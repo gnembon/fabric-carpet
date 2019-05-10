@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
-  "version": "${version}",
+  "id": "carpet",
+  "version": "0.1",
 
   "name": "Carpet Mod in Fabric",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "description": "Carpet made out of fabric",
   "authors": [
-    "Me!"
+    "gnembon, ..."
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
+    "homepage": "https://github.com/gnembon/fabric-carpet",
     "sources": "https://github.com/gnembon/fabric-carpet"
   },
 
   "license": "GNU LGPL V3",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/carpet/icon.png",
 
   "environment": "*",
   "entrypoints": {
@@ -22,7 +22,7 @@
     ]
   },
   "mixins": [
-    "modid.mixins.json"
+    "carpet.mixins.json"
   ],
 
   "requires": {
