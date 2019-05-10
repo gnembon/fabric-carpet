@@ -1,10 +1,10 @@
 package carpet;
 
-//import carpet.commands.CameraModeCommand;
+import carpet.commands.CameraModeCommand;
 //import carpet.commands.CarpetCommand;
 //import carpet.commands.CounterCommand;
 //import carpet.commands.DistanceCommand;
-//import carpet.commands.DrawCommand;
+import carpet.commands.DrawCommand;
 //import carpet.commands.ScriptCommand;
 //import carpet.commands.InfoCommand;
 //import carpet.commands.LogCommand;
@@ -56,11 +56,11 @@ public class CarpetServer // static for now - easier to handle all around the co
         //LogCommand.register(dispatcher);
         //SpawnCommand.register(dispatcher);
         //PlayerCommand.register(dispatcher);
-        //CameraModeCommand.register(dispatcher);
+        CameraModeCommand.register(dispatcher);
         //InfoCommand.register(dispatcher);
         //DistanceCommand.register(dispatcher);
         //PerimeterInfoCommand.register(dispatcher);
-        //DrawCommand.register(dispatcher);
+        DrawCommand.register(dispatcher);
         //ScriptCommand.register(dispatcher);
 
         TestCommand.register(dispatcher);

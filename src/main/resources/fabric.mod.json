@@ -3,23 +3,22 @@
   "id": "modid",
   "version": "${version}",
 
-  "name": "Example Mod",
+  "name": "Carpet Mod in Fabric",
   "description": "This is an example description! Tell everyone what your mod is about!",
   "authors": [
     "Me!"
   ],
   "contact": {
     "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "sources": "https://github.com/gnembon/fabric-carpet"
   },
 
-  "license": "CC0-1.0",
+  "license": "GNU LGPL V3",
   "icon": "assets/modid/icon.png",
 
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
     ]
   },
   "mixins": [

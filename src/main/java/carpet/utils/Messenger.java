@@ -9,8 +9,8 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.ChatFormat;
 import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.network.chat.ClickEvent;//   text.event.ClickEvent;
-import net.minecraft.network.chat.HoverEvent;//    text.event.HoverEvent;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
