@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "carpet.mixins",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "CommandManagerMixin"
+  ],
+  "client": [
+    "CommandManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
