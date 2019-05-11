@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "carpetServer/CommandManagerMixin",
-    "carpetServer/MinecraftServerMixin"
+    "carpetServer/MinecraftServerMixin",
+    "logging/PlayerListHeaderS2CPacketMixin"
   ],
   "client": [
     "carpetServer/MinecraftClientMixin",
