@@ -3,28 +3,28 @@ package carpet.logging.logHelpers;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.MobEffects;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.network.chat.BaseComponent;
 
 import java.util.function.Supplier;
 
 public class DamageReporter
 {
-    private static ITextComponent[] verifyAndProduceMessage(String option, EntityPlayer player, Entity from, Entity to, Supplier<ITextComponent> messageFuture)
+    private static BaseComponent[] verifyAndProduceMessage(String option, PlayerEntity player, Entity from, Entity to, Supplier<BaseComponent> messageFuture)
     {
         if ("all".equalsIgnoreCase(option)
-                || ("players".equalsIgnoreCase(option) && (from instanceof EntityPlayer || to instanceof EntityPlayer))
+                || ("players".equalsIgnoreCase(option) && (from instanceof PlayerEntity || to instanceof PlayerEntity))
                 || ("me".equalsIgnoreCase(option) && ( (from == player) || ( to == player)  ) ))
         {
-            return new ITextComponent[]{messageFuture.get()};
+            return new BaseComponent[]{messageFuture.get()};
         }
         return null;
     }
 
-    public static boolean register_damage_attacker(Entity target, EntityLivingBase source, float amount)
+    public static boolean register_damage_attacker(Entity target, LivingEntity source, float amount)
     {
         if (!LoggerRegistry.__damage) return true;
         LoggerRegistry.getLogger("damage").log( (option, player)->
@@ -37,27 +37,27 @@ public class DamageReporter
         return true;
     }
     
-    public static void register_damage(EntityLivingBase target, DamageSource source, float amount)
+    public static void register_damage(LivingEntity target, DamageSource source, float amount)
     {
         if (!LoggerRegistry.__damage) return;
-        if (source.isFireDamage() && (target.isImmuneToFire() ||
-                target.isPotionActive(MobEffects.FIRE_RESISTANCE)))
+        if (source.isFire() && (target.isFireImmune() ||
+                target.hasStatusEffect(StatusEffects.FIRE_RESISTANCE)))
             return;
         LoggerRegistry.getLogger("damage").log( (option, player)->
-            verifyAndProduceMessage(option, player, source.getTrueSource(), target, () ->
+            verifyAndProduceMessage(option, player, source.getSource(), target, () ->
                 Messenger.c(target.getDisplayName(),
                         "g  receiving ",
                         String.format("r %.2f", amount),
-                        String.format("g  points of damage from %s", source.getDamageType()))
+                        String.format("g  points of damage from %s", source.getName()))
             )
         );
     }
 
-    public static void register_final_damage(EntityLivingBase target, DamageSource source, float amount)
+    public static void register_final_damage(LivingEntity target, DamageSource source, float amount)
     {
         if (!LoggerRegistry.__damage) return;
         LoggerRegistry.getLogger("damage").log( (option, player)->
-            verifyAndProduceMessage(option, player, source.getTrueSource(), target, () ->
+            verifyAndProduceMessage(option, player, source.getSource(), target, () ->
                 Messenger.c("g  - total received ",
                         String.format("r %.2f", amount),
                         "g  points of damage")
@@ -65,17 +65,17 @@ public class DamageReporter
         );
     }
 
-    public static void modify_damage(EntityLivingBase target, DamageSource source, float previous_amount, float final_amount, String component)
+    public static void modify_damage(LivingEntity target, DamageSource source, float previous_amount, float final_amount, String component)
     {
         if (!LoggerRegistry.__damage)
             return;
         if (previous_amount == final_amount)
             return;
-        if (source.isFireDamage() && (target.isImmuneToFire() ||
-                target.isPotionActive(MobEffects.FIRE_RESISTANCE)))
+        if (source.isFire() && (target.isFireImmune() ||
+                target.hasStatusEffect(StatusEffects.FIRE_RESISTANCE)))
             return;
         LoggerRegistry.getLogger("damage").log( (option, player)->
-            verifyAndProduceMessage(option, player, source.getTrueSource(), target, () ->
+            verifyAndProduceMessage(option, player, source.getSource(), target, () ->
                 {
                     if (final_amount == 0.0f)
                     {

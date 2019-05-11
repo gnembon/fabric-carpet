@@ -1,6 +1,8 @@
 package carpet.utils;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnType;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.block.Material;
 import net.minecraft.block.MaterialColor;
@@ -199,15 +201,15 @@ public class BlockInfo
 
     private static BaseComponent wander_chances(BlockPos pos, World worldIn)
     {
-        MobEntityWithAi creature = new ZombiePigmanEntity(worldIn);
-        creature.onInitialSpawn(worldIn.getDifficultyForLocation(pos), null, null);
-        creature.setLocationAndAngles(pos.getX()+0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
+        MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIE_PIGMAN, worldIn);
+        creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);
+        creature.setPositionAndAngles(pos.getX()+0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);
         int success = 0;
         for (int i=0; i<1000; i++)
         {
 
-            Vec3d vec = PathfindingUtil.findRandomTarget(creature, 10, 7);
+            Vec3d vec = PathfindingUtil.findTarget(creature, 10, 7);
             if (vec == null)
             {
                 continue;
@@ -220,7 +222,7 @@ public class BlockInfo
             int i;
             for (i=1;i<30*20*60; i++) //*60 used to be 5 hours, limited to 30 mins
             {
-                if (wander.shouldExecute())
+                if (wander.canStart())
                 {
                     break;
                 }

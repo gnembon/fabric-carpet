@@ -1,9 +1,8 @@
 package carpet.logging;
 
 import carpet.CarpetSettings;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumDyeColor;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.DyeColor;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -40,7 +39,7 @@ public class LoggerRegistry
 
         registerLogger("tps", new HUDLogger("tps", null, null));
         registerLogger("packets", new HUDLogger("packets", null, null));
-        registerLogger("counter",new HUDLogger("counter","white", Arrays.stream(EnumDyeColor.values()).map(Object::toString).toArray(String[]::new)));
+        registerLogger("counter",new HUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
         registerLogger("mobcaps", new HUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
     }
 
@@ -136,7 +135,7 @@ public class LoggerRegistry
         setAccess(logger);
     }
 
-    public static void playerConnected(EntityPlayer player)
+    public static void playerConnected(PlayerEntity player)
     {
         for(Logger log: loggerRegistry.values() )
         {
@@ -144,7 +143,7 @@ public class LoggerRegistry
         }
 
     }
-    public static void playerDisconnected(EntityPlayer player)
+    public static void playerDisconnected(PlayerEntity player)
     {
         for(Logger log: loggerRegistry.values() )
         {

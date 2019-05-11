@@ -63,7 +63,8 @@ public class WoolTool
                 break;
             case YELLOW:
                 if (CarpetSettings.getBool("commandInfo"))
-                    EntityInfo.issue_entity_info(placer);
+                    Messenger.m(placer, "r use data get entity command");
+                    //EntityInfo.issue_entity_info(placer);
                 break;
 			case GREEN:
                 if (CarpetSettings.getBool("hopperCounters"))
@@ -94,8 +95,8 @@ public class WoolTool
     public static DyeColor getWoolColorAtPosition(World worldIn, BlockPos pos)
     {
         BlockState state = worldIn.getBlockState(pos);
-        if (state.getMaterial() != Material.CLOTH || !state.isFullCube())
+        if (state.getMaterial() != Material.WOOL || !state.isSimpleFullBlock(worldIn, pos))
             return null;
-        return Material2Dye.get(state.getMaterialColor(worldIn, pos));
+        return Material2Dye.get(state.getTopMaterialColor(worldIn, pos));
     }
 }

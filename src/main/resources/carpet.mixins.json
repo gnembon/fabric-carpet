@@ -5,7 +5,8 @@
   "mixins": [
     "carpetServer/CommandManagerMixin",
     "carpetServer/MinecraftServerMixin",
-    "logging/PlayerListHeaderS2CPacketMixin"
+    "logging/PlayerListHeaderS2CPacketMixin",
+    "spawnTracking/WeightedPickerEntryMixin"
   ],
   "client": [
     "carpetServer/MinecraftClientMixin",

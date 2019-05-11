@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.predicate.entity.EntityPredicates;
+import carpet.mixins.spawnTracking.WeightedPickerEntryMixin;
+import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.Pair;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.network.chat.BaseComponent;
@@ -24,7 +25,6 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.Entity;
 
 import net.minecraft.entity.passive.OcelotEntity;
@@ -239,16 +239,18 @@ public class SpawnReporter
             lst.add(Messenger.c(String.format("r Incorrect creature type: %s",creature_type_code)));
             return lst;
         }
-        Class<?> cls = typ.getBaseClass();// getCreatureClass();
+        Class<?> cls = typ.getDeclaringClass();// getBaseClass();// getCreatureClass();
         lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(typ))));
-        for (Entity entity : worldIn.loadedEntityList)
-        {
-            if ((!(entity instanceof LivingEntity) || !((LivingEntity)entity).isNoDespawnRequired()) && cls.isAssignableFrom(entity.getClass()))
-            {
-                lst.add(Messenger.c("w  - ",
-                        Messenger.tp("w", entity.posX, entity.posY, entity.posZ),"w  : "+EntityType.getId(entity.getType())));
-            }
-        }
+
+        lst.add(Messenger.s(" <sorry, this list will be populated, once M figures out what counts>"));
+        //for (Entity entity : ((ServerWorld)worldIn).getEntities(...))
+        //{
+        //    if ((!(entity instanceof LivingEntity) || !((LivingEntity)entity).isNoDespawnRequired()) && cls.isAssignableFrom(entity.getClass()))
+        //    {
+        //        lst.add(Messenger.c("w  - ",
+        //                Messenger.tp("w", entity.posX, entity.posY, entity.posZ),"w  : "+EntityType.getId(entity.getType())));
+        //    }
+        //}
         if (lst.size()==1)
         {
             lst.add(Messenger.s(" - Empty."));
@@ -311,7 +313,7 @@ public class SpawnReporter
                     "w ' to enable"));
             return report;
         }
-        Long duration = (long) worldIn.getServer().getTickCounter() - track_spawns;
+        Long duration = (long) worldIn.getServer().getTicks() - track_spawns;
         report.add(Messenger.c("bw --------------------"));
         String simulated = mock_spawns?"[SIMULATED] ":"";
         String location = (lower_spawning_limit != null)?String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
@@ -358,20 +360,20 @@ public class SpawnReporter
 
     public static void killEntity(LivingEntity entity)
     {
-        if (entity.isPassenger())
+        if (entity.hasVehicle())
         {
-            entity.getRidingEntity().remove();
+            entity.getVehicle().remove();
         }
-        if (entity.isBeingRidden())
+        if (entity.hasPassengers())
         {
-            for (Entity e: entity.getPassengers())
+            for (Entity e: entity.getPassengerList())
             {
                 e.remove();
             }
         }
         if (entity instanceof OcelotEntity)
         {
-            for (Entity e: entity.getEntityWorld().getEntitiesWithinAABB(OcelotEntity.class, entity.getBoundingBox()))
+            for (Entity e: entity.getEntityWorld().getEntities(OcelotEntity.class, entity.getBoundingBox()))
             {
                 e.remove();
             }
@@ -384,7 +386,7 @@ public class SpawnReporter
         List<BaseComponent> rep = new ArrayList<>();
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
         Chunk chunk = worldIn.getChunk(pos);
-        int lc = chunk.getTopBlockY(Heightmap.Type.LIGHT_BLOCKING, x, z) + 1;
+        int lc = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;
         String where = String.format((y >= lc) ? "%d blocks above it." : "%d blocks below it.",  MathHelper.abs(y-lc));
         if (y == lc) where = "right at it.";
         rep.add(Messenger.s(String.format("Maximum spawn Y value for (%+d, %+d) is %d. You are "+where, x, z, lc )));
@@ -395,17 +397,17 @@ public class SpawnReporter
             List<Biome.SpawnEntry> lst = ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(enumcreaturetype, pos);
             if (lst != null && !lst.isEmpty())
             {
-                for (Biome.SpawnEntry SpawnListEntry animal : lst)
+                for (Biome.SpawnEntry spawnEntry : lst)
                 {
-                    boolean canspawn = SpawnHelper.canCreatureTypeSpawnAtLocation(SpawnRestriction.getPlacementType(animal.entityType), worldIn, pos, animal.entityType);
+                    boolean canspawn = SpawnHelper.canSpawn(SpawnRestriction.getLocation(spawnEntry.type), worldIn, pos, spawnEntry.type);
                     int will_spawn = -1;
                     boolean fits = false;
                     boolean fits1 = false;
                     
-                    LivingEntity entityliving;
+                    MobEntity mob;
                     try
                     {
-                        entityliving = animal.entityType.create(worldIn);
+                        mob = (MobEntity) spawnEntry.type.create(worldIn);
                     }
                     catch (Exception exception)
                     {
@@ -423,19 +425,19 @@ public class SpawnReporter
                         {
                             float f = (float)x + 0.5F;
                             float f1 = (float)z + 0.5F;
-                            entityliving.setLocationAndAngles((double)f, (double)y, (double)f1, worldIn.rand.nextFloat() * 360.0F, 0.0F);
-                            fits1 = entityliving.isNotColliding();
+                            mob.setPositionAndAngles((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            fits1 = worldIn.doesNotCollide(mob);
                             
                             for (int i = 0; i < 20; ++i)
                             {
-                                if (entityliving.canSpawn(worldIn, false))
+                                if (mob.canSpawn(worldIn, SpawnType.NATURAL))
                                 {
                                     will_spawn += 1;
                                 }
                             }
-                            entityliving.onInitialSpawn(worldIn.getDifficultyForLocation(new BlockPos(entityliving)), null, null);
+                            mob.initialize(worldIn, worldIn.getLocalDifficulty(new BlockPos(mob)), SpawnType.NATURAL, null, null);
                             // the code invokes onInitialSpawn after getCanSpawHere
-                            fits = fits1 && entityliving.isNotColliding();
+                            fits = fits1 && worldIn.doesNotCollide(mob);
                             if (fits)
                             {
                                 fits_true = true;
@@ -445,11 +447,11 @@ public class SpawnReporter
                                 fits_false = true;
                             }
                             
-                            killEntity(entityliving);
+                            killEntity(mob);
                             
                             try
                             {
-                                entityliving = animal.entityType.create(worldIn);
+                                mob = (MobEntity) spawnEntry.type.create(worldIn);
                             }
                             catch (Exception exception)
                             {
@@ -459,14 +461,14 @@ public class SpawnReporter
                         }
                     }
                     
-                    String creature_name = Registry.ENTITY_TYPE.getKey(entityliving.getType()).toString().replaceFirst("minecraft:","");
-                    String pack_size = String.format("%d", entityliving.getMaxSpawnedInChunk());//String.format("%d-%d", animal.minGroupCount, animal.maxGroupCount);
-                    int weight = animal.getItemWeight();
+                    String creature_name = Registry.ENTITY_TYPE.getId(mob.getType()).toString().replaceFirst("minecraft:","");
+                    String pack_size = String.format("%d", mob.getLimitPerChunk());//String.format("%d-%d", animal.minGroupCount, animal.maxGroupCount);
+                    int weight = ((WeightedPickerEntryMixin) spawnEntry).getWeight();
                     if (canspawn)
                     {
                         String c = (fits_true && will_spawn>0)?"e":"gi";
                         rep.add(Messenger.c(
-                                String.format("%s %s: %s (%d:%d-%d/%d), can: ",c,type_code,creature_name,weight,animal.minGroupCount, animal.maxGroupCount,  entityliving.getMaxSpawnedInChunk()),
+                                String.format("%s %s: %s (%d:%d-%d/%d), can: ",c,type_code,creature_name,weight,spawnEntry.minGroupSize, spawnEntry.maxGroupSize,  mob.getLimitPerChunk()),
                                 "l YES",
                                 c+" , fit: ",
                                 ((fits_true && fits_false)?"y YES and NO":(fits_true?"l YES":"r NO")),
@@ -476,35 +478,12 @@ public class SpawnReporter
                     }
                     else
                     {
-                        rep.add(Messenger.c(String.format("gi %s: %s (%d:%d-%d/%d), can: ",type_code,creature_name,weight,animal.minGroupCount, animal.maxGroupCount, entityliving.getMaxSpawnedInChunk()), "n NO"));
+                        rep.add(Messenger.c(String.format("gi %s: %s (%d:%d-%d/%d), can: ",type_code,creature_name,weight,spawnEntry.minGroupSize, spawnEntry.maxGroupSize, mob.getLimitPerChunk()), "n NO"));
                     }
-                    killEntity(entityliving);
+                    killEntity(mob);
                 }
             }
         }
         return rep;
     }
-
-    public static boolean check_player_within_spawning_range(World worldServerIn, float x, float y, float z)
-    {
-
-        for (int i = 0; i < worldServerIn.playerEntities.size(); ++i)
-        {
-            PlayerEntity entityplayer = worldServerIn.playerEntities.get(i);
-
-            if (EntityPredicates.NOT_SPECTATING.test(entityplayer))
-            {
-                double d0 = entityplayer.getDistanceSq(x, y, z);
-
-                if ( d0 > 24.0*24.0 && d0 < 128.0*128.0)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-
 }
