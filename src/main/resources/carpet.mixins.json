@@ -3,10 +3,15 @@
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "CommandManagerMixin"
+    "carpetServer/CommandManagerMixin",
+    "carpetServer/MinecraftServerMixin"
   ],
   "client": [
-    "CommandManagerMixin"
+    "carpetServer/MinecraftClientMixin",
+    "carpetServer/IntegratedServerMixin"
+  ],
+  "server": [
+    "carpetServer/MinecraftDedicatedServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

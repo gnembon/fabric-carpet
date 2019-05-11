@@ -1,4 +1,4 @@
-package carpet.mixins;
+package carpet.mixins.carpetServer;
 
 import carpet.CarpetServer;
 import com.mojang.brigadier.CommandDispatcher;

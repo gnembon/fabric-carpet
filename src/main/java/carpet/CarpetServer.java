@@ -44,7 +44,6 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void tick(MinecraftServer server)
     {
-        CarpetSettings.LOG.error("ticking...");
         //TickSpeed.tick(server);
         //HUDController.update_hud(server);
     }

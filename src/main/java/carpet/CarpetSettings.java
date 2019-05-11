@@ -221,7 +221,7 @@ public class CarpetSettings
 
     private static void notifyPlayersCommandsChanged()
     {
-        if (CarpetServer.minecraft_server == null)
+        if (CarpetServer.minecraft_server == null || CarpetServer.minecraft_server.getPlayerManager() == null)
         {
             return;
         }
