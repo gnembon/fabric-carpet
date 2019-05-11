@@ -1,4 +1,4 @@
-package carpet.mixins.spawnTracking;
+package carpet.mixins;
 
 import net.minecraft.util.WeightedPicker;
 import org.spongepowered.asm.mixin.Mixin;

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import carpet.mixins.spawnTracking.WeightedPickerEntryMixin;
+import carpet.mixins.WeightedPickerEntryMixin;
 import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.Pair;
