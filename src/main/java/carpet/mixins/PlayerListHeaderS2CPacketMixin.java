@@ -6,7 +6,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(PlayerListHeaderS2CPacket.class)
-public interface PlayerListHeaderS2CPacketMixin {
+public interface PlayerListHeaderS2CPacketMixin
+{
     @Accessor("header")
     void setHeader(Component header);
 

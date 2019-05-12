@@ -3,6 +3,7 @@ package carpet.helpers;
 import carpet.CarpetSettings;
 import net.minecraft.init.Biomes;
 import net.minecraft.init.Blocks;
+import net.minecraft.structure.Structure;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -13,11 +14,12 @@ import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.gen.OverworldGenSettings;
 import net.minecraft.world.gen.feature.BlockBlobConfig;
+import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.IFeatureConfig;
+import net.minecraft.world.gen.feature.FeatureConfig;
 import net.minecraft.world.gen.feature.IcebergConfig;
 import net.minecraft.world.gen.feature.LakesConfig;
-import net.minecraft.world.gen.feature.NoFeatureConfig;
+import net.minecraft.world.gen.feature.OceanRuinFeature;
 import net.minecraft.world.gen.feature.SeaGrassConfig;
 import net.minecraft.world.gen.feature.ShrubFeature;
 import net.minecraft.world.gen.feature.TallGrassConfig;
@@ -25,9 +27,10 @@ import net.minecraft.world.gen.feature.TallGrassFeature;
 import net.minecraft.world.gen.feature.structure.MineshaftConfig;
 import net.minecraft.world.gen.feature.structure.MineshaftStructure;
 import net.minecraft.world.gen.feature.structure.OceanRuinConfig;
-import net.minecraft.world.gen.feature.structure.OceanRuinStructure;
+import net.minecraft.structure.OceanRuinGenerator;
 import net.minecraft.world.gen.feature.structure.ShipwreckConfig;
-import net.minecraft.world.gen.feature.structure.Structure;
+
+import net.minecraft.structure.Structure;
 import net.minecraft.world.gen.feature.structure.VillageConfig;
 import net.minecraft.world.gen.feature.structure.VillagePieces;
 import net.minecraft.world.gen.placement.CountConfig;
@@ -43,29 +46,29 @@ public class FeatureGenerator
     {
         Boolean plop(World world, BlockPos pos);
     }
-    private static Thing simplePlop(Feature<NoFeatureConfig> feature)
+    private static Thing simplePlop(Feature<DefaultFeatureConfig> feature)
     {
-        return simplePlop(feature, IFeatureConfig.NO_FEATURE_CONFIG);
+        return simplePlop(feature, FeatureConfig.DEFAULT);
     }
-    private static Thing simplePlop(Feature feature, IFeatureConfig config)
+    private static Thing simplePlop(Feature feature, FeatureConfig config)
     {
         return (w, p) -> {
             CarpetSettings.skipGenerationChecks=true;
-            boolean res = feature.place(w, w.getChunkProvider().getChunkGenerator(), w.rand, p, config);
+            boolean res = feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p, config);
             CarpetSettings.skipGenerationChecks=false;
             return res;
         };
 
     }
 
-    private static Thing spawnCustomStructure(Structure structure, IFeatureConfig config)
+    private static Thing spawnCustomStructure(Structure structure, FeatureConfig config)
     {
         return (w, p) -> {
             IChunkGenerator chunkgen = new ChunkGeneratorOverworld(w, null, new OverworldGenSettings())
             {
                 @Nullable
                 @Override
-                public IFeatureConfig getStructureConfig(Biome biomeIn, Structure<? extends IFeatureConfig> structureIn)
+                public FeatureConfig getStructureConfig(Biome biomeIn, Structure<? extends FeatureConfig> structureIn)
                 {
                     return config;
                 }
@@ -173,17 +176,17 @@ public class FeatureGenerator
         put("stronghold", Feature.STRONGHOLD::plopAnywhere);
 
         put("oceanruin_small", spawnCustomStructure(Feature.OCEAN_RUIN,
-                new OceanRuinConfig(OceanRuinStructure.Type.COLD, 0.0F, 0.5F)));
+                new OceanRuinConfig(OceanRuinGenerator.Type.COLD, 0.0F, 0.5F)));
         put("oceanruin_warm_small", spawnCustomStructure(Feature.OCEAN_RUIN,
-                new OceanRuinConfig(OceanRuinStructure.Type.WARM, 0.0F, 0.5F)));
+                new OceanRuinConfig(OceanRuinGenerator.Type.WARM, 0.0F, 0.5F)));
         put("oceanruin_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
-                new OceanRuinConfig(OceanRuinStructure.Type.COLD, 1.0F, 0.0F)));
+                new OceanRuinConfig(OceanRuinGenerator.Type.COLD, 1.0F, 0.0F)));
         put("oceanruin_warm_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
-                new OceanRuinConfig(OceanRuinStructure.Type.WARM, 1.0F, 0.0F)));
+                new OceanRuinConfig(OceanRuinGenerator.Type.WARM, 1.0F, 0.0F)));
         put("oceanruin", spawnCustomStructure(Feature.OCEAN_RUIN,
-                new OceanRuinConfig(OceanRuinStructure.Type.COLD, 1.0F, 1.0F)));
+                new OceanRuinConfig(OceanRuinGenerator.Type.COLD, 1.0F, 1.0F)));
         put("oceanruin_warm", spawnCustomStructure(Feature.OCEAN_RUIN,
-                new OceanRuinConfig(OceanRuinStructure.Type.WARM, 1.0F, 1.0F)));
+                new OceanRuinConfig(OceanRuinGenerator.Type.WARM, 1.0F, 1.0F)));
         put("treasure", Feature.BURIED_TREASURE::plopAnywhere);
 
 

@@ -1,37 +1,18 @@
 package carpet.helpers;
 
 import carpet.CarpetSettings;
-import com.google.common.base.Predicate;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockCommandBlock;
-import net.minecraft.block.BlockStructure;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockWorldState;
-import net.minecraft.block.state.IBlockState;
+import carpet.mixins.PlayerActionC2SPacketMixin;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.fluid.IFluidState;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemSword;
-import net.minecraft.network.play.client.CPacketPlayerDigging;
-import net.minecraft.util.EntitySelectors;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.network.packet.PlayerActionC2SPacket;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceFluidMode;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameType;
-import net.minecraft.world.World;
 
 import java.util.List;
 
 public class EntityPlayerActionPack
 {
-    private EntityPlayerMP player;
+    private ServerPlayerEntity player;
 
     private boolean doesAttack;
     private int attackInterval;
@@ -55,7 +36,7 @@ public class EntityPlayerActionPack
     private float forward;
     private float strafing;
 
-    public EntityPlayerActionPack(EntityPlayerMP playerIn)
+    public EntityPlayerActionPack(ServerPlayerEntity playerIn)
     {
         player = playerIn;
         stop();
@@ -183,9 +164,9 @@ public class EntityPlayerActionPack
             case "west":
                 look(90.0F, 0.0F); return true;
             case "up":
-                look(player.rotationYaw, -90.0F); return true;
+                look(player.yaw, -90.0F); return true;
             case "down":
-                look(player.rotationYaw,  90.0F); return true;
+                look(player.yaw,  90.0F); return true;
             case "left":
             case "right":
                 return turn(where);
@@ -194,7 +175,7 @@ public class EntityPlayerActionPack
     }
     public EntityPlayerActionPack look(float yaw, float pitch)
     {
-        player.setPositionAndRotation(player.posX, player.posY, player.posZ, yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
+        player.setPositionAndAngles(player.x, player.y, player.z, yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
         return this;
     }
     public boolean turn(String where)
@@ -216,7 +197,7 @@ public class EntityPlayerActionPack
     }
     public EntityPlayerActionPack turn(float yaw, float pitch)
     {
-        player.setPositionAndRotation(player.posX, player.posY, player.posZ, player.rotationYaw+yaw,MathHelper.clamp(player.rotationPitch+pitch,-90.0F, 90.0F));
+        player.setPositionAndAngles(player.x, player.y, player.z, player.yaw+yaw,MathHelper.clamp(player.pitch+pitch,-90.0F, 90.0F));
         return  this;
     }
 
@@ -227,7 +208,7 @@ public class EntityPlayerActionPack
         this.doesUse = false;
         this.doesAttack = false;
         this.doesJump = false;
-        resetBlockRemoving(false);
+        //resetBlockRemoving(false);
         setSneaking(false);
         setSprinting(false);
         forward = 0.0F;
@@ -240,25 +221,29 @@ public class EntityPlayerActionPack
 
     public void swapHands()
     {
-        player.connection.processPlayerDigging(new CPacketPlayerDigging(null, null, CPacketPlayerDigging.Action.SWAP_HELD_ITEMS));
+        PlayerActionC2SPacket packet = new PlayerActionC2SPacket();
+        ((PlayerActionC2SPacketMixin)packet).setAction(PlayerActionC2SPacket.Action.SWAP_HELD_ITEMS);
+        player.networkHandler.onPlayerAction(packet);
     }
 
     public void dropItem()
     {
-        player.connection.processPlayerDigging(new CPacketPlayerDigging(null, null, CPacketPlayerDigging.Action.DROP_ITEM));
+        PlayerActionC2SPacket packet = new PlayerActionC2SPacket();
+        ((PlayerActionC2SPacketMixin)packet).setAction(PlayerActionC2SPacket.Action.DROP_ITEM);
+        player.networkHandler.onPlayerAction(packet);
     }
     public void mount()
     {
-        List<Entity> entities = player.world.getEntitiesWithinAABBExcludingEntity(player,player.getBoundingBox().expand(3.0D, 1.0D, 3.0D));
+        List<Entity> entities = player.world.getEntities(player,player.getBoundingBox().expand(3.0D, 1.0D, 3.0D));
         if (entities.size()==0)
         {
             return;
         }
         Entity closest = entities.get(0);
-        double distance = player.getDistanceSq(closest);
+        double distance = player.squaredDistanceTo(closest);
         for (Entity e: entities)
         {
-            double dd = player.getDistanceSq(e);
+            double dd = player.squaredDistanceTo(e);
             if (dd<distance)
             {
                 distance = dd;
@@ -305,11 +290,11 @@ public class EntityPlayerActionPack
         }
         if (forward != 0.0F)
         {
-            player.moveForward = forward*(sneaking?0.3F:1.0F);
+            player.forwardSpeed = forward*(sneaking?0.3F:1.0F);
         }
         if (strafing != 0.0F)
         {
-            player.moveStrafing = strafing*(sneaking?0.3F:1.0F);
+            player.sidewaysSpeed = strafing*(sneaking?0.3F:1.0F);
         }
     }
 
@@ -321,12 +306,15 @@ public class EntityPlayerActionPack
         }
     }
 
+
+
     public void attackOnce()
     {
-        RayTraceResult raytraceresult = mouseOver();
+        /* needs rework due to 1.14 changes
+        HitResult raytraceresult = mouseOver();
         if(raytraceresult == null) return;
 
-        switch (raytraceresult.type)
+        switch (raytraceresult.getType())
         {
             case ENTITY:
                 player.attackTargetEntityWithCurrentItem(raytraceresult.entity);
@@ -348,11 +336,13 @@ public class EntityPlayerActionPack
                     break;
                 }
         }
+        */
     }
 
     public boolean useOnce()
     {
-        RayTraceResult raytraceresult = mouseOver();
+        /*needs rework due to 1.14 changes
+        BlockHitResult raytraceresult = mouseOver();
         for (EnumHand enumhand : EnumHand.values())
         {
             ItemStack itemstack = this.player.getHeldItem(enumhand);
@@ -412,10 +402,12 @@ public class EntityPlayerActionPack
                 return true;
             }
         }
+        */
         return false;
     }
 
-    private RayTraceResult rayTraceBlocks(double blockReachDistance)
+    /*needs rework due to 1.14 changes
+    private BlockHitResult rayTraceBlocks(double blockReachDistance)
     {
         Vec3d eyeVec = player.getEyePosition(1.0F);
         Vec3d lookVec = player.getLook(1.0F);
@@ -423,10 +415,10 @@ public class EntityPlayerActionPack
         return player.getEntityWorld().rayTraceBlocks(eyeVec, pointVec, RayTraceFluidMode.NEVER, false, true);
     }
 
-    private RayTraceResult mouseOver()
+    private BlockHitResult mouseOver()
     {
         World world = player.getEntityWorld();
-        RayTraceResult result = null;
+        BlockHitResult result = null;
 
         Entity pointedEntity = null;
         double reach = player.isCreative() ? 5.0D : 4.5D;
@@ -456,8 +448,8 @@ public class EntityPlayerActionPack
         for (int j = 0; j < list.size(); ++j)
         {
             Entity entity1 = list.get(j);
-            AxisAlignedBB axisalignedbb = entity1.getBoundingBox().grow((double) entity1.getCollisionBorderSize());
-            RayTraceResult raytraceresult = axisalignedbb.calculateIntercept(eyeVec, pointVec);
+            BoundingBox axisalignedbb = entity1.getBoundingBox().grow((double) entity1.getCollisionBorderSize());
+            BlockHitResult raytraceresult = axisalignedbb.calculateIntercept(eyeVec, pointVec);
 
             if (axisalignedbb.contains(eyeVec))
             {
@@ -495,23 +487,23 @@ public class EntityPlayerActionPack
         if (pointedEntity != null && flag && eyeVec.distanceTo(hitVec) > 3.0D)
         {
             pointedEntity = null;
-            result = new RayTraceResult(RayTraceResult.Type.MISS, hitVec, (EnumFacing) null, new BlockPos(hitVec));
+            result = new BlockHitResult(BlockHitResult.Type.MISS, hitVec, (Direction) null, new BlockPos(hitVec));
         }
 
         if (pointedEntity != null && (d2 < extendedReach || result == null))
         {
-            result = new RayTraceResult(pointedEntity, hitVec);
+            result = new BlockHitResult(pointedEntity, hitVec);
         }
 
         return result;
     }
 
-    public boolean clickBlock(BlockPos loc, EnumFacing face) // don't call this one
+    public boolean clickBlock(BlockPos loc, Direction face) // don't call this one
     {
         World world = player.getEntityWorld();
-        if (player.interactionManager.getGameType()!=GameType.ADVENTURE)
+        if (player.interactionManager.getGameType()!=GameMode.ADVENTURE)
         {
-            if (player.interactionManager.getGameType() == GameType.SPECTATOR)
+            if (player.interactionManager.getGameType() == GameMode.SPECTATOR)
             {
                 return false;
             }
@@ -540,7 +532,7 @@ public class EntityPlayerActionPack
         }
         else
         {
-            if (player.interactionManager.getGameType()==GameType.CREATIVE)
+            if (player.interactionManager.getGameType()==GameMode.CREATIVE)
             {
                 player.connection.processPlayerDigging(new CPacketPlayerDigging(loc, face, CPacketPlayerDigging.Action.START_DESTROY_BLOCK));
                 clickBlockCreative(world, loc, face);
@@ -553,7 +545,7 @@ public class EntityPlayerActionPack
                     player.connection.processPlayerDigging(new CPacketPlayerDigging(this.currentBlock, face, CPacketPlayerDigging.Action.ABORT_DESTROY_BLOCK));
                 }
 
-                IBlockState iblockstate = world.getBlockState(loc);
+                BlockState iblockstate = world.getBlockState(loc);
                 player.connection.processPlayerDigging(new CPacketPlayerDigging(loc, face, CPacketPlayerDigging.Action.START_DESTROY_BLOCK));
                 boolean flag = iblockstate.getMaterial() != Material.AIR;
 
@@ -579,7 +571,7 @@ public class EntityPlayerActionPack
         }
     }
 
-    private void clickBlockCreative(World world, BlockPos pos, EnumFacing facing)
+    private void clickBlockCreative(World world, BlockPos pos, Direction facing)
     {
         if (!world.extinguishFire(player, pos, facing))
         {
@@ -587,7 +579,7 @@ public class EntityPlayerActionPack
         }
     }
 
-    public boolean onPlayerDamageBlock(BlockPos posBlock, EnumFacing directionFacing) //continue clicking - one to call
+    public boolean onPlayerDamageBlock(BlockPos posBlock, Direction directionFacing) //continue clicking - one to call
     {
         if (this.blockHitDelay > 0)
         {
@@ -595,7 +587,7 @@ public class EntityPlayerActionPack
             return true;
         }
         World world = player.getEntityWorld();
-        if (player.interactionManager.getGameType()==GameType.CREATIVE && world.getWorldBorder().contains(posBlock))
+        if (player.interactionManager.getGameType()==GameMode.CREATIVE && world.getWorldBorder().contains(posBlock))
         {
             this.blockHitDelay = 5;
             player.connection.processPlayerDigging(new CPacketPlayerDigging(posBlock, directionFacing, CPacketPlayerDigging.Action.START_DESTROY_BLOCK));
@@ -604,7 +596,7 @@ public class EntityPlayerActionPack
         }
         else if (posBlock.equals(currentBlock))
         {
-            IBlockState iblockstate = world.getBlockState(posBlock);
+            BlockState iblockstate = world.getBlockState(posBlock);
 
             if (iblockstate.getMaterial() == Material.AIR)
             {
@@ -638,9 +630,9 @@ public class EntityPlayerActionPack
     private boolean onPlayerDestroyBlock(BlockPos pos)
     {
         World world = player.getEntityWorld();
-        if (player.interactionManager.getGameType()!=GameType.ADVENTURE)
+        if (player.interactionManager.getGameType()!=GameMode.ADVENTURE)
         {
-            if (player.interactionManager.getGameType() == GameType.SPECTATOR)
+            if (player.interactionManager.getGameType() == GameMode.SPECTATOR)
             {
                 return false;
             }
@@ -663,13 +655,13 @@ public class EntityPlayerActionPack
             }
         }
 
-        if (player.interactionManager.getGameType()==GameType.CREATIVE && !player.getHeldItemMainhand().isEmpty() && player.getHeldItemMainhand().getItem() instanceof ItemSword)
+        if (player.interactionManager.getGameType()==GameMode.CREATIVE && !player.getHeldItemMainhand().isEmpty() && player.getHeldItemMainhand().getItem() instanceof ItemSword)
         {
             return false;
         }
         else
         {
-            IBlockState iblockstate = world.getBlockState(pos);
+            BlockState iblockstate = world.getBlockState(pos);
             Block block = iblockstate.getBlock();
 
             if ((block instanceof BlockCommandBlock || block instanceof BlockStructure) && !player.canUseCommandBlock())
@@ -684,7 +676,7 @@ public class EntityPlayerActionPack
             {
                 world.playEvent(2001, pos, Block.getStateId(iblockstate));
                 block.onBlockHarvested(world, pos, iblockstate, player);
-                IFluidState ifluidstate = world.getFluidState(pos);
+                FluidState ifluidstate = world.getFluidState(pos);
                 boolean flag = world.setBlockState(pos, ifluidstate.getBlockState(), 11);
 
                 if (flag)
@@ -694,7 +686,7 @@ public class EntityPlayerActionPack
 
                 this.currentBlock = new BlockPos(this.currentBlock.getX(), -1, this.currentBlock.getZ());
 
-                if (!(player.interactionManager.getGameType()==GameType.CREATIVE))
+                if (!(player.interactionManager.getGameType()==GameMode.CREATIVE))
                 {
                     ItemStack itemstack1 = player.getHeldItemMainhand();
 
@@ -718,7 +710,7 @@ public class EntityPlayerActionPack
     {
         if (this.isHittingBlock || force)
         {
-            player.connection.processPlayerDigging(new CPacketPlayerDigging(this.currentBlock, EnumFacing.DOWN, CPacketPlayerDigging.Action.ABORT_DESTROY_BLOCK));
+            player.connection.processPlayerDigging(new CPacketPlayerDigging(this.currentBlock, Direction.DOWN, CPacketPlayerDigging.Action.ABORT_DESTROY_BLOCK));
             this.isHittingBlock = false;
             this.curBlockDamageMP = 0.0F;
             player.getEntityWorld().sendBlockBreakProgress(player.getEntityId(), this.currentBlock, -1);
@@ -730,7 +722,7 @@ public class EntityPlayerActionPack
 
 
     /*
-    public EnumActionResult processRightClickBlock(EntityPlayerSP player, WorldClient worldIn, BlockPos stack, EnumFacing pos, Vec3d facing, EnumHand vec)
+    public EnumActionResult processRightClickBlock(EntityPlayerSP player, WorldClient worldIn, BlockPos stack, Direction pos, Vec3d facing, EnumHand vec)
     {
         this.syncCurrentPlayItem();
         ItemStack itemstack = player.getHeldItem(vec);
@@ -745,9 +737,9 @@ public class EntityPlayerActionPack
         }
         else
         {
-            if (this.currentGameType != GameType.SPECTATOR)
+            if (this.currentGameType != GameMode.SPECTATOR)
             {
-                IBlockState iblockstate = worldIn.getBlockState(stack);
+                BlockState iblockstate = worldIn.getBlockState(stack);
 
                 if ((!player.isSneaking() || player.getHeldItemMainhand().func_190926_b() && player.getHeldItemOffhand().func_190926_b()) && iblockstate.getBlock().onBlockActivated(worldIn, stack, iblockstate, player, vec, pos, f, f1, f2))
                 {
@@ -767,7 +759,7 @@ public class EntityPlayerActionPack
 
             this.connection.sendPacket(new CPacketPlayerTryUseItemOnBlock(stack, pos, vec, f, f1, f2));
 
-            if (!flag && this.currentGameType != GameType.SPECTATOR)
+            if (!flag && this.currentGameType != GameMode.SPECTATOR)
             {
                 if (itemstack.func_190926_b())
                 {
@@ -813,7 +805,7 @@ public class EntityPlayerActionPack
 
     public EnumActionResult processRightClick(EntityPlayer player, World worldIn, EnumHand stack)
     {
-        if (this.currentGameType == GameType.SPECTATOR)
+        if (this.currentGameType == GameMode.SPECTATOR)
         {
             return EnumActionResult.PASS;
         }
@@ -847,18 +839,19 @@ public class EntityPlayerActionPack
     {
         this.syncCurrentPlayItem();
         this.connection.sendPacket(new CPacketUseEntity(target, heldItem));
-        return this.currentGameType == GameType.SPECTATOR ? EnumActionResult.PASS : player.func_190775_a(target, heldItem);
+        return this.currentGameType == GameMode.SPECTATOR ? EnumActionResult.PASS : player.func_190775_a(target, heldItem);
     }
+    */
 
-    /
+    /*
      * Handles right clicking an entity from the entities side, sends a packet to the server.
      *
-    public EnumActionResult interactWithEntity(EntityPlayer player, Entity target, RayTraceResult raytrace, EnumHand heldItem)
+    public EnumActionResult interactWithEntity(EntityPlayer player, Entity target, BlockHitResult raytrace, EnumHand heldItem)
     {
         this.syncCurrentPlayItem();
         Vec3d vec3d = new Vec3d(raytrace.hitVec.xCoord - target.posX, raytrace.hitVec.yCoord - target.posY, raytrace.hitVec.zCoord - target.posZ);
         this.connection.sendPacket(new CPacketUseEntity(target, heldItem, vec3d));
-        return this.currentGameType == GameType.SPECTATOR ? EnumActionResult.PASS : target.applyPlayerInteraction(player, vec3d, heldItem);
+        return this.currentGameType == GameMode.SPECTATOR ? EnumActionResult.PASS : target.applyPlayerInteraction(player, vec3d, heldItem);
     }
 */
 

@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
@@ -8,14 +9,16 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.suggestion.SuggestionProviders;
+import net.minecraft.command.arguments.DimensionArgumentType;
+import net.minecraft.command.arguments.RotationArgumentType;
+import net.minecraft.command.arguments.Vec3ArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameType;
+import net.minecraft.world.GameMode;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.Arrays;
@@ -28,16 +31,16 @@ import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.word;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.server.command.CommandSource.suggestMatching;
 
 public class PlayerCommand
 {
-    ServerPlayerEntity
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("player").
                 requires((player) -> CarpetSettings.getBool("commandPlayer")).
                 then(argument("player", word()).
-                        suggests( (c, b) -> SuggestionProviders.suggest(getPlayers(c.getSource()), b)).
+                        suggests( (c, b) -> suggestMatching(getPlayers(c.getSource()), b)).
                         then(literal("stop").
                                 executes(PlayerCommand::stop)).
                         then(literal("use").
@@ -96,7 +99,7 @@ public class PlayerCommand
                                         executes(PlayerCommand::lookUp)).
                                 then(literal("down").
                                         executes(PlayerCommand::lookDown)).
-                                then(argument("direction",RotationArgument.rotation()).
+                                then(argument("direction", RotationArgumentType.create()).
                                         executes(PlayerCommand::lookAround))).
                         then(literal("turn").
                                 then(literal("left").
@@ -105,7 +108,7 @@ public class PlayerCommand
                                         executes(PlayerCommand::turnRight)).
                                 then(literal("back").
                                         executes(PlayerCommand::turnBack)).
-                                then(argument("direction",RotationArgument.rotation()).
+                                then(argument("direction",RotationArgumentType.create()).
                                         executes(PlayerCommand::turn))).
                         then(literal("move").
                                 then(literal("forward").
@@ -119,13 +122,13 @@ public class PlayerCommand
                         then(literal("spawn").
                                 executes(PlayerCommand::spawn).
                                 then(literal("at").
-                                        then(argument("position", Vec3Argument.vec3()).
+                                        then(argument("position", Vec3ArgumentType.create()).
                                                 executes(PlayerCommand::spawn).
                                                 then(literal("facing").
-                                                        then(argument("direction",RotationArgument.rotation()).
+                                                        then(argument("direction",RotationArgumentType.create()).
                                                                 executes(PlayerCommand::spawn).
                                                                 then(literal("in").
-                                                                        then(argument("dimension",DimensionArgument.getDimension()).
+                                                                        then(argument("dimension", DimensionArgumentType.create()).
                                                                                 executes(PlayerCommand::spawn)))))))));
 
         dispatcher.register(literalargumentbuilder);
@@ -137,17 +140,17 @@ public class PlayerCommand
         return players;
     }
 
-    private static ServerPlayerEntityy getPlayer(CommandContext<ServerCommandSource> context)
+    private static ServerPlayerEntity getPlayer(CommandContext<ServerCommandSource> context)
     {
         String playerName = getString(context,"player");
-        MinecraftServer server = context.getSource().getServer();
-        return (ServerPlayerEntityy) server.getPlayerList().getPlayerByUsername(playerName);
+        MinecraftServer server = context.getSource().getMinecraftServer();
+        return server.getPlayerManager().getPlayer(playerName);
     }
 
     private static boolean cantSpawn(CommandContext<ServerCommandSource> context)
     {
         String playerName = getString(context,"player");
-        PlayerEntity player = context.getSource().getServer().getPlayerList().getPlayerByUsername(playerName);
+        PlayerEntity player = context.getSource().getMinecraftServer().getPlayerManager().getPlayer(playerName);
         if (player != null)
         {
             Messenger.m(context.getSource(), "r Player ", "rb "+playerName, "r is already logged on");
@@ -167,14 +170,14 @@ public class PlayerCommand
         PlayerEntity sendingPlayer;
         try
         {
-            sendingPlayer = context.getSource().asPlayer();
+            sendingPlayer = context.getSource().getPlayer();
         }
         catch (CommandSyntaxException e)
         {
             return false;
         }
 
-        if (!(context.getSource().getServer().getPlayerList().canSendCommands(sendingPlayer.getGameProfile())))
+        if (!(context.getSource().getMinecraftServer().getPlayerManager().isOperator(sendingPlayer.getGameProfile())))
         {
             if (!(sendingPlayer == player || player instanceof EntityPlayerMPFake))
             {
@@ -214,208 +217,208 @@ public class PlayerCommand
     private static int stop(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.stop();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().stop();
         return 1;
     }
     private static int useOnce(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.useOnce();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().useOnce();
         return 1;
     }
     private static int useContinuous(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.setUseForever();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setUseForever();
         return 1;
     }
     private static int useInterval(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
         int ticks = getInteger(context, "ticks");
-        getPlayer(context).actionPack.setUse(ticks, 0);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setUse(ticks, 0);
         return 1;
     }
     private static int jumpOnce(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.jumpOnce();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().jumpOnce();
         return 1;
     }
     private static int jumpContinuous(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.setJumpForever();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setJumpForever();
         return 1;
     }
     private static int jumpInterval(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
         int ticks = getInteger(context, "ticks");
-        getPlayer(context).actionPack.setJump(ticks, 0);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setJump(ticks, 0);
         return 1;
     }
     private static int attackOnce(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.attackOnce();
-        getPlayer(context).actionPack.resetBlockRemoving(true);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().attackOnce();
+        //((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().resetBlockRemoving(true);
 
         return 1;
     }
     private static int attackContinuous(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.setAttackForever();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setAttackForever();
         return 1;
     }
     private static int attackInterval(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
         int ticks = getInteger(context, "ticks");
-        getPlayer(context).actionPack.setAttack(ticks, 0);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setAttack(ticks, 0);
         return 1;
     }
     private static int dropItem(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.dropItem();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().dropItem();
         return 1;
     }
     private static int swapHands(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.swapHands();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().swapHands();
         return 1;
     }
     private static int kill(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).onKillCommand();
+        getPlayer(context).kill();
         return 1;
     }
     private static int shadow(CommandContext<ServerCommandSource> context)
     {
         if (cantShadow(context)) return 0;
         EntityPlayerMPFake.createShadow(
-                context.getSource().getServer(),
+                context.getSource().getMinecraftServer(),
                 getPlayer(context));
         return 1;
     }
     private static int mount(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.mount();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().mount();
         return 1;
     }
     private static int dismount(CommandContext<ServerCommandSource> context)
     {
         if (cantManipulate(context)) return 0;
-        getPlayer(context).actionPack.dismount();
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().dismount();
         return 1;
     }
     private static int sneak(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.setSneaking(true);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setSneaking(true);
         return 1;
     }
     private static int sprint(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.setSprinting(true);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setSprinting(true);
         return 1;
     }
     private static int lookNorth(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.look("north");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().look("north");
         return 1;
     }
     private static int lookSouth(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.look("south");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().look("south");
         return 1;
     }
     private static int lookEast(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.look("east");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().look("east");
         return 1;
     }
     private static int lookWest(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.look("west");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().look("west");
         return 1;
     }
     private static int lookUp(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.look("up");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().look("up");
         return 1;
     }
     private static int lookDown(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.look("down");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().look("down");
         return 1;
     }
     private static int lookAround(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        Vec2f vec2f = RotationArgument.getRotation(context, "direction").getRotation(context.getSource());
-        getPlayer(context).actionPack.look(vec2f.y,vec2f.x);
+        Vec2f vec2f = RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource());
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().look(vec2f.y,vec2f.x);
         return 1;
     }
     private static int turnRight(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.turn("right");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().turn("right");
         return 1;
     }
     private static int turnLeft(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.turn("left");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().turn("left");
         return 1;
     }
     private static int turnBack(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.turn("back");
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().turn("back");
         return 1;
     }
     private static int turn(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        Vec2f vec2f = RotationArgument.getRotation(context, "direction").getRotation(context.getSource());
-        getPlayer(context).actionPack.turn(vec2f.y,vec2f.x);
+        Vec2f vec2f = RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource());
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().turn(vec2f.y,vec2f.x);
         return 1;
     }
     private static int moveForward(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.setForward(1.0F);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setForward(1.0F);
         return 1;
     }
     private static int moveBackward(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.setForward(-1.0F);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setForward(-1.0F);
         return 1;
     }
     private static int strafeLeft(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.setStrafing(-1.0F);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setStrafing(-1.0F);
         return 1;
     }
     private static int strafeRight(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
-        getPlayer(context).actionPack.setStrafing(1.0F);
+        ((ServerPlayerEntityInterface)getPlayer(context)).getActionPack().setStrafing(1.0F);
         return 1;
     }
     private static int spawn(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
@@ -426,15 +429,15 @@ public class PlayerCommand
         DimensionType dim;
         try
         {
-            pos = Vec3Argument.getVec3(context, "position");
+            pos = Vec3ArgumentType.getVec3(context, "position");
         }
         catch (IllegalArgumentException e)
         {
-            pos = context.getSource().getPos();
+            pos = context.getSource().getPosition();
         }
         try
         {
-            facing = RotationArgument.getRotation(context, "direction").getRotation(context.getSource());
+            facing = RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource());
         }
         catch (IllegalArgumentException e)
         {
@@ -442,24 +445,24 @@ public class PlayerCommand
         }
         try
         {
-            dim = DimensionArgument.func_212592_a(context, "dimension");
+            dim = DimensionArgumentType.getDimensionArgument(context, "dimension");
         }
         catch (IllegalArgumentException e)
         {
             dim = context.getSource().getWorld().dimension.getType();
         }
-        GameType mode = GameType.CREATIVE;
+        GameMode mode = GameMode.CREATIVE;
         try
         {
-            ServerPlayerEntityy player = context.getSource().asPlayer();
-            mode = player.interactionManager.getGameType();
+            ServerPlayerEntity player = context.getSource().getPlayer();
+            mode = player.interactionManager.getGameMode();
         }
         catch (CommandSyntaxException ignored)
         {
         }
         PlayerEntity p = EntityPlayerMPFake.createFake(
                 getString(context,"player"),
-                context.getSource().getServer(),
+                context.getSource().getMinecraftServer(),
                 pos.x, pos.y, pos.z,
                 facing.y, facing.x,
                 dim,

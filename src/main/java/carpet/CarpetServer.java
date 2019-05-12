@@ -8,14 +8,12 @@ import carpet.commands.DrawCommand;
 //import carpet.commands.ScriptCommand;
 //import carpet.commands.InfoCommand;
 import carpet.commands.PerimeterInfoCommand;
-//import carpet.commands.PlayerCommand;
-//import carpet.commands.SpawnCommand;
+import carpet.commands.PlayerCommand;
+import carpet.commands.SpawnCommand;
 import carpet.commands.LogCommand;
 import carpet.commands.TestCommand;
-//import carpet.commands.TickCommand;
-//import carpet.logging.LoggerRegistry;
+import carpet.commands.TickCommand;
 //import carpet.script.ExpressionInspector;
-//import carpet.utils.HUDController;
 
 import java.util.Random;
 
@@ -53,11 +51,11 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         CarpetCommand.register(dispatcher);
-        //TickCommand.register(dispatcher);
+        TickCommand.register(dispatcher);
         CounterCommand.register(dispatcher);
         LogCommand.register(dispatcher);
-        //SpawnCommand.register(dispatcher);
-        //PlayerCommand.register(dispatcher);
+        SpawnCommand.register(dispatcher);
+        PlayerCommand.register(dispatcher);
         CameraModeCommand.register(dispatcher);
         //InfoCommand.register(dispatcher);
         //DistanceCommand.register(dispatcher);
