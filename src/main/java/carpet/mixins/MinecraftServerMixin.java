@@ -21,22 +21,27 @@ import java.util.function.BooleanSupplier;
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin
 {
-    // Called during game start
-    @Inject(method = "<init>", at = @At(value = "HEAD"))
+    @Inject(method = "<init>", at = @At(value = "RETURN"))
     private void onMinecraftServerCTOR(File file_1, Proxy proxy_1, DataFixer dataFixer_1,
                                        CommandManager serverCommandManager_1, YggdrasilAuthenticationService yggdrasilAuthenticationService_1,
                                        MinecraftSessionService minecraftSessionService_1, GameProfileRepository gameProfileRepository_1,
                                        UserCache userCache_1, WorldGenerationProgressListenerFactory worldGenerationProgressListenerFactory_1,
                                        String string_1, CallbackInfo ci)
     {
+        // Called during game start
         CarpetServer.init((MinecraftServer) (Object) this);
     }
 
     //to inject right before
     // this.tickWorlds(booleanSupplier_1);
     @Inject(
-            method = "Lnet/minecraft/server/MinecraftServer;tick(Ljava/util/function/BooleanSupplier;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;tickWorlds(Ljava/util/function/BooleanSupplier;)V", shift = At.Shift.BEFORE, ordinal = 0)
+            method = "tick",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/server/MinecraftServer;tickWorlds(Ljava/util/function/BooleanSupplier;)V",
+                    shift = At.Shift.BEFORE,
+                    ordinal = 0
+            )
     )
     private void onTick(BooleanSupplier booleanSupplier_1, CallbackInfo ci) {
         CarpetServer.tick((MinecraftServer) (Object) this);
