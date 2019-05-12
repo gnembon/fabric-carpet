@@ -4,7 +4,7 @@ import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.PacketCounter;
-import carpet.mixins.logging.PlayerListHeaderS2CPacketMixin;
+import carpet.mixins.PlayerListHeaderS2CPacketMixin;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;

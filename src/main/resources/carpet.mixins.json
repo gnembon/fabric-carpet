@@ -3,17 +3,18 @@
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "carpetServer/CommandManagerMixin",
-    "carpetServer/MinecraftServerMixin",
-    "logging/PlayerListHeaderS2CPacketMixin",
-    "WeightedPickerEntryMixin"
+    "CommandManagerMixin",
+    "MinecraftServerMixin",
+    "PlayerListHeaderS2CPacketMixin",
+    "WeightedPickerEntryMixin",
+    "ExperienceOrbEntityMixin"
   ],
   "client": [
-    "carpetServer/MinecraftClientMixin",
-    "carpetServer/IntegratedServerMixin"
+    "MinecraftClientMixin",
+    "IntegratedServerMixin"
   ],
   "server": [
-    "carpetServer/MinecraftDedicatedServerMixin"
+    "MinecraftDedicatedServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

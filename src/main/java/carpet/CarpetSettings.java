@@ -179,33 +179,12 @@ public class CarpetSettings
                                         Messenger.print_server_message(CarpetServer.minecraft_server, "view distance can only be changed on a server");
                                     }
                                 }),
-  /*rule("disableSpawnChunks",      "creative", "Removes the spawn chunks.")
+  rule("disableSpawnChunks",      "creative", "Removes the spawn chunks.")
                                   .validate((s) -> {
-                                      if (!CarpetSettings.getBool("disableSpawnChunks")) {
-                                          ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD);
-                                          if (overworld == null)
-                                              return;
-
-                                          List<ChunkPos> chunkList = SpawnChunks.listIncludedChunks(overworld);
-
-                                          // Reused from MinecraftServer initialWorldChunkLoad
-                                          CompletableFuture<?> completablefuture = overworld.getChunkProvider().loadChunks(chunkList, (c) -> {});
-                                          while (!completablefuture.isDone()) {
-                                              try {
-                                                  completablefuture.get(1L, TimeUnit.SECONDS);
-                                              } catch (InterruptedException interruptedexception) {
-                                                  throw new RuntimeException(interruptedexception);
-                                              } catch (ExecutionException executionexception) {
-                                                  if (executionexception.getCause() instanceof RuntimeException) {
-                                                      throw (RuntimeException) executionexception.getCause();
-                                                  }
-
-                                                  throw new RuntimeException(executionexception.getCause());
-                                              } catch (TimeoutException var22) {
-                                              }
-                                          }
-                                      }
-                                  }).boolAccelerate(),*/
+                                      if (!CarpetSettings.getBool("disableSpawnChunks"))
+                                          if (CarpetServer.minecraft_server != null)
+                                              Messenger.print_server_message(CarpetServer.minecraft_server, "Spawn chunks re-enabled. Visit spawn to load it.");
+                                  }).boolAccelerate(),
   rule("kelpGenerationGrowLimit", "feature", "limits growth limit of newly naturally generated kelp to this amount of blocks")
                                   .choices("25", "0 2 25").setNotStrict(),
   rule("renewableCoral",          "feature", "Coral structures will grow with bonemeal from coral plants"),

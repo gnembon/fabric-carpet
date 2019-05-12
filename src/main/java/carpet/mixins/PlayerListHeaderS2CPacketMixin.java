@@ -1,4 +1,4 @@
-package carpet.mixins.logging;
+package carpet.mixins;
 
 import net.minecraft.client.network.packet.PlayerListHeaderS2CPacket;
 import net.minecraft.network.chat.Component;
