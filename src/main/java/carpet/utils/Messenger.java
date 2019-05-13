@@ -80,7 +80,8 @@ public class Messenger
     }
     public static String heatmap_color(double actual, double reference)
     {
-        String color = "e";
+        String color = "g";
+        if (actual >= 0.0D) color = "e";
         if (actual > 0.5D*reference) color = "y";
         if (actual > 0.8D*reference) color = "r";
         if (actual > reference) color = "m";
