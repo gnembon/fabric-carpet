@@ -10,7 +10,8 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
-    "ServerChunkManagerMixin"
+    "ServerChunkManagerMixin",
+    "HopperBlockEntityMixin"
   ],
   "client": [
     "MinecraftClientMixin",
