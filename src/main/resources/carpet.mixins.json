@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "CommandManagerMixin",
-    "MinecraftServerMixin",
+    "MinecraftServer_coreMixin",
+    "MinecraftServer_tickspeedMixin",
     "PlayerListHeaderS2CPacketMixin",
     "WeightedPickerEntryMixin",
     "ExperienceOrbEntityMixin",

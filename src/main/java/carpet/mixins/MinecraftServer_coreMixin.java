@@ -19,7 +19,7 @@ import java.net.Proxy;
 import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
-public abstract class MinecraftServerMixin
+public abstract class MinecraftServer_coreMixin
 {
     @Inject(method = "<init>", at = @At(value = "RETURN"))
     private void onMinecraftServerCTOR(File file_1, Proxy proxy_1, DataFixer dataFixer_1,
