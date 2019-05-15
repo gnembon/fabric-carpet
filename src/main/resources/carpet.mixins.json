@@ -12,7 +12,8 @@
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
     "ServerChunkManagerMixin",
-    "HopperBlockEntityMixin"
+    "HopperBlockEntityMixin",
+    "ClientConnectionMixin"
   ],
   "client": [
     "MinecraftClientMixin",
