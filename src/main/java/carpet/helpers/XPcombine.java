@@ -1,12 +1,15 @@
 package carpet.helpers;
 
-import carpet.CarpetSettings;
 import carpet.fakes.ExperienceOrbInterface;
+import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ExperienceOrbEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 
 public class XPcombine
 {
@@ -58,24 +61,19 @@ public class XPcombine
                 (first.world.random.nextDouble() * 0.5D),
                 (first.world.random.nextDouble() * 1.0D - 0.5D)
         )));
-        double pitch = 0.5+Math.log(1+(tone%12))/Math.log(12);
-
-        tone++;
-
-        CarpetSettings.LOG.error("Playing tone: "+pitch);
-
-        newOrb.world.playSoundFromEntity(
-                null,
-                newOrb,
-                SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-                SoundCategory.BLOCKS, (float)pitch , (float)pitch); //newOrb.world.random.nextFloat()*0.5F+0.5F
-
-        /*newOrb.world.playSound(newOrb.x, newOrb.y, newOrb.z,
-                SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-                SoundCategory.BLOCKS,
-                (float)pitch,
-                newOrb.world.random.nextFloat()*0.5F+0.5F,
-                true);*/
+        double pitch = Math.pow(2.0D, (tone%13)/12.0D )/2.0;
+        tone+=2;
+        if(tone%13 == 0 || tone%13 == 1 || tone%13 == 6) tone --;
+        for (PlayerEntity p : newOrb.world.getPlayers())
+        {
+            ServerPlayerEntity sp = (ServerPlayerEntity)p;
+            if (sp.squaredDistanceTo(newOrb) < 256.0D)
+            {
+                sp.networkHandler.sendPacket(new PlaySoundIdS2CPacket(
+                        Registry.SOUND_EVENT.getId(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP),
+                        SoundCategory.BLOCKS, newOrb.getPos(), 1.0F, (float)pitch));
+            }
+        }
         return true;
     }
 
