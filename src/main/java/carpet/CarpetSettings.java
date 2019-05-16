@@ -60,6 +60,7 @@ public class CarpetSettings
     public static boolean b_disableSpawnChunks = false;
     public static boolean b_movableTileEntities = false;
     public static boolean b_huskSpawningInTemples = false;
+    public static boolean b_stackableShulkerBoxes = false;
 
     private static CarpetSettingEntry rule(String s1, String s2, String s3) { return CarpetSettingEntry.create(s1,s2,s3);}
     
@@ -82,7 +83,7 @@ public class CarpetSettings
   rule("xpNoCooldown",          "creative", "Players absorb XP instantly, without delay"),
   rule("combineXPOrbs",         "creative", "XP orbs combine with other into bigger orbs"),
   rule("stackableShulkerBoxes", "survival", "Empty shulker boxes can stack to 64 when dropped on the ground")
-                                .extraInfo("To move them around between inventories, use shift click to move entire stacks"),
+                                .extraInfo("To move them around between inventories, use shift click to move entire stacks").boolAccelerate().defaultFalse(),
   rule("explosionNoBlockDamage", "tnt", "Explosions won't destroy blocks"),
   rule("tntPrimerMomentumRemoved", "tnt", "Removes random TNT momentum when primed"),
   rule("fastRedstoneDust",      "experimental optimizations", "Lag optimizations for redstone dust")

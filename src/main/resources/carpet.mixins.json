@@ -13,7 +13,8 @@
     "ServerPlayerEntityMixin",
     "ServerChunkManagerMixin",
     "HopperBlockEntityMixin",
-    "ClientConnectionMixin"
+    "ClientConnectionMixin",
+    "ItemEntityMixin"
   ],
   "client": [
     "MinecraftClientMixin",
