@@ -805,6 +805,8 @@ public class CarpetExpression
      * </pre>
      * <h3><code>query(e,'pos')</code></h3>
      * <p>Triple of entity position</p>
+     * <h3><code>query(e,'location')</code></h3>
+     * <p>Quin-tuple of entity position (x, y, and z coords), and rotation (yaw, pitch)</p>
      * <h3><code>query(e,'x'), query(e,'y'), query(e,'z')</code></h3>
      * <p>Respective entity coordinate</p>
      * <h3><code>query(e,'pitch'), query(e,'yaw')</code></h3>
@@ -917,6 +919,8 @@ public class CarpetExpression
      * <p>Kills the entity.</p>
      * <h3><code>modify(e, 'pos', x, y, z), modify(e, 'pos', l(x,y,z) )</code></h3>
      * <p>Moves the entity to a specified coords.</p>
+     * <h3><code>modify(e, 'location', x, y, z, yaw, pitch), modify(e, 'location', l(x, y, z, yaw, pitch) )</code></h3>
+     * <p>Changes full location vector all at once.</p>
      * <h3><code>modify(e, 'x', x), modify(e, 'y', y), modify(e, 'z', z)</code></h3>
      * <p>Moves the entity in.... one direction.</p>
      * <h3><code>modify(e, 'pitch', pitch), modify(e, 'yaw', yaw)</code></h3>
@@ -1846,7 +1850,6 @@ public class CarpetExpression
         this.expr.addLazyFunction("game_tick", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             ((MinecraftServerInterface)s.getMinecraftServer()).forceTick( () -> System.nanoTime()- CarpetServer.scriptServer.tickStart<50000000L);
-            //s.getMinecraftServer().dontPanic(); // optional not to freak out the watchdog // forceTick handles it
             if (lv.size()>0)
             {
                 long ms_total = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();

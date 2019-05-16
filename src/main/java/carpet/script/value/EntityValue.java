@@ -137,6 +137,7 @@ public class EntityValue extends Value
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getEntityId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.x), new NumericValue(e.y), new NumericValue(e.z)));
+        put("location", (e, a) -> ListValue.of(new NumericValue(e.x), new NumericValue(e.y), new NumericValue(e.z), new NumericValue(e.yaw), new NumericValue(e.pitch)));
         put("x", (e, a) -> new NumericValue(e.x));
         put("y", (e, a) -> new NumericValue(e.y));
         put("z", (e, a) -> new NumericValue(e.z));
@@ -333,6 +334,24 @@ public class EntityValue extends Value
         put("remove", (entity, value) -> entity.remove());
         put("health", (e, v) -> { if (e instanceof LivingEntity) ((LivingEntity) e).setHealth((float) NumericValue.asNumber(v).getDouble()); });
         put("kill", (e, v) -> e.kill());
+        put("location", (e, v) ->
+        {
+            if (!(v instanceof ListValue))
+            {
+                throw new InternalExpressionException("expected a list of 5 parameters as second argument");
+            }
+            List<Value> coords = ((ListValue) v).getItems();
+            e.x = NumericValue.asNumber(coords.get(0)).getDouble();
+            e.y = NumericValue.asNumber(coords.get(1)).getDouble();
+            e.z = NumericValue.asNumber(coords.get(2)).getDouble();
+            e.pitch = (float) NumericValue.asNumber(coords.get(4)).getDouble();
+            e.prevPitch = e.pitch;
+            e.yaw = (float) NumericValue.asNumber(coords.get(3)).getDouble();
+            e.prevYaw = e.yaw;
+            e.setPosition(e.x, e.y, e.z);
+            if (e instanceof ServerPlayerEntity)
+                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+        });
         put("pos", (e, v) ->
         {
             if (!(v instanceof ListValue))
@@ -345,42 +364,42 @@ public class EntityValue extends Value
             e.z = NumericValue.asNumber(coords.get(2)).getDouble();
             e.setPosition(e.x, e.y, e.z);
             if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
         });
         put("x", (e, v) ->
         {
             e.x = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
             if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
         });
         put("y", (e, v) ->
         {
             e.y = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
             if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
         });
         put("z", (e, v) ->
         {
             e.z = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
             if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
         });
         put("pitch", (e, v) ->
         {
             e.pitch = (float) NumericValue.asNumber(v).getDouble();
             e.prevPitch = e.pitch;
             if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
         });
         put("yaw", (e, v) ->
         {
             e.yaw = (float) NumericValue.asNumber(v).getDouble();
             e.prevYaw = e.yaw;
             if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
         });
         //"look"
         //"turn"
