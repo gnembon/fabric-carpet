@@ -52,39 +52,28 @@ public class ContainerMixin
 
     private ItemStack dropAllCrafting(PlayerEntity playerIn, int index, List<Slot> invSlotParam)
     {
-
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = invSlotParam.get(index);
-
         if (slot != null && slot.hasStack())
         {
             ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
-
             if (index == 0)
             {
                 playerIn.dropItem(itemstack, true);
-
                 itemstack1.setAmount(0);
-
                 slot.onStackChanged(itemstack1, itemstack);
             }
-
             if (itemstack.getAmount() == itemstack1.getAmount())
             {
                 return ItemStack.EMPTY;
             }
-
             ItemStack itemstack2 = slot.onTakeItem(playerIn, itemstack1);
-
             if (index == 0)
             {
                 playerIn.dropItem(itemstack2, false);
             }
         }
-
         return itemstack;
     }
-
-
 }
