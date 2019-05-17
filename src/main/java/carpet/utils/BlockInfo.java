@@ -170,7 +170,7 @@ public class BlockInfo
         //lst.add(Messenger.s(String.format(" - Full block: %s", block.isShapeFullCube()))); //  isFullCube() )));
         lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isSimpleFullBlock(world, pos)))); //isNormalCube())));
         lst.add(Messenger.s(String.format(" - Is liquid: %s", material.isLiquid())));
-        lst.add(Messenger.s(String.format(" - Is solid: %s", material.isSolid())));
+        lst.add(Messenger.s(String.format(" - Is solid: %s", state.isFullBoundsCubeForCulling())));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Light in: %d, above: %d", world.getLightLevel(pos), world.getLightLevel(pos.up()))));
         lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.up()))));

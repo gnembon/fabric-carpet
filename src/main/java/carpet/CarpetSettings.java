@@ -198,7 +198,7 @@ public class CarpetSettings
         }
     }
 
-    private static void notifyPlayersCommandsChanged()
+    public static void notifyPlayersCommandsChanged()
     {
         if (CarpetServer.minecraft_server == null || CarpetServer.minecraft_server.getPlayerManager() == null)
         {

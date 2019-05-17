@@ -6,6 +6,7 @@
     "CommandManagerMixin",
     "MinecraftServer_coreMixin",
     "MinecraftServer_tickspeedMixin",
+    "MinecraftServer_scarpetMixin",
     "PlayerListHeaderS2CPacketMixin",
     "WeightedPickerEntryMixin",
     "ExperienceOrbEntityMixin",

@@ -1,24 +1,23 @@
 package carpet;
 
-import carpet.commands.CameraModeCommand;
-import carpet.commands.CarpetCommand;
-import carpet.commands.CounterCommand;
-//import carpet.commands.DistanceCommand;
-import carpet.commands.DrawCommand;
-//import carpet.commands.ScriptCommand;
-//import carpet.commands.InfoCommand;
-import carpet.commands.PerimeterInfoCommand;
-import carpet.commands.PlayerCommand;
-import carpet.commands.SpawnCommand;
-import carpet.commands.LogCommand;
-import carpet.commands.TestCommand;
-import carpet.commands.TickCommand;
-//import carpet.script.ExpressionInspector;
 
 import java.util.Random;
 
-//import carpet.helpers.TickSpeed;
+import carpet.commands.CameraModeCommand;
+import carpet.commands.CarpetCommand;
+import carpet.commands.CounterCommand;
+import carpet.commands.DistanceCommand;
+import carpet.commands.DrawCommand;
+import carpet.commands.InfoCommand;
+import carpet.commands.LogCommand;
+import carpet.commands.PerimeterInfoCommand;
+import carpet.commands.PlayerCommand;
+import carpet.commands.ScriptCommand;
+import carpet.commands.SpawnCommand;
+import carpet.commands.TickCommand;
+import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
+import carpet.script.CarpetScriptServer;
 import carpet.utils.HUDController;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.command.ServerCommandSource;
@@ -28,6 +27,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 {
     public static final Random rand = new Random((int)((2>>16)*Math.random()));
     public static MinecraftServer minecraft_server;
+    public static CarpetScriptServer scriptServer;
     public static void init(MinecraftServer server) //aka constructor of this static singleton class
     {
         CarpetServer.minecraft_server = server;
@@ -35,7 +35,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void onServerLoaded(MinecraftServer server)
     {
         CarpetSettings.apply_settings_from_conf(server);
-        //ExpressionInspector.CarpetExpression_resetExpressionEngine();
+        scriptServer = new CarpetScriptServer();
     }
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     public static void onGameStarted() {
@@ -44,7 +44,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void tick(MinecraftServer server)
     {
-        //TickSpeed.tick(server);
+        TickSpeed.tick(server);
         HUDController.update_hud(server);
     }
 
@@ -57,13 +57,13 @@ public class CarpetServer // static for now - easier to handle all around the co
         SpawnCommand.register(dispatcher);
         PlayerCommand.register(dispatcher);
         CameraModeCommand.register(dispatcher);
-        //InfoCommand.register(dispatcher);
-        //DistanceCommand.register(dispatcher);
+        InfoCommand.register(dispatcher);
+        DistanceCommand.register(dispatcher);
         PerimeterInfoCommand.register(dispatcher);
         DrawCommand.register(dispatcher);
-        //ScriptCommand.register(dispatcher);
+        ScriptCommand.register(dispatcher);
 
-        TestCommand.register(dispatcher);
+        //TestCommand.register(dispatcher);
     }
 }
 
