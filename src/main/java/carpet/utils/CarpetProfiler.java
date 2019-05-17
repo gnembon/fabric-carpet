@@ -120,7 +120,7 @@ public class CarpetProfiler
             return null;
         }
         String section = dimension+"."+ Registry.ENTITY_TYPE.getId(e.getType()).toString().replaceFirst("minecraft:","");
-        if (e.getWorld().isClient)
+        if (e.getEntityWorld().isClient)
             section += "(client)";
         long section_start = System.nanoTime();
         return new ProfilerToken(section, section_start);
