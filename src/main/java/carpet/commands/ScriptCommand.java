@@ -191,7 +191,7 @@ public class ScriptCommand
                         executes((cc) ->
                         {
                             boolean success =CarpetServer.scriptServer.removeScriptHost(StringArgumentType.getString(cc, "package"));
-                            Messenger.m(cc.getSource(), success?"w Successfully added a module":"r Failed to add a module");
+                            Messenger.m(cc.getSource(), success?"w Successfully removed a module":"r Failed to remove a module");
                             return success?1:0;
                         }));
 

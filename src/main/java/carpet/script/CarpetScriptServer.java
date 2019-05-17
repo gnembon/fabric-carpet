@@ -255,6 +255,7 @@ public class CarpetScriptServer
             return false;
         // stop all events associated with name
         modules.remove(name);
+        CarpetSettings.notifyPlayersCommandsChanged();
         return true;
     }
 }
