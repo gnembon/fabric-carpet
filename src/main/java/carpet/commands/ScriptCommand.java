@@ -181,7 +181,6 @@ public class ScriptCommand
                         executes((cc) ->
                         {
                             boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"));
-                            Messenger.m(cc.getSource(), success?"w Successfully added a module":"r Failed to add a module");
                             return success?1:0;
                         })
                 );
@@ -190,8 +189,7 @@ public class ScriptCommand
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(),bb)).
                         executes((cc) ->
                         {
-                            boolean success =CarpetServer.scriptServer.removeScriptHost(StringArgumentType.getString(cc, "package"));
-                            Messenger.m(cc.getSource(), success?"w Successfully removed a module":"r Failed to remove a module");
+                            boolean success =CarpetServer.scriptServer.removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"));
                             return success?1:0;
                         }));
 
@@ -229,25 +227,27 @@ public class ScriptCommand
         ScriptHost host = getHost(context);
         ServerCommandSource source = context.getSource();
 
-        Messenger.m(source, "w Global functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
+        Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
         for (String fname : host.getAvailableFunctions())
         {
             Expression expr = host.getExpressionForFunction(fname);
             Tokenizer.Token tok = host.getTokenForFunction(fname);
             List<String> snippet = ExpressionInspector.Expression_getExpressionSnippet(tok, expr);
-            Messenger.m(source, "w Function "+fname+" defined at: line "+(tok.lineno+1)+" pos "+(tok.linepos+1));
+            Messenger.m(source, "wb "+fname,"t  defined at: line "+(tok.lineno+1)+" pos "+(tok.linepos+1));
             for (String snippetLine: snippet)
             {
-                Messenger.m(source, "li "+snippetLine);
+                Messenger.m(source, "w "+snippetLine);
             }
             Messenger.m(source, "gi ----------------");
         }
         //Messenger.m(source, "w "+code);
-        Messenger.m(source, "w Global Variables:");
+        Messenger.m(source, "w  ");
+        Messenger.m(source, "lb Global variables"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
 
         for (String vname : host.globalVariables.keySet())
         {
-            Messenger.m(source, "w Variable "+vname+": ", "wb "+ host.globalVariables.get(vname).evalValue(null).getPrettyString());
+            if (!vname.startsWith("global")) continue;
+            Messenger.m(source, "wb "+vname+": ", "w "+ host.globalVariables.get(vname).evalValue(null).getPrettyString());
         }
         return 1;
     }

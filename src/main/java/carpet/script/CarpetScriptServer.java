@@ -12,6 +12,7 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.math.BlockPos;
 
@@ -21,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -32,6 +35,7 @@ public class CarpetScriptServer
     public Map<String, ScriptHost> modules;
     long tickStart;
     public boolean stopAll;
+    Set<String> holyMoly;
 
     public static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
         add(new CameraPathModule());
@@ -44,6 +48,8 @@ public class CarpetScriptServer
         tickStart = 0L;
         stopAll = false;
         resetErrorSnooper();
+        holyMoly = CarpetServer.minecraft_server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
+
     }
 
     ModuleInterface getModule(String name)
@@ -113,8 +119,9 @@ public class CarpetScriptServer
         ModuleInterface module = getModule(name);
         if (module == null)
         {
-            Messenger.m(source, "r Unable to load the package - not found");
-            return false;
+            Messenger.m(source, "r Unable to locate the package, but created empty host "+name+" instead");
+            modules.put(name, newHost);
+            return true;
         }
         String code = module.getCode();
         if (code == null)
@@ -139,13 +146,13 @@ public class CarpetScriptServer
         }
         modules.put(name, newHost);
 
-        addCommand(name);
+        addCommand(source, name);
         return true;
     }
 
 
 
-    public void addCommand(String hostName)
+    public void addCommand(ServerCommandSource source, String hostName)
     {
         ScriptHost host = modules.get(hostName);
         if (host == null)
@@ -154,8 +161,16 @@ public class CarpetScriptServer
         }
         if (!host.globalFunctions.containsKey("__command"))
         {
+            Messenger.m(source, "gi Package "+hostName+" loaded.");
             return;
         }
+        if (holyMoly.contains(hostName))
+        {
+            Messenger.m(source, "gi Package "+hostName+" loaded with no command.");
+            Messenger.m(source, "gi Tried to mask vanilla command.");
+            return;
+        }
+
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
                 requires((player) -> modules.containsKey(hostName)).
                 executes( (c) ->
@@ -195,6 +210,7 @@ public class CarpetScriptServer
                                         return 1;
                                     })));
         }
+        Messenger.m(source, "gi Package "+hostName+" loaded with /"+hostName+" command");
         CarpetServer.minecraft_server.getCommandManager().getDispatcher().register(command);
         CarpetSettings.notifyPlayersCommandsChanged();
     }
@@ -248,14 +264,18 @@ public class CarpetScriptServer
         ExpressionException.errorSnooper=null;
     }
 
-    public boolean removeScriptHost(String name)
+    public boolean removeScriptHost(ServerCommandSource source, String name)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (!modules.containsKey(name))
+        {
+            Messenger.m(source, "r No such host found: ", "wb  " + name);
             return false;
+        }
         // stop all events associated with name
         modules.remove(name);
         CarpetSettings.notifyPlayersCommandsChanged();
+        Messenger.m(source, "w Removed host "+name);
         return true;
     }
 }
