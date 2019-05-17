@@ -41,7 +41,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.LightType;
-import net.minecraft.world.SessionLockException;
 import net.minecraft.world.World;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.Heightmap;
