@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.World;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class CarpetProfiler
 
     }
 
-    public static void start_section(String dimension, String name)
+    public static void start_section(World world, String name)
     {
         if (tick_health_requested == 0L || test_type != 1)
         {
@@ -68,9 +69,9 @@ public class CarpetProfiler
             end_current_section();
         }
         String key = name;
-        if (dimension != null)
+        if (world != null)
         {
-            key = dimension+"."+name;
+            key = world.getDimension().getType().getSuffix()+"."+name;
         }
         current_section = key;
         current_section_start = System.nanoTime();
@@ -88,7 +89,7 @@ public class CarpetProfiler
         }
     }
 
-    public static ProfilerToken start_section_concurrent(String dimension, String name, boolean isRemote)
+    public static ProfilerToken start_section_concurrent(World world, String name, boolean isRemote)
     {
         if (tick_health_requested == 0L || test_type != 1)
         {
@@ -100,16 +101,16 @@ public class CarpetProfiler
         }
 
         String key = name;
-        if (dimension != null)
+        if (world != null)
         {
-            key = dimension+"."+name;
+            key = world.getDimension().getType().getSuffix()+"."+name;
         }
         if (isRemote) key += "(client)";
         long time = System.nanoTime();
         return new ProfilerToken(key, time);
     }
 
-    public static ProfilerToken start_entity_section(String dimension, Entity e)
+    public static ProfilerToken start_entity_section(World world, Entity e)
     {
         if (tick_health_requested == 0L || test_type != 2)
         {
@@ -119,14 +120,14 @@ public class CarpetProfiler
         {
             return null;
         }
-        String section = dimension+"."+ Registry.ENTITY_TYPE.getId(e.getType()).toString().replaceFirst("minecraft:","");
+        String section = world.getDimension().getType().getSuffix()+"."+ Registry.ENTITY_TYPE.getId(e.getType()).toString().replaceFirst("minecraft:","");
         if (e.getEntityWorld().isClient)
             section += "(client)";
         long section_start = System.nanoTime();
         return new ProfilerToken(section, section_start);
     }
 
-    public static ProfilerToken start_tileentity_section(String dimension, BlockEntity e)
+    public static ProfilerToken start_tileentity_section(World world, BlockEntity e)
     {
         if (tick_health_requested == 0L || test_type != 2)
         {
@@ -136,7 +137,7 @@ public class CarpetProfiler
         {
             return null;
         }
-        String section = dimension+"."+ BlockEntityType.getId(e.getType()).toString().replaceFirst("minecraft:","");
+        String section = world.getDimension().getType().getSuffix()+"."+ BlockEntityType.getId(e.getType()).toString().replaceFirst("minecraft:","");
         if (e.getWorld() == null)
             section += "??";
         else if (e.getWorld().isClient)
