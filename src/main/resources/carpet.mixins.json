@@ -23,7 +23,8 @@
     "HopperBlockEntityMixin",
     "ContainerMixin",
     "ClientConnectionMixin",
-    "ItemEntityMixin"
+    "ItemEntityMixin",
+    "TntBlockMixin"
   ],
   "client": [
     "MinecraftClientMixin",
