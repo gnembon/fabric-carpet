@@ -7,7 +7,14 @@
     "FillCommandMixin",
     "CloneCommandMixin",
     "MinecraftServer_coreMixin",
+
     "MinecraftServer_tickspeedMixin",
+    "World_tickMixin",
+    "ServerWorld_tickMixin",
+    "ServerChunkManager_tickMixin",
+
+    "MinecraftServer_motdMixin",
+    "ServerPlayNetworkHandlerMixin",
     "MinecraftServer_scarpetMixin",
     "PlayerListHeaderS2CPacketMixin",
     "WeightedPickerEntryMixin",
@@ -16,6 +23,7 @@
     "ServerPlayerEntityMixin",
     "ServerChunkManagerMixin",
     "HopperBlockEntityMixin",
+    "ContainerMixin",
     "ClientConnectionMixin",
     "ItemEntityMixin"
   ],
