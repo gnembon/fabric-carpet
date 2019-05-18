@@ -24,7 +24,8 @@
     "ContainerMixin",
     "ClientConnectionMixin",
     "ItemEntityMixin",
-    "TntBlockMixin"
+    "TntBlockMixin",
+    "ExplosionMixin"
   ],
   "client": [
     "MinecraftClientMixin",
