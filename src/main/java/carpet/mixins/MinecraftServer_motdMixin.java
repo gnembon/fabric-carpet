@@ -7,12 +7,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import javax.annotation.Nullable;
-
 @Mixin(MinecraftServer.class)
 public class MinecraftServer_motdMixin
 {
-    @Shadow @Nullable private String motd;
+    @Shadow private String motd;
 
     @Redirect(method = "run", at = @At(
             value = "FIELD",

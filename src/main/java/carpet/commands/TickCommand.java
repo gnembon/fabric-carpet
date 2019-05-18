@@ -130,13 +130,13 @@ public class TickCommand
 
     private static int healthReport(ServerCommandSource source, int ticks)
     {
-        CarpetProfiler.prepare_tick_report(ticks);
+        CarpetProfiler.prepare_tick_report(source.getMinecraftServer(), ticks);
         return 1;
     }
 
     private static int healthEntities(ServerCommandSource source, int ticks)
     {
-        CarpetProfiler.prepare_entity_report(ticks);
+        CarpetProfiler.prepare_entity_report(source.getMinecraftServer(), ticks);
         return 1;
     }
 
