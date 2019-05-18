@@ -1,13 +1,16 @@
 package carpet.mixins;
 
+import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
@@ -41,6 +44,15 @@ public abstract class World_tickMixin
         entitySection = CarpetProfiler.start_entity_section((World)(Object)this, blockEntity_2, CarpetProfiler.TYPE.TILEENTITY);
     }
 
+    @Redirect(method = "tickBlockEntities", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/block/entity/BlockEntity;hasWorld()Z"
+    ))
+    private boolean checkProcessTEs(BlockEntity blockEntity)
+    {
+        return blockEntity.hasWorld() && TickSpeed.process_entities;
+    }
+
     @Inject(method = "tickBlockEntities", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/entity/BlockEntity;isInvalid()Z",
@@ -52,9 +64,11 @@ public abstract class World_tickMixin
          CarpetProfiler.end_current_entity_section(entitySection);
     }
 
-    @Inject(method = "tickEntity", at = @At("HEAD"))
-    private void startEntity(Consumer<Entity> call, Entity e, CallbackInfo ci)
+    @Inject(method = "tickEntity", at = @At("HEAD"), cancellable = true)
+    private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
+        if (!TickSpeed.process_entities && !(e instanceof PlayerEntity))
+            ci.cancel();
         entitySection =  CarpetProfiler.start_entity_section((World) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
     }
 
