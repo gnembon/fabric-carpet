@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
+import carpet.utils.CarpetProfiler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.SystemUtil;
 import net.minecraft.util.profiler.DisableableProfiler;
@@ -42,6 +43,8 @@ public abstract class MinecraftServer_tickspeedMixin
 
     @Shadow private volatile boolean loading;
 
+    CarpetProfiler.ProfilerToken currentSection;
+
     // Cancel a while statement
     @Redirect(method = "run", at = @At(value = "FIELD", target = "Lnet/minecraft/server/MinecraftServer;running:Z"))
     private boolean cancelRunLoop(MinecraftServer server)
@@ -60,6 +63,10 @@ public abstract class MinecraftServer_tickspeedMixin
         {
             //long long_1 = SystemUtil.getMeasuringTimeMs() - this.timeReference;
             //CM deciding on tick speed
+            if (CarpetProfiler.tick_health_requested != 0L)
+            {
+                CarpetProfiler.start_tick_profiling();
+            }
             long mspt = 0L;
             long long_1 = 0L;
             if (TickSpeed.time_warp_start_time != 0 && TickSpeed.continueWarp())
@@ -102,4 +109,64 @@ public abstract class MinecraftServer_tickspeedMixin
         }
 
     }
+
+    @Inject(method = "tick", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/PlayerManager;saveAllPlayerData()V",
+            shift = At.Shift.BEFORE
+    ))
+    private void startAutosave(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    {
+        currentSection = CarpetProfiler.start_section(null, "Autosave", CarpetProfiler.TYPE.GENERAL);
+    }
+
+    @Inject(method = "tick", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/MinecraftServer;save(ZZZ)Z",
+            shift = At.Shift.AFTER
+    ))
+    private void finishAutosave(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    {
+        CarpetProfiler.end_current_section(currentSection);
+    }
+
+    @Inject(method = "tickWorlds", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/MinecraftServer;getNetworkIo()Lnet/minecraft/server/ServerNetworkIo;",
+            shift = At.Shift.BEFORE
+    ))
+    private void startNetwork(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    {
+        currentSection = CarpetProfiler.start_section(null, "Network", CarpetProfiler.TYPE.GENERAL);
+    }
+
+    @Inject(method = "tickWorlds", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/PlayerManager;updatePlayerLatency()V",
+            shift = At.Shift.AFTER
+    ))
+    private void finishNetwork(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    {
+        CarpetProfiler.end_current_section(currentSection);
+    }
+
+    @Inject(method = "method_16208", at = @At("HEAD"))
+    private void startAsync(CallbackInfo ci)
+    {
+        currentSection = CarpetProfiler.start_section(null, "Async Tasks", CarpetProfiler.TYPE.GENERAL);
+    }
+    @Inject(method = "method_16208", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/MinecraftServer;waitFor(Ljava/util/function/BooleanSupplier;)V",
+            shift = At.Shift.BEFORE
+    ))
+    private void stopAsync(CallbackInfo ci)
+    {
+        if (CarpetProfiler.tick_health_requested != 0L)
+        {
+            CarpetProfiler.end_tick_profiling((MinecraftServer) (Object)this, currentSection);
+        }
+    }
+
+
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 
 //import carpet.helpers.SpawnChunks;
+import carpet.fakes.MinecraftServer_motdInterface;
 import carpet.utils.Messenger;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -152,7 +153,8 @@ public class CarpetSettings
                                 .choices("100","0 10 50 100").setNotStrict(),
   rule("customMOTD",            "creative","Sets a different motd message on client trying to connect to the server")
                                 .extraInfo("use '_' to use the startup setting from server.properties")
-                                .choices("_","_").setNotStrict(),
+                                .choices("_","_").setNotStrict().validate((s) ->
+                                    ((MinecraftServer_motdInterface)CarpetServer.minecraft_server).checkMOTD()),
   rule("rotatorBlock",          "experimental", "Cactus in dispensers rotates blocks.")
                                 .extraInfo("Cactus in a dispenser gives the dispenser the ability to rotate the blocks " +
                                            "that are in front of it anti-clockwise if possible."),
