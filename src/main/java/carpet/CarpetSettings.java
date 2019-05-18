@@ -45,6 +45,7 @@ public class CarpetSettings
 
     public static final String[] default_tags = {"tnt","fix","survival","creative", "experimental","optimizations","feature","commands"}; //tab completion only
     public static boolean skipGenerationChecks = false;
+    public static boolean impendingFillSkipUpdates = false;
 
     static {
         settings_store = new HashMap<>();
@@ -62,6 +63,7 @@ public class CarpetSettings
     public static boolean b_movableTileEntities = false;
     public static boolean b_huskSpawningInTemples = false;
     public static boolean b_stackableShulkerBoxes = false;
+    public static boolean b_fillUpdates = true;
 
     private static CarpetSettingEntry rule(String s1, String s2, String s3) { return CarpetSettingEntry.create(s1,s2,s3);}
     
@@ -132,7 +134,7 @@ public class CarpetSettings
   rule("missingTools",          "survival", "Pistons, Glass and Sponge can be broken faster with their appropriate tools"),
   rule("portalCaching",         "survival experimental", "Alternative, persistent caching strategy for nether portals"),
   rule("calmNetherFires",       "experimental", "Permanent fires don't schedule random updates"),
-  rule("fillUpdates",           "creative", "fill/clone/setblock and structure blocks cause block updates").defaultTrue(),
+  rule("fillUpdates",           "creative", "fill/clone/setblock and structure blocks cause block updates").defaultTrue().boolAccelerate(),
   rule("pushLimit",             "creative","Customizable piston push limit")
                                 .choices("12","10 12 14 100").setNotStrict().numAccelerate(),
   rule("railPowerLimit",        "creative", "Customizable powered rail power range")
