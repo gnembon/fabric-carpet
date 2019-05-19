@@ -9,16 +9,18 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.DimensionArgumentType;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.DyeColor;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
@@ -54,7 +56,7 @@ public class SpawnCommand
                         then(literal("stop").
                                 executes( (c) -> stopTracking(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggestMatching(SpawnReporter.mob_groups,b)).
+                                suggests( (c, b) -> suggestMatching(Arrays.stream(EntityCategory.values()).map(EntityCategory::getName),b)).
                                 executes( (c) -> recentSpawnsForType(c.getSource(), getString(c, "type"))))).
                 then(literal("test").
                         executes( (c)-> runTest(c.getSource(), 72000, null)).
@@ -77,7 +79,7 @@ public class SpawnCommand
                         then(literal("reset").
                                 executes( (c) -> resetSpawnRates(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggestMatching(SpawnReporter.mob_groups,b)).
+                                suggests( (c, b) -> suggestMatching(Arrays.stream(EntityCategory.values()).map(EntityCategory::getName),b)).
                                 then(argument("rounds", integer(0)).
                                         suggests( (c, b) -> suggestMatching(new String[]{"1"},b)).
                                         executes( (c) -> setSpawnRates(
@@ -94,11 +96,21 @@ public class SpawnCommand
                 then(literal("entities").
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
-                                suggests( (c, b)->suggestMatching(SpawnReporter.mob_groups, b)).
+                                suggests( (c, b)->suggestMatching(Arrays.stream(EntityCategory.values()).map(EntityCategory::getName), b)).
                                 executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type")))));
 
         dispatcher.register(literalargumentbuilder);
     }
+
+    private static EntityCategory getCategory(String string) throws CommandSyntaxException
+    {
+        if (!Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.toSet()).contains(string))
+        {
+            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.joining(", ")))).create();
+        }
+        return EntityCategory.valueOf(string.toUpperCase());
+    }
+
 
     private static int listSpawns(ServerCommandSource source, BlockPos pos)
     {
@@ -151,14 +163,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int recentSpawnsForType(ServerCommandSource source, String mob_type)
+    private static int recentSpawnsForType(ServerCommandSource source, String mob_type) throws CommandSyntaxException
     {
-        if (!Arrays.asList(SpawnReporter.mob_groups).contains(mob_type))
-        {
-            Messenger.m(source, "r Wrong mob type: "+mob_type);
-            return 0;
-        }
-        Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), mob_type));
+        EntityCategory cat = getCategory(mob_type);
+        Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), cat));
         return 1;
     }
 
@@ -222,7 +230,7 @@ public class SpawnCommand
 
     private static int resetSpawnRates(ServerCommandSource source)
     {
-        for (String s: SpawnReporter.spawn_tries.keySet())
+        for (EntityCategory s: SpawnReporter.spawn_tries.keySet())
         {
             SpawnReporter.spawn_tries.put(s,1);
         }
@@ -231,10 +239,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int setSpawnRates(ServerCommandSource source, String mobtype, int rounds)
+    private static int setSpawnRates(ServerCommandSource source, String mobtype, int rounds) throws CommandSyntaxException
     {
-        String code = SpawnReporter.get_creature_code_from_string(mobtype);
-        SpawnReporter.spawn_tries.put(code, rounds);
+        EntityCategory cat = getCategory(mobtype);
+        SpawnReporter.spawn_tries.put(cat, rounds);
         Messenger.m(source, "gi "+mobtype+" mobs will now spawn "+rounds+" times per tick");
         return 1;
     }
@@ -253,9 +261,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int listEntitiesOfType(ServerCommandSource source, String mobtype)
+    private static int listEntitiesOfType(ServerCommandSource source, String mobtype) throws CommandSyntaxException
     {
-        Messenger.send(source, SpawnReporter.printEntitiesByType(mobtype, source.getWorld()));
+        EntityCategory cat = getCategory(mobtype);
+        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getWorld()));
         return 1;
     }
 }

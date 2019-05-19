@@ -1,82 +1,69 @@
 
 package carpet.utils;
 
-import java.util.List;
+import carpet.mixins.WeightedPickerEntryMixin;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.SpawnRestriction;
+import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.OcelotEntity;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.DyeColor;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.SpawnHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import carpet.mixins.WeightedPickerEntryMixin;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.entity.SpawnType;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.server.world.ServerChunkManager;
-import net.minecraft.structure.OceanMonumentGenerator;
-import net.minecraft.util.Pair;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.network.chat.BaseComponent;
-import net.minecraft.world.World;
-import net.minecraft.util.math.BlockPos;
-
-import net.minecraft.util.DyeColor;
-
-import net.minecraft.entity.EntityCategory;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.SpawnHelper;
-import net.minecraft.entity.SpawnRestriction;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Entity;
-
-import net.minecraft.entity.passive.OcelotEntity;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-
-import java.lang.Math;
+import java.util.HashSet;
+import java.util.List;
 
 public class SpawnReporter
 {
-    public static String [] mob_groups = {"hostile","passive","water","ambient"};
     public static boolean mock_spawns = false;
     
     public static Long track_spawns = 0L;
     public static final HashMap<DimensionType, Object2IntMap<EntityCategory>> mobCounts = new HashMap<>();
     public static final HashMap<DimensionType, Integer> chunkCounts = new HashMap<>();
 
-    public static final HashMap<String, HashMap<String,Long>> spawn_stats = new HashMap<String, HashMap<String,Long>>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
     public static double mobcap_exponent = 0.0D;
     
-    public static final HashMap<String, Long> spawn_attempts = new HashMap<String, Long>();
-    public static final HashMap<String, Long> overall_spawn_ticks = new HashMap<String, Long>();
-    public static final HashMap<String, Long> spawn_ticks_full = new HashMap<String, Long>();
-    public static final HashMap<String, Long> spawn_ticks_fail = new HashMap<String, Long>();
-    public static final HashMap<String, Long> spawn_ticks_succ = new HashMap<String, Long>();
-    public static final HashMap<String, Long> spawn_ticks_spawns = new HashMap<String, Long>();
-    public static final HashMap<String, Long> spawn_cap_count = new HashMap<String, Long>();
-    public static class SpawnPos
-    {
-        public String mob;
-        public BlockPos pos;
-        public SpawnPos(String mob, BlockPos pos)
-        {
-            this.mob = mob;
-            this.pos = pos;
-        }
-    }
-    public static final HashMap<String, EvictingQueue<SpawnPos, Integer>> spawned_mobs = new HashMap<>();
-    public static final HashMap<String, Integer> spawn_tries = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Long> spawn_attempts = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Long> overall_spawn_ticks = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Long> spawn_ticks_full = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Long> spawn_ticks_fail = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Long> spawn_ticks_succ = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Long> spawn_ticks_spawns = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, Long> spawn_cap_count = new HashMap<>();
+    public static final HashMap<Pair<DimensionType, EntityCategory>, EvictingQueue<Pair<EntityType, BlockPos>>> spawned_mobs = new HashMap<>();
+    public static final HashMap<EntityCategory, Integer> spawn_tries = new HashMap<>();
     public static BlockPos lower_spawning_limit = null;
     public static BlockPos upper_spawning_limit = null;
+    // in case game gets each thread for each world - these need to belong to workd.
+    public static HashMap<EntityCategory, Long> local_spawns = null; // per world
+    public static HashSet<EntityCategory> first_chunk_marker = null;
 
     static {
         reset_spawn_stats(true);
     }
 
-    public static void registerSpawn(LivingEntity el, String type, String mob, BlockPos pos) { registerSpawn(el, type, mob, pos, 1L);}
-    public static void registerSpawn(LivingEntity el, String type, String mob, BlockPos pos, long value)
+    public static void registerSpawn(DimensionType dim, MobEntity mob, EntityCategory cat, BlockPos pos)
     {
         if (lower_spawning_limit != null)
         {
@@ -88,10 +75,11 @@ public class SpawnReporter
                 return;
             }
         }
-        
-        long count = spawn_stats.get(type).getOrDefault(mob, 0L);
-        spawn_stats.get(type).put(mob, count + value);
-        spawned_mobs.get(type).put(new SpawnPos(mob, new BlockPos(el)), 1);
+        Pair<DimensionType, EntityCategory> key = Pair.of(mob.dimension, cat);
+        long count = spawn_stats.get(key).getOrDefault(mob.getType(), 0L);
+        spawn_stats.get(key).put(mob.getType(), count + 1);
+        spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));
+        local_spawns.put(cat, local_spawns.get(cat)+1);
     }
 
 
@@ -112,17 +100,16 @@ public class SpawnReporter
         List<String> shortCodes = new ArrayList<>();
         for (EntityCategory enumcreaturetype : EntityCategory.values())
         {
-            String type_code = String.format("%s", enumcreaturetype);
             int cur = dimCounts.getOrDefault(enumcreaturetype, -1);
-            int max = chunkcount * enumcreaturetype.getSpawnCap() / (int)Math.pow(17.0D, 2.0D); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
+            int max = chunkcount * (int)((double)enumcreaturetype.getSpawnCap() * (Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)))) / (int)Math.pow(17.0D, 2.0D); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
             String color = Messenger.heatmap_color(cur, max);
             String mobColor = Messenger.creatureTypeColor(enumcreaturetype);
             if (multiline)
             {
-                int rounds = spawn_tries.get(type_code);
-                lst.add(Messenger.c(String.format("w   %s: ", type_code),
+                int rounds = spawn_tries.get(enumcreaturetype);
+                lst.add(Messenger.c(String.format("w   %s: ", enumcreaturetype.getName()),
                         (cur < 0) ? "g -" : (color + " " + cur), "g  / ", mobColor + " " + max,
-                        (rounds == 1) ? "w " : String.format("fi  (%d rounds/tick)", spawn_tries.get(type_code))
+                        (rounds == 1) ? "w " : String.format("fi  (%d rounds/tick)", spawn_tries.get(enumcreaturetype))
                 ));
             }
             else
@@ -149,28 +136,24 @@ public class SpawnReporter
         return lst;
     }
     
-    public static List<BaseComponent> recent_spawns(World world, String creature_type_code)
+    public static List<BaseComponent> recent_spawns(World world, EntityCategory creature_type)
     {
-        
-        EntityCategory creature_type = get_creature_type_from_code(creature_type_code);
         List<BaseComponent> lst = new ArrayList<>();
         if ((track_spawns == 0L))
         {
             lst.add(Messenger.s("Spawn tracking not started"));
             return lst;
         }
-        if (creature_type == null)
-        {
-            lst.add(Messenger.s(String.format("Incorrect creature type: %s",creature_type_code)));
-            return lst;
-        }
-
-        String type_code = get_type_string(creature_type);
+        String type_code = creature_type.getName();
         
         lst.add(Messenger.s(String.format("Recent %s spawns:",type_code)));
-        for (SpawnPos entry: spawned_mobs.get(type_code).keySet())
+        for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.getDimension().getType(),creature_type)).keySet())
         {
-            lst.add( Messenger.c(String.format("w  - %s ",entry.mob), Messenger.tp("wb",entry.pos)));
+            lst.add( Messenger.c(
+                    "w  - ",
+                    Messenger.tp("wb",pair.getRight()),
+                    String.format("w : %s", EntityType.getId(pair.getLeft()).toString().replaceFirst("minecraft.",""))
+                    ));
         }
         
         if (lst.size()==1)
@@ -192,10 +175,10 @@ public class SpawnReporter
             }
             else
             {
-                //return print_general_mobcaps(worldIn);
+                return new ArrayList<>();
             }
         }
-        String creature_type = get_type_code_from_wool_code(under);
+        EntityCategory creature_type = get_type_code_from_wool_code(under);
         if (creature_type != null)
         {
             if (track_spawns > 0L)
@@ -222,18 +205,18 @@ public class SpawnReporter
         
     }
     
-    public static String get_type_code_from_wool_code(DyeColor color)
+    public static EntityCategory get_type_code_from_wool_code(DyeColor color)
     {
         switch (color)
         {
             case RED:
-                return "hostile";
+                return EntityCategory.MONSTER;
             case GREEN:
-                return "passive";
+                return EntityCategory.CREATURE;
             case BLUE:
-                return "water";
+                return EntityCategory.WATER_CREATURE;
             case BROWN:
-                return "ambient";
+                return EntityCategory.AMBIENT;
         }
         return null;
     }
@@ -270,27 +253,23 @@ public class SpawnReporter
         return get_type_string(get_creature_type_from_code(str));
     }
     
-    public static List<BaseComponent> printEntitiesByType(String creature_type_code, World worldIn) //Class<?> entityType)
+    public static List<BaseComponent> printEntitiesByType(EntityCategory cat, World worldIn) //Class<?> entityType)
     {
-        EntityCategory typ = get_creature_type_from_code(creature_type_code);
         List<BaseComponent> lst = new ArrayList<>();
-        if (typ == null)
+        lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
+        for (Entity entity : ((ServerWorld)worldIn).getEntities(null, (e) -> e.getType().getCategory()==cat))
         {
-            lst.add(Messenger.c(String.format("r Incorrect creature type: %s",creature_type_code)));
-            return lst;
+            if (!(entity instanceof MobEntity) || !((MobEntity)entity).isPersistent())
+            {
+                EntityType type = entity.getType();
+                BlockPos pos = entity.getBlockPos();
+                lst.add( Messenger.c(
+                        "w  - ",
+                        Messenger.tp("wb",pos),
+                        String.format("w : %s", EntityType.getId(type).toString().replaceFirst("minecraft.",""))
+                        ));
+            }
         }
-        Class<?> cls = typ.getDeclaringClass();// getBaseClass();// getCreatureClass();
-        lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(typ))));
-
-        lst.add(Messenger.s(" <sorry, this list will be populated, once M figures out what counts>"));
-        //for (Entity entity : ((ServerWorld)worldIn).getEntities(...))
-        //{
-        //    if ((!(entity instanceof LivingEntity) || !((LivingEntity)entity).isNoDespawnRequired()) && cls.isAssignableFrom(entity.getClass()))
-        //    {
-        //        lst.add(Messenger.c("w  - ",
-        //                Messenger.tp("w", entity.posX, entity.posY, entity.posZ),"w  : "+EntityType.getId(entity.getType())));
-        //    }
-        //}
         if (lst.size()==1)
         {
             lst.add(Messenger.s(" - Empty."));
@@ -312,35 +291,35 @@ public class SpawnReporter
     }
     public static void reset_spawn_stats(boolean full)
     {
+
         spawn_stats.clear();
         spawned_mobs.clear();
         for (EntityCategory enumcreaturetype : EntityCategory.values())
         {
-            String type_code = String.format("%s", enumcreaturetype);
             if (full)
             {
-                spawn_tries.put(type_code, 1);
+                spawn_tries.put(enumcreaturetype, 1);
             }
-            for (String suffix: new String[] {""," (N)"," (E)"})
+            for (DimensionType dim : DimensionType.getAll())
             {
-                String code = type_code+suffix;
-                overall_spawn_ticks.put(code, 0L);
-                spawn_attempts.put(code, 0L);
-                spawn_ticks_full.put(code, 0L);
-                spawn_ticks_fail.put(code, 0L);
-                spawn_ticks_succ.put(code, 0L);
-                spawn_ticks_spawns.put(code, 0L);
-                spawn_cap_count.put(code, 0L);
+                Pair<DimensionType, EntityCategory> key = Pair.of(dim, enumcreaturetype);
+                overall_spawn_ticks.put(key, 0L);
+                spawn_attempts.put(key, 0L);
+                spawn_ticks_full.put(key, 0L);
+                spawn_ticks_fail.put(key, 0L);
+                spawn_ticks_succ.put(key, 0L);
+                spawn_ticks_spawns.put(key, 0L);
+                spawn_cap_count.put(key, 0L);
+                spawn_stats.put(key, new Object2LongOpenHashMap<>());
+                spawned_mobs.put(key, new EvictingQueue<>());
             }
-            
-            spawn_stats.put(type_code, new HashMap<>());
-            spawned_mobs.put(type_code, new EvictingQueue<>());
         }
         track_spawns = 0L;
     }
     
     public static List<BaseComponent> tracking_report(World worldIn)
     {
+
         List<BaseComponent> report = new ArrayList<>();
         if (track_spawns == 0L)
         {
@@ -359,17 +338,17 @@ public class SpawnReporter
         report.add(Messenger.s(String.format("%sSpawn statistics %s: for %.1f min", simulated, location, (duration/72000.0)*60)));
         for (EntityCategory enumcreaturetype : EntityCategory.values())
         {
-            String type_code = String.format("%s", enumcreaturetype);
+            //String type_code = String.format("%s", enumcreaturetype);
             boolean there_are_mobs_to_list = false;
-            for (String world_code: new String[] {"", " (N)", " (E)"})  
+            for (DimensionType dim: DimensionType.getAll()) //String world_code: new String[] {"", " (N)", " (E)"})
             {
-                String code = type_code+world_code;
+                Pair<DimensionType, EntityCategory> code = Pair.of(dim, enumcreaturetype);
                 if (spawn_ticks_spawns.get(code) > 0L)
                 {
                     there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
                     report.add(Messenger.s(String.format(" > %s (%.1f min), %.1f m/t, {%.1f%%F / %.1f%%- / %.1f%%+}; %.2f s/att",
-                        code,
+                        code.getRight()+((code.getLeft()==DimensionType.OVERWORLD)?"":( (code.getLeft()==DimensionType.THE_NETHER)?"(N)":"(E)" )),
                         60*hours,
                         (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
                         (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),
@@ -377,16 +356,13 @@ public class SpawnReporter
                         (100.0D*spawn_ticks_succ.get(code))/ spawn_attempts.get(code),
                         (1.0D*spawn_ticks_spawns.get(code))/(spawn_ticks_fail.get(code)+spawn_ticks_succ.get(code))
                     )));
-                }
-            }
-            if (there_are_mobs_to_list)
-            {
-                for (String creature_name : spawn_stats.get(type_code).keySet())
-                {
-                    report.add(Messenger.s(String.format("   - %s: %d spawns, %d per hour",
-                            creature_name,
-                            spawn_stats.get(type_code).get(creature_name),
-                            (72000 * spawn_stats.get(type_code).get(creature_name)/duration ))));
+                    for (EntityType type: spawn_stats.get(code).keySet())
+                    {
+                        report.add(Messenger.s(String.format("   - %s: %d spawns, %d per hour",
+                                Registry.ENTITY_TYPE.getId(type).toString().replaceFirst("minecraft:",""),
+                                spawn_stats.get(code).getLong(type),
+                                (72000 * spawn_stats.get(code).getLong(type)/duration ))));
+                    }
                 }
             }
         }

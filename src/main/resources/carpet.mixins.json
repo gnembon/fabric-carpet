@@ -5,6 +5,7 @@
   "mixins": [
     "CommandManagerMixin",
 
+
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",
@@ -28,7 +29,10 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
+
     "ServerChunkManagerMixin",
+    "SpawnHelperMixin",
+
     "HopperBlockEntityMixin",
     "ContainerMixin",
     "ClientConnectionMixin",
@@ -37,6 +41,7 @@
     "ExplosionMixin"
   ],
   "client": [
+    "DebugHudMixin",
     "MinecraftClientMixin",
     "IntegratedServerMixin",
     "InGameHudMixin",
