@@ -21,10 +21,11 @@ public class XPcombine
         }
     }
     private static long tone = 0;
+    private static int lastTickCombine = 0;
     private static boolean combineItems(ExperienceOrbEntity first, ExperienceOrbEntity other)
     {
         if (
-                first == other || first.world.isClient
+                first == other || first.world.isClient || first.getServer().getTicks() == lastTickCombine
                 || !first.isAlive() || !other.isAlive()
                 || first.pickupDelay == 32767 || other.pickupDelay == 32767
                 || first.age == -32768 || other.age == -32768
@@ -61,9 +62,10 @@ public class XPcombine
                 (first.world.random.nextDouble() * 0.5D),
                 (first.world.random.nextDouble() * 1.0D - 0.5D)
         )));
-        double pitch = Math.pow(2.0D, (tone%13)/12.0D )/2.0;
+        float pitch = (float)Math.pow(2.0D, (tone%13)/12.0D )/2.0F;
         tone+=2;
         if(tone%13 == 0 || tone%13 == 1 || tone%13 == 6) tone --;
+        lastTickCombine = newOrb.getServer().getTicks();
         for (PlayerEntity p : newOrb.world.getPlayers())
         {
             ServerPlayerEntity sp = (ServerPlayerEntity)p;
@@ -71,7 +73,9 @@ public class XPcombine
             {
                 sp.networkHandler.sendPacket(new PlaySoundIdS2CPacket(
                         Registry.SOUND_EVENT.getId(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP),
-                        SoundCategory.BLOCKS, newOrb.getPos(), 1.0F, (float)pitch));
+                        SoundCategory.PLAYERS, newOrb.getPos(),
+                        pitch-newOrb.world.random.nextFloat()/2f,
+                        pitch));
             }
         }
         return true;

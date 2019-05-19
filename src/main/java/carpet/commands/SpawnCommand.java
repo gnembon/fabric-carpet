@@ -19,6 +19,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
@@ -54,7 +56,7 @@ public class SpawnCommand
                         then(literal("stop").
                                 executes( (c) -> stopTracking(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggestMatching(SpawnReporter.mob_groups,b)).
+                                suggests( (c, b) -> suggestMatching(Arrays.stream(EntityCategory.values()).map(EntityCategory::getName),b)).
                                 executes( (c) -> recentSpawnsForType(c.getSource(), getString(c, "type"))))).
                 then(literal("test").
                         executes( (c)-> runTest(c.getSource(), 72000, null)).
@@ -77,7 +79,7 @@ public class SpawnCommand
                         then(literal("reset").
                                 executes( (c) -> resetSpawnRates(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggestMatching(SpawnReporter.mob_groups,b)).
+                                suggests( (c, b) -> suggestMatching(Arrays.stream(EntityCategory.values()).map(EntityCategory::getName),b)).
                                 then(argument("rounds", integer(0)).
                                         suggests( (c, b) -> suggestMatching(new String[]{"1"},b)).
                                         executes( (c) -> setSpawnRates(
@@ -94,7 +96,7 @@ public class SpawnCommand
                 then(literal("entities").
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
-                                suggests( (c, b)->suggestMatching(SpawnReporter.mob_groups, b)).
+                                suggests( (c, b)->suggestMatching(Arrays.stream(EntityCategory.values()).map(EntityCategory::getName), b)).
                                 executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type")))));
 
         dispatcher.register(literalargumentbuilder);
@@ -153,12 +155,12 @@ public class SpawnCommand
 
     private static int recentSpawnsForType(ServerCommandSource source, String mob_type)
     {
-        if (!Arrays.asList(SpawnReporter.mob_groups).contains(mob_type))
+        if (!Arrays.asList(Arrays.stream(EntityCategory.values()).map(Enum::toString)).contains(mob_type))
         {
-            Messenger.m(source, "r Wrong mob type: "+mob_type);
+            Messenger.m(source, "r Wrong mob type: "+mob_type+" should be "+String.join(", ",Arrays.stream(EntityCategory.values()).map(Enum::toString).collect(Collectors.toSet())) );
             return 0;
         }
-        Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), mob_type));
+        //Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), mob_type));
         return 1;
     }
 
@@ -222,7 +224,7 @@ public class SpawnCommand
 
     private static int resetSpawnRates(ServerCommandSource source)
     {
-        for (String s: SpawnReporter.spawn_tries.keySet())
+        for (EntityCategory s: SpawnReporter.spawn_tries.keySet())
         {
             SpawnReporter.spawn_tries.put(s,1);
         }
@@ -234,7 +236,7 @@ public class SpawnCommand
     private static int setSpawnRates(ServerCommandSource source, String mobtype, int rounds)
     {
         String code = SpawnReporter.get_creature_code_from_string(mobtype);
-        SpawnReporter.spawn_tries.put(code, rounds);
+        //SpawnReporter.spawn_tries.put(code, rounds);
         Messenger.m(source, "gi "+mobtype+" mobs will now spawn "+rounds+" times per tick");
         return 1;
     }
@@ -255,7 +257,7 @@ public class SpawnCommand
 
     private static int listEntitiesOfType(ServerCommandSource source, String mobtype)
     {
-        Messenger.send(source, SpawnReporter.printEntitiesByType(mobtype, source.getWorld()));
+        Messenger.send(source, SpawnReporter.printEntitiesByType(EntityCategory.valueOf(mobtype.toUpperCase()), source.getWorld()));
         return 1;
     }
 }
