@@ -1,47 +1,37 @@
 
 package carpet.utils;
 
-import java.util.HashSet;
-import java.util.List;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import carpet.CarpetSettings;
 import carpet.mixins.WeightedPickerEntryMixin;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.server.world.ServerChunkManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.structure.OceanMonumentGenerator;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.entity.passive.OcelotEntity;
 import net.minecraft.network.chat.BaseComponent;
-import net.minecraft.world.World;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
-
-import net.minecraft.entity.EntityCategory;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.SpawnHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.SpawnHelper;
-import net.minecraft.entity.SpawnRestriction;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.Entity;
-
-import net.minecraft.entity.passive.OcelotEntity;
-import net.minecraft.world.Heightmap;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.lang.Math;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 public class SpawnReporter
 {
@@ -111,7 +101,7 @@ public class SpawnReporter
         for (EntityCategory enumcreaturetype : EntityCategory.values())
         {
             int cur = dimCounts.getOrDefault(enumcreaturetype, -1);
-            int max = chunkcount * enumcreaturetype.getSpawnCap() / (int)Math.pow(17.0D, 2.0D); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
+            int max = chunkcount * (int)((double)enumcreaturetype.getSpawnCap() * (Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)))) / (int)Math.pow(17.0D, 2.0D); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
             String color = Messenger.heatmap_color(cur, max);
             String mobColor = Messenger.creatureTypeColor(enumcreaturetype);
             if (multiline)
@@ -160,8 +150,10 @@ public class SpawnReporter
         for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.getDimension().getType(),creature_type)).keySet())
         {
             lst.add( Messenger.c(
-                    String.format("w  - %s ", Registry.ENTITY_TYPE.getId(pair.getLeft()).toString().replaceFirst("minecraft.","")),
-                    Messenger.tp("wb",pair.getRight())));
+                    "w  - ",
+                    Messenger.tp("wb",pair.getRight()),
+                    String.format("w : %s", EntityType.getId(pair.getLeft()).toString().replaceFirst("minecraft.",""))
+                    ));
         }
         
         if (lst.size()==1)
@@ -261,20 +253,21 @@ public class SpawnReporter
         return get_type_string(get_creature_type_from_code(str));
     }
     
-    public static List<BaseComponent> printEntitiesByType(EntityCategory type, World worldIn) //Class<?> entityType)
+    public static List<BaseComponent> printEntitiesByType(EntityCategory cat, World worldIn) //Class<?> entityType)
     {
-        CarpetSettings.LOG.error("\n\n\nprinting spawnlist\n\n\n");
         List<BaseComponent> lst = new ArrayList<>();
-        Class<?> cls = type.getDeclaringClass();// getBaseClass();// getCreatureClass();
-        lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(type))));
-
-        lst.add(Messenger.s(" <sorry, this list will be populated, once M figures out what counts>"));
-        for (Entity entity : ((ServerWorld)worldIn).getEntities(null, (e) -> e.getType().getCategory()==type))
+        lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
+        for (Entity entity : ((ServerWorld)worldIn).getEntities(null, (e) -> e.getType().getCategory()==cat))
         {
             if (!(entity instanceof MobEntity) || !((MobEntity)entity).isPersistent())
             {
-                lst.add(Messenger.c("w  - ",
-                        Messenger.tp("w", entity.x, entity.y, entity.z),"w  : "+EntityType.getId(entity.getType()).toString().replaceFirst("minecraft.","")));
+                EntityType type = entity.getType();
+                BlockPos pos = entity.getBlockPos();
+                lst.add( Messenger.c(
+                        "w  - ",
+                        Messenger.tp("wb",pos),
+                        String.format("w : %s", EntityType.getId(type).toString().replaceFirst("minecraft.",""))
+                        ));
             }
         }
         if (lst.size()==1)

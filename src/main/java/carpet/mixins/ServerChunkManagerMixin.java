@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.entity.EntityCategory;
@@ -18,7 +17,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -97,7 +95,7 @@ public abstract class ServerChunkManagerMixin
     private int getNewMobcaps(EntityCategory entityCategory)
     {
         DimensionType dim = this.world.dimension.getType();
-        int newCap = entityCategory.getSpawnCap()*(int)(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4)));
+        int newCap = (int) ((double)entityCategory.getSpawnCap()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
         if (SpawnReporter.track_spawns > 0L)
         {
             int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning

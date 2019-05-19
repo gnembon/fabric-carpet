@@ -9,17 +9,17 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.DimensionArgumentType;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.DyeColor;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
@@ -102,6 +102,16 @@ public class SpawnCommand
         dispatcher.register(literalargumentbuilder);
     }
 
+    private static EntityCategory getCategory(String string) throws CommandSyntaxException
+    {
+        if (!Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.toSet()).contains(string))
+        {
+            throw new SimpleCommandExceptionType(Messenger.c("r Wrong mob type: "+string+" should be "+ Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.joining(", ")))).create();
+        }
+        return EntityCategory.valueOf(string.toUpperCase());
+    }
+
+
     private static int listSpawns(ServerCommandSource source, BlockPos pos)
     {
         Messenger.send(source, SpawnReporter.report(pos, source.getWorld()));
@@ -153,14 +163,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int recentSpawnsForType(ServerCommandSource source, String mob_type)
+    private static int recentSpawnsForType(ServerCommandSource source, String mob_type) throws CommandSyntaxException
     {
-        if (!Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.toSet()).contains(mob_type))
-        {
-            Messenger.m(source, "r Wrong mob type: "+mob_type+" should be "+ Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.joining(", ")));
-            return 0;
-        }
-        Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), EntityCategory.valueOf(mob_type.toUpperCase())));
+        EntityCategory cat = getCategory(mob_type);
+        Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), cat));
         return 1;
     }
 
@@ -233,10 +239,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int setSpawnRates(ServerCommandSource source, String mobtype, int rounds)
+    private static int setSpawnRates(ServerCommandSource source, String mobtype, int rounds) throws CommandSyntaxException
     {
-        String code = SpawnReporter.get_creature_code_from_string(mobtype);
-        //SpawnReporter.spawn_tries.put(code, rounds);
+        EntityCategory cat = getCategory(mobtype);
+        SpawnReporter.spawn_tries.put(cat, rounds);
         Messenger.m(source, "gi "+mobtype+" mobs will now spawn "+rounds+" times per tick");
         return 1;
     }
@@ -255,9 +261,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int listEntitiesOfType(ServerCommandSource source, String mobtype)
+    private static int listEntitiesOfType(ServerCommandSource source, String mobtype) throws CommandSyntaxException
     {
-        Messenger.send(source, SpawnReporter.printEntitiesByType(EntityCategory.valueOf(mobtype.toUpperCase()), source.getWorld()));
+        EntityCategory cat = getCategory(mobtype);
+        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getWorld()));
         return 1;
     }
 }
