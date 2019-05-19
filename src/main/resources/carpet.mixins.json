@@ -4,6 +4,15 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "CommandManagerMixin",
+
+    "FillCommandMixin",
+    "CloneCommandMixin",
+    "SetBlockCommandMixin",
+    "World_fillUpdatesMixin",
+    "WorldChunk_fillUpdatesMixin",
+    "StructureBlockBlockEntity_fillUpdatesMixin",
+    "Structure_fillUpdatesMixin",
+
     "MinecraftServer_coreMixin",
 
     "MinecraftServer_tickspeedMixin",

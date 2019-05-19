@@ -46,6 +46,8 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         TickSpeed.tick(server);
         HUDController.update_hud(server);
+        //in case something happens
+        CarpetSettings.impendingFillSkipUpdates = false;
     }
 
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
