@@ -159,7 +159,9 @@ public class SpawnReporter
         lst.add(Messenger.s(String.format("Recent %s spawns:",type_code)));
         for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.getDimension().getType(),creature_type)).keySet())
         {
-            lst.add( Messenger.c(String.format("w  - %s ",pair.getLeft()), Messenger.tp("wb",pair.getRight())));
+            lst.add( Messenger.c(
+                    String.format("w  - %s ", Registry.ENTITY_TYPE.getId(pair.getLeft()).toString().replaceFirst("minecraft.","")),
+                    Messenger.tp("wb",pair.getRight())));
         }
         
         if (lst.size()==1)
@@ -272,7 +274,7 @@ public class SpawnReporter
             if (!(entity instanceof MobEntity) || !((MobEntity)entity).isPersistent())
             {
                 lst.add(Messenger.c("w  - ",
-                        Messenger.tp("w", entity.x, entity.y, entity.z),"w  : "+EntityType.getId(entity.getType())));
+                        Messenger.tp("w", entity.x, entity.y, entity.z),"w  : "+EntityType.getId(entity.getType()).toString().replaceFirst("minecraft.","")));
             }
         }
         if (lst.size()==1)

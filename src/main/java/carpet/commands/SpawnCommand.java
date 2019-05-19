@@ -155,12 +155,12 @@ public class SpawnCommand
 
     private static int recentSpawnsForType(ServerCommandSource source, String mob_type)
     {
-        if (!Arrays.asList(Arrays.stream(EntityCategory.values()).map(Enum::toString)).contains(mob_type))
+        if (!Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.toSet()).contains(mob_type))
         {
-            Messenger.m(source, "r Wrong mob type: "+mob_type+" should be "+String.join(", ",Arrays.stream(EntityCategory.values()).map(Enum::toString).collect(Collectors.toSet())) );
+            Messenger.m(source, "r Wrong mob type: "+mob_type+" should be "+ Arrays.stream(EntityCategory.values()).map(EntityCategory::getName).collect(Collectors.joining(", ")));
             return 0;
         }
-        //Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), mob_type));
+        Messenger.send(source, SpawnReporter.recent_spawns(source.getWorld(), EntityCategory.valueOf(mob_type.toUpperCase())));
         return 1;
     }
 
