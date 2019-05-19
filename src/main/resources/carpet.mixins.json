@@ -29,6 +29,7 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
+    "PlayerManagerMixin",
 
     "ServerChunkManagerMixin",
     "SpawnHelperMixin",
@@ -38,7 +39,16 @@
     "ClientConnectionMixin",
     "ItemEntityMixin",
     "TntBlockMixin",
-    "ExplosionMixin"
+    "ExplosionMixin",
+
+    "PrimedTNTEntityMixin",
+
+    "FloatingIslandsChunkGeneratorMixin",
+    "EndCityFeatureMixin",
+    "SpawnRestrictionMixin",
+
+    "InfestedBlockMixin",
+    "PlayerEntityMixin"
   ],
   "client": [
     "DebugHudMixin",
