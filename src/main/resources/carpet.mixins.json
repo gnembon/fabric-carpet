@@ -21,6 +21,8 @@
     "ServerWorld_tickMixin",
     "ServerChunkManager_tickMixin",
 
+    "MobEntityMixin",
+
     "MinecraftServer_motdMixin",
     "ServerPlayNetworkHandlerMixin",
     "MinecraftServer_scarpetMixin",
