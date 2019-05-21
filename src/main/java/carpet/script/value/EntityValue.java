@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import carpet.fakes.MobEntityInterface;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -192,13 +193,13 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
-        /*put("home", (e, a) -> {
-            if (e instanceof MobEntityWithAi)
+        put("home", (e, a) -> {
+            if (e instanceof MobEntity)
             {
-                return ((MobEntityWithAi) e).has hasHome()?new BlockValue(null, e.getEntityWorld(), ((MobEntityWithAi) e).getHomePosition()):Value.FALSE;
+                return (((MobEntity) e).getWalkTargetRange () > 0)?new BlockValue(null, e.getEntityWorld(), ((MobEntityWithAi) e).getWalkTarget()):Value.FALSE;
             }
             return Value.NULL;
-        });*/
+        });
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
@@ -523,7 +524,7 @@ public class EntityValue extends Value
         //    if (e instanceof MobEntity)
         //    {
         //        LivingEntity elb = assertEntityArgType(LivingEntity.class, v);
-        //        ((MobEntity) e).setAttackTarget(elb);
+        //        ((MobEntity) e).setTarget(elb);
         //    }
         //});
         put("talk", (e, v) -> {
@@ -533,7 +534,6 @@ public class EntityValue extends Value
                 ((MobEntity) e).playAmbientSound();
             }
         });
-        /*
         put("home", (e, v) -> {
             if (!(e instanceof MobEntityWithAi))
                 return;
@@ -542,9 +542,10 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("home requires at least one position argument, and optional distance, or null to cancel");
             if (v instanceof NullValue)
             {
-                ec.detachHome();
-                ec.getAI(false).removeTask(ec.temporaryTasks.get("home"));
-                ec.temporaryTasks.remove("home");
+                ec.setWalkTarget(BlockPos.ORIGIN, -1);
+                Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
+                ((MobEntityInterface)ec).getAI(false).remove(tasks.get("home"));
+                tasks.remove("home");
                 return;
             }
 
@@ -582,14 +583,15 @@ public class EntityValue extends Value
             }
             else throw new InternalExpressionException("home requires at least one position argument, and optional distance");
 
-            ec.setHomePosAndDistance(pos, distance);
-            if (!ec.temporaryTasks.containsKey("home"))
+            ec.setWalkTarget(pos, distance);
+            Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
+            if (!tasks.containsKey("home"))
             {
                 Goal task = new GoToWalkTargetGoal(ec, 1.0D);
-                ec.temporaryTasks.put("home", task);
-                ec.getAI(false).addTask(10, task);
+                tasks.put("home", task);
+                ((MobEntityInterface)ec).getAI(false).add(10, task);
             }
-        });*/ //requires mixing
+        }); //requires mixing
 
         // gamemode
         // spectate
