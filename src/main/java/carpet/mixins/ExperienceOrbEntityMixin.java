@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.ExperienceOrbInterface;
 import carpet.helpers.XPcombine;
 import net.minecraft.entity.ExperienceOrbEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,9 +40,16 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
 
             if (getCombineDelay() == 0)
             {
-                XPcombine.searchForOtherXPNearbyCarpet((ExperienceOrbEntity) (Object) this);
+                XPcombine.searchForOtherXPNearby((ExperienceOrbEntity) (Object) this);
             }
         }
+    }
+
+    @Inject(method = "onPlayerCollision", at = @At("HEAD"))
+    void removeDelay(PlayerEntity playerEntity_1, CallbackInfo ci)
+    {
+        if (CarpetSettings.getBool("xpNoCooldown"))
+            playerEntity_1.experiencePickUpDelay = 0;
     }
 
 }

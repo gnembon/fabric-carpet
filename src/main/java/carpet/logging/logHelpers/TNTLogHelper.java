@@ -3,19 +3,21 @@ package carpet.logging.logHelpers;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.util.math.Vec3d;
 
 public class TNTLogHelper
 {
-    private double primedX, primedY, primedZ, primedAngle;
+    private double primedX, primedY, primedZ;
+    Vec3d primedAngle;
     /**
      * Runs when the TNT is primed. Expects the position and motion angle of the TNT.
      */
-    public void onPrimed(double x, double y, double z, float angle)
+    public void onPrimed(double x, double y, double z, Vec3d motion)
     {
         primedX = x;
         primedY = y;
         primedZ = z;
-        primedAngle = angle;
+        primedAngle = motion;
     }
     /**
      * Runs when the TNT explodes. Expects the position of the TNT.
@@ -27,15 +29,16 @@ public class TNTLogHelper
             {
                 case "brief":
                     return new BaseComponent[]{Messenger.c(
-                            "l P ",Messenger.dblt("l",primedX,primedY,primedZ,primedAngle),
+                            "l P ",Messenger.dblt("l",primedX,primedY,primedZ),
+                            "w  ",Messenger.dblt("l", primedAngle.x, primedAngle.y, primedAngle.z),
                             "r  E ",Messenger.dblt("r",x, y, z))};
                 case "full":
                     return new BaseComponent[]{Messenger.c(
-                            "l P ",Messenger.dblf("l",primedX,primedY,primedZ,primedAngle),
+                            "l P ",Messenger.dblf("l",primedX,primedY,primedZ),
+                            "w  ",Messenger.dblf("l", primedAngle.x, primedAngle.y, primedAngle.z),
                             "r  E ",Messenger.dblf("r",x, y, z))};
             }
             return null;
         });
     }
-
 }

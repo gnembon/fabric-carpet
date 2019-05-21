@@ -28,11 +28,11 @@ public class TrajectoryLogHelper
         this.doLog = this.logger.hasOnlineSubscribers();
     }
 
-    public void onTick(double x, double y, double z, double motionX, double motionY, double motionZ)
+    public void onTick(double x, double y, double z, Vec3d velocity)
     {
         if (!doLog) return;
         positions.add(new Vec3d(x, y, z));
-        motions.add(new Vec3d(motionX, motionY, motionZ));
+        motions.add(velocity);
     }
 
     public void onFinish()
