@@ -43,7 +43,10 @@
     "TntBlockMixin",
     "ExplosionMixin",
 
-    "PrimedTNTEntityMixin",
+    "PrimedTntEntityMixin",
+    "ProjectileEntityMixin",
+    "FallingBlockEntityMixin",
+    "ThrownEntityMixin",
 
     "FloatingIslandsChunkGeneratorMixin",
     "EndCityFeatureMixin",

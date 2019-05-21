@@ -13,7 +13,7 @@ import net.minecraft.util.registry.Registry;
 
 public class XPcombine
 {
-    public static void searchForOtherXPNearbyCarpet(ExperienceOrbEntity first)
+    public static void searchForOtherXPNearby(ExperienceOrbEntity first)
     {
         for (ExperienceOrbEntity entityxp : first.world.getEntities(ExperienceOrbEntity.class, first.getBoundingBox().expand(0.5D, 0.0D, 0.5D)))
         {
