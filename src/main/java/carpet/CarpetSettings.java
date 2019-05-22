@@ -55,6 +55,7 @@ public class CarpetSettings
     //those don't have to mimic defaults - defaults will be '
     //static store
     public static int n_pushLimit = 12;
+    public static int n_maxEntityCollisions = 0;
     public static boolean b_hopperCounters = false;
     public static boolean b_shulkerSpawningInEndCities = false;
     public static boolean b_fastRedstoneDust = false;
@@ -64,6 +65,7 @@ public class CarpetSettings
     public static boolean b_huskSpawningInTemples = false;
     public static boolean b_stackableShulkerBoxes = false;
     public static boolean b_fillUpdates = true;
+    public static boolean b_lagFreeSpawning = false;
 
     private static CarpetSettingEntry rule(String s1, String s2, String s3) { return CarpetSettingEntry.create(s1,s2,s3);}
     
@@ -143,16 +145,14 @@ public class CarpetSettings
   rule("fillLimit",             "creative","Customizable fill/clone volume limit")
                                 .choices("32768","32768 250000 1000000").setNotStrict(),
   rule("maxEntityCollisions",   "optimizations", "Customizable maximal entity collision limits, 0 for no limits")
-                                .choices("0","0 1 20").setNotStrict(),
+                                .choices("0","0 1 20").setNotStrict().numAccelerate(),
   //???rule("pistonGhostBlocksFix",  "fix", "Fix for piston ghost blocks")
   //                              .extraInfo("true(serverOnly) option works with all clients, including vanilla",
   //                              "clientAndServer option requires compatible carpet clients and messes up flying machines")
   //                              .choices("false","false true clientAndServer"),
   //???rule("waterFlow",             "optimizations", "fixes water flowing issues")
   //                              .choices("vanilla","vanilla optimized correct"),
-  rule("sleepingThreshold",     "experimental", "The percentage of required sleeping players to skip the night")
-                                .extraInfo("Use values from 0 to 100, 100 for default (all players needed)")
-                                .choices("100","0 10 50 100").setNotStrict(),
+  rule("onePlayerSleeping",     "survival", "One player is required on the server to cause night to pass"),
   rule("customMOTD",            "creative","Sets a different motd message on client trying to connect to the server")
                                 .extraInfo("use '_' to use the startup setting from server.properties")
                                 .choices("_","_").setNotStrict().validate((s) ->
@@ -196,6 +196,7 @@ public class CarpetSettings
   rule("placementRotationFix",    "fix", "fixes block placement rotation issue when player rotates quickly while placing blocks"),
   rule("leadFix",                 "fix", "Fixes leads breaking/becoming invisible in unloaded chunks")
                                   .extraInfo("You may still get visibly broken leash links on the client side, but server side the link is still there."),
+  rule("lagFreeSpawning", "optimizations", "Spawning requires much less CPU and Memory").boolAccelerate()
         };
         for (CarpetSettingEntry rule: RuleList)
         {

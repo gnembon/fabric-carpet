@@ -1,9 +1,11 @@
 package carpet.mixins;
 
+import carpet.fakes.WorldInterface;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.World;
@@ -14,14 +16,23 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Consumer;
 
 @Mixin(World.class)
-public abstract class World_tickMixin
+public abstract class World_tickMixin implements WorldInterface
 {
     CarpetProfiler.ProfilerToken currentSection;
     CarpetProfiler.ProfilerToken entitySection;
+
+    Map<EntityType, Entity> precookedMobs = new HashMap<>();
+
+    public Map<EntityType, Entity> getPrecookedMobs()
+    {
+        return precookedMobs;
+    }
 
     @Inject(method = "tickBlockEntities", at = @At("HEAD"))
     private void startBlockEntities(CallbackInfo ci) {

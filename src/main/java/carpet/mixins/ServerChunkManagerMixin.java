@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.fakes.WorldInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.entity.EntityCategory;
@@ -56,6 +57,7 @@ public abstract class ServerChunkManagerMixin
                              Object2IntMap object2IntMap_1)
     {
         DimensionType dim = this.world.dimension.getType();
+        ((WorldInterface)world).getPrecookedMobs().clear();
         SpawnReporter.mobCounts.put(dim, (Object2IntMap<EntityCategory>)object2IntMap_1);
         SpawnReporter.chunkCounts.put(dim, int_2);
 

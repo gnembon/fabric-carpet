@@ -5,7 +5,6 @@
   "mixins": [
     "CommandManagerMixin",
 
-
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",
@@ -32,6 +31,15 @@
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
     "PlayerManagerMixin",
+    "CarpetBlockMixin",
+    "SummonCommandMixin",
+    "PistonHandler_pushLimitMixin",
+    "PoweredRailBlock_powerLimitMixin",
+    "LivingEntity_maxCollisionsMixin",
+    "ServerWorld_onePlayerSleepingMixin",
+    "KelpFeatureMixin",
+    "CoralBlockMixin",
+    "CoralFeatureMixin",
 
     "ServerChunkManagerMixin",
     "SpawnHelperMixin",

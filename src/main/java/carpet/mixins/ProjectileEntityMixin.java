@@ -25,7 +25,7 @@ public abstract class ProjectileEntityMixin extends Entity
             logHelper = new TrajectoryLogHelper("projectiles");
     }
 
-    @Inject(method = "tick", at = @At("RETURN"))
+    @Inject(method = "tick", at = @At("HEAD"))
     private void tickCheck(CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && logHelper != null)

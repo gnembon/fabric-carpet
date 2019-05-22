@@ -7,8 +7,9 @@ import net.minecraft.util.math.Vec3d;
 
 public class TNTLogHelper
 {
+    public boolean initialized;
     private double primedX, primedY, primedZ;
-    Vec3d primedAngle;
+    private Vec3d primedAngle;
     /**
      * Runs when the TNT is primed. Expects the position and motion angle of the TNT.
      */
@@ -18,6 +19,7 @@ public class TNTLogHelper
         primedY = y;
         primedZ = z;
         primedAngle = motion;
+        initialized = true;
     }
     /**
      * Runs when the TNT explodes. Expects the position of the TNT.
