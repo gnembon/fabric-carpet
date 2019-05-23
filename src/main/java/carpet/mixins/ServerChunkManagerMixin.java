@@ -57,7 +57,7 @@ public abstract class ServerChunkManagerMixin
                              Object2IntMap object2IntMap_1)
     {
         DimensionType dim = this.world.dimension.getType();
-        ((WorldInterface)world).getPrecookedMobs().clear();
+        //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.mobCounts.put(dim, (Object2IntMap<EntityCategory>)object2IntMap_1);
         SpawnReporter.chunkCounts.put(dim, int_2);
 

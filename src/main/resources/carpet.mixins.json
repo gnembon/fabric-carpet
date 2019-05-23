@@ -40,6 +40,14 @@
     "KelpFeatureMixin",
     "CoralBlockMixin",
     "CoralFeatureMixin",
+    "StructurePieceMixin",
+    "StructureFeatureMixin",
+    "ShipwreckGeneratorPieceMixin",
+    "OceanRuinGeneratorPieceMixin",
+    "IglooGeneratorPieceMixin",
+    "FossilFeatureMixin",
+    "BuriedTreasureGeneratorPieceMixin",
+
 
     "ServerChunkManagerMixin",
     "SpawnHelperMixin",

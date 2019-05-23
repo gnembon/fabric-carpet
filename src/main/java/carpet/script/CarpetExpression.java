@@ -2,7 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-// import carpet.helpers.FeatureGenerator; todo
+import carpet.helpers.FeatureGenerator;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
@@ -1878,13 +1878,13 @@ public class CarpetExpression
             return (cc, tt) -> retval;
         });
 
-        /*this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
+        this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
             Boolean res = FeatureGenerator.spawn(lv.get(locator.offset).evalValue(c).getString(), ((CarpetContext)c).s.getWorld(), locator.block.getPos());
             if (res == null)
                 return (c_, t_) -> Value.NULL;
             return (c_, t_) -> new NumericValue(res);
-        });*/
+        });
     }
 
     /**
