@@ -1,10 +1,7 @@
 package carpet.mixins;
 
-import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
