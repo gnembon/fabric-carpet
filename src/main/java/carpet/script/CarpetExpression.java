@@ -554,7 +554,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("solid", -1, (c, t, lv) ->
-                booleanStateTest(c, "solid", lv, (s, p) -> s.isFullBoundsCubeForCulling()));
+                genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.isSimpleFullBlock(w, p))));
 
         this.expr.addLazyFunction("air", -1, (c, t, lv) ->
                 booleanStateTest(c, "air", lv, (s, p) -> s.isAir()));

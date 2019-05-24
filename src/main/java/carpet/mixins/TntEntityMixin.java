@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.PrimedTntEntity;
+import net.minecraft.entity.TntEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -15,18 +15,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.TNTLogHelper;
 
-@Mixin(PrimedTntEntity.class)
-public abstract class PrimedTntEntityMixin extends Entity
+@Mixin(TntEntity.class)
+public abstract class TntEntityMixin extends Entity
 {
     private TNTLogHelper logHelper = null;
 
-    public PrimedTntEntityMixin(EntityType<?> entityType_1, World world_1)
+    public TntEntityMixin(EntityType<?> entityType_1, World world_1)
     {
         super(entityType_1, world_1);
     }
 
     @Inject(method = "<init>(Lnet/minecraft/entity/EntityType;Lnet/minecraft/world/World;)V", at = @At("RETURN"))
-    private void initTNTLoggerPrime(EntityType<? extends PrimedTntEntity> entityType_1, World world_1, CallbackInfo ci)
+    private void initTNTLoggerPrime(EntityType<? extends TntEntity> entityType_1, World world_1, CallbackInfo ci)
     {
         if (LoggerRegistry.__tnt && !world_1.isClient)
         {

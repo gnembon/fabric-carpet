@@ -60,7 +60,7 @@
     "TntBlockMixin",
     "ExplosionMixin",
 
-    "PrimedTntEntityMixin",
+    "TntEntityMixin",
     "ProjectileEntityMixin",
     "FallingBlockEntityMixin",
     "ThrownEntityMixin",
