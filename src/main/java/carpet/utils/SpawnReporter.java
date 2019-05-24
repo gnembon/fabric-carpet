@@ -1,6 +1,7 @@
 
 package carpet.utils;
 
+import carpet.CarpetSettings;
 import carpet.mixins.WeightedPickerEntryMixin;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -412,6 +413,8 @@ public class SpawnReporter
             {
                 for (Biome.SpawnEntry spawnEntry : lst)
                 {
+                    if (SpawnRestriction.getLocation(spawnEntry.type)==null)
+                        continue; // vanilla bug
                     boolean canspawn = SpawnHelper.canSpawn(SpawnRestriction.getLocation(spawnEntry.type), worldIn, pos, spawnEntry.type);
                     int will_spawn = -1;
                     boolean fits = false;
