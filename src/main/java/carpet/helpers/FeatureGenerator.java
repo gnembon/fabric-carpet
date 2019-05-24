@@ -61,7 +61,7 @@ public class FeatureGenerator
     private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
     {
         return (w, p) -> {
-            ChunkGenerator chunkgen = new OverworldChunkGenerator(w, null, new OverworldChunkGeneratorConfig())
+            ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.getChunkManager().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
             {
                 @Override
                 public <C extends FeatureConfig> C getStructureConfig(Biome biome_1, StructureFeature<C> structureFeature_1)
