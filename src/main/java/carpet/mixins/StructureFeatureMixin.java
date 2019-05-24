@@ -58,7 +58,8 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             }
             //generator.ge   getStructurePositionToReferenceMap(this).computeIfAbsent(chId,
             //    (x) -> new LongOpenHashSet()).add(chId);
-            world.getChunk(j, k, ChunkStatus.STRUCTURE_STARTS).addStructureReference(this.getName(), chId);
+            world.getChunk(j, k).addStructureReference(this.getName(), chId);  //, ChunkStatus.STRUCTURE_STARTS
+
             MutableIntBoundingBox box = structurestart.getBoundingBox();
             structurestart.generateStructure(
                     world,
@@ -82,7 +83,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
                     if (box.intersectsXZ(k1<<4, l1<<4, (k1<<4) + 15, (l1<<4) + 15))
                     {
                         //generator.getStructurePositionToReferenceMap(this).computeIfAbsent(nbchkid, (__) -> new LongOpenHashSet()).add(chId);
-                        world.getChunk(k1, l1, ChunkStatus.STRUCTURE_STARTS).addStructureReference(this.getName(), chId);
+                        world.getChunk(k1, l1).addStructureReference(this.getName(), chId); //, ChunkStatus.STRUCTURE_STARTS
                         //structurestart.  notifyPostProcessAt(new ChunkPos(k1, l1));
                     }
                 }
@@ -102,11 +103,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
     private StructureStart forceStructureStart(IWorld worldIn, ChunkGenerator <? extends ChunkGeneratorConfig > generator, Random rand, long packedChunkPos)
     {
         ChunkPos chunkpos = new ChunkPos(packedChunkPos);
-        StructureStart structurestart = worldIn.getChunk(chunkpos.x, chunkpos.z).getStructureStart(this.getName());
-        if (structurestart != null)
-        {
-            return structurestart; // structure already exist, will skip
-        }
+        StructureStart structurestart;
 
         Chunk ichunk = worldIn.getChunk(chunkpos.x, chunkpos.z, ChunkStatus.STRUCTURE_STARTS);
 
@@ -114,20 +111,19 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
         {
             structurestart = ichunk.getStructureStart(this.getName());
 
-            if (structurestart != null)
+            if (structurestart != null && structurestart != StructureStart.DEFAULT)
             {
-                //long2objectmap.put(packedChunkPos, structurestart);
                 return structurestart;
             }
         }
         Biome biome_1 = generator.getBiomeSource().getBiome(new BlockPos(chunkpos.getStartX() + 9, 0, chunkpos.getStartZ() + 9));
         StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, biome_1, MutableIntBoundingBox.empty(),0,generator.getSeed());
         structurestart1.initialize(generator, ((ServerWorld)worldIn).getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
-        structurestart = structurestart.hasChildren() ? structurestart : StructureStart.DEFAULT;
+        structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;
 
         if (structurestart.hasChildren())
         {
-            worldIn.getChunk(chunkpos.x, chunkpos.z, ChunkStatus.STRUCTURE_STARTS).setStructureStart(this.getName(), structurestart);
+            worldIn.getChunk(chunkpos.x, chunkpos.z).setStructureStart(this.getName(), structurestart);
         }
 
         //long2objectmap.put(packedChunkPos, structurestart);
