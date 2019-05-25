@@ -90,7 +90,7 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
             self.setStack(selfStack);
 
             this.pickupDelay = Math.max(((IItemEntity)other).getPickupDelay(), this.pickupDelay);
-            this.age = Math.min(other.getAge(), this.age);
+            this.age = Math.min(((IItemEntity)other).getAge(), this.age);
 
             otherStack.subtractAmount(amount);
             if (otherStack.isEmpty())
