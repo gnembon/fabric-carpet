@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,6 +25,8 @@ import java.io.FileNotFoundException;
 //import carpet.helpers.SpawnChunks;
 import carpet.fakes.MinecraftServer_motdInterface;
 import carpet.utils.Messenger;
+import net.minecraft.server.command.CommandSource;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.math.ChunkPos;
@@ -73,15 +76,15 @@ public class CarpetSettings
     {
         CarpetSettingEntry[] RuleList = new CarpetSettingEntry[] {
   rule("watchdogCrashFix", "fix", "Fixes server crashing supposedly on falling behind 60s in ONE tick, yeah bs.").
-                                   extraInfo("Fixed 1.12 watchdog crash in 1.13 pre-releases, reintroduced with 1.13, GG."),
+                                   extraInfo("Fixed 1.12 watchdog crash in 1.13 pre-releases, reintroduced with 1.13, GG.").wip(),
   rule("portalSuffocationFix",  "fix", "Nether portals correctly place entities going through")
-                                .extraInfo("Entities shouldn't suffocate in obsidian"),
+                                .extraInfo("Entities shouldn't suffocate in obsidian").wip(),
   rule("superSecretSetting",    "experimental","Gbhs sgnf sadsgras fhskdpri!"),
-  rule("invisibilityFix",       "fix", "Guardians honor players' invisibility effect"),
+  rule("invisibilityFix",       "fix", "Guardians honor players' invisibility effect").wip(),
   rule("portalCreativeDelay",   "creative",  "Portals won't let a creative player go through instantly")
                                 .extraInfo("Holding obsidian in either hand won't let you through at all"),
   rule("ctrlQCraftingFix",      "fix survival", "Dropping entire stacks works also from on the crafting UI result slot"),
-  rule("persistentParrots",     "survival feature", "Parrots don't get of your shoulders until you receive damage"),
+  rule("persistentParrots",     "survival feature", "Parrots don't get of your shoulders until you receive damage").wip(),
   //!rule("growingUpWallJump",     "fix", "Mobs growing up won't glitch into walls or go through fences"),
   //!rule("reloadSuffocationFix",  "fix experimental", "Won't let mobs glitch into blocks when reloaded.")
   //                              .extraInfo("Can cause slight differences in mobs behaviour"),
@@ -92,17 +95,17 @@ public class CarpetSettings
   rule("explosionNoBlockDamage", "tnt", "Explosions won't destroy blocks"),
   rule("tntPrimerMomentumRemoved", "tnt", "Removes random TNT momentum when primed"),
   rule("fastRedstoneDust",      "experimental optimizations", "Lag optimizations for redstone dust")
-                                .extraInfo("by Theosib").boolAccelerate().defaultFalse(),
-  rule("huskSpawningInTemples", "experimental feature", "Only husks spawn in desert temples").boolAccelerate(),
+                                .extraInfo("by Theosib").boolAccelerate().defaultFalse().wip(),
+  rule("huskSpawningInTemples", "experimental feature", "Only husks spawn in desert temples").boolAccelerate().wip(),
   rule("shulkerSpawningInEndCities", "feature experimental", "Shulkers will respawn in end cities").boolAccelerate(),
-  rule("unloadedEntityFix",     "experimental creative", "Entities pushed or moved into unloaded chunks no longer disappear"),
+  rule("unloadedEntityFix",     "experimental creative", "Entities pushed or moved into unloaded chunks no longer disappear").wip(),
   rule("TNTDoNotUpdate",        "tnt", "TNT doesn't update when placed against a power source"),
-  rule("antiCheatSpeed",        "creative surival", "Prevents players from rubberbanding when moving too fast"),
+  rule("antiCheatSpeed",        "creative surival", "Prevents players from rubberbanding when moving too fast").wip(),
   rule("quasiConnectivity",     "creative", "Pistons, droppers and dispensers react if block above them is powered")
-                                .defaultTrue(),
+                                .defaultTrue().wip(),
   rule("flippinCactus",         "creative survival", "Players can flip and rotate blocks when holding cactus")
                                 .extraInfo("Doesn't cause block updates when rotated/flipped",
-                                           "Applies to pistons, observers, droppers, repeaters, stairs, glazed terracotta etc..."),
+                                           "Applies to pistons, observers, droppers, repeaters, stairs, glazed terracotta etc...").wip(),
   rule("hopperCounters",        "commands creative survival","hoppers pointing to wool will count items passing through them")
                                 .extraInfo("Enables /counter command, and actions while placing red and green carpets on wool blocks",
                                            "Use /counter <color?> reset to reset the counter, and /counter <color?> to query",
@@ -110,14 +113,14 @@ public class CarpetSettings
                                            "Counters are global and shared between players, 16 channels available",
                                            "Items counted are destroyed, count up to one stack per tick per hopper")
                                 .isACommand().boolAccelerate().defaultFalse(),
-  rule("renewableSponges",      "experimental feature", "Guardians turn into Elder Guardian when struck by lightning"),
-  rule("movableTileEntities",   "experimental", "Pistons can push tile entities, like hoppers, chests etc.").boolAccelerate(),
-  rule("desertShrubs",          "feature", "Saplings turn into dead shrubs in hot climates and no water access when it attempts to grow into a tree"),
+  rule("renewableSponges",      "experimental feature", "Guardians turn into Elder Guardian when struck by lightning").wip(),
+  rule("movableTileEntities",   "experimental", "Pistons can push tile entities, like hoppers, chests etc.").boolAccelerate().wip(),
+  rule("desertShrubs",          "feature", "Saplings turn into dead shrubs in hot climates and no water access when it attempts to grow into a tree").wip(),
   rule("silverFishDropGravel",  "experimental", "Silverfish drop a gravel item when breaking out of a block"),
   rule("summonNaturalLightning","creative", "summoning a lightning bolt has all the side effects of natural lightning"),
   rule("commandSpawn",          "commands", "Enables /spawn command for spawn tracking").isACommand(),
   rule("commandTick",           "commands", "Enables /tick command to control game speed").isACommand(),
-  rule("commandLog",            "commands", "Enables /log command to monitor events in the game via chat and overlays").isACommand(),
+  rule("commandLog",            "commands", "Enables /log command to monitor events in the game via chat and overlays").isACommand().wip(),
   rule("commandDistance",       "commands", "Enables /distance command to measure in game distance between points").isACommand()
                                 .extraInfo("Also enables brown carpet placement action if 'carpets' rule is turned on as well"),
   rule("commandInfo",           "commands", "Enables /info command for blocks and entities").isACommand()
@@ -131,16 +134,16 @@ public class CarpetSettings
                                 .extraInfo("... allows for drawing simple shapes"),
   rule("commandScript",  "commands", "Enables /script command").isACommand()
                                 .extraInfo("a powerful in-game scripting API"),
-  rule("commandPlayer",         "commands", "Enables /player command to control/spawn players").isACommand(),
+  rule("commandPlayer",         "commands", "Enables /player command to control/spawn players").isACommand().wip(),
   rule("carpets",               "survival", "Placing carpets may issue carpet commands for non-op players"),
-  rule("missingTools",          "survival", "Pistons, Glass and Sponge can be broken faster with their appropriate tools"),
-  rule("portalCaching",         "survival experimental", "Alternative, persistent caching strategy for nether portals"),
-  rule("calmNetherFires",       "experimental", "Permanent fires don't schedule random updates"),
+  rule("missingTools",          "survival", "Pistons, Glass and Sponge can be broken faster with their appropriate tools").wip(),
+  rule("portalCaching",         "survival experimental", "Alternative, persistent caching strategy for nether portals").wip(),
+  rule("calmNetherFires",       "experimental", "Permanent fires don't schedule random updates").wip(),
   rule("fillUpdates",           "creative", "fill/clone/setblock and structure blocks cause block updates").defaultTrue().boolAccelerate(),
   rule("pushLimit",             "creative","Customizable piston push limit")
                                 .choices("12","10 12 14 100").setNotStrict().numAccelerate(),
   rule("railPowerLimit",        "creative", "Customizable powered rail power range")
-                                .choices("9","9 15 30").setNotStrict().validate( (s) ->
+                                .choices("9","9 15 30").setNotStrict().validate( (s, n) ->
                                     railPowerLimitAdjusted = CarpetSettings.getInt("railPowerLimit") - 1),
   rule("fillLimit",             "creative","Customizable fill/clone volume limit")
                                 .choices("32768","32768 250000 1000000").setNotStrict(),
@@ -155,15 +158,15 @@ public class CarpetSettings
   rule("onePlayerSleeping",     "survival", "One player is required on the server to cause night to pass"),
   rule("customMOTD",            "creative","Sets a different motd message on client trying to connect to the server")
                                 .extraInfo("use '_' to use the startup setting from server.properties")
-                                .choices("_","_").setNotStrict().validate((s) ->
+                                .choices("_","_").setNotStrict().validate((s, n) ->
                                     ((MinecraftServer_motdInterface)CarpetServer.minecraft_server).checkMOTD()),
   rule("rotatorBlock",          "experimental", "Cactus in dispensers rotates blocks.")
                                 .extraInfo("Cactus in a dispenser gives the dispenser the ability to rotate the blocks " +
-                                           "that are in front of it anti-clockwise if possible."),
+                                           "that are in front of it anti-clockwise if possible.").wip(),
   rule("viewDistance",          "creative", "Changes the view distance of the server.")
                                 .extraInfo("Set to 0 to not override the value in server settings.")
                                 .choices("0", "0 12 16 32 64").setNotStrict()
-                                .validate( (s) -> {
+                                .validate( (s, n) -> {
                                     int viewDistance = getInt("viewDistance");
                                     if (CarpetServer.minecraft_server.isDedicated())
                                     {
@@ -180,22 +183,23 @@ public class CarpetSettings
                                     }
                                     else
                                     {
-                                        CarpetSettings.get(s).setForce("0");
-                                        Messenger.print_server_message(CarpetServer.minecraft_server, "view distance can only be changed on a server");
+                                        CarpetSettings.get(n).setForce("0");
+                                        if (s != null)
+                                            Messenger.m(s, "w view distance can only be changed on a server");
                                     }
                                 }),
   rule("disableSpawnChunks",      "creative", "Removes the spawn chunks.")
-                                  .validate((s) -> {
+                                  .validate((s, n) -> {
                                       if (!CarpetSettings.getBool("disableSpawnChunks"))
-                                          if (CarpetServer.minecraft_server != null)
-                                              Messenger.print_server_message(CarpetServer.minecraft_server, "Spawn chunks re-enabled. Visit spawn to load it.");
-                                  }).boolAccelerate(),
+                                          if (s != null)
+                                              Messenger.m(s, "w Spawn chunks re-enabled. Visit spawn to load it.");
+                                  }).boolAccelerate().wip(),
   rule("kelpGenerationGrowLimit", "feature", "limits growth limit of newly naturally generated kelp to this amount of blocks")
                                   .choices("25", "0 2 25").setNotStrict(),
   rule("renewableCoral",          "feature", "Coral structures will grow with bonemeal from coral plants"),
-  rule("placementRotationFix",    "fix", "fixes block placement rotation issue when player rotates quickly while placing blocks"),
+  rule("placementRotationFix",    "fix", "fixes block placement rotation issue when player rotates quickly while placing blocks").wip(),
   rule("leadFix",                 "fix", "Fixes leads breaking/becoming invisible in unloaded chunks")
-                                  .extraInfo("You may still get visibly broken leash links on the client side, but server side the link is still there."),
+                                  .extraInfo("You may still get visibly broken leash links on the client side, but server side the link is still there.").wip(),
   rule("lagFreeSpawning", "optimizations", "Spawning requires much less CPU and Memory").boolAccelerate()
         };
         for (CarpetSettingEntry rule: RuleList)
@@ -227,7 +231,7 @@ public class CarpetSettings
         }
         for (String key: conf.keySet())
         {
-            set(key, conf.get(key));
+            set(server.getCommandSource(), key, conf.get(key));
             LOG.info("[CM]: loaded setting "+key+" as "+conf.get(key)+" from carpet.conf");
         }
         locked = is_locked;
@@ -310,41 +314,41 @@ public class CarpetSettings
     }
     
     // stores different defaults in the file
-    public static boolean setDefaultRule(MinecraftServer server, String setting_name, String string_value)
+    public static boolean setDefaultRule(ServerCommandSource source, String setting_name, String string_value)
     {
         if (locked) return false;
         if (settings_store.containsKey(setting_name))
         {
-            Map<String, String> conf = read_conf(server);
+            Map<String, String> conf = read_conf(source.getMinecraftServer());
             conf.put(setting_name, string_value);
-            write_conf(server, conf);
-            set(setting_name,string_value);
+            write_conf(source.getMinecraftServer(), conf);
+            set(source, setting_name,string_value);
             return true;
         }
         return false;
     }
     // removes overrides of the default values in the file  
-    public static boolean removeDefaultRule(MinecraftServer server, String setting_name)
+    public static boolean removeDefaultRule(ServerCommandSource source, String setting_name)
     {
         if (locked) return false;
         if (settings_store.containsKey(setting_name))
         {
-            Map<String, String> conf = read_conf(server);
+            Map<String, String> conf = read_conf(source.getMinecraftServer());
             conf.remove(setting_name);
-            write_conf(server, conf);
-            set(setting_name,get(setting_name).getDefault());
+            write_conf(source.getMinecraftServer(), conf);
+            set(source, setting_name,get(setting_name).getDefault());
             return true;
         }
         return false;
     }
 
     //changes setting temporarily
-    public static boolean set(String setting_name, String string_value)
+    public static boolean set(ServerCommandSource source, String setting_name, String string_value)
     {
         CarpetSettingEntry en = get(setting_name);
         if (en != FalseEntry)
         {
-            en.set(string_value);
+            en.set(source, string_value);
             //reload_stat(setting_name);
             //CarpetClientRuleChanger.updateCarpetClientsRule(setting_name, string_value);
             return true;
@@ -433,66 +437,66 @@ public class CarpetSettings
         return settings_store.get(rule);
     }
     
-    public static void resetToVanilla()
+    public static void resetToVanilla(ServerCommandSource source)
     {
         for (String rule: settings_store.keySet())
         {
-            get(rule).reset();
+            get(rule).reset(source);
             //reload_stat(rule);
         }
     }
     
-    public static void resetToUserDefaults(MinecraftServer server)
+    public static void resetToUserDefaults(ServerCommandSource source)
     {
-        resetToVanilla();
-        apply_settings_from_conf(server);
+        resetToVanilla(source);
+        apply_settings_from_conf(source.getMinecraftServer());
     }
     
-    public static void resetToCreative()
+    public static void resetToCreative(ServerCommandSource source)
     {
-        resetToBugFixes();
-        set("fillLimit","500000");
-        set("fillUpdates","false");
-        set("portalCreativeDelay","true");
-        set("portalCaching","true");
-        set("flippinCactus","true");
-        set("hopperCounters","true");
-        set("antiCheatSpeed","true");
+        resetToBugFixes(source);
+        set(source, "fillLimit","500000");
+        set(source, "fillUpdates","false");
+        set(source, "portalCreativeDelay","true");
+        set(source, "portalCaching","true");
+        set(source, "flippinCactus","true");
+        set(source, "hopperCounters","true");
+        set(source, "antiCheatSpeed","true");
         
     }
-    public static void resetToSurvival()
+    public static void resetToSurvival(ServerCommandSource source)
     {
-        resetToBugFixes();
-        set("ctrlQCraftingFix","true");
-        set("persistentParrots", "true");
-        set("stackableEmptyShulkerBoxes","true");
-        set("flippinCactus","true");
-        set("hopperCounters","true");
-        set("carpets","true");
-        set("missingTools","true");
-        set("portalCaching","true");
-        set("miningGhostBlocksFix","true");
+        resetToBugFixes(source);
+        set(source, "ctrlQCraftingFix","true");
+        set(source, "persistentParrots", "true");
+        set(source, "stackableEmptyShulkerBoxes","true");
+        set(source, "flippinCactus","true");
+        set(source, "hopperCounters","true");
+        set(source, "carpets","true");
+        set(source, "missingTools","true");
+        set(source, "portalCaching","true");
+        set(source, "miningGhostBlocksFix","true");
     }
-    public static void resetToBugFixes()
+    public static void resetToBugFixes(ServerCommandSource source)
     {
-        resetToVanilla();
-        set("portalSuffocationFix","true");
-        set("pistonGhostBlocksFix","serverOnly");
-        set("portalTeleportationFix","true");
-        set("entityDuplicationFix","true");
-        set("inconsistentRedstoneTorchesFix","true");
-        set("llamaOverfeedingFix","true");
-        set("invisibilityFix","true");
-        set("potionsDespawnFix","true");
-        set("liquidsNotRandom","true");
-        set("mobsDontControlMinecarts","true");
-        set("breedingMountingDisabled","true");
-        set("growingUpWallJump","true");
-        set("reloadSuffocationFix","true");
-        set("watchdogFix","true");
-        set("unloadedEntityFix","true");
-        set("hopperDuplicationFix","true");
-        set("calmNetherFires","true");
+        resetToVanilla(source);
+        set(source, "portalSuffocationFix","true");
+        set(source, "pistonGhostBlocksFix","serverOnly");
+        set(source, "portalTeleportationFix","true");
+        set(source, "entityDuplicationFix","true");
+        set(source, "inconsistentRedstoneTorchesFix","true");
+        set(source, "llamaOverfeedingFix","true");
+        set(source, "invisibilityFix","true");
+        set(source, "potionsDespawnFix","true");
+        set(source, "liquidsNotRandom","true");
+        set(source, "mobsDontControlMinecarts","true");
+        set(source, "breedingMountingDisabled","true");
+        set(source, "growingUpWallJump","true");
+        set(source, "reloadSuffocationFix","true");
+        set(source, "watchdogFix","true");
+        set(source, "unloadedEntityFix","true");
+        set(source, "hopperDuplicationFix","true");
+        set(source, "calmNetherFires","true");
     }
 
     public static class CarpetSettingEntry 
@@ -509,7 +513,7 @@ public class CarpetSettings
         private String default_string_value;
         private boolean isFloat;
         private boolean strict;
-        private List<Consumer<String>> validators;
+        private List<BiConsumer<ServerCommandSource, String>> validators;
 
         //factory
         public static CarpetSettingEntry create(String rule_name, String tags, String toast)
@@ -518,7 +522,7 @@ public class CarpetSettings
         }
         private CarpetSettingEntry(String rule_name, String tags_string, String toast_string)
         {
-            set("false");
+            set(null, "false");
             rule = rule_name;
             default_string_value = string;
             tags = tags_string.split("\\s+"); // never empty
@@ -531,12 +535,12 @@ public class CarpetSettings
         }
         public CarpetSettingEntry defaultTrue()
         {
-            set("true");
+            set(null, "true");
             default_string_value = string;
             options = "true false".split("\\s+");
             return this;
         }
-        public CarpetSettingEntry validate(Consumer<String> method)
+        public CarpetSettingEntry validate(BiConsumer<ServerCommandSource, String> method)
         {
             if (validators == null)
             {
@@ -547,7 +551,7 @@ public class CarpetSettings
         }
         public CarpetSettingEntry boolAccelerate()
         {
-            Consumer<String> validator = (name) -> {
+            BiConsumer<ServerCommandSource, String> validator = (source, name) -> {
                 try
                 {
                     Field f = CarpetSettings.class.getDeclaredField("b_"+name);
@@ -566,7 +570,7 @@ public class CarpetSettings
         }
         public CarpetSettingEntry numAccelerate()
         {
-            Consumer<String> validator = (name) -> {
+            BiConsumer<ServerCommandSource, String> validator = (source, name) -> {
                 try
                 {
                     Field f = CarpetSettings.class.getDeclaredField("n_"+name);
@@ -594,12 +598,12 @@ public class CarpetSettings
 
         public CarpetSettingEntry isACommand()
         {
-            return this.defaultTrue().validate( (s) -> notifyPlayersCommandsChanged());
+            return this.defaultTrue().validate( (s, n) -> notifyPlayersCommandsChanged());
         }
 
         public CarpetSettingEntry defaultFalse()
         {
-            set("false");
+            set(null, "false");
             default_string_value = string;
             options = "true false".split("\\s+");
             return this;
@@ -607,7 +611,7 @@ public class CarpetSettings
 
         public CarpetSettingEntry choices(String defaults, String options_string)
         {
-            set(defaults);
+            set(null, defaults);
             default_string_value = string;
             options =  options_string.split("\\s+");
             return this;
@@ -631,12 +635,12 @@ public class CarpetSettings
             return this;
         }
 
-        private void set(String unparsed)
+        private void set(ServerCommandSource source, String unparsed)
         {
             setForce(unparsed);
             if (validators != null)
             {
-                validators.forEach((r) -> r.accept(this.getName()));
+                validators.forEach((r) -> r.accept(source, this.getName()));
             }
         }
         private void setForce(String unparsed)
@@ -677,9 +681,9 @@ public class CarpetSettings
         public boolean getIsFloat() { return isFloat;}
 
         //actual stuff
-        public void reset()
+        public void reset(ServerCommandSource s)
         {
-            set(default_string_value);
+            set(s, default_string_value);
         }
 
         public boolean matches(String tag)
@@ -715,6 +719,14 @@ public class CarpetSettings
         public boolean isStrict()
         {
             return strict;
+        }
+
+        public CarpetSettingEntry wip()
+        {
+            return validate( (s, n) -> {
+               if (s != null)
+                   Messenger.m(s, "r Work in progress - limited or no functionality available for "+n);
+            });
         }
     }
 }
