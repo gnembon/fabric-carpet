@@ -48,6 +48,8 @@
     "FossilFeatureMixin",
     "BuriedTreasureGeneratorPieceMixin",
     "GravityStructureProcessorMixin",
+    "EntityMixin",
+    "DirectionMixin",
 
 
     "ServerChunkManagerMixin",
