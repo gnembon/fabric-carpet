@@ -1,7 +1,9 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -28,7 +30,7 @@ public class ScriptHost
     private String name;
     public String getName() {return name;}
 
-    public ScriptHost(String name)
+    ScriptHost(String name)
     {
         this.name = name;
         globalVariables.put("euler", (c, t) -> Expression.euler);
@@ -153,6 +155,31 @@ public class ScriptHost
         catch (ExpressionException e)
         {
             return e.getMessage();
+        }
+    }
+
+    public void callUDF(BlockPos pos, ServerCommandSource source, UserDefinedFunction acf, List<LazyValue> argv) throws InvalidCallbackException
+    {
+        if (CarpetServer.scriptServer.stopAll)
+            return;
+
+        List<String> args = acf.getArguments();
+        if (argv.size() != args.size())
+        {
+            throw new InvalidCallbackException();
+        }
+        try
+        {
+            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            Context context = new CarpetContext(this, source, pos);
+            Expression.evalValue(
+                    () -> acf.lazyEval(context, Context.VOID, acf.expression, acf.token, argv),
+                    context,
+                    Context.VOID);
+        }
+        catch (ExpressionException e)
+        {
+            CarpetSettings.LOG.error("Callback failed: "+e.getMessage());
         }
     }
 }

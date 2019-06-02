@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -7,6 +8,9 @@ import net.minecraft.util.NonBlockingThreadExecutor;
 import net.minecraft.util.SystemUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.BooleanSupplier;
 
@@ -30,5 +34,14 @@ public abstract class MinecraftServer_scarpetMixin extends NonBlockingThreadExec
         timeReference = field_4557 = SystemUtil.getMeasuringTimeMs();
         tick(isAhead);
         executeTaskQueue();
+    }
+
+    @Inject(method = "tick", at = @At(
+            value = "CONSTANT",
+            args = "stringValue=tallying"
+    ))
+    public void tickTasks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    {
+        CarpetServer.scriptServer.events.onTick();
     }
 }
