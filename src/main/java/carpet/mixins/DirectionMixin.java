@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.utils.IEntity;
+import carpet.fakes.EntityInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Direction;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +20,7 @@ public abstract class DirectionMixin
         }
         else
         {
-            return -((IEntity) entity).getMainYaw(1.0F) * 0.017453292F;
+            return -((EntityInterface) entity).getMainYaw(1.0F) * 0.017453292F;
         }
     }
 }
