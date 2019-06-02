@@ -131,7 +131,7 @@ public class EntityValue extends Value
         return featureAccessors.get(what).apply(entity, arg);
     }
     private static Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
-        put("main", EquipmentSlot.MAINHAND);
+        put("mainhand", EquipmentSlot.MAINHAND);
         put("offhand", EquipmentSlot.OFFHAND);
         put("head", EquipmentSlot.HEAD);
         put("chest", EquipmentSlot.CHEST);

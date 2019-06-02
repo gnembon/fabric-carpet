@@ -3,11 +3,13 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.WorldInterface;
 import carpet.utils.SpawnReporter;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BoundingBox;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
@@ -35,13 +37,17 @@ public class SpawnHelperMixin
         if (CarpetSettings.b_lagFreeSpawning)
         {
             BlockPos.Mutable blockpos = new BlockPos.Mutable();
-            for (int x = (int)bb.minX,  maxx = (int)Math.ceil(bb.maxX); x < maxx; x++)
-                for (int z = (int)bb.minZ, maxz = (int)Math.ceil(bb.maxZ); z < maxz; z++)
-                    for (int y = (int)bb.minY, maxy = (int)Math.ceil(bb.maxY); y < maxy; y++)
+            for (int y = (int)bb.minY, maxy = (int)Math.ceil(bb.maxY); y < maxy; y++)
+                for (int x = (int)bb.minX,  maxx = (int)Math.ceil(bb.maxX); x < maxx; x++)
+                    for (int z = (int)bb.minZ, maxz = (int)Math.ceil(bb.maxZ); z < maxz; z++)
                     {
                         blockpos.set(x, y, z);
-                        if (world.getBlockState(blockpos).getCollisionShape(world, blockpos) != VoxelShapes.empty())
-                            return world.doesNotCollide(bb);
+                        VoxelShape box = world.getBlockState(blockpos).getCollisionShape(world, blockpos);
+                        if ( box == VoxelShapes.empty())
+                            continue;
+                        if (Block.isShapeFullCube(box))
+                            return false;
+                        return world.doesNotCollide(bb);
                     }
             return true;
         }

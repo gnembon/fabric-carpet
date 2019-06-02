@@ -21,11 +21,16 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
+import net.minecraft.item.Items;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.block.BlockPlacementEnvironment;
@@ -44,6 +49,8 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.Heightmap;
+import net.minecraft.world.loot.context.LootContext;
+import net.minecraft.world.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -302,6 +309,12 @@ public class CarpetExpression
      * <p>Causes a block to tick at position.</p>
      * <h3><code>random_tick(pos)</code></h3>
      * <p>Causes a random tick at position.</p>
+     * <h3><code>destroy(pos), destroy(pos, -1), destroy(pos, &lt;N&gt;)</code></h3>
+     * <p>Destroys the block like it was harvest by a player. Add -1 for silk touch, and positive number for fortune level.</p>
+     * <h3><code>harvest(player, pos)</code></h3>
+     * <p>Causes a block to be harvested by a specified player entity. Honors player item enchantments, as well as damages the
+     * tool if applicable. If the entity is not a valid player, no block gets destroyed.</p>
+     *
      *
      * <h2>Block and World querying</h2>
      *
@@ -518,13 +531,7 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Block requires at least one parameter");
             }
-            if (lv.size() == 1)
-            {
-                Value retval = BlockValue.fromCommandExpression(lv.get(0).evalValue(cc).getString());
-                return (c_, t_) -> retval;
-                //return new BlockValue(Registry.field_212618_g.get(new Identifier(lv.get(0).getString())).getDefaultState(), origin);
-            }
-            Value retval = BlockValue.fromParams(cc, lv, 0).block;
+            Value retval = BlockValue.fromParams(cc, lv, 0, true).block;
             return (c_, t_) -> retval;
         });
 
@@ -681,34 +688,93 @@ public class CarpetExpression
             World world = cc.s.getWorld();
             if (lv.size() < 2 || lv.size() % 2 == 1)
                 throw new InternalExpressionException("set block should have at least 2 params and odd attributes");
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
-            Value blockArg = lv.get(locator.offset).evalValue(cc);
-            BlockValue bv = ((blockArg instanceof BlockValue)) ? (BlockValue) blockArg : BlockValue.fromString(blockArg.getString());
-            if (bv == BlockValue.NULL)
-                throw new InternalExpressionException("block to set to should be a valid block");
-            BlockState bs = bv.getBlockState();
-
-            BlockState targetBlockState = world.getBlockState(locator.block.getPos());
-            if (lv.size()==1+locator.offset && !(blockArg instanceof BlockValue)) // no reqs for properties
-                if (targetBlockState.getBlock() == bs.getBlock())
-                    return (c_, t_) -> Value.FALSE;
-
-            StateFactory<Block, BlockState> states = bs.getBlock().getStateFactory();
-
-            for (int i = 1+locator.offset; i < lv.size(); i += 2)
+            BlockValue.LocatorResult targetLocator = BlockValue.fromParams(cc, lv, 0);
+            BlockValue.LocatorResult sourceLocator = BlockValue.fromParams(cc, lv, targetLocator.offset, true);
+            BlockState sourceBlockState = sourceLocator.block.getBlockState();
+            BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
+            if (sourceLocator.offset < lv.size())
             {
-                String paramString = lv.get(i).evalValue(c).getString();
-                Property<?> property = states.getProperty(paramString);
-                if (property == null)
-                    throw new InternalExpressionException("property " + paramString + " doesn't apply to " + blockArg.getString());
-
-                String paramValue = lv.get(i + 1).evalValue(c).getString();
-
-                bs = setProperty(property, paramString, paramValue, bs);
+                StateFactory<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
+                for (int i = sourceLocator.offset; i < lv.size(); i += 2)
+                {
+                    String paramString = lv.get(i).evalValue(c).getString();
+                    Property<?> property = states.getProperty(paramString);
+                    if (property == null)
+                        throw new InternalExpressionException("property " + paramString + " doesn't apply to " + sourceLocator.block.getString());
+                    String paramValue = lv.get(i + 1).evalValue(c).getString();
+                    sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
+                }
             }
-            cc.s.getWorld().setBlockState(locator.block.getPos(), bs, 2 | (CarpetSettings.getBool("fillUpdates") ? 0 : 1024));
-            Value retval = new BlockValue(bs, world, locator.block.getPos());
+            if (sourceBlockState == targetBlockState)
+                return (c_, t_) -> Value.FALSE;
+            if (!CarpetSettings.b_fillUpdates) CarpetSettings.impendingFillSkipUpdates = true;
+            cc.s.getWorld().setBlockState(targetLocator.block.getPos(), sourceBlockState, 2);
+            CarpetSettings.impendingFillSkipUpdates = false;
+            Value retval = new BlockValue(sourceBlockState, world, targetLocator.block.getPos());
             return (c_, t_) -> retval;
+        });
+
+        this.expr.addLazyFunction("destroy", -1, (c, t, lv) -> {
+
+            CarpetContext cc = (CarpetContext)c;
+            ServerWorld world = cc.s.getWorld();
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockState state = locator.block.getBlockState();
+            if (state.isAir())
+                return (c_, t_) -> Value.FALSE;
+            BlockPos where = locator.block.getPos();
+            BlockEntity be = world.getBlockEntity(where);
+            long how = 0;
+            if (lv.size() > locator.offset)
+                how = NumericValue.asNumber(lv.get(locator.offset).evalValue(cc)).getLong();
+            world.clearBlockState(where, false);
+            world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
+            if (how < 0)
+            {
+                Block.dropStack(world, where, new ItemStack(state.getBlock()));
+            }
+            else
+            {
+                ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE, 1);
+                tool.addEnchantment(Enchantments.FORTUNE,(int)how);
+
+                LootContext.Builder lootContext$Builder_1 = (new LootContext.Builder(world)).
+                        setRandom(world.random).
+                        put(LootContextParameters.POSITION, where).
+                        put(LootContextParameters.BLOCK_STATE, state).
+                        putNullable(LootContextParameters.BLOCK_ENTITY, be).
+                        putNullable(LootContextParameters.THIS_ENTITY, cc.s.getEntity()).
+                        put(LootContextParameters.TOOL, tool);
+                state.getDroppedStacks(lootContext$Builder_1).forEach((stack) -> Block.dropStack(world, where, stack));
+
+                //Block.dropStacks(state, world, where, be, cc.s.getEntity(), tool );
+            }
+            return (c_, t_) -> Value.TRUE;
+        });
+
+        this.expr.addLazyFunction("harvest", -1, (c, t, lv) -> {
+
+            CarpetContext cc = (CarpetContext)c;
+            World world = cc.s.getWorld();
+            Value entityValue = lv.get(0).evalValue(cc);
+            if (!(entityValue instanceof EntityValue))
+                return (c_, t_) -> Value.FALSE;
+            Entity e = ((EntityValue) entityValue).getEntity();
+            if (!(e instanceof PlayerEntity))
+                return (c_, t_) -> Value.FALSE;
+            PlayerEntity player = (PlayerEntity)e;
+
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 1);
+            BlockState state = locator.block.getBlockState();
+            BlockPos where = locator.block.getPos();
+            BlockEntity be = world.getBlockEntity(where);
+            world.clearBlockState(where, false);
+            ItemStack itemstack2 = player.getMainHandStack();
+            itemstack2.onBlockBroken(player.world, state, where, player);
+            ItemStack itemstack1 = itemstack2.isEmpty() ? ItemStack.EMPTY : itemstack2.copy();
+            state.getBlock().afterBreak(world, player, where,state, be, itemstack1);
+            world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
+            return (c_, t_) -> Value.TRUE;
         });
 
         this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
@@ -891,7 +957,7 @@ public class CarpetExpression
      * <p>Returns triple of short name, stack count, and NBT of item held in <code>slot</code>.
      * Available options for <code>slot</code> are:</p>
      * <ul>
-     *     <li><code>main</code></li>
+     *     <li><code>mainhand</code></li>
      *     <li><code>offhand</code></li>
      *     <li><code>head</code></li>
      *     <li><code>chest</code></li>
@@ -1573,6 +1639,9 @@ public class CarpetExpression
      * </pre>
      * <h3><code>current_dimension()</code></h3>
      * <p>Returns current dimension that scripts run in.</p>
+     * <h3><code>schedule(delay, function, args...)</code></h3>
+     * <p>Schedules a user defined function to run with a specified <code>delay</code> ticks of delay.
+     * Scheduled functions run at the end of the tick, and they will run in order they were scheduled.</p>
      * <h3><code>plop(pos, what)</code></h3>
      * <p>Plops a structure or a feature at a given <code>pos</code>, so block, triple position coordinates
      * or a list of coordinates. To <code>what</code> gets plopped and exactly where it often depends on the
@@ -1816,7 +1885,7 @@ public class CarpetExpression
             }
             else
             {
-                Messenger.m(s, "w ");
+                Messenger.m(s, "w "+ lv.get(0).evalValue(c).getString());
             }
             return lv.get(0); // pass through for variables
         });
@@ -1884,6 +1953,27 @@ public class CarpetExpression
             if (res == null)
                 return (c_, t_) -> Value.NULL;
             return (c_, t_) -> new NumericValue(res);
+        });
+
+        this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
+            if (lv.size()<2)
+                throw new InternalExpressionException("schedule should have at least 2 arguments, delay and call name");
+            Long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+            String funname = lv.get(1).evalValue(c).getString();
+            CarpetContext cc = (CarpetContext)c;
+            if (!cc.host.globalFunctions.containsKey(funname))
+                throw new InternalExpressionException("function "+funname+" is not defined");
+            List<LazyValue> args = new ArrayList<>();
+            for (int i=2; i < lv.size(); i++)
+            {
+                Value arg = lv.get(i).evalValue(cc);
+                args.add( (_c, _t) -> arg);
+            }
+            if (cc.host.globalFunctions.get(funname).getArguments().size() != args.size())
+                throw new InternalExpressionException("function "+funname+" takes "+
+                        cc.host.globalFunctions.get(funname).getArguments().size()+" arguments, "+args.size()+" provided.");
+            CarpetServer.scriptServer.events.scheduleCall(cc, funname, args, delay);
+            return (c_, t_) -> Value.TRUE;
         });
     }
 

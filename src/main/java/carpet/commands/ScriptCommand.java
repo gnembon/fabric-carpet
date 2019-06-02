@@ -2,6 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.Expression;
 import carpet.script.ExpressionInspector;
@@ -193,9 +194,42 @@ public class ScriptCommand
                             return success?1:0;
                         }));
 
+        LiteralArgumentBuilder<ServerCommandSource> q = literal("event").requires( (player) -> player.hasPermissionLevel(2) ).
+                executes( (cc) -> listEvents(cc.getSource())).
+                then(literal("add_to").
+                        then(argument("event", StringArgumentType.word()).
+                                suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.events.eventHandlers.keySet() ,bb)).
+                                then(argument("call", StringArgumentType.word()).
+                                        suggests( (cc, bb) -> suggestMatching(suggestFunctionCalls(cc), bb)).
+                                        executes( (cc) -> CarpetServer.scriptServer.events.addEvent(
+                                                StringArgumentType.getString(cc, "event"),
+                                                null,
+                                                StringArgumentType.getString(cc, "call")
+                                        )?1:0)).
+                                then(literal("from").
+                                        then(argument("package", StringArgumentType.word()).
+                                                suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
+                                                then(argument("call", StringArgumentType.word()).
+                                                        suggests( (cc, bb) -> suggestMatching(suggestFunctionCalls(cc), bb)).
+                                                        executes( (cc) -> CarpetServer.scriptServer.events.addEvent(
+                                                                StringArgumentType.getString(cc, "event"),
+                                                                StringArgumentType.getString(cc, "package"),
+                                                                StringArgumentType.getString(cc, "call")
+                                                        )?1:0)))))).
+                then(literal("remove_from").
+                        then(argument("event", StringArgumentType.word()).
+                                suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.events.eventHandlers.keySet() ,bb)).
+                                then(argument("call", StringArgumentType.greedyString()).
+                                        suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.events.eventHandlers.get(StringArgumentType.getString(cc, "event")).callList.stream().map(CarpetEventServer.Callback::toString), bb)).
+                                        executes( (cc) -> CarpetServer.scriptServer.events.removeEvent(
+                                                StringArgumentType.getString(cc, "event"),
+                                                StringArgumentType.getString(cc, "call")
+                                        )?1:0))));
+
+
         dispatcher.register(literal("script").
                 requires((player) -> CarpetSettings.getBool("commandScript")).
-                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f));
+                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q));
         dispatcher.register(literal("script").
                 requires((player) -> CarpetSettings.getBool("commandScript")).
                 then(literal("in").
@@ -221,6 +255,24 @@ public class ScriptCommand
         ServerCommandSource s = c.getSource();
         ScriptHost host = getHost(c);
         return host.getPublicFunctions();
+    }
+    private static int listEvents(ServerCommandSource source)
+    {
+        Messenger.m(source, "w Lists ALL event handlers:");
+        for (String event: CarpetServer.scriptServer.events.eventHandlers.keySet())
+        {
+            boolean shownEvent = false;
+            for (CarpetEventServer.Callback c: CarpetServer.scriptServer.events.eventHandlers.get(event).callList)
+            {
+                if (!shownEvent)
+                {
+                    Messenger.m(source, "w Handlers for "+event+": ");
+                    shownEvent = true;
+                }
+                Messenger.m(source, "w  - "+c.udf+(c.host==null?"":" (from "+c.host+")"));
+            }
+        }
+        return 1;
     }
     private static int listGlobals(CommandContext<ServerCommandSource> context)
     {
