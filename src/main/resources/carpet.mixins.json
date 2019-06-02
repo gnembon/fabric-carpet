@@ -48,8 +48,13 @@
     "FossilFeatureMixin",
     "BuriedTreasureGeneratorPieceMixin",
     "GravityStructureProcessorMixin",
+<<<<<<< HEAD
     "EntityMixin",
     "DirectionMixin",
+=======
+    "ServerPlayNetworkHandler_scarpetEventsMixin",
+    "ServerPlayerInteractionManager_scarpetEventsMixin",
+>>>>>>> master
 
 
     "ServerChunkManagerMixin",

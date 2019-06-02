@@ -33,26 +33,8 @@ public class BlockValue extends Value
         return new BlockValue(null, c.s.getWorld(), pos);
     }
 
-    public static BlockValue fromString(String str)
-    {
-        try
-        {
-            Identifier blockId = Identifier.fromCommandInput(new StringReader(str));
-            if (Registry.BLOCK.containsId(blockId))
-            {
-
-                Block block = Registry.BLOCK.get(blockId);
-                return new BlockValue(block.getDefaultState(), null, null);
-            }
-        }
-        catch (CommandSyntaxException ignored)
-        {
-        }
-        throw new InternalExpressionException("Unknown block: "+str);
-    }
-
     private static Map<String, BlockValue> bvCache= new HashMap<>();
-    public static BlockValue fromCommandExpression(String str)
+    public static BlockValue fromString(String str)
     {
         try
         {
@@ -62,6 +44,8 @@ public class BlockValue extends Value
             if (blockstateparser.getBlockState() != null)
             {
                 bv = new BlockValue(blockstateparser.getBlockState(), null, null);
+                if (bvCache.size()>10000)
+                    bvCache.clear();
                 bvCache.put(str, bv);
                 return bv;
             }
@@ -111,9 +95,19 @@ public class BlockValue extends Value
 
     public static LocatorResult fromParams(CarpetContext c, List<LazyValue> params, int offset)
     {
+        return fromParams(c, params,offset, false);
+    }
+
+    public static LocatorResult fromParams(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString)
+    {
         try
         {
             Value v1 = params.get(0 + offset).evalValue(c);
+            //add conditional from string name
+            if (acceptString && v1 instanceof StringValue)
+            {
+                return new LocatorResult(fromString(v1.getString()), 1+offset);
+            }
             if (v1 instanceof BlockValue)
             {
                 return new LocatorResult(((BlockValue) v1), 1+offset);

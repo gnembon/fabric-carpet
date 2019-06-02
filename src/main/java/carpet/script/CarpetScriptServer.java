@@ -7,6 +7,7 @@ import carpet.script.bundled.FileModule;
 import carpet.script.bundled.ModuleInterface;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -36,6 +37,7 @@ public class CarpetScriptServer
     long tickStart;
     public boolean stopAll;
     Set<String> holyMoly;
+    public CarpetEventServer events;
 
     public static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
         add(new CameraPathModule());
@@ -43,7 +45,8 @@ public class CarpetScriptServer
 
     public CarpetScriptServer()
     {
-        globalHost = createMinecraftScriptHost("");
+        globalHost = createMinecraftScriptHost(null);
+        events = new CarpetEventServer();
         modules = new HashMap<>();
         tickStart = 0L;
         stopAll = false;
@@ -102,6 +105,13 @@ public class CarpetScriptServer
         return moduleNames;
     }
 
+    public ScriptHost getHostByName(String name)
+    {
+        if (name == null)
+            return globalHost;
+        return modules.get(name);
+    }
+
 
     private static ScriptHost createMinecraftScriptHost(String name)
     {
@@ -146,10 +156,30 @@ public class CarpetScriptServer
         }
         modules.put(name, newHost);
 
+        addEvents(source, name);
+
         addCommand(source, name);
         return true;
     }
 
+
+    public void addEvents(ServerCommandSource source, String hostName)
+    {
+        ScriptHost host = modules.get(hostName);
+        if (host == null)
+        {
+            return;
+        }
+        for (String fun : host.globalFunctions.keySet())
+        {
+            if (!fun.startsWith("__on_"))
+                continue;
+            String event = fun.replaceFirst("__on_","");
+            if (!events.eventHandlers.containsKey(event))
+                continue;
+            events.addEvent(event, hostName, fun);
+        }
+    }
 
 
     public void addCommand(ServerCommandSource source, String hostName)
@@ -276,6 +306,27 @@ public class CarpetScriptServer
         modules.remove(name);
         CarpetSettings.notifyPlayersCommandsChanged();
         Messenger.m(source, "w Removed host "+name);
+        return true;
+    }
+
+    public boolean runas(ServerCommandSource source, String hostname, String udf_name, List<LazyValue> argv)
+    {
+        return runas(BlockPos.ORIGIN, source, hostname, udf_name, argv);
+    }
+
+    public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, String udf_name, List<LazyValue> argv)
+    {
+        ScriptHost host = globalHost;
+        if (hostname != null)
+            host = modules.get(hostname);
+        try
+        {
+            host.callUDF(origin, source, host.globalFunctions.get(udf_name), argv);
+        }
+        catch (NullPointerException | InvalidCallbackException npe)
+        {
+            return false;
+        }
         return true;
     }
 }
