@@ -75,7 +75,6 @@
     "PlayerEntityMixin"
   ],
   "client": [
-    "DebugHudMixin",
     "MinecraftClientMixin",
     "IntegratedServerMixin",
     "InGameHudMixin",

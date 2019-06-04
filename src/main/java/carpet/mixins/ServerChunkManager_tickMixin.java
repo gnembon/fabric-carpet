@@ -19,7 +19,9 @@ import java.util.function.BooleanSupplier;
 @Mixin(ServerChunkManager.class)
 public abstract class ServerChunkManager_tickMixin
 {
+    /*
     @Shadow @Final private ServerWorld world;
+
     CarpetProfiler.ProfilerToken currentSection;
 
     @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(
@@ -64,7 +66,7 @@ public abstract class ServerChunkManager_tickMixin
         {
             CarpetProfiler.end_current_section(currentSection);
         }
-    }
+    }*/
 
     //// Tick freeze
     @Redirect(method = "tickChunks", at = @At(
