@@ -39,7 +39,7 @@ public class EntityInfo
         {
             return null;
         } // func_190916_E()
-        String stackname = item.getAmount()>1?String.format("%dx%s",item.getAmount(), item.getDisplayName().getString()):item.getDisplayName().getString();
+        String stackname = item.getCount()>1?String.format("%dx%s",item.getCount(), item.getCustomName().getString()):item.getCustomName().getString();
         if (item.isDamaged())
         {
             stackname += String.format(" %d/%d", item.getMaxUseTime()-item.getDamage(), item.getMaxUseTime());

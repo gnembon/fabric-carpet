@@ -179,7 +179,7 @@ public class CarpetSettings
                                             viewDistance = 64;
                                         }
                                         if (viewDistance != CarpetServer.minecraft_server.getPlayerManager().getViewDistance())
-                                            CarpetServer.minecraft_server.getPlayerManager().setViewDistance(viewDistance, viewDistance);
+                                            CarpetServer.minecraft_server.getPlayerManager().setViewDistance(viewDistance);
                                     }
                                     else
                                     {

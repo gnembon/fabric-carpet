@@ -55,14 +55,14 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
             method = "method_20397",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/item/ItemStack;getMaxAmount()I"
+                    target = "Lnet/minecraft/item/ItemStack;getMaxCount()I"
             )
     )
     private int getItemStackMaxAmount(ItemStack stack) {
         if (CarpetSettings.b_stackableShulkerBoxes && stack.getItem() instanceof BlockItem && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
             return SHULKERBOX_MAX_STACK_AMOUNT;
 
-        return stack.getMaxAmount();
+        return stack.getMaxCount();
     }
 
     @Inject(
@@ -82,17 +82,17 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
         if (selfStack.getItem() == otherStack.getItem()
                 && !InventoryHelper.shulkerBoxHasItems(selfStack)
                 && selfStack.hasTag() == otherStack.hasTag()
-                && selfStack.getAmount() + otherStack.getAmount() <= SHULKERBOX_MAX_STACK_AMOUNT)
+                && selfStack.getCount() + otherStack.getCount() <= SHULKERBOX_MAX_STACK_AMOUNT)
         {
-            int amount = Math.min(otherStack.getAmount(), SHULKERBOX_MAX_STACK_AMOUNT - selfStack.getAmount());
+            int amount = Math.min(otherStack.getCount(), SHULKERBOX_MAX_STACK_AMOUNT - selfStack.getCount());
 
-            selfStack.addAmount(amount);
+            selfStack.increment(amount);
             self.setStack(selfStack);
 
             this.pickupDelay = Math.max(((IItemEntity)other).getPickupDelay(), this.pickupDelay);
             this.age = Math.min(((IItemEntity)other).getAge(), this.age);
 
-            otherStack.subtractAmount(amount);
+            otherStack.decrement(amount);
             if (otherStack.isEmpty())
             {
                 other.remove();

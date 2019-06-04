@@ -70,7 +70,6 @@
 
     "FloatingIslandsChunkGeneratorMixin",
     "EndCityFeatureMixin",
-    "SpawnRestrictionMixin",
 
     "InfestedBlockMixin",
     "PlayerEntityMixin"

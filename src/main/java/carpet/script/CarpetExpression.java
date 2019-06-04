@@ -770,7 +770,7 @@ public class CarpetExpression
             BlockEntity be = world.getBlockEntity(where);
             world.clearBlockState(where, false);
             ItemStack itemstack2 = player.getMainHandStack();
-            itemstack2.onBlockBroken(player.world, state, where, player);
+            itemstack2.postMine(player.world, state, where, player);
             ItemStack itemstack1 = itemstack2.isEmpty() ? ItemStack.EMPTY : itemstack2.copy();
             state.getBlock().afterBreak(world, player, where,state, be, itemstack1);
             world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));

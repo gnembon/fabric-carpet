@@ -56,7 +56,7 @@ public class BlockRotator
         if (true) throw new UnsupportedOperationException("Alternative Block Placement / client controlled / is not implemnted");
 
         Direction facing;
-        Vec3d vec3d = context.getPos();
+        Vec3d vec3d = context.getHitPos();
         float hitX = (float) vec3d.x;
 
         if (hitX<2) // vanilla

@@ -249,7 +249,7 @@ public class CarpetEventServer
                     ((c, t) -> new EntityValue(player)),
                     ((c, t) -> ListValue.of(
                             new StringValue(Registry.ITEM.getId(itemstack.getItem()).getPath()),
-                            new NumericValue(itemstack.getAmount()),
+                            new NumericValue(itemstack.getCount()),
                             new StringValue(itemstack.toTag(new CompoundTag()).toString())
                     )),
                     ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"))
@@ -278,7 +278,7 @@ public class CarpetEventServer
                     ((c, t) -> new EntityValue(player)),
                     ((c, t) -> ListValue.of(
                             new StringValue(Registry.ITEM.getId(itemstack.getItem()).getPath()),
-                            new NumericValue(itemstack.getAmount()),
+                            new NumericValue(itemstack.getCount()),
                             new StringValue(itemstack.toTag(new CompoundTag()).toString())
                     )),
                     ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")),

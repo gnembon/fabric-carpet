@@ -178,8 +178,8 @@ public class EntityValue extends Value
         put("width", (e, a) -> new NumericValue(e.getSize(EntityPose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight(EntityPose.STANDING)));
         put("age", (e, a) -> new NumericValue(e.age));
-        put("item", (e, a) -> (e instanceof ItemEntity)?new StringValue(((ItemEntity) e).getStack().getDisplayName().getString()):Value.NULL);
-        put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getAmount()):Value.NULL);
+        put("item", (e, a) -> (e instanceof ItemEntity)?new StringValue(((ItemEntity) e).getStack().getCustomName().getString()):Value.NULL);
+        put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
@@ -279,7 +279,7 @@ public class EntityValue extends Value
                 {
                     return ListValue.of(
                             new StringValue(Registry.ITEM.getId(itemstack.getItem()).getPath()),
-                            new NumericValue(itemstack.getAmount()),
+                            new NumericValue(itemstack.getCount()),
                             new StringValue(itemstack.toTag(new CompoundTag()).toString())
                     );
                 }

@@ -53,7 +53,7 @@ public class HopperCounter
             startMillis = System.currentTimeMillis();
         }
         Item item = stack.getItem();
-        counter.put(item, counter.getLong(item) + stack.getAmount());
+        counter.put(item, counter.getLong(item) + stack.getCount());
         // pubSubProvider.publish();
     }
 

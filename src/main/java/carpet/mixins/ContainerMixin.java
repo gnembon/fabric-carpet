@@ -38,7 +38,7 @@ public class ContainerMixin
                 if(int_1 == 0 && int_2 == 1)
                 {
                     ItemStack itemStackDropAll = dropAllCrafting(playerEntity_1, int_1, slotList);
-                    while (!itemStackDropAll.isEmpty() && ItemStack.areEqual(slot_4.getStack(), itemStackDropAll))
+                    while (!itemStackDropAll.isEmpty() && ItemStack.areItemsEqual(slot_4.getStack(), itemStackDropAll))
                     {
                         itemStack_1 = itemStackDropAll.copy();
                         itemStackDropAll = dropAllCrafting(playerEntity_1, int_1, slotList);
@@ -61,10 +61,10 @@ public class ContainerMixin
             if (index == 0)
             {
                 playerIn.dropItem(itemstack, true);
-                itemstack1.setAmount(0);
+                itemstack1.setCount(0);
                 slot.onStackChanged(itemstack1, itemstack);
             }
-            if (itemstack.getAmount() == itemstack1.getAmount())
+            if (itemstack.getCount() == itemstack1.getCount())
             {
                 return ItemStack.EMPTY;
             }

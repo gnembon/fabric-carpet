@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.fakes.WorldInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.entity.EntityCategory;
