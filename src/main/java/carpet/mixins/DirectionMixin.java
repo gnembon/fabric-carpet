@@ -16,11 +16,11 @@ public abstract class DirectionMixin
     {
         if (!CarpetSettings.getBool("placementRotationFix"))
         {
-            return -entity.getYaw(1.0F) * 0.017453292F;
+            return entity.getYaw(1.0F);
         }
         else
         {
-            return -((EntityInterface) entity).getMainYaw(1.0F) * 0.017453292F;
+            return ((EntityInterface) entity).getMainYaw(1.0F);
         }
     }
 }
