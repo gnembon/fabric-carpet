@@ -72,38 +72,38 @@ import static java.lang.Math.min;
  * <p>or an overly complex example:</p>
  * <pre>
  * /script run
- * $    block_check(x1, y1, z1, x2, y2, z2, block_to_check) ->
- * $    (
- * $        l(minx, maxx) = sort(l(x1, x2));
- * $        l(miny, maxy) = sort(l(y1, y2));
- * $        l(minz, maxz) = sort(l(z1, z2));
- * $        'Need to compute the size of the area of course';
- * $        'Cause this language doesn\'t support comments';
- * $        xsize = maxx - minx + 1;
- * $        ysize = maxy - miny + 1;
- * $        zsize = maxz - minz + 1;
- * $        total_count = 0;
- * $        loop(xsize,
- * $            xx = minx + _ ;
- * $            loop(ysize,
- * $                yy = miny + _ ;
- * $                loop(zsize,
- * $                    zz = minz + _ ;
- * $                    if ( block(xx,yy,zz) == block_to_check,
- * $                        total_count += ceil(rand(1))
- * $                    )
- * $                )
- * $            )
- * $        );
- * $        total_count
- * $    );
- * $    check_area_around_closest_player_for_block(block_to_check) ->
- * $    (
- * $        closest_player = players();
- * $        l(posx, posy, posz) = query(closest_player, 'pos');
- * $        total_count = block_check( posx-8,1,posz-8, posx+8,17,posz+8, block_to_check);
- * $        print('There is '+total_count+' of '+block_to_check+' around you')
- * $    )
+ *     block_check(x1, y1, z1, x2, y2, z2, block_to_check) ->
+ *     (
+ *         l(minx, maxx) = sort(l(x1, x2));
+ *         l(miny, maxy) = sort(l(y1, y2));
+ *         l(minz, maxz) = sort(l(z1, z2));
+ *         'Need to compute the size of the area of course';
+ *         'Cause this language doesn\'t support comments';
+ *         xsize = maxx - minx + 1;
+ *         ysize = maxy - miny + 1;
+ *         zsize = maxz - minz + 1;
+ *         total_count = 0;
+ *         loop(xsize,
+ *             xx = minx + _ ;
+ *             loop(ysize,
+ *                 yy = miny + _ ;
+ *                 loop(zsize,
+ *                     zz = minz + _ ;
+ *                     if ( block(xx,yy,zz) == block_to_check,
+ *                         total_count += ceil(rand(1))
+ *                     )
+ *                 )
+ *             )
+ *         );
+ *         total_count
+ *     );
+ *     check_area_around_closest_player_for_block(block_to_check) ->
+ *     (
+ *         closest_player = player();
+ *         l(posx, posy, posz) = query(closest_player, 'pos');
+ *         total_count = block_check( posx-8,1,posz-8, posx+8,17,posz+8, block_to_check);
+ *         print('There is '+total_count+' of '+block_to_check+' around you')
+ *     )
  *
  * /script invoke check_area_around_closest_player_for_block 'diamond_ore'
  *
@@ -198,16 +198,20 @@ import static java.lang.Math.min;
  *
  *
  * <h2>Line indicators</h2>
+ * <p>Note that this should only apply to pasting your code to execute with commandblock. Scarpet recommends placing your
+ * code in packages (files with <code>.sc</code> extension that can be placed inside "/scripts" folder in the world files
+ * and loaded as a module with command <code>/script load [package_name]</code>. Scarpet modules loaded from disk should only
+ * contain code, no need to start with "/script run" prefix</p>
  * <p>Since the maximum command that can be input to the chat is limited in length, you will be probably inserting your
- * programs by pasting them to command blocks, however pasting to command blocks will remove some whitespaces and squish
+ * programs by pasting them to command blocks or reading from world files, however pasting to command blocks will remove some whitespaces and squish
  * your newlines making the code not readable. If you are pasting a program that is perfect and will never cause an error,
  * I salute you, but for the most part it is quite likely that your program might break, either at compile time, when
  * its initially analyzed, or at execute time, when you suddenly attempt to divide something by zero. In these cases
  * you would want to get a meaningful error message, but for that you would need to indicate for the compiler where
  * did you put these new lines, since command block would squish them. For that, place  at the beginning
- * of the line to let the copiler know where are you. This makes so that <code>$</code> is the only character that is
+ * of the line to let the compiler know where are you. This makes so that <code>$</code> is the only character that is
  * illegal in programs, since it will be replaced with new lines. As far as I know, <code>$</code> is not used
- * anywhere inside Minecraft identifiers, so this shoudn't hinder the abilities of your programs.</p>
+ * anywhere inside Minecraft identifiers, so this shouldn't hinder the abilities of your programs.</p>
  * <p>Consider the following program executed as command block command:</p>
  * <pre>
  * /script run
