@@ -84,7 +84,7 @@ public class CarpetSettings
   rule("portalCreativeDelay",   "creative",  "Portals won't let a creative player go through instantly")
                                 .extraInfo("Holding obsidian in either hand won't let you through at all"),
   rule("ctrlQCraftingFix",      "fix survival", "Dropping entire stacks works also from on the crafting UI result slot"),
-  rule("persistentParrots",     "survival feature", "Parrots don't get of your shoulders until you receive damage").wip(),
+  rule("persistentParrots",     "survival feature", "Parrots don't get of your shoulders until you receive damage"),
   //!rule("growingUpWallJump",     "fix", "Mobs growing up won't glitch into walls or go through fences"),
   //!rule("reloadSuffocationFix",  "fix experimental", "Won't let mobs glitch into blocks when reloaded.")
   //                              .extraInfo("Can cause slight differences in mobs behaviour"),

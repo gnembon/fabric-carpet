@@ -50,6 +50,7 @@
     "GravityStructureProcessorMixin",
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",
+    "PlayerEntity_parrotMixin",
     "SaplingBlockMixin",
     "EntityMixin",
     "DirectionMixin",
