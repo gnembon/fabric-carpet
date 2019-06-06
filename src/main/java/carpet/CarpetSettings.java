@@ -113,8 +113,13 @@ public class CarpetSettings
                                            "Counters are global and shared between players, 16 channels available",
                                            "Items counted are destroyed, count up to one stack per tick per hopper")
                                 .isACommand().boolAccelerate().defaultFalse(),
+<<<<<<< HEAD
   rule("renewableSponges",      "experimental feature", "Guardians turn into Elder Guardian when struck by lightning"),
   rule("movableTileEntities",   "experimental", "Pistons can push tile entities, like hoppers, chests etc.").boolAccelerate().wip(),
+=======
+  rule("renewableSponges",      "experimental feature", "Guardians turn into Elder Guardian when struck by lightning").wip(),
+  rule("movableTileEntities",   "experimental", "Pistons can push tile entities, like hoppers, chests etc.").boolAccelerate(),
+>>>>>>> master
   rule("desertShrubs",          "feature", "Saplings turn into dead shrubs in hot climates and no water access when it attempts to grow into a tree").wip(),
   rule("silverFishDropGravel",  "experimental", "Silverfish drop a gravel item when breaking out of a block"),
   rule("summonNaturalLightning","creative", "summoning a lightning bolt has all the side effects of natural lightning"),

@@ -73,13 +73,21 @@
     "EndCityFeatureMixin",
 
     "InfestedBlockMixin",
-    "PlayerEntityMixin"
+    "PlayerEntityMixin",
+
+    "PistonBlock_movableTEMixin",
+    "PistonBlockEntity_movableTEMixin",
+    "World_movableTEMixin",
+    "WorldChunk_movableTEMixin"
   ],
   "client": [
     "MinecraftClientMixin",
     "IntegratedServerMixin",
     "InGameHudMixin",
-    "PlayerListHudMixin"
+    "PlayerListHudMixin",
+
+    "BlockEntityRenderDispatcher_movableTEMixin",
+    "PistonBlockEntityRenderer_movableTEMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"
