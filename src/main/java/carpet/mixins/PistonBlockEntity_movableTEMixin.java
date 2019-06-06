@@ -118,12 +118,12 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     @Inject(method = "fromTag", at = @At(value = "TAIL"))
     private void onFromTag(CompoundTag compoundTag_1, CallbackInfo ci)
     {
-        if (CarpetSettings.b_movableTileEntities && compoundTag_1.containsKey("carriedTileEntity", 10))
+        if (CarpetSettings.b_movableTileEntities && compoundTag_1.containsKey("carriedTileEntityCM", 10))
         {
             if (this.pushedBlock.getBlock() instanceof BlockEntityProvider)
                 this.carriedBlockEntity = ((BlockEntityProvider) (this.pushedBlock.getBlock())).createBlockEntity(this.world);
             if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
-                this.carriedBlockEntity.fromTag(compoundTag_1.getCompound("carriedTileEntity"));
+                this.carriedBlockEntity.fromTag(compoundTag_1.getCompound("carriedTileEntityCM"));
         }
     }
     
@@ -132,8 +132,8 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     {
         if (CarpetSettings.b_movableTileEntities && this.carriedBlockEntity != null)
         {
-            //Leave name "carriedTileEntity" instead of "carriedBlockEntity" for upgrade compatibility with 1.12 movable TE
-            compoundTag_1.put("carriedTileEntity", this.carriedBlockEntity.toTag(new CompoundTag()));
+            //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
+            compoundTag_1.put("carriedTileEntityCM", this.carriedBlockEntity.toTag(new CompoundTag()));
         }
     }
 }
