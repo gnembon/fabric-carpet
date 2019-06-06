@@ -54,7 +54,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     {
         if (!block.hasBlockEntity())
         {
-            return !true;
+            return false;
         }
         else
         {
