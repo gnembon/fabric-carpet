@@ -79,7 +79,9 @@
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
-    "WorldChunk_movableTEMixin"
+    "WorldChunk_movableTEMixin",
+
+    "BlockPlacementDispenserBehaviourMixin",
   ],
   "client": [
     "MinecraftClientMixin",
