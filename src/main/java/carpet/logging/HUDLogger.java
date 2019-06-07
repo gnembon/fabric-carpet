@@ -2,7 +2,7 @@ package carpet.logging;
 
 import carpet.utils.HUDController;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 
 public class HUDLogger extends Logger
 {
@@ -20,9 +20,9 @@ public class HUDLogger extends Logger
     }
 
     @Override
-    public void sendPlayerMessage(PlayerEntity player, BaseComponent... messages)
+    public void sendPlayerMessage(PlayerEntity player, BaseText... messages)
     {
-        for (BaseComponent m:messages) HUDController.addMessage(player, m);
+        for (BaseText m:messages) HUDController.addMessage(player, m);
     }
 
 

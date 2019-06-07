@@ -6,7 +6,7 @@ import carpet.utils.EntityInfo;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.EntityArgumentType;
@@ -55,9 +55,9 @@ public class InfoCommand
         dispatcher.register(command);
     }
 
-    public static void printEntity(List<BaseComponent> messages, ServerCommandSource source, String grep)
+    public static void printEntity(List<BaseText> messages, ServerCommandSource source, String grep)
     {
-        List<BaseComponent> actual = new ArrayList<>();
+        List<BaseText> actual = new ArrayList<>();
         if (grep != null)
         {
             Pattern p = Pattern.compile(grep);
@@ -65,7 +65,7 @@ public class InfoCommand
             boolean empty = true;
             for (int i = 1; i<messages.size(); i++)
             {
-                BaseComponent line = messages.get(i);
+                BaseText line = messages.get(i);
                 Matcher m = p.matcher(line.getString());
                 if (m.find())
                 {
@@ -86,7 +86,7 @@ public class InfoCommand
         Messenger.send(source, actual);
     }
 
-    public static void printBlock(List<BaseComponent> messages, ServerCommandSource source, String grep)
+    public static void printBlock(List<BaseText> messages, ServerCommandSource source, String grep)
     {
         Messenger.m(source, "");
         if (grep != null)
@@ -95,7 +95,7 @@ public class InfoCommand
             Messenger.m(source, messages.get(0));
             for (int i = 1; i<messages.size(); i++)
             {
-                BaseComponent line = messages.get(i);
+                BaseText line = messages.get(i);
                 Matcher m = p.matcher(line.getString());
                 if (m.find())
                 {
@@ -115,7 +115,7 @@ public class InfoCommand
     {
         for (Entity e: entities)
         {
-            List<BaseComponent> report = EntityInfo.entityInfo(e, source.getWorld());
+            List<BaseText> report = EntityInfo.entityInfo(e, source.getWorld());
             printEntity(report, source, grep);
         }
         return 1;

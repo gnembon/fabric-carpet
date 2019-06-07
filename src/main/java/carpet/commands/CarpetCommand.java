@@ -10,7 +10,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +83,7 @@ public class CarpetCommand
 
         Arrays.stream(rule.getInfo()).forEach(s -> Messenger.m(player, "g  "+s));
 
-        List<BaseComponent> tags = new ArrayList<>();
+        List<BaseText> tags = new ArrayList<>();
         tags.add(Messenger.c("w Tags: "));
         for (String t: rule.getTags())
         {
@@ -94,7 +94,7 @@ public class CarpetCommand
         Messenger.m(player, tags.toArray(new Object[0]));
 
         Messenger.m(player, "w Current value: ",String.format("%s %s (%s value)",rule.getBoolValue()?"lb":"nb", rule.getStringValue(),rule.isDefault()?"default":"modified"));
-        List<BaseComponent> options = new ArrayList<>();
+        List<BaseText> options = new ArrayList<>();
         options.add(Messenger.c("w Options: ", "y [ "));
         for (String o: rule.getOptions())
         {
@@ -133,7 +133,7 @@ public class CarpetCommand
     }
 
 
-    private static BaseComponent displayInteractiveSetting(CarpetSettingEntry e)
+    private static BaseText displayInteractiveSetting(CarpetSettingEntry e)
     {
         List<Object> args = new ArrayList<>();
         args.add("w - "+e.getName()+" ");

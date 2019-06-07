@@ -36,7 +36,7 @@ public abstract class ServerChunkManagerMixin
             locals = LocalCapture.CAPTURE_FAILHARD,
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/world/ThreadedAnvilChunkStorage;entryIterator()Lit/unimi/dsi/fastutil/objects/ObjectBidirectionalIterator;",
+                    target = "Lnet/minecraft/server/world/ThreadedAnvilChunkStorage;entryIterator()Ljava/lang/Iterable;",
                     shift = At.Shift.AFTER,
                     ordinal = 0
 
@@ -75,6 +75,7 @@ public abstract class ServerChunkManagerMixin
         }
     }
 
+/*  problems in 1.14.3 pre 2 with mappings, I think // gnembon
     @Redirect(method = "tickChunks", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;)V"
@@ -173,5 +174,8 @@ public abstract class ServerChunkManagerMixin
         }
         SpawnReporter.local_spawns = null;
     }
+
+
+ */
 
 }

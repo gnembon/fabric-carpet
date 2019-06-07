@@ -3,7 +3,7 @@ package carpet.mixins;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.ClientConnection;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -72,7 +72,7 @@ public abstract class PlayerManagerMixin
                 serverPlayerEntity_3.kill();
                 continue;
             }
-            serverPlayerEntity_3.networkHandler.disconnect(new TranslatableComponent("multiplayer.disconnect.duplicate_login", new Object[0]));
+            serverPlayerEntity_3.networkHandler.disconnect(new TranslatableText("multiplayer.disconnect.duplicate_login", new Object[0]));
         }
     }
 

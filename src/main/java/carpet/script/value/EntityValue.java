@@ -32,7 +32,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.text.LiteralText;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -178,7 +178,7 @@ public class EntityValue extends Value
         put("width", (e, a) -> new NumericValue(e.getSize(EntityPose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight(EntityPose.STANDING)));
         put("age", (e, a) -> new NumericValue(e.age));
-        put("item", (e, a) -> (e instanceof ItemEntity)?new StringValue(((ItemEntity) e).getStack().getCustomName().getString()):Value.NULL);
+        put("item", (e, a) -> (e instanceof ItemEntity)?new StringValue(((ItemEntity) e).getStack().getName().getString()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
@@ -308,8 +308,8 @@ public class EntityValue extends Value
                 if (tags.size()==0)
                     return Value.NULL;
                 if (tags.size()==1)
-                    return new StringValue(tags.get(0).toTextComponent().getString());
-                return ListValue.wrap(tags.stream().map((t) -> new StringValue(t.toTextComponent().getString())).collect(Collectors.toList()));
+                    return new StringValue(tags.get(0).toText().getString());
+                return ListValue.wrap(tags.stream().map((t) -> new StringValue(t.toText().getString())).collect(Collectors.toList()));
             }
             catch (CommandSyntaxException ignored) { }
             return new StringValue(res);
@@ -483,7 +483,7 @@ public class EntityValue extends Value
             String name = v.getString();
             if (name.isEmpty())
                 e.setCustomName(null);
-            e.setCustomName(new TextComponent(v.getString()));
+            e.setCustomName(new LiteralText(v.getString()));
         });
         put("dismount", (e, v) -> e.stopRiding() );
         put("mount", (e, v) -> {

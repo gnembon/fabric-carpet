@@ -2,7 +2,7 @@ package carpet.logging;
 
 import carpet.CarpetServer;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -89,7 +89,7 @@ public class Logger
      * will repeat invocation for players that share the same option
      */
     @FunctionalInterface
-    public interface lMessage { BaseComponent [] get(String playerOption, PlayerEntity player);}
+    public interface lMessage { BaseText [] get(String playerOption, PlayerEntity player);}
     public void log(lMessage messagePromise)
     {
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
@@ -97,7 +97,7 @@ public class Logger
             PlayerEntity player = playerFromName(en.getKey());
             if (player != null)
             {
-                BaseComponent [] messages = messagePromise.get(en.getValue(),player);
+                BaseText [] messages = messagePromise.get(en.getValue(),player);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
@@ -109,10 +109,10 @@ public class Logger
      * and served the same way to all other players subscribed to the same option
      */
     @FunctionalInterface
-    public interface lMessageIgnorePlayer { BaseComponent [] get(String playerOption);}
+    public interface lMessageIgnorePlayer { BaseText [] get(String playerOption);}
     public void log(lMessageIgnorePlayer messagePromise)
     {
-        Map<String, BaseComponent[]> cannedMessages = new HashMap<>();
+        Map<String, BaseText[]> cannedMessages = new HashMap<>();
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
             PlayerEntity player = playerFromName(en.getKey());
@@ -123,7 +123,7 @@ public class Logger
                 {
                     cannedMessages.put(option,messagePromise.get(option));
                 }
-                BaseComponent [] messages = cannedMessages.get(option);
+                BaseText [] messages = cannedMessages.get(option);
                 if (messages != null)
                     sendPlayerMessage(player, messages);
             }
@@ -132,9 +132,9 @@ public class Logger
     /**
      * guarantees that message is evaluated once, so independent from the player and chosen option
      */
-    public void log(Supplier<BaseComponent[]> messagePromise)
+    public void log(Supplier<BaseText[]> messagePromise)
     {
-        BaseComponent [] cannedMessages = null;
+        BaseText [] cannedMessages = null;
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
             PlayerEntity player = playerFromName(en.getKey());
@@ -146,7 +146,7 @@ public class Logger
         }
     }
 
-    public void sendPlayerMessage(PlayerEntity player, BaseComponent ... messages)
+    public void sendPlayerMessage(PlayerEntity player, BaseText ... messages)
     {
         Arrays.stream(messages).forEach(player::sendMessage);
     }

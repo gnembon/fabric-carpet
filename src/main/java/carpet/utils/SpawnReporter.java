@@ -14,7 +14,7 @@ import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.OcelotEntity;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
@@ -84,10 +84,10 @@ public class SpawnReporter
     }
 
 
-    public static List<BaseComponent> printMobcapsForDimension(DimensionType dim, boolean multiline)
+    public static List<BaseText> printMobcapsForDimension(DimensionType dim, boolean multiline)
     {
         String name = dim.toString();
-        List<BaseComponent> lst = new ArrayList<>();
+        List<BaseText> lst = new ArrayList<>();
         if (multiline)
             lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
         Object2IntMap<EntityCategory> dimCounts = mobCounts.get(dim);
@@ -137,9 +137,9 @@ public class SpawnReporter
         return lst;
     }
     
-    public static List<BaseComponent> recent_spawns(World world, EntityCategory creature_type)
+    public static List<BaseText> recent_spawns(World world, EntityCategory creature_type)
     {
-        List<BaseComponent> lst = new ArrayList<>();
+        List<BaseText> lst = new ArrayList<>();
         if ((track_spawns == 0L))
         {
             lst.add(Messenger.s("Spawn tracking not started"));
@@ -165,7 +165,7 @@ public class SpawnReporter
 
     }
     
-    public static List<BaseComponent> show_mobcaps(BlockPos pos, World worldIn)
+    public static List<BaseText> show_mobcaps(BlockPos pos, World worldIn)
     {
         DyeColor under = WoolTool.getWoolColorAtPosition(worldIn, pos.down());
         if (under == null)
@@ -254,9 +254,9 @@ public class SpawnReporter
         return get_type_string(get_creature_type_from_code(str));
     }
     
-    public static List<BaseComponent> printEntitiesByType(EntityCategory cat, World worldIn) //Class<?> entityType)
+    public static List<BaseText> printEntitiesByType(EntityCategory cat, World worldIn) //Class<?> entityType)
     {
-        List<BaseComponent> lst = new ArrayList<>();
+        List<BaseText> lst = new ArrayList<>();
         lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
         for (Entity entity : ((ServerWorld)worldIn).getEntities(null, (e) -> e.getType().getCategory()==cat))
         {
@@ -318,10 +318,10 @@ public class SpawnReporter
         track_spawns = 0L;
     }
     
-    public static List<BaseComponent> tracking_report(World worldIn)
+    public static List<BaseText> tracking_report(World worldIn)
     {
 
-        List<BaseComponent> report = new ArrayList<>();
+        List<BaseText> report = new ArrayList<>();
         if (track_spawns == 0L)
         {
             report.add(Messenger.c(
@@ -395,9 +395,9 @@ public class SpawnReporter
         entity.remove();
     }
 
-    public static List<BaseComponent> report(BlockPos pos, World worldIn)
+    public static List<BaseText> report(BlockPos pos, World worldIn)
     {
-        List<BaseComponent> rep = new ArrayList<>();
+        List<BaseText> rep = new ArrayList<>();
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
         Chunk chunk = worldIn.getChunk(pos);
         int lc = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;

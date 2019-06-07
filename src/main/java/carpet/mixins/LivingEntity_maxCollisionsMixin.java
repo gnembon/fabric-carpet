@@ -6,6 +6,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,7 +33,7 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
     {
         List<Entity> list_1 = this.world.getEntities((Entity)this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
         if (!list_1.isEmpty()) {
-            int int_1 = this.world.getGameRules().getInteger("maxEntityCramming");
+            int int_1 = this.world.getGameRules().getInteger(GameRules.MAX_ENTITY_CRAMMING);
             int int_2;
             if (int_1 > 0 && list_1.size() > int_1 - 1 && this.random.nextInt(4) == 0) {
                 int_2 = 0;

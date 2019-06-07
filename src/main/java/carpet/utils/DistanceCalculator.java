@@ -3,7 +3,7 @@ package carpet.utils;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +18,7 @@ public class DistanceCalculator
         return START_POINT_STORAGE.containsKey(source.getName());
     }
 
-    public static List<BaseComponent> findDistanceBetweenTwoPoints(Vec3d pos1, Vec3d pos2)
+    public static List<BaseText> findDistanceBetweenTwoPoints(Vec3d pos1, Vec3d pos2)
     {
         double dx = MathHelper.abs((float)pos1.x-(float)pos2.x);
         double dy = MathHelper.abs((float)pos1.y-(float)pos2.y);
@@ -26,7 +26,7 @@ public class DistanceCalculator
         double manhattan = dx+dy+dz;
         double spherical = MathHelper.sqrt(dx*dx + dy*dy + dz*dz);
         double cylindrical = MathHelper.sqrt(dx*dx + dz*dz);
-        List<BaseComponent> res = new ArrayList<>();
+        List<BaseText> res = new ArrayList<>();
         res.add(Messenger.c("w Distance between ",
                 Messenger.tp("c",pos1),"w  and ",
                 Messenger.tp("c",pos2),"w :"));

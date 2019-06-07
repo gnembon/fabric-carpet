@@ -7,19 +7,19 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 
 import java.util.function.Supplier;
 
 public class DamageReporter
 {
-    private static BaseComponent[] verifyAndProduceMessage(String option, PlayerEntity player, Entity from, Entity to, Supplier<BaseComponent> messageFuture)
+    private static BaseText[] verifyAndProduceMessage(String option, PlayerEntity player, Entity from, Entity to, Supplier<BaseText> messageFuture)
     {
         if ("all".equalsIgnoreCase(option)
                 || ("players".equalsIgnoreCase(option) && (from instanceof PlayerEntity || to instanceof PlayerEntity))
                 || ("me".equalsIgnoreCase(option) && ( (from == player) || ( to == player)  ) ))
         {
-            return new BaseComponent[]{messageFuture.get()};
+            return new BaseText[]{messageFuture.get()};
         }
         return null;
     }

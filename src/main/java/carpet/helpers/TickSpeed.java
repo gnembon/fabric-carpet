@@ -6,7 +6,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 
 public class TickSpeed
 {
@@ -48,7 +48,7 @@ public class TickSpeed
         }
     }
 
-    public static BaseComponent tickrate_advance(PlayerEntity player, int advance, String callback, ServerCommandSource source)
+    public static BaseText tickrate_advance(PlayerEntity player, int advance, String callback, ServerCommandSource source)
     {
         if (0 == advance)
         {

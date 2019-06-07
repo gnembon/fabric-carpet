@@ -7,8 +7,8 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.util.DyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.chat.BaseComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.text.BaseText;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.ArrayList;
@@ -73,13 +73,13 @@ public class HopperCounter
         }
     }
 
-    public static List<BaseComponent> formatAll(MinecraftServer server, boolean realtime)
+    public static List<BaseText> formatAll(MinecraftServer server, boolean realtime)
     {
-        List<BaseComponent> text = new ArrayList<>();
+        List<BaseText> text = new ArrayList<>();
 
         for (HopperCounter counter : COUNTERS.values())
         {
-            List<BaseComponent> temp = counter.format(server, realtime, false);
+            List<BaseText> temp = counter.format(server, realtime, false);
             if (temp.size() > 1)
             {
                 if (!text.isEmpty()) text.add(Messenger.s(""));
@@ -93,7 +93,7 @@ public class HopperCounter
         return text;
     }
 
-    public List<BaseComponent> format(MinecraftServer server, boolean realTime, boolean brief)
+    public List<BaseText> format(MinecraftServer server, boolean realTime, boolean brief)
     {
         if (counter.isEmpty())
         {
@@ -120,14 +120,14 @@ public class HopperCounter
             return Collections.singletonList(Messenger.c(String.format("c %s: %d, %d/h, %.1f min ",
                     color.getName(), total, total * (20 * 60 * 60) / ticks, ticks / (20.0 * 60.0))));
         }
-        List<BaseComponent> items = new ArrayList<>();
+        List<BaseText> items = new ArrayList<>();
         items.add(Messenger.c(String.format("w Items for %s (%.2f min.%s), total: %d, (%.1f/h):",
                 color, ticks*1.0/(20*60), (realTime?" - real time":""), total, total*1.0*(20*60*60)/ticks),
                 "nb [X]", "^g reset", "!/counter "+color+" reset"
         ));
         items.addAll(counter.object2LongEntrySet().stream().map(e ->
         {
-            BaseComponent itemName = new TranslatableComponent(e.getKey().getTranslationKey());
+            BaseText itemName = new TranslatableText(e.getKey().getTranslationKey());
             long count = e.getLongValue();
             return Messenger.c("w - ", itemName, String.format("w : %d, %.1f/h",
                     count,

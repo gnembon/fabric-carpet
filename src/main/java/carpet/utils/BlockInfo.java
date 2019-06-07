@@ -15,7 +15,7 @@ import net.minecraft.block.BlockPlacementEnvironment;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -149,7 +149,7 @@ public class BlockInfo
         put(Material.CAKE           , "cake"         );
     }};
 
-    public static List<BaseComponent> blockInfo(BlockPos pos, World world)
+    public static List<BaseText> blockInfo(BlockPos pos, World world)
     {
         BlockState state = world.getBlockState(pos);
         Material material = state.getMaterial();
@@ -159,7 +159,7 @@ public class BlockInfo
         {
             metastring += ", "+iproperty.getName() + '='+state.get(iproperty);
         }
-        List<BaseComponent> lst = new ArrayList<>();
+        List<BaseText> lst = new ArrayList<>();
         lst.add(Messenger.s(""));
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):",Registry.BLOCK.getId(block),metastring, Registry.BLOCK.getRawId(block), metastring )));
@@ -198,7 +198,7 @@ public class BlockInfo
         return lst;
     }
 
-    private static BaseComponent wander_chances(BlockPos pos, World worldIn)
+    private static BaseText wander_chances(BlockPos pos, World worldIn)
     {
         MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIE_PIGMAN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);

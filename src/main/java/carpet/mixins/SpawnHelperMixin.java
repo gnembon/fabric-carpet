@@ -8,7 +8,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BoundingBox;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.SpawnHelper;
@@ -22,13 +22,14 @@ import java.util.Map;
 @Mixin(SpawnHelper.class)
 public class SpawnHelperMixin
 {
+    
     // in World: private static Map<EntityType, Entity> precookedMobs= new HashMap<>();
 
     @Redirect(method = "spawnEntitiesInChunk", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;doesNotCollide(Lnet/minecraft/util/math/BoundingBox;)Z"
+            target = "Lnet/minecraft/world/World;doesNotCollide(Lnet/minecraft/util/math/Box;)Z"
     ))
-    private static boolean doesNotCollide(World world, BoundingBox bb)
+    private static boolean doesNotCollide(World world, Box bb)
     {
         //.doesNotCollide is VERY expensive. On the other side - most worlds are not made of trapdoors in
         // various configurations, but solid and 'passable' blocks, like air, water grass, etc.

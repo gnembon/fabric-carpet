@@ -41,7 +41,7 @@ import net.minecraft.state.StateFactory;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.util.Identifier;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.BoundingBox;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
@@ -1128,7 +1128,7 @@ public class CarpetExpression
                     NumericValue.asNumber(lv.get(2).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(3).evalValue(c)).getDouble()
             );
-            BoundingBox area = new BoundingBox(center).expand(
+            Box area = new Box(center).expand(
                     NumericValue.asNumber(lv.get(4).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(5).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(6).evalValue(c)).getDouble()

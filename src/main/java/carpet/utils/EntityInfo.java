@@ -4,7 +4,7 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class EntityInfo
         {
             return null;
         } // func_190916_E()
-        String stackname = item.getCount()>1?String.format("%dx%s",item.getCount(), item.getCustomName().getString()):item.getCustomName().getString();
+        String stackname = item.getCount()>1?String.format("%dx%s",item.getCount(), item.getName().getString()):item.getName().getString();
         if (item.isDamaged())
         {
             stackname += String.format(" %d/%d", item.getMaxUseTime()-item.getDamage(), item.getMaxUseTime());
@@ -51,7 +51,7 @@ public class EntityInfo
             for (Enchantment e: enchants.keySet())
             {
                 int level = enchants.get(e);
-                String enstring = e.getTextComponent(level).getString();
+                String enstring = e.getName(level).getString();
                 stackname += enstring+" ";
             }
             stackname += ")";
@@ -92,9 +92,9 @@ public class EntityInfo
         return 100*(internal-min)/(max-min);
     }
 
-    public static List<BaseComponent> entityInfo(Entity e, World source_world)
+    public static List<BaseText> entityInfo(Entity e, World source_world)
     {
-        List<BaseComponent> lst = new ArrayList<>();
+        List<BaseText> lst = new ArrayList<>();
         lst.add(Messenger.s("w Use /data get entity command"));
         return lst;
     }

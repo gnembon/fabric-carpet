@@ -12,8 +12,8 @@ import net.minecraft.client.network.packet.PlayerListHeaderS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.network.chat.BaseComponent;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.text.BaseText;
+import net.minecraft.text.LiteralText;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayList;
@@ -25,9 +25,9 @@ import java.util.Map;
 
 public class HUDController
 {
-    public static Map<PlayerEntity, List<BaseComponent>> player_huds = new HashMap<>();
+    public static Map<PlayerEntity, List<BaseText>> player_huds = new HashMap<>();
 
-    public static void addMessage(PlayerEntity player, BaseComponent hudMessage)
+    public static void addMessage(PlayerEntity player, BaseText hudMessage)
     {
         if (!player_huds.containsKey(player))
         {
@@ -35,15 +35,15 @@ public class HUDController
         }
         else
         {
-            player_huds.get(player).add(new TextComponent("\n"));
+            player_huds.get(player).add(new LiteralText("\n"));
         }
         player_huds.get(player).add(hudMessage);
     }
     public static void clear_player(PlayerEntity player)
     {
         PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-        ((PlayerListHeaderS2CPacketMixin)packet).setHeader(new TextComponent(""));
-        ((PlayerListHeaderS2CPacketMixin)packet).setFooter(new TextComponent(""));
+        ((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
+        ((PlayerListHeaderS2CPacketMixin)packet).setFooter(new LiteralText(""));
         ((ServerPlayerEntity)player).networkHandler.sendPacket(packet);
     }
 
@@ -73,7 +73,7 @@ public class HUDController
                         dim = DimensionType.THE_END;
                         break;
                 }
-                return new BaseComponent[]{SpawnReporter.printMobcapsForDimension(dim, false).get(0)};
+                return new BaseText[]{SpawnReporter.printMobcapsForDimension(dim, false).get(0)};
             });
 
         if(LoggerRegistry.__counter)
@@ -85,30 +85,30 @@ public class HUDController
         for (PlayerEntity player: player_huds.keySet())
         {
             PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(new TextComponent(""));
+            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
             ((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.get(player).toArray(new Object[0])));
             ((ServerPlayerEntity)player).networkHandler.sendPacket(packet);
         }
     }
-    private static BaseComponent [] send_tps_display(MinecraftServer server)
+    private static BaseText [] send_tps_display(MinecraftServer server)
     {
         double MSPT = MathHelper.average(server.lastTickLengths) * 1.0E-6D;
         double TPS = 1000.0D / Math.max((TickSpeed.time_warp_start_time != 0)?0.0:TickSpeed.mspt, MSPT);
         String color = Messenger.heatmap_color(MSPT,TickSpeed.mspt);
-        return new BaseComponent[]{Messenger.c(
+        return new BaseText[]{Messenger.c(
                 "g TPS: ", String.format(Locale.US, "%s %.1f",color, TPS),
                 "g  MSPT: ", String.format(Locale.US,"%s %.1f", color, MSPT))};
     }
 
-    private static BaseComponent [] send_counter_info(MinecraftServer server, String color)
+    private static BaseText [] send_counter_info(MinecraftServer server, String color)
     {
         HopperCounter counter = HopperCounter.getCounter(color);
-        List <BaseComponent> res = counter == null ? Collections.emptyList() : counter.format(server, false, true);
-        return new BaseComponent[]{ Messenger.c(res.toArray(new Object[0]))};
+        List <BaseText> res = counter == null ? Collections.emptyList() : counter.format(server, false, true);
+        return new BaseText[]{ Messenger.c(res.toArray(new Object[0]))};
     }
-    private static BaseComponent [] packetCounter()
+    private static BaseText [] packetCounter()
     {
-        BaseComponent [] ret =  new BaseComponent[]{
+        BaseText [] ret =  new BaseText[]{
                 Messenger.c("w I/" + PacketCounter.totalIn + " O/" + PacketCounter.totalOut),
         };
         PacketCounter.reset();

@@ -9,7 +9,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.util.DyeColor;
-import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.text.BaseText;
 
 public class CounterCommand
 {
@@ -42,7 +42,7 @@ public class CounterCommand
         HopperCounter counter = HopperCounter.getCounter(color);
         if (counter == null) throw new CommandException(Messenger.s("Unknown wool color: "+color));
 
-        for (BaseComponent message: counter.format(source.getMinecraftServer(), realtime, false))
+        for (BaseText message: counter.format(source.getMinecraftServer(), realtime, false))
         {
             source.sendFeedback(message, false);
         }
@@ -68,7 +68,7 @@ public class CounterCommand
 
     private static int listAllCounters(ServerCommandSource source, boolean realtime)
     {
-        for (BaseComponent message: HopperCounter.formatAll(source.getMinecraftServer(), realtime))
+        for (BaseText message: HopperCounter.formatAll(source.getMinecraftServer(), realtime))
         {
             source.sendFeedback(message, false);
         }
