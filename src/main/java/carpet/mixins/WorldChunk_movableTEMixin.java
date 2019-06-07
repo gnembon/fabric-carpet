@@ -2,7 +2,6 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.fakes.WorldChunkInterface;
-import com.sun.istack.internal.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
@@ -39,7 +38,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
     private World world;
     
     @Shadow
-    @Nullable
+    /* @Nullable */
     public abstract BlockEntity getBlockEntity(BlockPos blockPos_1, WorldChunk.CreationType worldChunk$CreationType_1);
     
     // Fix Failure: If a moving BlockEntity is placed while BlockEntities are ticking, this will not find it and then replace it with a new TileEntity!
@@ -66,7 +65,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
      *
      * @author 2No2Name
      */
-    @Nullable
+    /* @Nullable */
     public BlockState setBlockStateWithBlockEntity(BlockPos blockPos_1, BlockState newBlockState, BlockEntity newBlockEntity,
             boolean boolean_1)
     {
