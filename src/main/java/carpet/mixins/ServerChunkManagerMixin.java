@@ -75,8 +75,7 @@ public abstract class ServerChunkManagerMixin
         }
     }
 
-/*  problems in 1.14.3 pre 2 with mappings, I think // gnembon
-    @Redirect(method = "tickChunks", at = @At(
+    @Redirect(method = "method_20801", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;)V"
     ))
@@ -89,7 +88,7 @@ public abstract class ServerChunkManagerMixin
         }
     }
 
-    @Redirect(method = "tickChunks", at = @At(
+    @Redirect(method = "method_20801", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/EntityCategory;getSpawnCap()I"
     ))
@@ -176,6 +175,5 @@ public abstract class ServerChunkManagerMixin
     }
 
 
- */
 
 }
