@@ -53,11 +53,16 @@
     "PlayerEntity_parrotMixin",
     "SaplingBlockMixin",
     "EntityMixin",
-    "DirectionMixin",
     "GuardianEntityMixin",
 
     "ServerChunkManagerMixin",
     "SpawnHelperMixin",
+
+    "DirectionMixin",
+    "ServerPlayerInteractionManager_cactusMixin",
+    "HopperBlock_cactusMixin",
+    "ItemUsageContext_cactusMixin",
+    "Bootstrap_cactusMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",
