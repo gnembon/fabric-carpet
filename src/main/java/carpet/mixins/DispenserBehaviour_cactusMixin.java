@@ -9,10 +9,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//UNUSED - used Bootstrap_cactus instead cause mixins
 @Mixin(DispenserBehavior.class)
 public interface DispenserBehaviour_cactusMixin
 {
+    @SuppressWarnings("PublicStaticMixinMember")
     @Inject(method = "registerDefaults", at = @At("HEAD"))
     static void addBlockRotator(CallbackInfo ci)
     {

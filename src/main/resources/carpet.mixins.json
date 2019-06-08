@@ -62,7 +62,7 @@
     "ServerPlayerInteractionManager_cactusMixin",
     "HopperBlock_cactusMixin",
     "ItemUsageContext_cactusMixin",
-    "Bootstrap_cactusMixin",
+    "DispenserBehaviour_cactusMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",
