@@ -80,7 +80,6 @@ public class CarpetSettings
   rule("portalSuffocationFix",  "fix", "Nether portals correctly place entities going through")
                                 .extraInfo("Entities shouldn't suffocate in obsidian").wip(),
   rule("superSecretSetting",    "experimental","Gbhs sgnf sadsgras fhskdpri!"),
-  rule("invisibilityFix",       "fix", "Guardians honor players' invisibility effect").wip(),
   rule("portalCreativeDelay",   "creative",  "Portals won't let a creative player go through instantly")
                                 .extraInfo("Holding obsidian in either hand won't let you through at all"),
   rule("ctrlQCraftingFix",      "fix survival", "Dropping entire stacks works also from on the crafting UI result slot"),
@@ -105,7 +104,7 @@ public class CarpetSettings
                                 .defaultTrue().wip(),
   rule("flippinCactus",         "creative survival", "Players can flip and rotate blocks when holding cactus")
                                 .extraInfo("Doesn't cause block updates when rotated/flipped",
-                                           "Applies to pistons, observers, droppers, repeaters, stairs, glazed terracotta etc...").wip(),
+                                           "Applies to pistons, observers, droppers, repeaters, stairs, glazed terracotta etc..."),
   rule("hopperCounters",        "commands creative survival","hoppers pointing to wool will count items passing through them")
                                 .extraInfo("Enables /counter command, and actions while placing red and green carpets on wool blocks",
                                            "Use /counter <color?> reset to reset the counter, and /counter <color?> to query",
@@ -162,7 +161,7 @@ public class CarpetSettings
                                     ((MinecraftServer_motdInterface)CarpetServer.minecraft_server).checkMOTD()),
   rule("rotatorBlock",          "experimental", "Cactus in dispensers rotates blocks.")
                                 .extraInfo("Cactus in a dispenser gives the dispenser the ability to rotate the blocks " +
-                                           "that are in front of it anti-clockwise if possible.").wip(),
+                                           "that are in front of it anti-clockwise if possible."),
   rule("viewDistance",          "creative", "Changes the view distance of the server.")
                                 .extraInfo("Set to 0 to not override the value in server settings.")
                                 .choices("0", "0 12 16 32 64").setNotStrict()
@@ -724,8 +723,12 @@ public class CarpetSettings
         public CarpetSettingEntry wip()
         {
             return validate( (s, n) -> {
-               if (s != null)
-                   Messenger.m(s, "r Work in progress - limited or no functionality available for "+n);
+                if (s != null)
+                    try
+                    {
+                        Messenger.m(s, "r Work in progress - limited or no functionality available for "+n);
+                    }
+                    catch (NullPointerException ignored) { }
             });
         }
     }

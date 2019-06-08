@@ -21,6 +21,7 @@ import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.StairsBlock;
 import net.minecraft.block.TrapdoorBlock;
+import net.minecraft.block.dispenser.FallibleItemDispenserBehavior;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.enums.SlabType;
@@ -31,6 +32,7 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPointer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -40,13 +42,16 @@ import net.minecraft.world.World;
 
 public class BlockRotator
 {
-    public static boolean flipBlockWithCactus(World worldIn, BlockPos pos, BlockState state, PlayerEntity playerIn, Hand hand, Direction facing, float hitX, float hitY, float hitZ)
+    public static boolean flipBlockWithCactus(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
     {
-        if (!playerIn.abilities.allowModifyWorld || !CarpetSettings.getBool("flippinCactus") || !player_holds_cactus_mainhand(playerIn))
+        if (!player.abilities.allowModifyWorld || !CarpetSettings.getBool("flippinCactus") || !player_holds_cactus_mainhand(player))
         {
             return false;
         }
-        return flip_block(worldIn, pos, state, playerIn, hand, facing, hitX, hitY, hitZ);
+        CarpetSettings.impendingFillSkipUpdates = true;
+        boolean retval = flip_block(state, world, player, hand, hit);
+        CarpetSettings.impendingFillSkipUpdates = false;
+        return retval;
     }
 
     public static BlockState alternativeBlockPlacement(Block block,  ItemPlacementContext context)//World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
@@ -185,66 +190,69 @@ public class BlockRotator
 
 
 
-    public static boolean flip_block(World worldIn, BlockPos pos, BlockState state, PlayerEntity playerIn, Hand hand, Direction facing, float hitX, float hitY, float hitZ)
+    public static boolean flip_block(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
     {
         Block block = state.getBlock();
+        BlockPos pos = hit.getBlockPos();
+        Vec3d hitVec = hit.getPos().subtract(pos.getX(), pos.getY(), pos.getZ());
+        Direction facing = hit.getSide();
         if ( (block instanceof GlazedTerracottaBlock) || (block instanceof AbstractRedstoneGateBlock) || (block instanceof RailBlock) ||
              (block instanceof TrapdoorBlock)         || (block instanceof LeverBlock)         || (block instanceof FenceGateBlock))
         {
-            worldIn.setBlockState(pos, block.rotate(state, BlockRotation.CLOCKWISE_90), 2 | 1024);
+            world.setBlockState(pos, state.rotate(BlockRotation.CLOCKWISE_90), 2 | 1024);
         }
         else if ((block instanceof ObserverBlock) || (block instanceof EndRodBlock))
         {
-            worldIn.setBlockState(pos, state.with(FacingBlock.FACING, (Direction) state.get(FacingBlock.FACING).getOpposite()), 2 | 1024);
+            world.setBlockState(pos, state.with(FacingBlock.FACING, (Direction) state.get(FacingBlock.FACING).getOpposite()), 2 | 1024);
         }
         else if (block instanceof DispenserBlock)
         {
-            worldIn.setBlockState(pos, state.with(DispenserBlock.FACING, state.get(DispenserBlock.FACING).getOpposite()), 2 | 1024);
+            world.setBlockState(pos, state.with(DispenserBlock.FACING, state.get(DispenserBlock.FACING).getOpposite()), 2 | 1024);
         }
         else if (block instanceof PistonBlock)
         {
             if (!(state.get(PistonBlock.EXTENDED)))
-                worldIn.setBlockState(pos, state.with(FacingBlock.FACING, state.get(FacingBlock.FACING).getOpposite()), 2 | 1024);
+                world.setBlockState(pos, state.with(FacingBlock.FACING, state.get(FacingBlock.FACING).getOpposite()), 2 | 1024);
         }
         else if (block instanceof SlabBlock)
         {
             if (((SlabBlock) block).hasSidedTransparency(state))
             {
-                worldIn.setBlockState(pos, state.with(SlabBlock.TYPE, state.get(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP), 2 | 1024);
+                world.setBlockState(pos, state.with(SlabBlock.TYPE, state.get(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP), 2 | 1024);
             }
         }
         else if (block instanceof HopperBlock)
         {
             if ((Direction)state.get(HopperBlock.FACING) != Direction.DOWN)
             {
-                worldIn.setBlockState(pos, state.with(HopperBlock.FACING, state.get(HopperBlock.FACING).rotateYClockwise()), 2 | 1024);
+                world.setBlockState(pos, state.with(HopperBlock.FACING, state.get(HopperBlock.FACING).rotateYClockwise()), 2 | 1024);
             }
         }
         else if (block instanceof StairsBlock)
         {
             //LOG.error(String.format("hit with facing: %s, at side %.1fX, X %.1fY, Y %.1fZ",facing, hitX, hitY, hitZ));
-            if ((facing == Direction.UP && hitY == 1.0f) || (facing == Direction.DOWN && hitY == 0.0f))
+            if ((facing == Direction.UP && hitVec.y == 1.0f) || (facing == Direction.DOWN && hitVec.y == 0.0f))
             {
-                worldIn.setBlockState(pos, state.with(StairsBlock.HALF, state.get(StairsBlock.HALF) == BlockHalf.TOP ? BlockHalf.BOTTOM : BlockHalf.TOP ), 2 | 1024);
+                world.setBlockState(pos, state.with(StairsBlock.HALF, state.get(StairsBlock.HALF) == BlockHalf.TOP ? BlockHalf.BOTTOM : BlockHalf.TOP ), 2 | 1024);
             }
             else
             {
                 boolean turn_right;
                 if (facing == Direction.NORTH)
                 {
-                    turn_right = (hitX <= 0.5);
+                    turn_right = (hitVec.x <= 0.5);
                 }
                 else if (facing == Direction.SOUTH)
                 {
-                    turn_right = !(hitX <= 0.5);
+                    turn_right = !(hitVec.x <= 0.5);
                 }
                 else if (facing == Direction.EAST)
                 {
-                    turn_right = (hitZ <= 0.5);
+                    turn_right = (hitVec.z <= 0.5);
                 }
                 else if (facing == Direction.WEST)
                 {
-                    turn_right = !(hitZ <= 0.5);
+                    turn_right = !(hitVec.z <= 0.5);
                 }
                 else
                 {
@@ -252,11 +260,11 @@ public class BlockRotator
                 }
                 if (turn_right)
                 {
-                    worldIn.setBlockState(pos, block.rotate(state, BlockRotation.COUNTERCLOCKWISE_90), 2 | 1024);
+                    world.setBlockState(pos, state.rotate(BlockRotation.COUNTERCLOCKWISE_90), 2 | 1024);
                 }
                 else
                 {
-                    worldIn.setBlockState(pos, block.rotate(state, BlockRotation.CLOCKWISE_90), 2 | 1024);
+                    world.setBlockState(pos, state.rotate(BlockRotation.CLOCKWISE_90), 2 | 1024);
                 }
             }
         }
@@ -264,7 +272,7 @@ public class BlockRotator
         {
             return false;
         }
-        worldIn.scheduleBlockRender(pos);
+        world.scheduleBlockRender(pos);
         return true;
     }
     private static boolean player_holds_cactus_mainhand(PlayerEntity playerIn)
@@ -279,10 +287,26 @@ public class BlockRotator
                 && (entity instanceof PlayerEntity))
         {
             PlayerEntity player = (PlayerEntity)entity;
-            return (!player.getMainHandStack().isEmpty()
-                    && player.getMainHandStack().getItem() instanceof BlockItem &&
-                    ((BlockItem) (player.getMainHandStack().getItem())).getBlock() == Blocks.CACTUS);
+            return (!player.getOffHandStack().isEmpty()
+                    && player.getOffHandStack().getItem() instanceof BlockItem &&
+                    ((BlockItem) (player.getOffHandStack().getItem())).getBlock() == Blocks.CACTUS);
         }
         return false;
+    }
+
+    public static class CactusDispenserBehaviour extends FallibleItemDispenserBehavior
+    {
+        @Override
+        protected ItemStack dispenseSilently(BlockPointer source, ItemStack stack)
+        {
+            if (CarpetSettings.getBool("rotatorBlock"))
+            {
+                return BlockRotator.dispenserRotate(source, stack);
+            }
+            else
+            {
+                return super.dispenseSilently(source, stack);
+            }
+        }
     }
 }
