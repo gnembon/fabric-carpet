@@ -80,7 +80,6 @@ public class CarpetSettings
   rule("portalSuffocationFix",  "fix", "Nether portals correctly place entities going through")
                                 .extraInfo("Entities shouldn't suffocate in obsidian").wip(),
   rule("superSecretSetting",    "experimental","Gbhs sgnf sadsgras fhskdpri!"),
-  rule("invisibilityFix",       "fix", "Guardians honor players' invisibility effect").wip(),
   rule("portalCreativeDelay",   "creative",  "Portals won't let a creative player go through instantly")
                                 .extraInfo("Holding obsidian in either hand won't let you through at all"),
   rule("ctrlQCraftingFix",      "fix survival", "Dropping entire stacks works also from on the crafting UI result slot"),
