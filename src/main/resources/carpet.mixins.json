@@ -64,6 +64,9 @@
     "ItemUsageContext_cactusMixin",
     "DispenserBehaviour_cactusMixin",
 
+    "PortalForcer_portalCachingMixin",
+    "PortalBlock_portalCachingMixin",
+
     "HopperBlockEntityMixin",
     "ContainerMixin",
     "ClientConnectionMixin",
