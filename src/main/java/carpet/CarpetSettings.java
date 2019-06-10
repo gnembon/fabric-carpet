@@ -1,41 +1,32 @@
 package carpet;
 
+import carpet.fakes.MinecraftServer_motdInterface;
+import carpet.fakes.PortalForcerInterface;
+import carpet.utils.Messenger;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.network.ServerPlayerEntity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileReader;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-
 //import carpet.helpers.SpawnChunks;
-import carpet.fakes.MinecraftServer_motdInterface;
-import carpet.utils.Messenger;
-import net.minecraft.server.command.CommandSource;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.dimension.DimensionType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.minecraft.server.MinecraftServer;
 
 public class CarpetSettings
 {
@@ -136,7 +127,9 @@ public class CarpetSettings
   rule("commandPlayer",         "commands", "Enables /player command to control/spawn players").isACommand().wip(),
   rule("carpets",               "survival", "Placing carpets may issue carpet commands for non-op players"),
   rule("missingTools",          "survival", "Pistons, Glass and Sponge can be broken faster with their appropriate tools").wip(),
-  rule("portalCaching",         "survival experimental", "Alternative, persistent caching strategy for nether portals").wip(),
+  rule("portalCaching",         "survival experimental", "Alternative, persistent caching strategy for nether portals").validate(
+          (s, n) -> s.getMinecraftServer().getWorlds().forEach(w -> ((PortalForcerInterface)w.getPortalForcer()).invalidateCache())
+  ),
   rule("calmNetherFires",       "experimental", "Permanent fires don't schedule random updates").wip(),
   rule("fillUpdates",           "creative", "fill/clone/setblock and structure blocks cause block updates").defaultTrue().boolAccelerate(),
   rule("pushLimit",             "creative","Customizable piston push limit")
