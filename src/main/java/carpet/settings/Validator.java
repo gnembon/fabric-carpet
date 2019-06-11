@@ -62,4 +62,11 @@ public abstract class Validator<T> {
             return newValue;
         }
     }
+
+    public static class NONNEGATIVE_NUMBER <T extends Number> extends Validator<T> {
+        @Override
+        public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string) {
+            return newValue.doubleValue() >= 0 ? newValue : null;
+        }
+    }
 }
