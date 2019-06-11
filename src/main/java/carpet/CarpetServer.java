@@ -10,6 +10,7 @@ import carpet.commands.DistanceCommand;
 import carpet.commands.DrawCommand;
 import carpet.commands.InfoCommand;
 import carpet.commands.LogCommand;
+import carpet.commands.ParcetCommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ScriptCommand;
@@ -18,6 +19,8 @@ import carpet.commands.TickCommand;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
+import carpet.settings.Settings;
+import carpet.settings.SettingsManager;
 import carpet.utils.HUDController;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.command.ServerCommandSource;
@@ -28,12 +31,21 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static final Random rand = new Random((int)((2>>16)*Math.random()));
     public static MinecraftServer minecraft_server;
     public static CarpetScriptServer scriptServer;
+    public static SettingsManager settingsManager;
+    static {
+        SettingsManager.parseSettingsClass(Settings.class);
+        //...
+    }
     public static void init(MinecraftServer server) //aka constructor of this static singleton class
     {
         CarpetServer.minecraft_server = server;
     }
     public static void onServerLoaded(MinecraftServer server)
     {
+        //new
+        settingsManager = new SettingsManager(server);
+
+        //old
         CarpetSettings.apply_settings_from_conf(server);
         scriptServer = new CarpetScriptServer();
     }
@@ -65,6 +77,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         PerimeterInfoCommand.register(dispatcher);
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
+        ParcetCommand.register(dispatcher);
 
         //TestCommand.register(dispatcher);
     }

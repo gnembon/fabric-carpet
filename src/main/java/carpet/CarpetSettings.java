@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -214,19 +215,19 @@ public class CarpetSettings
 
     public static void apply_settings_from_conf(MinecraftServer server)
     {
-        Map<String, String> conf = read_conf(server);
-        boolean is_locked = locked;
+        Pair<Map<String, String>,Boolean> conf = read_conf(server);
         locked = false;
-        if (is_locked)
+        if (conf.getRight())
         {
             LOG.info("[CM]: Carpet Mod is locked by the administrator");
+            disable_commands_by_default();
         }
-        for (String key: conf.keySet())
+        for (String key: conf.getLeft().keySet())
         {
-            set(server.getCommandSource(), key, conf.get(key));
-            LOG.info("[CM]: loaded setting "+key+" as "+conf.get(key)+" from carpet.conf");
+            set(server.getCommandSource(), key, conf.getLeft().get(key));
+            LOG.info("[CM]: loaded setting "+key+" as "+conf.getLeft().get(key)+" from carpet.conf");
         }
-        locked = is_locked;
+        locked = conf.getRight();
     }
     private static void disable_commands_by_default()
     {
@@ -239,21 +240,21 @@ public class CarpetSettings
         }
     }
 
-    private static Map<String, String> read_conf(MinecraftServer server)
+    private static Pair<Map<String, String>,Boolean> read_conf(MinecraftServer server)
     {
         try
         {
             File settings_file = server.getLevelStorage().resolveFile(server.getLevelName(), "carpet.conf");
             BufferedReader b = new BufferedReader(new FileReader(settings_file));
             String line = "";
+            boolean confLocked = false;
             Map<String,String> result = new HashMap<String, String>();
             while ((line = b.readLine()) != null)
             {
                 line = line.replaceAll("\\r|\\n", "");
                 if ("locked".equalsIgnoreCase(line))
                 {
-                    disable_commands_by_default();
-                    locked = true;
+                    confLocked = true;
                 }
                 String[] fields = line.split("\\s+",2);
                 if (fields.length > 1)
@@ -272,16 +273,16 @@ public class CarpetSettings
                 }
             }
             b.close();
-            return result;
+            return Pair.of(result, confLocked);
         }
         catch(FileNotFoundException e)
         {
-            return new HashMap<>();
+            return Pair.of(new HashMap<>(), false);
         }
         catch (IOException e)
         {
             e.printStackTrace();
-            return new HashMap<>();
+            return Pair.of(new HashMap<>(), false);
         }
         
     }
@@ -311,9 +312,10 @@ public class CarpetSettings
         if (locked) return false;
         if (settings_store.containsKey(setting_name))
         {
-            Map<String, String> conf = read_conf(source.getMinecraftServer());
-            conf.put(setting_name, string_value);
-            write_conf(source.getMinecraftServer(), conf);
+            Pair<Map<String, String>,Boolean> conf = read_conf(source.getMinecraftServer());
+            conf.getLeft().put(setting_name, string_value);
+            write_conf(source.getMinecraftServer(), conf.getLeft()); // this may feels weird, but if conf
+            // is locked, it will never reach this point.
             set(source, setting_name,string_value);
             return true;
         }
@@ -325,9 +327,9 @@ public class CarpetSettings
         if (locked) return false;
         if (settings_store.containsKey(setting_name))
         {
-            Map<String, String> conf = read_conf(source.getMinecraftServer());
-            conf.remove(setting_name);
-            write_conf(source.getMinecraftServer(), conf);
+            Pair<Map<String, String>,Boolean> conf = read_conf(source.getMinecraftServer());
+            conf.getLeft().remove(setting_name);
+            write_conf(source.getMinecraftServer(), conf.getLeft());
             set(source, setting_name,get(setting_name).getDefault());
             return true;
         }
@@ -386,7 +388,7 @@ public class CarpetSettings
     public static CarpetSettingEntry[] find_nondefault(MinecraftServer server)
     {
         ArrayList<CarpetSettingEntry> res = new ArrayList<CarpetSettingEntry>();
-        Map <String,String> defaults = read_conf(server);
+        Map <String,String> defaults = read_conf(server).getLeft();
         for (String rule: settings_store.keySet().stream().sorted().collect(Collectors.toList()))
         {
             if (!settings_store.get(rule).isDefault() || defaults.containsKey(rule))
@@ -400,7 +402,7 @@ public class CarpetSettings
     {
         ArrayList<CarpetSettingEntry> res = new ArrayList<CarpetSettingEntry>();
         if (locked) return res.toArray(new CarpetSettingEntry[0]);
-        Map <String,String> defaults = read_conf(server);
+        Map <String,String> defaults = read_conf(server).getLeft();
         for (String rule: settings_store.keySet().stream().sorted().collect(Collectors.toList()))
         {
             if (defaults.containsKey(rule))
