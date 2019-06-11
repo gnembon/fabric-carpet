@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
     /**
      * A list of categories the rule is in
      */
-    RuleCategory[] category();
+    String[] category();
 
     /**
      * Options to select in menu.
@@ -47,9 +47,9 @@ import java.lang.annotation.Target;
     /**
      * if a rule is not strict - can take any value, otherwise it needs to match
      * any of the options
-     * For enums, its always strict
+     * For enums, its always strict, same for booleans - no need to set that for them.
      */
-    boolean strict() default true;
+    boolean strict() default false;
 
     /**
      * The class of the validator checked when the rule is changed.

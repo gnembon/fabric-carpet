@@ -1,5 +1,7 @@
 package carpet.settings;
 
+import net.minecraft.server.command.ServerCommandSource;
+
 import static carpet.settings.RuleCategory.BUGFIX;
 import static carpet.settings.RuleCategory.COMMANDS;
 import static carpet.settings.RuleCategory.CREATIVE;
@@ -28,11 +30,20 @@ public class Settings
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
 
+
+    private static class CheckFillLimitLimits extends Validator<Integer>
+    {
+        @Override
+        Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String typedString)
+        {
+            return newValue < 20000000 ? newValue : null;
+        }
+    }
     @Rule(
         desc = "Customizable fill/clone volume limit",
         options = {"32768", "250000", "1000000"},
-        validate = Validator.POSITIVE_NUMBER.class,
-        category = CREATIVE
+        validate = {Validator.POSITIVE_NUMBER.class, CheckFillLimitLimits.class},
+        category = {CREATIVE, "skyblock"}
     )
     public static int fillLimit = 32768;
 

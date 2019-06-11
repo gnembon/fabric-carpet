@@ -3,7 +3,6 @@ package carpet.commands;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.settings.ParsedRule;
-import carpet.settings.RuleCategory;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
@@ -11,16 +10,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.command.CommandManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.BaseText;
-import net.minecraft.text.Text;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -43,7 +38,7 @@ public class ParcetCommand
                                         "Current CarpetMod Startup Settings from carpet.conf",
                                         CarpetServer.settingsManager.findStartupOverrides()))).
                         then(argument("tag",StringArgumentType.word()).
-                                suggests( (c, b)->suggestMatching(Arrays.stream(RuleCategory.values()).map(r -> r.lowerCase), b)).
+                                suggests( (c, b)->suggestMatching(SettingsManager.getCategories(), b)).
                                 executes( (c) -> listSettings(c.getSource(),
                                         String.format("CarpetMod Settings matching \"%s\"", StringArgumentType.getString(c, "tag")),
                                         CarpetServer.settingsManager.getRulesMatching(StringArgumentType.getString(c, "tag"))))));
@@ -94,7 +89,7 @@ public class ParcetCommand
 
         List<BaseText> tags = new ArrayList<>();
         tags.add(Messenger.c("w Tags: "));
-        for (String t: Arrays.stream(RuleCategory.values()).sorted().map(c -> c.lowerCase).collect(Collectors.toList()))
+        for (String t: SettingsManager.getCategories())
         {
             tags.add(Messenger.c("c ["+t+"]", "^g list all "+t+" settings","!/carpet list "+t));
             tags.add(Messenger.c("w , "));
@@ -191,7 +186,7 @@ public class ParcetCommand
             PlayerEntity player = source.getPlayer();
             List<Object> tags = new ArrayList<>();
             tags.add("w Browse Categories:\n");
-            for (String t : Arrays.stream(RuleCategory.values()).map(r -> r.lowerCase).collect(Collectors.toList()))
+            for (String t : SettingsManager.getCategories())
             {
                 tags.add("c [" + t+"]");
                 tags.add("^g list all " + t + " settings");

@@ -11,14 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -45,6 +38,13 @@ public class SettingsManager {
             CarpetSettings.LOG.error("REGISTERED RULE: "+parsed.name);
             rules.put(parsed.name, parsed);
         }
+    }
+
+    public static Iterable<String> getCategories()
+    {
+        Set<String> categories = new HashSet<>();
+        getRules().stream().map(r -> r.categories).forEach(categories::addAll);
+        return categories;
     }
 
 
@@ -75,7 +75,7 @@ public class SettingsManager {
         return server.getLevelStorage().resolveFile(server.getLevelName(), "carpet.conf");
     }
 
-    public void disableBooleanFromCategory(RuleCategory category) {
+    public void disableBooleanFromCategory(String category) {
         for (ParsedRule<?> rule : rules.values()) {
             if (rule.type != boolean.class || !rule.categories.contains(category)) continue;
             ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
@@ -223,7 +223,7 @@ public class SettingsManager {
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return getRulesMatching(rule -> {
             if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true;
-            for (RuleCategory c : rule.categories) if (c.lowerCase.equals(search)) return true;
+            for (String c : rule.categories) if (c.toLowerCase(Locale.ROOT).equals(search)) return true;
             return false;
         });
     }

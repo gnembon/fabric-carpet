@@ -1,13 +1,12 @@
 package carpet.settings;
 
-import java.util.Locale;
+public class RuleCategory {
+    public static final String BUGFIX = "bugfix";
+    public static final String SURVIVAL = "survival";
+    public static final String CREATIVE = "creative";
+    public static final String EXPERIMENTAL = "experimental";
+    public static final String OPTIMIZATIONS = "optimizations";
+    public static final String FEATURE = "feature";
+    public static final String COMMANDS = "commands";
 
-public enum RuleCategory {
-    BUGFIX, SURVIVAL, CREATIVE, EXPERIMENTAL, OPTIMIZATIONS, FEATURE, COMMANDS ;
-
-    public final String lowerCase;
-
-    RuleCategory() {
-        this.lowerCase = this.name().toLowerCase(Locale.ROOT);
-    }
 }

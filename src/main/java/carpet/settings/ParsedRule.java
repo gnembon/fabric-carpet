@@ -1,5 +1,6 @@
 package carpet.settings;
 
+import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.server.command.ServerCommandSource;
@@ -12,13 +13,11 @@ import java.util.List;
 import java.util.Locale;
 
 public final class ParsedRule<T> implements Comparable<ParsedRule> {
-    public final Rule rule;
     public final Field field;
-
     public final String name;
     public final String description;
     public final ImmutableList<String> extraInfo;
-    public final ImmutableList<RuleCategory> categories;
+    public final ImmutableList<String> categories;
     public final ImmutableList<String> options;
     public boolean isStrict;
     public final Class<T> type;
@@ -37,7 +36,6 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     }
 
     ParsedRule(Field field, Rule rule) {
-        this.rule = rule;
         this.field = field;
         this.name = rule.name().isEmpty() ? field.getName() : rule.name();
         this.type = (Class<T>) field.getType();
@@ -52,16 +50,20 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
         if (categories.contains(RuleCategory.COMMANDS))
             this.validators.add(callConstructor(Validator._COMMAND.class));
-
         this.defaultValue = get();
         this.defaultAsString = convertToString(this.defaultValue);
-        if (this.type == boolean.class) {
+        if (this.type == boolean.class)
+        {
             this.isStrict = true; // it has no sense otherwise
             this.options = ImmutableList.of("true", "false");
-        } else if (this.type.isEnum()) {
+        }
+        else if (this.type.isEnum())
+        {
             this.isStrict = true; // it has no sense otherwise
             this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum) e).name().toLowerCase(Locale.ROOT)).collect(ImmutableList.toImmutableList());
-        } else {
+        }
+        else
+        {
             this.options = ImmutableList.copyOf(rule.options());
         }
         if (isStrict)
@@ -70,7 +72,8 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
 
 
     public ParsedRule<T> set(ServerCommandSource source, String value) {
-        //if locked - prevent
+        if (CarpetServer.settingsManager.locked)
+            return null;
         if (type == String.class)
         {
             return set(source, (T) value, value);
@@ -95,12 +98,12 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
     }
 
-    public ParsedRule<T> set(ServerCommandSource source, T value, String stringValue) {
+    ParsedRule<T> set(ServerCommandSource source, T value, String stringValue) {
         try {
             for (Validator<T> validator : this.validators)
             {
-                boolean allowed = validator.validate(source, this, value, stringValue);
-                if (!allowed)
+                value = validator.validate(source, this, value, stringValue);
+                if (value == null)
                 {
                     Messenger.m(source, "r Wrong value for " + name + ": " + stringValue);
                     return null;
@@ -112,6 +115,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         catch (IllegalAccessException e)
         {
             Messenger.m(source, "r Unable to access setting for  "+name);
+            return null;
         }
         return this;
     }
