@@ -149,16 +149,16 @@ public class CarpetCommand
         return Messenger.c(args.toArray(new Object[0]));
     }
 
-    private static BaseText makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets) {
+    private static BaseText makeSetRuleButton(ParsedRule<?> rule, String option, boolean brackets)
+    {
         String style = rule.isDefault()?"g":(option.equalsIgnoreCase(rule.defaultAsString)?"y":"e");
         if (option.equalsIgnoreCase(rule.defaultAsString))
             style = style+"b";
         else if (option.equalsIgnoreCase(rule.getAsString()))
             style = style+"u";
         String baseText = style + (brackets ? " [" : " ") + option + (brackets ? "]" : "");
-        if (CarpetServer.settingsManager.locked) {
+        if (CarpetServer.settingsManager.locked)
             return Messenger.c(baseText, "^g Settings are locked");
-        }
         if (option.equalsIgnoreCase(rule.getAsString()))
             return Messenger.c(baseText);
         return Messenger.c(baseText, "^g Switch to " + option, "?/carpet " + rule.name + " " + option);
@@ -200,9 +200,7 @@ public class CarpetCommand
             tags.remove(tags.size() - 1);
             Messenger.m(player, tags.toArray(new Object[0]));
         }
-        catch (CommandSyntaxException e)
-        {
-        }
+        catch (CommandSyntaxException ignored) { }
         return 1;
     }
 }

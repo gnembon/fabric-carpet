@@ -45,9 +45,12 @@ public abstract class HopperBlockEntityMixin extends LootableContainerBlockEntit
             DyeColor wool_color = WoolTool.getWoolColorAtPosition(
                     getWorld(),
                     new BlockPos(getHopperX(), getHopperY(), getHopperZ()).offset(this.getCachedState().get(HopperBlock.FACING)));
-            if (wool_color != null) {
-                for (int i = 0; i < this.getInvSize(); ++i) {
-                    if (!this.getInvStack(i).isEmpty()) {
+            if (wool_color != null)
+            {
+                for (int i = 0; i < this.getInvSize(); ++i)
+                {
+                    if (!this.getInvStack(i).isEmpty())
+                    {
                         ItemStack itemstack = this.getInvStack(i);//.copy();
                         HopperCounter.COUNTERS.get(wool_color).add(this.getWorld().getServer(), itemstack);
                         this.setInvStack(i, ItemStack.EMPTY);

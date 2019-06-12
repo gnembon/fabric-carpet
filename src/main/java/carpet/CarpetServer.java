@@ -14,6 +14,7 @@ import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ScriptCommand;
 import carpet.commands.SpawnCommand;
+import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
@@ -31,7 +32,8 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static MinecraftServer minecraft_server;
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
-    static {
+    static
+    {
         SettingsManager.parseSettingsClass(CarpetSettings.class);
         //...
     }
@@ -45,7 +47,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer = new CarpetScriptServer();
     }
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
-    public static void onGameStarted() {
+    public static void onGameStarted()
+    {
         LoggerRegistry.initLoggers();
     }
 
@@ -72,7 +75,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
         CarpetCommand.register(dispatcher);
-
         //TestCommand.register(dispatcher);
     }
 }

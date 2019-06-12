@@ -10,11 +10,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import static carpet.settings.RuleCategory.BUGFIX;
-import static carpet.settings.RuleCategory.COMMANDS;
+import static carpet.settings.RuleCategory.COMMAND;
 import static carpet.settings.RuleCategory.CREATIVE;
 import static carpet.settings.RuleCategory.EXPERIMENTAL;
 import static carpet.settings.RuleCategory.FEATURE;
-import static carpet.settings.RuleCategory.OPTIMIZATIONS;
+import static carpet.settings.RuleCategory.OPTIMIZATION;
 import static carpet.settings.RuleCategory.SURVIVAL;
 
 public class CarpetSettings
@@ -98,7 +98,7 @@ public class CarpetSettings
     @Rule(
             desc = "Lag optimizations for redstone dust",
             extra = "by Theosib",
-            category = {EXPERIMENTAL, OPTIMIZATIONS},
+            category = {EXPERIMENTAL, OPTIMIZATION},
             validate = Validator.WIP.class
     )
     public static boolean fastRedstoneDust = false;
@@ -113,7 +113,7 @@ public class CarpetSettings
     public static boolean unloadedEntityFix = false;
 
     @Rule( desc = "TNT doesn't update when placed against a power source", category = CREATIVE )
-    public static boolean TNTDoNotUpdate = false;
+    public static boolean tntDoNotUpdate = false;
 
     @Rule(
             desc = "Prevents players from rubberbanding when moving too fast",
@@ -145,7 +145,7 @@ public class CarpetSettings
                     "Counters are global and shared between players, 16 channels available",
                     "Items counted are destroyed, count up to one stack per tick per hopper"
             },
-            category = {COMMANDS, CREATIVE, FEATURE}
+            category = {COMMAND, CREATIVE, FEATURE}
     )
     public static boolean hopperCounters = false;
 
@@ -164,19 +164,19 @@ public class CarpetSettings
     @Rule( desc = "summoning a lightning bolt has all the side effects of natural lightning", category = CREATIVE )
     public static boolean summonNaturalLightning = false;
 
-    @Rule(desc = "Enables /spawn command for spawn tracking", category = COMMANDS)
+    @Rule(desc = "Enables /spawn command for spawn tracking", category = COMMAND)
     public static boolean commandSpawn = true;
 
-    @Rule(desc = "Enables /tick command to control game clocks", category = COMMANDS)
+    @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND)
     public static boolean commandTick = true;
 
-    @Rule(desc = "Enables /log command to monitor events in the game via chat and overlays", category = COMMANDS)
+    @Rule(desc = "Enables /log command to monitor events in the game via chat and overlays", category = COMMAND)
     public static boolean commandLog = true;
 
     @Rule(
             desc = "Enables /distance command to measure in game distance between points",
             extra = "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
-            category = COMMANDS
+            category = COMMAND
     )
     public static boolean commandDistance = true;
 
@@ -186,31 +186,31 @@ public class CarpetSettings
                     "Also enables gray carpet placement action",
                     "if 'carpets' rule is turned on as well"
             },
-            category = COMMANDS
+            category = COMMAND
     )
     public static boolean commandInfo = true;
 
     @Rule(
             desc = "Enables /c and /s commands to quickly switch between camera and survival modes",
             extra = "/c and /s commands are available to all players regardless of their permission levels",
-            category = COMMANDS
+            category = COMMAND
     )
     public static boolean commandCameramode = true;
 
     @Rule(
             desc = "Enables /perimeterinfo command",
             extra = "... that scans the area around the block for potential spawnable spots",
-            category = COMMANDS
+            category = COMMAND
     )
     public static boolean commandPerimeterInfo = true;
 
-    @Rule(desc = "Enables /draw commands", extra = "... allows for drawing simple shapes", category = COMMANDS)
+    @Rule(desc = "Enables /draw commands", extra = "... allows for drawing simple shapes", category = COMMAND)
     public static boolean commandDraw = true;
 
-    @Rule(desc = "Enables /script command", extra = "an in-game scripting API", category = COMMANDS)
+    @Rule(desc = "Enables /script command", extra = "An in-game scripting API for Scarpet programming language", category = COMMAND)
     public static boolean commandScript = true;
 
-    @Rule(desc = "Enables /player command to control/spawn players", category = COMMANDS, validate = Validator.WIP.class)
+    @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND, validate = Validator.WIP.class)
     public static boolean commandPlayer = true;
 
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
@@ -226,16 +226,18 @@ public class CarpetSettings
     @Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
     public static boolean portalCaching = false;
 
-    @Rule(desc = "Permanent fires don't schedule random updates", category = OPTIMIZATIONS, validate = Validator.WIP.class)
+    @Rule(desc = "Permanent fires don't schedule random updates", category = OPTIMIZATION, validate = Validator.WIP.class)
     public static boolean calmNetherFires = false;
 
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
 
     private static class PushLimitLimits extends Validator<Integer> {
-        @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue>0 && newValue < 1024) ? newValue : null;
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            return (newValue>0 && newValue <= 1024) ? newValue : null;
         }
+        @Override
+        public String description() { return "You must choose a value from 1 to 1024";}
     }
     @Rule(
             desc = "Customizable piston push limit",
@@ -254,9 +256,11 @@ public class CarpetSettings
     public static int railPowerLimit = 9;
 
     private static class FillLimitLimits extends Validator<Integer> {
-        @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue < 20000000) ? newValue : null;
         }
+        @Override
+        public String description() { return "You must choose a value from 1 to 20M";}
     }
     @Rule(
             desc = "Customizable fill/clone volume limit",
@@ -269,7 +273,7 @@ public class CarpetSettings
     @Rule(
             desc = "Customizable maximal entity collision limits, 0 for no limits",
             options = {"0", "1", "20"},
-            category = OPTIMIZATIONS,
+            category = OPTIMIZATION,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
     public static int maxEntityCollisions = 0;
@@ -278,7 +282,7 @@ public class CarpetSettings
     public static boolean onePlayerSleeping = false;
 
     private static class SetMotd extends Validator<String> {
-        @Override String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
             customMOTD = newValue; // accelerate a smidge
             ((MinecraftServer_motdInterface) CarpetServer.minecraft_server).checkMOTD();
             return newValue;
@@ -298,7 +302,7 @@ public class CarpetSettings
 
     private static class ViewDistanceValidator extends Validator<Integer>
     {
-        @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
         {
             if (newValue < 0 || newValue > 32)
             {
@@ -320,6 +324,8 @@ public class CarpetSettings
                 return 0;
             }
         }
+        @Override
+        public String description() { return "You must choose a value from 0 (use server settings) to 32";}
     }
     @Rule(
             desc = "Changes the view distance of the server.",
@@ -331,7 +337,7 @@ public class CarpetSettings
     public static int viewDistance = 0;
 
     private static class DisableSpawnChunksValidator extends Validator<Boolean> {
-        @Override Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string) {
+        @Override public Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string) {
             if (!newValue)
                 Messenger.m(source, "w Spawn chunks re-enabled. Visit spawn to load them?");
             return newValue;
@@ -344,10 +350,13 @@ public class CarpetSettings
     )
     public static boolean disableSpawnChunks = false;
 
-    private static class KelpLimit extends Validator<Integer> {
-        @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+    private static class KelpLimit extends Validator<Integer>
+    {
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>=0 && newValue <=25)?newValue:null;
         }
+        @Override
+        public String description() { return "You must choose a value from 0 to 25. 25 and all natural kelp can grow 25 blocks, choose 0 to make all generated kelp not to grow";}
     }
     @Rule(
             desc = "limits growth limit of newly naturally generated kelp to this amount of blocks",
@@ -371,7 +380,6 @@ public class CarpetSettings
     )
     public static boolean leadFix = false;
 
-    @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATIONS)
+    @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
-
 }

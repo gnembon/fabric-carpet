@@ -25,17 +25,22 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final T defaultValue;
     public final String defaultAsString;
 
-    public static <T> T callConstructor(Class<T> cls) {
-        try {
+    public static <T> T callConstructor(Class<T> cls)
+    {
+        try
+        {
             Constructor<T> constr = cls.getDeclaredConstructor();
             constr.setAccessible(true);
             return constr.newInstance();
-        } catch (ReflectiveOperationException e) {
+        }
+        catch (ReflectiveOperationException e)
+        {
             throw new RuntimeException(e);
         }
     }
 
-    ParsedRule(Field field, Rule rule) {
+    ParsedRule(Field field, Rule rule)
+    {
         this.field = field;
         this.name = rule.name().isEmpty() ? field.getName() : rule.name();
         this.type = (Class<T>) field.getType();
@@ -45,10 +50,8 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         this.categories = ImmutableList.copyOf(rule.category());
         this.validators = new ArrayList<>();
         for (Class v : rule.validate())
-        {
             this.validators.add((Validator<T>) callConstructor(v));
-        }
-        if (categories.contains(RuleCategory.COMMANDS))
+        if (categories.contains(RuleCategory.COMMAND))
             this.validators.add(callConstructor(Validator._COMMAND.class));
         this.defaultValue = get();
         this.defaultAsString = convertToString(this.defaultValue);

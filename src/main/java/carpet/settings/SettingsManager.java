@@ -11,10 +11,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class SettingsManager {
+public class SettingsManager
+{
     private static final Logger LOG = LogManager.getLogger();
     private static Map<String, ParsedRule<?>> rules = new HashMap<>();
     public boolean locked;
@@ -46,11 +46,13 @@ public class SettingsManager {
     }
 
 
-    public ParsedRule getRule(String name) {
+    public ParsedRule getRule(String name)
+    {
         return rules.get(name);
     }
 
-    public static Collection<ParsedRule<?>> getRules() {
+    public static Collection<ParsedRule<?>> getRules()
+    {
         CarpetSettings.LOG.error("grabbing rules");
         List<ParsedRule<?>> r = rules.values().stream().sorted().collect(Collectors.toList());
         CarpetSettings.LOG.error("Got: "+r.size()+" rules");
@@ -65,17 +67,22 @@ public class SettingsManager {
     }
 
 
-    public Collection<ParsedRule<?>> getNonDefault() {
+    public Collection<ParsedRule<?>> getNonDefault()
+    {
         return rules.values().stream().filter(r -> !r.isDefault()).sorted().collect(Collectors.toList());
     }
 
-    private File getFile() {
+    private File getFile()
+    {
         return server.getLevelStorage().resolveFile(server.getLevelName(), "carpet.conf");
     }
 
-    public void disableBooleanFromCategory(String category) {
-        for (ParsedRule<?> rule : rules.values()) {
-            if (rule.type != boolean.class || !rule.categories.contains(category)) continue;
+    public void disableBooleanFromCategory(String category)
+    {
+        for (ParsedRule<?> rule : rules.values())
+        {
+            if (rule.type != boolean.class || !rule.categories.contains(category))
+                continue;
             ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
         }
     }
@@ -84,7 +91,8 @@ public class SettingsManager {
 
     private void writeSettingsToConf(Map<String, String> values)
     {
-        if (locked) return;
+        if (locked)
+            return;
         try
         {
             FileWriter fw  = new FileWriter(getFile());
@@ -122,7 +130,7 @@ public class SettingsManager {
         if (conf.getRight())
         {
             LOG.info("[CM]: Carpet Mod is locked by the administrator");
-            disableBooleanFromCategory(RuleCategory.COMMANDS);
+            disableBooleanFromCategory(RuleCategory.COMMAND);
         }
         for (String key: conf.getLeft().keySet())
         {
@@ -157,8 +165,6 @@ public class SettingsManager {
                         continue;
                     }
                     ParsedRule rule = rules.get(fields[0]);
-
-
 
                     if (!(rule.options.contains(fields[1])) && rule.isStrict)
                     {
@@ -213,16 +219,48 @@ public class SettingsManager {
         return false;
     }
 
-    public Collection<ParsedRule<?>> getRulesMatching(Predicate<ParsedRule<?>> predicate) {
-        return rules.values().stream().filter(predicate).collect(ImmutableList.toImmutableList());
-    }
-
     public Collection<ParsedRule<?>> getRulesMatching(String search) {
         String lcSearch = search.toLowerCase(Locale.ROOT);
-        return getRulesMatching(rule -> {
+        return rules.values().stream().filter(rule ->
+        {
             if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true;
             for (String c : rule.categories) if (c.toLowerCase(Locale.ROOT).equals(search)) return true;
             return false;
-        });
+        }).collect(ImmutableList.toImmutableList());
     }
+
+    public int printAllRulesToLog()
+    {
+        PrintStream ps = System.out;
+        ps.println("# Carpet Settings");
+        for (Map.Entry<String, ParsedRule<?>> e : new TreeMap<>(rules).entrySet())
+        {
+            ParsedRule<?> rule = e.getValue();
+            ps.println("## " + rule.name);
+            ps.println(rule.description+"  ");
+            for (String extra : rule.extraInfo)
+                ps.println(extra + "  ");
+            ps.println("* Type: `" + rule.type.getSimpleName() + "`  ");
+            ps.println("* Default value: `" + rule.defaultAsString + "`  ");
+            String optionString = rule.options.stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
+            ps.println((rule.isStrict?"* Required":"* Suggested")+" options: " + optionString + "  ");
+            ps.println("* Categories: " + rule.categories.stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
+            boolean preamble = false;
+            for (Validator<?> validator : rule.validators)
+            {
+                if(validator.description() != null)
+                {
+                    if (!preamble)
+                    {
+                        ps.println("* Additional notes:  ");
+                        preamble = true;
+                    }
+                    ps.println("  * "+validator.description()+"  ");
+                }
+            }
+            ps.println("  ");
+        }
+        return 1;
+    }
+
 }
