@@ -8,9 +8,24 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class SettingsManager
@@ -18,14 +33,14 @@ public class SettingsManager
     private static final Logger LOG = LogManager.getLogger();
     private static Map<String, ParsedRule<?>> rules = new HashMap<>();
     public boolean locked;
-    MinecraftServer server;
+    private MinecraftServer server;
+    private static List<BiConsumer<ParsedRule<?>, String>> observers = new ArrayList<>();
 
     public SettingsManager(MinecraftServer server)
     {
         this.server = server;
         loadConfigurationFromConf();
     }
-
 
     public static void parseSettingsClass(Class settingsClass)
     {
@@ -36,6 +51,16 @@ public class SettingsManager
             ParsedRule parsed = new ParsedRule(f, rule);
             rules.put(parsed.name, parsed);
         }
+    }
+
+    public static void addRuleObserver(BiConsumer<ParsedRule<?>, String> observer)
+    {
+        observers.add(observer);
+    }
+
+    static void notifyRuleChanged(ParsedRule<?> rule, String userTypedValue)
+    {
+        observers.forEach(observer -> observer.accept(rule, userTypedValue));
     }
 
     public static Iterable<String> getCategories()
@@ -86,7 +111,6 @@ public class SettingsManager
             ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
         }
     }
-
 
 
     private void writeSettingsToConf(Map<String, String> values)
@@ -141,7 +165,7 @@ public class SettingsManager
     }
 
 
-    public Pair<Map<String, String>,Boolean> readSettingsFromConf()
+    private Pair<Map<String, String>,Boolean> readSettingsFromConf()
     {
         try
         {

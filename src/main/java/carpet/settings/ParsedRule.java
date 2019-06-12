@@ -25,20 +25,6 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final T defaultValue;
     public final String defaultAsString;
 
-    public static <T> T callConstructor(Class<T> cls)
-    {
-        try
-        {
-            Constructor<T> constr = cls.getDeclaredConstructor();
-            constr.setAccessible(true);
-            return constr.newInstance();
-        }
-        catch (ReflectiveOperationException e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
-
     ParsedRule(Field field, Rule rule)
     {
         this.field = field;
@@ -73,6 +59,19 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
             this.validators.add(callConstructor(Validator._STRICT.class));
     }
 
+    private <T> T callConstructor(Class<T> cls)
+    {
+        try
+        {
+            Constructor<T> constr = cls.getDeclaredConstructor();
+            constr.setAccessible(true);
+            return constr.newInstance();
+        }
+        catch (ReflectiveOperationException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
 
     public ParsedRule<T> set(ServerCommandSource source, String value)
     {
@@ -115,8 +114,11 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                     return null;
                 }
             }
-            this.field.set(null, value);
-
+            if (!value.equals(get()))
+            {
+                this.field.set(null, value);
+                SettingsManager.notifyRuleChanged(this, stringValue);
+            }
         }
         catch (IllegalAccessException e)
         {
