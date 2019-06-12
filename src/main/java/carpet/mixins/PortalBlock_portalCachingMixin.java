@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.PortalForcerInterface;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PortalBlock;
@@ -22,7 +22,7 @@ public class PortalBlock_portalCachingMixin
     ))
     private void onCreatePortal(IWorld iWorld_1, BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir)
     {
-        if (!iWorld_1.isClient() && CarpetSettings.getBool("portalCaching"))
+        if (!iWorld_1.isClient() && CarpetSettings.portalCaching)
         {
             ((PortalForcerInterface)((ServerWorld)iWorld_1).getPortalForcer()).invalidateCache();
         }
@@ -34,7 +34,7 @@ public class PortalBlock_portalCachingMixin
     ))
     private void getAirBlockState(BlockState blockState_1, Direction direction_1, BlockState blockState_2, IWorld iWorld_1, BlockPos blockPos_1, BlockPos blockPos_2, CallbackInfoReturnable<BlockState> cir)
     {
-        if (!iWorld_1.isClient() && CarpetSettings.getBool("portalCaching"))
+        if (!iWorld_1.isClient() && CarpetSettings.portalCaching)
         {
             ((PortalForcerInterface)((ServerWorld)iWorld_1).getPortalForcer()).invalidateCache();
         }

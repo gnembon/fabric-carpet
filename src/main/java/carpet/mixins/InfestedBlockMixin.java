@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -26,7 +26,7 @@ public abstract class InfestedBlockMixin extends Block
     private void onOnStacksDropped(BlockState blockState_1, World world_1, BlockPos blockPos_1,
                                    ItemStack itemStack_1, CallbackInfo ci)
     {
-        if (CarpetSettings.getBool("silverFishDropGravel"))
+        if (CarpetSettings.silverFishDropGravel)
         {
             dropStack(world_1, blockPos_1, new ItemStack(Blocks.GRAVEL));
         }

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.WorldChunkInterface;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
@@ -48,7 +48,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
     private BlockEntity ifGetBlockEntity(WorldChunk worldChunk, BlockPos blockPos_1,
             WorldChunk.CreationType worldChunk$CreationType_1)
     {
-        if (!CarpetSettings.b_movableTileEntities)
+        if (!CarpetSettings.movableTileEntities)
         {
             return this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
         }

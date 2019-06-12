@@ -1,11 +1,10 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.TntEntity;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -49,7 +48,7 @@ public abstract class TntEntityMixin extends Entity
     private void initTNTLogger(World world_1, double double_1, double double_2, double double_3,
                                LivingEntity livingEntity_1, CallbackInfo ci)
     {
-        if(CarpetSettings.getBool("tntPrimerMomentumRemoved"))
+        if(CarpetSettings.tntPrimerMomentumRemoved)
             this.setVelocity(new Vec3d(0.0, 0.20000000298023224D, 0.0));
     }
 

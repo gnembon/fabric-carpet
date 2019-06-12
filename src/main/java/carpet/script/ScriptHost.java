@@ -1,7 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.NumericValue;

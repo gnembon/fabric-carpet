@@ -1,7 +1,5 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
-import com.mojang.bridge.game.GameVersion;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.DebugHud;
 import org.spongepowered.asm.mixin.Mixin;

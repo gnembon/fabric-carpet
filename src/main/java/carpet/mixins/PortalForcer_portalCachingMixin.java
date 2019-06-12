@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.PortalForcerInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ChunkTicketType;
@@ -45,7 +45,7 @@ public class PortalForcer_portalCachingMixin implements PortalForcerInterface
     private Object /* private TicketInfo */ getTicketInfo(Map map, Object /* ColumnPos */ key)
     {
         //Do the dance with ticketinfos. If vanilla has one, we gonna borrow, if vanilla is missing, we supply
-        if (!CarpetSettings.getBool("portalCaching"))
+        if (!CarpetSettings.portalCaching)
             return map.get(key);
         Object ticketInfo = map.get(key);
         if (ticketInfo != null)
@@ -71,7 +71,7 @@ public class PortalForcer_portalCachingMixin implements PortalForcerInterface
     ))
     private Object /* TicketInfo */ putNewTicket(Map map, Object /*ColumnPos */ key, Object /*TicketInfo */ value)
     {
-        if (CarpetSettings.getBool("portalCaching"))
+        if (CarpetSettings.portalCaching)
             storedTicketInfos.put((ColumnPos) key, value);
         return map.put(key, value);
     }

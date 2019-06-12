@@ -1,6 +1,6 @@
 package carpet.commands;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
@@ -26,7 +26,7 @@ public class LogCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = CommandManager.literal("log").
-                requires((player) -> CarpetSettings.getBool("commandLog")).
+                requires((player) -> CarpetSettings.commandLog).
                 executes((context) -> listLogs(context.getSource())).
                 then(CommandManager.literal("clear").
                         executes( (c) -> unsubFromAll(c.getSource(), c.getSource().getName())).

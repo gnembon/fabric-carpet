@@ -1,6 +1,6 @@
 package carpet.utils;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import net.minecraft.block.Material;
 import net.minecraft.block.MaterialColor;
@@ -30,23 +30,23 @@ public class WoolTool
 
     public static void carpetPlacedAction(DyeColor color, PlayerEntity placer, BlockPos pos, World worldIn)
     {
-		if (!CarpetSettings.getBool("carpets"))
+		if (!CarpetSettings.carpets)
 		{
 			return;
 		}
         switch (color)
         {
             case PINK:
-                if (CarpetSettings.getBool("commandSpawn"))
+                if (CarpetSettings.commandSpawn)
                     Messenger.send(placer, SpawnReporter.report(pos, worldIn));
 
                 break;
             case BLACK:
-                if (CarpetSettings.getBool("commandSpawn"))
+                if (CarpetSettings.commandSpawn)
                     Messenger.send(placer, SpawnReporter.show_mobcaps(pos, worldIn));
                 break;
             case BROWN:
-                if (CarpetSettings.getBool("commandDistance"))
+                if (CarpetSettings.commandDistance)
                 {
                     ServerCommandSource source = placer.getCommandSource();
                     if (!DistanceCalculator.hasStartingPoint(source) || placer.isSneaking()) {
@@ -58,16 +58,16 @@ public class WoolTool
                 }
                 break;
             case GRAY:
-                if (CarpetSettings.getBool("commandInfo"))
+                if (CarpetSettings.commandInfo)
                     Messenger.send(placer, BlockInfo.blockInfo(pos.down(), worldIn));
                 break;
             case YELLOW:
-                if (CarpetSettings.getBool("commandInfo"))
-                    Messenger.m(placer, "r use data get entity command");
+                if (CarpetSettings.commandInfo)
+                    Messenger.m(placer, "r This used to show entity info around the player. Use data get entity command, sorry");
                     //EntityInfo.issue_entity_info(placer);
                 break;
 			case GREEN:
-                if (CarpetSettings.getBool("hopperCounters"))
+                if (CarpetSettings.hopperCounters)
                 {
                     DyeColor under = getWoolColorAtPosition(worldIn, pos.down());
                     if (under == null) return;
@@ -77,7 +77,7 @@ public class WoolTool
                 }
 				break;
 			case RED:
-                if (CarpetSettings.getBool("hopperCounters"))
+                if (CarpetSettings.hopperCounters)
                 {
                     DyeColor under = getWoolColorAtPosition(worldIn, pos.down());
                     if (under == null) return;

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.entity.StructureBlockBlockEntity;
 import net.minecraft.structure.Structure;
 import net.minecraft.structure.StructurePlacementData;
@@ -19,7 +19,7 @@ public abstract class StructureBlockBlockEntity_fillUpdatesMixin
     ))
     private void onStructurePlacen(Structure structure, IWorld iWorld_1, BlockPos blockPos_1, StructurePlacementData structurePlacementData_1)
     {
-        if(!CarpetSettings.b_fillUpdates)
+        if(!CarpetSettings.fillUpdates)
             CarpetSettings.impendingFillSkipUpdates = true;
         try
         {

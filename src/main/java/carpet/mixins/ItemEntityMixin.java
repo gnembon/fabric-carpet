@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.helpers.InventoryHelper;
 import carpet.utils.IItemEntity;
 import net.minecraft.block.ShulkerBoxBlock;
@@ -41,7 +41,7 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
     @Inject(method="<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;)V", at = @At("RETURN"))
     private void removeEmptyShulkerBoxTags(World worldIn, double x, double y, double z, ItemStack stack, CallbackInfo ci)
     {
-        if (CarpetSettings.b_stackableShulkerBoxes
+        if (CarpetSettings.stackableShulkerBoxes
                 && stack.getItem() instanceof BlockItem
                 && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
         {
@@ -59,7 +59,7 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
             )
     )
     private int getItemStackMaxAmount(ItemStack stack) {
-        if (CarpetSettings.b_stackableShulkerBoxes && stack.getItem() instanceof BlockItem && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
+        if (CarpetSettings.stackableShulkerBoxes && stack.getItem() instanceof BlockItem && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
             return SHULKERBOX_MAX_STACK_AMOUNT;
 
         return stack.getMaxCount();
@@ -74,7 +74,7 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
     {
         ItemEntity self = (ItemEntity)(Object)this;
         ItemStack selfStack = self.getStack();
-        if (!CarpetSettings.b_stackableShulkerBoxes || !(selfStack.getItem() instanceof BlockItem) || !(((BlockItem)selfStack.getItem()).getBlock() instanceof ShulkerBoxBlock)) {
+        if (!CarpetSettings.stackableShulkerBoxes || !(selfStack.getItem() instanceof BlockItem) || !(((BlockItem)selfStack.getItem()).getBlock() instanceof ShulkerBoxBlock)) {
             return;
         }
 

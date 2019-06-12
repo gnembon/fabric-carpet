@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.mob.SkeletonHorseEntity;
@@ -31,7 +31,7 @@ public class SummonCommandMixin
     private static void addRiders(ServerCommandSource source, Identifier identifier_1, Vec3d vec3d_1, CompoundTag compoundTag_1, boolean arg4, CallbackInfoReturnable<Integer> cir, CompoundTag compoundTag_2, LightningEntity lightningEntity_1)
     {
         // [CM] SummonNaturalLightning - if statement around
-        if (CarpetSettings.getBool("summonNaturalLightning") && !source.getWorld().isClient)
+        if (CarpetSettings.summonNaturalLightning && !source.getWorld().isClient)
         {
             ServerWorld world = source.getWorld();
             BlockPos at = new BlockPos(vec3d_1);

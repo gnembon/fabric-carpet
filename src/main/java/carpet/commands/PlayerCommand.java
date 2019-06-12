@@ -1,6 +1,6 @@
 package carpet.commands;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.utils.Messenger;
@@ -38,7 +38,7 @@ public class PlayerCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("player").
-                requires((player) -> CarpetSettings.getBool("commandPlayer")).
+                requires((player) -> CarpetSettings.commandPlayer).
                 then(argument("player", word()).
                         suggests( (c, b) -> suggestMatching(getPlayers(c.getSource()), b)).
                         then(literal("stop").

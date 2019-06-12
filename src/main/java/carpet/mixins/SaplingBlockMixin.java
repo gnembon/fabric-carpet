@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.helpers.BlockSaplingHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -23,7 +23,7 @@ public abstract class SaplingBlockMixin
             cancellable = true)
     private void onGenerate(IWorld iWorld_1, BlockPos blockPos_1, BlockState blockState_1, Random random_1, CallbackInfo ci)
     {
-        if(CarpetSettings.getBool("desertShrubs") && iWorld_1.getBiome(blockPos_1) == Biomes.DESERT && !BlockSaplingHelper.hasWater(iWorld_1, blockPos_1))
+        if(CarpetSettings.desertShrubs && iWorld_1.getBiome(blockPos_1) == Biomes.DESERT && !BlockSaplingHelper.hasWater(iWorld_1, blockPos_1))
         {
             iWorld_1.setBlockState(blockPos_1, Blocks.DEAD_BUSH.getDefaultState(), 3);
             ci.cancel();

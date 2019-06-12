@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.PoweredRailBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
@@ -13,6 +13,6 @@ public class PoweredRailBlock_powerLimitMixin
             constant = @Constant(intValue = 8))
     private int powerLimit(int original)
     {
-        return CarpetSettings.railPowerLimitAdjusted;
+        return CarpetSettings.railPowerLimit-1;
     }
 }

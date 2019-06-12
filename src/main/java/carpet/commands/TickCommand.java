@@ -1,6 +1,6 @@
 package carpet.commands;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
@@ -26,7 +26,7 @@ public class TickCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("tick").
-                requires((player) -> CarpetSettings.getBool("commandTick")).
+                requires((player) -> CarpetSettings.commandTick).
                 then(literal("rate").
                         executes((c) -> queryTps(c.getSource())).
                         then(argument("rate", floatArg(0.1F, 500.0F)).

@@ -1,5 +1,6 @@
 package carpet.commands;
 
+import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -15,6 +16,7 @@ public class TestCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         dispatcher.register(literal("test").
+                then(literal("dump").executes((c) -> CarpetServer.settingsManager.printAllRulesToLog())).
                 then(argument("first",word()).
                         executes( (c)-> test(c, getString(c, "first")+" 1"))).
                 then(argument("second", word()).
@@ -23,7 +25,7 @@ public class TestCommand
 
     private static int test(CommandContext<ServerCommandSource> c, String term)
     {
-        Messenger.m(c.getSource(),"w term is: ",term.substring(0,1)+"b "+term);
+        Messenger.m(c.getSource(),term.substring(0,1)+" "+term+": how did you get here?");
         return 1;
     }
 }

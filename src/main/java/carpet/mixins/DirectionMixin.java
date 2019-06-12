@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.EntityInterface;
 import carpet.helpers.BlockRotator;
 import net.minecraft.entity.Entity;
@@ -16,7 +16,7 @@ public abstract class DirectionMixin
     private static float getYaw(Entity entity, float float_1)
     {
         float yaw;
-        if (!CarpetSettings.getBool("placementRotationFix"))
+        if (!CarpetSettings.placementRotationFix)
         {
             yaw = entity.getYaw(float_1);
         }

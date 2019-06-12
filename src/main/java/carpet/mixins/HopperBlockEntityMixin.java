@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.HopperBlock;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.HopperBlockEntity;
@@ -41,13 +41,16 @@ public abstract class HopperBlockEntityMixin extends LootableContainerBlockEntit
     @Inject(method = "insert", at = @At("HEAD"), cancellable = true)
     private void onInsert(CallbackInfoReturnable<Boolean> cir)
     {
-        if (CarpetSettings.b_hopperCounters) {
+        if (CarpetSettings.hopperCounters) {
             DyeColor wool_color = WoolTool.getWoolColorAtPosition(
                     getWorld(),
                     new BlockPos(getHopperX(), getHopperY(), getHopperZ()).offset(this.getCachedState().get(HopperBlock.FACING)));
-            if (wool_color != null) {
-                for (int i = 0; i < this.getInvSize(); ++i) {
-                    if (!this.getInvStack(i).isEmpty()) {
+            if (wool_color != null)
+            {
+                for (int i = 0; i < this.getInvSize(); ++i)
+                {
+                    if (!this.getInvStack(i).isEmpty())
+                    {
                         ItemStack itemstack = this.getInvStack(i);//.copy();
                         HopperCounter.COUNTERS.get(wool_color).add(this.getWorld().getServer(), itemstack);
                         this.setInvStack(i, ItemStack.EMPTY);

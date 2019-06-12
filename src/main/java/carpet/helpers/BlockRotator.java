@@ -1,6 +1,6 @@
 package carpet.helpers;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.AbstractRedstoneGateBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -44,7 +44,7 @@ public class BlockRotator
 {
     public static boolean flipBlockWithCactus(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
     {
-        if (!player.abilities.allowModifyWorld || !CarpetSettings.getBool("flippinCactus") || !player_holds_cactus_mainhand(player))
+        if (!player.abilities.allowModifyWorld || !CarpetSettings.flippinCactus || !player_holds_cactus_mainhand(player))
         {
             return false;
         }
@@ -283,8 +283,7 @@ public class BlockRotator
     }
     public static boolean flippinEligibility(Entity entity)
     {
-        if (CarpetSettings.getBool("flippinCactus")
-                && (entity instanceof PlayerEntity))
+        if (CarpetSettings.flippinCactus && (entity instanceof PlayerEntity))
         {
             PlayerEntity player = (PlayerEntity)entity;
             return (!player.getOffHandStack().isEmpty()
@@ -299,7 +298,7 @@ public class BlockRotator
         @Override
         protected ItemStack dispenseSilently(BlockPointer source, ItemStack stack)
         {
-            if (CarpetSettings.getBool("rotatorBlock"))
+            if (CarpetSettings.rotatorBlock)
             {
                 return BlockRotator.dispenserRotate(source, stack);
             }

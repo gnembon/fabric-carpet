@@ -1,7 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.helpers.FeatureGenerator;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.script.exception.CarpetExpressionException;
@@ -21,7 +21,6 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
@@ -707,7 +706,7 @@ public class CarpetExpression
             }
             if (sourceBlockState == targetBlockState)
                 return (c_, t_) -> Value.FALSE;
-            if (!CarpetSettings.b_fillUpdates) CarpetSettings.impendingFillSkipUpdates = true;
+            CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
             cc.s.getWorld().setBlockState(targetLocator.block.getPos(), sourceBlockState, 2);
             CarpetSettings.impendingFillSkipUpdates = false;
             Value retval = new BlockValue(sourceBlockState, world, targetLocator.block.getPos());

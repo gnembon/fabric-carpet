@@ -1,6 +1,6 @@
 package carpet.helpers;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.mixins.PlayerActionC2SPacketMixin;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;

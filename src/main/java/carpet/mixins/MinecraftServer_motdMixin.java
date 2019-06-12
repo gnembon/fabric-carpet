@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.MinecraftServer_motdInterface;
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,15 +27,15 @@ public abstract class MinecraftServer_motdMixin implements MinecraftServer_motdI
     @Override
     public String checkMOTD()
     {
-        if ("_".equals(CarpetSettings.getString("customMOTD")))
+        if ("_".equals(CarpetSettings.customMOTD))
         {
             setMotd(motd);
             return motd;
         }
         else
         {
-            setMotd(CarpetSettings.getString("customMOTD"));
-            return CarpetSettings.getString("customMOTD");
+            setMotd(CarpetSettings.customMOTD);
+            return CarpetSettings.customMOTD;
         }
     }
 }

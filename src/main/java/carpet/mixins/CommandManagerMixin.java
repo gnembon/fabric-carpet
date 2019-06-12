@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -30,7 +30,7 @@ public abstract class CommandManagerMixin
     @Inject(method = "execute", at = @At("HEAD"))
     private void onExecuteBegin(ServerCommandSource serverCommandSource_1, String string_1, CallbackInfoReturnable<Integer> cir)
     {
-        if (!CarpetSettings.b_fillUpdates)
+        if (!CarpetSettings.fillUpdates)
             CarpetSettings.impendingFillSkipUpdates = true;
     }
 

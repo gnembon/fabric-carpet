@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.explosion.Explosion;
 import org.spongepowered.asm.mixin.Final;
@@ -23,7 +23,7 @@ public abstract class ExplosionMixin
             target = "Ljava/util/List;addAll(Ljava/util/Collection;)Z"))
     private void clearList(CallbackInfo ci)
     {
-        if (CarpetSettings.getBool("explosionNoBlockDamage"))
+        if (CarpetSettings.explosionNoBlockDamage)
         {
             this.affectedBlocks.clear();
         }

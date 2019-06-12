@@ -1,6 +1,6 @@
 package carpet.commands;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.utils.Messenger;
@@ -37,7 +37,7 @@ public class SpawnCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("spawn").
-                requires((player) -> CarpetSettings.getBool("commandSpawn"));
+                requires((player) -> CarpetSettings.commandSpawn);
 
         literalargumentbuilder.
                 then(literal("list").

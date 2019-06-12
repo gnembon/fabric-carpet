@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
@@ -25,7 +25,7 @@ public abstract class FloatingIslandsChunkGeneratorMixin extends SurfaceChunkGen
     @Override
     public List<Biome.SpawnEntry> getEntitySpawnList(EntityCategory entityCategory_1, BlockPos blockPos_1)
     {
-        if (CarpetSettings.b_shulkerSpawningInEndCities && EntityCategory.MONSTER == entityCategory_1)
+        if (CarpetSettings.shulkerSpawningInEndCities && EntityCategory.MONSTER == entityCategory_1)
         {
             if (Feature.END_CITY.isInsideStructure(this.world, blockPos_1))
             {
