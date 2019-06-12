@@ -1,9 +1,8 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.piston.PistonHandler;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
@@ -13,6 +12,6 @@ public class PistonHandler_pushLimitMixin
     @ModifyConstant(method = "tryMove", constant = @Constant(intValue = 12), expect = 3)
     private int pushLimit(int original)
     {
-        return CarpetSettings.n_pushLimit;
+        return CarpetSettings.pushLimit;
     }
 }

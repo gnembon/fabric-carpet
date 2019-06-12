@@ -1,6 +1,6 @@
 package carpet.commands;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.utils.DistanceCalculator;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -15,7 +15,7 @@ public class DistanceCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> command = literal("distance").
-                requires((player) -> CarpetSettings.getBool("commandDistance")).
+                requires((player) -> CarpetSettings.commandDistance).
                 then(literal("from").
                         executes( (c) -> DistanceCalculator.setStart(c.getSource(), c.getSource().getPosition())).
                         then(argument("from", Vec3ArgumentType.create()).

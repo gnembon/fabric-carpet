@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.gen.feature.FossilFeature;

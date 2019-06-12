@@ -1,6 +1,6 @@
 package carpet.commands;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
@@ -29,7 +29,7 @@ public class DrawCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> command = literal("draw").
-                requires((player) -> CarpetSettings.getBool("commandDraw")).
+                requires((player) -> CarpetSettings.commandDraw).
                 then(literal("sphere").
                         then(argument("center",BlockPosArgumentType.create()).
                                 then(argument("radius",IntegerArgumentType.integer(1)).
@@ -113,6 +113,7 @@ public class DrawCommand
                         }
                     }
 
+                    CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
                     for (int xmod = -1; xmod < 2; xmod+= 2)
                     {
                         for (int ymod = -1; ymod < 2; ymod += 2)
@@ -129,11 +130,7 @@ public class DrawCommand
                                         ((Inventory)tileentity).clear();
                                     }
 
-                                    if (block.setBlockState(
-                                            world,
-                                            mbpos,
-                                            2 | (CarpetSettings.getBool("fillUpdates") ?0:1024)
-                                    ))
+                                    if (block.setBlockState(world, mbpos,2))
                                     {
                                         list.add(mbpos.toImmutable());
                                         ++affected;
@@ -142,10 +139,11 @@ public class DrawCommand
                             }
                         }
                     }
+                    CarpetSettings.impendingFillSkipUpdates = false;
                 }
             }
         }
-        if (CarpetSettings.getBool("fillUpdates"))
+        if (CarpetSettings.fillUpdates)
         {
 
             for (BlockPos blockpos1 : list)

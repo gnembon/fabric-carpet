@@ -10,13 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(IntegratedServer.class)
 public class IntegratedServerMixin
 {
-    @Inject(method = "setupServer",
-            at = @At(
-                    value = "INVOKE",
-                    shift = At.Shift.AFTER,
-                    target = "Lnet/minecraft/server/integrated/IntegratedServer;setKeyPair(Ljava/security/KeyPair;)V"
-            )
-    )
+    @Inject(method = "setupServer", at = @At("TAIL"))
     private void onSetupServerIntegrated(CallbackInfoReturnable<Boolean> cir) {
         CarpetServer.onServerLoaded((IntegratedServer) (Object) this);
     }

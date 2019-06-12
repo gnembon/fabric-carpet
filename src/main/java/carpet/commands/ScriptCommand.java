@@ -1,7 +1,7 @@
 package carpet.commands;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.Expression;
@@ -26,8 +26,6 @@ import net.minecraft.util.Clearable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.MutableIntBoundingBox;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -228,10 +226,10 @@ public class ScriptCommand
 
 
         dispatcher.register(literal("script").
-                requires((player) -> CarpetSettings.getBool("commandScript")).
+                requires((player) -> CarpetSettings.commandScript).
                 then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q));
         dispatcher.register(literal("script").
-                requires((player) -> CarpetSettings.getBool("commandScript")).
+                requires((player) -> CarpetSettings.commandScript).
                 then(literal("in").
                         then(argument("package", StringArgumentType.word()).
                                 suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
@@ -379,12 +377,13 @@ public class ScriptCommand
         MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
         CarpetExpression cexpr = new CarpetExpression(expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
-        if (int_1 > CarpetSettings.getInt("fillLimit"))
+        if (int_1 > CarpetSettings.fillLimit)
         {
             Messenger.m(source, "r too many blocks to evaluate: " + int_1);
             return 1;
         }
         int successCount = 0;
+        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
         try
         {
             for (int x = area.minX; x <= area.maxX; x++)
@@ -409,6 +408,10 @@ public class ScriptCommand
             Messenger.m(source, "r Error while processing command: "+exc);
             return 0;
         }
+        finally
+        {
+            CarpetSettings.impendingFillSkipUpdates = false;
+        }
         Messenger.m(source, "w Expression successful in " + successCount + " out of " + int_1 + " blocks");
         return successCount;
 
@@ -423,7 +426,7 @@ public class ScriptCommand
         MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
         CarpetExpression cexpr = new CarpetExpression(expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
-        if (int_1 > CarpetSettings.getInt("fillLimit"))
+        if (int_1 > CarpetSettings.fillLimit)
         {
             Messenger.m(source, "r too many blocks to evaluate: "+ int_1);
             return 1;
@@ -433,7 +436,6 @@ public class ScriptCommand
 
         BlockPos.Mutable mbpos = new BlockPos.Mutable(origin);
         ServerWorld world = source.getWorld();
-
 
         for (int x = area.minX; x <= area.maxX; x++)
         {
@@ -490,6 +492,8 @@ public class ScriptCommand
             volume = newVolume;
         }
         int affected = 0;
+
+        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
         for (int x = 0; x <= maxx; x++)
         {
             for (int y = 0; y <= maxy; y++)
@@ -505,11 +509,7 @@ public class ScriptCommand
                             BlockEntity tileentity = world.getBlockEntity(mbpos);
                             Clearable.clear(tileentity);
                             
-                            if (block.setBlockState(
-                                    world,
-                                    mbpos,
-                                    2 | (CarpetSettings.getBool("fillUpdates") ?0:1024)
-                            ))
+                            if (block.setBlockState(world, mbpos,2))
                             {
                                 ++affected;
                             }
@@ -518,7 +518,9 @@ public class ScriptCommand
                 }
             }
         }
-        if (CarpetSettings.getBool("fillUpdates") && block != null)
+        CarpetSettings.impendingFillSkipUpdates = false;
+
+        if (CarpetSettings.fillUpdates && block != null)
         {
             for (int x = 0; x <= maxx; x++)
             {

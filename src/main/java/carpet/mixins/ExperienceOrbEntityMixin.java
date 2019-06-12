@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.ExperienceOrbInterface;
 import carpet.helpers.XPcombine;
 import net.minecraft.entity.ExperienceOrbEntity;
@@ -31,7 +31,7 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
             ))
     void checkCombineAtTick(CallbackInfo ci)
     {
-        if (CarpetSettings.getBool("combineXPOrbs"))
+        if (CarpetSettings.combineXPOrbs)
         {
             if (getCombineDelay() > 0)
             {
@@ -48,7 +48,7 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
     @Inject(method = "onPlayerCollision", at = @At("HEAD"))
     void removeDelay(PlayerEntity playerEntity_1, CallbackInfo ci)
     {
-        if (CarpetSettings.getBool("xpNoCooldown"))
+        if (CarpetSettings.xpNoCooldown)
             playerEntity_1.experiencePickUpDelay = 0;
     }
 

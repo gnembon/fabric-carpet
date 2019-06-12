@@ -10,7 +10,6 @@ import carpet.commands.DistanceCommand;
 import carpet.commands.DrawCommand;
 import carpet.commands.InfoCommand;
 import carpet.commands.LogCommand;
-import carpet.commands.ParcetCommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ScriptCommand;
@@ -19,7 +18,7 @@ import carpet.commands.TickCommand;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.settings.Settings;
+import carpet.settings.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.HUDController;
 import com.mojang.brigadier.CommandDispatcher;
@@ -33,7 +32,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
     static {
-        SettingsManager.parseSettingsClass(Settings.class);
+        SettingsManager.parseSettingsClass(CarpetSettings.class);
         //...
     }
     public static void init(MinecraftServer server) //aka constructor of this static singleton class
@@ -42,11 +41,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     }
     public static void onServerLoaded(MinecraftServer server)
     {
-        //new
         settingsManager = new SettingsManager(server);
-
-        //old
-        CarpetSettings.apply_settings_from_conf(server);
         scriptServer = new CarpetScriptServer();
     }
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
@@ -65,7 +60,6 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
     {
-        CarpetCommand.register(dispatcher);
         TickCommand.register(dispatcher);
         CounterCommand.register(dispatcher);
         LogCommand.register(dispatcher);
@@ -77,7 +71,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         PerimeterInfoCommand.register(dispatcher);
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
-        ParcetCommand.register(dispatcher);
+        CarpetCommand.register(dispatcher);
 
         //TestCommand.register(dispatcher);
     }

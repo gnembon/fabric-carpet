@@ -1,7 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.script.bundled.CameraPathModule;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.ModuleInterface;
@@ -242,7 +242,7 @@ public class CarpetScriptServer
         }
         Messenger.m(source, "gi Package "+hostName+" loaded with /"+hostName+" command");
         CarpetServer.minecraft_server.getCommandManager().getDispatcher().register(command);
-        CarpetSettings.notifyPlayersCommandsChanged();
+        CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
 
     public void setChatErrorSnooper(ServerCommandSource source)
@@ -304,7 +304,7 @@ public class CarpetScriptServer
         }
         // stop all events associated with name
         modules.remove(name);
-        CarpetSettings.notifyPlayersCommandsChanged();
+        CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         Messenger.m(source, "w Removed host "+name);
         return true;
     }

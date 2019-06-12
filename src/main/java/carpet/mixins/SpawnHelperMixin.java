@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.WorldInterface;
 import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
@@ -35,7 +35,7 @@ public class SpawnHelperMixin
         // various configurations, but solid and 'passable' blocks, like air, water grass, etc.
         // checking if in the BB of the entity are only passable blocks is very cheap and covers most cases
         // in case something more complex happens - we default to full block collision check
-        if (CarpetSettings.b_lagFreeSpawning)
+        if (CarpetSettings.lagFreeSpawning)
         {
             BlockPos.Mutable blockpos = new BlockPos.Mutable();
             for (int y = (int)bb.minY, maxy = (int)Math.ceil(bb.maxY); y < maxy; y++)
@@ -61,7 +61,7 @@ public class SpawnHelperMixin
     ))
     private static Entity create(EntityType<?> entityType, World world_1)
     {
-        if (CarpetSettings.b_lagFreeSpawning)
+        if (CarpetSettings.lagFreeSpawning)
         {
             Map<EntityType, Entity> precookedMobs = ((WorldInterface)world_1).getPrecookedMobs();
             if (precookedMobs.containsKey(entityType))
@@ -80,7 +80,7 @@ public class SpawnHelperMixin
     ))
     private static boolean spawnEntity(World world, Entity entity_1)
     {
-        if (CarpetSettings.b_lagFreeSpawning)
+        if (CarpetSettings.lagFreeSpawning)
             // we used the mob - next time we will create a new one when needed
             ((WorldInterface) world).getPrecookedMobs().remove(entity_1.getType());
 

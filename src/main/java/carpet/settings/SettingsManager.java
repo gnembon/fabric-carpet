@@ -1,6 +1,5 @@
 package carpet.settings;
 
-import carpet.CarpetSettings;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -35,7 +34,6 @@ public class SettingsManager {
             Rule rule = f.getAnnotation(Rule.class);
             if (rule == null) continue;
             ParsedRule parsed = new ParsedRule(f, rule);
-            CarpetSettings.LOG.error("REGISTERED RULE: "+parsed.name);
             rules.put(parsed.name, parsed);
         }
     }

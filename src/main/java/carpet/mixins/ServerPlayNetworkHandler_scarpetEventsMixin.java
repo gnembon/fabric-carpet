@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.packet.ClientCommandC2SPacket;

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.Dynamic;
 import net.minecraft.entity.EntityType;
@@ -27,7 +27,7 @@ public abstract class EndCityFeatureMixin extends StructureFeature<DefaultFeatur
     @Override
     public List<Biome.SpawnEntry> getMonsterSpawns()
     {
-        if (CarpetSettings.b_shulkerSpawningInEndCities)
+        if (CarpetSettings.shulkerSpawningInEndCities)
             return spawnList;
         return Collections.emptyList();
     }

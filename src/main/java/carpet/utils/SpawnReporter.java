@@ -1,7 +1,6 @@
 
 package carpet.utils;
 
-import carpet.CarpetSettings;
 import carpet.mixins.WeightedPickerEntryMixin;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;

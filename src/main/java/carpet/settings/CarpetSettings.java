@@ -6,6 +6,8 @@ import carpet.utils.Messenger;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import static carpet.settings.RuleCategory.BUGFIX;
 import static carpet.settings.RuleCategory.COMMANDS;
@@ -15,8 +17,13 @@ import static carpet.settings.RuleCategory.FEATURE;
 import static carpet.settings.RuleCategory.OPTIMIZATIONS;
 import static carpet.settings.RuleCategory.SURVIVAL;
 
-public class Settings
+public class CarpetSettings
 {
+    public static final String carpetVersion = "v19_06_04alpha";
+    public static final Logger LOG = LogManager.getLogger();
+    public static boolean skipGenerationChecks = false;
+    public static boolean impendingFillSkipUpdates = false;
+
     @Rule(
             desc = "Fixes server crashing supposedly on falling behind 60s in ONE tick, yeah bs.",
             extra = "Fixed 1.12 watchdog crash in 1.13 pre-releases, reintroduced with 1.13, GG.",
@@ -225,7 +232,7 @@ public class Settings
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
 
-    private class PushLimitLimits extends Validator<Integer> {
+    private static class PushLimitLimits extends Validator<Integer> {
         @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue < 1024) ? newValue : null;
         }
@@ -246,7 +253,7 @@ public class Settings
     )
     public static int railPowerLimit = 9;
 
-    private class FillLimitLimits extends Validator<Integer> {
+    private static class FillLimitLimits extends Validator<Integer> {
         @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue < 20000000) ? newValue : null;
         }
@@ -270,7 +277,7 @@ public class Settings
     @Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
     public static boolean onePlayerSleeping = false;
 
-    private class SetMotd extends Validator<String> {
+    private static class SetMotd extends Validator<String> {
         @Override String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
             customMOTD = newValue; // accelerate a smidge
             ((MinecraftServer_motdInterface) CarpetServer.minecraft_server).checkMOTD();
@@ -289,7 +296,7 @@ public class Settings
     @Rule(desc = "Cactus in dispensers rotates blocks.", extra = "Rotates block anti-clockwise if possible", category = FEATURE)
     public static boolean rotatorBlock = false;
 
-    private class ViewDistanceValidator extends Validator<Integer>
+    private static class ViewDistanceValidator extends Validator<Integer>
     {
         @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
         {
@@ -323,7 +330,7 @@ public class Settings
     )
     public static int viewDistance = 0;
 
-    private class DisableSpawnChunksValidator extends Validator<Boolean> {
+    private static class DisableSpawnChunksValidator extends Validator<Boolean> {
         @Override Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string) {
             if (!newValue)
                 Messenger.m(source, "w Spawn chunks re-enabled. Visit spawn to load them?");
@@ -337,7 +344,7 @@ public class Settings
     )
     public static boolean disableSpawnChunks = false;
 
-    private class KelpLimit extends Validator<Integer> {
+    private static class KelpLimit extends Validator<Integer> {
         @Override Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>=0 && newValue <=25)?newValue:null;
         }

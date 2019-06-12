@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.container.Container;
 import net.minecraft.container.Slot;
 import net.minecraft.container.SlotActionType;
@@ -29,7 +29,7 @@ public class ContainerMixin
             CallbackInfoReturnable<ItemStack> cir
     )
     {
-        if (slotActionType_1 == SlotActionType.THROW && CarpetSettings.getBool("ctrlQCraftingFix") && playerEntity_1.inventory.getCursorStack().isEmpty() && int_1 >= 0)
+        if (slotActionType_1 == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity_1.inventory.getCursorStack().isEmpty() && int_1 >= 0)
         {
             ItemStack itemStack_1 = ItemStack.EMPTY;
             Slot slot_4 = slotList.get(int_1);

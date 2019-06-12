@@ -23,7 +23,7 @@ public class TestCommand
 
     private static int test(CommandContext<ServerCommandSource> c, String term)
     {
-        Messenger.m(c.getSource(),"w term is: ",term.substring(0,1)+"b "+term);
+        Messenger.m(c.getSource(),term.substring(0,1)+" "+term+": how did you get here?");
         return 1;
     }
 }

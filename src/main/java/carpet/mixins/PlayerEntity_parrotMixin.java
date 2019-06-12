@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -50,7 +50,7 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
             target = "Lnet/minecraft/entity/player/PlayerEntity;updateShoulderEntity(Lnet/minecraft/nbt/CompoundTag;)V"))
     private void onTickMovement(CallbackInfo ci)
     {
-        boolean parrots_will_drop = !CarpetSettings.getBool("persistentParrots") || this.abilities.invulnerable;
+        boolean parrots_will_drop = !CarpetSettings.persistentParrots || this.abilities.invulnerable;
         if (!this.world.isClient && ((parrots_will_drop && this.fallDistance > 0.5F) || this.isInWater() || (parrots_will_drop && this.hasVehicle())) || this.abilities.flying)
         {
             this.dropShoulderEntities();
@@ -80,7 +80,7 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
             target = "Lnet/minecraft/entity/player/PlayerEntity;dropShoulderEntities()V"))
     private void onDamage(DamageSource damageSource_1, float float_1, CallbackInfoReturnable<Boolean> cir)
     {
-        if (CarpetSettings.getBool("persistentParrots") && !this.isSneaking())
+        if (CarpetSettings.persistentParrots && !this.isSneaking())
         {
             if (this.random.nextFloat() < ((float_1)/15.0) )
             {

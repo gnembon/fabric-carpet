@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.Block;
 import net.minecraft.server.command.SetBlockCommand;
 import net.minecraft.server.world.ServerWorld;
@@ -18,6 +18,6 @@ public class SetBlockCommandMixin
     ))
     private static void conditionalUpdating(ServerWorld serverWorld, BlockPos blockPos_1, Block block_1)
     {
-        if (CarpetSettings.b_fillUpdates) serverWorld.updateNeighbors(blockPos_1, block_1);
+        if (CarpetSettings.fillUpdates) serverWorld.updateNeighbors(blockPos_1, block_1);
     }
 }

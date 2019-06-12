@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.TntBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -16,6 +16,6 @@ public abstract class TntBlockMixin
             target = "Lnet/minecraft/world/World;isReceivingRedstonePower(Lnet/minecraft/util/math/BlockPos;)Z"))
     private boolean isTNTDoNotUpdate(World world, BlockPos blockPos)
     {
-        return !CarpetSettings.getBool("TNTDoNotUpdate") && world.isReceivingRedstonePower(blockPos);
+        return !CarpetSettings.TNTDoNotUpdate && world.isReceivingRedstonePower(blockPos);
     }
 }

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.world.gen.feature.KelpFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,7 +16,7 @@ public class KelpFeatureMixin
     {
         if (bound==10)
             return random.nextInt(bound);
-        int limit = CarpetSettings.getInt("kelpGenerationGrowLimit");
+        int limit = CarpetSettings.kelpGenerationGrowthLimit;
         if (limit == 0)
             return random.nextInt(bound);
         return 25-limit+random.nextInt(Math.min(23,limit+1));

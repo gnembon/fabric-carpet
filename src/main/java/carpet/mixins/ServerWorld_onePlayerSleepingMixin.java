@@ -1,7 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
-import net.minecraft.entity.player.PlayerEntity;
+import carpet.settings.CarpetSettings;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import org.spongepowered.asm.mixin.Final;
@@ -26,7 +25,7 @@ public class ServerWorld_onePlayerSleepingMixin
     @Inject(method = "updatePlayersSleeping", cancellable = true, at = @At("HEAD"))
     private void updateOnePlayerSleeping(CallbackInfo ci)
     {
-        if(CarpetSettings.getBool("onePlayerSleeping"))
+        if(CarpetSettings.onePlayerSleeping)
         {
             allPlayersSleeping = false;
             for (ServerPlayerEntity p : players)
@@ -46,7 +45,7 @@ public class ServerWorld_onePlayerSleepingMixin
     ))
     private boolean noneMatchSleep(Stream<ServerPlayerEntity> stream, Predicate<ServerPlayerEntity> predicate)
     {
-        if (CarpetSettings.getBool("onePlayerSleeping"))
+        if (CarpetSettings.onePlayerSleeping)
             return stream.anyMatch((p) -> !p.isSpectator() && p.isSleepingLongEnough());
         return stream.noneMatch(predicate);
     }

@@ -71,8 +71,9 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     }
 
 
-    public ParsedRule<T> set(ServerCommandSource source, String value) {
-        if (CarpetServer.settingsManager.locked)
+    public ParsedRule<T> set(ServerCommandSource source, String value)
+    {
+        if (CarpetServer.settingsManager != null && CarpetServer.settingsManager.locked)
             return null;
         if (type == String.class)
         {
@@ -98,8 +99,10 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
     }
 
-    ParsedRule<T> set(ServerCommandSource source, T value, String stringValue) {
-        try {
+    ParsedRule<T> set(ServerCommandSource source, T value, String stringValue)
+    {
+        try
+        {
             for (Validator<T> validator : this.validators)
             {
                 value = validator.validate(source, this, value, stringValue);
@@ -120,55 +123,68 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return this;
     }
 
-    public T get() {
-        try {
+    public T get()
+    {
+        try
+        {
             return (T) this.field.get(null);
-        } catch (IllegalAccessException e) {
+        }
+        catch (IllegalAccessException e)
+        {
             throw new IllegalStateException(e);
         }
     }
 
-    public String getAsString() {
+    public String getAsString()
+    {
         return convertToString(get());
     }
 
-    public boolean getBoolValue() {
+    public boolean getBoolValue()
+    {
         if (type == boolean.class) return (Boolean) get();
         if (type.isAssignableFrom(Number.class)) return ((Number) get()).doubleValue() > 0;
         return false;
     }
 
-    public boolean isDefault() {
+    public boolean isDefault()
+    {
         return defaultValue.equals(get());
     }
 
-    public void resetToDefault(ServerCommandSource source) {
+    public void resetToDefault(ServerCommandSource source)
+    {
         set(source, defaultValue, defaultAsString);
     }
 
 
-    private static String convertToString(Object value) {
+    private static String convertToString(Object value)
+    {
         if (value instanceof Enum) return ((Enum) value).name().toLowerCase(Locale.ROOT);
         return value.toString();
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(Object obj)
+    {
         return obj.getClass() == ParsedRule.class && ((ParsedRule) obj).name.equals(this.name);
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
         return this.name.hashCode();
     }
 
     @Override
-    public int compareTo(ParsedRule o) {
+    public int compareTo(ParsedRule o)
+    {
         return this.name.compareTo(o.name);
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return this.name + ": " + getAsString();
     }
 }

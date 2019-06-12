@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
@@ -50,8 +49,8 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
             }
 
             int limit = list_1.size();
-            if (CarpetSettings.n_maxEntityCollisions > 0)
-                limit = Math.min(limit, CarpetSettings.n_maxEntityCollisions);
+            if (CarpetSettings.maxEntityCollisions > 0)
+                limit = Math.min(limit, CarpetSettings.maxEntityCollisions);
 
             for(int_2 = 0; int_2 < limit; ++int_2) {
                 Entity entity_1 = (Entity)list_1.get(int_2);
