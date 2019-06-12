@@ -278,6 +278,22 @@ public class CarpetSettings
     )
     public static int maxEntityCollisions = 0;
 
+    /*
+    @Rule(
+            desc = "Fix for piston ghost blocks",
+            category = BUGFIX,
+            validate = Validator.WIP.class
+    )
+    public static boolean pistonGhostBlocksFix = true;
+
+    @Rule(
+            desc = "fixes water performance issues",
+            category = OPTIMIZATION,
+            validate = Validator.WIP.class
+    )
+    public static boolean waterFlow = true;
+    */
+
     @Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
     public static boolean onePlayerSleeping = false;
 
