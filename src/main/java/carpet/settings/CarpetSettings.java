@@ -103,7 +103,7 @@ public class CarpetSettings
     )
     public static boolean fastRedstoneDust = false;
 
-    @Rule(desc = "Only husks spawn in desert temples", category = FEATURE, validate = Validator.WIP.class)
+    @Rule(desc = "Only husks spawn in desert temples", category = FEATURE)
     public static boolean huskSpawningInTemples = false;
 
     @Rule( desc = "Shulkers will respawn in end cities", category = FEATURE )
