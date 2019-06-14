@@ -93,7 +93,7 @@
     "World_movableTEMixin",
     "WorldChunk_movableTEMixin",
 
-    "BlockPlacementDispenserBehaviourMixin",
+    "BlockPlacementDispenserBehaviourMixin"
   ],
   "client": [
     "MinecraftClientMixin",
