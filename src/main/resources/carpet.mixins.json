@@ -78,6 +78,7 @@
     "ProjectileEntityMixin",
     "FallingBlockEntityMixin",
     "ThrownEntityMixin",
+    "EntityNavigation_pathfindingMixin",
 
     "FloatingIslandsChunkGeneratorMixin",
     "EndCityFeatureMixin",

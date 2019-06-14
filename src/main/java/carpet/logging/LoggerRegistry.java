@@ -27,6 +27,7 @@ public class LoggerRegistry
     public static boolean __damage;
     public static boolean __packets;
     public static boolean __weather;
+    public static boolean __pathfinding;
 
     public static void initLoggers()
     {
@@ -36,6 +37,7 @@ public class LoggerRegistry
         registerLogger("kills", new Logger("kills", null, null));
         registerLogger("damage", new Logger("damage", "all", new String[]{"all","players","me"}));
         registerLogger("weather", new Logger("weather", null, null));
+        registerLogger( "pathfinding", new Logger("pathfinding", "20", new String[]{"2", "5", "10"}));
 
         registerLogger("tps", new HUDLogger("tps", null, null));
         registerLogger("packets", new HUDLogger("packets", null, null));
