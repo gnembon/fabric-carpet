@@ -54,6 +54,8 @@
     "SaplingBlockMixin",
     "EntityMixin",
     "GuardianEntityMixin",
+    "DesertPyramidFeatureMixin",
+    "OverworldChunkGeneratorMixin",
 
     "ServerChunkManagerMixin",
     "SpawnHelperMixin",
