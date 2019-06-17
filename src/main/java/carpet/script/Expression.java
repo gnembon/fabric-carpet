@@ -2375,9 +2375,15 @@ public class Expression implements Cloneable
             String format = lv.get(0).getString();
             if (lv.size() == 1)
                 return new StringValue(format);
+            int argIndex = 1;
+            if (lv.get(1) instanceof ListValue)
+            {
+                lv = ((ListValue) lv.get(1)).getItems();
+                argIndex = 0;
+            }
             List<Object> args = new ArrayList<>();
             Matcher m = formatPattern.matcher(format);
-            int argIndex = 1;
+
             for (int i = 0, len = format.length(); i < len; ) {
                 if (m.find(i)) {
                     // Anything between the start of the string and the beginning

@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.script.value.NullValue;
 import carpet.settings.CarpetSettings;
 import carpet.helpers.FeatureGenerator;
 import carpet.fakes.MinecraftServerInterface;
@@ -24,6 +25,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.item.Items;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.command.arguments.ParticleArgumentType;
@@ -38,10 +41,12 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.state.property.Property;
 import net.minecraft.state.StateFactory;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.EulerRotation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.LightType;
@@ -1872,6 +1877,62 @@ public class CarpetExpression
             pc += drawParticleLine(world, particle, new Vec3d(bx, ay, az), new Vec3d(bx, ay, bz), density);
             int particleCount = pc;
             return (c_, t_) -> new NumericValue(particleCount);
+        });
+
+        this.expr.addLazyFunction("create_marker", -1, (c, t, lv) ->{
+            CarpetContext cc = (CarpetContext)c;
+            BlockState targetBlock = null;
+            BlockValue.VectorLocator pointLocator;
+            String name;
+            try
+            {
+                Value nameValue = lv.get(0).evalValue(c);
+                name = nameValue instanceof NullValue ? "" : nameValue.getString();
+                pointLocator = BlockValue.locateVec(cc, lv, 1, true);
+                if (lv.size()>pointLocator.offset)
+                    targetBlock = BlockValue.fromParams(cc, lv, pointLocator.offset, true).block.getBlockState();
+
+            }
+            catch (IndexOutOfBoundsException e)
+            {
+                throw new InternalExpressionException("create_marker requires a name and three coordinates, with optional direction, and optional block on its head");
+            }
+
+            ArmorStandEntity armorstand = new ArmorStandEntity(EntityType.ARMOR_STAND, cc.s.getWorld());
+            armorstand.setPositionAndAngles(
+                    pointLocator.vec.x,
+                    pointLocator.vec.y - ((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3)),
+                    pointLocator.vec.z,
+                    (float)pointLocator.yaw,
+                    (float) pointLocator.pitch
+            );
+            armorstand.addScoreboardTag("__scarpet_marker");
+            if (targetBlock != null)
+                armorstand.setEquippedStack(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
+            if (!name.isEmpty())
+            {
+                armorstand.setCustomName(new LiteralText(name));
+                armorstand.setCustomNameVisible(true);
+            }
+            armorstand.setHeadRotation(new EulerRotation((int)pointLocator.pitch,0,0));
+            armorstand.setNoGravity(true);
+            armorstand.setInvisible(true);
+            armorstand.setInvulnerable(true);
+            cc.s.getWorld().spawnEntity(armorstand);
+            EntityValue result = new EntityValue(armorstand);
+            return (_c, _t) -> result;
+        });
+
+        this.expr.addLazyFunction("remove_all_markers", 0, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            int total = 0;
+            for (Entity e : cc.s.getWorld().getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains("__scarpet_marker")))
+            {
+                total ++;
+                e.remove();
+            }
+            int finalTotal = total;
+            return (_cc, _tt) -> new NumericValue(finalTotal);
         });
 
         //"overridden" native call that prints to stderr
