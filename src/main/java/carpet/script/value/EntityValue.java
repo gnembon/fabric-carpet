@@ -174,8 +174,8 @@ public class EntityValue extends Value
 
         put("invulnerable", (e, a) -> new NumericValue(e.isInvulnerable()));
         put("dimension", (e, a) -> new StringValue(e.dimension.toString().replaceFirst("minecraft:","")));
-        put("height", (e, a) -> new NumericValue(e.getSize(EntityPose.STANDING).height));
-        put("width", (e, a) -> new NumericValue(e.getSize(EntityPose.STANDING).width));
+        put("height", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).height));
+        put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight(EntityPose.STANDING)));
         put("age", (e, a) -> new NumericValue(e.age));
         put("item", (e, a) -> (e instanceof ItemEntity)?new StringValue(((ItemEntity) e).getStack().getName().getString()):Value.NULL);

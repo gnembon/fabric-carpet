@@ -5,11 +5,9 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.arguments.BlockArgumentParser;
 import net.minecraft.block.Blocks;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
@@ -58,6 +56,10 @@ public class BlockValue extends Value
 
     public static VectorLocator locateVec(CarpetContext c, List<LazyValue> params, int offset)
     {
+        return locateVec(c,params, offset, false);
+    }
+    public static VectorLocator locateVec(CarpetContext c, List<LazyValue> params, int offset, boolean optionalDirection)
+    {
         try
         {
             Value v1 = params.get(0 + offset).evalValue(c);
@@ -68,19 +70,34 @@ public class BlockValue extends Value
             if (v1 instanceof ListValue)
             {
                 List<Value> args = ((ListValue) v1).getItems();
-                return new VectorLocator( new Vec3d(
+                Vec3d pos = new Vec3d(
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
-                        NumericValue.asNumber(args.get(2)).getDouble()),
-                        offset+1
-                );
+                        NumericValue.asNumber(args.get(2)).getDouble());
+                double yaw = 0.0D;
+                double pitch = 0.0D;
+                if (args.size()>3 && optionalDirection)
+                {
+                    yaw = NumericValue.asNumber(args.get(3)).getDouble();
+                    pitch = NumericValue.asNumber(args.get(4)).getDouble();
+                }
+                return new VectorLocator(pos,offset+1, yaw, pitch);
             }
-            return new VectorLocator( new Vec3d(
+            Vec3d pos = new Vec3d(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble()),
-                    offset+3
-            );
+                    NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble());
+            double yaw = 0.0D;
+            double pitch = 0.0D;
+            int eatenLength = 3;
+            if (params.size()>3+offset && optionalDirection)
+            {
+                yaw = NumericValue.asNumber(params.get(3 + offset).evalValue(c)).getDouble();
+                pitch = NumericValue.asNumber(params.get(4 + offset).evalValue(c)).getDouble();
+                eatenLength = 5;
+            }
+
+            return new VectorLocator(pos,offset+eatenLength, yaw, pitch);
         }
         catch (IndexOutOfBoundsException e)
         {
@@ -205,10 +222,21 @@ public class BlockValue extends Value
     {
         public Vec3d vec;
         public int offset;
+        public double yaw;
+        public double pitch;
         VectorLocator(Vec3d v, int o)
         {
             vec = v;
             offset = o;
+            yaw = 0.0D;
+            pitch = 0.0D;
+        }
+        VectorLocator(Vec3d v, int o, double y, double p)
+        {
+            vec = v;
+            offset = o;
+            yaw = y;
+            pitch = p;
         }
     }
 }

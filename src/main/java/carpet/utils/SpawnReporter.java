@@ -445,7 +445,7 @@ public class SpawnReporter
                             
                             for (int i = 0; i < 20; ++i)
                             {
-                                if (mob.canSpawn(worldIn, SpawnType.NATURAL))
+                                if (SpawnRestriction.method_20638(mob.getType(),mob.getEntityWorld(), SpawnType.NATURAL, mob.getBlockPos(), mob.getEntityWorld().random))
                                 {
                                     will_spawn += 1;
                                 }
