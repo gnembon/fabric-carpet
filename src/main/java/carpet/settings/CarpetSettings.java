@@ -373,7 +373,7 @@ public class CarpetSettings
     @Rule(
             desc = "Allows spawn chunks to unload",
             category = CREATIVE,
-            validate = {Validator.WIP.class, DisableSpawnChunksValidator.class}
+            validate = DisableSpawnChunksValidator.class
     )
     public static boolean disableSpawnChunks = false;
 
