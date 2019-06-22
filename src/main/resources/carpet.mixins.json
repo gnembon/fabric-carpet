@@ -88,6 +88,9 @@
     "InfestedBlockMixin",
     "PlayerEntityMixin",
 
+    "PistonBlock_qcMixin",
+    "DispenserBlock_qcMixin",
+
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",

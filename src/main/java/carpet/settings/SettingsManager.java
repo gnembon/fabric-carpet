@@ -78,10 +78,7 @@ public class SettingsManager
 
     public static Collection<ParsedRule<?>> getRules()
     {
-        CarpetSettings.LOG.error("grabbing rules");
-        List<ParsedRule<?>> r = rules.values().stream().sorted().collect(Collectors.toList());
-        CarpetSettings.LOG.error("Got: "+r.size()+" rules");
-        return r;
+        return rules.values().stream().sorted().collect(Collectors.toList());
     }
 
     public Collection<ParsedRule<?>> findStartupOverrides()

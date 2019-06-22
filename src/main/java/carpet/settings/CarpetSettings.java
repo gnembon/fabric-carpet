@@ -121,7 +121,7 @@ public class CarpetSettings
     )
     public static boolean antiCheatSpeed = false;
 
-    @Rule(desc = "Pistons, droppers and dispensers react if block above them is powered", category = CREATIVE, validate = Validator.WIP.class)
+    @Rule(desc = "Pistons, droppers and dispensers react if block above them is powered", category = CREATIVE)
     public static boolean quasiConnectivity = true;
 
     @Rule(
@@ -315,6 +315,10 @@ public class CarpetSettings
     {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
         {
+            if (currentRule.get().equals(newValue))
+            {
+                return newValue;
+            }
             if (newValue < 0 || newValue > 32)
             {
                 Messenger.m(source, "r view distance has to be between 0 and 32");
@@ -349,13 +353,11 @@ public class CarpetSettings
 
     private static class DisableSpawnChunksValidator extends Validator<Boolean> {
         @Override public Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string) {
-            if (currentRule.get() == newValue)
+            if (currentRule.get().booleanValue() == newValue.booleanValue())
             {
                 //must been some startup thing
                 return newValue;
             }
-            if (!newValue)
-                Messenger.m(source, "w Spawn chunks re-enabled. Visit spawn to load them?");
             ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD);
             if (overworld != null) {
                 ChunkPos centerChunk = new ChunkPos(overworld.getSpawnPos());
