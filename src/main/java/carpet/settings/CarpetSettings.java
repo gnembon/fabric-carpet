@@ -25,14 +25,6 @@ public class CarpetSettings
     public static boolean impendingFillSkipUpdates = false;
 
     @Rule(
-            desc = "Fixes server crashing supposedly on falling behind 60s in ONE tick, yeah bs.",
-            extra = "Fixed 1.12 watchdog crash in 1.13 pre-releases, reintroduced with 1.13, GG.",
-            category = BUGFIX,
-            validate = Validator.WIP.class
-    )
-    public static boolean watchdogCrashFix = false;
-
-    @Rule(
             desc = "Nether portals correctly place entities going through",
             extra = "Entities shouldn't suffocate in obsidian",
             category = BUGFIX,
