@@ -6,6 +6,12 @@ import carpet.utils.Messenger;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.world.ChunkTicketType;
+import net.minecraft.server.world.ServerChunkManager;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Unit;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -343,8 +349,24 @@ public class CarpetSettings
 
     private static class DisableSpawnChunksValidator extends Validator<Boolean> {
         @Override public Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string) {
+            if (currentRule.get() == newValue)
+            {
+                //must been some startup thing
+                return newValue;
+            }
             if (!newValue)
                 Messenger.m(source, "w Spawn chunks re-enabled. Visit spawn to load them?");
+            ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD);
+            if (overworld != null) {
+                ChunkPos centerChunk = new ChunkPos(overworld.getSpawnPos());
+                ServerChunkManager chunkManager = (ServerChunkManager) overworld.getChunkManager();
+
+                chunkManager.removeTicket(ChunkTicketType.START, centerChunk, 11, Unit.INSTANCE);
+                if (!newValue)
+                {
+                    chunkManager.addTicket(ChunkTicketType.START, centerChunk, 11, Unit.INSTANCE);
+                }
+            }
             return newValue;
         }
     }
