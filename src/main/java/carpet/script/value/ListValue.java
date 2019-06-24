@@ -1,6 +1,9 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +47,19 @@ public class ListValue extends Value
         items = new ArrayList<>();
         items.addAll(list);
     }
+
+    public static Value fromItemStack(ItemStack itemstack)
+    {
+        if (itemstack == null || itemstack.isEmpty())
+            return Value.NULL;
+        return ListValue.of(
+                new StringValue(Registry.ITEM.getId(itemstack.getItem()).getPath()),
+                new NumericValue(itemstack.getCount()),
+                new NBTSerializableValue(itemstack)
+        );
+    }
+
+
     public static ListValue wrap(List<Value> list)
     {
         ListValue created = new ListValue();

@@ -19,6 +19,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.settings.CarpetSettings;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -1833,6 +1834,21 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
+        addBinaryFunction("get", (v1, v2) -> {
+            if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
+            {
+                throw new InternalExpressionException("First argument of element should be a list");
+            }
+            List<Value> items = ((ListValue)v1).getItems();
+            long index = NumericValue.asNumber(v2).getLong();
+            int numitems = items.size();
+            long range = abs(index)/numitems;
+            index += (range+2)*numitems;
+            index = index % numitems;
+            return items.get((int)index);
+        });
+
+        //Deprecated
         addBinaryFunction("element", (v1, v2) -> {
             if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
             {
