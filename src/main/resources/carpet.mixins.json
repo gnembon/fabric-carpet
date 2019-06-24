@@ -19,6 +19,7 @@
     "World_tickMixin",
     "ServerWorld_tickMixin",
     "ServerChunkManager_tickMixin",
+    "ThreadedAnvilChunkStorage_tickMixin",
 
     "MobEntityMixin",
 
