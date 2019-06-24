@@ -24,6 +24,9 @@ public abstract class ServerChunkManager_tickMixin
 
     CarpetProfiler.ProfilerToken currentSection;
 
+    /* Replaced with ThreadedAnvilCHunkStorage_Mixin path and separately isolated spawning and random ticks here
+       ticket manager is not worth its own section at this point - will fall into rest, until its fixed.
+
     @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(
             value = "CONSTANT",
             args = "stringValue=purge"
@@ -61,6 +64,25 @@ public abstract class ServerChunkManager_tickMixin
 
     @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At("TAIL"))
     private void stopUnloadSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
+    {
+        if (currentSection != null)
+        {
+            CarpetProfiler.end_current_section(currentSection);
+        }
+    }
+    */
+
+
+
+
+    @Inject(method = "tickChunks", at = @At("HEAD"))
+    private void startSpawningSection(CallbackInfo ci)
+    {
+        currentSection = CarpetProfiler.start_section(world, "Spawning and Random Ticks", CarpetProfiler.TYPE.GENERAL);
+    }
+
+    @Inject(method = "tickChunks", at = @At("RETURN"))
+    private void stopSpawningSection(CallbackInfo ci)
     {
         if (currentSection != null)
         {
