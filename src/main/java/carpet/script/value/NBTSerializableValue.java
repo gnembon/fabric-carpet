@@ -3,7 +3,12 @@ package carpet.script.value;
 import carpet.script.CarpetContext;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.entity.HopperBlockEntity;
+import net.minecraft.command.arguments.ItemStackArgument;
+import net.minecraft.command.arguments.ItemStackArgumentType;
+import net.minecraft.command.arguments.ItemStringReader;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.AbstractTraderEntity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -12,8 +17,11 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class NBTSerializableValue extends Value
@@ -26,7 +34,7 @@ public class NBTSerializableValue extends Value
     public NBTSerializableValue(ItemStack stack)
     {
         what = stack;
-        nbtSupplier = () -> ((ItemStack)what).toTag(new CompoundTag());
+        nbtSupplier = () -> ((ItemStack) what).toTag(new CompoundTag());
     }
 
     public static InventoryLocator locateInventory(CarpetContext c, List<LazyValue> params, int offset)
@@ -39,13 +47,13 @@ public class NBTSerializableValue extends Value
             {
                 Entity e = ((EntityValue) v1).getEntity();
                 if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).inventory;
-                else if (e instanceof Inventory) inv = (Inventory)e;
+                else if (e instanceof Inventory) inv = (Inventory) e;
                 else if (e instanceof VillagerEntity) inv = ((VillagerEntity) e).getInventory();
 
                 if (inv == null)
-                    throw new InternalExpressionException("Entity "+e+" has no inventory");
+                    throw new InternalExpressionException("Entity " + e + " has no inventory");
 
-                return new InventoryLocator(e, e.getBlockPos(), inv, offset+1);
+                return new InventoryLocator(e, e.getBlockPos(), inv, offset + 1);
             }
             else if (v1 instanceof BlockValue)
             {
@@ -54,8 +62,8 @@ public class NBTSerializableValue extends Value
                     throw new InternalExpressionException("Block to acess inventory needs to be positioned in the world");
                 inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
-                    throw new InternalExpressionException("Block at "+pos+" has no inventory");
-                return new InventoryLocator(pos, pos, inv, offset+1);
+                    throw new InternalExpressionException("Block at " + pos + " has no inventory");
+                return new InventoryLocator(pos, pos, inv, offset + 1);
             }
             else if (v1 instanceof ListValue)
             {
@@ -66,8 +74,8 @@ public class NBTSerializableValue extends Value
                         NumericValue.asNumber(args.get(2)).getDouble());
                 inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
-                    throw new InternalExpressionException("Block at "+pos+" has no inventory");
-                return new InventoryLocator(pos, pos, inv, offset+1);
+                    throw new InternalExpressionException("Block at " + pos + " has no inventory");
+                return new InventoryLocator(pos, pos, inv, offset + 1);
             }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
@@ -75,13 +83,44 @@ public class NBTSerializableValue extends Value
                     NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble());
             inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
             if (inv == null)
-                throw new InternalExpressionException("Block at "+pos+" has no inventory");
-            return new InventoryLocator(pos, pos, inv, offset+3);
+                throw new InternalExpressionException("Block at " + pos + " has no inventory");
+            return new InventoryLocator(pos, pos, inv, offset + 3);
         }
         catch (IndexOutOfBoundsException e)
         {
             throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, or an entity");
         }
+    }
+
+    private static Map<String,ItemStackArgument> itemCache = new HashMap<>();
+    public static ItemStackArgument parseItem(String itemString)
+    {
+        try
+        {
+            ItemStackArgument res = itemCache.get(itemString);
+            if (res != null)
+                return res;
+            ItemStringReader parser = (new ItemStringReader(new StringReader(itemString), false)).consume();
+            res = new ItemStackArgument(parser.getItem(), parser.getTag());
+            itemCache.put(itemString, res);
+            if (itemCache.size()>64000)
+                itemCache.clear();
+            return res;
+        }
+        catch (CommandSyntaxException e)
+        {
+            return null;
+        }
+    }
+
+    public static int validateSlot(int slot, Inventory inv)
+    {
+        int invSize = inv.getInvSize();
+        if (slot < 0)
+            slot = invSize + slot;
+        if (slot < 0 || slot >= invSize)
+            throw new InternalExpressionException("Slot for inventory should be between 0 and "+(invSize-1));
+        return slot;
     }
 
     private CompoundTag getTag()

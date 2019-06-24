@@ -19,11 +19,14 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.BlockInfo;
 import carpet.utils.Messenger;
+import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.command.arguments.ItemStackArgument;
+import net.minecraft.command.arguments.ItemStringReader;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -50,10 +53,7 @@ import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.EulerRotation;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -899,19 +899,125 @@ public class CarpetExpression
         });
 
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
+        this.expr.addLazyFunction("inventory_find", -1, (c, t, lv) -> {
+            //long stime = System.nanoTime();
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            ItemStackArgument itemArg = null;
+            if (lv.size() > inventoryLocator.offset)
+            {
+                Value secondArg = lv.get(inventoryLocator.offset+0).evalValue(c);
+                if (!(secondArg instanceof NullValue))
+                {
+                    itemArg = NBTSerializableValue.parseItem(secondArg.getString());
+                    if (itemArg == null)
+                        throw new InternalExpressionException("Incorrect item format: "+secondArg.getString());
+                }
+            }
+            int startIndex = 0;
+            if (lv.size() > inventoryLocator.offset+1)
+            {
+                startIndex = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
+            }
+            startIndex = NBTSerializableValue.validateSlot(startIndex, inventoryLocator.inventory);
+            for (int i = startIndex, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+            {
+                ItemStack stack = inventoryLocator.inventory.getInvStack(i);
+                if ( (itemArg == null && stack.isEmpty()) || (itemArg != null && itemArg.getItem().equals(stack.getItem())) )
+                {
+                    Value res = new NumericValue(i);
+                    return (_c, _t) -> res;
+                }
+            }
+            //long etime = System.nanoTime();
+            //CarpetSettings.LOG.error("took "+(etime-stime)/1000);
+            return (_c, _t) -> Value.NULL;
+        });
+
         //inventory_set(<b,e>, <n>, <count>, <item>)
+        this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) -> {
+            //long stime = System.nanoTime();
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+
+            if (lv.size() <= inventoryLocator.offset+2)
+                throw new InternalExpressionException("inventory_set requires at least slot number and new stack size, and optional new item");
+            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0).evalValue(c)).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
+            int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
+            if (count == 0)
+            {
+                // clear slot
+                ItemStack removedStack = inventoryLocator.inventory.removeInvStack(slot);
+                //Value res = ListValue.fromItemStack(removedStack);
+                return (_c, _t) -> ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
+            }
+            if (lv.size() <= inventoryLocator.offset+3)
+            {
+                ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
+                ItemStack newStack = previousStack.copy();
+                newStack.setCount(count);
+                inventoryLocator.inventory.setInvStack(slot, newStack);
+                return (_c, _t) -> ListValue.fromItemStack(previousStack);
+            }
+            ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset+2).evalValue(c).getString());
+            ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
+            try
+            {
+                inventoryLocator.inventory.setInvStack(slot, newitem.createStack(count, false));
+            }
+            catch (CommandSyntaxException e)
+            {
+                throw new InternalExpressionException(e.getMessage());
+            }
+            return (_c, _t) -> ListValue.fromItemStack(previousStack);
+        });
+
         //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
 
+        this.expr.addLazyFunction("inventory_remove", -1, (c, t, lv) -> {
+            //long stime = System.nanoTime();
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
 
-
-        /*
-        if (slot > -1)
+            if (lv.size() <= inventoryLocator.offset+1)
+                throw new InternalExpressionException("inventory_set requires at least an item to be removed");
+            ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).evalValue(c).getString());
+            int amount = 1;
+            if (lv.size() > inventoryLocator.offset+2)
             {
-                if (slot >= inv.getInvSize())
-                    throw new InternalExpressionException("Inventory of "+e+" has "+inv.getInvSize()+" slots only");
-                itemstack = inv.getInvStack(slot);
+                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+2).evalValue(c)).getLong();
             }
-         */
+            // not enough
+            if ( (amount == 1) && (inventoryLocator.inventory.containsAnyInInv(Sets.newHashSet(searchItem.getItem()))) ||
+                    inventoryLocator.inventory.getInvAmountOf(searchItem.getItem()) >= amount )
+                return (_c, _t) -> Value.FALSE;
+            for (int i = 0, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+            {
+                ItemStack stack = inventoryLocator.inventory.getInvStack(i);
+                if (stack.isEmpty())
+                    continue;
+                if (!stack.getItem().equals(searchItem.getItem()))
+                    continue;
+                int left = stack.getCount()-amount;
+                if (left > 0)
+                {
+                    stack.setCount(left);
+                    inventoryLocator.inventory.setInvStack(i, stack);
+                    return (_c, _t) -> Value.TRUE;
+                }
+                else
+                {
+                    inventoryLocator.inventory.removeInvStack(i);
+                    amount -= stack.getCount();
+                }
+            }
+            if (amount > 0)
+                throw new InternalExpressionException("Something bad happened - cannot pull all items from inventory");
+            return (_c, _t) -> Value.TRUE;
+
+        });
+
     }
 
     /**
