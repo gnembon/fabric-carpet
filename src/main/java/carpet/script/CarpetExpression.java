@@ -36,6 +36,10 @@ import net.minecraft.entity.ai.brain.task.LookTargetUtil;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.passive.AbstractTraderEntity;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.AutomaticItemPlacementContext;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.command.arguments.ParticleArgumentType;
@@ -51,6 +55,7 @@ import net.minecraft.state.property.Property;
 import net.minecraft.state.StateFactory;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.math.*;
@@ -816,6 +821,47 @@ public class CarpetExpression
             Value retval = new StringValue(state.get(property).toString());
             return (_c, _t) -> retval;
         });
+        this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            String itemString = lv.get(0).evalValue(c).getString();
+            BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
+            ItemStackArgument stackArg = NBTSerializableValue.parseItem(itemString);
+            BlockPos where = new BlockPos(locator.vec);
+            Direction side = Direction.UP;
+            if (lv.size() > locator.offset)
+            {
+                String key = lv.get(locator.offset).evalValue(c).getString();
+                side = BlockValue.DIRECTION_MAP.get(key);
+                if (side == null)
+                    throw new InternalExpressionException("unknown direction: " + key);
+            }
+            if (stackArg.getItem() instanceof BlockItem)
+            {
+                BlockItem blockItem = (BlockItem) stackArg.getItem();
+                ItemPlacementContext ctx = null;
+                try
+                {
+                    ctx = new AutomaticItemPlacementContext(cc.s.getWorld(),new BlockPos(locator.vec), side, stackArg.createStack(1, false), side );
+                }
+                catch (CommandSyntaxException e)
+                {
+                    throw new InternalExpressionException(e.getMessage());
+                }
+                BlockState placementState = blockItem.getBlock().getPlacementState(ctx);
+                if (placementState != null)
+                {
+                    if (placementState.canPlaceAt(cc.s.getWorld(), where))
+                    {
+                        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+                        cc.s.getWorld().setBlockState(where, placementState, 2);
+                        CarpetSettings.impendingFillSkipUpdates = false;
+                        return (_c, _t) -> Value.TRUE;
+                    }
+                }
+            }
+            return (_c, _t) -> Value.FALSE;
+        });
 
     }
 
@@ -940,7 +986,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
 
-            if (lv.size() <= inventoryLocator.offset+2)
+            if (lv.size() < inventoryLocator.offset+2)
                 throw new InternalExpressionException("inventory_set requires at least slot number and new stack size, and optional new item");
             int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0).evalValue(c)).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
@@ -952,7 +998,7 @@ public class CarpetExpression
                 //Value res = ListValue.fromItemStack(removedStack);
                 return (_c, _t) -> ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
             }
-            if (lv.size() <= inventoryLocator.offset+3)
+            if (lv.size() < inventoryLocator.offset+3)
             {
                 ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
                 ItemStack newStack = previousStack.copy();
@@ -980,18 +1026,20 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
 
-            if (lv.size() <= inventoryLocator.offset+1)
+            if (lv.size() <= inventoryLocator.offset)
                 throw new InternalExpressionException("inventory_set requires at least an item to be removed");
             ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).evalValue(c).getString());
             int amount = 1;
-            if (lv.size() > inventoryLocator.offset+2)
+            if (lv.size() > inventoryLocator.offset+1)
             {
-                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+2).evalValue(c)).getLong();
+                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
             }
             // not enough
-            if ( (amount == 1) && (inventoryLocator.inventory.containsAnyInInv(Sets.newHashSet(searchItem.getItem()))) ||
-                    inventoryLocator.inventory.getInvAmountOf(searchItem.getItem()) >= amount )
+            if (((amount == 1) && (!inventoryLocator.inventory.containsAnyInInv(Sets.newHashSet(searchItem.getItem()))))
+                    || (inventoryLocator.inventory.countInInv(searchItem.getItem()) < amount))
+            {
                 return (_c, _t) -> Value.FALSE;
+            }
             for (int i = 0, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
             {
                 ItemStack stack = inventoryLocator.inventory.getInvStack(i);
@@ -1017,8 +1065,8 @@ public class CarpetExpression
             return (_c, _t) -> Value.TRUE;
 
         });
-
     }
+
 
     /**
      * <h1>Entity API</h1>
