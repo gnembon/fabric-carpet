@@ -827,27 +827,31 @@ public class CarpetExpression
             String itemString = lv.get(0).evalValue(c).getString();
             BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
             ItemStackArgument stackArg = NBTSerializableValue.parseItem(itemString);
-            BlockPos where = new BlockPos(locator.vec);
-            Direction side = Direction.UP;
-            if (lv.size() > locator.offset)
+            if (stackArg == null)
             {
-                String key = lv.get(locator.offset).evalValue(c).getString();
-                side = BlockValue.DIRECTION_MAP.get(key);
-                if (side == null)
-                    throw new InternalExpressionException("unknown direction: " + key);
+                throw new InternalExpressionException("unknown item: "+itemString);
             }
+            BlockPos where = new BlockPos(locator.vec);
+            String facing = "up";
+            if (lv.size() > locator.offset)
+                facing = lv.get(locator.offset).evalValue(c).getString();
+            boolean sneakPlace = false;
+            if (lv.size() > locator.offset+1)
+                sneakPlace = lv.get(locator.offset+1).evalValue(c).getBoolean();
             if (stackArg.getItem() instanceof BlockItem)
             {
                 BlockItem blockItem = (BlockItem) stackArg.getItem();
-                ItemPlacementContext ctx = null;
+                BlockValue.PlacementContext ctx;
                 try
                 {
-                    ctx = new AutomaticItemPlacementContext(cc.s.getWorld(),new BlockPos(locator.vec), side, stackArg.createStack(1, false), side );
+                    ctx = BlockValue.PlacementContext.from(cc.s.getWorld(), where, facing, sneakPlace, stackArg.createStack(1, false));
                 }
                 catch (CommandSyntaxException e)
                 {
                     throw new InternalExpressionException(e.getMessage());
                 }
+                if (!ctx.canPlace())
+                    return (_c, _t) -> Value.FALSE;
                 BlockState placementState = blockItem.getBlock().getPlacementState(ctx);
                 if (placementState != null)
                 {

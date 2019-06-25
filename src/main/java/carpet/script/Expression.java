@@ -2770,10 +2770,10 @@ public class Expression implements Cloneable
         {
             return exit.retval;
         }
-        catch (StackOverflowError ignored)
-        {
-            throw new ExpressionException("Your thoughts are too deep");
-        }
+        //catch (StackOverflowError ignored)
+        //{
+        //    throw new ExpressionException("Your thoughts are too deep");
+        //}
         catch (InternalExpressionException exc)
         {
             throw new ExpressionException("Your expression result is incorrect:"+exc.getMessage());

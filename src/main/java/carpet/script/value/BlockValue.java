@@ -20,9 +20,11 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BlockValue extends Value
 {
@@ -255,80 +257,79 @@ public class BlockValue extends Value
         }
     }
 
-    /*public enum SpecificDirection {
+    public enum SpecificDirection {
         UP("up",0.5, 0.0, 0.5, Direction.UP),
 
-        UPNORTH ("upnorth", 0.5, 0.0, 0.4, Direction.NORTH),
-        UPSOUTH ("upsouth", 0.5, 0.0, 0.6, Direction.SOUTH),
-        UPEAST("upeast", 0.6, 0.0, 0.5, Direction.EAST),
-        UPWEST("upwest", 0.4, 0.0, 0.5, Direction.WEST),
+        UPNORTH ("upnorth", 0.5, 0.0, 0.4, Direction.UP),
+        UPSOUTH ("upsouth", 0.5, 0.0, 0.6, Direction.UP),
+        UPEAST("upeast", 0.6, 0.0, 0.5, Direction.UP),
+        UPWEST("upwest", 0.4, 0.0, 0.5, Direction.UP),
 
         DOWN("down", 0.5, 1.0, 0.5, Direction.DOWN),
 
-        DOWNNORTH ("downnorth", 0.5, 0.0, 0.4, Direction.NORTH),
-        DOWNSOUTH ("downsouth", 0.5, 0.0, 0.6, Direction.SOUTH),
-        DOWNEAST("downeast", 0.6, 0.0, 0.5, Direction.EAST),
-        DOWNWEST("downwest", 0.4, 0.0, 0.5, Direction.WEST),
+        DOWNNORTH ("downnorth", 0.5, 1.0, 0.4, Direction.DOWN),
+        DOWNSOUTH ("downsouth", 0.5, 1.0, 0.6, Direction.DOWN),
+        DOWNEAST("downeast", 0.6, 1.0, 0.5, Direction.DOWN),
+        DOWNWEST("downwest", 0.4, 1.0, 0.5, Direction.DOWN),
 
 
         NORTH ("north", 0.5, 0.4, 1.0, Direction.NORTH),
         SOUTH ("south", 0.5, 0.4, 0.0, Direction.SOUTH),
         EAST("east", 0.0, 0.4, 0.5, Direction.EAST),
         WEST("west", 1.0, 0.4, 0.5, Direction.WEST),
+
         NORTHUP ("northup", 0.5, 0.6, 1.0, Direction.NORTH),
         SOUTHUP ("southup", 0.5, 0.6, 0.0, Direction.SOUTH),
         EASTUP("eastup", 0.0, 0.6, 0.5, Direction.EAST),
-        WESTUP("westup", 1.0, 0.6, 0.5, Direction.WEST),
+        WESTUP("westup", 1.0, 0.6, 0.5, Direction.WEST);
 
+        public String name;
+        public Vec3d hitOffset;
+        public Direction facing;
 
-        NORTHUP (),
-        SOUTHUP(),
-        EASTUP(),
-        WESTUP();
+        private static final Map<String, SpecificDirection> DIRECTION_MAP = Arrays.stream(values()).collect(Collectors.toMap(SpecificDirection::getName, d -> d));
 
-        private static final Direction[] ALL = values();
-        private static final Map<String, Direction> NAME_MAP = (Map)Arrays.stream(ALL).collect(Collectors.toMap(Direction::getName, (direction_1) -> {
-      return direction_1;
-   }));
 
         private SpecificDirection(String name, double hitx, double hity, double hitz, Direction blockFacing)
         {
-
+            this.name = name;
+            this.hitOffset = new Vec3d(hitx, hity, hitz);
+            this.facing = blockFacing;
+        }
+        private String getName()
+        {
+            return name;
         }
     }
 
-    public class PlacementContext extends ItemPlacementContext {
+    public static class PlacementContext extends ItemPlacementContext {
         private final Direction facing;
+        private final boolean sneakPlace;
 
-        public static final Map<String, Direction> DIRECTION_MAP = new HashMap<String, Direction>() {{
-            put("up", Direction.UP);
-            put("down", Direction.DOWN);
-            put("east", Direction.EAST);
-            put("west", Direction.WEST);
-            put("north", Direction.NORTH);
-            put("south", Direction.SOUTH);
-        }};
-        public
-
-        public PlacementContext(World world_1, BlockPos blockPos_1, Direction direction_1, ItemStack itemStack_1, Direction direction_2) {
-            super(world_1, (PlayerEntity)null, Hand.MAIN_HAND, itemStack_1, new BlockHitResult(new Vec3d((double)blockPos_1.getX() + 0.5D, (double)blockPos_1.getY(), (double)blockPos_1.getZ() + 0.5D), direction_2, blockPos_1, false));
+        public static PlacementContext from(World world, BlockPos pos, String direction, boolean sneakPlace, ItemStack itemStack)
+        {
+            SpecificDirection dir = SpecificDirection.DIRECTION_MAP.get(direction);
+            if (dir == null)
+                throw new InternalExpressionException("unknown block placement direction: "+direction);
+            BlockHitResult hitres =  new BlockHitResult(
+                    new Vec3d(pos).add(dir.hitOffset),
+                    dir.facing,
+                    pos,
+                    false);
+            return new PlacementContext(world, pos, dir.facing, sneakPlace, itemStack, hitres);
+        }
+        public PlacementContext(World world_1, BlockPos blockPos_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
+            super(world_1, null, Hand.MAIN_HAND, itemStack_1, hitres);
             this.facing = direction_1;
+            this.sneakPlace = sneakPlace;
         }
 
         public BlockPos getBlockPos() {
             return this.hit.getBlockPos();
         }
 
-        public boolean canPlace() {
-            return this.world.getBlockState(this.hit.getBlockPos()).canReplace(this);
-        }
-
-        public boolean canReplaceExisting() {
-            return this.canPlace();
-        }
-
         public Direction getPlayerLookDirection() {
-            return Direction.DOWN;
+            return facing.getOpposite();
         }
 
         public Direction[] getPlacementDirections() {
@@ -354,11 +355,11 @@ public class BlockValue extends Value
         }
 
         public boolean isPlayerSneaking() {
-            return false;
+            return sneakPlace;
         }
 
         public float getPlayerYaw() {
             return (float)(this.facing.getHorizontal() * 90);
         }
-    }*/
+    }
 }
