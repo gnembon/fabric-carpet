@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
+import carpet.settings.CarpetSettings;
 import carpet.fakes.RedstoneWireBlockInterface;
 import carpet.helpers.RedstoneWireTurbo;
 import net.minecraft.block.Block;
@@ -70,12 +70,15 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
 
     public BlockState fastUpdate(World world, BlockPos pos, BlockState state, BlockPos source) {
         // [CM] fastRedstoneDust -- update based on carpet rule
-        if (CarpetSettings.b_fastRedstoneDust) {
+        if (CarpetSettings.fastRedstoneDust) {
             wireTurbo.updateSurroundingRedstone(world, pos, state, source);
         }
         return update(world, pos, state);
     }
 
+    /**
+     * @author soykaf
+     */
     @Overwrite
     private BlockState updateLogic(World world_1, BlockPos blockPos_1, BlockState blockState_1) {
         BlockState blockState_2 = blockState_1;
@@ -87,13 +90,13 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
         int int_3 = 0; // l
 
         // [CM] fastRedstoneDust -- if statement around unnecessary check
-        if (!CarpetSettings.b_fastRedstoneDust) {
+        if (!CarpetSettings.fastRedstoneDust) {
             if (int_2 > 0 && int_2 > int_4 - 1) {
                 int_4 = int_2;
             }
         }
 
-        if (!CarpetSettings.b_fastRedstoneDust || int_2 < 15) {
+        if (!CarpetSettings.fastRedstoneDust || int_2 < 15) {
             Iterator var8 = Direction.Type.HORIZONTAL.iterator();
 
             label43:
@@ -118,7 +121,7 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
         }
 
         // [CM] fastRedstoneDust -- if statement around unnecessary check
-        if (!CarpetSettings.b_fastRedstoneDust) {
+        if (!CarpetSettings.fastRedstoneDust) {
             if (int_3 > int_4) {
                 int_4 = int_3 - 1;
             } else if (int_4 > 0) {
@@ -141,7 +144,7 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
                 world_1.setBlockState(blockPos_1, blockState_1, 2);
             }
 
-            if (!CarpetSettings.b_fastRedstoneDust) {
+            if (!CarpetSettings.fastRedstoneDust) {
                 this.affectedNeighbors.add(blockPos_1);
                 Direction[] var14 = Direction.values();
                 int var15 = var14.length;
@@ -158,19 +161,18 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
 
     // =
 
-    private static final String updateTarget = "Lnet/minecraft/block/RedstoneWireBlock;update(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)Lnet/minecraft/block/BlockState;";
 
-    @Redirect(method = "onBlockAdded", at = @At(value = "INVOKE", target = updateTarget))
+    @Redirect(method = "onBlockAdded", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/RedstoneWireBlock;update(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)Lnet/minecraft/block/BlockState;"))
     private BlockState redirectOnBlockAddedUpdate(RedstoneWireBlock self, World world_1, BlockPos blockPos_1, BlockState blockState_1) {
         return fastUpdate(world_1, blockPos_1, blockState_1, null);
     }
 
-    @Redirect(method = "onBlockRemoved", at = @At(value = "INVOKE", target = updateTarget))
+    @Redirect(method = "onBlockRemoved", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/RedstoneWireBlock;update(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)Lnet/minecraft/block/BlockState;"))
     private BlockState redirectOnBlockRemovedUpdate(RedstoneWireBlock self, World world_1, BlockPos blockPos_1, BlockState blockState_1) {
         return fastUpdate(world_1, blockPos_1, blockState_1, null);
     }
 
-    @Redirect(method = "neighborUpdate", at = @At(value = "INVOKE", target = updateTarget))
+    @Redirect(method = "neighborUpdate", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/RedstoneWireBlock;update(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)Lnet/minecraft/block/BlockState;"))
     private BlockState redirectNeighborUpdateUpdate(
             RedstoneWireBlock self,
             World world_1,
