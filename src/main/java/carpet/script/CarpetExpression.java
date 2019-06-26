@@ -788,34 +788,6 @@ public class CarpetExpression
             return (c_, t_) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
-                booleanStateTest(c, "blocks_movement", lv, (s, p) ->
-                        !s.canPlaceAtSide(((CarpetContext) c).s.getWorld(), p, BlockPlacementEnvironment.LAND)));
-
-        this.expr.addLazyFunction("block_sound", -1, (c, t, lv) ->
-                stateStringQuery(c, "block_sound", lv, (s, p) ->
-                        BlockInfo.soundName.get(s.getSoundGroup())));
-
-        this.expr.addLazyFunction("material", -1, (c, t, lv) ->
-                stateStringQuery(c, "material", lv, (s, p) ->
-                        BlockInfo.materialName.get(s.getMaterial())));
-
-        this.expr.addLazyFunction("map_colour", -1, (c, t, lv) ->
-                stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        BlockInfo.mapColourName.get(s.getTopMaterialColor(((CarpetContext)c).s.getWorld(), p))));
-
-        this.expr.addLazyFunction("property", -1, (c, t, lv) ->
-        {
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
-            BlockState state = locator.block.getBlockState();
-            String tag = lv.get(locator.offset).evalValue(c).getString();
-            StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
-            Property<?> property = states.getProperty(tag);
-            if (property == null)
-                return LazyValue.NULL;
-            Value retval = new StringValue(state.get(property).toString());
-            return (_c, _t) -> retval;
-        });
         this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
@@ -862,13 +834,42 @@ public class CarpetExpression
             return (_c, _t) -> Value.FALSE;
         });
 
+        this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
+                booleanStateTest(c, "blocks_movement", lv, (s, p) ->
+                        !s.canPlaceAtSide(((CarpetContext) c).s.getWorld(), p, BlockPlacementEnvironment.LAND)));
+
+        this.expr.addLazyFunction("block_sound", -1, (c, t, lv) ->
+                stateStringQuery(c, "block_sound", lv, (s, p) ->
+                        BlockInfo.soundName.get(s.getSoundGroup())));
+
+        this.expr.addLazyFunction("material", -1, (c, t, lv) ->
+                stateStringQuery(c, "material", lv, (s, p) ->
+                        BlockInfo.materialName.get(s.getMaterial())));
+
+        this.expr.addLazyFunction("map_colour", -1, (c, t, lv) ->
+                stateStringQuery(c, "map_colour", lv, (s, p) ->
+                        BlockInfo.mapColourName.get(s.getTopMaterialColor(((CarpetContext)c).s.getWorld(), p))));
+
+        this.expr.addLazyFunction("property", -1, (c, t, lv) ->
+        {
+            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
+            BlockState state = locator.block.getBlockState();
+            String tag = lv.get(locator.offset).evalValue(c).getString();
+            StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
+            Property<?> property = states.getProperty(tag);
+            if (property == null)
+                return LazyValue.NULL;
+            Value retval = new StringValue(state.get(property).toString());
+            return (_c, _t) -> retval;
+        });
+
+
     }
 
     public void API_InventoryManipulation()
     {
         //inventory_get(<b, e>, <n>) -> item_triple
         this.expr.addLazyFunction("inventory_get", -1, (c, t, lv) -> {
-            //long stime = System.nanoTime();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (lv.size() == inventoryLocator.offset)
@@ -879,22 +880,17 @@ public class CarpetExpression
                     fullInventory.add(ListValue.fromItemStack(inventoryLocator.inventory.getInvStack(i)));
                 }
                 Value res = ListValue.wrap(fullInventory);
-                //long etime = System.nanoTime();
-                //CarpetSettings.LOG.error("took "+(etime-stime)/1000);
                 return (_c, _t) -> res;
             }
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
             if (slot < 0 || slot > inventoryLocator.inventory.getInvSize())
                 throw new InternalExpressionException("Inventory has "+inventoryLocator.inventory.getInvSize()+" slots available");
             Value res = ListValue.fromItemStack(inventoryLocator.inventory.getInvStack(slot));
-            //long etime = System.nanoTime();
-            //CarpetSettings.LOG.error("took "+(etime-stime)/1000);
             return (_c, _t) -> res;
         });
 
         //inventory_drop(<b, e>, <n>, <amount=1, 0-whatever's there>) -> entity_item (and sets slot) or null if cannot
         this.expr.addLazyFunction("inventory_drop", -1, (c, t, lv) -> {
-            //long stime = System.nanoTime();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (lv.size() == inventoryLocator.offset)
@@ -945,7 +941,6 @@ public class CarpetExpression
 
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
         this.expr.addLazyFunction("inventory_find", -1, (c, t, lv) -> {
-            //long stime = System.nanoTime();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             ItemStackArgument itemArg = null;
@@ -974,14 +969,11 @@ public class CarpetExpression
                     return (_c, _t) -> res;
                 }
             }
-            //long etime = System.nanoTime();
-            //CarpetSettings.LOG.error("took "+(etime-stime)/1000);
             return (_c, _t) -> Value.NULL;
         });
 
         //inventory_set(<b,e>, <n>, <count>, <item>)
         this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) -> {
-            //long stime = System.nanoTime();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
 
@@ -994,8 +986,8 @@ public class CarpetExpression
             {
                 // clear slot
                 ItemStack removedStack = inventoryLocator.inventory.removeInvStack(slot);
-                //Value res = ListValue.fromItemStack(removedStack);
-                return (_c, _t) -> ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
+                //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
+                return (_c, _t) -> ListValue.fromItemStack(removedStack);
             }
             if (lv.size() < inventoryLocator.offset+3)
             {
@@ -1021,7 +1013,6 @@ public class CarpetExpression
         //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
 
         this.expr.addLazyFunction("inventory_remove", -1, (c, t, lv) -> {
-            //long stime = System.nanoTime();
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
 
@@ -1062,7 +1053,6 @@ public class CarpetExpression
             if (amount > 0)
                 throw new InternalExpressionException("Something bad happened - cannot pull all items from inventory");
             return (_c, _t) -> Value.TRUE;
-
         });
     }
 

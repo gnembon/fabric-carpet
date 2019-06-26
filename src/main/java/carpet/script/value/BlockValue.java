@@ -26,14 +26,6 @@ import java.util.stream.Collectors;
 
 public class BlockValue extends Value
 {
-    public static final Map<String, Direction> DIRECTION_MAP = new HashMap<String, Direction>() {{
-        put("up", Direction.UP);
-        put("down", Direction.DOWN);
-        put("east", Direction.EAST);
-        put("west", Direction.WEST);
-        put("north", Direction.NORTH);
-        put("south", Direction.SOUTH);
-    }};
     public static final BlockValue AIR = new BlockValue(Blocks.AIR.getDefaultState(), null, BlockPos.ORIGIN);
     public static final BlockValue NULL = new BlockValue(null, null, null);
     private BlockState blockState;
@@ -309,14 +301,10 @@ public class BlockValue extends Value
             SpecificDirection dir = SpecificDirection.DIRECTION_MAP.get(direction);
             if (dir == null)
                 throw new InternalExpressionException("unknown block placement direction: "+direction);
-            BlockHitResult hitres =  new BlockHitResult(
-                    new Vec3d(pos).add(dir.hitOffset),
-                    dir.facing,
-                    pos,
-                    false);
-            return new PlacementContext(world, pos, dir.facing, sneakPlace, itemStack, hitres);
+            BlockHitResult hitres =  new BlockHitResult(new Vec3d(pos).add(dir.hitOffset), dir.facing, pos, false);
+            return new PlacementContext(world, dir.facing, sneakPlace, itemStack, hitres);
         }
-        private PlacementContext(World world_1, BlockPos blockPos_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
+        private PlacementContext(World world_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
             super(world_1, null, Hand.MAIN_HAND, itemStack_1, hitres);
             this.facing = direction_1;
             this.sneakPlace = sneakPlace;
