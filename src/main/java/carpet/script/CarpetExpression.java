@@ -46,6 +46,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
@@ -827,7 +828,10 @@ public class CarpetExpression
                         CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
                         cc.s.getWorld().setBlockState(where, placementState, 2);
                         CarpetSettings.impendingFillSkipUpdates = false;
+                        BlockSoundGroup blockSoundGroup = placementState.getSoundGroup();
+                        cc.s.getWorld().playSound(null, where, blockSoundGroup.getPlaceSound(), SoundCategory.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
                         return (_c, _t) -> Value.TRUE;
+
                     }
                 }
             }
