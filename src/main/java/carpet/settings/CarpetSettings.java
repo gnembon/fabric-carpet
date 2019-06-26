@@ -51,11 +51,7 @@ public class CarpetSettings
     @Rule(desc = "Dropping entire stacks works also from on the crafting UI result slot", category = {BUGFIX, SURVIVAL})
     public static boolean ctrlQCraftingFix = false;
 
-    @Rule(
-            desc = "Parrots don't get of your shoulders until you receive damage",
-            category = {SURVIVAL, FEATURE},
-            validate = Validator.WIP.class
-    )
+    @Rule(desc = "Parrots don't get of your shoulders until you receive proper damage", category = {SURVIVAL, FEATURE})
     public static boolean persistentParrots = false;
 
     /*@Rule(
@@ -208,7 +204,7 @@ public class CarpetSettings
     @Rule(desc = "Enables /script command", extra = "An in-game scripting API for Scarpet programming language", category = COMMAND)
     public static boolean commandScript = true;
 
-    @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND, validate = Validator.WIP.class)
+    @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static boolean commandPlayer = true;
 
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)

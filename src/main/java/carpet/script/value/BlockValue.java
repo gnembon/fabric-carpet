@@ -8,8 +8,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.arguments.BlockArgumentParser;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.AutomaticItemPlacementContext;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
@@ -260,17 +258,17 @@ public class BlockValue extends Value
     public enum SpecificDirection {
         UP("up",0.5, 0.0, 0.5, Direction.UP),
 
-        UPNORTH ("upnorth", 0.5, 0.0, 0.4, Direction.UP),
-        UPSOUTH ("upsouth", 0.5, 0.0, 0.6, Direction.UP),
-        UPEAST("upeast", 0.6, 0.0, 0.5, Direction.UP),
-        UPWEST("upwest", 0.4, 0.0, 0.5, Direction.UP),
+        UPNORTH ("up-north", 0.5, 0.0, 0.4, Direction.UP),
+        UPSOUTH ("up-south", 0.5, 0.0, 0.6, Direction.UP),
+        UPEAST("up-east", 0.6, 0.0, 0.5, Direction.UP),
+        UPWEST("up-west", 0.4, 0.0, 0.5, Direction.UP),
 
         DOWN("down", 0.5, 1.0, 0.5, Direction.DOWN),
 
-        DOWNNORTH ("downnorth", 0.5, 1.0, 0.4, Direction.DOWN),
-        DOWNSOUTH ("downsouth", 0.5, 1.0, 0.6, Direction.DOWN),
-        DOWNEAST("downeast", 0.6, 1.0, 0.5, Direction.DOWN),
-        DOWNWEST("downwest", 0.4, 1.0, 0.5, Direction.DOWN),
+        DOWNNORTH ("down-north", 0.5, 1.0, 0.4, Direction.DOWN),
+        DOWNSOUTH ("down-south", 0.5, 1.0, 0.6, Direction.DOWN),
+        DOWNEAST("dow-neast", 0.6, 1.0, 0.5, Direction.DOWN),
+        DOWNWEST("down-west", 0.4, 1.0, 0.5, Direction.DOWN),
 
 
         NORTH ("north", 0.5, 0.4, 1.0, Direction.NORTH),
@@ -278,10 +276,10 @@ public class BlockValue extends Value
         EAST("east", 0.0, 0.4, 0.5, Direction.EAST),
         WEST("west", 1.0, 0.4, 0.5, Direction.WEST),
 
-        NORTHUP ("northup", 0.5, 0.6, 1.0, Direction.NORTH),
-        SOUTHUP ("southup", 0.5, 0.6, 0.0, Direction.SOUTH),
-        EASTUP("eastup", 0.0, 0.6, 0.5, Direction.EAST),
-        WESTUP("westup", 1.0, 0.6, 0.5, Direction.WEST);
+        NORTHUP ("north-up", 0.5, 0.6, 1.0, Direction.NORTH),
+        SOUTHUP ("south-up", 0.5, 0.6, 0.0, Direction.SOUTH),
+        EASTUP("east-up", 0.0, 0.6, 0.5, Direction.EAST),
+        WESTUP("west-up", 1.0, 0.6, 0.5, Direction.WEST);
 
         public String name;
         public Vec3d hitOffset;
@@ -290,7 +288,7 @@ public class BlockValue extends Value
         private static final Map<String, SpecificDirection> DIRECTION_MAP = Arrays.stream(values()).collect(Collectors.toMap(SpecificDirection::getName, d -> d));
 
 
-        private SpecificDirection(String name, double hitx, double hity, double hitz, Direction blockFacing)
+        SpecificDirection(String name, double hitx, double hity, double hitz, Direction blockFacing)
         {
             this.name = name;
             this.hitOffset = new Vec3d(hitx, hity, hitz);
@@ -318,7 +316,7 @@ public class BlockValue extends Value
                     false);
             return new PlacementContext(world, pos, dir.facing, sneakPlace, itemStack, hitres);
         }
-        public PlacementContext(World world_1, BlockPos blockPos_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
+        private PlacementContext(World world_1, BlockPos blockPos_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
             super(world_1, null, Hand.MAIN_HAND, itemStack_1, hitres);
             this.facing = direction_1;
             this.sneakPlace = sneakPlace;

@@ -29,6 +29,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import org.apache.commons.lang3.tuple.Pair;
@@ -295,6 +296,16 @@ public class EntityValue extends Value
            if (e instanceof PlayerEntity)
                return new NumericValue(((PlayerEntity) e).inventory.selectedSlot);
            return null;
+        });
+
+        put("facing", (e, a) -> {
+            int index = 0;
+            if (a != null)
+                index = (6+(int)NumericValue.asNumber(a).getLong())%6;
+            if (index < 0 || index > 5)
+                throw new InternalExpressionException("facing order should be between -6 and 5");
+
+            return new StringValue(Direction.getEntityFacingOrder(e)[index].asString());
         });
 
         put("nbt",(e, a) -> {
