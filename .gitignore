@@ -4,6 +4,7 @@
 build/
 out/
 classes/
+publish/
 
 # idea
 
