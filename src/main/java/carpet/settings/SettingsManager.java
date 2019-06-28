@@ -71,7 +71,7 @@ public class SettingsManager
     }
 
 
-    public ParsedRule getRule(String name)
+    public static ParsedRule<?> getRule(String name)
     {
         return rules.get(name);
     }
