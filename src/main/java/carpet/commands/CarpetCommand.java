@@ -8,7 +8,9 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.BaseText;
@@ -23,6 +25,14 @@ import static net.minecraft.server.command.CommandSource.suggestMatching;
 
 public class CarpetCommand
 {
+    private static ParsedRule<?> getRule(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException
+    {
+        String ruleName = StringArgumentType.getString(ctx, "rule");
+        ParsedRule<?> rule = SettingsManager.getRule(ruleName);
+        if (rule == null)
+            throw new SimpleCommandExceptionType(Messenger.c("rb Unknown rule: "+ruleName)).create();
+        return rule;
+    }
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("carpet").requires((player) ->
@@ -41,30 +51,27 @@ public class CarpetCommand
                                 suggests( (c, b)->suggestMatching(SettingsManager.getCategories(), b)).
                                 executes( (c) -> listSettings(c.getSource(),
                                         String.format("CarpetMod Settings matching \"%s\"", StringArgumentType.getString(c, "tag")),
-                                        CarpetServer.settingsManager.getRulesMatching(StringArgumentType.getString(c, "tag"))))));
+                                        CarpetServer.settingsManager.getRulesMatching(StringArgumentType.getString(c, "tag")))))).
+                then(literal("removeDefault").
+                        requires(s -> !CarpetServer.settingsManager.locked).
+                        then(argument("rule", StringArgumentType.word()).
+                                suggests( (c, b) -> suggestMatching(SettingsManager.getRules().stream().map(r -> r.name), b)).
+                                executes((c) -> removeDefault(c.getSource(), getRule(c))))).
+                then(literal("setDefault").
+                        requires(s -> !CarpetServer.settingsManager.locked).
+                        then(argument("rule", StringArgumentType.word()).
+                                suggests( (c, b) -> suggestMatching(SettingsManager.getRules().stream().map(r -> r.name), b)).
+                                then(argument("value", StringArgumentType.word()).
+                                        suggests((c, b)-> suggestMatching(getRule(c).options, b)).
+                                        executes((c) -> setDefault(c.getSource(), getRule(c), StringArgumentType.getString(c, "value")))))).
+                then(argument("rule", StringArgumentType.word()).
+                        suggests( (c, b) -> suggestMatching(SettingsManager.getRules().stream().map(r -> r.name), b)).
+                        requires(s -> !CarpetServer.settingsManager.locked ).
+                        executes( (c) -> displayRuleMenu(c.getSource(),getRule(c))).
+                        then(argument("value", StringArgumentType.word()).
+                                suggests((c, b)-> suggestMatching(getRule(c).options,b)).
+                                executes((c) -> setRule(c.getSource(), getRule(c), StringArgumentType.getString(c, "value")))));
 
-        for (ParsedRule<?> rule: SettingsManager.getRules())
-        {
-            literalargumentbuilder.then(literal(rule.name).executes( (context) ->
-                    displayRuleMenu(context.getSource(),rule)));
-            literalargumentbuilder.then(literal("removeDefault").
-                    requires(s -> !CarpetServer.settingsManager.locked).
-                    then(literal(rule.name).executes((context) ->
-                            removeDefault(context.getSource(), rule))));
-            literalargumentbuilder.then(literal(rule.name).
-                    requires(s -> !CarpetServer.settingsManager.locked).
-                    then(argument("value", StringArgumentType.word()).
-                            suggests((c, b)-> suggestMatching(rule.options,b)).
-                            executes((context) ->
-                                    setRule(context.getSource(), rule, StringArgumentType.getString(context, "value")))));
-            literalargumentbuilder.then(literal("setDefault").
-                    requires(s -> !CarpetServer.settingsManager.locked).
-                    then(literal(rule.name).
-                            then(argument("value", StringArgumentType.word()).
-                                    suggests((c, b)-> suggestMatching(rule.options,b)).
-                                    executes((context) ->
-                                            setDefault(context.getSource(), rule, StringArgumentType.getString(context, "value"))))));
-        }
         dispatcher.register(literalargumentbuilder);
     }
 

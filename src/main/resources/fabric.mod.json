@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "carpet",
-  "version": "0.1",
+  "version": "${version}",
 
   "name": "Carpet Mod in Fabric",
   "description": "Carpet made out of fabric",
