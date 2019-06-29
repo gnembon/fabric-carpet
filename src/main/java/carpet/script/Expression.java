@@ -2242,7 +2242,7 @@ public class Expression implements Cloneable
      * number('2')+number('2') =&gt; 4
      * </pre>
      *
-     * <h3><code>str(expr, params? ... )</code></h3>
+     * <h3><code>str(expr, params? ... ), str(expr, param_list)</code></h3>
      *
      * <p>Returns a formatted string representing expression.
      * Accepts formatting style accepted by <code>String.format</code>.
@@ -2265,6 +2265,7 @@ public class Expression implements Cloneable
      * str('3bar') =&gt; null
      * str(2)+str(2) =&gt; 22
      * str('pi: %.2f',pi) =&gt; 'pi: 3.14'
+     * str('player at: %d %d %d',pos(player())) =&gt; 'player at: 567, -2423, 124'
      * </pre>
      *
      * <hr>

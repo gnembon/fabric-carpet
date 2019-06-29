@@ -119,7 +119,7 @@ public class NBTSerializableValue extends Value
         if (slot < 0)
             slot = invSize + slot;
         if (slot < 0 || slot >= invSize)
-            throw new InternalExpressionException("Slot for inventory should be between 0 and "+(invSize-1));
+            return inv.getInvSize(); // outside of inventory
         return slot;
     }
 

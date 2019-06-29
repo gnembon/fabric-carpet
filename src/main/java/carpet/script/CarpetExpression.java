@@ -873,6 +873,15 @@ public class CarpetExpression
 
     public void API_InventoryManipulation()
     {
+        this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            Value res = new NumericValue(inventoryLocator.inventory.getInvSize());
+            return (_c, _t) -> res;
+        });
+
         //inventory_get(<b, e>, <n>) -> item_triple
         this.expr.addLazyFunction("inventory_get", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
@@ -890,8 +899,9 @@ public class CarpetExpression
                 return (_c, _t) -> res;
             }
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
-            if (slot < 0 || slot > inventoryLocator.inventory.getInvSize())
-                throw new InternalExpressionException("Inventory has "+inventoryLocator.inventory.getInvSize()+" slots available");
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
+            if (slot == inventoryLocator.inventory.getInvSize())
+                return (_c, _t) -> Value.NULL;
             Value res = ListValue.fromItemStack(inventoryLocator.inventory.getInvStack(slot));
             return (_c, _t) -> res;
         });
@@ -905,8 +915,9 @@ public class CarpetExpression
             if (lv.size() == inventoryLocator.offset)
                 throw new InternalExpressionException("slot number is required for inventory_drop");
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
-            if (slot < 0 || slot > inventoryLocator.inventory.getInvSize())
-                throw new InternalExpressionException("Inventory has "+inventoryLocator.inventory.getInvSize()+" slots available");
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
+            if (slot == inventoryLocator.inventory.getInvSize())
+                return (_c, _t) -> Value.NULL;
             int amount = 0;
             if (lv.size() > inventoryLocator.offset+1)
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
@@ -989,6 +1000,8 @@ public class CarpetExpression
                 throw new InternalExpressionException("inventory_set requires at least slot number and new stack size, and optional new item");
             int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0).evalValue(c)).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
+            if (slot == inventoryLocator.inventory.getInvSize())
+                return (_c, _t) -> Value.NULL;
             int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
             if (count == 0)
             {
