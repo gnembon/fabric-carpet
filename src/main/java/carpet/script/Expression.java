@@ -1840,11 +1840,10 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
-        addBinaryFunction("get", (v1, v2) -> {
+        addBinaryFunction("get", (v1, v2) ->
+        {
             if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
-            {
                 throw new InternalExpressionException("First argument of element should be a list");
-            }
             List<Value> items = ((ListValue)v1).getItems();
             long index = NumericValue.asNumber(v2).getLong();
             int numitems = items.size();
@@ -1854,12 +1853,11 @@ public class Expression implements Cloneable
             return items.get((int)index);
         });
 
-        //Deprecated
-        addBinaryFunction("element", (v1, v2) -> {
+        //Deprecated, use "get" instead
+        addBinaryFunction("element", (v1, v2) ->
+        {
             if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
-            {
                 throw new InternalExpressionException("First argument of element should be a list");
-            }
             List<Value> items = ((ListValue)v1).getItems();
             long index = NumericValue.asNumber(v2).getLong();
             int numitems = items.size();
@@ -1868,6 +1866,7 @@ public class Expression implements Cloneable
             index = index % numitems;
             return items.get((int)index);
         });
+
         addFunction("put", (lv) ->
         {
             if(lv.size()<3)
@@ -2777,10 +2776,10 @@ public class Expression implements Cloneable
         {
             return exit.retval;
         }
-        //catch (StackOverflowError ignored)
-        //{
-        //    throw new ExpressionException("Your thoughts are too deep");
-        //}
+        catch (StackOverflowError ignored)
+        {
+            throw new ExpressionException("Your thoughts are too deep");
+        }
         catch (InternalExpressionException exc)
         {
             throw new ExpressionException("Your expression result is incorrect:"+exc.getMessage());

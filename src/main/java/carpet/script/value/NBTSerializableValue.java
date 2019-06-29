@@ -163,12 +163,9 @@ public class NBTSerializableValue extends Value
     public boolean equals(final Value o)
     {
         if (o instanceof NBTSerializableValue)
-        {
             return getTag().equals(((NBTSerializableValue) o).getTag());
-        }
         return super.equals(o);
     }
-
 
     @Override
     public String getString()

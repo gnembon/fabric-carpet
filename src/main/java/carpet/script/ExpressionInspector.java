@@ -34,7 +34,7 @@ public class ExpressionInspector
         APIFunctions = new TreeSet<>(allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toSet()));
     }
 
-    public static List<String> suggestFunctions(String previous, String prefix)
+    public static List<String> suggestFunctions(ScriptHost host, String previous, String prefix)
     {
         previous = previous.replace("\\'", "");
         int quoteCount = StringUtils.countMatches(previous,'\'');
@@ -45,7 +45,12 @@ public class ExpressionInspector
                 filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList());
         scarpetMatches.addAll(APIFunctions.stream().
                 filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList()));
-        scarpetMatches.addAll(CarpetServer.scriptServer.globalHost.globalVariables.keySet().stream().
+        // not that useful in commandline, more so in external scripts, so skipping here
+        //scarpetMatches.addAll(CarpetServer.scriptServer.events.eventHandlers.keySet().stream().
+        //        filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> "__"+s+"(").collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globalFunctions.keySet().stream().
+                filter(s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globalVariables.keySet().stream().
                 filter(s -> s.startsWith(prefix)).collect(Collectors.toList()));
         return scarpetMatches;
     }

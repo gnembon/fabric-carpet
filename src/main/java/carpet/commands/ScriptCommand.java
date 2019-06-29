@@ -44,27 +44,25 @@ import static net.minecraft.server.command.CommandSource.suggestMatching;
 public class ScriptCommand
 {
 
-    private static CompletableFuture<Suggestions> suggestCode(SuggestionsBuilder suggestionsBuilder) {
+    private static CompletableFuture<Suggestions> suggestCode(
+            CommandContext<ServerCommandSource> context,
+            SuggestionsBuilder suggestionsBuilder
+    )
+    {
+        ScriptHost currentHost = getHost(context);
         String previous = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
         int strlen = previous.length();
         StringBuilder lastToken = new StringBuilder();
         for (int idx = strlen-1; idx >=0; idx--)
         {
             char ch = previous.charAt(idx);
-            if (Character.isLetterOrDigit(ch) || ch == '_')
-            {
-                lastToken.append(ch);
-            }
-            else
-            {
-                break;
-            }
+            if (Character.isLetterOrDigit(ch) || ch == '_') lastToken.append(ch); else break;
         }
         if (lastToken.length() == 0)
             return suggestionsBuilder.buildFuture();
         String prefix = lastToken.reverse().toString();
         String previousString =  previous.substring(0,previous.length()-prefix.length()) ;
-        ExpressionInspector.suggestFunctions(previousString, prefix).forEach(text -> suggestionsBuilder.suggest(previousString+text));
+        ExpressionInspector.suggestFunctions(currentHost, previousString, prefix).forEach(text -> suggestionsBuilder.suggest(previousString+text));
         return suggestionsBuilder.buildFuture();
     }
 
@@ -78,7 +76,7 @@ public class ScriptCommand
                 executes( (cc) -> { CarpetServer.scriptServer.stopAll = false; return 1;});
         LiteralArgumentBuilder<ServerCommandSource> l = literal("run").
                 requires((player) -> player.hasPermissionLevel(2)).
-                then(argument("expr", StringArgumentType.greedyString()).suggests((cc, bb) -> suggestCode(bb)).
+                then(argument("expr", StringArgumentType.greedyString()).suggests((cc, bb) -> suggestCode(cc, bb)).
                         executes((cc) -> compute(
                                 cc,
                                 StringArgumentType.getString(cc, "expr"))));
@@ -141,7 +139,7 @@ public class ScriptCommand
                         then(argument("from", BlockPosArgumentType.create()).
                                 then(argument("to", BlockPosArgumentType.create()).
                                         then(argument("expr", StringArgumentType.greedyString()).
-                                                suggests((cc, bb) -> suggestCode(bb)).
+                                                suggests((cc, bb) -> suggestCode(cc, bb)).
                                                 executes( (cc) -> scriptScan(
                                                         cc,
                                                         BlockPosArgumentType.getBlockPos(cc, "origin"),

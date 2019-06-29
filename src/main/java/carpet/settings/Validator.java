@@ -47,7 +47,7 @@ public abstract class Validator<T>
             if (source != null)
                 try
                 {
-                    Messenger.m(source, "r Work in progress - limited or no functionality available for "+currentRule.name);
+                    Messenger.m(source, "r "+currentRule.name+" not yet fully implemented - we are still working on it.");
                 }
                 catch (NullPointerException ignored) { }
             return newValue;

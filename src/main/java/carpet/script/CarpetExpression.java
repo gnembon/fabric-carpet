@@ -866,7 +866,6 @@ public class CarpetExpression
                         BlockSoundGroup blockSoundGroup = placementState.getSoundGroup();
                         cc.s.getWorld().playSound(null, where, blockSoundGroup.getPlaceSound(), SoundCategory.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
                         return (_c, _t) -> Value.TRUE;
-
                     }
                 }
             }
@@ -907,13 +906,15 @@ public class CarpetExpression
 
     public void API_InventoryManipulation()
     {
-        this.expr.addLazyFunction("stack_limit", 1, (c, t, lv) -> {
+        this.expr.addLazyFunction("stack_limit", 1, (c, t, lv) ->
+        {
             ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
             Value res = new NumericValue(item.getItem().getMaxCount());
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) -> {
+        this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
@@ -923,7 +924,8 @@ public class CarpetExpression
         });
 
         //inventory_get(<b, e>, <n>) -> item_triple
-        this.expr.addLazyFunction("inventory_get", -1, (c, t, lv) -> {
+        this.expr.addLazyFunction("inventory_get", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
@@ -947,7 +949,8 @@ public class CarpetExpression
         });
 
         //inventory_drop(<b, e>, <n>, <amount=1, 0-whatever's there>) -> entity_item (and sets slot) or null if cannot
-        this.expr.addLazyFunction("inventory_drop", -1, (c, t, lv) -> {
+        this.expr.addLazyFunction("inventory_drop", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
@@ -1000,7 +1003,8 @@ public class CarpetExpression
         });
 
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
-        this.expr.addLazyFunction("inventory_find", -1, (c, t, lv) -> {
+        this.expr.addLazyFunction("inventory_find", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
@@ -1031,7 +1035,8 @@ public class CarpetExpression
         });
 
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
-        this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) -> {
+        this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
