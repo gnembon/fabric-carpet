@@ -101,6 +101,7 @@ public class CarpetExpression
     private ServerCommandSource source;
     private BlockPos origin;
     private Expression expr;
+    Expression getExpr() {return expr;}
     private static long tickStart = 0L;
 
     private static boolean stopAll = false;
@@ -766,6 +767,8 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("harvest", -1, (c, t, lv) ->
         {
+            if (lv.size()<2)
+                throw new InternalExpressionException("harvest takes at least 2 parameters: entity and block, or position, to harvest");
             CarpetContext cc = (CarpetContext)c;
             World world = cc.s.getWorld();
             Value entityValue = lv.get(0).evalValue(cc);
@@ -791,14 +794,12 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
+            if (lv.size()<2)
+                throw new InternalExpressionException("place_item takes at least 2 parameters: item and block, or position, to place onto");
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).evalValue(c).getString();
             BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
             ItemStackArgument stackArg = NBTSerializableValue.parseItem(itemString);
-            if (stackArg == null)
-            {
-                throw new InternalExpressionException("unknown item: "+itemString);
-            }
             BlockPos where = new BlockPos(locator.vec);
             String facing = "up";
             if (lv.size() > locator.offset)
@@ -876,6 +877,8 @@ public class CarpetExpression
         this.expr.addLazyFunction("inventory_get", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
             if (lv.size() == inventoryLocator.offset)
             {
                 List<Value> fullInventory = new ArrayList<>();
@@ -897,6 +900,8 @@ public class CarpetExpression
         this.expr.addLazyFunction("inventory_drop", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
             if (lv.size() == inventoryLocator.offset)
                 throw new InternalExpressionException("slot number is required for inventory_drop");
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
@@ -947,16 +952,14 @@ public class CarpetExpression
         this.expr.addLazyFunction("inventory_find", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
             ItemStackArgument itemArg = null;
             if (lv.size() > inventoryLocator.offset)
             {
                 Value secondArg = lv.get(inventoryLocator.offset+0).evalValue(c);
                 if (!(secondArg instanceof NullValue))
-                {
                     itemArg = NBTSerializableValue.parseItem(secondArg.getString());
-                    if (itemArg == null)
-                        throw new InternalExpressionException("Incorrect item format: "+secondArg.getString());
-                }
             }
             int startIndex = 0;
             if (lv.size() > inventoryLocator.offset+1)
@@ -980,7 +983,8 @@ public class CarpetExpression
         this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
             if (lv.size() < inventoryLocator.offset+2)
                 throw new InternalExpressionException("inventory_set requires at least slot number and new stack size, and optional new item");
             int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0).evalValue(c)).getLong();
@@ -1019,7 +1023,8 @@ public class CarpetExpression
         this.expr.addLazyFunction("inventory_remove", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
-
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
             if (lv.size() <= inventoryLocator.offset)
                 throw new InternalExpressionException("inventory_set requires at least an item to be removed");
             ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).evalValue(c).getString());

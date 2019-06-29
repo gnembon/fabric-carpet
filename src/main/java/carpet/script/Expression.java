@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -350,6 +351,7 @@ public class Expression implements Cloneable
     boolean isAnOperator(String opname) { return operators.containsKey(opname) || operators.containsKey(opname+"u");}
 
     private Map<String, ILazyFunction> functions = new HashMap<>();
+    Set<String> getFunctionNames() {return functions.keySet();}
 
     //static final Map<String, UserDefinedFunction> globalFunctions = new HashMap<>();
 

@@ -51,7 +51,7 @@ public class NBTSerializableValue extends Value
                 else if (e instanceof VillagerEntity) inv = ((VillagerEntity) e).getInventory();
 
                 if (inv == null)
-                    throw new InternalExpressionException("Entity " + e + " has no inventory");
+                    return null;
 
                 return new InventoryLocator(e, e.getBlockPos(), inv, offset + 1);
             }
@@ -59,10 +59,10 @@ public class NBTSerializableValue extends Value
             {
                 BlockPos pos = ((BlockValue) v1).getPos();
                 if (pos == null)
-                    throw new InternalExpressionException("Block to acess inventory needs to be positioned in the world");
+                    throw new InternalExpressionException("Block to access inventory needs to be positioned in the world");
                 inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
-                    throw new InternalExpressionException("Block at " + pos + " has no inventory");
+                    return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
             }
             else if (v1 instanceof ListValue)
@@ -74,7 +74,7 @@ public class NBTSerializableValue extends Value
                         NumericValue.asNumber(args.get(2)).getDouble());
                 inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
-                    throw new InternalExpressionException("Block at " + pos + " has no inventory");
+                    return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
             }
             BlockPos pos = new BlockPos(
@@ -83,7 +83,7 @@ public class NBTSerializableValue extends Value
                     NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble());
             inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
             if (inv == null)
-                throw new InternalExpressionException("Block at " + pos + " has no inventory");
+                return null;
             return new InventoryLocator(pos, pos, inv, offset + 3);
         }
         catch (IndexOutOfBoundsException e)
@@ -109,7 +109,7 @@ public class NBTSerializableValue extends Value
         }
         catch (CommandSyntaxException e)
         {
-            return null;
+            throw new InternalExpressionException("Incorrect item: "+itemString);
         }
     }
 
