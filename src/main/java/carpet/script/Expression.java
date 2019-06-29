@@ -964,12 +964,14 @@ public class Expression implements Cloneable
             return (cc, tt) -> new StringValue("OK");
         });
 
-        addUnaryFunction("exit", (v) -> { throw new ExitStatement(v); });
-        addUnaryFunction("return", (v) -> { throw new ReturnStatement(v); });
-        addUnaryFunction("throw", (v)-> {throw new ThrowStatement(v); });
+        addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        addFunction("return", (lv) -> { throw new ReturnStatement(lv.size()==0?Value.NULL:lv.get(0));} );
+        addFunction("throw", (lv)-> {throw new ThrowStatement(lv.size()==0?Value.NULL:lv.get(0)); });
 
-        addLazyFunction("try", 2, (c, t, lv) ->
+        addLazyFunction("try", -1, (c, t, lv) ->
         {
+            if (lv.size()==0)
+                throw new InternalExpressionException("try needs at least an expression block");
             try
             {
                 Value retval = lv.get(0).evalValue(c, t);
@@ -977,6 +979,8 @@ public class Expression implements Cloneable
             }
             catch (ThrowStatement ret)
             {
+                if (lv.size() == 1)
+                    return (c_, t_) -> Value.NULL;
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.retval.reboundedTo("_"));
                 Value val = lv.get(1).evalValue(c, t);

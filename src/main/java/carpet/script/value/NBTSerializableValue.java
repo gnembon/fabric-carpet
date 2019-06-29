@@ -7,17 +7,15 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.command.arguments.ItemStackArgument;
-import net.minecraft.command.arguments.ItemStackArgumentType;
 import net.minecraft.command.arguments.ItemStringReader;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.passive.AbstractTraderEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,15 +24,33 @@ import java.util.function.Supplier;
 
 public class NBTSerializableValue extends Value
 {
-    private Object what;
     private String nbtString = null;
     private CompoundTag nbtTag = null;
-    private Supplier<CompoundTag> nbtSupplier;
+    private Supplier<CompoundTag> nbtSupplier = null;
 
     public NBTSerializableValue(ItemStack stack)
     {
-        what = stack;
-        nbtSupplier = () -> ((ItemStack) what).toTag(new CompoundTag());
+        nbtSupplier = () -> stack.hasTag() ? stack.getTag(): new CompoundTag();
+    }
+
+    public NBTSerializableValue(String nbtString)
+    {
+        nbtSupplier = () ->
+        {
+            try
+            {
+                return (new StringNbtReader(new StringReader(nbtString))).parseCompoundTag();
+            }
+            catch (CommandSyntaxException e)
+            {
+                throw new InternalExpressionException("Incorrect nbt data: "+nbtString);
+            }
+        };
+    }
+
+    public NBTSerializableValue(CompoundTag tag)
+    {
+        nbtTag = tag;
     }
 
     public static InventoryLocator locateInventory(CarpetContext c, List<LazyValue> params, int offset)
@@ -93,19 +109,32 @@ public class NBTSerializableValue extends Value
     }
 
     private static Map<String,ItemStackArgument> itemCache = new HashMap<>();
+
     public static ItemStackArgument parseItem(String itemString)
+    {
+        return parseItem(itemString, null);
+    }
+
+    public static ItemStackArgument parseItem(String itemString, CompoundTag customTag)
     {
         try
         {
             ItemStackArgument res = itemCache.get(itemString);
             if (res != null)
-                return res;
+                if (customTag == null)
+                    return res;
+                else
+                    return new ItemStackArgument(res.getItem(), customTag);
+
             ItemStringReader parser = (new ItemStringReader(new StringReader(itemString), false)).consume();
             res = new ItemStackArgument(parser.getItem(), parser.getTag());
             itemCache.put(itemString, res);
             if (itemCache.size()>64000)
                 itemCache.clear();
-            return res;
+            if (customTag == null)
+                return res;
+            else
+                return new ItemStackArgument(res.getItem(), customTag);
         }
         catch (CommandSyntaxException e)
         {
@@ -123,11 +152,21 @@ public class NBTSerializableValue extends Value
         return slot;
     }
 
-    private CompoundTag getTag()
+    public CompoundTag getTag()
     {
         if (nbtTag == null)
             nbtTag = nbtSupplier.get();
         return nbtTag;
+    }
+
+    @Override
+    public boolean equals(final Value o)
+    {
+        if (o instanceof NBTSerializableValue)
+        {
+            return getTag().equals(((NBTSerializableValue) o).getTag());
+        }
+        return super.equals(o);
     }
 
 

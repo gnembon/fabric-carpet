@@ -40,6 +40,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
@@ -547,6 +548,20 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
+        this.expr.addLazyFunction("block_data", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.size() == 0)
+            {
+                throw new InternalExpressionException("Block requires at least one parameter");
+            }
+            CompoundTag tag = BlockValue.fromParams(cc, lv, 0, true).block.getData();
+            if (tag.isEmpty())
+                return (c_, t_) -> Value.NULL;
+            Value retval = new NBTSerializableValue(tag);
+            return (c_, t_) -> retval;
+        });
+
         this.expr.addLazyFunction("pos", 1, (c, t, lv) ->
         {
             Value arg = lv.get(0).evalValue(c);
@@ -718,10 +733,29 @@ public class CarpetExpression
                     sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
                 }
             }
-            if (sourceBlockState == targetBlockState)
+
+            CompoundTag data = sourceLocator.block.getData();
+
+            if (sourceBlockState == targetBlockState && data == null)
                 return (c_, t_) -> Value.FALSE;
             CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
-            cc.s.getWorld().setBlockState(targetLocator.block.getPos(), sourceBlockState, 2);
+            BlockPos targetPos = targetLocator.block.getPos();
+            cc.s.getWorld().setBlockState(targetPos, sourceBlockState, 2);
+
+            if ( data != null)
+            {
+                BlockEntity be = world.getBlockEntity(targetPos);
+                if (be != null)
+                {
+                    CompoundTag destTag = data.method_10553();
+                    destTag.putInt("x", targetPos.getX());
+                    destTag.putInt("y", targetPos.getY());
+                    destTag.putInt("z", targetPos.getZ());
+                    be.fromTag(destTag);
+                    be.markDirty();
+                }
+            }
+
             CarpetSettings.impendingFillSkipUpdates = false;
             Value retval = new BlockValue(sourceBlockState, world, targetLocator.block.getPos());
             return (c_, t_) -> retval;
@@ -873,6 +907,12 @@ public class CarpetExpression
 
     public void API_InventoryManipulation()
     {
+        this.expr.addLazyFunction("stack_limit", 1, (c, t, lv) -> {
+            ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
+            Value res = new NumericValue(item.getItem().getMaxCount());
+            return (_c, _t) -> res;
+        });
+
         this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -990,7 +1030,7 @@ public class CarpetExpression
             return (_c, _t) -> Value.NULL;
         });
 
-        //inventory_set(<b,e>, <n>, <count>, <item>)
+        //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
         this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -1018,7 +1058,20 @@ public class CarpetExpression
                 inventoryLocator.inventory.setInvStack(slot, newStack);
                 return (_c, _t) -> ListValue.fromItemStack(previousStack);
             }
-            ItemStackArgument newitem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset+2).evalValue(c).getString());
+            CompoundTag nbt = null;
+            if (lv.size() >= inventoryLocator.offset+3)
+            {
+                Value nbtValue = lv.get(inventoryLocator.offset+3).evalValue(c);
+                if (nbtValue instanceof NBTSerializableValue)
+                    nbt = ((NBTSerializableValue)nbtValue).getTag();
+                else
+                    nbt = new NBTSerializableValue(nbtValue.getString()).getTag();
+            }
+            ItemStackArgument newitem = NBTSerializableValue.parseItem(
+                    lv.get(inventoryLocator.offset+2).evalValue(c).getString(),
+                    nbt
+            );
+
             ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
             try
             {

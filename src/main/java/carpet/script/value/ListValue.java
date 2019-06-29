@@ -203,25 +203,33 @@ public class ListValue extends Value
             ListValue ol = (ListValue)o;
             int this_size = this.getItems().size();
             int o_size = ol.getItems().size();
-            if (this_size != o_size)
-            {
-                return this_size - o_size;
-            }
-            if (this_size == 0)
-            {
-                return 0;
-            }
+            if (this_size != o_size) return this_size - o_size;
+            if (this_size == 0) return 0;
             for (int i = 0; i < this_size; i++)
             {
                 int res = this.items.get(i).compareTo(ol.items.get(i));
-                if (res != 0)
-                {
-                    return res;
-                }
+                if (res != 0) return res;
             }
             return 0;
         }
-        return super.compareTo(o);
+        return getString().compareTo(o.getString());
+    }
+
+    @Override
+    public boolean equals(final Value o)
+    {
+        if (o instanceof ListValue)
+        {
+            ListValue ol = (ListValue)o;
+            int this_size = this.getItems().size();
+            int o_size = ol.getItems().size();
+            if (this_size != o_size) return false;
+            if (this_size == 0) return true;
+            for (int i = 0; i < this_size; i++)
+                if (!this.items.get(i).equals(ol.items.get(i))) return false;
+            return true;
+        }
+        return false;
     }
 
     public List<Value> getItems()

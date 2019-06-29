@@ -6,10 +6,12 @@ import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.command.arguments.BlockArgumentParser;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -31,6 +33,7 @@ public class BlockValue extends Value
     private BlockState blockState;
     private BlockPos pos;
     private World world;
+    private CompoundTag data;
 
     public static BlockValue fromCoords(CarpetContext c, int x, int y, int z)
     {
@@ -48,7 +51,10 @@ public class BlockValue extends Value
             BlockArgumentParser blockstateparser = (new BlockArgumentParser(new StringReader(str), false)).parse(true);
             if (blockstateparser.getBlockState() != null)
             {
-                bv = new BlockValue(blockstateparser.getBlockState(), null, null);
+                CompoundTag bd = blockstateparser.getNbtData();
+                if (bd == null)
+                    bd = new CompoundTag();
+                bv = new BlockValue(blockstateparser.getBlockState(), null, null, bd );
                 if (bvCache.size()>10000)
                     bvCache.clear();
                 bvCache.put(str, bv);
@@ -182,11 +188,44 @@ public class BlockValue extends Value
         throw new InternalExpressionException("Attemted to fetch blockstate without world or stored blockstate");
     }
 
+    public CompoundTag getData()
+    {
+        if (data != null)
+        {
+            if (data.isEmpty())
+                return null;
+            return data;
+        }
+        if (world != null && pos != null)
+        {
+            BlockEntity be = world.getBlockEntity(pos);
+            CompoundTag tag = new CompoundTag();
+            if (be == null)
+            {
+                data = tag;
+                return null;
+            }
+            data = be.toTag(tag);
+            return data;
+        }
+        throw new InternalExpressionException("Attemted to fetch block data without world or stored block data");
+    }
+
+
     public BlockValue(BlockState state, World world, BlockPos position)
     {
         this.world = world;
         blockState = state;
         pos = position;
+        data = null;
+    }
+
+    public BlockValue(BlockState state, World world, BlockPos position, CompoundTag nbt)
+    {
+        this.world = world;
+        blockState = state;
+        pos = position;
+        data = nbt;
     }
 
 
