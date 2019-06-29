@@ -7,6 +7,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,7 +26,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class SettingsManager
@@ -34,7 +34,7 @@ public class SettingsManager
     private static Map<String, ParsedRule<?>> rules = new HashMap<>();
     public boolean locked;
     private MinecraftServer server;
-    private static List<BiConsumer<ParsedRule<?>, String>> observers = new ArrayList<>();
+    private static List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> observers = new ArrayList<>();
 
     public SettingsManager(MinecraftServer server)
     {
@@ -53,14 +53,14 @@ public class SettingsManager
         }
     }
 
-    public static void addRuleObserver(BiConsumer<ParsedRule<?>, String> observer)
+    public static void addRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
     {
         observers.add(observer);
     }
 
-    static void notifyRuleChanged(ParsedRule<?> rule, String userTypedValue)
+    static void notifyRuleChanged(ServerCommandSource source, ParsedRule<?> rule, String userTypedValue)
     {
-        observers.forEach(observer -> observer.accept(rule, userTypedValue));
+        observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
     }
 
     public static Iterable<String> getCategories()
