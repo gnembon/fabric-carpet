@@ -119,7 +119,7 @@ public abstract class ServerChunkManagerMixin
                         SpawnReporter.spawn_cap_count.get(key) + mobCount);
             }
 
-            if (mobCount <= int_3)
+            if (mobCount <= int_3 || SpawnReporter.mock_spawns)
             {
                 //place 0 to indicate there were spawn attempts for a category
                 //if (entityCategory != EntityCategory.CREATURE || world.getServer().getTicks() % 400 == 0)
@@ -136,6 +136,8 @@ public abstract class ServerChunkManagerMixin
     @Inject(method = "tickChunks", at = @At("RETURN"))
     private void onFinishSpawnWorldCycle(CallbackInfo ci)
     {
+        LevelProperties levelProperties_1 = this.world.getLevelProperties();
+        boolean boolean_3 = levelProperties_1.getTime() % 400L == 0L;
         if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
         {
             for (EntityCategory cat: EntityCategory.values())
@@ -145,9 +147,13 @@ public abstract class ServerChunkManagerMixin
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))
                 {
-                    // fill mobcaps for that category so spawn got cancelled
-                    SpawnReporter.spawn_ticks_full.put(key,
-                            SpawnReporter.spawn_ticks_full.get(key)+ spawnTries);
+                    if (!cat.isAnimal() || boolean_3)
+                    {
+                        // fill mobcaps for that category so spawn got cancelled
+                        SpawnReporter.spawn_ticks_full.put(key,
+                                SpawnReporter.spawn_ticks_full.get(key)+ spawnTries);
+                    }
+
                 }
                 else if (SpawnReporter.local_spawns.get(cat) > 0)
                 {
