@@ -100,4 +100,10 @@ public abstract class LazyListValue extends ListValue implements Iterator<Value>
         throw new InternalExpressionException("Cannot add to iterators");
     }
 
+    @Override
+    public boolean equals(final Value o)
+    {
+        return false;
+    }
+
 }

@@ -116,7 +116,7 @@ public class NumericValue extends Value
         {
             return value.compareTo(((NumericValue) o).getDouble());
         }
-        return super.compareTo(o);
+        return getString().compareTo(o.getString());
     }
     @Override
     public boolean equals(Value o)

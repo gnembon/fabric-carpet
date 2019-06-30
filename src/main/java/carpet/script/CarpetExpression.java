@@ -1,58 +1,66 @@
 package carpet.script;
 
 import carpet.CarpetServer;
-import carpet.script.value.NullValue;
-import carpet.settings.CarpetSettings;
-import carpet.helpers.FeatureGenerator;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.FeatureGenerator;
+import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.Fluff.TriFunction;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.NBTSerializableValue;
+import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.settings.CarpetSettings;
 import carpet.utils.BlockInfo;
 import carpet.utils.Messenger;
+import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockPlacementEnvironment;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
+import net.minecraft.command.arguments.ItemStackArgument;
+import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.item.Items;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.command.arguments.ParticleArgumentType;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.particle.ParticleEffect;
-import net.minecraft.block.BlockPlacementEnvironment;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.state.property.Property;
-import net.minecraft.state.StateFactory;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.state.StateFactory;
+import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.EulerRotation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.Heightmap;
 import net.minecraft.world.loot.context.LootContext;
 import net.minecraft.world.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
@@ -94,6 +102,7 @@ public class CarpetExpression
     private ServerCommandSource source;
     private BlockPos origin;
     private Expression expr;
+    Expression getExpr() {return expr;}
     private static long tickStart = 0L;
 
     private static boolean stopAll = false;
@@ -272,12 +281,13 @@ public class CarpetExpression
      * <h2>Specifying blocks</h2>
      * <h3><code>block(x, y, z), block(state)</code></h3>
      * <p>Returns either a block from specified location, or block with a specific state
-     * (as used by <code>/setblock</code> command), so allowing for block properties etc.
-     * Blocks can be referenced everywhere by its simple name, but its only used in its default state</p>
+     * (as used by <code>/setblock</code> command), so allowing for block properties, block entity data etc.
+     * Blocks otherwise can be referenced everywhere by its simple string name, but its only used in its default state</p>
      * <pre>
      * block('air')  =&gt; air
      * block('iron_trapdoor[half=top]')  =&gt; iron_trapdoor
      * block(0,0,0) == block('bedrock')  =&gt; 1
+     * block('hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') =&gt; hopper
      * </pre>
      * <h2>World Manipulation</h2>
      * <p>All the functions below can be used with block value, queried with coord triple, or 3-long list.
@@ -306,6 +316,21 @@ public class CarpetExpression
      * set(x,y,z,'iron_trapdoor[half=top]')  // Incorrect. sets bottom iron trapdoor - no parsing of properties
      * set(x,y,z,'iron_trapdoor','half','top') // correct - top trapdoor
      * set(x,y,z,block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
+     * set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
+     * </pre>
+     * <h3><code>place_item(item, pos, facing?, sneak?)</code></h3>
+     * <p>Places a given item in the world like it was placed by a player. Item names are default minecraft item name,
+     * less the minecraft prefix. Default facing is 'up', but there are other options: 'down', 'north', 'east',
+     * 'south', 'west', but also there are other secondary directions important for placement of blocks like stairs, doors, etc.
+     * Try experiment with options like 'north-up' which is placed facing north with cursor pointing to the upper part of the block,
+     * or 'up-north', which means a block placed facing up (player looking down) and placed smidge away of the block center
+     * towards north. Optional sneak is a boolean indicating if a player would be sneaking while placing the block -
+     * this option only affects placement of chests and scaffolding at the moment.
+     * Returns true if placement was successful, false otherwise.</p>
+     * <pre>
+     *     place_item('stone',x,y,z) // places a stone block on x,y,z block
+     *     place_item('piston,x,y,z,'down') // places a piston facing down
+     *     place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
      * </pre>
      * <h3><code>update(pos)</code></h3>
      * <p>Causes a block update at position.</p>
@@ -343,7 +368,12 @@ public class CarpetExpression
      *     property(block('iron_trapdoor[half=top]'),'powered')  =&gt; false
      *     bool(property(block('iron_trapdoor[half=top]'),'powered'))  =&gt; 0
      * </pre>
-     *
+     * <h3><code>block_data(pos)</code></h3>
+     * <p>Return NBT string associated with specific location, or null if the block does not carry block data.
+     * Can be currently used to match specific information from it, or use it to copy to another block</p>
+     * <pre>
+     *     block_data(x,y,z) =&gt; '{TransferCooldown:0,x:450,y:68, ... }'
+     * </pre>
      * <h3><code>solid(pos)</code></h3>
      * <p>Boolean function, true if the block is solid</p>
      * <h3> <code>air(pos)</code></h3>
@@ -539,6 +569,20 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
+        this.expr.addLazyFunction("block_data", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.size() == 0)
+            {
+                throw new InternalExpressionException("Block requires at least one parameter");
+            }
+            CompoundTag tag = BlockValue.fromParams(cc, lv, 0, true).block.getData();
+            if (tag.isEmpty())
+                return (c_, t_) -> Value.NULL;
+            Value retval = new NBTSerializableValue(tag);
+            return (c_, t_) -> retval;
+        });
+
         this.expr.addLazyFunction("pos", 1, (c, t, lv) ->
         {
             Value arg = lv.get(0).evalValue(c);
@@ -556,7 +600,7 @@ public class CarpetExpression
                 if (e == null)
                     throw new InternalExpressionException("Null entity");
                 Value retval = ListValue.of(new NumericValue(e.x), new NumericValue(e.y), new NumericValue(e.z));
-                return(c_, t_) -> retval;
+                return (c_, t_) -> retval;
             }
             else
             {
@@ -607,7 +651,8 @@ public class CarpetExpression
                 genericStateTest(c, "blast_resistance", lv, (s, p, w) -> new NumericValue(s.getBlock().getBlastResistance())));
 
 
-        this.expr.addLazyFunction("top", -1, (c, t, lv) -> {
+        this.expr.addLazyFunction("top", -1, (c, t, lv) ->
+        {
             String type = lv.get(0).evalValue(c).getString().toLowerCase(Locale.ROOT);
             Heightmap.Type htype;
             switch (type)
@@ -709,17 +754,36 @@ public class CarpetExpression
                     sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
                 }
             }
-            if (sourceBlockState == targetBlockState)
+
+            CompoundTag data = sourceLocator.block.getData();
+
+            if (sourceBlockState == targetBlockState && data == null)
                 return (c_, t_) -> Value.FALSE;
             CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
-            cc.s.getWorld().setBlockState(targetLocator.block.getPos(), sourceBlockState, 2);
+            BlockPos targetPos = targetLocator.block.getPos();
+            cc.s.getWorld().setBlockState(targetPos, sourceBlockState, 2);
+
+            if ( data != null)
+            {
+                BlockEntity be = world.getBlockEntity(targetPos);
+                if (be != null)
+                {
+                    CompoundTag destTag = data.method_10553();
+                    destTag.putInt("x", targetPos.getX());
+                    destTag.putInt("y", targetPos.getY());
+                    destTag.putInt("z", targetPos.getZ());
+                    be.fromTag(destTag);
+                    be.markDirty();
+                }
+            }
+
             CarpetSettings.impendingFillSkipUpdates = false;
             Value retval = new BlockValue(sourceBlockState, world, targetLocator.block.getPos());
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("destroy", -1, (c, t, lv) -> {
-
+        this.expr.addLazyFunction("destroy", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
@@ -756,8 +820,10 @@ public class CarpetExpression
             return (c_, t_) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("harvest", -1, (c, t, lv) -> {
-
+        this.expr.addLazyFunction("harvest", -1, (c, t, lv) ->
+        {
+            if (lv.size()<2)
+                throw new InternalExpressionException("harvest takes at least 2 parameters: entity and block, or position, to harvest");
             CarpetContext cc = (CarpetContext)c;
             World world = cc.s.getWorld();
             Value entityValue = lv.get(0).evalValue(cc);
@@ -776,9 +842,55 @@ public class CarpetExpression
             ItemStack itemstack2 = player.getMainHandStack();
             itemstack2.postMine(player.world, state, where, player);
             ItemStack itemstack1 = itemstack2.isEmpty() ? ItemStack.EMPTY : itemstack2.copy();
-            state.getBlock().afterBreak(world, player, where,state, be, itemstack1);
+            state.getBlock().afterBreak(world, player, where, state, be, itemstack1);
             world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
             return (c_, t_) -> Value.TRUE;
+        });
+
+        this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
+        {
+            if (lv.size()<2)
+                throw new InternalExpressionException("place_item takes at least 2 parameters: item and block, or position, to place onto");
+            CarpetContext cc = (CarpetContext) c;
+            String itemString = lv.get(0).evalValue(c).getString();
+            BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
+            ItemStackArgument stackArg = NBTSerializableValue.parseItem(itemString);
+            BlockPos where = new BlockPos(locator.vec);
+            String facing = "up";
+            if (lv.size() > locator.offset)
+                facing = lv.get(locator.offset).evalValue(c).getString();
+            boolean sneakPlace = false;
+            if (lv.size() > locator.offset+1)
+                sneakPlace = lv.get(locator.offset+1).evalValue(c).getBoolean();
+            if (stackArg.getItem() instanceof BlockItem)
+            {
+                BlockItem blockItem = (BlockItem) stackArg.getItem();
+                BlockValue.PlacementContext ctx;
+                try
+                {
+                    ctx = BlockValue.PlacementContext.from(cc.s.getWorld(), where, facing, sneakPlace, stackArg.createStack(1, false));
+                }
+                catch (CommandSyntaxException e)
+                {
+                    throw new InternalExpressionException(e.getMessage());
+                }
+                if (!ctx.canPlace())
+                    return (_c, _t) -> Value.FALSE;
+                BlockState placementState = blockItem.getBlock().getPlacementState(ctx);
+                if (placementState != null)
+                {
+                    if (placementState.canPlaceAt(cc.s.getWorld(), where))
+                    {
+                        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+                        cc.s.getWorld().setBlockState(where, placementState, 2);
+                        CarpetSettings.impendingFillSkipUpdates = false;
+                        BlockSoundGroup blockSoundGroup = placementState.getSoundGroup();
+                        cc.s.getWorld().playSound(null, where, blockSoundGroup.getPlaceSound(), SoundCategory.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
+                        return (_c, _t) -> Value.TRUE;
+                    }
+                }
+            }
+            return (_c, _t) -> Value.FALSE;
         });
 
         this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
@@ -789,11 +901,11 @@ public class CarpetExpression
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
                         BlockInfo.soundName.get(s.getSoundGroup())));
 
-        this.expr.addLazyFunction("material",-1, (c, t, lv) ->
+        this.expr.addLazyFunction("material", -1, (c, t, lv) ->
                 stateStringQuery(c, "material", lv, (s, p) ->
                         BlockInfo.materialName.get(s.getMaterial())));
 
-        this.expr.addLazyFunction("map_colour", -1,  (c, t, lv) ->
+        this.expr.addLazyFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
                         BlockInfo.mapColourName.get(s.getTopMaterialColor(((CarpetContext)c).s.getWorld(), p))));
 
@@ -807,9 +919,330 @@ public class CarpetExpression
             if (property == null)
                 return LazyValue.NULL;
             Value retval = new StringValue(state.get(property).toString());
-            return (_c, _t ) -> retval;
+            return (_c, _t) -> retval;
+        });
+
+
+    }
+
+    /**
+     * <h1>Inventory and Items API</h1>
+     * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
+     * <h2>Manipulating inventories of blocks and entities</h2>
+     * <p>Most functions in this category require inventory as the first argument. Inventory could be specified by
+     * an entity, or a block, or position (three coordinates) of a potential block with inventory.
+     * If the entity or a block doesn't
+     * have an inventory, they typically do nothing and return null.</p>
+     * <p>Most items returned are in the form of
+     * a triple of item name, count, and nbt or the extra data associated with an item.
+     * Manipulating of the nbt data can be costly, but retrieving them from the tuple to match other aspects is cheap</p>
+     * <h3><code>stack_limit(item)</code></h3>
+     * <p>Returns number indicating what is the stack limit for the item. Its typically 1 (non-stackable),
+     * 16 (like buckets), or 64 - rest. It is recommended to consult this, as other inventory API functions
+     * ignore normal stack limits, and it is up to the programmer to keep it at bay. As of 1.13, game checks for negative
+     * numbers and setting an item to negative is the same as empty.</p>
+     * <pre>
+     *     stack_limit('wooden_axe') =&gt; 1
+     *     stack_limit('ender_pearl') =&gt; 16
+     *     stack_limit('stone') =&gt; 64
+     * </pre>
+     * <h3><code>inventory_size(inventory)</code></h3>
+     * <p>Returns the size of the inventory for the entity or block in question. Returns null if the block or entity
+     * don't have an inventory</p>
+     * <pre>
+     *     inventory_size(player()) =&gt; 41
+     *     inventory_size(x,y,z) =&gt; 27 // chest
+     *     inventory_size(block(pos)) =&gt; 5 // hopper
+     * </pre>
+     * <h3><code>inventory_get(inventory, slot)</code></h3>
+     * <p>Returns the item in the corresponding inventory slot, or null if slot empty or inventory is invalid.
+     * You can use negative numbers to indicate slots counted from 'the back'.</p>
+     * <pre>
+     *     inventory_get(player(), 0) =&gt; null // nothing in first hotbar slot
+     *     inventory_get(x,y,z, 5) =&gt; ['stone', 1, {}]
+     *     inventory_get(player(), -1) =&gt; ['diamond_pickaxe', 1, {Damage:4}] // slightly damaged diamond pick in the offhand
+     * </pre>
+     *
+     * <h3><code>inventory_set(inventory, slot, count, item?, nbt?) </code></h3>
+     * <p>Modifies or sets a stack in inventory. specify count 0 to empty the slot.
+     * If item is not specified, keeps existing item, just modifies the count. If item is provided - replaces current item.
+     * If nbt is provided - adds a tag to the stack at slot. Returns previous stack in that slot.</p>
+     * <pre>
+     *     inventory_set(player(), 0, 0) =&gt; ['stone', 64, {}] // player had a stack of stone in first hotbar slot
+     *     inventory_set(player(), 0, 6) =&gt; ['diamond', 64, {}] // changed stack of diamonds in player slot to 6
+     *     inventory_set(player(), 0, 1, 'diamond_axe','{Damage:5}') =&gt; null //added slightly damaged pick to first player slot
+     * </pre>
+     *
+     * <h3><code>inventory_find(inventory, item, start_slot?, ), inventory_find(inventory, null, start_slot?) </code></h3>
+     * <p>Finds the first slot with a corresponding item in the inventory, or if queried with null: the first empty slot.
+     * Returns slot number if found, or null otherwise. Optional start_slot argument allows to skip all preceeding slots
+     * allowing for efficient (so not slot-by-slot) inventory search for items.</p>
+     * <pre>
+     *     inventory_find(player(), 'stone') =&gt; 0 // player has stone in first hotbar slot
+     *     inventory_find(player(), null) =&gt; null // player's inventory has no empty spot
+     *     while( (slot = inventory_find(p, 'diamond', slot)) != null, 41, drop_item(p, slot) )
+     *         // spits all diamonds from player inventory wherever they are
+     *     inventory_drop(x,y,z, 0) =&gt; 64 // removed and spawned in the world a full stack of items
+     * </pre>
+     *
+     * <h3><code>inventory_remove(inventory, item, amount?) </code></h3>
+     * <p>Removes amount (defaults to 1) of item from inventory. If the inventory doesn't have the defined amount, nothing
+     * happens, otherwise the given amount of items is removed wherever they are in the inventory. Returns boolean whether
+     * the removal operation was successful. Easiest way to remove a specific item from player inventory without specifying
+     * the slot.</p>
+     * <pre>
+     *     inventory_remove(player(), 'diamond') =&gt; 1 // removed diamond from player inventory
+     *     inventory_remove(player(), 'diamond', 100) =&gt; 0 // player doesn't have 100 diamonds, nothing happened
+     * </pre>
+     *
+     * <h3><code>drop_item(inventory, slot, amount?, )</code></h3>
+     * <p>Drops the items from indicated inventory slot, like player that Q's an item or villager, that exchanges food.
+     * You can Q items from block inventories as well. default amount is 0 - which is all from the slot. NOTE: hoppers are quick
+     * enough to pick all the queued items from their inventory anyways.
+     * Returns size of the actual dropped items.</p>
+     * <pre>
+     *     inventory_drop(player(), 0, 1) =&gt; 1 // Q's one item on the ground
+     *     inventory_drop(x,y,z, 0) =&gt; 64 // removed and spawned in the world a full stack of items
+     * </pre>
+     * </div>
+     */
+    public void API_InventoryManipulation()
+    {
+        this.expr.addLazyFunction("stack_limit", 1, (c, t, lv) ->
+        {
+            ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
+            Value res = new NumericValue(item.getItem().getMaxCount());
+            return (_c, _t) -> res;
+        });
+
+        this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            Value res = new NumericValue(inventoryLocator.inventory.getInvSize());
+            return (_c, _t) -> res;
+        });
+
+        //inventory_get(<b, e>, <n>) -> item_triple
+        this.expr.addLazyFunction("inventory_get", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            if (lv.size() == inventoryLocator.offset)
+            {
+                List<Value> fullInventory = new ArrayList<>();
+                for (int i = 0, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+                {
+                    fullInventory.add(ListValue.fromItemStack(inventoryLocator.inventory.getInvStack(i)));
+                }
+                Value res = ListValue.wrap(fullInventory);
+                return (_c, _t) -> res;
+            }
+            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
+            if (slot == inventoryLocator.inventory.getInvSize())
+                return (_c, _t) -> Value.NULL;
+            Value res = ListValue.fromItemStack(inventoryLocator.inventory.getInvStack(slot));
+            return (_c, _t) -> res;
+        });
+
+        //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
+        this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            if (lv.size() < inventoryLocator.offset+2)
+                throw new InternalExpressionException("inventory_set requires at least slot number and new stack size, and optional new item");
+            int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0).evalValue(c)).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
+            if (slot == inventoryLocator.inventory.getInvSize())
+                return (_c, _t) -> Value.NULL;
+            int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
+            if (count == 0)
+            {
+                // clear slot
+                ItemStack removedStack = inventoryLocator.inventory.removeInvStack(slot);
+                //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
+                return (_c, _t) -> ListValue.fromItemStack(removedStack);
+            }
+            if (lv.size() < inventoryLocator.offset+3)
+            {
+                ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
+                ItemStack newStack = previousStack.copy();
+                newStack.setCount(count);
+                inventoryLocator.inventory.setInvStack(slot, newStack);
+                return (_c, _t) -> ListValue.fromItemStack(previousStack);
+            }
+            CompoundTag nbt = null; // skipping one argument
+            if (lv.size() > inventoryLocator.offset+3)
+            {
+                Value nbtValue = lv.get(inventoryLocator.offset+3).evalValue(c);
+                if (nbtValue instanceof NBTSerializableValue)
+                    nbt = ((NBTSerializableValue)nbtValue).getTag();
+                else
+                    nbt = new NBTSerializableValue(nbtValue.getString()).getTag();
+            }
+            ItemStackArgument newitem = NBTSerializableValue.parseItem(
+                    lv.get(inventoryLocator.offset+2).evalValue(c).getString(),
+                    nbt
+            );
+
+            ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
+            try
+            {
+                inventoryLocator.inventory.setInvStack(slot, newitem.createStack(count, false));
+            }
+            catch (CommandSyntaxException e)
+            {
+                throw new InternalExpressionException(e.getMessage());
+            }
+            return (_c, _t) -> ListValue.fromItemStack(previousStack);
+        });
+
+        //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
+        this.expr.addLazyFunction("inventory_find", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            ItemStackArgument itemArg = null;
+            if (lv.size() > inventoryLocator.offset)
+            {
+                Value secondArg = lv.get(inventoryLocator.offset+0).evalValue(c);
+                if (!(secondArg instanceof NullValue))
+                    itemArg = NBTSerializableValue.parseItem(secondArg.getString());
+            }
+            int startIndex = 0;
+            if (lv.size() > inventoryLocator.offset+1)
+            {
+                startIndex = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
+            }
+            startIndex = NBTSerializableValue.validateSlot(startIndex, inventoryLocator.inventory);
+            for (int i = startIndex, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+            {
+                ItemStack stack = inventoryLocator.inventory.getInvStack(i);
+                if ( (itemArg == null && stack.isEmpty()) || (itemArg != null && itemArg.getItem().equals(stack.getItem())) )
+                {
+                    Value res = new NumericValue(i);
+                    return (_c, _t) -> res;
+                }
+            }
+            return (_c, _t) -> Value.NULL;
+        });
+
+
+
+        //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
+
+        this.expr.addLazyFunction("inventory_remove", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            if (lv.size() <= inventoryLocator.offset)
+                throw new InternalExpressionException("inventory_set requires at least an item to be removed");
+            ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).evalValue(c).getString());
+            int amount = 1;
+            if (lv.size() > inventoryLocator.offset+1)
+            {
+                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
+            }
+            // not enough
+            if (((amount == 1) && (!inventoryLocator.inventory.containsAnyInInv(Sets.newHashSet(searchItem.getItem()))))
+                    || (inventoryLocator.inventory.countInInv(searchItem.getItem()) < amount))
+            {
+                return (_c, _t) -> Value.FALSE;
+            }
+            for (int i = 0, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+            {
+                ItemStack stack = inventoryLocator.inventory.getInvStack(i);
+                if (stack.isEmpty())
+                    continue;
+                if (!stack.getItem().equals(searchItem.getItem()))
+                    continue;
+                int left = stack.getCount()-amount;
+                if (left > 0)
+                {
+                    stack.setCount(left);
+                    inventoryLocator.inventory.setInvStack(i, stack);
+                    return (_c, _t) -> Value.TRUE;
+                }
+                else
+                {
+                    inventoryLocator.inventory.removeInvStack(i);
+                    amount -= stack.getCount();
+                }
+            }
+            if (amount > 0)
+                throw new InternalExpressionException("Something bad happened - cannot pull all items from inventory");
+            return (_c, _t) -> Value.TRUE;
+        });
+
+        //inventory_drop(<b, e>, <n>, <amount=1, 0-whatever's there>) -> entity_item (and sets slot) or null if cannot
+        this.expr.addLazyFunction("drop_item", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            if (lv.size() == inventoryLocator.offset)
+                throw new InternalExpressionException("slot number is required for inventory_drop");
+            int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
+            slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
+            if (slot == inventoryLocator.inventory.getInvSize())
+                return (_c, _t) -> Value.NULL;
+            int amount = 0;
+            if (lv.size() > inventoryLocator.offset+1)
+                amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
+            if (amount < 0)
+                throw new InternalExpressionException("Cannot throw negative number of items");
+            ItemStack stack = inventoryLocator.inventory.getInvStack(slot);
+            if (stack == null || stack.isEmpty())
+                return (_c, _t) -> Value.ZERO;
+            if (amount == 0)
+                amount = stack.getCount();
+            ItemStack droppedStack = inventoryLocator.inventory.takeInvStack(slot, amount);
+            if (droppedStack.isEmpty())
+            {
+                return (_c, _t) -> Value.ZERO;
+            }
+            Object owner = inventoryLocator.owner;
+            ItemEntity item;
+            if (owner instanceof PlayerEntity)
+            {
+                item = ((PlayerEntity) owner).dropItem(droppedStack, false, true);
+            }
+            else if (owner instanceof LivingEntity)
+            {
+                LivingEntity villager = (LivingEntity)owner;
+                // stolen from LookTargetUtil.give((VillagerEntity)owner, droppedStack, (LivingEntity) owner);
+                double double_1 = villager.y - 0.30000001192092896D + (double)villager.getStandingEyeHeight();
+                item = new ItemEntity(villager.world, villager.x, double_1, villager.z, droppedStack);
+                Vec3d vec3d_1 = villager.getRotationVec(1.0F).normalize().multiply(0.3);//  new Vec3d(0, 0.3, 0);
+                item.setVelocity(vec3d_1);
+                item.setToDefaultPickupDelay();
+                cc.s.getWorld().spawnEntity(item);
+            }
+            else
+            {
+                Vec3d point = new Vec3d(inventoryLocator.position);
+                item = new ItemEntity(cc.s.getWorld(), point.x+0.5, point.y+0.5, point.z+0.5, droppedStack);
+                item.setToDefaultPickupDelay();
+                cc.s.getWorld().spawnEntity(item);
+            }
+            inventoryLocator.inventory.markDirty();
+            Value res = new NumericValue(item.getStack().getCount());
+            return (_c, _t) -> res;
         });
     }
+
 
     /**
      * <h1>Entity API</h1>
@@ -859,6 +1292,12 @@ public class CarpetExpression
      * <p>Unlike with blocks, that use plethora of vastly different querying functions, entities are queried with
      * <code>query</code> function and altered via <code>modify</code> function. Type of information needed or
      * values to be modified are different for each call</p>
+     * <p>Using <code>~</code> (in) operator is an alias for <code>query</code>. Especially useful if a statement has
+     * no arguments, which in this case can be radically simplified</p>
+     * <pre>
+     *     query(p, 'name') &lt;=&gt; p ~ 'name'     // much shorter and cleaner
+     *     query(p, 'holds', 'offhand') &lt;=&gt; p ~ l('holds', 'offhand')    // not really but can be done
+     * </pre>
      * <h3><code>query(e,'removed')</code></h3>
      * <p>Boolean. True if the entity is removed</p>
      * <h3><code>query(e,'id')</code></h3>
@@ -969,6 +1408,12 @@ public class CarpetExpression
      *     <li><code>feet</code></li>
      * </ul>
      * <p>If <code>slot</code> is not specified, it defaults to the main hand.</p>
+     * <h3><code>query(e,'selected_slot')</code></h3>
+     * <p>Number indicating the selected slot of entity inventory. Currently only applicable to players.</p>
+     * <h3><code>query(e,'facing', order?)</code></h3>
+     * <p>Returns where the entity is facing. optional order (number from 0 to 5, and negative), indicating
+     * primary directions where entity is looking at. From most prominent (order 0) to opposite (order 5, or -1)</p>
+     *
      * <h3><code>query(e,'nbt',path?)</code></h3>
      * <p>Returns full NBT of the entity. If path is specified, it fetches only that portion of the NBT,
      * that corresponds to the path. For specification of <code>path</code> attribute, consult
@@ -2051,6 +2496,7 @@ public class CarpetExpression
 
         API_BlockManipulation();
         API_EntityManipulation();
+        API_InventoryManipulation();
         API_IteratingOverAreasOfBlocks();
         API_AuxiliaryAspects();
     }
@@ -2092,6 +2538,7 @@ public class CarpetExpression
      * <p>The last method is the one that world edit is using (part of carpet mod). It turns out that the outline method with <code>32.5</code> radius,
      * fill method with <code>round</code> function and draw command are equivalent</p>
      * </div>
+     * @param host .
      * @param x .
      * @param y .
      * @param z .
@@ -2134,12 +2581,14 @@ public class CarpetExpression
     /**
      * <h1><code>/script run</code> command</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
-     * <p>primary way to input commands. The command executes in the context, position, and dimension of the executing
+     * <p>Primary way to input commands. The command executes in the context, position, and dimension of the executing
      * player, commandblock, etc... The command receives 4 variables, <code>x</code>, <code>y</code>, <code>z</code>
      * and <code>p</code> indicating position and the executing entity of the command.
+     * You will receive tab completion suggestions as you type your code suggesting functions and global variables.
      * It is advisable to use <code>/execute in ... at ... as ... run script run ...</code> or similar, to simulate running
      * commands in a different scope</p>
      * </div>
+     * @param host .
      * @param pos .
      * @return .
      */

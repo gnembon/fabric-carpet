@@ -6,16 +6,25 @@ import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.command.arguments.BlockArgumentParser;
 import net.minecraft.block.Blocks;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BlockValue extends Value
 {
@@ -24,6 +33,7 @@ public class BlockValue extends Value
     private BlockState blockState;
     private BlockPos pos;
     private World world;
+    private CompoundTag data;
 
     public static BlockValue fromCoords(CarpetContext c, int x, int y, int z)
     {
@@ -41,7 +51,10 @@ public class BlockValue extends Value
             BlockArgumentParser blockstateparser = (new BlockArgumentParser(new StringReader(str), false)).parse(true);
             if (blockstateparser.getBlockState() != null)
             {
-                bv = new BlockValue(blockstateparser.getBlockState(), null, null);
+                CompoundTag bd = blockstateparser.getNbtData();
+                if (bd == null)
+                    bd = new CompoundTag();
+                bv = new BlockValue(blockstateparser.getBlockState(), null, null, bd );
                 if (bvCache.size()>10000)
                     bvCache.clear();
                 bvCache.put(str, bv);
@@ -175,11 +188,44 @@ public class BlockValue extends Value
         throw new InternalExpressionException("Attemted to fetch blockstate without world or stored blockstate");
     }
 
+    public CompoundTag getData()
+    {
+        if (data != null)
+        {
+            if (data.isEmpty())
+                return null;
+            return data;
+        }
+        if (world != null && pos != null)
+        {
+            BlockEntity be = world.getBlockEntity(pos);
+            CompoundTag tag = new CompoundTag();
+            if (be == null)
+            {
+                data = tag;
+                return null;
+            }
+            data = be.toTag(tag);
+            return data;
+        }
+        throw new InternalExpressionException("Attemted to fetch block data without world or stored block data");
+    }
+
+
     public BlockValue(BlockState state, World world, BlockPos position)
     {
         this.world = world;
         blockState = state;
         pos = position;
+        data = null;
+    }
+
+    public BlockValue(BlockState state, World world, BlockPos position, CompoundTag nbt)
+    {
+        this.world = world;
+        blockState = state;
+        pos = position;
+        data = nbt;
     }
 
 
@@ -237,6 +283,108 @@ public class BlockValue extends Value
             offset = o;
             yaw = y;
             pitch = p;
+        }
+    }
+
+    public enum SpecificDirection {
+        UP("up",0.5, 0.0, 0.5, Direction.UP),
+
+        UPNORTH ("up-north", 0.5, 0.0, 0.4, Direction.UP),
+        UPSOUTH ("up-south", 0.5, 0.0, 0.6, Direction.UP),
+        UPEAST("up-east", 0.6, 0.0, 0.5, Direction.UP),
+        UPWEST("up-west", 0.4, 0.0, 0.5, Direction.UP),
+
+        DOWN("down", 0.5, 1.0, 0.5, Direction.DOWN),
+
+        DOWNNORTH ("down-north", 0.5, 1.0, 0.4, Direction.DOWN),
+        DOWNSOUTH ("down-south", 0.5, 1.0, 0.6, Direction.DOWN),
+        DOWNEAST("down-east", 0.6, 1.0, 0.5, Direction.DOWN),
+        DOWNWEST("down-west", 0.4, 1.0, 0.5, Direction.DOWN),
+
+
+        NORTH ("north", 0.5, 0.4, 1.0, Direction.NORTH),
+        SOUTH ("south", 0.5, 0.4, 0.0, Direction.SOUTH),
+        EAST("east", 0.0, 0.4, 0.5, Direction.EAST),
+        WEST("west", 1.0, 0.4, 0.5, Direction.WEST),
+
+        NORTHUP ("north-up", 0.5, 0.6, 1.0, Direction.NORTH),
+        SOUTHUP ("south-up", 0.5, 0.6, 0.0, Direction.SOUTH),
+        EASTUP("east-up", 0.0, 0.6, 0.5, Direction.EAST),
+        WESTUP("west-up", 1.0, 0.6, 0.5, Direction.WEST);
+
+        public String name;
+        public Vec3d hitOffset;
+        public Direction facing;
+
+        private static final Map<String, SpecificDirection> DIRECTION_MAP = Arrays.stream(values()).collect(Collectors.toMap(SpecificDirection::getName, d -> d));
+
+
+        SpecificDirection(String name, double hitx, double hity, double hitz, Direction blockFacing)
+        {
+            this.name = name;
+            this.hitOffset = new Vec3d(hitx, hity, hitz);
+            this.facing = blockFacing;
+        }
+        private String getName()
+        {
+            return name;
+        }
+    }
+
+    public static class PlacementContext extends ItemPlacementContext {
+        private final Direction facing;
+        private final boolean sneakPlace;
+
+        public static PlacementContext from(World world, BlockPos pos, String direction, boolean sneakPlace, ItemStack itemStack)
+        {
+            SpecificDirection dir = SpecificDirection.DIRECTION_MAP.get(direction);
+            if (dir == null)
+                throw new InternalExpressionException("unknown block placement direction: "+direction);
+            BlockHitResult hitres =  new BlockHitResult(new Vec3d(pos).add(dir.hitOffset), dir.facing, pos, false);
+            return new PlacementContext(world, dir.facing, sneakPlace, itemStack, hitres);
+        }
+        private PlacementContext(World world_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {
+            super(world_1, null, Hand.MAIN_HAND, itemStack_1, hitres);
+            this.facing = direction_1;
+            this.sneakPlace = sneakPlace;
+        }
+
+        public BlockPos getBlockPos() {
+            return this.hit.getBlockPos();
+        }
+
+        public Direction getPlayerLookDirection() {
+            return facing.getOpposite();
+        }
+
+        public Direction[] getPlacementDirections() {
+            switch(this.facing) {
+                case DOWN:
+                default:
+                    return new Direction[]{Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, Direction.UP};
+                case UP:
+                    return new Direction[]{Direction.DOWN, Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+                case NORTH:
+                    return new Direction[]{Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.WEST, Direction.UP, Direction.SOUTH};
+                case SOUTH:
+                    return new Direction[]{Direction.DOWN, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.UP, Direction.NORTH};
+                case WEST:
+                    return new Direction[]{Direction.DOWN, Direction.WEST, Direction.SOUTH, Direction.UP, Direction.NORTH, Direction.EAST};
+                case EAST:
+                    return new Direction[]{Direction.DOWN, Direction.EAST, Direction.SOUTH, Direction.UP, Direction.NORTH, Direction.WEST};
+            }
+        }
+
+        public Direction getPlayerFacing() {
+            return this.facing.getAxis() == Direction.Axis.Y ? Direction.NORTH : this.facing;
+        }
+
+        public boolean isPlayerSneaking() {
+            return sneakPlace;
+        }
+
+        public float getPlayerYaw() {
+            return (float)(this.facing.getHorizontal() * 90);
         }
     }
 }

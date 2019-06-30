@@ -51,11 +51,7 @@ public class CarpetSettings
     @Rule(desc = "Dropping entire stacks works also from on the crafting UI result slot", category = {BUGFIX, SURVIVAL})
     public static boolean ctrlQCraftingFix = false;
 
-    @Rule(
-            desc = "Parrots don't get of your shoulders until you receive damage",
-            category = {SURVIVAL, FEATURE},
-            validate = Validator.WIP.class
-    )
+    @Rule(desc = "Parrots don't get of your shoulders until you receive proper damage", category = {SURVIVAL, FEATURE})
     public static boolean persistentParrots = false;
 
     /*@Rule(
