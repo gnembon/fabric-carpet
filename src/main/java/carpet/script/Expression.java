@@ -859,9 +859,10 @@ public class Expression implements Cloneable
      * <p>Ability to combine more statements into one expression, with functions, passing parameters, and global and outer
      * scoping allow to organize even larger scripts</p>
      * <h2>Control flow</h2>
-     * <h3><code>return(expr)</code></h3>
+     * <h3><code>return(expr?)</code></h3>
      * <p>Sometimes its convenient to break the organized control flow, or it is not practical to pass
      * the final result value of a function to the last statement, in this case a return statement can be used</p>
+     * <p>If no argument is provided - returns null value.</p>
      * <pre>
      * def() -&gt; (
      *  expr1;
@@ -873,12 +874,14 @@ public class Expression implements Cloneable
      * </pre>
      * <p>In general its cheaper to leave the last expression as a return value, rather than calling returns everywhere,
      * but it would often lead to a messy code.</p>
-     * <h3><code>exit(expr)</code></h3>
-     * <p>It terminates entire program passing <code>expr</code> as the result of the program execution.</p>
-     * <h3><code>try(expr, catch_expr(_)) ... throw(value)</code></h3>
+     * <h3><code>exit(expr?)</code></h3>
+     * <p>It terminates entire program passing <code>expr</code> as the result of the program execution, or null if omitted.</p>
+     * <h3><code>try(expr, catch_expr(_)?) ... throw(value?)</code></h3>
      * <p><code>try</code> function evaluates expression, and continues further unless <code>throw</code> function is called
      * anywhere inside <code>expr</code>. In that case the <code>catch_expr</code> is evaluates with <code>_</code> set
-     * to the argument <code>throw</code> was called with. This mechanism allows to terminate large portion of a convoluted
+     * to the argument <code>throw</code> was called with.
+     * This mechanic accepts skipping thrown value - it throws null instead, and catch expression - then try returns null as well
+     * This mechanism allows to terminate large portion of a convoluted
      * call stack and continue program execution. There is only one level of exceptions currently in carpet, so if the inner
      * function also defines the <code>try</code> catchment area, it will received the exception first, but it can technically
      * rethrow the value its getting for the outer scope. Unhandled throw acts like an exit statement.</p>
@@ -1620,15 +1623,15 @@ public class Expression implements Cloneable
      *     range(20, 10, -2)  =&gt; [20, 18, 16, 14, 12]
      * </pre>
      *
-     * <h3><code>element(list, index)</code></h3>
+     * <h3><code>get(list, index), element(list, index)(deprecated)</code></h3>
      * <p>Returns the value at <code>index</code> element from the <code>list</code>.
-     * use negative numbers to reach elements from the end of the list. <code>element</code>
+     * use negative numbers to reach elements from the end of the list. <code>get</code>
      * call will always be able to find the index. In case there is few items, it will loop over </p>
      * <pre>
-     *     element(l(range(10)), 5)  =&gt; 5
-     *     element(l(range(10)), -1)  =&gt; 9
-     *     element(l(range(10)), 10)  =&gt; 0
-     *     element(l(range(10)), 93)  =&gt; 3
+     *     get(l(range(10)), 5)  =&gt; 5
+     *     get(l(range(10)), -1)  =&gt; 9
+     *     get(l(range(10)), 10)  =&gt; 0
+     *     get(l(range(10)), 93)  =&gt; 3
      * </pre>
      *
      * <h3><code>put(list, index, values ...), put(list, null, values ...)</code></h3>

@@ -298,7 +298,7 @@ public class BlockValue extends Value
 
         DOWNNORTH ("down-north", 0.5, 1.0, 0.4, Direction.DOWN),
         DOWNSOUTH ("down-south", 0.5, 1.0, 0.6, Direction.DOWN),
-        DOWNEAST("dow-neast", 0.6, 1.0, 0.5, Direction.DOWN),
+        DOWNEAST("down-east", 0.6, 1.0, 0.5, Direction.DOWN),
         DOWNWEST("down-west", 0.4, 1.0, 0.5, Direction.DOWN),
 
 
