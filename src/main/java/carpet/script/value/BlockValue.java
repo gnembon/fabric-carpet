@@ -349,14 +349,17 @@ public class BlockValue extends Value
             this.sneakPlace = sneakPlace;
         }
 
+        @Override
         public BlockPos getBlockPos() {
             return this.hit.getBlockPos();
         }
 
+        @Override
         public Direction getPlayerLookDirection() {
             return facing.getOpposite();
         }
 
+        @Override
         public Direction[] getPlacementDirections() {
             switch(this.facing) {
                 case DOWN:
@@ -375,14 +378,17 @@ public class BlockValue extends Value
             }
         }
 
+        @Override
         public Direction getPlayerFacing() {
             return this.facing.getAxis() == Direction.Axis.Y ? Direction.NORTH : this.facing;
         }
 
+        @Override
         public boolean isPlayerSneaking() {
             return sneakPlace;
         }
 
+        @Override
         public float getPlayerYaw() {
             return (float)(this.facing.getHorizontal() * 90);
         }
