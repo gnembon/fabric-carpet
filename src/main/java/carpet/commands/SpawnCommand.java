@@ -41,14 +41,14 @@ public class SpawnCommand
 
         literalargumentbuilder.
                 then(literal("list").
-                        then(argument("pos", BlockPosArgumentType.create()).
+                        then(argument("pos", BlockPosArgumentType.blockPos()).
                                 executes( (c) -> listSpawns(c.getSource(), BlockPosArgumentType.getBlockPos(c, "pos"))))).
                 then(literal("tracking").
                         executes( (c) -> printTrackingReport(c.getSource())).
                         then(literal("start").
                                 executes( (c) -> startTracking(c.getSource(), null, null)).
-                                then(argument("from", BlockPosArgumentType.create()).
-                                        then(argument("to", BlockPosArgumentType.create()).
+                                then(argument("from", BlockPosArgumentType.blockPos()).
+                                        then(argument("to", BlockPosArgumentType.blockPos()).
                                                 executes( (c) -> startTracking(
                                                         c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "from"),
@@ -91,7 +91,7 @@ public class SpawnCommand
                         then(literal("set").
                                 then(argument("cap (hostile)", integer(1,1400)).
                                         executes( (c) -> setMobcaps(c.getSource(), getInteger(c, "cap (hostile)"))))).
-                        then(argument("dimension", DimensionArgumentType.create()).
+                        then(argument("dimension", DimensionArgumentType.dimension()).
                                 executes( (c)-> mobcapsForDimension(c.getSource(), DimensionArgumentType.getDimensionArgument(c, "dimension"))))).
                 then(literal("entities").
                         executes( (c) -> generalMobcaps(c.getSource()) ).

@@ -315,7 +315,7 @@ public class EntityValue extends Value
             NbtPathArgumentType.NbtPath path;
             try
             {
-                path = NbtPathArgumentType.create().method_9362(new StringReader(a.getString()));
+                path = NbtPathArgumentType.nbtPath().method_9362(new StringReader(a.getString()));
             }
             catch (CommandSyntaxException exc)
             {

@@ -31,9 +31,9 @@ public class DrawCommand
         LiteralArgumentBuilder<ServerCommandSource> command = literal("draw").
                 requires((player) -> CarpetSettings.commandDraw).
                 then(literal("sphere").
-                        then(argument("center",BlockPosArgumentType.create()).
+                        then(argument("center",BlockPosArgumentType.blockPos()).
                                 then(argument("radius",IntegerArgumentType.integer(1)).
-                                        then(argument("block",BlockStateArgumentType.create()).
+                                        then(argument("block",BlockStateArgumentType.blockState()).
                                                 executes((c)-> drawCircle(
                                                         c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "center"),
@@ -43,7 +43,7 @@ public class DrawCommand
                                                         )
                                                 ).
                                                 then(literal("replace").
-                                                        then(argument("filter",BlockPredicateArgumentType.create())
+                                                        then(argument("filter",BlockPredicateArgumentType.blockPredicate())
                                                                 .executes((c)-> drawCircle(
                                                                         c.getSource(),
                                                                         BlockPosArgumentType.getBlockPos(c, "center"),

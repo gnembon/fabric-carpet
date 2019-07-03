@@ -55,7 +55,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.EulerRotation;
+import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
@@ -2359,7 +2359,7 @@ public class CarpetExpression
                 armorstand.setCustomName(new LiteralText(name));
                 armorstand.setCustomNameVisible(true);
             }
-            armorstand.setHeadRotation(new EulerRotation((int)pointLocator.pitch,0,0));
+            armorstand.setHeadRotation(new EulerAngle((int)pointLocator.pitch,0,0));
             armorstand.setNoGravity(true);
             armorstand.setInvisible(true);
             armorstand.setInvulnerable(true);

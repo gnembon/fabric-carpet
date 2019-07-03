@@ -196,36 +196,37 @@ public class BlockRotator
         BlockPos pos = hit.getBlockPos();
         Vec3d hitVec = hit.getPos().subtract(pos.getX(), pos.getY(), pos.getZ());
         Direction facing = hit.getSide();
+        BlockState newState = null;
         if ( (block instanceof GlazedTerracottaBlock) || (block instanceof AbstractRedstoneGateBlock) || (block instanceof RailBlock) ||
              (block instanceof TrapdoorBlock)         || (block instanceof LeverBlock)         || (block instanceof FenceGateBlock))
         {
-            world.setBlockState(pos, state.rotate(BlockRotation.CLOCKWISE_90), 2 | 1024);
+            newState = state.rotate(BlockRotation.CLOCKWISE_90);
         }
         else if ((block instanceof ObserverBlock) || (block instanceof EndRodBlock))
         {
-            world.setBlockState(pos, state.with(FacingBlock.FACING, (Direction) state.get(FacingBlock.FACING).getOpposite()), 2 | 1024);
+            newState = state.with(FacingBlock.FACING, (Direction) state.get(FacingBlock.FACING).getOpposite());
         }
         else if (block instanceof DispenserBlock)
         {
-            world.setBlockState(pos, state.with(DispenserBlock.FACING, state.get(DispenserBlock.FACING).getOpposite()), 2 | 1024);
+            newState = state.with(DispenserBlock.FACING, state.get(DispenserBlock.FACING).getOpposite());
         }
         else if (block instanceof PistonBlock)
         {
             if (!(state.get(PistonBlock.EXTENDED)))
-                world.setBlockState(pos, state.with(FacingBlock.FACING, state.get(FacingBlock.FACING).getOpposite()), 2 | 1024);
+                newState = state.with(FacingBlock.FACING, state.get(FacingBlock.FACING).getOpposite());
         }
         else if (block instanceof SlabBlock)
         {
             if (((SlabBlock) block).hasSidedTransparency(state))
             {
-                world.setBlockState(pos, state.with(SlabBlock.TYPE, state.get(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP), 2 | 1024);
+                newState =  state.with(SlabBlock.TYPE, state.get(SlabBlock.TYPE) == SlabType.TOP ? SlabType.BOTTOM : SlabType.TOP);
             }
         }
         else if (block instanceof HopperBlock)
         {
             if ((Direction)state.get(HopperBlock.FACING) != Direction.DOWN)
             {
-                world.setBlockState(pos, state.with(HopperBlock.FACING, state.get(HopperBlock.FACING).rotateYClockwise()), 2 | 1024);
+                newState =  state.with(HopperBlock.FACING, state.get(HopperBlock.FACING).rotateYClockwise());
             }
         }
         else if (block instanceof StairsBlock)
@@ -233,7 +234,7 @@ public class BlockRotator
             //LOG.error(String.format("hit with facing: %s, at side %.1fX, X %.1fY, Y %.1fZ",facing, hitX, hitY, hitZ));
             if ((facing == Direction.UP && hitVec.y == 1.0f) || (facing == Direction.DOWN && hitVec.y == 0.0f))
             {
-                world.setBlockState(pos, state.with(StairsBlock.HALF, state.get(StairsBlock.HALF) == BlockHalf.TOP ? BlockHalf.BOTTOM : BlockHalf.TOP ), 2 | 1024);
+                newState =  state.with(StairsBlock.HALF, state.get(StairsBlock.HALF) == BlockHalf.TOP ? BlockHalf.BOTTOM : BlockHalf.TOP );
             }
             else
             {
@@ -260,11 +261,11 @@ public class BlockRotator
                 }
                 if (turn_right)
                 {
-                    world.setBlockState(pos, state.rotate(BlockRotation.COUNTERCLOCKWISE_90), 2 | 1024);
+                    newState = state.rotate(BlockRotation.COUNTERCLOCKWISE_90);
                 }
                 else
                 {
-                    world.setBlockState(pos, state.rotate(BlockRotation.CLOCKWISE_90), 2 | 1024);
+                    newState = state.rotate(BlockRotation.CLOCKWISE_90);
                 }
             }
         }
@@ -272,8 +273,13 @@ public class BlockRotator
         {
             return false;
         }
-        world.scheduleBlockRender(pos);
-        return true;
+        if (newState != null)
+        {
+            world.setBlockState(pos, newState, 2 | 1024);
+            world.scheduleBlockRender(pos, state, newState);
+            return true;
+        }
+        return false;
     }
     private static boolean player_holds_cactus_mainhand(PlayerEntity playerIn)
     {

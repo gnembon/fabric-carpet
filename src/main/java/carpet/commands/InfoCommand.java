@@ -31,7 +31,7 @@ public class InfoCommand
         LiteralArgumentBuilder<ServerCommandSource> command = literal("info").
                 requires((player) -> CarpetSettings.commandInfo).
                 then(literal("block").
-                        then(argument("block position", BlockPosArgumentType.create()).
+                        then(argument("block position", BlockPosArgumentType.blockPos()).
                                 executes( (c) -> infoBlock(
                                         c.getSource(),
                                         BlockPosArgumentType.getBlockPos(c, "block position"), null)).
