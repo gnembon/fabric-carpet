@@ -67,7 +67,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
     public static List<Token> simplepass(String input)
     {
-        Tokenizer tok = new Tokenizer(null, input);
+        Tokenizer tok = new Tokenizer(null, input, false, false);
         List<Token> res = new ArrayList<>();
         while (tok.hasNext()) res.add(tok.next());
         return res;
@@ -233,6 +233,9 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                         lineno++;
                         linepos = 0;
                     }
+                    token.append(greedyMatch);
+                    token.type = Token.TokenType.MARKER;
+                    return token; // skipping setting previous
                 }
                 pos++;
                 linepos++;
