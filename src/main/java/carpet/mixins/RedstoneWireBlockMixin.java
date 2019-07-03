@@ -71,7 +71,7 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
     public BlockState fastUpdate(World world, BlockPos pos, BlockState state, BlockPos source) {
         // [CM] fastRedstoneDust -- update based on carpet rule
         if (CarpetSettings.fastRedstoneDust) {
-            wireTurbo.updateSurroundingRedstone(world, pos, state, source);
+            return wireTurbo.updateSurroundingRedstone(world, pos, state, source);
         }
         return update(world, pos, state);
     }

@@ -327,17 +327,7 @@ public class RedstoneWireTurbo
         // be replicated here.
         if (!oldState.canPlaceAt(worldIn, pos)) {
             // Pop off the redstone dust
-            // aurieh: there must be a better way to do this
-            LootContext.Builder ctx = new LootContext
-                    .Builder(worldIn.getServer().getWorld(worldIn.dimension.getType()))
-                    .put(LootContextParameters.POSITION, pos)
-                    .put(LootContextParameters.TOOL, ItemStack.EMPTY);
-            List<ItemStack> stacks = oldState.getDroppedStacks(ctx);
-            for (ItemStack stack : stacks) {
-                ItemEntity itemEntity = new ItemEntity(worldIn, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
-                worldIn.spawnEntity(itemEntity);
-            }
-            worldIn.clearBlockState(pos, false);
+            Block.dropStacks(oldState, worldIn, pos);
              
             // Mark this position as not being redstone wire
             upd1.type = UpdateNode.Type.OTHER;
