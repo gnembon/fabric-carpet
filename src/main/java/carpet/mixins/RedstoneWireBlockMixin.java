@@ -83,19 +83,10 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
     private BlockState updateLogic(World world_1, BlockPos blockPos_1, BlockState blockState_1) {
         BlockState blockState_2 = blockState_1;
         int int_1 = (Integer)blockState_1.get(POWER); // i
-        int int_4 = increasePower(0, blockState_2); // j
         this.wiresGivePower = false;
         int int_2 = world_1.getReceivedRedstonePower(blockPos_1); // k
         this.wiresGivePower = true;
         int int_3 = 0; // l
-
-        // [CM] fastRedstoneDust -- if statement around unnecessary check
-        if (!CarpetSettings.fastRedstoneDust) {
-            if (int_2 > 0 && int_2 > int_4 - 1) {
-                int_4 = int_2;
-            }
-        }
-
         if (!CarpetSettings.fastRedstoneDust || int_2 < 15) {
             Iterator var8 = Direction.Type.HORIZONTAL.iterator();
 
@@ -120,23 +111,9 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
             }
         }
 
-        // [CM] fastRedstoneDust -- if statement around unnecessary check
-        if (!CarpetSettings.fastRedstoneDust) {
-            if (int_3 > int_4) {
-                int_4 = int_3 - 1;
-            } else if (int_4 > 0) {
-                --int_4;
-            } else {
-                int_4 = 0;
-            }
+        int int_4 = int_3 - 1;
+        if (int_2 > int_4) int_4 = int_2;
 
-            if (int_2 > int_4 - 1) {
-                int_4 = int_2;
-            }
-        } else {
-            int_4 = int_3 - 1;
-            if (int_2 > int_4) int_4 = int_2;
-        }
 
         if (int_1 != int_4) {
             blockState_1 = (BlockState)blockState_1.with(POWER, int_4);

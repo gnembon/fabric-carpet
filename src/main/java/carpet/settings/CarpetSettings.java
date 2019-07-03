@@ -92,8 +92,7 @@ public class CarpetSettings
     @Rule(
             desc = "Lag optimizations for redstone dust",
             extra = "by Theosib",
-            category = {EXPERIMENTAL, OPTIMIZATION},
-            validate = Validator.WIP.class
+            category = {EXPERIMENTAL, OPTIMIZATION}
     )
     public static boolean fastRedstoneDust = false;
 
