@@ -99,7 +99,7 @@ public class PlayerCommand
                                         executes(PlayerCommand::lookUp)).
                                 then(literal("down").
                                         executes(PlayerCommand::lookDown)).
-                                then(argument("direction", RotationArgumentType.create()).
+                                then(argument("direction", RotationArgumentType.rotation()).
                                         executes(PlayerCommand::lookAround))).
                         then(literal("turn").
                                 then(literal("left").
@@ -108,7 +108,7 @@ public class PlayerCommand
                                         executes(PlayerCommand::turnRight)).
                                 then(literal("back").
                                         executes(PlayerCommand::turnBack)).
-                                then(argument("direction",RotationArgumentType.create()).
+                                then(argument("direction",RotationArgumentType.rotation()).
                                         executes(PlayerCommand::turn))).
                         then(literal("move").
                                 then(literal("forward").
@@ -122,13 +122,13 @@ public class PlayerCommand
                         then(literal("spawn").
                                 executes(PlayerCommand::spawn).
                                 then(literal("at").
-                                        then(argument("position", Vec3ArgumentType.create()).
+                                        then(argument("position", Vec3ArgumentType.vec3()).
                                                 executes(PlayerCommand::spawn).
                                                 then(literal("facing").
-                                                        then(argument("direction",RotationArgumentType.create()).
+                                                        then(argument("direction",RotationArgumentType.rotation()).
                                                                 executes(PlayerCommand::spawn).
                                                                 then(literal("in").
-                                                                        then(argument("dimension", DimensionArgumentType.create()).
+                                                                        then(argument("dimension", DimensionArgumentType.dimension()).
                                                                                 executes(PlayerCommand::spawn)))))))));
 
         dispatcher.register(literalargumentbuilder);

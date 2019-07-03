@@ -71,7 +71,7 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=village"
+            args = "stringValue=raid"
     ))
     private void stopBlockStartVillageSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
@@ -151,15 +151,6 @@ public abstract class ServerWorld_tickMixin extends World
     {
         if (TickSpeed.process_entities) return levelProperties.getGeneratorType();
         return LevelGeneratorType.DEBUG_ALL_BLOCK_STATES;
-    }
-
-    @Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/village/ZombieSiegeManager;tick()V"
-    ))
-    private void tickConditionally(ZombieSiegeManager zombieSiegeManager)
-    {
-        if (TickSpeed.process_entities) zombieSiegeManager.tick();
     }
 
     @Redirect(method = "tick", at = @At(

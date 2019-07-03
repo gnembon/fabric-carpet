@@ -27,12 +27,12 @@ public class PerimeterInfoCommand
                         c.getSource(),
                         new BlockPos(c.getSource().getPosition()),
                         null)).
-                then(argument("center position", BlockPosArgumentType.create()).
+                then(argument("center position", BlockPosArgumentType.blockPos()).
                         executes( (c) -> perimeterDiagnose(
                                 c.getSource(),
                                 BlockPosArgumentType.getBlockPos(c, "center position"),
                                 null)).
-                        then(argument("mob",EntitySummonArgumentType.create()).
+                        then(argument("mob",EntitySummonArgumentType.entitySummon()).
                                 suggests(SuggestionProviders.SUMMONABLE_ENTITIES).
                                 executes( (c) -> perimeterDiagnose(
                                         c.getSource(),

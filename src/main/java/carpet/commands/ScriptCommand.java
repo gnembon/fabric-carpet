@@ -99,7 +99,7 @@ public class ScriptCommand
                                 ))));
         LiteralArgumentBuilder<ServerCommandSource> c = literal("invokepoint").
                 then(argument("call", StringArgumentType.word()).suggests( (cc, bb)->suggestMatching(suggestFunctionCalls(cc),bb)).
-                        then(argument("origin", BlockPosArgumentType.create()).
+                        then(argument("origin", BlockPosArgumentType.blockPos()).
                                 executes( (cc) -> invoke(
                                         cc,
                                         StringArgumentType.getString(cc, "call"),
@@ -117,8 +117,8 @@ public class ScriptCommand
                                         )))));
         LiteralArgumentBuilder<ServerCommandSource> h = literal("invokearea").
                 then(argument("call", StringArgumentType.word()).suggests( (cc, bb)->suggestMatching(suggestFunctionCalls(cc),bb)).
-                        then(argument("from", BlockPosArgumentType.create()).
-                                then(argument("to", BlockPosArgumentType.create()).
+                        then(argument("from", BlockPosArgumentType.blockPos()).
+                                then(argument("to", BlockPosArgumentType.blockPos()).
                                         executes( (cc) -> invoke(
                                                 cc,
                                                 StringArgumentType.getString(cc, "call"),
@@ -135,9 +135,9 @@ public class ScriptCommand
                                                         StringArgumentType.getString(cc, "arguments")
                                                 ))))));
         LiteralArgumentBuilder<ServerCommandSource> i = literal("scan").requires((player) -> player.hasPermissionLevel(2)).
-                then(argument("origin", BlockPosArgumentType.create()).
-                        then(argument("from", BlockPosArgumentType.create()).
-                                then(argument("to", BlockPosArgumentType.create()).
+                then(argument("origin", BlockPosArgumentType.blockPos()).
+                        then(argument("from", BlockPosArgumentType.blockPos()).
+                                then(argument("to", BlockPosArgumentType.blockPos()).
                                         then(argument("expr", StringArgumentType.greedyString()).
                                                 suggests((cc, bb) -> suggestCode(cc, bb)).
                                                 executes( (cc) -> scriptScan(
@@ -148,11 +148,11 @@ public class ScriptCommand
                                                         StringArgumentType.getString(cc, "expr")
                                                 ))))));
         LiteralArgumentBuilder<ServerCommandSource> e = literal("fill").requires((player) -> player.hasPermissionLevel(2)).
-                then(argument("origin", BlockPosArgumentType.create()).
-                        then(argument("from", BlockPosArgumentType.create()).
-                                then(argument("to", BlockPosArgumentType.create()).
+                then(argument("origin", BlockPosArgumentType.blockPos()).
+                        then(argument("from", BlockPosArgumentType.blockPos()).
+                                then(argument("to", BlockPosArgumentType.blockPos()).
                                         then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgumentType.create()).
+                                                then(argument("block", BlockStateArgumentType.blockState()).
                                                         executes((cc) -> scriptFill(
                                                                 cc,
                                                                 BlockPosArgumentType.getBlockPos(cc, "origin"),
@@ -163,7 +163,7 @@ public class ScriptCommand
                                                                 null, "solid"
                                                         )).
                                                         then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgumentType.create())
+                                                                then(argument("filter", BlockPredicateArgumentType.blockPredicate())
                                                                         .executes((cc) -> scriptFill(
                                                                                 cc,
                                                                                 BlockPosArgumentType.getBlockPos(cc, "origin"),
@@ -175,11 +175,11 @@ public class ScriptCommand
                                                                                 "solid"
                                                                         )))))))));
         LiteralArgumentBuilder<ServerCommandSource> t = literal("outline").requires((player) -> player.hasPermissionLevel(2)).
-                then(argument("origin", BlockPosArgumentType.create()).
-                        then(argument("from", BlockPosArgumentType.create()).
-                                then(argument("to", BlockPosArgumentType.create()).
+                then(argument("origin", BlockPosArgumentType.blockPos()).
+                        then(argument("from", BlockPosArgumentType.blockPos()).
+                                then(argument("to", BlockPosArgumentType.blockPos()).
                                         then(argument("expr", StringArgumentType.string()).
-                                                then(argument("block", BlockStateArgumentType.create()).
+                                                then(argument("block", BlockStateArgumentType.blockState()).
                                                         executes((cc) -> scriptFill(
                                                                 cc,
                                                                 BlockPosArgumentType.getBlockPos(cc, "origin"),
@@ -190,7 +190,7 @@ public class ScriptCommand
                                                                 null, "outline"
                                                         )).
                                                         then(literal("replace").
-                                                                then(argument("filter", BlockPredicateArgumentType.create())
+                                                                then(argument("filter", BlockPredicateArgumentType.blockPredicate())
                                                                         .executes((cc) -> scriptFill(
                                                                                 cc,
                                                                                 BlockPosArgumentType.getBlockPos(cc, "origin"),

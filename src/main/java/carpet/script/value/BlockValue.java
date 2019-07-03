@@ -380,7 +380,7 @@ public class BlockValue extends Value
 
         @Override
         public Direction getPlayerFacing() {
-            return this.facing.getAxis() == Direction.Axis.Y ? Direction.NORTH : this.facing;
+            return this.facing.getAxis() == Direction.Axis.field_11052 ? Direction.NORTH : this.facing;
         }
 
         @Override

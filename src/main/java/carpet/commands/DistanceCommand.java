@@ -18,7 +18,7 @@ public class DistanceCommand
                 requires((player) -> CarpetSettings.commandDistance).
                 then(literal("from").
                         executes( (c) -> DistanceCalculator.setStart(c.getSource(), c.getSource().getPosition())).
-                        then(argument("from", Vec3ArgumentType.create()).
+                        then(argument("from", Vec3ArgumentType.vec3()).
                                 executes( (c) -> DistanceCalculator.setStart(
                                         c.getSource(),
                                         Vec3ArgumentType.getVec3(c, "from"))).
@@ -27,7 +27,7 @@ public class DistanceCommand
                                                 c.getSource(),
                                                 Vec3ArgumentType.getVec3(c, "from"),
                                                 c.getSource().getPosition())).
-                                        then(argument("to", Vec3ArgumentType.create()).
+                                        then(argument("to", Vec3ArgumentType.vec3()).
                                                 executes( (c) -> DistanceCalculator.distance(
                                                         c.getSource(),
                                                         Vec3ArgumentType.getVec3(c, "from"),
@@ -35,7 +35,7 @@ public class DistanceCommand
                                                 )))))).
                 then(literal("to").
                         executes( (c) -> DistanceCalculator.setEnd(c.getSource(), c.getSource().getPosition()) ).
-                        then(argument("to", Vec3ArgumentType.create()).
+                        then(argument("to", Vec3ArgumentType.vec3()).
                                 executes( (c) -> DistanceCalculator.setEnd(c.getSource(), Vec3ArgumentType.getVec3(c, "to")))));
         dispatcher.register(command);
     }
