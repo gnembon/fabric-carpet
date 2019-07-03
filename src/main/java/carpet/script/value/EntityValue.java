@@ -4,35 +4,34 @@ import carpet.fakes.MobEntityInterface;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.client.network.packet.EntityVelocityUpdateS2CPacket;
+import net.minecraft.command.EntitySelector;
+import net.minecraft.command.EntitySelectorReader;
+import net.minecraft.command.arguments.NbtPathArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.goal.GoToWalkTargetGoal;
+import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.nbt.Tag;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.command.EntitySelector;
-import net.minecraft.command.EntitySelectorReader;
-import net.minecraft.command.arguments.NbtPathArgumentType;
-import net.minecraft.entity.mob.MobEntityWithAi; // EntityCreature;
-import net.minecraft.entity.mob.MobEntity; //LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.goal.GoToWalkTargetGoal;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.client.network.packet.EntityVelocityUpdateS2CPacket;
-import net.minecraft.potion.Potion;
+import net.minecraft.nbt.Tag;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.text.LiteralText;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -64,7 +63,7 @@ public class EntityValue extends Value
             {
                 return entitySelector.getEntities(source);
             }
-            entitySelector = new EntitySelectorReader(new StringReader(selector), true).build();
+            entitySelector = new EntitySelectorReader(new StringReader(selector), true).read();
             selectorCache.put(selector, entitySelector);
             return entitySelector.getEntities(source);
         }
@@ -104,6 +103,21 @@ public class EntityValue extends Value
     @Override
     public Value in(Value v)
     {
+        if (v instanceof ListValue)
+        {
+            List<Value> values = ((ListValue) v).getItems();
+            String what = values.get(0).getString();
+            Value arg = null;
+            if (values.size() == 2)
+            {
+                arg = values.get(1);
+            }
+            else if (values.size() > 2)
+            {
+                arg = ListValue.wrap(values.subList(1,values.size()));
+            }
+            return this.get(what, arg);
+        }
         String what = v.getString();
         return this.get(what, null);
     }
@@ -139,6 +153,7 @@ public class EntityValue extends Value
         put("feet", EquipmentSlot.FEET);
     }};
     private static Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
+        //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
         put("removed", (entity, arg) -> new NumericValue(entity.removed));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getEntityId()));
@@ -273,19 +288,24 @@ public class EntityValue extends Value
             if (where == null)
                 throw new InternalExpressionException("Unknown inventory slot: "+a.getString());
             if (e instanceof LivingEntity)
-            {
-                ItemStack itemstack = ((LivingEntity)e).getEquippedStack(where);
-                if (!itemstack.isEmpty())
-                {
-                    return ListValue.of(
-                            new StringValue(Registry.ITEM.getId(itemstack.getItem()).getPath()),
-                            new NumericValue(itemstack.getCount()),
-                            new StringValue(itemstack.toTag(new CompoundTag()).toString())
-                    );
-                }
-            }
+                return ListValue.fromItemStack(((LivingEntity)e).getEquippedStack(where));
             return Value.NULL;
+        });
 
+        put("selected_slot", (e, a) -> {
+           if (e instanceof PlayerEntity)
+               return new NumericValue(((PlayerEntity) e).inventory.selectedSlot);
+           return null;
+        });
+
+        put("facing", (e, a) -> {
+            int index = 0;
+            if (a != null)
+                index = (6+(int)NumericValue.asNumber(a).getLong())%6;
+            if (index < 0 || index > 5)
+                throw new InternalExpressionException("facing order should be between -6 and 5");
+
+            return new StringValue(Direction.getEntityFacingOrder(e)[index].asString());
         });
 
         put("nbt",(e, a) -> {

@@ -175,7 +175,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.up()))));
         lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
-        //lst.add(Messenger.s(String.format(" - Blocks light: %s", state.propagatesSkylightDown(world, pos))));
+        lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().blocksLight())));
         //lst.add(Messenger.s(String.format(" - Emitted light: %d", state.getLightValue())));
         //lst.add(Messenger.s(String.format(" - Picks neighbour light value: %s", state.useNeighborBrightness(world, pos))));
         lst.add(Messenger.s(""));

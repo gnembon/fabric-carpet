@@ -25,7 +25,7 @@ import static carpet.settings.RuleCategory.SURVIVAL;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "v19_06_24alpha";
+    public static final String carpetVersion = "v190627";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -51,11 +51,7 @@ public class CarpetSettings
     @Rule(desc = "Dropping entire stacks works also from on the crafting UI result slot", category = {BUGFIX, SURVIVAL})
     public static boolean ctrlQCraftingFix = false;
 
-    @Rule(
-            desc = "Parrots don't get of your shoulders until you receive damage",
-            category = {SURVIVAL, FEATURE},
-            validate = Validator.WIP.class
-    )
+    @Rule(desc = "Parrots don't get of your shoulders until you receive proper damage", category = {SURVIVAL, FEATURE})
     public static boolean persistentParrots = false;
 
     /*@Rule(

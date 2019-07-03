@@ -117,7 +117,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
             if (!value.equals(get()))
             {
                 this.field.set(null, value);
-                SettingsManager.notifyRuleChanged(this, stringValue);
+                SettingsManager.notifyRuleChanged(source, this, stringValue);
             }
         }
         catch (IllegalAccessException e)

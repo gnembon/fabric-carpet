@@ -19,6 +19,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.settings.CarpetSettings;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -349,6 +351,7 @@ public class Expression implements Cloneable
     boolean isAnOperator(String opname) { return operators.containsKey(opname) || operators.containsKey(opname+"u");}
 
     private Map<String, ILazyFunction> functions = new HashMap<>();
+    Set<String> getFunctionNames() {return functions.keySet();}
 
     //static final Map<String, UserDefinedFunction> globalFunctions = new HashMap<>();
 
@@ -856,9 +859,10 @@ public class Expression implements Cloneable
      * <p>Ability to combine more statements into one expression, with functions, passing parameters, and global and outer
      * scoping allow to organize even larger scripts</p>
      * <h2>Control flow</h2>
-     * <h3><code>return(expr)</code></h3>
+     * <h3><code>return(expr?)</code></h3>
      * <p>Sometimes its convenient to break the organized control flow, or it is not practical to pass
      * the final result value of a function to the last statement, in this case a return statement can be used</p>
+     * <p>If no argument is provided - returns null value.</p>
      * <pre>
      * def() -&gt; (
      *  expr1;
@@ -870,12 +874,14 @@ public class Expression implements Cloneable
      * </pre>
      * <p>In general its cheaper to leave the last expression as a return value, rather than calling returns everywhere,
      * but it would often lead to a messy code.</p>
-     * <h3><code>exit(expr)</code></h3>
-     * <p>It terminates entire program passing <code>expr</code> as the result of the program execution.</p>
-     * <h3><code>try(expr, catch_expr(_)) ... throw(value)</code></h3>
+     * <h3><code>exit(expr?)</code></h3>
+     * <p>It terminates entire program passing <code>expr</code> as the result of the program execution, or null if omitted.</p>
+     * <h3><code>try(expr, catch_expr(_)?) ... throw(value?)</code></h3>
      * <p><code>try</code> function evaluates expression, and continues further unless <code>throw</code> function is called
      * anywhere inside <code>expr</code>. In that case the <code>catch_expr</code> is evaluates with <code>_</code> set
-     * to the argument <code>throw</code> was called with. This mechanism allows to terminate large portion of a convoluted
+     * to the argument <code>throw</code> was called with.
+     * This mechanic accepts skipping thrown value - it throws null instead, and catch expression - then try returns null as well
+     * This mechanism allows to terminate large portion of a convoluted
      * call stack and continue program execution. There is only one level of exceptions currently in carpet, so if the inner
      * function also defines the <code>try</code> catchment area, it will received the exception first, but it can technically
      * rethrow the value its getting for the outer scope. Unhandled throw acts like an exit statement.</p>
@@ -961,12 +967,14 @@ public class Expression implements Cloneable
             return (cc, tt) -> new StringValue("OK");
         });
 
-        addUnaryFunction("exit", (v) -> { throw new ExitStatement(v); });
-        addUnaryFunction("return", (v) -> { throw new ReturnStatement(v); });
-        addUnaryFunction("throw", (v)-> {throw new ThrowStatement(v); });
+        addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        addFunction("return", (lv) -> { throw new ReturnStatement(lv.size()==0?Value.NULL:lv.get(0));} );
+        addFunction("throw", (lv)-> {throw new ThrowStatement(lv.size()==0?Value.NULL:lv.get(0)); });
 
-        addLazyFunction("try", 2, (c, t, lv) ->
+        addLazyFunction("try", -1, (c, t, lv) ->
         {
+            if (lv.size()==0)
+                throw new InternalExpressionException("try needs at least an expression block");
             try
             {
                 Value retval = lv.get(0).evalValue(c, t);
@@ -974,6 +982,8 @@ public class Expression implements Cloneable
             }
             catch (ThrowStatement ret)
             {
+                if (lv.size() == 1)
+                    return (c_, t_) -> Value.NULL;
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.retval.reboundedTo("_"));
                 Value val = lv.get(1).evalValue(c, t);
@@ -1613,15 +1623,15 @@ public class Expression implements Cloneable
      *     range(20, 10, -2)  =&gt; [20, 18, 16, 14, 12]
      * </pre>
      *
-     * <h3><code>element(list, index)</code></h3>
+     * <h3><code>get(list, index), element(list, index)(deprecated)</code></h3>
      * <p>Returns the value at <code>index</code> element from the <code>list</code>.
-     * use negative numbers to reach elements from the end of the list. <code>element</code>
+     * use negative numbers to reach elements from the end of the list. <code>get</code>
      * call will always be able to find the index. In case there is few items, it will loop over </p>
      * <pre>
-     *     element(l(range(10)), 5)  =&gt; 5
-     *     element(l(range(10)), -1)  =&gt; 9
-     *     element(l(range(10)), 10)  =&gt; 0
-     *     element(l(range(10)), 93)  =&gt; 3
+     *     get(l(range(10)), 5)  =&gt; 5
+     *     get(l(range(10)), -1)  =&gt; 9
+     *     get(l(range(10)), 10)  =&gt; 0
+     *     get(l(range(10)), 93)  =&gt; 3
      * </pre>
      *
      * <h3><code>put(list, index, values ...), put(list, null, values ...)</code></h3>
@@ -1833,11 +1843,10 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
-        addBinaryFunction("element", (v1, v2) -> {
+        addBinaryFunction("get", (v1, v2) ->
+        {
             if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
-            {
-                throw new InternalExpressionException("First argument of element should be a list");
-            }
+                throw new InternalExpressionException("First argument of get should be a list");
             List<Value> items = ((ListValue)v1).getItems();
             long index = NumericValue.asNumber(v2).getLong();
             int numitems = items.size();
@@ -1846,6 +1855,21 @@ public class Expression implements Cloneable
             index = index % numitems;
             return items.get((int)index);
         });
+
+        //Deprecated, use "get" instead
+        addBinaryFunction("element", (v1, v2) ->
+        {
+            if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
+                throw new InternalExpressionException("First argument of get should be a list");
+            List<Value> items = ((ListValue)v1).getItems();
+            long index = NumericValue.asNumber(v2).getLong();
+            int numitems = items.size();
+            long range = abs(index)/numitems;
+            index += (range+2)*numitems;
+            index = index % numitems;
+            return items.get((int)index);
+        });
+
         addFunction("put", (lv) ->
         {
             if(lv.size()<3)
@@ -2224,7 +2248,7 @@ public class Expression implements Cloneable
      * number('2')+number('2') =&gt; 4
      * </pre>
      *
-     * <h3><code>str(expr, params? ... )</code></h3>
+     * <h3><code>str(expr, params? ... ), str(expr, param_list)</code></h3>
      *
      * <p>Returns a formatted string representing expression.
      * Accepts formatting style accepted by <code>String.format</code>.
@@ -2247,6 +2271,7 @@ public class Expression implements Cloneable
      * str('3bar') =&gt; null
      * str(2)+str(2) =&gt; 22
      * str('pi: %.2f',pi) =&gt; 'pi: 3.14'
+     * str('player at: %d %d %d',pos(player())) =&gt; 'player at: 567, -2423, 124'
      * </pre>
      *
      * <hr>
