@@ -13,7 +13,6 @@ import java.util.List;
  */
 public class Tokenizer implements Iterator<Tokenizer.Token>
 {
-
     /** What character to use for decimal separators. */
     private static final char decimalSeparator = '.';
     /** What character to use for minus sign (negative values). */
@@ -24,8 +23,6 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     private int linepos = 0;
     private boolean comments;
     private boolean newLinesMarkers;
-
-
     /** The original input expression. */
     private String input;
     /** The previous token or <code>null</code> if none. */
@@ -40,8 +37,6 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         this.comments = allowComments;
         this.newLinesMarkers = allowNewLineMakers;
     }
-
-
 
     @Override
     public boolean hasNext()
@@ -226,7 +221,6 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                         ch = input.charAt(pos++);
                         linepos++;
                         greedyMatch += ch;
-
                     }
                     if (ch=='\n')
                     {
