@@ -9,7 +9,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -74,7 +73,7 @@ public class SettingsManager
         notifyPlayersCommandsChanged();
     }
 
-    public SettingsManager parseSettingsClass(Class settingsClass)
+    public void parseSettingsClass(Class settingsClass)
     {
         for (Field f : settingsClass.getDeclaredFields())
         {
@@ -83,7 +82,6 @@ public class SettingsManager
             ParsedRule parsed = new ParsedRule(f, rule);
             rules.put(parsed.name, parsed);
         }
-        return this;
     }
 
     public void addRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
@@ -307,7 +305,6 @@ public class SettingsManager
                     Messenger.c("rb Failed to add settings command for " + identifier + ". It is masking previous command."));
             return;
         }
-        CarpetSettings.LOG.error("\n\n\n\n REGISTERIN\n\n\n\n");
 
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal(identifier).requires((player) ->
                 player.hasPermissionLevel(2) && !locked);
