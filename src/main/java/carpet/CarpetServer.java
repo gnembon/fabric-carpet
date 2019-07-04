@@ -1,10 +1,11 @@
 package carpet;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import carpet.commands.CameraModeCommand;
-import carpet.commands.CarpetCommand;
 import carpet.commands.CounterCommand;
 import carpet.commands.DistanceCommand;
 import carpet.commands.DrawCommand;
@@ -14,7 +15,6 @@ import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ScriptCommand;
 import carpet.commands.SpawnCommand;
-import carpet.commands.TestCommand;
 import carpet.commands.TickCommand;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
@@ -32,24 +32,36 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static MinecraftServer minecraft_server;
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
-    static
+    public static List<CarpetExtension> extensions = new ArrayList<>();
+
+    // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
+    public static void manageExtension(CarpetExtension extension)
     {
-        SettingsManager.parseSettingsClass(CarpetSettings.class);
-        //...
+        extensions.add(extension);
     }
+
+    public static void onGameStarted()
+    {
+        LoggerRegistry.initLoggers();
+        settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
+        settingsManager.parseSettingsClass(CarpetSettings.class);
+        extensions.forEach(CarpetExtension::onGameStarted);
+    }
+
     public static void init(MinecraftServer server) //aka constructor of this static singleton class
     {
+        // no sure we really need this here, needs testing and moving to onServerLoaded
         CarpetServer.minecraft_server = server;
     }
     public static void onServerLoaded(MinecraftServer server)
     {
-        settingsManager = new SettingsManager(server);
+        settingsManager.attachServer(server);
+        extensions.forEach(e -> {
+            if (e.customSettingsManager() != null)
+                e.customSettingsManager().attachServer(server);
+            e.onServerLoaded(server);
+        });
         scriptServer = new CarpetScriptServer();
-    }
-    // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
-    public static void onGameStarted()
-    {
-        LoggerRegistry.initLoggers();
     }
 
     public static void tick(MinecraftServer server)
@@ -59,6 +71,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer.events.tick();
         //in case something happens
         CarpetSettings.impendingFillSkipUpdates = false;
+        extensions.forEach(e -> e.onTick(server));
     }
 
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
@@ -74,7 +87,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         PerimeterInfoCommand.register(dispatcher);
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
-        CarpetCommand.register(dispatcher);
+        extensions.forEach(e -> e.registerCommands(dispatcher));
         //TestCommand.register(dispatcher);
     }
 }
