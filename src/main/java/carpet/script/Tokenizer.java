@@ -22,6 +22,8 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     private int pos = 0;
     private int lineno = 0;
     private int linepos = 0;
+    private boolean comments;
+    private boolean newLinesMarkers;
 
 
     /** The original input expression. */
@@ -31,10 +33,12 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
     private Expression expression;
 
-    Tokenizer(Expression expr, String input)
+    Tokenizer(Expression expr, String input, boolean allowComments, boolean allowNewLineMakers)
     {
         this.input = input;
         this.expression = expr;
+        this.comments = allowComments;
+        this.newLinesMarkers = allowNewLineMakers;
     }
 
 
@@ -63,7 +67,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
     public static List<Token> simplepass(String input)
     {
-        Tokenizer tok = new Tokenizer(null, input);
+        Tokenizer tok = new Tokenizer(null, input, false, false);
         List<Token> res = new ArrayList<>();
         while (tok.hasNext()) res.add(tok.next());
         return res;
@@ -214,6 +218,25 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                     && (pos < input.length()))
             {
                 greedyMatch += ch;
+                if (comments && "//".equals(greedyMatch))
+                {
+
+                    while ( ch != '\n' && pos < input.length())
+                    {
+                        ch = input.charAt(pos++);
+                        linepos++;
+                        greedyMatch += ch;
+
+                    }
+                    if (ch=='\n')
+                    {
+                        lineno++;
+                        linepos = 0;
+                    }
+                    token.append(greedyMatch);
+                    token.type = Token.TokenType.MARKER;
+                    return token; // skipping setting previous
+                }
                 pos++;
                 linepos++;
                 if (Expression.none.isAnOperator(greedyMatch))
@@ -221,6 +244,14 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                     validOperatorSeenUntil = pos;
                 }
                 ch = pos == input.length() ? 0 : input.charAt(pos);
+            }
+            if (newLinesMarkers && "$".equals(greedyMatch))
+            {
+                lineno++;
+                linepos = 0;
+                token.type = Token.TokenType.MARKER;
+                token.append('$');
+                return token; // skipping previous token lookback
             }
             if (validOperatorSeenUntil != -1)
             {
@@ -277,7 +308,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         enum TokenType
         {
             VARIABLE, FUNCTION, LITERAL, OPERATOR, UNARY_OPERATOR,
-            OPEN_PAREN, COMMA, CLOSE_PAREN, HEX_LITERAL, STRINGPARAM
+            OPEN_PAREN, COMMA, CLOSE_PAREN, HEX_LITERAL, STRINGPARAM, MARKER
         }
         public String surface = "";
         public TokenType type;

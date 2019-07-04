@@ -129,6 +129,7 @@ public class ScriptHost
                 case OPEN_PAREN:
                 case COMMA:
                 case CLOSE_PAREN:
+                case MARKER:
                     return "Fail: "+tok.surface+" is not allowed in invoke";
             }
         }
