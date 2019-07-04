@@ -147,7 +147,6 @@ public class CarpetScriptServer
             setChatErrorSnooper(source);
             CarpetExpression ex = new CarpetExpression(module.getCode(), source, new BlockPos(0, 0, 0));
             ex.getExpr().asAModule();
-
             ex.scriptRunCommand(newHost, new BlockPos(source.getPosition()));
         }
         catch (CarpetExpressionException e)
