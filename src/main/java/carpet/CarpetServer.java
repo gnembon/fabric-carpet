@@ -57,8 +57,8 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
-            if (e.customSettingsManager() != null)
-                e.customSettingsManager().attachServer(server);
+            SettingsManager sm = e.customSettingsManager();
+            if (sm != null) sm.attachServer(server);
             e.onServerLoaded(server);
         });
         scriptServer = new CarpetScriptServer();
