@@ -14,9 +14,10 @@ public class MinecraftDedicatedServerMixin
     // this.tickWorlds(booleanSupplier_1);
     @Inject(method = "setupServer", at = @At("TAIL"))
     private void onSetupServer(CallbackInfoReturnable<Boolean> cir) {
-        //CM init - all stuff loaded from the server, just before worlds loading
-        CarpetServer.onServerLoaded((MinecraftDedicatedServer) (Object) this);
         //CM start game hook
         CarpetServer.onGameStarted();
+        //CM init - all stuff loaded from the server, just before worlds loading
+        CarpetServer.onServerLoaded((MinecraftDedicatedServer) (Object) this);
+
     }
 }

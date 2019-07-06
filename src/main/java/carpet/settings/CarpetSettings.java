@@ -1,7 +1,6 @@
 package carpet.settings;
 
 import carpet.CarpetServer;
-import carpet.fakes.MinecraftServer_motdInterface;
 import carpet.utils.Messenger;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -209,11 +208,7 @@ public class CarpetSettings
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
     public static boolean carpets = false;
 
-    @Rule(
-            desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools",
-            category = SURVIVAL,
-            validate = Validator.WIP.class
-    )
+    @Rule(desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools", category = SURVIVAL)
     public static boolean missingTools = false;
 
     @Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
@@ -287,19 +282,11 @@ public class CarpetSettings
     @Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
     public static boolean onePlayerSleeping = false;
 
-    private static class SetMotd extends Validator<String> {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            customMOTD = newValue; // accelerate a smidge
-            ((MinecraftServer_motdInterface) CarpetServer.minecraft_server).checkMOTD();
-            return newValue;
-        }
-    }
     @Rule(
             desc = "Sets a different motd message on client trying to connect to the server",
             extra = "use '_' to use the startup setting from server.properties",
             options = "_",
-            category = CREATIVE,
-            validate = {SetMotd.class, Validator.WIP.class} // for some reason doesn't yet work
+            category = CREATIVE
     )
     public static String customMOTD = "_";
 

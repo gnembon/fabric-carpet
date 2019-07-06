@@ -13,6 +13,8 @@
     "StructureBlockBlockEntity_fillUpdatesMixin",
     "Structure_fillUpdatesMixin",
 
+    "ServerMetadata_motdMixin",
+
     "MinecraftServer_coreMixin",
 
     "MinecraftServer_tickspeedMixin",
@@ -23,7 +25,6 @@
 
     "MobEntityMixin",
 
-    "MinecraftServer_motdMixin",
     "ServerPlayNetworkHandlerMixin",
     "MinecraftServer_scarpetMixin",
     "PlayerListHeaderS2CPacketMixin",
@@ -92,6 +93,10 @@
 
     "PistonBlock_qcMixin",
     "DispenserBlock_qcMixin",
+
+    "PickaxeItem_missingToolsMixin",
+    "ShearsItem_missingToolsMixin",
+
 
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",

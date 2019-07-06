@@ -5,17 +5,22 @@ import carpet.fakes.WorldInterface;
 import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 
@@ -95,5 +100,18 @@ public class SpawnHelperMixin
         if (!SpawnReporter.mock_spawns)
             return world.spawnEntity(entity_1);
         return false;
+    }
+
+    @Redirect(method = "spawnEntitiesInChunk", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(DDD)D"
+    ))
+    private static double getSqDistanceTo(PlayerEntity playerEntity, double double_1, double double_2, double double_3,
+                                          EntityCategory entityCategory_1, World world_1, WorldChunk worldChunk_1, BlockPos blockPos_1)
+    {
+        double distanceTo = playerEntity.squaredDistanceTo(double_1, double_2, double_3);
+        if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory_1 != EntityCategory.CREATURE)
+            return 0.0;
+        return distanceTo;
     }
 }
