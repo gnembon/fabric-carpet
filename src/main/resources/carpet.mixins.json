@@ -24,6 +24,8 @@
     "ThreadedAnvilChunkStorage_tickMixin",
 
     "MobEntityMixin",
+    "ServerWorld_unloadedEntityMixin",
+    "MobEntity_leashMixin",
 
     "ServerPlayNetworkHandlerMixin",
     "MinecraftServer_scarpetMixin",

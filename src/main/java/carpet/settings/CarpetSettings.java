@@ -104,7 +104,7 @@ public class CarpetSettings
     @Rule( desc = "Shulkers will respawn in end cities", category = FEATURE )
     public static boolean shulkerSpawningInEndCities = false;
 
-    @Rule(desc = "Entities pushed or moved into unloaded chunks no longer disappear", category = {EXPERIMENTAL, BUGFIX}, validate = Validator.WIP.class)
+    @Rule(desc = "Entities pushed or moved into unloaded chunks no longer disappear", category = {EXPERIMENTAL, BUGFIX})
     public static boolean unloadedEntityFix = false;
 
     @Rule( desc = "TNT doesn't update when placed against a power source", category = CREATIVE )
@@ -164,7 +164,11 @@ public class CarpetSettings
     @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND)
     public static boolean commandTick = true;
 
-    @Rule(desc = "Enables /log command to monitor events in the game via chat and overlays", category = COMMAND)
+    @Rule(
+            desc = "Enables /log command to monitor events in the game via chat and overlays",
+            category = COMMAND,
+            validate = Validator.WIP.class
+    )
     public static boolean commandLog = true;
 
     @Rule(
@@ -388,8 +392,7 @@ public class CarpetSettings
     @Rule(
             desc = "Fixes leads breaking/becoming invisible in unloaded chunks",
             extra = "You may still get visibly broken leash links on the client side, but server side the link is still there.",
-            category = BUGFIX,
-            validate = Validator.WIP.class
+            category = BUGFIX
     )
     public static boolean leadFix = false;
 
