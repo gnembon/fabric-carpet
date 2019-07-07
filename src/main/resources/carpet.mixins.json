@@ -69,8 +69,13 @@
     "ItemUsageContext_cactusMixin",
     "DispenserBehaviour_cactusMixin",
 
+    "ServerPlayNetworkHandler_antiCheatSpeedMixin",
+
     "PortalForcer_portalCachingMixin",
     "PortalBlock_portalCachingMixin",
+
+    "Entity_portalSuffocationMixin",
+    "PortalForcer_portalSuffocationMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",

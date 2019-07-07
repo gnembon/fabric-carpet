@@ -9,7 +9,9 @@ import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Unit;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,12 +30,13 @@ public class CarpetSettings
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
+    public static Box currentTelepotingEntityBox = null;
+    public static Vec3d fixedPosition = null;
 
     @Rule(
             desc = "Nether portals correctly place entities going through",
             extra = "Entities shouldn't suffocate in obsidian",
-            category = BUGFIX,
-            validate = Validator.WIP.class
+            category = BUGFIX
     )
     public static boolean portalSuffocationFix = false;
 
@@ -109,11 +112,10 @@ public class CarpetSettings
 
     @Rule(
             desc = "Prevents players from rubberbanding when moving too fast",
-            extra = "Puts more trust in clients positioning",
-            category = {CREATIVE, SURVIVAL},
-            validate = Validator.WIP.class
+            extra = {"... or being kicked out for 'flying'","Puts more trust in clients positioning"},
+            category = {CREATIVE, SURVIVAL}
     )
-    public static boolean antiCheatSpeed = false;
+    public static boolean antiCheatDisabled = false;
 
     @Rule(desc = "Pistons, droppers and dispensers react if block above them is powered", category = CREATIVE)
     public static boolean quasiConnectivity = true;
