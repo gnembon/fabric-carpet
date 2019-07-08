@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ServerWorld.class)
-public abstract class ServerWorld_fakePlayersDimensionChange
+public abstract class ServerWorld_fakePlayersMixin
 {
     @Shadow private boolean ticking;
 

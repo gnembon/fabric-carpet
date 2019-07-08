@@ -27,7 +27,7 @@
     "ServerWorld_unloadedEntityMixin",
     "MobEntity_leashMixin",
 
-    "ServerWorld_fakePlayersDimensionChange",
+    "ServerWorld_fakePlayersMixin",
 
     "ServerPlayNetworkHandlerMixin",
     "MinecraftServer_scarpetMixin",
