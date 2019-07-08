@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayNetworkHandler.class)
-public abstract class ServerPlayNetworkHandler_antiCheatSpeedMixin
+public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
 {
     @Shadow private int floatingTicks;
 

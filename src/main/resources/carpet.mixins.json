@@ -73,7 +73,7 @@
     "ItemUsageContext_cactusMixin",
     "DispenserBehaviour_cactusMixin",
 
-    "ServerPlayNetworkHandler_antiCheatSpeedMixin",
+    "ServerPlayNetworkHandler_antiCheatDisabledMixin",
 
     "PortalForcer_portalCachingMixin",
     "PortalBlock_portalCachingMixin",
