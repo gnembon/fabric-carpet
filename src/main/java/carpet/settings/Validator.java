@@ -47,13 +47,13 @@ public abstract class Validator<T>
             if (source != null)
                 try
                 {
-                    Messenger.m(source, "r "+currentRule.name+" is not yet fully implemented - we are still working on it.");
+                    Messenger.m(source, "r "+currentRule.name+" is missing a few bits - we are still working on it.");
                 }
                 catch (NullPointerException ignored) { }
             return newValue;
         }
         @Override
-        public String description() { return "Its not yet fully implemented - we are working on it";}
+        public String description() { return "A few bits still needs implementing - we are working on it";}
     }
     public static class _STRICT<T> extends Validator<T>
     {

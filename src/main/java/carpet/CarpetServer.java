@@ -48,13 +48,9 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(CarpetExtension::onGameStarted);
     }
 
-    public static void init(MinecraftServer server) //aka constructor of this static singleton class
-    {
-        // no sure we really need this here, needs testing and moving to onServerLoaded
-        CarpetServer.minecraft_server = server;
-    }
     public static void onServerLoaded(MinecraftServer server)
     {
+        CarpetServer.minecraft_server = server;
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
             SettingsManager sm = e.customSettingsManager();
@@ -69,8 +65,12 @@ public class CarpetServer // static for now - easier to handle all around the co
         TickSpeed.tick(server);
         HUDController.update_hud(server);
         scriptServer.events.tick();
+
         //in case something happens
         CarpetSettings.impendingFillSkipUpdates = false;
+        CarpetSettings.currentTelepotingEntityBox = null;
+        CarpetSettings.fixedPosition = null;
+
         extensions.forEach(e -> e.onTick(server));
     }
 

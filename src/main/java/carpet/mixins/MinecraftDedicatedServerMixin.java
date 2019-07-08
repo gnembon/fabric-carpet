@@ -12,11 +12,14 @@ public class MinecraftDedicatedServerMixin
 {
     //to inject right before
     // this.tickWorlds(booleanSupplier_1);
-    @Inject(method = "setupServer", at = @At("TAIL"))
+    @Inject(method = "setupServer", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/dedicated/MinecraftDedicatedServer;loadWorld(Ljava/lang/String;Ljava/lang/String;JLnet/minecraft/world/level/LevelGeneratorType;Lcom/google/gson/JsonElement;)V",
+            shift = At.Shift.BEFORE
+    ))
     private void onSetupServer(CallbackInfoReturnable<Boolean> cir) {
-        //CM init - all stuff loaded from the server, just before worlds loading
-        CarpetServer.onServerLoaded((MinecraftDedicatedServer) (Object) this);
         //CM start game hook
         CarpetServer.onGameStarted();
+
     }
 }

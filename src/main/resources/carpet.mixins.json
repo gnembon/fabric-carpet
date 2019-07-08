@@ -13,6 +13,8 @@
     "StructureBlockBlockEntity_fillUpdatesMixin",
     "Structure_fillUpdatesMixin",
 
+    "ServerMetadata_motdMixin",
+
     "MinecraftServer_coreMixin",
 
     "MinecraftServer_tickspeedMixin",
@@ -22,8 +24,11 @@
     "ThreadedAnvilChunkStorage_tickMixin",
 
     "MobEntityMixin",
+    "ServerWorld_unloadedEntityMixin",
+    "MobEntity_leashMixin",
 
-    "MinecraftServer_motdMixin",
+    "ServerWorld_fakePlayersMixin",
+
     "ServerPlayNetworkHandlerMixin",
     "MinecraftServer_scarpetMixin",
     "PlayerListHeaderS2CPacketMixin",
@@ -68,8 +73,13 @@
     "ItemUsageContext_cactusMixin",
     "DispenserBehaviour_cactusMixin",
 
+    "ServerPlayNetworkHandler_antiCheatDisabledMixin",
+
     "PortalForcer_portalCachingMixin",
     "PortalBlock_portalCachingMixin",
+
+    "Entity_portalSuffocationMixin",
+    "PortalForcer_portalSuffocationMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",
@@ -92,6 +102,10 @@
 
     "PistonBlock_qcMixin",
     "DispenserBlock_qcMixin",
+
+    "PickaxeItem_missingToolsMixin",
+    "ShearsItem_missingToolsMixin",
+
 
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",

@@ -1,7 +1,6 @@
 package carpet.settings;
 
 import carpet.CarpetServer;
-import carpet.fakes.MinecraftServer_motdInterface;
 import carpet.utils.Messenger;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -10,7 +9,9 @@ import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Unit;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,16 +26,17 @@ import static carpet.settings.RuleCategory.SURVIVAL;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "v190704";
+    public static final String carpetVersion = "v190707";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
+    public static Box currentTelepotingEntityBox = null;
+    public static Vec3d fixedPosition = null;
 
     @Rule(
             desc = "Nether portals correctly place entities going through",
             extra = "Entities shouldn't suffocate in obsidian",
-            category = BUGFIX,
-            validate = Validator.WIP.class
+            category = BUGFIX
     )
     public static boolean portalSuffocationFix = false;
 
@@ -102,7 +104,7 @@ public class CarpetSettings
     @Rule( desc = "Shulkers will respawn in end cities", category = FEATURE )
     public static boolean shulkerSpawningInEndCities = false;
 
-    @Rule(desc = "Entities pushed or moved into unloaded chunks no longer disappear", category = {EXPERIMENTAL, BUGFIX}, validate = Validator.WIP.class)
+    @Rule(desc = "Entities pushed or moved into unloaded chunks no longer disappear", category = {EXPERIMENTAL, BUGFIX})
     public static boolean unloadedEntityFix = false;
 
     @Rule( desc = "TNT doesn't update when placed against a power source", category = CREATIVE )
@@ -110,11 +112,10 @@ public class CarpetSettings
 
     @Rule(
             desc = "Prevents players from rubberbanding when moving too fast",
-            extra = "Puts more trust in clients positioning",
-            category = {CREATIVE, SURVIVAL},
-            validate = Validator.WIP.class
+            extra = {"... or being kicked out for 'flying'","Puts more trust in clients positioning"},
+            category = {CREATIVE, SURVIVAL}
     )
-    public static boolean antiCheatSpeed = false;
+    public static boolean antiCheatDisabled = false;
 
     @Rule(desc = "Pistons, droppers and dispensers react if block above them is powered", category = CREATIVE)
     public static boolean quasiConnectivity = true;
@@ -163,7 +164,11 @@ public class CarpetSettings
     @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND)
     public static boolean commandTick = true;
 
-    @Rule(desc = "Enables /log command to monitor events in the game via chat and overlays", category = COMMAND)
+    @Rule(
+            desc = "Enables /log command to monitor events in the game via chat and overlays",
+            category = COMMAND,
+            validate = Validator.WIP.class
+    )
     public static boolean commandLog = true;
 
     @Rule(
@@ -209,11 +214,7 @@ public class CarpetSettings
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
     public static boolean carpets = false;
 
-    @Rule(
-            desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools",
-            category = SURVIVAL,
-            validate = Validator.WIP.class
-    )
+    @Rule(desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools", category = SURVIVAL)
     public static boolean missingTools = false;
 
     @Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
@@ -287,19 +288,11 @@ public class CarpetSettings
     @Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
     public static boolean onePlayerSleeping = false;
 
-    private static class SetMotd extends Validator<String> {
-        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            customMOTD = newValue; // accelerate a smidge
-            ((MinecraftServer_motdInterface) CarpetServer.minecraft_server).checkMOTD();
-            return newValue;
-        }
-    }
     @Rule(
             desc = "Sets a different motd message on client trying to connect to the server",
             extra = "use '_' to use the startup setting from server.properties",
             options = "_",
-            category = CREATIVE,
-            validate = {SetMotd.class, Validator.WIP.class} // for some reason doesn't yet work
+            category = CREATIVE
     )
     public static String customMOTD = "_";
 
@@ -399,8 +392,7 @@ public class CarpetSettings
     @Rule(
             desc = "Fixes leads breaking/becoming invisible in unloaded chunks",
             extra = "You may still get visibly broken leash links on the client side, but server side the link is still there.",
-            category = BUGFIX,
-            validate = Validator.WIP.class
+            category = BUGFIX
     )
     public static boolean leadFix = false;
 

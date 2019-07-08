@@ -59,6 +59,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), instance.dimension);
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), instance.dimension);
         instance.getServerWorld().method_14178().updateCameraPosition(instance);
+        instance.dataTracker.set(PLAYER_MODEL_BIT_MASK, (byte) 0x7f); // show all model layers (incl. capes)
         return instance;
     }
 
