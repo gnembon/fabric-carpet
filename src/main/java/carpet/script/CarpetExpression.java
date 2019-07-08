@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.helpers.Tracer;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
@@ -53,6 +54,9 @@ import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.EulerAngle;
@@ -1240,6 +1244,24 @@ public class CarpetExpression
             inventoryLocator.inventory.markDirty();
             Value res = new NumericValue(item.getStack().getCount());
             return (_c, _t) -> res;
+        });
+
+        this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
+            Value entityValue = lv.get(0).evalValue(c);
+            if (!(entityValue instanceof EntityValue))
+                throw new InternalExpressionException("First argument of trace_block should be an entity");
+            Entity e = ((EntityValue) entityValue).getEntity();
+            HitResult hitres = Tracer.traceEntityLook(e, 20);
+            switch (hitres.getType())
+            {
+                case MISS:
+                    return (_c, _t) -> Value.NULL;
+                case BLOCK:
+                    return (_c, _t) -> new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case ENTITY:
+                    return (_c, _t) -> new EntityValue(((EntityHitResult)hitres).getEntity());
+            }
+            return LazyValue.NULL;
         });
     }
 
