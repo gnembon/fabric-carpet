@@ -223,6 +223,9 @@ public class CarpetSettings
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
 
+    @Rule(desc = "smooth client animations with low tps settings", extra = "works only in SP, and will slow down players", category = CREATIVE)
+    public static boolean smoothClientAnimations;
+
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue <= 1024) ? newValue : null;
