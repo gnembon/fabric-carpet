@@ -65,6 +65,8 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.loot.context.LootContext;
 import net.minecraft.world.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
@@ -926,6 +928,40 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
+        this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
+            Value entityValue = lv.get(0).evalValue(c);
+            if (!(entityValue instanceof EntityValue))
+                throw new InternalExpressionException("First argument of trace_block should be an entity");
+            Entity e = ((EntityValue) entityValue).getEntity();
+            HitResult hitres = Tracer.traceEntityLook(e, 20);
+            switch (hitres.getType())
+            {
+                case MISS:
+                    return (_c, _t) -> Value.NULL;
+                case BLOCK:
+                    return (_c, _t) -> new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case ENTITY:
+                    return (_c, _t) -> new EntityValue(((EntityHitResult)hitres).getEntity());
+            }
+            return LazyValue.NULL;
+        });
+
+        this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
+            Biome biome = Registry.BIOME.get(new Identifier(biomeName));
+            byte biomeId = (byte) (Registry.BIOME.getRawId(biome) & 255);
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            Chunk chunk = world.getChunk(pos);
+            chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
+            chunk.setShouldSave(true);
+            //world.method_14178().markForUpdate(pos);
+            CarpetServer.scriptServer.markChunkForUpdate(world, pos);
+            return LazyValue.NULL;
+
+        });
 
     }
 
@@ -1244,24 +1280,6 @@ public class CarpetExpression
             inventoryLocator.inventory.markDirty();
             Value res = new NumericValue(item.getStack().getCount());
             return (_c, _t) -> res;
-        });
-
-        this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
-            Value entityValue = lv.get(0).evalValue(c);
-            if (!(entityValue instanceof EntityValue))
-                throw new InternalExpressionException("First argument of trace_block should be an entity");
-            Entity e = ((EntityValue) entityValue).getEntity();
-            HitResult hitres = Tracer.traceEntityLook(e, 20);
-            switch (hitres.getType())
-            {
-                case MISS:
-                    return (_c, _t) -> Value.NULL;
-                case BLOCK:
-                    return (_c, _t) -> new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
-                case ENTITY:
-                    return (_c, _t) -> new EntityValue(((EntityHitResult)hitres).getEntity());
-            }
-            return LazyValue.NULL;
         });
     }
 

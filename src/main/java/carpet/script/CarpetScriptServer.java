@@ -14,16 +14,16 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
+import net.minecraft.client.network.packet.ChunkDataS2CPacket;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.chunk.Chunk;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -38,6 +38,7 @@ public class CarpetScriptServer
     public boolean stopAll;
     Set<String> holyMoly;
     public CarpetEventServer events;
+    private Set<Pair<ServerWorld,ChunkPos>> modifiedChunks = new HashSet<>();
 
     public static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
         add(new CameraPathModule());
@@ -329,5 +330,25 @@ public class CarpetScriptServer
             return false;
         }
         return true;
+    }
+
+    void markChunkForUpdate(ServerWorld world, BlockPos pos)
+    {
+        modifiedChunks.add(Pair.of(world, new ChunkPos(pos)));
+    }
+
+    public void tick()
+    {
+        for (Pair<ServerWorld,ChunkPos> tuple : modifiedChunks)
+        {
+            //ChunkDataS2CPacket
+            ServerWorld world = tuple.getLeft();
+            ChunkPos chpos = tuple.getRight();
+            Chunk chunk = world.getChunk(chpos.x, chpos.z);
+            //.....
+
+        }
+        modifiedChunks.clear();
+        events.tick();
     }
 }
