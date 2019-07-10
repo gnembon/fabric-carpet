@@ -17,7 +17,7 @@ public class ServerPlayerInteractionManager_scarpetEventsMixin
 {
     @Shadow public ServerPlayerEntity player;
 
-    @Inject(method = "destroyBlock", locals = LocalCapture.CAPTURE_FAILEXCEPTION, at = @At(
+    @Inject(method = "tryBreakBlock", locals = LocalCapture.CAPTURE_FAILEXCEPTION, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/Block;onBroken(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)V",
             shift = At.Shift.BEFORE
