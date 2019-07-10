@@ -281,6 +281,20 @@ public class CarpetExpression
         return pcount;
     }
 
+    private void forceChunkUpdate(BlockPos pos, ServerWorld world)
+    {
+        Chunk chunk = world.getChunk(pos);
+        chunk.setShouldSave(true);
+        for (int i = 0; i<16; i++)
+        {
+            BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
+            world.method_14178().markForUpdate(section);
+            world.method_14178().markForUpdate(section.east());
+            world.method_14178().markForUpdate(section.west());
+            world.method_14178().markForUpdate(section.north());
+        }
+    }
+
     /**
      * <h1>Blocks / World API</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
@@ -656,7 +670,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("blast_resistance", -1, (c, t, lv) ->
                 genericStateTest(c, "blast_resistance", lv, (s, p, w) -> new NumericValue(s.getBlock().getBlastResistance())));
 
-
+        // Deprecated
         this.expr.addLazyFunction("top", -1, (c, t, lv) ->
         {
             String type = lv.get(0).evalValue(c).getString().toLowerCase(Locale.ROOT);
@@ -960,15 +974,7 @@ public class CarpetExpression
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos);
             chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
-            chunk.setShouldSave(true);
-            for (int i = 0; i<16; i++)
-            {
-                BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
-                world.method_14178().markForUpdate(section);
-                world.method_14178().markForUpdate(section.east());
-                world.method_14178().markForUpdate(section.west());
-                world.method_14178().markForUpdate(section.north());
-            }
+            this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;
 
         });
@@ -2504,9 +2510,14 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
-            Boolean res = FeatureGenerator.spawn(lv.get(locator.offset).evalValue(c).getString(), ((CarpetContext)c).s.getWorld(), locator.block.getPos());
+            if (lv.size() <= locator.offset)
+                throw new InternalExpressionException("plop needs extra argument indicating what to plop");
+            String what = lv.get(locator.offset).evalValue(c).getString();
+            Boolean res = FeatureGenerator.spawn(what, ((CarpetContext)c).s.getWorld(), locator.block.getPos());
             if (res == null)
                 return (c_, t_) -> Value.NULL;
+            if (what.equalsIgnoreCase("boulder"))  // there might be more of those
+                this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext)c).s.getWorld());
             return (c_, t_) -> new NumericValue(res);
         });
 
