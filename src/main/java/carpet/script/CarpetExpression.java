@@ -949,16 +949,26 @@ public class CarpetExpression
         this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            if (lv.size() == locator.offset)
+                throw new InternalExpressionException("set_biome needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
             Biome biome = Registry.BIOME.get(new Identifier(biomeName));
+            if (biome == null)
+                throw new InternalExpressionException("Unknown biome: "+biomeName);
             byte biomeId = (byte) (Registry.BIOME.getRawId(biome) & 255);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos);
             chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
             chunk.setShouldSave(true);
-            //world.method_14178().markForUpdate(pos);
-            CarpetServer.scriptServer.markChunkForUpdate(world, pos);
+            for (int i = 0; i<16; i++)
+            {
+                BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
+                world.method_14178().markForUpdate(section);
+                world.method_14178().markForUpdate(section.east());
+                world.method_14178().markForUpdate(section.west());
+                world.method_14178().markForUpdate(section.north());
+            }
             return LazyValue.NULL;
 
         });

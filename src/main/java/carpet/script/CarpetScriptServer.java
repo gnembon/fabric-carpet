@@ -38,7 +38,6 @@ public class CarpetScriptServer
     public boolean stopAll;
     Set<String> holyMoly;
     public CarpetEventServer events;
-    private Set<Pair<ServerWorld,ChunkPos>> modifiedChunks = new HashSet<>();
 
     public static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
         add(new CameraPathModule());
@@ -332,23 +331,8 @@ public class CarpetScriptServer
         return true;
     }
 
-    void markChunkForUpdate(ServerWorld world, BlockPos pos)
-    {
-        modifiedChunks.add(Pair.of(world, new ChunkPos(pos)));
-    }
-
     public void tick()
     {
-        for (Pair<ServerWorld,ChunkPos> tuple : modifiedChunks)
-        {
-            //ChunkDataS2CPacket
-            ServerWorld world = tuple.getLeft();
-            ChunkPos chpos = tuple.getRight();
-            Chunk chunk = world.getChunk(chpos.x, chpos.z);
-            //.....
-
-        }
-        modifiedChunks.clear();
         events.tick();
     }
 }
