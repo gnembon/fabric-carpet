@@ -401,4 +401,11 @@ public class CarpetSettings
 
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
+
+    @Rule(
+            desc = "Prevents horses and other mobs to wander into the distance after dismounting",
+            extra = "Fixes issues with various Joergens wandering off and disappearing client-side",
+            category = BUGFIX
+    )
+    public static boolean horseWanderingFix = false;
 }
