@@ -125,11 +125,10 @@ public class CarpetScriptServer
 
     public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer)
     {
+        //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
         ModuleInterface module = getModule(name);
         ScriptHost newHost = createMinecraftScriptHost(name, module);
-        // move to host constructor.....
-        .....
         if (module == null)
         {
             Messenger.m(source, "r Unable to locate the package, but created empty host "+name+" instead");
