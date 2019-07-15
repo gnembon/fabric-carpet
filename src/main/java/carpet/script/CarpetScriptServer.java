@@ -35,7 +35,6 @@ public class CarpetScriptServer
     //make static for now, but will change that later:
     public ScriptHost globalHost;
     public Map<String, ScriptHost> modules;
-    public Map<Pair<String, PlayerEntity>, ScriptHost> playerModules;
     long tickStart;
     public boolean stopAll;
     Set<String> holyMoly;
