@@ -352,6 +352,8 @@ public class CarpetExpression
      *     place_item('piston,x,y,z,'down') // places a piston facing down
      *     place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
      * </pre>
+     * <h3><code>set_biome(pos, biome_name)</code></h3>
+     * <p>changes biome at that block position.</p>
      * <h3><code>update(pos)</code></h3>
      * <p>Causes a block update at position.</p>
      * <h3><code>block_tick(pos)</code></h3>
@@ -942,7 +944,7 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
-        this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
+        /*this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
             Value entityValue = lv.get(0).evalValue(c);
             if (!(entityValue instanceof EntityValue))
                 throw new InternalExpressionException("First argument of trace_block should be an entity");
@@ -958,7 +960,7 @@ public class CarpetExpression
                     return (_c, _t) -> new EntityValue(((EntityHitResult)hitres).getEntity());
             }
             return LazyValue.NULL;
-        });
+        });*/
 
         this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
@@ -969,15 +971,14 @@ public class CarpetExpression
             Biome biome = Registry.BIOME.get(new Identifier(biomeName));
             if (biome == null)
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
-            byte biomeId = (byte) (Registry.BIOME.getRawId(biome) & 255);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos);
             chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
             this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;
-
         });
+        // need get_biome
 
     }
 
