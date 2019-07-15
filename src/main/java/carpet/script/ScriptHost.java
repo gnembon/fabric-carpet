@@ -51,10 +51,6 @@ public class ScriptHost
         globalVariables.put("_a", (c, t) -> Value.ZERO);
     }
 
-    public boolean replicable() { return myCode != null; }
-
-    public ScriptHost replicate() { return new ScriptHost(name, myCode); }
-
     public Expression getExpressionForFunction(String name)
     {
         return globalFunctions.get(name).getExpression();
