@@ -223,6 +223,9 @@ public class CarpetSettings
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
 
+    @Rule(desc = "smooth client animations with low tps settings", extra = "works only in SP, and will slow down players", category = CREATIVE)
+    public static boolean smoothClientAnimations;
+
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>0 && newValue <= 1024) ? newValue : null;
@@ -398,4 +401,11 @@ public class CarpetSettings
 
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
+
+    @Rule(
+            desc = "Prevents horses and other mobs to wander into the distance after dismounting",
+            extra = "Fixes issues with various Joergens wandering off and disappearing client-side",
+            category = BUGFIX
+    )
+    public static boolean horseWanderingFix = false;
 }

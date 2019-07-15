@@ -1,7 +1,6 @@
 package carpet.script;
 
 import carpet.CarpetServer;
-import carpet.settings.CarpetSettings;
 import carpet.script.bundled.CameraPathModule;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.ModuleInterface;
@@ -45,7 +44,7 @@ public class CarpetScriptServer
 
     public CarpetScriptServer()
     {
-        globalHost = createMinecraftScriptHost(null);
+        globalHost = createMinecraftScriptHost(null, null);
         events = new CarpetEventServer();
         modules = new HashMap<>();
         tickStart = 0L;
@@ -113,7 +112,7 @@ public class CarpetScriptServer
     }
 
 
-    private static ScriptHost createMinecraftScriptHost(String name)
+    private static ScriptHost createMinecraftScriptHost(String name, ModuleInterface code)
     {
         ScriptHost host = new ScriptHost(name);
         host.globalVariables.put("_x", (c, t) -> Value.ZERO);
@@ -122,11 +121,12 @@ public class CarpetScriptServer
         return host;
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name)
+    public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer)
     {
+        //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
-        ScriptHost newHost = createMinecraftScriptHost(name);
         ModuleInterface module = getModule(name);
+        ScriptHost newHost = createMinecraftScriptHost(name, module);
         if (module == null)
         {
             Messenger.m(source, "r Unable to locate the package, but created empty host "+name+" instead");
@@ -329,5 +329,10 @@ public class CarpetScriptServer
             return false;
         }
         return true;
+    }
+
+    public void tick()
+    {
+        events.tick();
     }
 }

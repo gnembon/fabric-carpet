@@ -108,6 +108,18 @@ public abstract class Fluff
             {
                 throw new ExpressionException(e, t, exc.getMessage());
             }
+            catch (ArithmeticException exc)
+            {
+                throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
+            }
+            catch (Expression.ExitStatement exit)
+            {
+                throw exit;
+            }
+            catch (Exception exc)
+            {
+                throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+            }
         }
     }
 
@@ -154,6 +166,14 @@ public abstract class Fluff
             {
                 throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
             }
+            catch (Expression.ExitStatement exit)
+            {
+                throw exit;
+            }
+            catch (Exception exc)
+            {
+                throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+            }
         }
     }
 
@@ -181,6 +201,14 @@ public abstract class Fluff
             catch (ArithmeticException exc)
             {
                 throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
+            }
+            catch (Expression.ExitStatement exit)
+            {
+                throw exit;
+            }
+            catch (Exception exc)
+            {
+                throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
             }
         }
 

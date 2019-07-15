@@ -506,6 +506,14 @@ public class Expression implements Cloneable
                 {
                     throw new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
                 }
+                catch (ExitStatement exit)
+                {
+                    throw exit;
+                }
+                catch (Exception exc)
+                {
+                    throw new ExpressionException(e, token, "Error while evaluating expression: "+exc.getMessage());
+                }
             }
         });
     }
@@ -532,6 +540,14 @@ public class Expression implements Cloneable
                 {
                     throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
                 }
+                catch (ExitStatement exit)
+                {
+                    throw exit;
+                }
+                catch (Exception exc)
+                {
+                    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                }
             }
         });
     }
@@ -556,6 +572,14 @@ public class Expression implements Cloneable
                 catch (ArithmeticException exc)
                 {
                     throw new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
+                }
+                catch (ExitStatement exit)
+                {
+                    throw exit;
+                }
+                catch (Exception exc)
+                {
+                    throw new ExpressionException(e, token, "Error while evaluating expression: "+exc.getMessage());
                 }
             }
         });
@@ -663,6 +687,14 @@ public class Expression implements Cloneable
                 {
                     throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
                 }
+                catch (ExitStatement exit)
+                {
+                    throw exit;
+                }
+                catch (Exception exc)
+                {
+                    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                }
             }
         });
     }
@@ -725,7 +757,7 @@ public class Expression implements Cloneable
                 {
                     retVal = returnStatement.retval;
                 }
-                catch (ThrowStatement throwStatement)
+                catch (ThrowStatement throwStatement) // might not be really necessary
                 {
                     retVal = throwStatement.retval;
                     rethrow = true;
@@ -737,6 +769,14 @@ public class Expression implements Cloneable
                 catch (ArithmeticException exc)
                 {
                     throw new ExpressionException(function_context, t, "Your math is wrong, "+exc.getMessage());
+                }
+                catch (ExitStatement exit)
+                {
+                    throw exit;
+                }
+                catch (Exception exc)
+                {
+                    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
                 }
                 for (String global: globals)
                 {

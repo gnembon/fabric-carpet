@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.helpers.Tracer;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
@@ -53,6 +54,9 @@ import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.EulerAngle;
@@ -61,6 +65,8 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.loot.context.LootContext;
 import net.minecraft.world.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
@@ -275,6 +281,20 @@ public class CarpetExpression
         return pcount;
     }
 
+    private void forceChunkUpdate(BlockPos pos, ServerWorld world)
+    {
+        Chunk chunk = world.getChunk(pos);
+        chunk.setShouldSave(true);
+        for (int i = 0; i<16; i++)
+        {
+            BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
+            world.method_14178().markForUpdate(section);
+            world.method_14178().markForUpdate(section.east());
+            world.method_14178().markForUpdate(section.west());
+            world.method_14178().markForUpdate(section.north());
+        }
+    }
+
     /**
      * <h1>Blocks / World API</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
@@ -332,6 +352,8 @@ public class CarpetExpression
      *     place_item('piston,x,y,z,'down') // places a piston facing down
      *     place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
      * </pre>
+     * <h3><code>set_biome(pos, biome_name)</code></h3>
+     * <p>changes biome at that block position.</p>
      * <h3><code>update(pos)</code></h3>
      * <p>Causes a block update at position.</p>
      * <h3><code>block_tick(pos)</code></h3>
@@ -650,7 +672,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("blast_resistance", -1, (c, t, lv) ->
                 genericStateTest(c, "blast_resistance", lv, (s, p, w) -> new NumericValue(s.getBlock().getBlastResistance())));
 
-
+        // Deprecated
         this.expr.addLazyFunction("top", -1, (c, t, lv) ->
         {
             String type = lv.get(0).evalValue(c).getString().toLowerCase(Locale.ROOT);
@@ -922,6 +944,41 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
+        /*this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
+            Value entityValue = lv.get(0).evalValue(c);
+            if (!(entityValue instanceof EntityValue))
+                throw new InternalExpressionException("First argument of trace_block should be an entity");
+            Entity e = ((EntityValue) entityValue).getEntity();
+            HitResult hitres = Tracer.traceEntityLook(e, 20);
+            switch (hitres.getType())
+            {
+                case MISS:
+                    return (_c, _t) -> Value.NULL;
+                case BLOCK:
+                    return (_c, _t) -> new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case ENTITY:
+                    return (_c, _t) -> new EntityValue(((EntityHitResult)hitres).getEntity());
+            }
+            return LazyValue.NULL;
+        });*/
+
+        this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            if (lv.size() == locator.offset)
+                throw new InternalExpressionException("set_biome needs a biome name as an argument");
+            String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
+            Biome biome = Registry.BIOME.get(new Identifier(biomeName));
+            if (biome == null)
+                throw new InternalExpressionException("Unknown biome: "+biomeName);
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            Chunk chunk = world.getChunk(pos);
+            chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
+            this.forceChunkUpdate(pos, world);
+            return LazyValue.NULL;
+        });
+        // need get_biome
 
     }
 
@@ -2454,9 +2511,14 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
-            Boolean res = FeatureGenerator.spawn(lv.get(locator.offset).evalValue(c).getString(), ((CarpetContext)c).s.getWorld(), locator.block.getPos());
+            if (lv.size() <= locator.offset)
+                throw new InternalExpressionException("plop needs extra argument indicating what to plop");
+            String what = lv.get(locator.offset).evalValue(c).getString();
+            Boolean res = FeatureGenerator.spawn(what, ((CarpetContext)c).s.getWorld(), locator.block.getPos());
             if (res == null)
                 return (c_, t_) -> Value.NULL;
+            if (what.equalsIgnoreCase("boulder"))  // there might be more of those
+                this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext)c).s.getWorld());
             return (c_, t_) -> new NumericValue(res);
         });
 

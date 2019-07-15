@@ -64,7 +64,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         TickSpeed.tick(server);
         HUDController.update_hud(server);
-        scriptServer.events.tick();
+        scriptServer.tick();
 
         //in case something happens
         CarpetSettings.impendingFillSkipUpdates = false;

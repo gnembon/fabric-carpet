@@ -81,6 +81,8 @@
     "Entity_portalSuffocationMixin",
     "PortalForcer_portalSuffocationMixin",
 
+    "Entity_horseFixMixin",
+
     "HopperBlockEntityMixin",
     "ContainerMixin",
     "ClientConnectionMixin",
@@ -113,6 +115,7 @@
     "WorldChunk_movableTEMixin"
   ],
   "client": [
+    "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
     "IntegratedServerMixin",
     "InGameHudMixin",
