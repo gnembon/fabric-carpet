@@ -206,7 +206,7 @@ public class ScriptCommand
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(),bb)).
                         executes((cc) ->
                         {
-                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"));
+                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), false);
                             return success?1:0;
                         })
                 );

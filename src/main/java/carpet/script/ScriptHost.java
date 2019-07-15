@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.script.bundled.ModuleInterface;
 import carpet.settings.CarpetSettings;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InvalidCallbackException;
@@ -30,9 +31,14 @@ public class ScriptHost
     private String name;
     public String getName() {return name;}
 
-    ScriptHost(String name)
+    private ModuleInterface myCode;
+
+    ScriptHost(String name) { this(name, null);}
+
+    ScriptHost(String name, ModuleInterface code)
     {
         this.name = name;
+        this.myCode = code;
         globalVariables.put("euler", (c, t) -> Expression.euler);
         globalVariables.put("pi", (c, t) -> Expression.PI);
         globalVariables.put("null", (c, t) -> Value.NULL);
@@ -44,6 +50,11 @@ public class ScriptHost
         globalVariables.put("_i", (c, t) -> Value.ZERO);
         globalVariables.put("_a", (c, t) -> Value.ZERO);
     }
+
+    public boolean replicable() { return myCode != null; }
+
+    public ScriptHost replicate() { return new ScriptHost(name, myCode); }
+
     public Expression getExpressionForFunction(String name)
     {
         return globalFunctions.get(name).getExpression();

@@ -15,6 +15,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.client.network.packet.ChunkDataS2CPacket;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -34,6 +35,7 @@ public class CarpetScriptServer
     //make static for now, but will change that later:
     public ScriptHost globalHost;
     public Map<String, ScriptHost> modules;
+    public Map<Pair<String, PlayerEntity>, ScriptHost> playerModules;
     long tickStart;
     public boolean stopAll;
     Set<String> holyMoly;
@@ -45,7 +47,7 @@ public class CarpetScriptServer
 
     public CarpetScriptServer()
     {
-        globalHost = createMinecraftScriptHost(null);
+        globalHost = createMinecraftScriptHost(null, null);
         events = new CarpetEventServer();
         modules = new HashMap<>();
         tickStart = 0L;
@@ -113,7 +115,7 @@ public class CarpetScriptServer
     }
 
 
-    private static ScriptHost createMinecraftScriptHost(String name)
+    private static ScriptHost createMinecraftScriptHost(String name, ModuleInterface code)
     {
         ScriptHost host = new ScriptHost(name);
         host.globalVariables.put("_x", (c, t) -> Value.ZERO);
@@ -122,11 +124,13 @@ public class CarpetScriptServer
         return host;
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name)
+    public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer)
     {
         name = name.toLowerCase(Locale.ROOT);
-        ScriptHost newHost = createMinecraftScriptHost(name);
         ModuleInterface module = getModule(name);
+        ScriptHost newHost = createMinecraftScriptHost(name, module);
+        // move to host constructor.....
+        .....
         if (module == null)
         {
             Messenger.m(source, "r Unable to locate the package, but created empty host "+name+" instead");
