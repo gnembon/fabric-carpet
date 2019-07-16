@@ -220,7 +220,7 @@ public class Messenger
     //message source
     public static void m(ServerCommandSource source, Object ... fields)
     {
-        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer().getWorld(DimensionType.OVERWORLD).getGameRules() != null);
+        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer().getWorld(DimensionType.OVERWORLD) != null);
     }
     public static void m(PlayerEntity player, Object ... fields)
     {

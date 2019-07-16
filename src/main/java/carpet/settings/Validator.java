@@ -44,12 +44,7 @@ public abstract class Validator<T>
         @Override
         public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string)
         {
-            if (source != null)
-                try
-                {
-                    Messenger.m(source, "r "+currentRule.name+" is missing a few bits - we are still working on it.");
-                }
-                catch (NullPointerException ignored) { }
+            Messenger.m(source, "r "+currentRule.name+" is missing a few bits - we are still working on it.");
             return newValue;
         }
         @Override
@@ -62,14 +57,7 @@ public abstract class Validator<T>
         {
             if (!currentRule.options.contains(string.toLowerCase(Locale.ROOT)))
             {
-                if (source != null)
-                    try
-                    {
-                        Messenger.m(source, "r Valid options: " + currentRule.options.toString());
-                    }
-                    catch (NullPointerException ignored)
-                    {
-                    }
+                Messenger.m(source, "r Valid options: " + currentRule.options.toString());
                 return null;
             }
             return newValue;
