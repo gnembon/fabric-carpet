@@ -11,6 +11,7 @@ import net.minecraft.text.BaseText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
+import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -219,7 +220,7 @@ public class Messenger
     //message source
     public static void m(ServerCommandSource source, Object ... fields)
     {
-        source. sendFeedback(Messenger.c(fields),true);
+        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer().getWorld(DimensionType.OVERWORLD).getGameRules() != null);
     }
     public static void m(PlayerEntity player, Object ... fields)
     {
