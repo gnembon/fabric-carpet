@@ -78,6 +78,8 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         interactionManagerIn.setGameMode(player.interactionManager.getGameMode());
         ((ServerPlayerEntityInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerEntityInterface) player).getActionPack());
         playerShadow.stepHeight = 0.6F;
+        playerShadow.dataTracker.set(PLAYER_MODEL_BIT_MASK, player.getDataTracker().get(PLAYER_MODEL_BIT_MASK));
+
 
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(playerShadow, (byte) (player.headYaw * 256 / 360)), playerShadow.dimension);
         server.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, playerShadow));

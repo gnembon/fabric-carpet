@@ -25,6 +25,7 @@ import carpet.utils.HUDController;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -90,5 +91,16 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.registerCommands(dispatcher));
         //TestCommand.register(dispatcher);
     }
+
+    public static void onPlayerLoggedIn(ServerPlayerEntity player)
+    {
+        extensions.forEach(e -> e.onPlayerLoggedIn(player));
+    }
+
+    public static void onPlayerLoggedOut(ServerPlayerEntity player)
+    {
+        extensions.forEach(e -> e.onPlayerLoggedOut(player));
+    }
+
 }
 
