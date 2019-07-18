@@ -691,10 +691,10 @@ public class Expression implements Cloneable
                 {
                     throw exit;
                 }
-                catch (Exception exc)
-                {
-                    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
-                }
+                //catch (Exception exc)
+                //{
+                //    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                //}
             }
         });
     }

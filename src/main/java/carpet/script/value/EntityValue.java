@@ -4,6 +4,7 @@ import carpet.fakes.MobEntityInterface;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.client.network.packet.EntityPositionS2CPacket;
 import net.minecraft.client.network.packet.EntityVelocityUpdateS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
@@ -26,6 +27,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -356,6 +358,21 @@ public class EntityValue extends Value
         featureModifiers.get(what).accept(entity, toWhat);
     }
 
+    private static void updatePosition(Entity e)
+    {
+        if (e instanceof ServerPlayerEntity)
+            ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+        else
+            ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e,new EntityPositionS2CPacket(e));
+    }
+
+    private static void updateVelocity(Entity e)
+    {
+        ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
+    }
+
+
+
     private static Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.remove());
         put("health", (e, v) -> { if (e instanceof LivingEntity) ((LivingEntity) e).setHealth((float) NumericValue.asNumber(v).getDouble()); });
@@ -375,8 +392,7 @@ public class EntityValue extends Value
             e.yaw = (float) NumericValue.asNumber(coords.get(3)).getDouble();
             e.prevYaw = e.yaw;
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("pos", (e, v) ->
         {
@@ -389,43 +405,37 @@ public class EntityValue extends Value
             e.y = NumericValue.asNumber(coords.get(1)).getDouble();
             e.z = NumericValue.asNumber(coords.get(2)).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("x", (e, v) ->
         {
             e.x = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("y", (e, v) ->
         {
             e.y = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("z", (e, v) ->
         {
             e.z = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("pitch", (e, v) ->
         {
             e.pitch = (float) NumericValue.asNumber(v).getDouble();
             e.prevPitch = e.pitch;
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("yaw", (e, v) ->
         {
             e.yaw = (float) NumericValue.asNumber(v).getDouble();
             e.prevYaw = e.yaw;
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         //"look"
         //"turn"
@@ -442,8 +452,7 @@ public class EntityValue extends Value
             e.y += NumericValue.asNumber(coords.get(1)).getDouble();
             e.z += NumericValue.asNumber(coords.get(2)).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
 
         put("motion", (e, v) ->
@@ -458,29 +467,25 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
         put("motion_x", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
             e.setVelocity(NumericValue.asNumber(v).getDouble(), velocity.y, velocity.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
         put("motion_y", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
             e.setVelocity(velocity.x, NumericValue.asNumber(v).getDouble(), velocity.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
         put("motion_z", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
             e.setVelocity(velocity.x, velocity.y, NumericValue.asNumber(v).getDouble());
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
 
         put("accelerate", (e, v) ->
@@ -495,8 +500,7 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
 
         });
         put("custom_name", (e, v) -> {

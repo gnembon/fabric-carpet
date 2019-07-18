@@ -78,7 +78,7 @@ public class BlockValue extends Value
             Value v1 = params.get(0 + offset).evalValue(c);
             if (v1 instanceof BlockValue)
             {
-                return new VectorLocator(new Vec3d(((BlockValue) v1).getPos()).add(0.5,0.5,0.5), 1+offset);
+                return (new VectorLocator(new Vec3d(((BlockValue) v1).getPos()).add(0.5,0.5,0.5), 1+offset)).fromBlock();
             }
             if (v1 instanceof ListValue)
             {
@@ -270,6 +270,7 @@ public class BlockValue extends Value
         public int offset;
         public double yaw;
         public double pitch;
+        public boolean fromBlock;
         VectorLocator(Vec3d v, int o)
         {
             vec = v;
@@ -283,6 +284,12 @@ public class BlockValue extends Value
             offset = o;
             yaw = y;
             pitch = p;
+        }
+
+        public VectorLocator fromBlock()
+        {
+            fromBlock = true;
+            return this;
         }
     }
 
