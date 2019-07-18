@@ -46,4 +46,5 @@ public abstract class CarpetExtension
      */
     public void onPlayerLoggedOut(PlayerEntity player) {}
 
+    default void onServerClosed(MinecraftServer server) {};
 }

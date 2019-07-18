@@ -35,4 +35,10 @@ public abstract class MinecraftServer_coreMixin
     {
         CarpetServer.onServerLoaded((MinecraftServer) (Object) this);
     }
+
+    @Inject(method = "shutdown", at = @At("HEAD"))
+    private void serverClosed(CallbackInfo ci)
+    {
+        CarpetServer.onServerClosed((MinecraftServer) (Object) this);
+    }
 }
