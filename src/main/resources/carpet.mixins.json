@@ -29,7 +29,9 @@
 
     "ServerWorld_fakePlayersMixin",
 
-    "ServerPlayNetworkHandlerMixin",
+    "ServerPlayNetworkHandler_coreMixin",
+
+    "ServerPlayNetworkHandler_tickMixin",
     "MinecraftServer_scarpetMixin",
     "PlayerListHeaderS2CPacketMixin",
     "WeightedPickerEntryMixin",
@@ -81,7 +83,7 @@
     "Entity_portalSuffocationMixin",
     "PortalForcer_portalSuffocationMixin",
 
-    "Entity_horseFixMixin",
+    "PlayerEntity_horseFixMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",
