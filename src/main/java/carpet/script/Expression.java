@@ -1894,15 +1894,7 @@ public class Expression implements Cloneable
 
         addBinaryFunction("get", (v1, v2) ->
         {
-            if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
-                throw new InternalExpressionException("First argument of get should be a list");
-            List<Value> items = ((ListValue)v1).getItems();
-            long index = NumericValue.asNumber(v2).getLong();
-            int numitems = items.size();
-            long range = abs(index)/numitems;
-            index += (range+2)*numitems;
-            index = index % numitems;
-            return items.get((int)index);
+            return v1.getElementAt(v2);
         });
 
         //Deprecated, use "get" instead

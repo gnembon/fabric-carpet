@@ -15,12 +15,15 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringNbtReader;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import static java.lang.Math.abs;
 
 public class NBTSerializableValue extends Value
 {
@@ -194,5 +197,44 @@ public class NBTSerializableValue extends Value
             inventory = i;
             offset = o;
         }
+    }
+
+    @Override
+    public Value getElementAt(Value value)
+    {
+        String path = value.getString();
+
+        return Value.NULL;
+        /*
+        CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
+            if (a==null)
+                return new NBTSerializableValue(nbttagcompound);//StringValue(nbttagcompound.toString());
+            NbtPathArgumentType.NbtPath path;
+            try
+            {
+                path = NbtPathArgumentType.nbtPath().method_9362(new StringReader(a.getString()));
+            }
+            catch (CommandSyntaxException exc)
+            {
+                throw new InternalExpressionException("Incorrect path: "+a.getString());
+            }
+            String res = null;
+            try
+            {
+                List<Tag> tags = path.get(nbttagcompound);
+                if (tags.size()==0)
+                    return Value.NULL;
+                if (tags.size()==1)
+                    return new NBTSerializableValue(tags.get(0));
+                return ListValue.wrap(tags.stream().map(NBTSerializableValue::new).collect(Collectors.toList()));
+            }
+            catch (CommandSyntaxException ignored) { }
+            return Value.NULL;
+         */
+        /*int numitems = items.size();
+        long range = abs(index)/numitems;
+        index += (range+2)*numitems;
+        index = index % numitems;
+        return items.get((int)index); */
     }
 }

@@ -8,7 +8,9 @@ import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 
 import java.math.BigInteger;
@@ -23,22 +25,21 @@ import static java.lang.Math.max;
 
 public class ScriptHost
 {
-
-    public final Map<String, UserDefinedFunction> globalFunctions = new HashMap<>();
-
-    public final Map<String, LazyValue> globalVariables = new HashMap<>();
+    public final Map<String, ScriptHost> userHosts = new HashMap<>();
+    public Map<String, UserDefinedFunction> globalFunctions = new HashMap<>();
+    public Map<String, LazyValue> globalVariables = new HashMap<>();
 
     private String name;
     public String getName() {return name;}
 
-    private ModuleInterface myCode;
+    private final ModuleInterface myCode;
+    public final boolean perUser;
 
-    ScriptHost(String name) { this(name, null);}
-
-    ScriptHost(String name, ModuleInterface code)
+    ScriptHost(String name, ModuleInterface code, boolean perUser)
     {
         this.name = name;
         this.myCode = code;
+        this.perUser = perUser;
         globalVariables.put("euler", (c, t) -> Expression.euler);
         globalVariables.put("pi", (c, t) -> Expression.PI);
         globalVariables.put("null", (c, t) -> Value.NULL);
@@ -49,6 +50,37 @@ public class ScriptHost
         globalVariables.put("_", (c, t) -> Value.ZERO);
         globalVariables.put("_i", (c, t) -> Value.ZERO);
         globalVariables.put("_a", (c, t) -> Value.ZERO);
+    }
+
+    public ScriptHost retrieveForExecution(String /*Nullable*/ user)
+    {
+        if (!perUser)
+            return this;
+        ScriptHost userHost = userHosts.get(user);
+        if (userHost != null)
+            return userHost;
+        userHost = new ScriptHost(this.name, myCode, false);
+        userHost.globalVariables.putAll(this.globalVariables);
+        userHost.globalFunctions.putAll(this.globalFunctions);
+        userHosts.put(user, userHost);
+        return userHost;
+    }
+
+    public ScriptHost retrieveForExecution(ServerCommandSource source)
+    {
+        if (!perUser)
+            return this;
+        try
+        {
+            ServerPlayerEntity player = source.getPlayer();
+            CarpetSettings.LOG.error("Retrieving "+player.getName().getString()+" host for "+getName());
+            return retrieveForExecution(player.getName().getString());
+        }
+        catch (CommandSyntaxException e)
+        {
+            CarpetSettings.LOG.error("Retrieving global host for "+getName());
+            return retrieveForExecution((String)null);
+        }
     }
 
     public Expression getExpressionForFunction(String name)
@@ -190,4 +222,6 @@ public class ScriptHost
             CarpetSettings.LOG.error("Callback failed: "+e.getMessage());
         }
     }
+
+
 }

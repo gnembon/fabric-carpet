@@ -14,6 +14,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -24,6 +25,7 @@ import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.command.arguments.BlockStateArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
@@ -206,9 +208,17 @@ public class ScriptCommand
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(),bb)).
                         executes((cc) ->
                         {
-                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), false);
+                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), true);
                             return success?1:0;
-                        })
+                        }).
+                        then(literal("global").
+                                executes((cc) ->
+                                {
+                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), false);
+                                    return success?1:0;
+                                }
+                                )
+                        )
                 );
         LiteralArgumentBuilder<ServerCommandSource> f = literal("unload").requires( (player) -> player.hasPermissionLevel(2) ).
                 then(argument("package", StringArgumentType.word()).
@@ -267,8 +277,8 @@ public class ScriptCommand
         try
         {
             String name = StringArgumentType.getString(context, "package").toLowerCase(Locale.ROOT);
-            return CarpetServer.scriptServer.modules.getOrDefault(name, CarpetServer.scriptServer.globalHost);
-
+            ScriptHost parentHost = CarpetServer.scriptServer.modules.getOrDefault(name, CarpetServer.scriptServer.globalHost);
+            return parentHost.retrieveForExecution(context.getSource());
         }
         catch (IllegalArgumentException ignored)
         {
@@ -277,7 +287,6 @@ public class ScriptCommand
     }
     private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c)
     {
-        ServerCommandSource s = c.getSource();
         ScriptHost host = getHost(c);
         return host.getPublicFunctions();
     }

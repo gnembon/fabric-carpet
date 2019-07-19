@@ -44,7 +44,7 @@ public class CarpetScriptServer
 
     public CarpetScriptServer()
     {
-        globalHost = createMinecraftScriptHost(null, null);
+        globalHost = createMinecraftScriptHost(null, null, false, null);
         events = new CarpetEventServer();
         modules = new HashMap<>();
         tickStart = 0L;
@@ -112,12 +112,35 @@ public class CarpetScriptServer
     }
 
 
-    private static ScriptHost createMinecraftScriptHost(String name, ModuleInterface code)
+    private ScriptHost createMinecraftScriptHost(String name, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
     {
-        ScriptHost host = new ScriptHost(name);
+        ScriptHost host = new ScriptHost(name, module, perPlayer );
         host.globalVariables.put("_x", (c, t) -> Value.ZERO);
         host.globalVariables.put("_y", (c, t) -> Value.ZERO);
         host.globalVariables.put("_z", (c, t) -> Value.ZERO);
+        // parse code and convert to expression
+        if (module != null)
+        {
+            try
+            {
+                String code = module.getCode();
+                if (code == null)
+                {
+                    Messenger.m(source, "r Unable to load the package - not found");
+                    return null;
+                }
+                setChatErrorSnooper(source);
+                CarpetExpression ex = new CarpetExpression(code, source, new BlockPos(0, 0, 0));
+                ex.getExpr().asAModule();
+                ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
+            }
+            catch (CarpetExpressionException e)
+            {
+                Messenger.m(source, "r Exception white evaluating expression at " + new BlockPos(source.getPosition()) + ": " + e.getMessage());
+                resetErrorSnooper();
+                return null;
+            }
+        }
         return host;
     }
 
@@ -126,7 +149,12 @@ public class CarpetScriptServer
         //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
         ModuleInterface module = getModule(name);
-        ScriptHost newHost = createMinecraftScriptHost(name, module);
+        ScriptHost newHost = createMinecraftScriptHost(name, module, perPlayer, source);
+        if (newHost == null)
+        {
+            Messenger.m(source, "r Failed to add a module");
+            return false;
+        }
         if (module == null)
         {
             Messenger.m(source, "r Unable to locate the package, but created empty host "+name+" instead");
@@ -134,27 +162,12 @@ public class CarpetScriptServer
             return true;
         }
         String code = module.getCode();
-        if (code == null)
+        if (module.getCode() == null)
         {
             Messenger.m(source, "r Unable to load the package - not found");
             return false;
         }
-        // parse code and convert to expression
-        // fill functions etc.
-        // possibly add a command
-        try
-        {
-            setChatErrorSnooper(source);
-            CarpetExpression ex = new CarpetExpression(module.getCode(), source, new BlockPos(0, 0, 0));
-            ex.getExpr().asAModule();
-            ex.scriptRunCommand(newHost, new BlockPos(source.getPosition()));
-        }
-        catch (CarpetExpressionException e)
-        {
-            Messenger.m(source, "r Exception white evaluating expression at "+new BlockPos(source.getPosition())+": "+e.getMessage());
-            resetErrorSnooper();
-            return false;
-        }
+
         modules.put(name, newHost);
 
         addEvents(source, name);
@@ -206,7 +219,7 @@ public class CarpetScriptServer
                 requires((player) -> modules.containsKey(hostName)).
                 executes( (c) ->
                 {
-                    Messenger.m(c.getSource(), "gi "+modules.get(hostName).call(c.getSource(),"__command", null, ""));
+                    Messenger.m(c.getSource(), "gi "+modules.get(hostName).retrieveForExecution(c.getSource()).call(c.getSource(),"__command", null, ""));
                     return 1;
                 });
 
@@ -218,7 +231,7 @@ public class CarpetScriptServer
                             executes( (c) -> {
                                 Messenger.m(
                                         c.getSource(),
-                                        "gi "+modules.get(hostName).call(
+                                        "gi "+modules.get(hostName).retrieveForExecution(c.getSource()).call(
                                                 c.getSource(),
                                                 function,
                                                 null,
@@ -231,7 +244,7 @@ public class CarpetScriptServer
                                     executes( (c) -> {
                                         Messenger.m(
                                                 c.getSource(),
-                                                "gi "+modules.get(hostName).call(
+                                                "gi "+modules.get(hostName).retrieveForExecution(c.getSource()).call(
                                                         c.getSource(),
                                                         function,
                                                         null,
@@ -304,6 +317,7 @@ public class CarpetScriptServer
             return false;
         }
         // stop all events associated with name
+        events.removeAllHostEvents(name);
         modules.remove(name);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         Messenger.m(source, "w Removed host "+name);
@@ -319,7 +333,7 @@ public class CarpetScriptServer
     {
         ScriptHost host = globalHost;
         if (hostname != null)
-            host = modules.get(hostname);
+            host = modules.get(hostname).retrieveForExecution(source);
         try
         {
             host.callUDF(origin, source, host.globalFunctions.get(udf_name), argv);
