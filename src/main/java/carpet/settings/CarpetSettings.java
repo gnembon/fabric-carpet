@@ -208,7 +208,7 @@ public class CarpetSettings
     @Rule(desc = "Enables /script command", extra = "An in-game scripting API for Scarpet programming language", category = COMMAND)
     public static boolean commandScript = true;
 
-    @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND, validate = Validator.WIP.class)
+    @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static boolean commandPlayer = true;
 
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
