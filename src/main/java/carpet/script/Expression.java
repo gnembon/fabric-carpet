@@ -1892,10 +1892,9 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
-        addBinaryFunction("get", (v1, v2) ->
-        {
-            return v1.getElementAt(v2);
-        });
+        addUnaryFunction("is_list", value -> (value instanceof ListValue)? Value.TRUE : Value.FALSE);
+
+        addBinaryFunction("get", (v1, v2) -> v1.getElementAt(v2));
 
         //Deprecated, use "get" instead
         addBinaryFunction("element", (v1, v2) ->

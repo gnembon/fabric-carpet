@@ -1162,9 +1162,9 @@ public class CarpetExpression
             {
                 Value nbtValue = lv.get(inventoryLocator.offset+3).evalValue(c);
                 if (nbtValue instanceof NBTSerializableValue)
-                    nbt = ((NBTSerializableValue)nbtValue).getTag();
+                    nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
                 else
-                    nbt = new NBTSerializableValue(nbtValue.getString()).getTag();
+                    nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
             ItemStackArgument newitem = NBTSerializableValue.parseItem(
                     lv.get(inventoryLocator.offset+2).evalValue(c).getString(),
@@ -1644,7 +1644,7 @@ public class CarpetExpression
             if (lv.size() > position.offset)
             {
                 hasTag = true;
-                tag = new NBTSerializableValue(lv.get(position.offset).evalValue(c).getString()).getTag();
+                tag = new NBTSerializableValue(lv.get(position.offset).evalValue(c).getString()).getCompoundTag();
             }
             tag.putString("id", entityId.toString());
             Vec3d vec3d = position.vec;

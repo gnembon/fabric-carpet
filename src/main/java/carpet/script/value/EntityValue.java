@@ -330,8 +330,8 @@ public class EntityValue extends Value
                 if (tags.size()==0)
                     return Value.NULL;
                 if (tags.size()==1)
-                    return new NBTSerializableValue((CompoundTag) tags.get(0));
-                return ListValue.wrap(tags.stream().map(t -> new NBTSerializableValue((CompoundTag) t)).collect(Collectors.toList()));
+                    return NBTSerializableValue.decodeTag(tags.get(0));
+                return ListValue.wrap(tags.stream().map(t -> NBTSerializableValue.decodeTag(t)).collect(Collectors.toList()));
             }
             catch (CommandSyntaxException ignored) { }
             return Value.NULL;
