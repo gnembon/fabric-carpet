@@ -498,21 +498,9 @@ public class Expression implements Cloneable
                     Value.assertNotNull(v);
                     return lazyfun.apply(c, t, v);
                 }
-                catch (InternalExpressionException exc)
+                catch (RuntimeException exc)
                 {
-                    throw new ExpressionException(e, token, exc.getMessage());
-                }
-                catch (ArithmeticException exc)
-                {
-                    throw new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
-                }
-                catch (ExitStatement exit)
-                {
-                    throw exit;
-                }
-                catch (Exception exc)
-                {
-                    throw new ExpressionException(e, token, "Error while evaluating expression: "+exc.getMessage());
+                    throw handleCodeException(exc, e, token);
                 }
             }
         });
@@ -532,21 +520,9 @@ public class Expression implements Cloneable
                     Value.assertNotNull(v1, v2);
                     return lazyfun.apply(c, type, e, t, v1, v2);
                 }
-                catch (InternalExpressionException exc) // might not actually throw it
+                catch (RuntimeException exc)
                 {
-                    throw new ExpressionException(e, t, exc.getMessage());
-                }
-                catch (ArithmeticException exc)
-                {
-                    throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
-                }
-                catch (ExitStatement exit)
-                {
-                    throw exit;
-                }
-                catch (Exception exc)
-                {
-                    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                    throw handleCodeException(exc, e, t);
                 }
             }
         });
@@ -565,24 +541,25 @@ public class Expression implements Cloneable
                     Value.assertNotNull(v1, v2);
                     return lazyfun.apply(c, t, v1, v2);
                 }
-                catch (InternalExpressionException exc)
+                catch (RuntimeException exc)
                 {
-                    throw new ExpressionException(e, token, exc.getMessage());
-                }
-                catch (ArithmeticException exc)
-                {
-                    throw new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
-                }
-                catch (ExitStatement exit)
-                {
-                    throw exit;
-                }
-                catch (Exception exc)
-                {
-                    throw new ExpressionException(e, token, "Error while evaluating expression: "+exc.getMessage());
+                    throw handleCodeException(exc, e, token);
                 }
             }
         });
+    }
+
+    private RuntimeException handleCodeException(RuntimeException exc, Expression e, Tokenizer.Token token)
+    {
+        if (exc instanceof ExitStatement)
+            return exc;
+        if (exc instanceof InternalExpressionException)
+            return new ExpressionException(e, token, exc.getMessage());
+        if (exc instanceof ArithmeticException)
+            return new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
+        if (exc instanceof ExpressionException)
+            return exc;
+        return new ExpressionException(e, token, "Error while evaluating expression: "+exc.getMessage());
     }
 
     private void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
@@ -679,21 +656,9 @@ public class Expression implements Cloneable
                 {
                     return fun.apply(c, i, lazyParams);
                 }
-                catch (InternalExpressionException exc)
+                catch (RuntimeException exc)
                 {
-                    throw new ExpressionException(e, t, exc.getMessage());
-                }
-                catch (ArithmeticException exc)
-                {
-                    throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
-                }
-                catch (ExitStatement exit)
-                {
-                    throw exit;
-                }
-                catch (Exception exc)
-                {
-                    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                    throw handleCodeException(exc, e, t);
                 }
             }
         });
@@ -770,7 +735,7 @@ public class Expression implements Cloneable
                 {
                     throw new ExpressionException(function_context, t, "Your math is wrong, "+exc.getMessage());
                 }
-                catch (ExitStatement exit)
+                catch (ExitStatement | ExpressionException exit)
                 {
                     throw exit;
                 }
@@ -1060,7 +1025,7 @@ public class Expression implements Cloneable
                 Value ret = lv.get(lv.size() - 1).evalValue(c);
                 return (cc, tt) -> ret;
             }
-            return (cc, tt) -> Value.ZERO;
+            return (cc, tt) -> Value.NULL;
         });
     }
 
@@ -1892,18 +1857,7 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
-        addBinaryFunction("get", (v1, v2) ->
-        {
-            if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
-                throw new InternalExpressionException("First argument of get should be a list");
-            List<Value> items = ((ListValue)v1).getItems();
-            long index = NumericValue.asNumber(v2).getLong();
-            int numitems = items.size();
-            long range = abs(index)/numitems;
-            index += (range+2)*numitems;
-            index = index % numitems;
-            return items.get((int)index);
-        });
+        addBinaryFunction("get", (v1, v2) -> v1.getElementAt(v2));
 
         //Deprecated, use "get" instead
         addBinaryFunction("element", (v1, v2) ->
@@ -2520,6 +2474,8 @@ public class Expression implements Cloneable
                 throw new InternalExpressionException("Illegal string format: "+ife.getMessage());
             }
         });
+
+        addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
 
         addUnaryFunction("length", v -> new NumericValue(v.length()));
         addLazyFunction("rand", 1, (c, t, lv) -> {

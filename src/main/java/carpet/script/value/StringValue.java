@@ -24,4 +24,10 @@ public class StringValue extends Value
     {
         this.str = str;
     }
+
+    @Override
+    public String getTypeString()
+    {
+        return "number";
+    }
 }

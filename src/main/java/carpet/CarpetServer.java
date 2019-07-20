@@ -11,6 +11,7 @@ import carpet.commands.DistanceCommand;
 import carpet.commands.DrawCommand;
 import carpet.commands.InfoCommand;
 import carpet.commands.LogCommand;
+import carpet.commands.MobAICommand;
 import carpet.commands.PerimeterInfoCommand;
 import carpet.commands.PlayerCommand;
 import carpet.commands.ScriptCommand;
@@ -22,6 +23,7 @@ import carpet.script.CarpetScriptServer;
 import carpet.settings.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.HUDController;
+import carpet.utils.MobAI;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
@@ -59,6 +61,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             e.onServerLoaded(server);
         });
         scriptServer = new CarpetScriptServer();
+        MobAI.resetTrackers();
     }
 
     public static void tick(MinecraftServer server)
@@ -88,6 +91,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         PerimeterInfoCommand.register(dispatcher);
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
+        MobAICommand.register(dispatcher);
         extensions.forEach(e -> e.registerCommands(dispatcher));
         //TestCommand.register(dispatcher);
     }

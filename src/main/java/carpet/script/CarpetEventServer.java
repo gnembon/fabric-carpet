@@ -122,6 +122,11 @@ public class CarpetEventServer
         {
             callList.removeIf((c)->  c.udf.equalsIgnoreCase(callName) && ( hostName == null || c.host.equalsIgnoreCase(hostName) ) );
         }
+
+        public void removeAllCalls(String hostName)
+        {
+            callList.removeIf((c)-> c.host.equals(hostName));
+        }
     }
 
     public Map<String, CallbackList> eventHandlers = new HashMap<>();
@@ -192,6 +197,11 @@ public class CarpetEventServer
         Callback callback= decodeCallback(funName);
         eventHandlers.get(event).removeEventCall(callback.host, callback.udf);
         return true;
+    }
+
+    public void removeAllHostEvents(String hostName)
+    {
+        eventHandlers.forEach((e, a) -> a.removeAllCalls(hostName));
     }
 
     private Callback decodeCallback(String funName)

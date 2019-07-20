@@ -167,4 +167,10 @@ public class NumericValue extends Value
         return getLong();
     }
 
+    @Override
+    public String getTypeString()
+    {
+        return "number";
+    }
+
 }

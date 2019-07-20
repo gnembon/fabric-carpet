@@ -172,4 +172,11 @@ public abstract class Value implements Comparable<Value>, Cloneable
     {
         return (long)readNumber();
     }
+
+    public Value getElementAt(Value v2)
+    {
+        throw new InternalExpressionException("get element can only be obtained for lists and nbt values");
+    }
+
+    public abstract String getTypeString();
 }

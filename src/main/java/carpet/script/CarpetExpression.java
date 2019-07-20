@@ -35,13 +35,17 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
@@ -53,6 +57,8 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -73,6 +79,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -599,7 +606,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("Block requires at least one parameter");
             }
             CompoundTag tag = BlockValue.fromParams(cc, lv, 0, true).block.getData();
-            if (tag.isEmpty())
+            if (tag == null)
                 return (c_, t_) -> Value.NULL;
             Value retval = new NBTSerializableValue(tag);
             return (c_, t_) -> retval;
@@ -672,7 +679,6 @@ public class CarpetExpression
         this.expr.addLazyFunction("blast_resistance", -1, (c, t, lv) ->
                 genericStateTest(c, "blast_resistance", lv, (s, p, w) -> new NumericValue(s.getBlock().getBlastResistance())));
 
-        // Deprecated
         this.expr.addLazyFunction("top", -1, (c, t, lv) ->
         {
             String type = lv.get(0).evalValue(c).getString().toLowerCase(Locale.ROOT);
@@ -686,20 +692,10 @@ public class CarpetExpression
                 case "surface": htype = Heightmap.Type.WORLD_SURFACE; break;
                 default: throw new InternalExpressionException("Unknown heightmap type: "+type);
             }
-            int x;
-            int z;
-            Value v1 = lv.get(1).evalValue(c);
-            if (v1 instanceof BlockValue)
-            {
-                BlockPos inpos = ((BlockValue)v1).getPos();
-                x = inpos.getX();
-                z = inpos.getZ();
-            }
-            else
-            {
-                x = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-                z = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
-            }
+            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 1);
+            BlockPos pos = locator.block.getPos();
+            int x = pos.getX();
+            int z = pos.getZ();
             Value retval = new NumericValue(((CarpetContext)c).s.getWorld().getChunk(x >> 4, z >> 4).sampleHeightmap(htype, x & 15, z & 15) + 1);
             return (c_, t_) -> retval;
             //BlockPos pos = new BlockPos(x,y,z);
@@ -783,7 +779,8 @@ public class CarpetExpression
                 return (c_, t_) -> Value.FALSE;
             CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
             BlockPos targetPos = targetLocator.block.getPos();
-            cc.s.getWorld().setBlockState(targetPos, sourceBlockState, 2);
+            Clearable.clear(world.getBlockEntity(targetPos));
+            world.setBlockState(targetPos, sourceBlockState, 2);
 
             if ( data != null)
             {
@@ -935,32 +932,27 @@ public class CarpetExpression
         {
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
+            if (lv.size() <= locator.offset)
+                throw new InternalExpressionException("property requires to specify a property to query");
             String tag = lv.get(locator.offset).evalValue(c).getString();
             StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
             Property<?> property = states.getProperty(tag);
             if (property == null)
                 return LazyValue.NULL;
-            Value retval = new StringValue(state.get(property).toString());
+            Value retval = new StringValue(state.get(property).toString().toLowerCase(Locale.ROOT));
             return (_c, _t) -> retval;
         });
 
-        /*this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
-            Value entityValue = lv.get(0).evalValue(c);
-            if (!(entityValue instanceof EntityValue))
-                throw new InternalExpressionException("First argument of trace_block should be an entity");
-            Entity e = ((EntityValue) entityValue).getEntity();
-            HitResult hitres = Tracer.traceEntityLook(e, 20);
-            switch (hitres.getType())
-            {
-                case MISS:
-                    return (_c, _t) -> Value.NULL;
-                case BLOCK:
-                    return (_c, _t) -> new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
-                case ENTITY:
-                    return (_c, _t) -> new EntityValue(((EntityHitResult)hitres).getEntity());
-            }
-            return LazyValue.NULL;
-        });*/
+        this.expr.addLazyFunction("block_properties", -1, (c, t, lv) ->
+        {
+            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
+            BlockState state = locator.block.getBlockState();
+            StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
+            Value res = ListValue.wrap(states.getProperties().stream().map(
+                    p -> new StringValue(p.getName())).collect(Collectors.toList())
+            );
+            return (_c, _t) -> res;
+        });
 
         this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
@@ -1141,9 +1133,9 @@ public class CarpetExpression
             {
                 Value nbtValue = lv.get(inventoryLocator.offset+3).evalValue(c);
                 if (nbtValue instanceof NBTSerializableValue)
-                    nbt = ((NBTSerializableValue)nbtValue).getTag();
+                    nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
                 else
-                    nbt = new NBTSerializableValue(nbtValue.getString()).getTag();
+                    nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
             ItemStackArgument newitem = NBTSerializableValue.parseItem(
                     lv.get(inventoryLocator.offset+2).evalValue(c).getString(),
@@ -1597,6 +1589,60 @@ public class CarpetExpression
             return (cc, tt) -> finalVar;
         });
 
+        this.expr.addLazyFunction("spawn", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 2)
+                throw new InternalExpressionException("spawn function takes mob name, and position to spawn");
+            String entityString = lv.get(0).evalValue(c).getString();
+            Identifier entityId;
+            try
+            {
+                entityId = Identifier.fromCommandInput(new StringReader(entityString));
+                EntityType type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
+                if (type == null || !type.isSummonable())
+                    return LazyValue.NULL;
+            }
+            catch (CommandSyntaxException exception)
+            {
+                 return LazyValue.NULL;
+            }
+
+            BlockValue.VectorLocator position = BlockValue.locateVec(cc, lv, 1);
+            if (position.fromBlock)
+                position.vec = position.vec.subtract(0, 0.5, 0);
+            CompoundTag tag = new CompoundTag();
+            boolean hasTag = false;
+            if (lv.size() > position.offset)
+            {
+                hasTag = true;
+                tag = new NBTSerializableValue(lv.get(position.offset).evalValue(c).getString()).getCompoundTag();
+            }
+            tag.putString("id", entityId.toString());
+            Vec3d vec3d = position.vec;
+
+            if (EntityType.getId(EntityType.LIGHTNING_BOLT).equals(entityId)) {
+                LightningEntity lightningEntity_1 = new LightningEntity(cc.s.getWorld(), vec3d.x, vec3d.y, vec3d.z, false);
+                cc.s.getWorld().addLightning(lightningEntity_1);
+                cc.s.sendFeedback(new TranslatableText("commands.summon.success", lightningEntity_1.getDisplayName()), true);
+                return LazyValue.NULL;
+            } else {
+                ServerWorld serverWorld = cc.s.getWorld();
+                Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
+                    entity_1x.setPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
+                    return !serverWorld.method_18768(entity_1x) ? null : entity_1x;
+                });
+                if (entity_1 == null) {
+                    return LazyValue.NULL;
+                } else {
+                    if (!hasTag && entity_1 instanceof MobEntity) {
+                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(new BlockPos(entity_1)), SpawnType.COMMAND, null, null);
+                    }
+                    Value res = new EntityValue(entity_1);
+                    return (_c, _t) -> res;
+                }
+            }
+        });
+
         this.expr.addLazyFunction("entity_id", 1, (c, t, lv) ->
         {
             Value who = lv.get(0).evalValue(c);
@@ -1660,7 +1706,6 @@ public class CarpetExpression
             }
             return (c_, t_) -> ListValue.wrap(retlist);
         });
-
 
         this.expr.addLazyFunction("query", -1, (c, t, lv) -> {
             if (lv.size()<2)
@@ -2441,15 +2486,16 @@ public class CarpetExpression
         this.expr.addLazyFunction("print", 1, (c, t, lv) ->
         {
             ServerCommandSource s = ((CarpetContext)c).s;
+            Value res = lv.get(0).evalValue(c);
             if (s.getEntity() instanceof  PlayerEntity)
             {
-                Messenger.m((PlayerEntity) s.getEntity(), "w "+ lv.get(0).evalValue(c).getString());
+                Messenger.m((PlayerEntity) s.getEntity(), "w "+ res.getString());
             }
             else
             {
-                Messenger.m(s, "w "+ lv.get(0).evalValue(c).getString());
+                Messenger.m(s, "w "+ res.getString());
             }
-            return lv.get(0); // pass through for variables
+            return (_c, _t) -> res; // pass through for variables
         });
 
 

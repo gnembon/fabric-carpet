@@ -8,24 +8,28 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ItemStringReader;
+import net.minecraft.command.arguments.NbtPathArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringNbtReader;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class NBTSerializableValue extends Value
 {
     private String nbtString = null;
-    private CompoundTag nbtTag = null;
+    private Tag nbtTag = null;
     private Supplier<CompoundTag> nbtSupplier = null;
 
     public NBTSerializableValue(ItemStack stack)
@@ -48,7 +52,7 @@ public class NBTSerializableValue extends Value
         };
     }
 
-    public NBTSerializableValue(CompoundTag tag)
+    public NBTSerializableValue(Tag tag)
     {
         nbtTag = tag;
     }
@@ -152,7 +156,17 @@ public class NBTSerializableValue extends Value
         return slot;
     }
 
-    public CompoundTag getTag()
+    public static Value decodeTag(Tag t)
+    {
+        if (t instanceof CompoundTag)
+            return new NBTSerializableValue(t);
+        if (t instanceof AbstractNumberTag)
+            return new NumericValue(((AbstractNumberTag) t).getDouble());
+        // more can be done here
+        return new StringValue(t.asString());
+    }
+
+    public Tag getTag()
     {
         if (nbtTag == null)
             nbtTag = nbtSupplier.get();
@@ -181,6 +195,18 @@ public class NBTSerializableValue extends Value
         return true;
     }
 
+    public CompoundTag getCompoundTag()
+    {
+        try
+        {
+            return (CompoundTag) getTag();
+        }
+        catch (ClassCastException e)
+        {
+            throw new InternalExpressionException(getString()+" is not a valid compound tag");
+        }
+    }
+
     public static class InventoryLocator
     {
         public Object owner;
@@ -194,5 +220,48 @@ public class NBTSerializableValue extends Value
             inventory = i;
             offset = o;
         }
+    }
+
+    private static Map<String, NbtPathArgumentType.NbtPath> pathCache = new HashMap<>();
+    public static NbtPathArgumentType.NbtPath cachePath(String arg)
+    {
+        NbtPathArgumentType.NbtPath res = pathCache.get(arg);
+        if (res != null)
+            return res;
+        try
+        {
+            res = NbtPathArgumentType.nbtPath().method_9362(new StringReader(arg));
+        }
+        catch (CommandSyntaxException exc)
+        {
+            throw new InternalExpressionException("Incorrect nbt path: "+arg);
+        }
+        if (pathCache.size() > 1024)
+            pathCache.clear();
+        pathCache.put(arg, res);
+        return res;
+    }
+
+    @Override
+    public Value getElementAt(Value value)
+    {
+        NbtPathArgumentType.NbtPath path = cachePath(value.getString());
+        try
+        {
+            List<Tag> tags = path.get(getTag());
+            if (tags.size()==0)
+                return Value.NULL;
+            if (tags.size()==1)
+                return NBTSerializableValue.decodeTag(tags.get(0));
+            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
+        }
+        catch (CommandSyntaxException ignored) { }
+        return Value.NULL;
+    }
+
+    @Override
+    public String getTypeString()
+    {
+        return "nbt";
     }
 }

@@ -1,9 +1,11 @@
 package carpet.script.value;
 
 import carpet.fakes.MobEntityInterface;
+import carpet.helpers.Tracer;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.client.network.packet.EntityPositionS2CPacket;
 import net.minecraft.client.network.packet.EntityVelocityUpdateS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
@@ -26,8 +28,12 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -120,6 +126,12 @@ public class EntityValue extends Value
         }
         String what = v.getString();
         return this.get(what, null);
+    }
+
+    @Override
+    public String getTypeString()
+    {
+        return "entity";
     }
 
     public static Pair<EntityType<?>, Predicate<? super Entity>> getPredicate(String who)
@@ -308,31 +320,76 @@ public class EntityValue extends Value
             return new StringValue(Direction.getEntityFacingOrder(e)[index].asString());
         });
 
+        put("trace", (e, a) ->
+        {
+            float reach = 4.5f;
+            boolean entities = true;
+            boolean liquids = false;
+
+            if (a!=null)
+            {
+                if (!(a instanceof ListValue))
+                {
+                    reach = (float) NumericValue.asNumber(a).getDouble();
+                }
+                else
+                {
+                    List<Value> args = ((ListValue) a).getItems();
+                    if (args.size()==0)
+                        throw new InternalExpressionException("trace needs more arguments");
+                    reach = (float) NumericValue.asNumber(args.get(0)).getDouble();
+                    if (args.size() > 1)
+                    {
+                        entities = false;
+                        for (int i = 1; i < args.size(); i++)
+                        {
+                            String what = args.get(i).getString();
+                            if (what.equalsIgnoreCase("entities"))
+                                entities = true;
+                            else if (what.equalsIgnoreCase("blocks")) {}
+                            else if (what.equalsIgnoreCase("liquids"))
+                                liquids = true;
+                            else throw new InternalExpressionException("Incorrect tracing: "+what);
+                        }
+                    }
+                }
+            }
+            else if (e instanceof ServerPlayerEntity && ((ServerPlayerEntity) e).interactionManager.isCreative())
+            {
+                reach = 5.0f;
+            }
+
+            HitResult hitres;
+            if (entities)
+                hitres = Tracer.rayTrace(e, 1, reach, liquids);
+            else
+                hitres = Tracer.rayTraceBlocks(e, 1, reach, liquids);
+
+            switch (hitres.getType())
+            {
+                case MISS: return Value.NULL;
+                case BLOCK: return new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case ENTITY: return new EntityValue(((EntityHitResult)hitres).getEntity());
+            }
+            return Value.NULL;
+        });
+
         put("nbt",(e, a) -> {
             CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
             if (a==null)
-                return new StringValue(nbttagcompound.toString());
-            NbtPathArgumentType.NbtPath path;
-            try
-            {
-                path = NbtPathArgumentType.nbtPath().method_9362(new StringReader(a.getString()));
-            }
-            catch (CommandSyntaxException exc)
-            {
-                throw new InternalExpressionException("Incorrect path: "+a.getString());
-            }
-            String res = null;
+                return new NBTSerializableValue(nbttagcompound);//StringValue(nbttagcompound.toString());
+            NbtPathArgumentType.NbtPath path = NBTSerializableValue.cachePath(a.getString());
             try
             {
                 List<Tag> tags = path.get(nbttagcompound);
                 if (tags.size()==0)
                     return Value.NULL;
                 if (tags.size()==1)
-                    return new StringValue(tags.get(0).toText().getString());
-                return ListValue.wrap(tags.stream().map((t) -> new StringValue(t.toText().getString())).collect(Collectors.toList()));
+                    return NBTSerializableValue.decodeTag(tags.get(0));
+                return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
             }
             catch (CommandSyntaxException ignored) { }
-            return new StringValue(res);
+            return Value.NULL;
         });
     }};
     private static <Req extends Entity> Req assertEntityArgType(Class<Req> klass, Value arg)
@@ -356,6 +413,21 @@ public class EntityValue extends Value
         featureModifiers.get(what).accept(entity, toWhat);
     }
 
+    private static void updatePosition(Entity e)
+    {
+        if (e instanceof ServerPlayerEntity)
+            ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+        else
+            ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e,new EntityPositionS2CPacket(e));
+    }
+
+    private static void updateVelocity(Entity e)
+    {
+        ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
+    }
+
+
+
     private static Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.remove());
         put("health", (e, v) -> { if (e instanceof LivingEntity) ((LivingEntity) e).setHealth((float) NumericValue.asNumber(v).getDouble()); });
@@ -375,8 +447,7 @@ public class EntityValue extends Value
             e.yaw = (float) NumericValue.asNumber(coords.get(3)).getDouble();
             e.prevYaw = e.yaw;
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("pos", (e, v) ->
         {
@@ -389,43 +460,37 @@ public class EntityValue extends Value
             e.y = NumericValue.asNumber(coords.get(1)).getDouble();
             e.z = NumericValue.asNumber(coords.get(2)).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("x", (e, v) ->
         {
             e.x = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("y", (e, v) ->
         {
             e.y = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("z", (e, v) ->
         {
             e.z = NumericValue.asNumber(v).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("pitch", (e, v) ->
         {
             e.pitch = (float) NumericValue.asNumber(v).getDouble();
             e.prevPitch = e.pitch;
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         put("yaw", (e, v) ->
         {
             e.yaw = (float) NumericValue.asNumber(v).getDouble();
             e.prevYaw = e.yaw;
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
         //"look"
         //"turn"
@@ -442,8 +507,7 @@ public class EntityValue extends Value
             e.y += NumericValue.asNumber(coords.get(1)).getDouble();
             e.z += NumericValue.asNumber(coords.get(2)).getDouble();
             e.setPosition(e.x, e.y, e.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.y, e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e);
         });
 
         put("motion", (e, v) ->
@@ -458,29 +522,25 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
         put("motion_x", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
             e.setVelocity(NumericValue.asNumber(v).getDouble(), velocity.y, velocity.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
         put("motion_y", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
             e.setVelocity(velocity.x, NumericValue.asNumber(v).getDouble(), velocity.z);
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
         put("motion_z", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
             e.setVelocity(velocity.x, velocity.y, NumericValue.asNumber(v).getDouble());
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
         });
 
         put("accelerate", (e, v) ->
@@ -495,14 +555,17 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            if (e instanceof ServerPlayerEntity)
-                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(e));
+            updateVelocity(e);
 
         });
         put("custom_name", (e, v) -> {
-            String name = v.getString();
-            if (name.isEmpty())
+            if (v instanceof NullValue)
+            {
+                e.setCustomNameVisible(false);
                 e.setCustomName(null);
+                return;
+            }
+            e.setCustomNameVisible(true);
             e.setCustomName(new LiteralText(v.getString()));
         });
         put("dismount", (e, v) -> e.stopRiding() );

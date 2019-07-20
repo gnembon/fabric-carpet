@@ -106,4 +106,15 @@ public abstract class LazyListValue extends ListValue implements Iterator<Value>
         return false;
     }
 
+    @Override
+    public Value getElementAt(Value v2)
+    {
+        throw new InternalExpressionException("get element can only be obtained for regular lists");
+    }
+    @Override
+    public String getTypeString()
+    {
+        return "iterator";
+    }
+
 }
