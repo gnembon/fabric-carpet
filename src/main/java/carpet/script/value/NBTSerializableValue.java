@@ -257,12 +257,6 @@ public class NBTSerializableValue extends Value
         }
         catch (CommandSyntaxException ignored) { }
         return Value.NULL;
-
-        /*int numitems = items.size();
-        long range = abs(index)/numitems;
-        index += (range+2)*numitems;
-        index = index % numitems;
-        return items.get((int)index); */
     }
 
     @Override
