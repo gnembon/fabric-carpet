@@ -211,7 +211,7 @@ public class ScriptCommand
                             boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), true);
                             return success?1:0;
                         }).
-                        then(literal("global").
+                        then(literal("shared").
                                 executes((cc) ->
                                 {
                                     boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), false);

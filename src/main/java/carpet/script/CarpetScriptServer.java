@@ -56,24 +56,22 @@ public class CarpetScriptServer
 
     ModuleInterface getModule(String name)
     {
+        File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
+                CarpetServer.minecraft_server.getLevelName(), "scripts");
+        File[] listOfFiles = folder.listFiles();
+        if (listOfFiles != null)
+            for (File script : listOfFiles)
+            {
+                if (script.getName().equalsIgnoreCase(name+".sc"))
+                {
+                    return new FileModule(script);
+                }
+            }
         for (ModuleInterface moduleData : bundledModuleData)
         {
             if (moduleData.getName().equalsIgnoreCase(name))
             {
                 return moduleData;
-            }
-        }
-
-        File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
-                CarpetServer.minecraft_server.getLevelName(), "scripts");
-        File[] listOfFiles = folder.listFiles();
-        if (listOfFiles == null)
-            return null;
-        for (File script : listOfFiles)
-        {
-            if (script.getName().equalsIgnoreCase(name+".sc"))
-            {
-                return new FileModule(script);
             }
         }
         return null;
@@ -84,8 +82,7 @@ public class CarpetScriptServer
         List<String> moduleNames = new ArrayList<>();
         for (ModuleInterface mi: bundledModuleData)
         {
-            if (!modules.containsKey(mi.getName()))
-                moduleNames.add(mi.getName());
+            moduleNames.add(mi.getName());
         }
         File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts");
@@ -97,8 +94,7 @@ public class CarpetScriptServer
             if (script.getName().endsWith(".sc"))
             {
                 String name = script.getName().replaceFirst("\\.sc","").toLowerCase(Locale.ROOT);
-                if (!modules.containsKey(name))
-                    moduleNames.add(name);
+                moduleNames.add(name);
             }
         }
         return moduleNames;
