@@ -242,6 +242,12 @@ public class BlockValue extends Value
     }
 
     @Override
+    public String getTypeString()
+    {
+        return "block";
+    }
+
+    @Override
     public Value clone()
     {
         return new BlockValue(blockState, world, pos);

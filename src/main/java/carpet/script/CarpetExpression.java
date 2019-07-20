@@ -679,7 +679,6 @@ public class CarpetExpression
         this.expr.addLazyFunction("blast_resistance", -1, (c, t, lv) ->
                 genericStateTest(c, "blast_resistance", lv, (s, p, w) -> new NumericValue(s.getBlock().getBlastResistance())));
 
-        // Deprecated
         this.expr.addLazyFunction("top", -1, (c, t, lv) ->
         {
             String type = lv.get(0).evalValue(c).getString().toLowerCase(Locale.ROOT);
@@ -693,20 +692,10 @@ public class CarpetExpression
                 case "surface": htype = Heightmap.Type.WORLD_SURFACE; break;
                 default: throw new InternalExpressionException("Unknown heightmap type: "+type);
             }
-            int x;
-            int z;
-            Value v1 = lv.get(1).evalValue(c);
-            if (v1 instanceof BlockValue)
-            {
-                BlockPos inpos = ((BlockValue)v1).getPos();
-                x = inpos.getX();
-                z = inpos.getZ();
-            }
-            else
-            {
-                x = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-                z = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
-            }
+            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 1);
+            BlockPos pos = locator.block.getPos();
+            int x = pos.getX();
+            int z = pos.getZ();
             Value retval = new NumericValue(((CarpetContext)c).s.getWorld().getChunk(x >> 4, z >> 4).sampleHeightmap(htype, x & 15, z & 15) + 1);
             return (c_, t_) -> retval;
             //BlockPos pos = new BlockPos(x,y,z);
@@ -964,24 +953,6 @@ public class CarpetExpression
             );
             return (_c, _t) -> res;
         });
-
-        /*this.expr.addLazyFunction("trace_block", -1, (c, t, lv) -> {
-            Value entityValue = lv.get(0).evalValue(c);
-            if (!(entityValue instanceof EntityValue))
-                throw new InternalExpressionException("First argument of trace_block should be an entity");
-            Entity e = ((EntityValue) entityValue).getEntity();
-            HitResult hitres = Tracer.traceEntityLook(e, 20);
-            switch (hitres.getType())
-            {
-                case MISS:
-                    return (_c, _t) -> Value.NULL;
-                case BLOCK:
-                    return (_c, _t) -> new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
-                case ENTITY:
-                    return (_c, _t) -> new EntityValue(((EntityHitResult)hitres).getEntity());
-            }
-            return LazyValue.NULL;
-        });*/
 
         this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
@@ -1735,7 +1706,6 @@ public class CarpetExpression
             }
             return (c_, t_) -> ListValue.wrap(retlist);
         });
-
 
         this.expr.addLazyFunction("query", -1, (c, t, lv) -> {
             if (lv.size()<2)
@@ -2516,15 +2486,16 @@ public class CarpetExpression
         this.expr.addLazyFunction("print", 1, (c, t, lv) ->
         {
             ServerCommandSource s = ((CarpetContext)c).s;
+            Value res = lv.get(0).evalValue(c);
             if (s.getEntity() instanceof  PlayerEntity)
             {
-                Messenger.m((PlayerEntity) s.getEntity(), "w "+ lv.get(0).evalValue(c).getString());
+                Messenger.m((PlayerEntity) s.getEntity(), "w "+ res.getString());
             }
             else
             {
-                Messenger.m(s, "w "+ lv.get(0).evalValue(c).getString());
+                Messenger.m(s, "w "+ res.getString());
             }
-            return lv.get(0); // pass through for variables
+            return (_c, _t) -> res; // pass through for variables
         });
 
 

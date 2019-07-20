@@ -1,6 +1,7 @@
 package carpet.script.value;
 
 import carpet.fakes.MobEntityInterface;
+import carpet.helpers.Tracer;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -30,6 +31,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -122,6 +126,12 @@ public class EntityValue extends Value
         }
         String what = v.getString();
         return this.get(what, null);
+    }
+
+    @Override
+    public String getTypeString()
+    {
+        return "entity";
     }
 
     public static Pair<EntityType<?>, Predicate<? super Entity>> getPredicate(String who)
@@ -310,20 +320,65 @@ public class EntityValue extends Value
             return new StringValue(Direction.getEntityFacingOrder(e)[index].asString());
         });
 
+        put("trace", (e, a) ->
+        {
+            float reach = 4.5f;
+            boolean entities = true;
+            boolean liquids = false;
+
+            if (a!=null)
+            {
+                if (!(a instanceof ListValue))
+                {
+                    reach = (float) NumericValue.asNumber(a).getDouble();
+                }
+                else
+                {
+                    List<Value> args = ((ListValue) a).getItems();
+                    if (args.size()==0)
+                        throw new InternalExpressionException("trace needs more arguments");
+                    reach = (float) NumericValue.asNumber(args.get(0)).getDouble();
+                    if (args.size() > 1)
+                    {
+                        entities = false;
+                        for (int i = 1; i < args.size(); i++)
+                        {
+                            String what = args.get(i).getString();
+                            if (what.equalsIgnoreCase("entities"))
+                                entities = true;
+                            else if (what.equalsIgnoreCase("blocks")) {}
+                            else if (what.equalsIgnoreCase("liquids"))
+                                liquids = true;
+                            else throw new InternalExpressionException("Incorrect tracing: "+what);
+                        }
+                    }
+                }
+            }
+            else if (e instanceof ServerPlayerEntity && ((ServerPlayerEntity) e).interactionManager.isCreative())
+            {
+                reach = 5.0f;
+            }
+
+            HitResult hitres;
+            if (entities)
+                hitres = Tracer.rayTrace(e, 1, reach, liquids);
+            else
+                hitres = Tracer.rayTraceBlocks(e, 1, reach, liquids);
+
+            switch (hitres.getType())
+            {
+                case MISS: return Value.NULL;
+                case BLOCK: return new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case ENTITY: return new EntityValue(((EntityHitResult)hitres).getEntity());
+            }
+            return Value.NULL;
+        });
+
         put("nbt",(e, a) -> {
             CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
             if (a==null)
                 return new NBTSerializableValue(nbttagcompound);//StringValue(nbttagcompound.toString());
-            NbtPathArgumentType.NbtPath path;
-            try
-            {
-                path = NbtPathArgumentType.nbtPath().method_9362(new StringReader(a.getString()));
-            }
-            catch (CommandSyntaxException exc)
-            {
-                throw new InternalExpressionException("Incorrect path: "+a.getString());
-            }
-            String res = null;
+            NbtPathArgumentType.NbtPath path = NBTSerializableValue.cachePath(a.getString());
             try
             {
                 List<Tag> tags = path.get(nbttagcompound);
@@ -331,7 +386,7 @@ public class EntityValue extends Value
                     return Value.NULL;
                 if (tags.size()==1)
                     return NBTSerializableValue.decodeTag(tags.get(0));
-                return ListValue.wrap(tags.stream().map(t -> NBTSerializableValue.decodeTag(t)).collect(Collectors.toList()));
+                return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
             }
             catch (CommandSyntaxException ignored) { }
             return Value.NULL;
@@ -504,9 +559,13 @@ public class EntityValue extends Value
 
         });
         put("custom_name", (e, v) -> {
-            String name = v.getString();
-            if (name.isEmpty())
+            if (v instanceof NullValue)
+            {
+                e.setCustomNameVisible(false);
                 e.setCustomName(null);
+                return;
+            }
+            e.setCustomNameVisible(true);
             e.setCustomName(new LiteralText(v.getString()));
         });
         put("dismount", (e, v) -> e.stopRiding() );

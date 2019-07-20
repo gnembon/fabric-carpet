@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static java.lang.Math.abs;
-
 public class NBTSerializableValue extends Value
 {
     private String nbtString = null;
@@ -224,31 +222,38 @@ public class NBTSerializableValue extends Value
         }
     }
 
-    @Override
-    public Value getElementAt(Value value)
+    private static Map<String, NbtPathArgumentType.NbtPath> pathCache = new HashMap<>();
+    public static NbtPathArgumentType.NbtPath cachePath(String arg)
     {
-        String pathString = value.getString();
-
-        //return Value.NULL;
-
-        NbtPathArgumentType.NbtPath path;
+        NbtPathArgumentType.NbtPath res = pathCache.get(arg);
+        if (res != null)
+            return res;
         try
         {
-            path = NbtPathArgumentType.nbtPath().method_9362(new StringReader(pathString));
+            res = NbtPathArgumentType.nbtPath().method_9362(new StringReader(arg));
         }
         catch (CommandSyntaxException exc)
         {
-            throw new InternalExpressionException("Incorrect nbt path: "+pathString);
+            throw new InternalExpressionException("Incorrect nbt path: "+arg);
         }
-        String res = null;
+        if (pathCache.size() > 1024)
+            pathCache.clear();
+        pathCache.put(arg, res);
+        return res;
+    }
+
+    @Override
+    public Value getElementAt(Value value)
+    {
+        NbtPathArgumentType.NbtPath path = cachePath(value.getString());
         try
         {
             List<Tag> tags = path.get(getTag());
             if (tags.size()==0)
                 return Value.NULL;
             if (tags.size()==1)
-                return new NBTSerializableValue(tags.get(0));
-            return ListValue.wrap(tags.stream().map(NBTSerializableValue::new).collect(Collectors.toList()));
+                return NBTSerializableValue.decodeTag(tags.get(0));
+            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
         }
         catch (CommandSyntaxException ignored) { }
         return Value.NULL;
@@ -258,5 +263,11 @@ public class NBTSerializableValue extends Value
         index += (range+2)*numitems;
         index = index % numitems;
         return items.get((int)index); */
+    }
+
+    @Override
+    public String getTypeString()
+    {
+        return "nbt";
     }
 }

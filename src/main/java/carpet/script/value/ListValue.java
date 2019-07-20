@@ -326,6 +326,11 @@ public class ListValue extends Value
         index = index % numitems;
         return items.get((int)index);
     }
+    @Override
+    public String getTypeString()
+    {
+        return "list";
+    }
 
 
 

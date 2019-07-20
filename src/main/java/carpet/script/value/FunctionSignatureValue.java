@@ -1,7 +1,7 @@
 package carpet.script.value;
 
 import carpet.script.exception.ExpressionException;
-import carpet.script.value.Value;
+import carpet.script.exception.InternalExpressionException;
 
 import java.util.List;
 
@@ -21,6 +21,12 @@ public class FunctionSignatureValue extends Value
     public boolean getBoolean()
     {
         throw new ExpressionException("Function "+identifier+" is not defined yet");
+    }
+
+    @Override
+    public String getTypeString()
+    {
+        throw new InternalExpressionException("How did you get here? Cannot get type of an internal struct.");
     }
 
     @Override

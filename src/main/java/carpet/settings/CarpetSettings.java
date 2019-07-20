@@ -211,6 +211,9 @@ public class CarpetSettings
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static boolean commandPlayer = true;
 
+    @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND)
+    public static boolean commandTrackAI = true;
+
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
     public static boolean carpets = false;
 

@@ -38,4 +38,10 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         return  o instanceof NullValue ? 0 : -1;
     }
+
+    @Override
+    public String getTypeString()
+    {
+        return "null";
+    }
 }

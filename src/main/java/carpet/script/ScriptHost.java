@@ -73,12 +73,10 @@ public class ScriptHost
         try
         {
             ServerPlayerEntity player = source.getPlayer();
-            CarpetSettings.LOG.error("Retrieving "+player.getName().getString()+" host for "+getName());
             return retrieveForExecution(player.getName().getString());
         }
         catch (CommandSyntaxException e)
         {
-            CarpetSettings.LOG.error("Retrieving global host for "+getName());
             return retrieveForExecution((String)null);
         }
     }

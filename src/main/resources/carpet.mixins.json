@@ -27,6 +27,8 @@
     "ServerWorld_unloadedEntityMixin",
     "MobEntity_leashMixin",
 
+    "VillagerEntity_aiMixin",
+
     "ServerWorld_fakePlayersMixin",
 
     "ServerPlayNetworkHandler_coreMixin",
