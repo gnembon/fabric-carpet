@@ -193,6 +193,10 @@ public class EntityValue extends Value
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
         put("yaw", (e, a)-> new NumericValue(e.yaw));
         put("pitch", (e, a)-> new NumericValue(e.pitch));
+        put("look", (e, a) -> {
+            Vec3d look = e.getRotationVector();
+            return ListValue.of(new NumericValue(look.x),new NumericValue(look.y),new NumericValue(look.z));
+        });
         put("is_burning", (e, a) -> new NumericValue(e.isOnFire()));
         //put("fire", (e, a) -> new NumericValue(e.getFire())); needs mixing
         put("silent", (e, a)-> new NumericValue(e.isSilent()));

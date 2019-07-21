@@ -64,7 +64,7 @@ import static java.lang.Math.min;
  * repository</a></p>
  *
  * <p>This specification is divided into two sections: this one is agnostic
- * to any Minecraft related features and could function on its own, and {@see carpet.script.CarpetExpression} for
+ * to any Minecraft related features and could function on its own, and CarpetExpression for
  * Minecraft specific routines and world manipulation functions.</p>
  *
  * <h1>Synopsis</h1>
@@ -75,7 +75,7 @@ import static java.lang.Math.min;
  * <p>or an overly complex example:</p>
  * <pre>
  * /script run
- *     block_check(x1, y1, z1, x2, y2, z2, block_to_check) ->
+ *     block_check(x1, y1, z1, x2, y2, z2, block_to_check) -&gt;
  *     (
  *         l(minx, maxx) = sort(l(x1, x2));
  *         l(miny, maxy) = sort(l(y1, y2));
@@ -100,7 +100,7 @@ import static java.lang.Math.min;
  *         );
  *         total_count
  *     );
- *     check_area_around_closest_player_for_block(block_to_check) ->
+ *     check_area_around_closest_player_for_block(block_to_check) -&gt;
  *     (
  *         closest_player = player();
  *         l(posx, posy, posz) = query(closest_player, 'pos');
@@ -1638,15 +1638,19 @@ public class Expression implements Cloneable
      *     range(20, 10, -2)  =&gt; [20, 18, 16, 14, 12]
      * </pre>
      *
-     * <h3><code>get(list, index), element(list, index)(deprecated)</code></h3>
-     * <p>Returns the value at <code>index</code> element from the <code>list</code>.
-     * use negative numbers to reach elements from the end of the list. <code>get</code>
+     * <h3><code>get(value, address), element(value, address)(deprecated)</code></h3>
+     * <p>Returns the value at <code>address</code> element from the <code>value</code>.
+     * For lists it indicates an index, use negative numbers to reach elements from the end of the list. <code>get</code>
      * call will always be able to find the index. In case there is few items, it will loop over </p>
+     * <p>[Minecraft specific usecase]: In case <code>value</code> is of <code>nbt</code> type, uses addess as the nbt path to query,
+     * returning null, if path is not found, one value if there was one match, or list of values if result is a list.
+     * Returned elements can be of numerical type, string texts, or another compound nbt tags</p>
      * <pre>
      *     get(l(range(10)), 5)  =&gt; 5
      *     get(l(range(10)), -1)  =&gt; 9
      *     get(l(range(10)), 10)  =&gt; 0
      *     get(l(range(10)), 93)  =&gt; 3
+     *     get(player() ~ 'nbt', 'Health') =&gt; 20 // inefficient way to get player health
      * </pre>
      *
      * <h3><code>put(list, index, values ...), put(list, null, values ...)</code></h3>
@@ -2220,6 +2224,10 @@ public class Expression implements Cloneable
      * <h1>System functions</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <h2>Type conversion functions</h2>
+     * <h3><code>type(expr)</code></h3>
+     * <p>Returns the string value indicating type of the expression. Possible outcomes are
+     * <code>null, number, string, list, iterator</code>, as well as minecraft related concepts like
+     * <code>block, entity, nbt</code></p>
      * <h3><code>bool(expr)</code></h3>
      * <p>Returns a boolean context of the expression. Note that there are no true/false values in
      * scarpet. <code>true</code> is alias of 1, and <code>false</code> is 0. Bool is also interpreting
