@@ -23,9 +23,14 @@ import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.block.BarrierBlock;
+import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockPlacementEnvironment;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.CommandBlock;
+import net.minecraft.block.JigsawBlock;
+import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
@@ -849,21 +854,42 @@ public class CarpetExpression
             if (!(entityValue instanceof EntityValue))
                 return (c_, t_) -> Value.FALSE;
             Entity e = ((EntityValue) entityValue).getEntity();
-            if (!(e instanceof PlayerEntity))
+            if (!(e instanceof ServerPlayerEntity))
                 return (c_, t_) -> Value.FALSE;
-            PlayerEntity player = (PlayerEntity)e;
+            ServerPlayerEntity player = (ServerPlayerEntity)e;
 
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 1);
             BlockState state = locator.block.getBlockState();
             BlockPos where = locator.block.getPos();
             BlockEntity be = world.getBlockEntity(where);
-            world.clearBlockState(where, false);
-            ItemStack itemstack2 = player.getMainHandStack();
-            itemstack2.postMine(player.world, state, where, player);
-            ItemStack itemstack1 = itemstack2.isEmpty() ? ItemStack.EMPTY : itemstack2.copy();
-            state.getBlock().afterBreak(world, player, where, state, be, itemstack1);
+            Block block = state.getBlock();
+            if ((block instanceof CommandBlock || block instanceof StructureBlock || block instanceof JigsawBlock) && !player.isCreativeLevelTwoOp())
+                return LazyValue.FALSE;
+            if ((block instanceof BedrockBlock || block instanceof BarrierBlock) && player.interactionManager.isSurvivalLike())
+                return LazyValue.FALSE;
+            if (player.method_21701(world, where, player.interactionManager.getGameMode()))
+                return LazyValue.FALSE;
+
+            state.getBlock().onBreak(world,where, state, player);
+
+            boolean removedActualBlock = world.clearBlockState(where, false);
+            if (removedActualBlock)
+            {
+                block.onBroken(world, where, state);
+            }
             world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
-            return (c_, t_) -> Value.TRUE;
+            if (player.interactionManager.isCreative())
+                return LazyValue.TRUE;
+
+            ItemStack itemStack_1 = player.getMainHandStack();
+            boolean couldMineIt = player.isUsingEffectiveTool(state);
+            itemStack_1.postMine(world, state, where, player);
+            if (removedActualBlock && couldMineIt)
+            {
+                ItemStack itemStack_2 = itemStack_1.isEmpty() ? ItemStack.EMPTY : itemStack_1.copy();
+                block.afterBreak(world, player, where, state, be, itemStack_2);
+            }
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
