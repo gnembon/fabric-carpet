@@ -28,6 +28,6 @@ public class StringValue extends Value
     @Override
     public String getTypeString()
     {
-        return "number";
+        return "string";
     }
 }

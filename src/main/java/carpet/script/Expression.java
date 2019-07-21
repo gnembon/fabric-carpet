@@ -12,6 +12,7 @@ import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.AbstractListValue;
 import carpet.script.value.FunctionSignatureValue;
 import carpet.script.value.GlobalValue;
 import carpet.script.value.LazyListValue;
@@ -63,7 +64,7 @@ import static java.lang.Math.min;
  * repository</a></p>
  *
  * <p>This specification is divided into two sections: this one is agnostic
- * to any Minecraft related features and could function on its own, and {@see carpet.script.CarpetExpression} for
+ * to any Minecraft related features and could function on its own, and CarpetExpression for
  * Minecraft specific routines and world manipulation functions.</p>
  *
  * <h1>Synopsis</h1>
@@ -74,7 +75,7 @@ import static java.lang.Math.min;
  * <p>or an overly complex example:</p>
  * <pre>
  * /script run
- *     block_check(x1, y1, z1, x2, y2, z2, block_to_check) ->
+ *     block_check(x1, y1, z1, x2, y2, z2, block_to_check) -&gt;
  *     (
  *         l(minx, maxx) = sort(l(x1, x2));
  *         l(miny, maxy) = sort(l(y1, y2));
@@ -99,7 +100,7 @@ import static java.lang.Math.min;
  *         );
  *         total_count
  *     );
- *     check_area_around_closest_player_for_block(block_to_check) ->
+ *     check_area_around_closest_player_for_block(block_to_check) -&gt;
  *     (
  *         closest_player = player();
  *         l(posx, posy, posz) = query(closest_player, 'pos');
@@ -1637,15 +1638,19 @@ public class Expression implements Cloneable
      *     range(20, 10, -2)  =&gt; [20, 18, 16, 14, 12]
      * </pre>
      *
-     * <h3><code>get(list, index), element(list, index)(deprecated)</code></h3>
-     * <p>Returns the value at <code>index</code> element from the <code>list</code>.
-     * use negative numbers to reach elements from the end of the list. <code>get</code>
+     * <h3><code>get(value, address), element(value, address)(deprecated)</code></h3>
+     * <p>Returns the value at <code>address</code> element from the <code>value</code>.
+     * For lists it indicates an index, use negative numbers to reach elements from the end of the list. <code>get</code>
      * call will always be able to find the index. In case there is few items, it will loop over </p>
+     * <p>[Minecraft specific usecase]: In case <code>value</code> is of <code>nbt</code> type, uses addess as the nbt path to query,
+     * returning null, if path is not found, one value if there was one match, or list of values if result is a list.
+     * Returned elements can be of numerical type, string texts, or another compound nbt tags</p>
      * <pre>
      *     get(l(range(10)), 5)  =&gt; 5
      *     get(l(range(10)), -1)  =&gt; 9
      *     get(l(range(10)), 10)  =&gt; 0
      *     get(l(range(10)), 93)  =&gt; 3
+     *     get(player() ~ 'nbt', 'Health') =&gt; 20 // inefficient way to get player health
      * </pre>
      *
      * <h3><code>put(list, index, values ...), put(list, null, values ...)</code></h3>
@@ -1857,12 +1862,12 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
-        addBinaryFunction("get", (v1, v2) -> v1.getElementAt(v2));
+        addBinaryFunction("get", Value::getElementAt);
 
         //Deprecated, use "get" instead
         addBinaryFunction("element", (v1, v2) ->
         {
-            if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
+            if (!(v1 instanceof ListValue))
                 throw new InternalExpressionException("First argument of get should be a list");
             List<Value> items = ((ListValue)v1).getItems();
             long index = NumericValue.asNumber(v2).getLong();
@@ -1880,7 +1885,7 @@ public class Expression implements Cloneable
                 throw new InternalExpressionException("put takes at least three arguments, a list, index, and values to insert at that index");
             }
             Value list = lv.get(0);
-            if (list instanceof LazyListValue || !(list instanceof ListValue))
+            if (!(list instanceof ListValue))
             {
                 throw new InternalExpressionException("First argument of element should be a list");
             }
@@ -1965,9 +1970,9 @@ public class Expression implements Cloneable
 
             Value rval= lv.get(0).evalValue(c);
 
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of map function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
             if(lv.size() > 2) cond = lv.get(2);
@@ -1991,12 +1996,12 @@ public class Expression implements Cloneable
                 }
                 next.boundVariable = var;
             }
-            ((ListValue) rval).fatality();
-            LazyValue ret = (cc, tt) -> ListValue.wrap(result);
+            ((AbstractListValue) rval).fatality();
+            Value ret = ListValue.wrap(result);
             //revering scope
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
-            return ret;
+            return (cc, tt) ->  ret;
         });
 
         // grep(list or num, expr, exit_expr) => list
@@ -2010,9 +2015,9 @@ public class Expression implements Cloneable
             }
 
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of filter function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
             if(lv.size() > 2) cond = lv.get(2);
@@ -2037,12 +2042,12 @@ public class Expression implements Cloneable
                 }
                 next.boundVariable = var;
             }
-            ((ListValue) rval).fatality();
-            LazyValue ret = (cc, tt) -> ListValue.wrap(result); // might be a trap - lazy evaluation
+            ((AbstractListValue) rval).fatality();
+            Value ret = ListValue.wrap(result);
             //revering scope
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
-            return ret;
+            return (cc, tt) -> ret;
         });
 
         // first(list, expr) => elem or null
@@ -2052,9 +2057,9 @@ public class Expression implements Cloneable
         {
 
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'first' function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
             LazyValue _val = c.getVariable("_");
@@ -2077,7 +2082,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //revering scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             Value whyWontYouTrustMeJava = result;
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
@@ -2090,9 +2095,9 @@ public class Expression implements Cloneable
         addLazyFunction("all", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'all' function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
             LazyValue _val = c.getVariable("_");
@@ -2115,7 +2120,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //revering scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
             return result;
@@ -2131,9 +2136,9 @@ public class Expression implements Cloneable
                 throw new InternalExpressionException("Incorrect number of attributes for 'for', should be 2 or 3, not "+lv.size());
             }
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("Second argument of 'for' function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
             if(lv.size() > 2) cond = lv.get(2);
@@ -2160,7 +2165,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //revering scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
             long promiseWontChange = successCount;
@@ -2178,9 +2183,9 @@ public class Expression implements Cloneable
 
             Value acc = lv.get(2).evalValue(c);
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'reduce' should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
 
             if (!iterator.hasNext())
             {
@@ -2204,7 +2209,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //reverting scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             c.setVariable("_a", _acc);
             c.setVariable("_", _val);
 
@@ -2219,6 +2224,10 @@ public class Expression implements Cloneable
      * <h1>System functions</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <h2>Type conversion functions</h2>
+     * <h3><code>type(expr)</code></h3>
+     * <p>Returns the string value indicating type of the expression. Possible outcomes are
+     * <code>null, number, string, list, iterator</code>, as well as minecraft related concepts like
+     * <code>block, entity, nbt</code></p>
      * <h3><code>bool(expr)</code></h3>
      * <p>Returns a boolean context of the expression. Note that there are no true/false values in
      * scarpet. <code>true</code> is alias of 1, and <code>false</code> is 0. Bool is also interpreting

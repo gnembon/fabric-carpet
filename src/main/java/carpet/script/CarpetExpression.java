@@ -23,9 +23,14 @@ import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.block.BarrierBlock;
+import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockPlacementEnvironment;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.CommandBlock;
+import net.minecraft.block.JigsawBlock;
+import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
@@ -302,6 +307,46 @@ public class CarpetExpression
         }
     }
 
+    public boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
+    {
+        //this could be done little better, by hooking up event handling not in try_break_block but wherever its called
+        // so we can safely call it here
+        // but that woudl do for now.
+        BlockState blockState_1 = player.world.getBlockState(blockPos_1);
+        if (!player.getMainHandStack().getItem().canMine(blockState_1, player.world, blockPos_1, player)) {
+            return false;
+        } else {
+            BlockEntity blockEntity_1 = player.world.getBlockEntity(blockPos_1);
+            Block block_1 = blockState_1.getBlock();
+            if ((block_1 instanceof CommandBlock || block_1 instanceof StructureBlock || block_1 instanceof JigsawBlock) && !player.isCreativeLevelTwoOp()) {
+                player.world.updateListeners(blockPos_1, blockState_1, blockState_1, 3);
+                return false;
+            } else if (player.method_21701(player.world, blockPos_1, player.interactionManager.getGameMode())) {
+                return false;
+            } else {
+                block_1.onBreak(player.world, blockPos_1, blockState_1, player);
+                boolean boolean_1 = player.world.clearBlockState(blockPos_1, false);
+                if (boolean_1) {
+                    block_1.onBroken(player.world, blockPos_1, blockState_1);
+                }
+
+                if (player.isCreative()) {
+                    return true;
+                } else {
+                    ItemStack itemStack_1 = player.getMainHandStack();
+                    boolean boolean_2 = player.isUsingEffectiveTool(blockState_1);
+                    itemStack_1.postMine(player.world, blockState_1, blockPos_1, player);
+                    if (boolean_1 && boolean_2) {
+                        ItemStack itemStack_2 = itemStack_1.isEmpty() ? ItemStack.EMPTY : itemStack_1.copy();
+                        block_1.afterBreak(player.world, player, blockPos_1, blockState_1, blockEntity_1, itemStack_2);
+                    }
+
+                    return true;
+                }
+            }
+        }
+    }
+
     /**
      * <h1>Blocks / World API</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
@@ -368,11 +413,12 @@ public class CarpetExpression
      * <h3><code>random_tick(pos)</code></h3>
      * <p>Causes a random tick at position.</p>
      * <h3><code>destroy(pos), destroy(pos, -1), destroy(pos, &lt;N&gt;)</code></h3>
-     * <p>Destroys the block like it was harvest by a player. Add -1 for silk touch, and positive number for fortune level.</p>
+     * <p>Destroys the block like it was mined by a player. Add -1 for silk touch, and positive number for fortune level.
+     * This function, unlike harvest, will affect all kinds of blocks</p>
      * <h3><code>harvest(player, pos)</code></h3>
      * <p>Causes a block to be harvested by a specified player entity. Honors player item enchantments, as well as damages the
-     * tool if applicable. If the entity is not a valid player, no block gets destroyed.</p>
-     *
+     * tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to
+     * break that block, a block doesn't get destroyed either.</p>
      *
      * <h2>Block and World querying</h2>
      *
@@ -385,6 +431,8 @@ public class CarpetExpression
      *     pos(players()) =&gt; l(12.3, 45.6, 32.05)
      *     pos(block('stone'))  =&gt; Error: Cannot fetch position of an unrealized block
      * </pre>
+     * <h3><code>block_properties(pos)</code></h3>
+     * <p>Returns a list of available block properties for a particular block. If a block has no properties, returns an empty list.</p>
      * <h3><code>property(pos, name)</code></h3>
      * <p>Returns property of block at <code>pos</code>, or specified by <code>block</code> argument. If a block doesn't
      * have that property, <code>null</code> value is returned. Returned values are always strings. It is expected from
@@ -433,19 +481,19 @@ public class CarpetExpression
      * <h3><code>blast_resistance(pos)</code></h3>
      * <p>Numeric function, indicating blast_resistance of a block.</p>
 
-     * <h3><code>top(type, x, z)</code></h3>
-     * <p>Returns the Y value of the topmost block at given x, z coords, according to the
+     * <h3><code>top(type, pos)</code></h3>
+     * <p>Returns the Y value of the topmost block at given x, z coords (y value of a block is not important), according to the
      * heightmap specified by <code>type</code>. Valid options are:</p>
      * <ul>
-     *     <li><code>light</code>: topmost light blocking block</li>
+     *     <li><code>light</code>: topmost light blocking block (1.13 only)</li>
      *     <li><code>motion</code>: topmost motion blocking block</li>
      *     <li><code>terrain</code>: topmost motion blocking block except leaves</li>
      *     <li><code>ocean_floor</code>: topmost non-water block</li>
      *     <li><code>surface</code>: topmost surface block</li>
      * </ul>
      * <pre>
-     * top('motion', x, z)  =&gt; 63
-     * top('ocean_floor', x, z)  =&gt; 41
+     * top('motion', x, y, z)  =&gt; 63
+     * top('ocean_floor', x, y, z)  =&gt; 41
      * </pre>
      * <h3><code>loaded(pos)</code></h3>
      * <p>Boolean function, true if the block is loaded. Normally <code>scarpet</code> doesn't check if operates on
@@ -849,21 +897,19 @@ public class CarpetExpression
             if (!(entityValue instanceof EntityValue))
                 return (c_, t_) -> Value.FALSE;
             Entity e = ((EntityValue) entityValue).getEntity();
-            if (!(e instanceof PlayerEntity))
+            if (!(e instanceof ServerPlayerEntity))
                 return (c_, t_) -> Value.FALSE;
-            PlayerEntity player = (PlayerEntity)e;
-
+            ServerPlayerEntity player = (ServerPlayerEntity)e;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 1);
-            BlockState state = locator.block.getBlockState();
             BlockPos where = locator.block.getPos();
-            BlockEntity be = world.getBlockEntity(where);
-            world.clearBlockState(where, false);
-            ItemStack itemstack2 = player.getMainHandStack();
-            itemstack2.postMine(player.world, state, where, player);
-            ItemStack itemstack1 = itemstack2.isEmpty() ? ItemStack.EMPTY : itemstack2.copy();
-            state.getBlock().afterBreak(world, player, where, state, be, itemstack1);
-            world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
-            return (c_, t_) -> Value.TRUE;
+            BlockState state = locator.block.getBlockState();
+            Block block = state.getBlock();
+            boolean success = false;
+            if (!((block instanceof BedrockBlock || block instanceof BarrierBlock) && player.interactionManager.isSurvivalLike()))
+                success = tryBreakBlock_copy_from_ServerPlayerInteractionManager(player, where);
+            if (success)
+                world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
+            return success ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
         this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
@@ -1336,6 +1382,11 @@ public class CarpetExpression
      * <p>Returns entities satisfying given vanilla entity selector. Most complex among all the methods of selecting
      * entities, but the most capable. Selectors are cached so should be as fast as other methods of selecting entities.</p>
      *
+     * <h3><code>spawn(name, pos, nbt?)</code></h3>
+     * <p>Spawns and places an entity in world, like <code>/summon</code> vanilla command.
+     * Requires a position to spawn, and optional extra nbt data to merge with the entity. What makes it different from calling
+     * <code>run('summon ...')</code>, is the fact that you get the entity back as a return value, which is swell.</p>
+     *
      * <h2>Entity Manipulation</h2>
      *
      * <p>Unlike with blocks, that use plethora of vastly different querying functions, entities are queried with
@@ -1368,6 +1419,8 @@ public class CarpetExpression
      * <p>Respective entity coordinate</p>
      * <h3><code>query(e,'pitch'), query(e,'yaw')</code></h3>
      * <p>Pitch and Yaw or where entity is looking.</p>
+     * <h3><code>query(e,'look')</code></h3>
+     * <p>Returns a 3d vector where the entity is looking.</p>
      * <h3><code>query(e,'motion')</code></h3>
      * <p>Triple of entity motion vector, <code>l(motion_x, motion_y, motion_z)</code></p>
      * <h3><code>query(e,'motion_x'), query(e,'motion_y'), query(e,'motion_z')</code></h3>
@@ -1445,6 +1498,7 @@ public class CarpetExpression
      * </pre>
      * <h3><code>query(e,'health')</code></h3>
      * <p>Number indicating remaining entity health, or <code>null</code> if not applicable.</p>
+     *
      * <h3><code>query(e,'holds',slot?)</code></h3>
      * <p>Returns triple of short name, stack count, and NBT of item held in <code>slot</code>.
      * Available options for <code>slot</code> are:</p>
@@ -1462,7 +1516,14 @@ public class CarpetExpression
      * <h3><code>query(e,'facing', order?)</code></h3>
      * <p>Returns where the entity is facing. optional order (number from 0 to 5, and negative), indicating
      * primary directions where entity is looking at. From most prominent (order 0) to opposite (order 5, or -1)</p>
-     *
+     * <h3><code>query(e,'trace', reach?, options?...)</code></h3>
+     * <p>Returns the result of ray tracing from entity perspective, indicating what it is looking at. Default reach is 4.5
+     * blocks (5 for creative players), and by default it traces for blocks and entities, identical to player attack tracing action.
+     * This can be customized with <code>options</code>, use 'blocks' to trace for blocks only, 'liquids' to include liquid blocks
+     * as possible results, and 'entities' to trace entities as well.</p>
+     * <p>Regardless of the options selected, the result could be <code>null</code> if nothing is in reach, entity, if look
+     * targets an antity, and block value if block is in reach. Tracing always hits blocks. Even if an entity tracing is requested
+     * and there is a block in the way - the block will be returned.</p>
      * <h3><code>query(e,'nbt',path?)</code></h3>
      * <p>Returns full NBT of the entity. If path is specified, it fetches only that portion of the NBT,
      * that corresponds to the path. For specification of <code>path</code> attribute, consult
@@ -1497,8 +1558,7 @@ public class CarpetExpression
      * <h3><code>modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', l(x, y, z) )</code></h3>
      * <p>Adds a vector to the motion vector. Most realistic way to apply a force to an entity.</p>
      * <h3><code>modify(e, 'custom_name'), modify(e, 'custom_name', name )</code></h3>
-     * <p>Sets a custom name for an entity. No argument sets it empty, not removes it. Vanilla doesn't allow removing
-     * of attributes.</p>
+     * <p>Sets a custom name for an entity. Removes a custom name if the argument is <code>null</code></p>
      * <h3><code>modify(e, 'dismount')</code></h3>
      * <p>Dismounts riding entity.</p>
      * <h3><code>modify(e, 'mount', other)</code></h3>
@@ -1977,9 +2037,7 @@ public class CarpetExpression
                 int y;
                 int z;
                 {
-                    x = minx;
-                    y = miny;
-                    z = minz;
+                    reset();
                 }
                 @Override
                 public boolean hasNext()
@@ -2012,6 +2070,15 @@ public class CarpetExpression
                 public void fatality()
                 {
                     // possibly return original x, y, z
+                    super.fatality();
+                }
+
+                @Override
+                public void reset()
+                {
+                    x = minx;
+                    y = miny;
+                    z = minz;
                 }
             };
         });
@@ -2066,10 +2133,10 @@ public class CarpetExpression
             {
                 return (c_, t_) -> new LazyListValue()
                 {
-                    int curradius = 0;
-                    int curpos = 0;
+                    int curradius;
+                    int curpos;
                     {
-
+                        reset();
                     }
                     @Override
                     public boolean hasNext()
@@ -2097,15 +2164,25 @@ public class CarpetExpression
                         return block;
 
                     }
+
+                    @Override
+                    public void reset()
+                    {
+                        curradius = 0;
+                        curpos = 0;
+                    }
                 };
             }
             else
             {
                 return (c_, t_) -> new LazyListValue()
                 {
-                    int curradius = 0;
-                    int curpos = 0;
-                    int curheight = -height;
+                    int curradius;
+                    int curpos;
+                    int curheight;
+                    {
+                        reset();
+                    }
                     @Override
                     public boolean hasNext()
                     {
@@ -2142,6 +2219,14 @@ public class CarpetExpression
                         }
                         return block;
                     }
+
+                    @Override
+                    public void reset()
+                    {
+                        curradius = 0;
+                        curpos = 0;
+                        curheight = -height;
+                    }
                 };
             }
         });
@@ -2170,6 +2255,10 @@ public class CarpetExpression
      * <h3><code>particle_rect(name, pos, pos2, density?)</code></h3>
      * <p>Renders a cuboid of particles between point <code>pos</code> to <code>pos2</code> with supplied density.</p>
      * <h2>System function</h2>
+     * <h3><code>nbt(expr)</code></h3>
+     * <p>Treats the argument as a nbt serializable string and returns its nbt value.
+     * In case nbt is not in a correct nbt compound tag format, the execution of a script will stop with an error,
+     * whenever that tag is used.</p>
      * <h3><code>print(expr)</code></h3>
      * <p>Displays the result of the expression to the chat. Overrides default <code>scarpet</code> behaviour of
      * sending everyting to stderr.</p>
@@ -2482,6 +2571,14 @@ public class CarpetExpression
             return (_cc, _tt) -> new NumericValue(finalTotal);
         });
 
+        this.expr.addLazyFunction("nbt", 1, (c, t, lv) -> {
+            Value v = lv.get(0).evalValue(c);
+            if (v instanceof NBTSerializableValue)
+                return (cc, tt) -> v;
+            Value ret = new NBTSerializableValue(v.getString());
+            return (cc, tt) -> ret;
+        });
+
         //"overridden" native call that prints to stderr
         this.expr.addLazyFunction("print", 1, (c, t, lv) ->
         {
@@ -2772,6 +2869,92 @@ public class CarpetExpression
      */
 
     public static String invokeGlobalFunctionCommand()
+    {
+        return "Yeah";
+    }
+
+    /**
+     * <h1><code>/script load / unload &lt;module&gt; (shared?)</code>, <code>/script in &lt;module&gt;</code> commands</h1>
+     * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
+     * <p><code>load / unload</code> commands allow for very conventient way of writing your code, providing it to the game
+     * and distribute with your worlds without the need of use of commandblocks. Just place your scarpet code in the /scripts
+     * folder of your world files and make sure it ends with <code>.sc</code> extension. The good thing about editing that
+     * code is that you can no only use normal editing without the need of marking of newlines, but you can also use
+     * comments in your code.</p>
+     * <p> a comment is anything that starts with a double slash, and continues to the end of the line:</p>
+     * <pre>
+     * foo = 1;
+     * //This is a comment
+     * bar = 2;
+     * // This never worked, so I commented it out
+     * // baz = foo()
+     * </pre>
+     * <h2></h2>
+     * <h3><code>/script load/unload &lt;module&gt; (?shared) </code></h3>
+     * <p>Loading operation will load that script code from disk and execute it right away. You would probably use it to
+     * load some stored procedures to be used for later. To reload the module, just type <code>/script load</code> again.
+     * Reloading removes all the current global state (globals and functions) that were added later by the module. </p>
+     * <p>Loading a module, if it contains a <code>__command()</code> method, will attempt to registed a command with that
+     * module name, and register all public (no underscore) functions available in the module as subcommands. It will also
+     * bind specific events to the event system (check Events section for details).</p>
+     * <p>Unloading a module removes all of its state from the game, disables commands, and removes bounded events</p>
+     * <p>Scripts can be loaded in shared and player mode. Default is player, so all globals and stored functions are
+     * individual for each player, meaning scripts don't need to worry about making sure they store some intermittent data
+     * for each player independently. In shared mode - all global values and stored functions are shared among all players.
+     * To access specific player data with commandblocks, use <code>/execute as (player) run script in (module) run ... </code>
+     * To access global/server state, you need to disown the command from any player, so use a commandblock, or any arbitrary
+     * entity: <code>/execute as @e[type=bat,limit=1] run script in (module) globals</code> for instance.
+     * </p>
+     * <h3><code>/script in &lt;module&gt; ... </code></h3>
+     * <p>Allows to run normal /script commands in a specific module, like <code>run, invoke,..., globals</code> etc...</p>
+     * </div>
+     * @return .
+     */
+    public static String loadScriptsFromFilesCommand()
+    {
+        return "Yeah";
+    }
+
+    /**
+     * <h1>Scarpet events system</h1>
+     * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
+     * <p>Provides the ability to execute specific function whenever an event occurs. The functions to be registered
+     * need to conform with the arguments to the event specification. When loading module functions, each function that
+     * starts with <code>__on_...</code> and has the required arguments, will be bound automatically.
+     * In case of player specific modules, all player action events will be directed to the appropriate player space, and
+     * all tick events will be executed in the global context, so its not a good idea to mix these two, so use either of these,
+     * or use commands to call tick events directly, or handle player specific data inside a module.</p>
+     * <h2></h2>
+     * <h3>Event list</h3>
+     * <p>Here is a list of events that can be handled by scarpet. This list includes prefixes required by modules to
+     * autoload them, but you can add any function to any event if it had required parameters:</p>
+     * <pre>
+     * __on_tick()         // can access blocks and entities in the overworld
+     * __on_tick_nether()  // can access blocks and entities in the nether
+     * __on_tick_ender()   // can access blocks and entities in the end
+     * // player specific callbacks
+     * __on_player_jumps(player)
+     * __on_player_deploys_elytra(player)
+     * __on_player_wakes_up(player)
+     * __on_player_rides(player, forward, strafe, jumping, sneaking)
+     * __on_player_uses_item(player, item_tuple, hand)
+     * __on_player_clicks_block(player, block, face)
+     * __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)
+     * __on_player_breaks_block(player, block)
+     * __on_player_interacts_with_entity(player, entity, hand)
+     * __on_player_attacks_entity(player, entity)
+     * __on_player_starts_sneaking(player)
+     * __on_player_stops_sneaking(player)
+     * __on_player_starts_sprinting(player)
+     * __on_player_stops_sprinting(player)
+     * </pre>
+     * <h3><code>/script event</code> command</h3>
+     * <p>used to display current events and bounded functions. use <code>add_to</code> ro register new event, or <code>remove_from</code>
+     * to unbind a specific function from an event.</p>
+     * </div>
+     * @return .
+     */
+    public static String gameEventsSystem()
     {
         return "Yeah";
     }
