@@ -178,5 +178,8 @@ public abstract class Value implements Comparable<Value>, Cloneable
         throw new InternalExpressionException("get element can only be obtained for lists and nbt values");
     }
 
-    public abstract String getTypeString();
+    public String getTypeString()
+    {
+        throw new InternalExpressionException("How did you get here? Cannot get type of an intenal type.");
+    }
 }

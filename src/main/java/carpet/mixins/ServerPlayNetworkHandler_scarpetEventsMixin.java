@@ -47,7 +47,8 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onClicked(PlayerActionC2SPacket packet, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onBlockClicked(player, packet.getPos(), packet.getDirection());
+        if (packet.getAction() == PlayerActionC2SPacket.Action.START_DESTROY_BLOCK)
+            CarpetServer.scriptServer.events.onBlockClicked(player, packet.getPos(), packet.getDirection());
     }
 
     @Inject(method = "onPlayerInteractBlock", at = @At(

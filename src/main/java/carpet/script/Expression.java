@@ -12,6 +12,7 @@ import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.AbstractListValue;
 import carpet.script.value.FunctionSignatureValue;
 import carpet.script.value.GlobalValue;
 import carpet.script.value.LazyListValue;
@@ -1857,12 +1858,12 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
-        addBinaryFunction("get", (v1, v2) -> v1.getElementAt(v2));
+        addBinaryFunction("get", Value::getElementAt);
 
         //Deprecated, use "get" instead
         addBinaryFunction("element", (v1, v2) ->
         {
-            if (v1 instanceof LazyListValue || !(v1 instanceof ListValue))
+            if (!(v1 instanceof ListValue))
                 throw new InternalExpressionException("First argument of get should be a list");
             List<Value> items = ((ListValue)v1).getItems();
             long index = NumericValue.asNumber(v2).getLong();
@@ -1880,7 +1881,7 @@ public class Expression implements Cloneable
                 throw new InternalExpressionException("put takes at least three arguments, a list, index, and values to insert at that index");
             }
             Value list = lv.get(0);
-            if (list instanceof LazyListValue || !(list instanceof ListValue))
+            if (!(list instanceof ListValue))
             {
                 throw new InternalExpressionException("First argument of element should be a list");
             }
@@ -1965,9 +1966,9 @@ public class Expression implements Cloneable
 
             Value rval= lv.get(0).evalValue(c);
 
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of map function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
             if(lv.size() > 2) cond = lv.get(2);
@@ -1991,12 +1992,12 @@ public class Expression implements Cloneable
                 }
                 next.boundVariable = var;
             }
-            ((ListValue) rval).fatality();
-            LazyValue ret = (cc, tt) -> ListValue.wrap(result);
+            ((AbstractListValue) rval).fatality();
+            Value ret = ListValue.wrap(result);
             //revering scope
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
-            return ret;
+            return (cc, tt) ->  ret;
         });
 
         // grep(list or num, expr, exit_expr) => list
@@ -2010,9 +2011,9 @@ public class Expression implements Cloneable
             }
 
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of filter function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
             if(lv.size() > 2) cond = lv.get(2);
@@ -2037,12 +2038,12 @@ public class Expression implements Cloneable
                 }
                 next.boundVariable = var;
             }
-            ((ListValue) rval).fatality();
-            LazyValue ret = (cc, tt) -> ListValue.wrap(result); // might be a trap - lazy evaluation
+            ((AbstractListValue) rval).fatality();
+            Value ret = ListValue.wrap(result);
             //revering scope
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
-            return ret;
+            return (cc, tt) -> ret;
         });
 
         // first(list, expr) => elem or null
@@ -2052,9 +2053,9 @@ public class Expression implements Cloneable
         {
 
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'first' function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
             LazyValue _val = c.getVariable("_");
@@ -2077,7 +2078,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //revering scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             Value whyWontYouTrustMeJava = result;
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
@@ -2090,9 +2091,9 @@ public class Expression implements Cloneable
         addLazyFunction("all", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'all' function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
             LazyValue _val = c.getVariable("_");
@@ -2115,7 +2116,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //revering scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
             return result;
@@ -2131,9 +2132,9 @@ public class Expression implements Cloneable
                 throw new InternalExpressionException("Incorrect number of attributes for 'for', should be 2 or 3, not "+lv.size());
             }
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("Second argument of 'for' function should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
             if(lv.size() > 2) cond = lv.get(2);
@@ -2160,7 +2161,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //revering scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             c.setVariable("_", _val);
             c.setVariable("_i", _iter);
             long promiseWontChange = successCount;
@@ -2178,9 +2179,9 @@ public class Expression implements Cloneable
 
             Value acc = lv.get(2).evalValue(c);
             Value rval= lv.get(0).evalValue(c);
-            if (!(rval instanceof ListValue))
+            if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'reduce' should be a list or iterator");
-            Iterator<Value> iterator = ((ListValue) rval).iterator();
+            Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
 
             if (!iterator.hasNext())
             {
@@ -2204,7 +2205,7 @@ public class Expression implements Cloneable
                 next.boundVariable = var;
             }
             //reverting scope
-            ((ListValue) rval).fatality();
+            ((AbstractListValue) rval).fatality();
             c.setVariable("_a", _acc);
             c.setVariable("_", _val);
 

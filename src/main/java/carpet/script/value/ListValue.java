@@ -2,7 +2,6 @@ package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
 
-public class ListValue extends Value
+public class ListValue extends AbstractListValue
 {
     protected List<Value> items;
     @Override
@@ -241,9 +240,6 @@ public class ListValue extends Value
     {
         return items.iterator();
     }
-    public void fatality()
-    {
-    }
 
     public void extend(List<Value> subList)
     {
@@ -331,7 +327,4 @@ public class ListValue extends Value
     {
         return "list";
     }
-
-
-
 }

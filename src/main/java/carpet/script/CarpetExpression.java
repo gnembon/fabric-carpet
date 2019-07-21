@@ -1977,9 +1977,7 @@ public class CarpetExpression
                 int y;
                 int z;
                 {
-                    x = minx;
-                    y = miny;
-                    z = minz;
+                    reset();
                 }
                 @Override
                 public boolean hasNext()
@@ -2012,6 +2010,15 @@ public class CarpetExpression
                 public void fatality()
                 {
                     // possibly return original x, y, z
+                    super.fatality();
+                }
+
+                @Override
+                public void reset()
+                {
+                    x = minx;
+                    y = miny;
+                    z = minz;
                 }
             };
         });
@@ -2066,10 +2073,10 @@ public class CarpetExpression
             {
                 return (c_, t_) -> new LazyListValue()
                 {
-                    int curradius = 0;
-                    int curpos = 0;
+                    int curradius;
+                    int curpos;
                     {
-
+                        reset();
                     }
                     @Override
                     public boolean hasNext()
@@ -2097,15 +2104,25 @@ public class CarpetExpression
                         return block;
 
                     }
+
+                    @Override
+                    public void reset()
+                    {
+                        curradius = 0;
+                        curpos = 0;
+                    }
                 };
             }
             else
             {
                 return (c_, t_) -> new LazyListValue()
                 {
-                    int curradius = 0;
-                    int curpos = 0;
-                    int curheight = -height;
+                    int curradius;
+                    int curpos;
+                    int curheight;
+                    {
+                        reset();
+                    }
                     @Override
                     public boolean hasNext()
                     {
@@ -2141,6 +2158,14 @@ public class CarpetExpression
                             }
                         }
                         return block;
+                    }
+
+                    @Override
+                    public void reset()
+                    {
+                        curradius = 0;
+                        curpos = 0;
+                        curheight = -height;
                     }
                 };
             }
