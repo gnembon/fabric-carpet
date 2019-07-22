@@ -15,6 +15,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import static carpet.settings.RuleCategory.BUGFIX;
 import static carpet.settings.RuleCategory.COMMAND;
@@ -228,6 +229,8 @@ public class CarpetSettings
 
     @Rule(desc = "smooth client animations with low tps settings", extra = "works only in SP, and will slow down players", category = CREATIVE)
     public static boolean smoothClientAnimations;
+    @Rule(desc = "Optimize collisions even more", category = OPTIMIZATION)
+    public static boolean optimizedCollisionsEvenMoar;
 
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
