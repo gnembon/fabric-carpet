@@ -208,7 +208,7 @@ public class BlockValue extends Value
             data = be.toTag(tag);
             return data;
         }
-        throw new InternalExpressionException("Attemted to fetch block data without world or stored block data");
+        return null;
     }
 
 
