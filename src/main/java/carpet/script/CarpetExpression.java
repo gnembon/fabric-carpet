@@ -307,7 +307,7 @@ public class CarpetExpression
         }
     }
 
-    public boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
+    private boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
     {
         //this could be done little better, by hooking up event handling not in try_break_block but wherever its called
         // so we can safely call it here
