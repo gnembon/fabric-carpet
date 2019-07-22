@@ -550,7 +550,7 @@ public class Expression implements Cloneable
         });
     }
 
-    private RuntimeException handleCodeException(RuntimeException exc, Expression e, Tokenizer.Token token)
+    static RuntimeException handleCodeException(RuntimeException exc, Expression e, Tokenizer.Token token)
     {
         if (exc instanceof ExitStatement)
             return exc;

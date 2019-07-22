@@ -2254,6 +2254,11 @@ public class CarpetExpression
      * which indicates how far part you would want particles to appear, so <code>0.1</code> means one every 10cm.</p>
      * <h3><code>particle_rect(name, pos, pos2, density?)</code></h3>
      * <p>Renders a cuboid of particles between point <code>pos</code> to <code>pos2</code> with supplied density.</p>
+     * <h2>Markers</h2>
+     * <h3><code>create_marker(text, pos, rotation?, block?)</code></h3>
+     * <p>Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations</p>
+     * <h3><code>remove_all_markers()</code></h3>
+     * <p>Removes all scarpet markers from the loaded portion of the world in case you didn't want to do the cleanup</p>
      * <h2>System function</h2>
      * <h3><code>nbt(expr)</code></h3>
      * <p>Treats the argument as a nbt serializable string and returns its nbt value.

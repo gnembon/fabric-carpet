@@ -104,21 +104,9 @@ public abstract class Fluff
                     }
                 };
             }
-            catch (InternalExpressionException exc)
+            catch (RuntimeException exc)
             {
-                throw new ExpressionException(e, t, exc.getMessage());
-            }
-            catch (ArithmeticException exc)
-            {
-                throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
-            }
-            catch (Expression.ExitStatement exit)
-            {
-                throw exit;
-            }
-            catch (Exception exc)
-            {
-                throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                throw Expression.handleCodeException(exc, e, t);
             }
         }
     }
@@ -158,21 +146,9 @@ public abstract class Fluff
             {
                 return (c, type_ignored) -> AbstractOperator.this.eval(v1.evalValue(c), v2.evalValue(c));
             }
-            catch (InternalExpressionException exc)
+            catch (RuntimeException exc)
             {
-                throw new ExpressionException(e, t, exc.getMessage());
-            }
-            catch (ArithmeticException exc)
-            {
-                throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
-            }
-            catch (Expression.ExitStatement exit)
-            {
-                throw exit;
-            }
-            catch (Exception exc)
-            {
-                throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                throw Expression.handleCodeException(exc, e, t);
             }
         }
     }
@@ -194,21 +170,9 @@ public abstract class Fluff
                 }
                 return (c, ignored_type) -> AbstractUnaryOperator.this.evalUnary(v1.evalValue(c));
             }
-            catch (InternalExpressionException exc) // might not actually throw it
+            catch (RuntimeException exc)
             {
-                throw new ExpressionException(e, t, exc.getMessage());
-            }
-            catch (ArithmeticException exc)
-            {
-                throw new ExpressionException(e, t, "Your math is wrong, "+exc.getMessage());
-            }
-            catch (Expression.ExitStatement exit)
-            {
-                throw exit;
-            }
-            catch (Exception exc)
-            {
-                throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+                throw Expression.handleCodeException(exc, e, t);
             }
         }
 
