@@ -156,7 +156,7 @@ public class CarpetExpression
      * </div>
      * @param doStop .
      */
-    public static void BreakExecutionOfAllScriptsWithCommands(boolean doStop)
+    public void BreakExecutionOfAllScriptsWithCommands(boolean doStop)
     {
         //unused - accessed via CarpetScriptServer
     }
@@ -2873,9 +2873,9 @@ public class CarpetExpression
      * @return .
      */
 
-    public static String invokeGlobalFunctionCommand()
+    public void invokeGlobalFunctionCommand()
     {
-        return "Yeah";
+
     }
 
     /**
@@ -2915,9 +2915,9 @@ public class CarpetExpression
      * </div>
      * @return .
      */
-    public static String loadScriptsFromFilesCommand()
+    public void loadScriptsFromFilesCommand()
     {
-        return "Yeah";
+
     }
 
     /**
@@ -2959,8 +2959,8 @@ public class CarpetExpression
      * </div>
      * @return .
      */
-    public static String gameEventsSystem()
+    public void gameEventsSystem()
     {
-        return "Yeah";
+
     }
 }
