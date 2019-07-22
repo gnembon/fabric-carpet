@@ -2,6 +2,11 @@
 
 Cause all carpets are made of fabric?
 
+# How? Hwat?
+
+Follow instructions for all other fabric mods in https://fabricmc.net/use/ and dump carpet...jar in `mods` folder along
+with other compatible mods.
+
 # Carpet Mod Settings
 ## antiCheatDisabled
 Prevents players from rubberbanding when moving too fast
