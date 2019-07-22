@@ -2,26 +2,15 @@
 
 Cause all carpets are made of fabric?
 
-# Carpet Settings
-
-## antiCheatSpeed
+# Carpet Mod Settings
+## antiCheatDisabled
 Prevents players from rubberbanding when moving too fast
+... or being kicked out for 'flying'
 Puts more trust in clients positioning
 * Type: `boolean`
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `CREATIVE`, `SURVIVAL`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
-
-## calmNetherFires
-Permanent fires don't schedule random updates
-* Type: `boolean`
-* Default value: `false`
-* Required options: `true`, `false`
-* Categories: `OPTIMIZATION`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## carpets
 Placing carpets may issue carpet commands for non-op players
@@ -85,6 +74,7 @@ Enables /log command to monitor events in the game via chat and overlays
 * Required options: `true`, `false`
 * Categories: `COMMAND`
 * Additional notes:
+  * A few bits still needs implementing - we are working on it
   * It has an accompanying command
 
 ## commandPerimeterInfo
@@ -104,7 +94,6 @@ Enables /player command to control/spawn players
 * Required options: `true`, `false`
 * Categories: `COMMAND`
 * Additional notes:
-  * Its not yet fully implemented - we are working on it
   * It has an accompanying command
 
 ## commandScript
@@ -135,6 +124,15 @@ Enables /tick command to control game clocks
 * Additional notes:
   * It has an accompanying command
 
+## commandTrackAI
+Allows to track mobs AI via /track command
+* Type: `boolean`
+* Default value: `true`
+* Required options: `true`, `false`
+* Categories: `COMMAND`
+* Additional notes:
+  * It has an accompanying command
+
 ## ctrlQCraftingFix
 Dropping entire stacks works also from on the crafting UI result slot
 * Type: `boolean`
@@ -149,8 +147,6 @@ use '_' to use the startup setting from server.properties
 * Default value: `_`
 * Suggested options: `_`
 * Categories: `CREATIVE`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## desertShrubs
 Saplings turn into dead shrubs in hot climates and no water access
@@ -165,8 +161,6 @@ Allows spawn chunks to unload
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `CREATIVE`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## explosionNoBlockDamage
 Explosions won't destroy blocks
@@ -182,8 +176,6 @@ by Theosib
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `EXPERIMENTAL`, `OPTIMIZATION`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## fillLimit
 Customizable fill/clone volume limit
@@ -224,14 +216,20 @@ Items counted are destroyed, count up to one stack per tick per hopper
 * Additional notes:
   * It has an accompanying command
 
+## horseWanderingFix
+Prevents horses and other mobs to wander into the distance after dismounting
+Fixes issues with various Joergens wandering off and disappearing client-side
+* Type: `boolean`
+* Default value: `false`
+* Required options: `true`, `false`
+* Categories: `BUGFIX`
+
 ## huskSpawningInTemples
 Only husks spawn in desert temples
 * Type: `boolean`
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `FEATURE`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## kelpGenerationGrowthLimit
 limits growth limit of newly naturally generated kelp to this amount of blocks
@@ -256,8 +254,6 @@ You may still get visibly broken leash links on the client side, but server side
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `BUGFIX`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## maxEntityCollisions
 Customizable maximal entity collision limits, 0 for no limits
@@ -274,8 +270,6 @@ Pistons, Glass and Sponge can be broken faster with their appropriate tools
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `SURVIVAL`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## movableTileEntities
 Pistons can push tile entities, like hoppers, chests etc.
@@ -292,13 +286,11 @@ One player is required on the server to cause night to pass
 * Categories: `SURVIVAL`
 
 ## persistentParrots
-Parrots don't get of your shoulders until you receive damage
+Parrots don't get of your shoulders until you receive proper damage
 * Type: `boolean`
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `SURVIVAL`, `FEATURE`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## placementRotationFix
 fixes block placement rotation issue when player rotates quickly while placing blocks
@@ -329,8 +321,6 @@ Entities shouldn't suffocate in obsidian
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `BUGFIX`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## pushLimit
 Customizable piston push limit
@@ -347,8 +337,6 @@ Pistons, droppers and dispensers react if block above them is powered
 * Default value: `true`
 * Required options: `true`, `false`
 * Categories: `CREATIVE`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## railPowerLimit
 Customizable powered rail power range
@@ -395,6 +383,14 @@ Silverfish drop a gravel item when breaking out of a block
 * Required options: `true`, `false`
 * Categories: `FEATURE`
 
+## smoothClientAnimations
+smooth client animations with low tps settings
+works only in SP, and will slow down players
+* Type: `boolean`
+* Default value: `false`
+* Required options: `true`, `false`
+* Categories: `CREATIVE`
+
 ## stackableShulkerBoxes
 Empty shulker boxes can stack to 64 when dropped on the ground
 To move them around between inventories, use shift click to move entire stacks
@@ -437,8 +433,6 @@ Entities pushed or moved into unloaded chunks no longer disappear
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `EXPERIMENTAL`, `BUGFIX`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## viewDistance
 Changes the view distance of the server.
@@ -449,16 +443,6 @@ Set to 0 to not override the value in server settings.
 * Categories: `CREATIVE`
 * Additional notes:
   * You must choose a value from 0 (use server settings) to 32
-
-## watchdogCrashFix
-Fixes server crashing supposedly on falling behind 60s in ONE tick, yeah bs.
-Fixed 1.12 watchdog crash in 1.13 pre-releases, reintroduced with 1.13, GG.
-* Type: `boolean`
-* Default value: `false`
-* Required options: `true`, `false`
-* Categories: `BUGFIX`
-* Additional notes:
-  * Its not yet fully implemented - we are working on it
 
 ## xpNoCooldown
 Players absorb XP instantly, without delay
