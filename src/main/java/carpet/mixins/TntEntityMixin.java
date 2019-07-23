@@ -17,7 +17,7 @@ import carpet.logging.logHelpers.TNTLogHelper;
 @Mixin(TntEntity.class)
 public abstract class TntEntityMixin extends Entity
 {
-    private TNTLogHelper logHelper = null;
+    private TNTLogHelper logHelper;
 
     public TntEntityMixin(EntityType<?> entityType_1, World world_1)
     {
