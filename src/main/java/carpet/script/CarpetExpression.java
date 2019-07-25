@@ -1804,6 +1804,21 @@ public class CarpetExpression
                 ((EntityValue) v).set(what, ListValue.wrap(lv.subList(2, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList())));
             return lv.get(0);
         });
+
+        // or update
+        this.expr.addLazyFunction("entity_event", 3, (c, t, lv) ->
+        {
+            Value v = lv.get(0).evalValue(c);
+            if (!(v instanceof EntityValue))
+                throw new InternalExpressionException("First argument to get should be an entity");
+            String what = lv.get(1).evalValue(c).getString();
+            Value functionValue = lv.get(2).evalValue(c);
+            String function = null;
+            if (!(functionValue instanceof NullValue))
+                function = functionValue.getString();
+            ((EntityValue) v).setEvent((CarpetContext)c, what, function);
+            return LazyValue.NULL;
+        });
     }
 
     /**

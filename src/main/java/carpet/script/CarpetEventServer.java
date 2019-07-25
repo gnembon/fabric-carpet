@@ -6,6 +6,7 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.command.ServerCommandSource;
@@ -71,6 +72,11 @@ public class CarpetEventServer
         }
 
         public void execute()
+        {
+            CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, args);
+        }
+
+        public void execute(List<LazyValue> args)
         {
             CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, args);
         }
@@ -346,5 +352,21 @@ public class CarpetEventServer
     public void onStopSprinting(PlayerEntity player)
     {
         eventHandlers.get("player_stops_sprinting").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+    }
+
+    public ScheduledCall makeDeathCall(CarpetContext cc, String function)
+    {
+        UserDefinedFunction udf = cc.host.globalFunctions.get(function);
+        if (udf == null || udf.getArguments().size() != 2)
+        {
+            // call won't match arguments
+            return null;
+        }
+        return new ScheduledCall(cc, function, null, 0);
+    }
+
+    public void onEntityDeath(ScheduledCall call, Entity e, String reason)
+    {
+        call.execute( Arrays.asList( (c, t)-> new EntityValue(e), (c, t)-> new StringValue(reason)));
     }
 }
