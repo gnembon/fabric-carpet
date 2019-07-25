@@ -11,6 +11,7 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.SpawnHelper;
@@ -43,9 +44,15 @@ public class SpawnHelperMixin
         if (CarpetSettings.lagFreeSpawning)
         {
             BlockPos.Mutable blockpos = new BlockPos.Mutable();
-            for (int y = (int)bb.minY, maxy = (int)Math.ceil(bb.maxY); y < maxy; y++)
-                for (int x = (int)bb.minX,  maxx = (int)Math.ceil(bb.maxX); x < maxx; x++)
-                    for (int z = (int)bb.minZ, maxz = (int)Math.ceil(bb.maxZ); z < maxz; z++)
+            int minX = MathHelper.floor(bb.minX);
+            int maxX = MathHelper.ceil(bb.maxX);
+            int minY = MathHelper.floor(bb.minY);
+            int maxY = MathHelper.ceil(bb.maxY);
+            int minZ = MathHelper.floor(bb.minZ);
+            int maxZ = MathHelper.ceil(bb.maxZ);
+            for (int y = minY; y < maxY; y++)
+                for (int x = minX; x < maxX; x++)
+                    for (int z = minZ; z < maxZ; z++)
                     {
                         blockpos.set(x, y, z);
                         VoxelShape box = world.getBlockState(blockpos).getCollisionShape(world, blockpos);
