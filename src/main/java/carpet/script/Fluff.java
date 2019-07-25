@@ -16,6 +16,9 @@ public abstract class Fluff
     public interface TriConsumer<A, B, C> { void accept(A a, B b, C c); }
 
     @FunctionalInterface
+    public interface QuadConsumer<A, B, C, D> { void accept(A a, B b, C c, D d); }
+
+    @FunctionalInterface
     public interface QuadFunction<A, B, C, D, R> { R apply(A a, B b, C c, D d);}
 
     @FunctionalInterface

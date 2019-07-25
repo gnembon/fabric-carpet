@@ -704,14 +704,15 @@ public class EntityValue extends Value
         // "nbt" <-big one, for now use run('data merge entity ...
     }};
 
-    public void setEvent(CarpetContext cc, String event, String fun)
+    public void setEvent(CarpetContext cc, String event, String fun, List<Value> args)
     {
         if (!(events.containsKey(event)))
             throw new InternalExpressionException("unknown entity event: " + event);
-        events.get(event).accept(cc, entity, fun);
+        events.get(event).accept(cc, entity, fun, args);
     }
 
-    private static Map<String, Fluff.TriConsumer<CarpetContext, Entity, String>> events = new HashMap<String, Fluff.TriConsumer<CarpetContext, Entity, String>>() {{
-        put("on_death", (c, e, f) -> { ((EntityInterface)e).setDeathCallback(c, f); });
+    private static Map<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>> events = new HashMap<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>>() {{
+        put("on_death", (c, e, f, l) -> ((EntityInterface)e).setDeathCallback(c, f, l));
+        put("on_removed", (c, e, f, l) -> ((EntityInterface)e).setRemovedCallback(c, f, l));
     }};
 }
