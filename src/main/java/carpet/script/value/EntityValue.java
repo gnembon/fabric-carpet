@@ -432,7 +432,7 @@ public class EntityValue extends Value
     private static void updateVelocity(Entity e)
     {
         e.velocityModified = true;
-        ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
+        //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 
 
