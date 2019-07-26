@@ -13,6 +13,8 @@
     "StructureBlockBlockEntity_fillUpdatesMixin",
     "Structure_fillUpdatesMixin",
 
+    "ServerPlayerInteractionManager_ghostBlocksMixin",
+
     "ServerMetadata_motdMixin",
 
     "MinecraftServer_coreMixin",
