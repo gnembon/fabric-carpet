@@ -6,6 +6,8 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
+import carpet.script.value.Value;
+import carpet.settings.CarpetSettings;
 import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.command.ServerCommandSource;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class CarpetEventServer
 {
@@ -73,6 +76,19 @@ public class CarpetEventServer
         public void execute()
         {
             CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, args);
+        }
+
+        public void execute(List<LazyValue> args)
+        {
+            if (this.args == null)
+                CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, args);
+            else
+            {
+                List<LazyValue> combinedArgs = new ArrayList<>();
+                combinedArgs.addAll(args);
+                combinedArgs.addAll(this.args);
+                CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, combinedArgs);
+            }
         }
     }
 
@@ -215,6 +231,24 @@ public class CarpetEventServer
         return new Callback(null, funName);
     }
 
+    private ScheduledCall makeEventCall(CarpetContext cc, String function, List<Value> extraArgs, int argCount)
+    {
+        UserDefinedFunction udf = cc.host.globalFunctions.get(function);
+        if (udf == null || (udf.getArguments().size()-extraArgs.size()) != argCount)
+        {
+            // call won't match arguments
+            return null;
+        }
+        List<LazyValue> lazyArgs = null;
+        if (extraArgs != null)
+        {
+            lazyArgs = new ArrayList<>();
+            for (Value v : extraArgs)
+                lazyArgs.add( (c, t) -> v);
+        }
+        return new ScheduledCall(cc, function, lazyArgs, 0);
+    }
+
     public void onTick()
     {
         eventHandlers.get("tick").call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
@@ -347,4 +381,24 @@ public class CarpetEventServer
     {
         eventHandlers.get("player_stops_sprinting").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
     }
+
+    public ScheduledCall makeDeathCall(CarpetContext cc, String function, List<Value> extraArgs)
+    {
+        return makeEventCall(cc, function, extraArgs, 2);
+    }
+    public ScheduledCall makeRemovedCall(CarpetContext cc, String function, List<Value> extraArgs)
+    {
+        return makeEventCall(cc, function, extraArgs, 1);
+    }
+
+
+    public void onEntityDeath(ScheduledCall call, Entity e, String reason)
+    {
+        call.execute( Arrays.asList( (c, t)-> new EntityValue(e), (c, t)-> new StringValue(reason)));
+    }
+    public void onEntityRemoved(ScheduledCall removeCall, Entity entity)
+    {
+        removeCall.execute(Collections.singletonList((c, t) -> new EntityValue(entity)));
+    }
+
 }

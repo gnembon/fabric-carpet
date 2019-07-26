@@ -1,8 +1,12 @@
 package carpet.script.value;
 
+import carpet.fakes.EntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
+import carpet.script.CarpetContext;
+import carpet.script.Fluff;
 import carpet.script.exception.InternalExpressionException;
+import carpet.settings.CarpetSettings;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.client.network.packet.EntityPositionS2CPacket;
@@ -427,7 +431,8 @@ public class EntityValue extends Value
 
     private static void updateVelocity(Entity e)
     {
-        ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
+        e.velocityModified = true;
+        //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 
 
@@ -680,6 +685,7 @@ public class EntityValue extends Value
             }
         }); //requires mixing
 
+
         // gamemode
         // spectate
         // "fire"
@@ -696,5 +702,17 @@ public class EntityValue extends Value
         // "hold_offhand"
         // "jump"
         // "nbt" <-big one, for now use run('data merge entity ...
+    }};
+
+    public void setEvent(CarpetContext cc, String event, String fun, List<Value> args)
+    {
+        if (!(events.containsKey(event)))
+            throw new InternalExpressionException("unknown entity event: " + event);
+        events.get(event).accept(cc, entity, fun, args);
+    }
+
+    private static Map<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>> events = new HashMap<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>>() {{
+        put("on_death", (c, e, f, l) -> ((EntityInterface)e).setDeathCallback(c, f, l));
+        put("on_removed", (c, e, f, l) -> ((EntityInterface)e).setRemovedCallback(c, f, l));
     }};
 }

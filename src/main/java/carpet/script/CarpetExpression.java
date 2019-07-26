@@ -3,7 +3,6 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.helpers.Tracer;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
@@ -50,7 +49,6 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
@@ -65,9 +63,6 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.EulerAngle;
@@ -84,7 +79,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -1803,6 +1798,32 @@ public class CarpetExpression
             else
                 ((EntityValue) v).set(what, ListValue.wrap(lv.subList(2, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList())));
             return lv.get(0);
+        });
+
+        // or update
+        this.expr.addLazyFunction("entity_event", -1, (c, t, lv) ->
+        {
+            if (lv.size()<3)
+                throw new InternalExpressionException("entity_event requires at least 3 arguments, entity, event to be handled, and function name, with optional arguments");
+            Value v = lv.get(0).evalValue(c);
+            if (!(v instanceof EntityValue))
+                throw new InternalExpressionException("First argument to get should be an entity");
+            String what = lv.get(1).evalValue(c).getString();
+            Value functionValue = lv.get(2).evalValue(c);
+            String function = null;
+            if (!(functionValue instanceof NullValue))
+                function = functionValue.getString();
+            List<Value> args = null;
+            if (lv.size()==4)
+                args = Collections.singletonList(lv.get(3).evalValue(c));
+            else if (lv.size()>4)
+            {
+                args = new ArrayList<>(lv.subList(3, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList()));
+            }
+
+            ((EntityValue) v).setEvent((CarpetContext)c, what, function, args);
+
+            return LazyValue.NULL;
         });
     }
 

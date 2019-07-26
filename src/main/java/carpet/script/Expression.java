@@ -2527,6 +2527,20 @@ public class Expression implements Cloneable
             return (cc, tt) -> time;
         });
 
+        addLazyFunction("profile_expr", 1, (c, t, lv) ->
+        {
+            LazyValue lazy = lv.get(0);
+            long end = System.nanoTime()+50000000L;
+            long it = 0;
+            while (System.nanoTime()<end)
+            {
+                lazy.evalValue(c);
+                it++;
+            }
+            Value res = new NumericValue(it);
+            return (cc, tt) -> res;
+        });
+
         addLazyFunction("var", 1, (c, t, lv) -> {
             String varname = lv.get(0).evalValue(c).getString();
             if (!c.isAVariable(varname))
