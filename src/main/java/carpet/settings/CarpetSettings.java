@@ -229,7 +229,7 @@ public class CarpetSettings
     @Rule(desc = "smooth client animations with low tps settings", extra = "works only in SP, and will slow down players", category = CREATIVE)
     public static boolean smoothClientAnimations;
 
-    @Rule(desc="Fixes mining ghost blocks by allowing ANY mining speed from clients", category = SURVIVAL)
+    //@Rule(desc="Fixes mining ghost blocks by allowing ANY mining speed from clients", category = SURVIVAL)
     public static boolean miningGhostBlockFix;
 
     private static class PushLimitLimits extends Validator<Integer> {
