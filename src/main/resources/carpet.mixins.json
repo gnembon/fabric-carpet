@@ -114,6 +114,9 @@
     "PickaxeItem_missingToolsMixin",
     "ShearsItem_missingToolsMixin",
 
+    "Entity_scarpetEventsMixin",
+    "LivingEntity_scarpetEventsMixin",
+
 
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",

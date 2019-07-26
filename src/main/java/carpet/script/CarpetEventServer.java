@@ -234,7 +234,7 @@ public class CarpetEventServer
     private ScheduledCall makeEventCall(CarpetContext cc, String function, List<Value> extraArgs, int argCount)
     {
         UserDefinedFunction udf = cc.host.globalFunctions.get(function);
-        if (udf == null || udf.getArguments().size() != argCount)
+        if (udf == null || (udf.getArguments().size()-extraArgs.size()) != argCount)
         {
             // call won't match arguments
             return null;
