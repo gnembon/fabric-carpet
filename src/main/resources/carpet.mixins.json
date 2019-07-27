@@ -21,7 +21,9 @@
     "World_tickMixin",
     "ServerWorld_tickMixin",
     "ServerChunkManager_tickMixin",
+    "ServerChunkManager_ticketManagerMixin",
     "ThreadedAnvilChunkStorage_tickMixin",
+    "ChunkTicketManagerMixin",
 
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",

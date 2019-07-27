@@ -2,16 +2,19 @@ package carpet.commands;
 
 import carpet.settings.CarpetSettings;
 import carpet.utils.BlockInfo;
+import carpet.utils.ChunkInfo;
 import carpet.utils.EntityInfo;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.command.arguments.ColumnPosArgumentType;
 import net.minecraft.text.BaseText;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.EntityArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ColumnPos;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +53,12 @@ public class InfoCommand
                                                 executes( (c) -> infoEntities(
                                                         c.getSource(),
                                                         EntityArgumentType.getEntities(c,"entity selector"),
-                                                        getString(c, "regexp")))))));
+                                                        getString(c, "regexp"))))))).
+                then(literal("chunk").
+                        then(argument("column position", ColumnPosArgumentType.columnPos()).
+                        executes( (c) -> infoChunk(
+                                c.getSource(),
+                                ColumnPosArgumentType.getColumnPos(c, "column position")))));
 
         dispatcher.register(command);
     }
@@ -109,6 +117,11 @@ public class InfoCommand
         }
     }
 
+    public static void printChunk(List<BaseText> messages, ServerCommandSource source)
+    {
+        Messenger.send(source, messages);
+    }
+
 
 
     private static int infoEntities(ServerCommandSource source, Collection<? extends Entity> entities, String grep)
@@ -123,6 +136,11 @@ public class InfoCommand
     private static int infoBlock(ServerCommandSource source, BlockPos pos, String grep)
     {
         printBlock(BlockInfo.blockInfo(pos, source.getWorld()),source, grep);
+        return 1;
+    }
+    private static int infoChunk(ServerCommandSource source, ColumnPos pos)
+    {
+        printChunk(ChunkInfo.chunkInfo(pos, source.getWorld()), source);
         return 1;
     }
 
