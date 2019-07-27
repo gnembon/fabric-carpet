@@ -50,7 +50,7 @@ public class ChunkInfo
         {
             lst.add(Messenger.s(
                     String.format("- Chunk holder: level: %d, type: %s",
-                            chunkHolder.getLevel(), chunkHolder.getLevelType())));
+                            chunkHolder.getLevel(), ChunkHolder.getLevelType(chunkHolder.getLevel()))));
         }
 
         ObjectSortedSet<ChunkTicket<?>> ticketSet =
