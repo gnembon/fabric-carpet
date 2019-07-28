@@ -1,21 +1,32 @@
 package carpet.mixins;
 
+import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityInteraction;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Activity;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.AbstractTraderEntity;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.GlobalPos;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Timestamp;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Optional;
 
@@ -24,10 +35,24 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
 {
     @Shadow protected abstract boolean hasSeenGolemRecently(long long_1);
 
+    @Shadow protected abstract void sayNo();
+
+    @Shadow protected abstract int getAvailableFood();
+
+    @Shadow protected abstract void depleteFood(int int_1);
+
+    @Shadow protected abstract boolean lacksFood();
+
+    @Shadow public abstract void eatForBreeding();
+
+    int totalFood;
+    boolean hasBed;
+    int displayAge;
+
     @Inject(method = "tick", at = @At("HEAD"))
     private void ontick(CallbackInfo ci)
     {
-        if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING) && !getEntityWorld().isClient())
+        if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             long time;
             Optional<Long> optional_1 = this.brain.getOptionalMemory(MemoryModuleType.GOLEM_LAST_SEEN_TIME);
@@ -58,7 +83,56 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                     (recentlySeen?"rb ":"lb ")+time ));
             this.setCustomNameVisible(true);
         }
+        else if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
+        {
+            if (age % 50 == 0 || age < 20)
+            {
+                totalFood = getAvailableFood() / 12;
+                hasBed = this.brain.getOptionalMemory(MemoryModuleType.HOME).isPresent();
+                displayAge = getBreedingAge();
+
+            }
+            if (Math.abs(displayAge) < 100 && displayAge !=0) displayAge = getBreedingAge();
+
+            this.setCustomName(Messenger.c(
+                    (hasBed?"eb ":"fb ")+"\u263d ",
+                    (totalFood>0?"eb ":"fb ")+"\u2668",(totalFood>0?"e ":"f ")+totalFood+" ",
+                    (displayAge==0?"eb ":"fb ")+"\u2661",(displayAge==0?"e ":"f ")+displayAge+""
+            ));
+            this.setCustomNameVisible(true);
+        }
     }
+
+    @Inject(method = "interactMob", at = @At("HEAD"), cancellable = true)
+    private void onInteract(PlayerEntity playerEntity_1, Hand hand_1, CallbackInfoReturnable<Boolean> cir)
+    {
+        if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
+        {
+            ItemStack itemStack_1 = playerEntity_1.getStackInHand(hand_1);
+            if (itemStack_1.getItem() == Items.EMERALD)
+            {
+                GlobalPos bedPos = this.brain.getOptionalMemory(MemoryModuleType.HOME).orElse(null);
+                if (bedPos == null || bedPos.getDimension() != dimension)
+                {
+                    sayNo();
+                    ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, x, y + getStandingEyeHeight() + 1, z, 1, 0.1, 0.1, 0.1, 0.0);
+                }
+                else
+                {
+
+                    ParticleDisplay.drawParticleLine((ServerPlayerEntity) playerEntity_1, getPos(), new Vec3d(bedPos.getPos()).add(0.5, 0.5, 0.5), "dust 0 0 0 1", "happy_villager", 100, 0.2);
+                }
+            }
+            else if (itemStack_1.getItem() == Items.ROTTEN_FLESH)
+            {
+                while(getAvailableFood() >= 12) eatForBreeding();
+
+            }
+            cir.setReturnValue(false);
+            cir.cancel();
+        }
+    }
+
 
     @Inject(method = "summonGolem", at = @At(
             value = "INVOKE",
@@ -67,7 +141,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
     ))
     private void particleIt(long long_1, int int_1, CallbackInfo ci)
     {
-        if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING) && !getEntityWorld().isClient())
+        if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, x, y+3, z, 1, 0.1, 0.1, 0.1, 0.0);
         }

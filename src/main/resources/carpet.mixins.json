@@ -87,6 +87,8 @@
 
     "PlayerEntity_horseFixMixin",
 
+    "ServerPlayerInteractionManager_ghostBlocksMixin",
+
     "HopperBlockEntityMixin",
     "ContainerMixin",
     "ClientConnectionMixin",
@@ -127,6 +129,8 @@
     "IntegratedServerMixin",
     "InGameHudMixin",
     "PlayerListHudMixin",
+
+    "ClientPlayerInteractionManager_ghostBlocksMixin",
 
     "BlockEntityRenderDispatcher_movableTEMixin",
     "PistonBlockEntityRenderer_movableTEMixin"
