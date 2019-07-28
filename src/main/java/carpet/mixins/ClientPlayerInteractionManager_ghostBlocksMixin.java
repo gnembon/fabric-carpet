@@ -6,6 +6,8 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.packet.PlayerInteractBlockC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -39,9 +41,14 @@ public abstract class ClientPlayerInteractionManager_ghostBlocksMixin
                 blockState_1.getCollisionShape(iWorld_1, blockPos_1) != VoxelShapes.empty()
         )
         {
-            client.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(
-                    Hand.MAIN_HAND,
-                    new BlockHitResult(new Vec3d(blockPos_1), Direction.DOWN, blockPos_1, false)
+            ItemStack handItem = client.player.getMainHandStack();
+            if (handItem.isEmpty() ||
+                    handItem.getItem().getGroup() == ItemGroup.TOOLS ||
+                    handItem.getItem().getGroup() == ItemGroup.COMBAT
+            )
+                client.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(
+                        Hand.MAIN_HAND,
+                        new BlockHitResult(new Vec3d(blockPos_1), Direction.DOWN, blockPos_1, false)
             ));
         }
     }
