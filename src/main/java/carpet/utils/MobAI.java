@@ -25,6 +25,8 @@ public class MobAI
 
     public static boolean isTracking(Entity e, TrackingType type)
     {
+        if (e.getEntityWorld().isClient())
+            return false;
         Set<TrackingType> currentTrackers = aiTrackers.get(e.getType());
         if (currentTrackers == null)
             return false;
@@ -72,7 +74,8 @@ public class MobAI
 
     public enum TrackingType
     {
-        IRON_GOLEM_SPAWNING("iron_golem_spawning", Sets.newHashSet(EntityType.VILLAGER));
+        IRON_GOLEM_SPAWNING("iron_golem_spawning", Sets.newHashSet(EntityType.VILLAGER)),
+        VILLAGER_BREEDING("villager_breeding", Sets.newHashSet(EntityType.VILLAGER));
         public Set<EntityType> types;
         public String name;
         TrackingType(String name, Set<EntityType> applicableTypes)
