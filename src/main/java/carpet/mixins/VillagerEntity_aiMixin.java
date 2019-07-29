@@ -8,9 +8,11 @@ import net.minecraft.entity.EntityInteraction;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Activity;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.passive.AbstractTraderEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BedItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
@@ -19,7 +21,11 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.GlobalPos;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Timestamp;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.village.PointOfInterest;
+import net.minecraft.village.PointOfInterestStorage;
+import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,7 +34,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Mixin(VillagerEntity.class)
 public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
@@ -128,9 +136,41 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                 while(getAvailableFood() >= 12) eatForBreeding();
 
             }
+            else if (itemStack_1.getItem() instanceof BedItem)
+            {
+                List<PointOfInterest> list_1 = ((ServerWorld) getEntityWorld()).getPointOfInterestStorage().get(
+                        type -> type == PointOfInterestType.HOME,
+                        getBlockPos(),
+                        48, PointOfInterestStorage.OccupationStatus.ANY).collect(Collectors.toList());
+                for (PointOfInterest poi : list_1)
+                {
+                    Vec3d pv = new Vec3d(poi.getPos()).add(0.5, 0.5, 0.5);
+                    if (!poi.hasSpace())
+                    {
+                        ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.HAPPY_VILLAGER,
+                                pv.x, pv.y+1.5, pv.z,
+                                50, 0.1, 0.3, 0.1, 0.0);
+                    }
+                    else if (method_20642((VillagerEntity)(Object)this, poi.getPos()))
+                        ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.END_ROD,
+                                pv.x, pv.y+1, pv.z,
+                                50, 0.1, 0.3, 0.1, 0.0);
+                    else
+                        ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER,
+                                pv.x, pv.y+1, pv.z,
+                                1, 0.1, 0.1, 0.1, 0.0);
+
+
+                }
+            }
             cir.setReturnValue(false);
             cir.cancel();
         }
+    }
+
+    private boolean method_20642(VillagerEntity villagerEntity_1, BlockPos blockPos_1) {
+        Path path_1 = villagerEntity_1.getNavigation().findPathTo(blockPos_1, PointOfInterestType.HOME.method_21648());
+        return path_1 != null && path_1.method_21655();
     }
 
 

@@ -26,7 +26,7 @@ public class ParticleDisplay
             throw new RuntimeException("No such particle: "+name);
         }
     }
-    private static ParticleEffect getEffect(String name)
+    public static ParticleEffect getEffect(String name)
     {
         if (name == null) return null;
         ParticleEffect res = particleCache.get(name);
