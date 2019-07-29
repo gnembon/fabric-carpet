@@ -2407,7 +2407,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
             BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
-            if (!(Registry.SOUND_EVENT.containsId(soundName)))
+            if (Registry.SOUND_EVENT.get(soundName) == null)
                 throw new InternalExpressionException("No such sound: "+soundName.getPath());
             float volume = 1.0F;
             float pitch = 1.0F;
