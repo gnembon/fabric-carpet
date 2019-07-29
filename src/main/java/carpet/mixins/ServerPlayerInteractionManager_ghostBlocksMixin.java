@@ -12,6 +12,8 @@ import net.minecraft.world.BlockView;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 //needs tests, WIP
@@ -43,18 +45,11 @@ public class ServerPlayerInteractionManager_ghostBlocksMixin
         return progress;
     }
 
-    /*
     @ModifyConstant(method = "method_14263",
             constant = @Constant(doubleValue = 36D))
     private double addDistance(double original) {
         if (CarpetSettings.miningGhostBlockFix)
-            return 1024D;
+            return 1024D; // blocks 32 distance
         return original;
     }
-    @Inject(method = "method_14263", at = @At("HEAD"))
-    private void logAction(BlockPos blockPos_1, PlayerActionC2SPacket.Action playerActionC2SPacket$Action_1, Direction direction_1, int int_1, CallbackInfo ci)
-    {
-        CarpetSettings.LOG.error("Got action: "+playerActionC2SPacket$Action_1+"("+int_1+")");
-    }
-    */
 }
