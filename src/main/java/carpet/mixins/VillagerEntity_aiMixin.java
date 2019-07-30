@@ -103,9 +103,9 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             if (Math.abs(displayAge) < 100 && displayAge !=0) displayAge = getBreedingAge();
 
             this.setCustomName(Messenger.c(
-                    (hasBed?"eb ":"fb ")+"\u263d ",
+                    (hasBed?"eb ":"fb ")+"\u2616 ",//"\u263d ",
                     (totalFood>0?"eb ":"fb ")+"\u2668",(totalFood>0?"e ":"f ")+totalFood+" ",
-                    (displayAge==0?"eb ":"fb ")+"\u2661",(displayAge==0?"e ":"f ")+displayAge+""
+                    (displayAge==0?"eb ":"fb ")+"\u2661",(displayAge==0?"e ":"f "+displayAge)
             ));
             this.setCustomNameVisible(true);
         }
@@ -159,8 +159,6 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                         ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER,
                                 pv.x, pv.y+1, pv.z,
                                 1, 0.1, 0.1, 0.1, 0.0);
-
-
                 }
             }
             cir.setReturnValue(false);

@@ -20,7 +20,6 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.settings.CarpetSettings;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

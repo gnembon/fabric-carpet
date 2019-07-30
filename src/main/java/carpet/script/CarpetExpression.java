@@ -1678,7 +1678,6 @@ public class CarpetExpression
             if (EntityType.getId(EntityType.LIGHTNING_BOLT).equals(entityId)) {
                 LightningEntity lightningEntity_1 = new LightningEntity(cc.s.getWorld(), vec3d.x, vec3d.y, vec3d.z, false);
                 cc.s.getWorld().addLightning(lightningEntity_1);
-                cc.s.sendFeedback(new TranslatableText("commands.summon.success", lightningEntity_1.getDisplayName()), true);
                 return LazyValue.NULL;
             } else {
                 ServerWorld serverWorld = cc.s.getWorld();
@@ -2891,7 +2890,6 @@ public class CarpetExpression
      * followed by the second set of coordinates, providing tab completion, with <code>looking at... </code> mechanics for convenience,
      * followed by any other required arguments</p>
      * </div>
-     * @return .
      */
 
     public void invokeGlobalFunctionCommand()
@@ -2934,7 +2932,6 @@ public class CarpetExpression
      * <h3><code>/script in &lt;module&gt; ... </code></h3>
      * <p>Allows to run normal /script commands in a specific module, like <code>run, invoke,..., globals</code> etc...</p>
      * </div>
-     * @return .
      */
     public void loadScriptsFromFilesCommand()
     {
@@ -2978,7 +2975,6 @@ public class CarpetExpression
      * <p>used to display current events and bounded functions. use <code>add_to</code> ro register new event, or <code>remove_from</code>
      * to unbind a specific function from an event.</p>
      * </div>
-     * @return .
      */
     public void gameEventsSystem()
     {
