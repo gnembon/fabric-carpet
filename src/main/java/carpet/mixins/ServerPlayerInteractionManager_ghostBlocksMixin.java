@@ -16,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-//needs tests, WIP
 @Mixin(ServerPlayerInteractionManager.class)
 public class ServerPlayerInteractionManager_ghostBlocksMixin
 {
@@ -34,7 +33,7 @@ public class ServerPlayerInteractionManager_ghostBlocksMixin
         float progress = blockState.calcBlockBreakingDelta(playerEntity_1, blockView_1, blockPos_1);
         if (CarpetSettings.miningGhostBlockFix &&
                 (playerActionC2SPacket$Action_1 == PlayerActionC2SPacket.Action.START_DESTROY_BLOCK) &&
-                !playerEntity_1.onGround &&
+                !playerEntity_1.onGround && !playerEntity_1.isClimbing() && !playerEntity_1.isFallFlying() &&
                 progress >= 0.2
         )
             return progress*5;

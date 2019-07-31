@@ -75,7 +75,4 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
             return false;
         return serverPlayerEntity.onGround;
     }
-
-
-
 }

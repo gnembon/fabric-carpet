@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.settings.CarpetSettings;
 import net.minecraft.client.network.packet.EntityPositionS2CPacket;
+import net.minecraft.client.network.packet.VehicleMoveS2CPacket;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.MobEntity;
@@ -40,8 +41,8 @@ public abstract class PlayerEntity_horseFixMixin extends Entity
                 ((ServerWorld) getEntityWorld()).method_14178().sendToNearbyPlayers(this, new EntityPositionS2CPacket(getVehicle()));
                 // not sure if player at this point is actually considered to be next to the exiting vehicle
                 ((ServerPlayerEntity)(Object)this).networkHandler.sendPacket(new EntityPositionS2CPacket(getVehicle()));
+                ((ServerPlayerEntity)(Object)this).networkHandler.sendPacket(new VehicleMoveS2CPacket(getVehicle()));
             }
         }
     }
-
 }
