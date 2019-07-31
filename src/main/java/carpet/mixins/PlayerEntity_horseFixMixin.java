@@ -36,7 +36,7 @@ public abstract class PlayerEntity_horseFixMixin extends Entity
                 ((MobEntity) getVehicle()).getNavigation().stop();
             if (!getEntityWorld().isClient)
             {
-                ((ServerWorld) getEntityWorld()).method_14178().sendToNearbyPlayers((Entity)(Object)this, new EntityPositionS2CPacket(getVehicle()));
+                ((ServerWorld) getEntityWorld()).method_14178().sendToNearbyPlayers(this, new EntityPositionS2CPacket(getVehicle()));
             }
         }
     }
