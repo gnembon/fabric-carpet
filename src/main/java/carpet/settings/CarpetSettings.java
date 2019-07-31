@@ -26,7 +26,7 @@ import static carpet.settings.RuleCategory.SURVIVAL;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.0.2-v190728";
+    public static final String carpetVersion = "1.0.3-v190730";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
