@@ -116,6 +116,7 @@
 
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
+    "RaidManager_scarpetAPIMixin",
 
 
     "PistonBlock_movableTEMixin",

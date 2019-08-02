@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.RaidManagerInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
@@ -45,6 +46,7 @@ import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.raid.Raid;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -2688,6 +2690,39 @@ public class CarpetExpression
             if (what.equalsIgnoreCase("boulder"))  // there might be more of those
                 this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext)c).s.getWorld());
             return (c_, t_) -> new NumericValue(res);
+        });
+
+        this.expr.addLazyFunction("get_raids", -1, (c,t,lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.size()==0)
+            {
+                List<Value> allRaids = new ArrayList<>();
+                for (Map.Entry<Integer, Raid > entry : ((RaidManagerInterface)cc.s.
+                        getWorld().getRaidManager()).getAllRaids().entrySet())
+                {
+                    Raid raid = entry.getValue();
+                    allRaids.add(ListValue.of(
+                            new NumericValue(entry.getKey()),
+                            new BlockValue(null, cc.s.getWorld(), raid.getCenter()),
+                            new NumericValue(raid.getRaiderCount())
+                            // current wave count etc...
+                            ));
+                }
+                Value res = ListValue.wrap(allRaids);
+                return (_c, _t) -> res;
+            }
+            int raidId = (int)NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+            Raid raid = cc.s.getWorld().getRaidManager().getRaid(raidId);
+            if (raid == null)
+                return LazyValue.NULL;
+            Value res = ListValue.of(
+                    new NumericValue(raidId),
+                    new BlockValue(null, cc.s.getWorld(), raid.getCenter()),
+                    new NumericValue(raid.getRaiderCount())
+                    // current wave count etc...
+            );
+            return (_c, _t) -> res;
         });
 
         this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
