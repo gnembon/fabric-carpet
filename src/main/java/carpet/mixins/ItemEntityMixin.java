@@ -52,7 +52,7 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
     }
 
     @Redirect(
-            method = "method_20397",
+            method = "tryMerge(Lnet/minecraft/entity/ItemEntity;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/item/ItemStack;getMaxCount()I"
