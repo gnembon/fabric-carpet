@@ -64,8 +64,11 @@
     "PlayerEntity_parrotMixin",
     "SaplingBlockMixin",
     "EntityMixin",
+
     "GuardianEntityMixin",
     "DesertPyramidFeatureMixin",
+    "HuskEntityMixin",
+
     "OverworldChunkGeneratorMixin",
 
     "ServerChunkManagerMixin",

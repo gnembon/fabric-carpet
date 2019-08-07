@@ -65,6 +65,7 @@ import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
@@ -754,8 +755,9 @@ public class CarpetExpression
         this.expr.addLazyFunction("loaded_ep", -1, (c, t, lv) ->
         {
             BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
-            Value retval = ((CarpetContext)c).s.getWorld().isAreaLoaded(pos.getX() - 32, 0, pos.getZ() - 32,
-                    pos.getX() + 32, 0, pos.getZ() + 32) ? Value.TRUE : Value.FALSE;
+            Value retval = ((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos))?Value.TRUE : Value.FALSE;
+            //Value retval = ((CarpetContext)c).s.getWorld().isAreaLoaded(pos.getX() - 32, 0, pos.getZ() - 32,
+            //        pos.getX() + 32, 0, pos.getZ() + 32) ? Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         });
 
