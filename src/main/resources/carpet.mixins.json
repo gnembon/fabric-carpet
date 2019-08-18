@@ -124,7 +124,8 @@
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
-    "WorldChunk_movableTEMixin"
+    "WorldChunk_movableTEMixin",
+    "PistonHandler_movableTEMixin"
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",
