@@ -8,6 +8,7 @@ import net.minecraft.client.render.GuiLighting;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.lwjgl.opengl.GL20;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -43,7 +44,7 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
             int i = this.world.getLightmapIndex(blockEntity_1.getPos(), 0);
             int j = i % 65536;
             int k = i / 65536;
-            RenderSystem.glMultiTexCoord2f(33985, (float) j, (float) k);
+            RenderSystem.glMultiTexCoord2f(GL20.GL_TEXTURE1, (float) j, (float) k);
             RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
             BlockPos blockpos = blockEntity_1.getPos();
             this.renderEntity(blockEntity_1, (double) blockpos.getX() - renderOffsetX + xOffset, (double) blockpos.getY() - renderOffsetY + yOffset, (double) blockpos.getZ() - renderOffsetZ + zOffset, partialTicks, destroyStage, false);
