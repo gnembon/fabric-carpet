@@ -9,6 +9,7 @@ import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Unit;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
@@ -361,7 +362,11 @@ public class CarpetSettings
             }
             ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD);
             if (overworld != null) {
-                ChunkPos centerChunk = new ChunkPos(overworld.getSpawnPos());
+                ChunkPos centerChunk = new ChunkPos(new BlockPos(
+                        overworld.getLevelProperties().getSpawnX(),
+                        overworld.getLevelProperties().getSpawnY(),
+                        overworld.getLevelProperties().getSpawnZ()
+                ));
                 ServerChunkManager chunkManager = (ServerChunkManager) overworld.getChunkManager();
 
                 chunkManager.removeTicket(ChunkTicketType.START, centerChunk, 11, Unit.INSTANCE);
