@@ -2571,7 +2571,7 @@ public class CarpetExpression
             );
             armorstand.addScoreboardTag("__scarpet_marker");
             if (targetBlock != null)
-                armorstand.setEquippedStack(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
+                armorstand.equipStack(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
             if (!name.isEmpty())
             {
                 armorstand.setCustomName(new LiteralText(name));

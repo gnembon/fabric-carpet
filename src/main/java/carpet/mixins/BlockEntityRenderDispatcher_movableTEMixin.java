@@ -1,8 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.BlockEntityRenderDispatcherInterface;
-import com.mojang.blaze3d.platform.GLX;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GuiLighting;
@@ -44,8 +43,8 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
             int i = this.world.getLightmapIndex(blockEntity_1.getPos(), 0);
             int j = i % 65536;
             int k = i / 65536;
-            GLX.glMultiTexCoord2f(GLX.GL_TEXTURE1, (float) j, (float) k);
-            GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.glMultiTexCoord2f(33985, (float) j, (float) k);
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
             BlockPos blockpos = blockEntity_1.getPos();
             this.renderEntity(blockEntity_1, (double) blockpos.getX() - renderOffsetX + xOffset, (double) blockpos.getY() - renderOffsetY + yOffset, (double) blockpos.getZ() - renderOffsetZ + zOffset, partialTicks, destroyStage, false);
         }

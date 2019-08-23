@@ -21,6 +21,8 @@ public class ServerPlayerInteractionManager_ghostBlocksMixin
 {
     @Shadow public ServerPlayerEntity player;
 
+    /*
+    1.15 changes the protocol to include instamine as a possible action
     @Redirect(method = "method_14263", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/BlockState;calcBlockBreakingDelta(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;)F")
@@ -42,7 +44,7 @@ public class ServerPlayerInteractionManager_ghostBlocksMixin
         )
             return 1.0f;
         return progress;
-    }
+    }*/
 
     @ModifyConstant(method = "method_14263",
             constant = @Constant(doubleValue = 36D))

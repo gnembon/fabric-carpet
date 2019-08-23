@@ -27,7 +27,7 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
 
     @Shadow protected abstract void pushAway(Entity entity_1);
 
-    @Inject(method = "tickPushing", cancellable = true, at = @At("HEAD"))
+    @Inject(method = "tickCramming", cancellable = true, at = @At("HEAD"))
     private void tickPushingReplacement(CallbackInfo ci)
     {
         List<Entity> list_1 = this.world.getEntities((Entity)this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
