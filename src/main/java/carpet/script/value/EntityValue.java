@@ -9,6 +9,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.settings.CarpetSettings;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.client.network.packet.EntityPassengersSetS2CPacket;
 import net.minecraft.client.network.packet.EntityPositionS2CPacket;
 import net.minecraft.client.network.packet.EntityVelocityUpdateS2CPacket;
 import net.minecraft.command.EntitySelector;
@@ -582,6 +583,11 @@ public class EntityValue extends Value
             if (v instanceof EntityValue)
             {
                 e.startRiding(((EntityValue) v).getEntity(),true);
+            }
+            if (e instanceof ServerPlayerEntity)
+            {
+                ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityPassengersSetS2CPacket(e));
+                //...
             }
         });
         put("drop_passengers", (e, v) -> e.removeAllPassengers());

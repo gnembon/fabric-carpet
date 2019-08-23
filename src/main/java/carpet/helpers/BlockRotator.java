@@ -21,6 +21,7 @@ import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.StairsBlock;
 import net.minecraft.block.TrapdoorBlock;
+import net.minecraft.block.dispenser.DispenserBehavior;
 import net.minecraft.block.dispenser.FallibleItemDispenserBehavior;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
@@ -299,7 +300,7 @@ public class BlockRotator
         return false;
     }
 
-    public static class CactusDispenserBehaviour extends FallibleItemDispenserBehavior
+    public static class CactusDispenserBehaviour extends FallibleItemDispenserBehavior implements DispenserBehavior
     {
         @Override
         protected ItemStack dispenseSilently(BlockPointer source, ItemStack stack)

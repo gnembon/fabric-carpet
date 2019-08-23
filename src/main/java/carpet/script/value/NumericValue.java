@@ -55,9 +55,15 @@ public class NumericValue extends Value
     {
         return value;
     }
+
+    public static long floor(double double_1) {
+        long int_1 = (long)double_1;
+        return double_1 < (double)int_1 ? int_1 - 1 : int_1;
+    }
+
     public long getLong()
     {
-        return (long)(value+epsilon);
+        return floor((value+epsilon));
     }
 
     @Override

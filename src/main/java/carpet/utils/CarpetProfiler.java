@@ -4,6 +4,7 @@ import carpet.settings.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 public class CarpetProfiler
 {
     private static final HashMap<String, Long> time_repo = new HashMap<>();
+    private static ServerCommandSource currentRequester = null;
     public static int tick_health_requested = 0;
     private static int tick_health_elapsed = 0;
     private static TYPE test_type = TYPE.NONE; //1 for ticks, 2 for entities;
@@ -80,7 +82,7 @@ public class CarpetProfiler
                 world.isClient ? " (Client)" : "");
     }
 
-    public static void prepare_tick_report(MinecraftServer server, int ticks)
+    public static void prepare_tick_report(ServerCommandSource source, int ticks)
     {
         //maybe add so it only spams the sending player, but honestly - all may want to see it
         time_repo.clear();
@@ -103,9 +105,10 @@ public class CarpetProfiler
         tick_health_elapsed = ticks;
         tick_health_requested = ticks;
         current_tick_start = 0L;
+        currentRequester = source;
     }
 
-    public static void prepare_entity_report(MinecraftServer server, int ticks)
+    public static void prepare_entity_report(ServerCommandSource source, int ticks)
     {
         //maybe add so it only spams the sending player, but honestly - all may want to see it
         time_repo.clear();
@@ -114,6 +117,7 @@ public class CarpetProfiler
         tick_health_elapsed = ticks;
         tick_health_requested = ticks;
         current_tick_start = 0L;
+        currentRequester = source;
     }
 
     public static ProfilerToken start_section(World world, String name, TYPE type)
@@ -202,15 +206,18 @@ public class CarpetProfiler
         tick_health_elapsed = 0;
         tick_health_requested = 0;
         current_tick_start = 0L;
+        currentRequester = null;
     }
 
     public static void finalize_tick_report_for_time(MinecraftServer server)
     {
         //print stats
+        if (currentRequester == null)
+            return;
         long total_tick_time = time_repo.get("tick");
         double divider = 1.0D / tick_health_requested / 1000000;
-        Messenger.print_server_message(server, "");
-        Messenger.print_server_message(server, String.format("Average tick time: %.3fms", divider * total_tick_time));
+        Messenger.m(currentRequester, "w ");
+        Messenger.m(currentRequester, String.format("gi Average tick time: %.3fms", divider * total_tick_time));
         long accumulated = 0L;
 
         for (String section : GENERAL_SECTIONS)
@@ -219,7 +226,7 @@ public class CarpetProfiler
             if (amount > 0.01)
             {
                 accumulated += time_repo.get(section);
-                Messenger.print_server_message(server, String.format("%s: %.3fms", section, amount));
+                Messenger.m(currentRequester, String.format("gi %s: %.3fms", section, amount));
             }
         }
 
@@ -239,7 +246,7 @@ public class CarpetProfiler
             {
                 continue;
             }
-            Messenger.print_server_message(server, dimension + ":");
+            Messenger.m(currentRequester, "gi "+dimension + ":");
             for (String section : SECTIONS)
             {
                 double amount = divider * time_repo.get(dimension + "." + section);
@@ -247,26 +254,28 @@ public class CarpetProfiler
                 {
                     if (!(section.endsWith("(client)")))
                         accumulated += time_repo.get(dimension + "." + section);
-                    Messenger.print_server_message(server, String.format(" - %s: %.3fms", section, amount));
+                    Messenger.m(currentRequester, String.format("gi  - %s: %.3fms", section, amount));
                 }
             }
         }
 
         long rest = total_tick_time - accumulated;
 
-        Messenger.print_server_message(server, String.format("The Rest, whatever that might be: %.3fms", divider * rest));
+        Messenger.m(currentRequester, String.format("gi The Rest, whatever that might be: %.3fms", divider * rest));
     }
 
     public static void finalize_tick_report_for_entities(MinecraftServer server)
     {
+        if (currentRequester == null)
+            return;
         //print stats
         long total_tick_time = time_repo.get("tick");
         double divider = 1.0D / tick_health_requested / 1000000;
         double divider_1 = 1.0D / (tick_health_requested - 1) / 1000000;
-        Messenger.print_server_message(server, "");
-        Messenger.print_server_message(server, String.format("Average tick time: %.3fms", divider * total_tick_time));
+        Messenger.m(currentRequester, "gi ");
+        Messenger.m(currentRequester, String.format("gi Average tick time: %.3fms", divider * total_tick_time));
         time_repo.remove("tick");
-        Messenger.print_server_message(server, "Top 10 counts:");
+        Messenger.m(currentRequester, "gi Top 10 counts:");
         int total = 0;
         for (Map.Entry<String, Long> entry : time_repo.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
         {
@@ -283,9 +292,9 @@ public class CarpetProfiler
             String dim = parts[1];
             String name = parts[2];
             int penalty = name.endsWith("(client)") ? 1 : 0;
-            Messenger.print_server_message(server, String.format(" - %s in %s: %.3f", name, dim, 1.0D * entry.getValue() / (tick_health_requested - penalty)));
+            Messenger.m(currentRequester, String.format("gi  - %s in %s: %.1f", name, dim, 1.0D * entry.getValue() / (tick_health_requested - penalty)));
         }
-        Messenger.print_server_message(server, "Top 10 grossing:");
+        Messenger.m(currentRequester, "gi Top 10 CPU hogs:");
         total = 0;
         for (Map.Entry<String, Long> entry : time_repo.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).collect(Collectors.toList()))
         {
@@ -302,7 +311,7 @@ public class CarpetProfiler
             String dim = parts[1];
             String name = parts[2];
             double applicableDivider = name.endsWith("(client)") ? divider : divider_1;
-            Messenger.print_server_message(server, String.format(" - %s in %s: %.3fms", name, dim, applicableDivider * entry.getValue()));
+            Messenger.m(currentRequester, String.format("gi  - %s in %s: %.2fms", name, dim, applicableDivider * entry.getValue()));
         }
     }
 }

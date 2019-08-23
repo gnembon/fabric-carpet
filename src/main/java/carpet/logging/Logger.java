@@ -2,6 +2,7 @@ package carpet.logging;
 
 import carpet.CarpetServer;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 
 import java.util.Arrays;
@@ -94,7 +95,7 @@ public class Logger
     {
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
-            PlayerEntity player = playerFromName(en.getKey());
+            ServerPlayerEntity player = playerFromName(en.getKey());
             if (player != null)
             {
                 BaseText [] messages = messagePromise.get(en.getValue(),player);
@@ -115,7 +116,7 @@ public class Logger
         Map<String, BaseText[]> cannedMessages = new HashMap<>();
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
-            PlayerEntity player = playerFromName(en.getKey());
+            ServerPlayerEntity player = playerFromName(en.getKey());
             if (player != null)
             {
                 String option = en.getValue();
@@ -137,7 +138,7 @@ public class Logger
         BaseText [] cannedMessages = null;
         for (Map.Entry<String,String> en : subscribedOnlinePlayers.entrySet())
         {
-            PlayerEntity player = playerFromName(en.getKey());
+            ServerPlayerEntity player = playerFromName(en.getKey());
             if (player != null)
             {
                 if (cannedMessages == null) cannedMessages = messagePromise.get();
@@ -146,7 +147,7 @@ public class Logger
         }
     }
 
-    public void sendPlayerMessage(PlayerEntity player, BaseText ... messages)
+    public void sendPlayerMessage(ServerPlayerEntity player, BaseText ... messages)
     {
         Arrays.stream(messages).forEach(player::sendMessage);
     }
@@ -154,7 +155,7 @@ public class Logger
     /**
      * Gets the {@code PlayerEntity} instance for a player given their UUID. Returns null if they are offline.
      */
-    protected PlayerEntity playerFromName(String name)
+    protected ServerPlayerEntity playerFromName(String name)
     {
         return CarpetServer.minecraft_server.getPlayerManager().getPlayer(name);
     }
