@@ -1,7 +1,6 @@
 package carpet.helpers;
 
 import carpet.fakes.ServerPlayerEntityInterface;
-import carpet.mixins.PlayerActionC2SPacketMixin;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
@@ -13,11 +12,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 
 import java.util.List;
 import java.util.Map;
@@ -281,7 +276,7 @@ public class EntityPlayerActionPack
                         BlockPos pos = blockHit.getBlockPos();
                         Direction side = blockHit.getSide();
                         if (player.method_21701(player.world, pos, player.interactionManager.getGameMode())) return false;
-                        if (ap.currentBlock != null && player.world.isAir(ap.currentBlock))
+                        if (ap.currentBlock != null && player.world.getBlockState(ap.currentBlock).isAir())
                         {
                             ap.currentBlock = null;
                             return false;

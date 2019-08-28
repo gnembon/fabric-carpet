@@ -1,21 +1,18 @@
 package carpet.utils;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.*;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnType;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.block.Material;
-import net.minecraft.block.MaterialColor;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.mob.MobEntityWithAi;
-import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.ai.PathfindingUtil;
+import net.minecraft.entity.ai.goal.WanderAroundGoal;
+import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.mob.ZombiePigmanEntity;
-import net.minecraft.block.BlockPlacementEnvironment;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.text.BaseText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.text.BaseText;
+import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -171,8 +168,10 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isSimpleFullBlock(world, pos)))); //isNormalCube())));
         lst.add(Messenger.s(String.format(" - Is liquid: %s", material.isLiquid())));
         lst.add(Messenger.s(""));
-        lst.add(Messenger.s(String.format(" - Light in: %d, above: %d", world.getLightLevel(pos), world.getLightLevel(pos.up()))));
-        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.up()))));
+        lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
+                Math.max(world.getLightLevel(LightType.BLOCK, pos),world.getLightLevel(LightType.SKY, pos)) ,
+                Math.max(world.getLightLevel(LightType.BLOCK, pos.up()),world.getLightLevel(LightType.SKY, pos.up())))));
+        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.method_22349(pos), world.method_22349(pos.up()))));
         lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
         lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().blocksLight())));

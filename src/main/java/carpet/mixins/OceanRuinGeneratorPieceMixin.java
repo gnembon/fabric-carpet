@@ -13,10 +13,10 @@ public class OceanRuinGeneratorPieceMixin
 {
     @Redirect(method = "generate", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/IWorld;getTop(Lnet/minecraft/world/Heightmap$Type;II)I"
+            target = "Lnet/minecraft/world/IWorld;getLightLevel(Lnet/minecraft/world/Heightmap$Type;II)I"
     ))
     private int getTop(IWorld iWorld, Heightmap.Type var1, int var2, int var3)
     {
-        return iWorld.getTop(CarpetSettings.skipGenerationChecks?Heightmap.Type.OCEAN_FLOOR:Heightmap.Type.OCEAN_FLOOR_WG, var2, var3);
+        return iWorld.getLightLevel(CarpetSettings.skipGenerationChecks?Heightmap.Type.OCEAN_FLOOR:Heightmap.Type.OCEAN_FLOOR_WG, var2, var3);
     }
 }

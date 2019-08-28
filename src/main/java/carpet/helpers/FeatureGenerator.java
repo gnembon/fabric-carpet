@@ -3,6 +3,7 @@ package carpet.helpers;
 import carpet.settings.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import net.minecraft.block.Blocks;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -41,7 +42,7 @@ public class FeatureGenerator
     @FunctionalInterface
     private interface Thing
     {
-        Boolean plop(World world, BlockPos pos);
+        Boolean plop(ServerWorld world, BlockPos pos);
     }
     private static Thing simplePlop(Feature<DefaultFeatureConfig> feature)
     {
@@ -51,7 +52,7 @@ public class FeatureGenerator
     {
         return (w, p) -> {
             CarpetSettings.skipGenerationChecks=true;
-            boolean res = feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p, config);
+            boolean res = feature.generate(w, w.method_14178().getChunkGenerator(), w.random, p, config);
             CarpetSettings.skipGenerationChecks=false;
             return res;
         };
@@ -61,7 +62,7 @@ public class FeatureGenerator
     private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
     {
         return (w, p) -> {
-            ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.getChunkManager().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
+            ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.method_14178().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
             {
                 @Override
                 public <C extends FeatureConfig> C getStructureConfig(Biome biome_1, StructureFeature<C> structureFeature_1)
@@ -72,7 +73,7 @@ public class FeatureGenerator
                 @Override
                 public BiomeSource getBiomeSource()
                 {
-                    return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig().setLevelProperties(w.getLevelProperties()))
+                    return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties()))
                     {
                         @Override
                         public Biome getBiome(int i, int j)
@@ -88,7 +89,7 @@ public class FeatureGenerator
         };
     }
 
-    public static Boolean spawn(String name, World world, BlockPos pos)
+    public static Boolean spawn(String name, ServerWorld world, BlockPos pos)
     {
         if (featureMap.containsKey(name))
             return featureMap.get(name).plop(world, pos);

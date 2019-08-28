@@ -291,7 +291,7 @@ public class CarpetExpression
 
     private void forceChunkUpdate(BlockPos pos, ServerWorld world)
     {
-        Chunk chunk = world.getChunk(pos);
+        Chunk chunk = world.method_22350(pos);
         chunk.setShouldSave(true);
         for (int i = 0; i<16; i++)
         {
@@ -706,7 +706,7 @@ public class CarpetExpression
                 genericStateTest(c, "emitted_light", lv, (s, p, w) -> new NumericValue(s.getLuminance())));
 
         this.expr.addLazyFunction("light", -1, (c, t, lv) ->
-                genericStateTest(c, "light", lv, (s, p, w) -> new NumericValue(w.getLightLevel(p))));
+                genericStateTest(c, "light", lv, (s, p, w) -> new NumericValue(Math.max(w.getLightLevel(LightType.BLOCK, p), w.getLightLevel(LightType.SKY, p)))));
 
         this.expr.addLazyFunction("block_light", -1, (c, t, lv) ->
                 genericStateTest(c, "block_light", lv, (s, p, w) -> new NumericValue(w.getLightLevel(LightType.BLOCK, p))));
@@ -748,7 +748,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("loaded", -1, (c, t, lv) ->
         {
-            Value retval = ((CarpetContext) c).s.getWorld().isBlockLoaded(BlockValue.fromParams((CarpetContext) c, lv, 0).block.getPos()) ? Value.TRUE : Value.FALSE;
+            Value retval = ((CarpetContext) c).s.getWorld().isHeightValidAndBlockLoaded(BlockValue.fromParams((CarpetContext) c, lv, 0).block.getPos()) ? Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         });
 
@@ -780,7 +780,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("block_tick", -1, (c, t, lv) ->
                 booleanStateTest(c, "block_tick", lv, (s, p) ->
                 {
-                    World w = ((CarpetContext)c).s.getWorld();
+                    ServerWorld w = ((CarpetContext)c).s.getWorld();
                     s.onRandomTick(w, p, w.random);
                     return true;
                 }));
@@ -788,7 +788,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("random_tick", -1, (c, t, lv) ->
                 booleanStateTest(c, "random_tick", lv, (s, p) ->
                 {
-                    World w = ((CarpetContext)c).s.getWorld();
+                    ServerWorld w = ((CarpetContext)c).s.getWorld();
                     if (s.hasRandomTicks() || s.getFluidState().hasRandomTicks())
                         s.onRandomTick(w, p, w.random);
                     return true;
@@ -1008,7 +1008,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Chunk chunk = world.getChunk(pos);
+            Chunk chunk = world.method_22350(pos);
             chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
             this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;

@@ -394,11 +394,11 @@ public class SpawnReporter
         entity.remove();
     }
 
-    public static List<BaseText> report(BlockPos pos, World worldIn)
+    public static List<BaseText> report(BlockPos pos, ServerWorld worldIn)
     {
         List<BaseText> rep = new ArrayList<>();
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
-        Chunk chunk = worldIn.getChunk(pos);
+        Chunk chunk = worldIn.method_22350(pos);
         int lc = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;
         String where = String.format((y >= lc) ? "%d blocks above it." : "%d blocks below it.",  MathHelper.abs(y-lc));
         if (y == lc) where = "right at it.";
@@ -407,7 +407,7 @@ public class SpawnReporter
         for (EntityCategory enumcreaturetype : EntityCategory.values())
         {
             String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
-            List<Biome.SpawnEntry> lst = ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(enumcreaturetype, pos);
+            List<Biome.SpawnEntry> lst = ((ChunkGenerator)worldIn.method_14178().getChunkGenerator()).getEntitySpawnList(enumcreaturetype, pos);
             if (lst != null && !lst.isEmpty())
             {
                 for (Biome.SpawnEntry spawnEntry : lst)

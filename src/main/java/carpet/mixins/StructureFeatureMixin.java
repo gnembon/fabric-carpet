@@ -32,11 +32,12 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
     @Shadow public abstract StructureFeature.StructureStartFactory getStructureStartFactory();
 
     @Override
-    public boolean plopAnywhere(IWorld world, BlockPos pos)
+    public boolean plopAnywhere(ServerWorld world, BlockPos pos)
     {
-        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator());
+        return plopAnywhere(world, pos, world.method_14178().getChunkGenerator());
     }
-    public boolean plopAnywhere(IWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator)
+    @Override
+    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator)
     {
         if (world.isClient())
             return false;
@@ -60,6 +61,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             MutableIntBoundingBox box = structurestart.getBoundingBox();
             structurestart.generateStructure(
                     world,
+                    generator,
                     rand,
                     new MutableIntBoundingBox(
                             pos.getX() - this.getRadius()*16,
@@ -102,7 +104,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
         ChunkPos chunkpos = new ChunkPos(packedChunkPos);
         StructureStart structurestart;
 
-        Chunk ichunk = worldIn.getChunk(chunkpos.x, chunkpos.z, ChunkStatus.STRUCTURE_STARTS);
+        Chunk ichunk = worldIn.getChunk(chunkpos.x, chunkpos.z, ChunkStatus.STRUCTURE_STARTS, false);
 
         if (ichunk != null)
         {

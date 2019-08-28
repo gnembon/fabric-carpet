@@ -7,6 +7,7 @@ import net.minecraft.block.MaterialColor;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -28,7 +29,7 @@ public class WoolTool
         }
     }
 
-    public static void carpetPlacedAction(DyeColor color, PlayerEntity placer, BlockPos pos, World worldIn)
+    public static void carpetPlacedAction(DyeColor color, PlayerEntity placer, BlockPos pos, ServerWorld worldIn)
     {
 		if (!CarpetSettings.carpets)
 		{
