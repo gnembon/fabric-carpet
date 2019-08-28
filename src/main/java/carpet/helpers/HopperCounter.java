@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.text.BaseText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +50,7 @@ public class HopperCounter
     {
         if (startTick == 0)
         {
-            startTick = server.getTicks();
+            startTick = server.getWorld(DimensionType.OVERWORLD).getTime();
             startMillis = System.currentTimeMillis();
         }
         Item item = stack.getItem();
@@ -60,7 +61,7 @@ public class HopperCounter
     public void reset(MinecraftServer server)
     {
         counter.clear();
-        startTick = server.getTicks();
+        startTick = server.getWorld(DimensionType.OVERWORLD).getTime();
         startMillis = System.currentTimeMillis();
         // pubSubProvider.publish();
     }
@@ -104,7 +105,7 @@ public class HopperCounter
             return Collections.singletonList(Messenger.s(String.format("No items for %s yet", color.getName())));
         }
         long total = getTotalItems();
-        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getTicks() - startTick, 1);
+        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getWorld(DimensionType.OVERWORLD).getTime() - startTick, 1);
         if (total == 0)
         {
             if (brief)
