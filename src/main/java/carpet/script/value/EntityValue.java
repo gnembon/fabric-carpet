@@ -217,6 +217,7 @@ public class EntityValue extends Value
         put("item", (e, a) -> (e instanceof ItemEntity)?new StringValue(((ItemEntity) e).getStack().getName().getString()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         // ItemEntity -> despawn timer via ssGetAge
+        // TODO item pickup delay read and write
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
             if (e instanceof MobEntity)
