@@ -57,11 +57,12 @@ public abstract class World_tickMixin implements WorldInterface
 
     @Redirect(method = "tickBlockEntities", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntity;hasWorld()Z"
+            target = "Lnet/minecraft/block/entity/BlockEntity;isInvalid()Z",
+            ordinal = 0
     ))
     private boolean checkProcessTEs(BlockEntity blockEntity)
     {
-        return blockEntity.hasWorld() && TickSpeed.process_entities;
+        return blockEntity.isInvalid() || !TickSpeed.process_entities;
     }
 
     @Inject(method = "tickBlockEntities", at = @At(
