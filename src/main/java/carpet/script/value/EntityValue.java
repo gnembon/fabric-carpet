@@ -1,6 +1,7 @@
 package carpet.script.value;
 
 import carpet.fakes.EntityInterface;
+import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
 import carpet.script.CarpetContext;
@@ -214,8 +215,9 @@ public class EntityValue extends Value
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight(EntityPose.STANDING)));
         put("age", (e, a) -> new NumericValue(e.age));
-        put("item", (e, a) -> (e instanceof ItemEntity)?new StringValue(((ItemEntity) e).getStack().getName().getString()):Value.NULL);
+        put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
+        put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelay()):Value.NULL);
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
@@ -691,6 +693,13 @@ public class EntityValue extends Value
             }
         }); //requires mixing
 
+        put("pickup_delay", (e, v) ->
+        {
+            if (e instanceof ItemEntity)
+            {
+                ((ItemEntity) e).setPickupDelay((int)NumericValue.asNumber(v).getLong());
+            }
+        });
 
         // gamemode
         // spectate
@@ -720,5 +729,7 @@ public class EntityValue extends Value
     private static Map<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>> events = new HashMap<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>>() {{
         put("on_death", (c, e, f, l) -> ((EntityInterface)e).setDeathCallback(c, f, l));
         put("on_removed", (c, e, f, l) -> ((EntityInterface)e).setRemovedCallback(c, f, l));
+        put("on_tick", (c, e, f, l) -> ((EntityInterface)e).setTickCallback(c, f, l));
+        put("on_damage", (c, e, f, l) -> ((EntityInterface)e).setDamageCallback(c, f, l));
     }};
 }
