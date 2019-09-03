@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import carpet.settings.CarpetSettings;
 import carpet.helpers.InventoryHelper;
-import carpet.utils.IItemEntity;
+import carpet.fakes.ItemEntityInterface;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -18,7 +18,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemEntity.class)
-public abstract class ItemEntityMixin extends Entity implements IItemEntity {
+public abstract class ItemEntityMixin extends Entity implements ItemEntityInterface
+{
     private static final int SHULKERBOX_MAX_STACK_AMOUNT = 64;
 
     @Shadow private int age;
@@ -89,8 +90,8 @@ public abstract class ItemEntityMixin extends Entity implements IItemEntity {
             selfStack.increment(amount);
             self.setStack(selfStack);
 
-            this.pickupDelay = Math.max(((IItemEntity)other).getPickupDelay(), this.pickupDelay);
-            this.age = Math.min(((IItemEntity)other).getAge(), this.age);
+            this.pickupDelay = Math.max(((ItemEntityInterface)other).getPickupDelay(), this.pickupDelay);
+            this.age = Math.min(((ItemEntityInterface)other).getAge(), this.age);
 
             otherStack.decrement(amount);
             if (otherStack.isEmpty())

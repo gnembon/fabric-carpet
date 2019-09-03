@@ -9,6 +9,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.settings.CarpetSettings;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
@@ -390,6 +391,15 @@ public class CarpetEventServer
     {
         return makeEventCall(cc, function, extraArgs, 1);
     }
+    public ScheduledCall makeTickCall(CarpetContext cc, String function, List<Value> extraArgs)
+    {
+        return makeEventCall(cc, function, extraArgs, 1);
+    }
+    public ScheduledCall makeDamageCall(CarpetContext cc, String function, List<Value> extraArgs)
+    {
+        return makeEventCall(cc, function, extraArgs, 3);
+    }
+
 
 
     public void onEntityDeath(ScheduledCall call, Entity e, String reason)
@@ -400,5 +410,20 @@ public class CarpetEventServer
     {
         removeCall.execute(Collections.singletonList((c, t) -> new EntityValue(entity)));
     }
+    public void onEntityTick(ScheduledCall tickCall, Entity entity)
+    {
+        tickCall.execute(Collections.singletonList((c, t) -> new EntityValue(entity)));
+    }
+    public void onEntityDamage(ScheduledCall call, Entity e, float amount, DamageSource source)
+    {
+        call.execute(Arrays.asList(
+                (c, t) -> new EntityValue(e),
+                (c, t) -> new NumericValue(amount),
+                (c, t) -> new StringValue(source.getName()),
+                (c, t) -> source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
+        ));
+    }
+
+
 
 }
