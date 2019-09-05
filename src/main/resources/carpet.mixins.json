@@ -119,6 +119,7 @@
 
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
+    "DamageTracker_scarpetEventMixin",
 
 
     "PistonBlock_movableTEMixin",
