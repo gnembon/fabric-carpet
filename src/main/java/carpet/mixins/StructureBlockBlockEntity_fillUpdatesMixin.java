@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(StructureBlockBlockEntity.class)
 public abstract class StructureBlockBlockEntity_fillUpdatesMixin
 {
-    @Redirect(method = "method_21864", at = @At(
+    @Redirect(method = "place", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/structure/Structure;place(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/structure/StructurePlacementData;)V"
     ))

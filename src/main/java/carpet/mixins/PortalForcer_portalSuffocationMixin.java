@@ -65,7 +65,7 @@ public class PortalForcer_portalSuffocationMixin
     }
 
 
-    @Redirect(method = "getPortal",at = @At(
+    @Redirect(method = "method_22391",at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/pattern/BlockPattern$Result;method_18478(Lnet/minecraft/util/math/Direction;Lnet/minecraft/util/math/BlockPos;DLnet/minecraft/util/math/Vec3d;D)Lnet/minecraft/block/pattern/BlockPattern$TeleportTarget;"
     ))

@@ -76,7 +76,7 @@ public class FeatureGenerator
                     return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties()))
                     {
                         @Override
-                        public Biome getBiome(int i, int j)
+                        public Biome getBiome(int i, int j, int k)
                         {
                             return biome;
                         }

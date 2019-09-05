@@ -21,8 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Mixin(PortalForcer.class)
-public class PortalForcer_portalCachingMixin implements PortalForcerInterface
+public abstract class PortalForcer_portalCachingMixin implements PortalForcerInterface
 {
+    /*
     @Shadow @Final private ServerWorld world;
     private Map<ColumnPos, Object> storedTicketInfos = new HashMap<>();
 
@@ -42,7 +43,7 @@ public class PortalForcer_portalCachingMixin implements PortalForcerInterface
             value = "INVOKE",
             target = "Ljava/util/Map;get(Ljava/lang/Object;)Ljava/lang/Object;"
     ))
-    private Object /* private TicketInfo */ getTicketInfo(Map map, Object /* ColumnPos */ key)
+    private Object / private TicketInfo / getTicketInfo(Map map, Object / ColumnPos / key)
     {
         //Do the dance with ticketinfos. If vanilla has one, we gonna borrow, if vanilla is missing, we supply
         if (!CarpetSettings.portalCaching)
@@ -69,10 +70,11 @@ public class PortalForcer_portalCachingMixin implements PortalForcerInterface
             value = "INVOKE",
             target = "Ljava/util/Map;put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"
     ))
-    private Object /* TicketInfo */ putNewTicket(Map map, Object /*ColumnPos */ key, Object /*TicketInfo */ value)
+    private Object / TicketInfo / putNewTicket(Map map, Object /ColumnPos / key, Object /TicketInfo / value)
     {
         if (CarpetSettings.portalCaching)
             storedTicketInfos.put((ColumnPos) key, value);
         return map.put(key, value);
     }
+    */
 }

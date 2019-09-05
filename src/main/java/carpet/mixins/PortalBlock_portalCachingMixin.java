@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PortalBlock.class)
 public class PortalBlock_portalCachingMixin
 {
+    /*
     @Inject(method = "createPortalAt", at = @At(
             value =  "INVOKE",
             target = "Lnet/minecraft/block/PortalBlock$AreaHelper;createPortal()V"
@@ -39,5 +40,6 @@ public class PortalBlock_portalCachingMixin
             ((PortalForcerInterface)((ServerWorld)iWorld_1).getPortalForcer()).invalidateCache();
         }
     }
+    */
 
 }

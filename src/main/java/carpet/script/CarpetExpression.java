@@ -998,6 +998,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
+            throw new InternalExpressionException("set_biome is WIP on 19w36a");/*
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
             if (lv.size() == locator.offset)
@@ -1009,9 +1010,10 @@ public class CarpetExpression
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.method_22350(pos);
-            chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
+            // todo these indices are wrong in 1.15 - needs fixing.
+            ((class_4548Interface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
             this.forceChunkUpdate(pos, world);
-            return LazyValue.NULL;
+            return LazyValue.NULL; */
         });
         // need get_biome
 

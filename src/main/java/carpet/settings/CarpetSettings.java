@@ -221,7 +221,7 @@ public class CarpetSettings
     @Rule(desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools", category = SURVIVAL)
     public static boolean missingTools = false;
 
-    @Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
+    //@Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
     public static boolean portalCaching = false;
 
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
