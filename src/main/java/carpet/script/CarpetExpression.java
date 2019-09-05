@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.class_4548Interface;
 import carpet.helpers.FeatureGenerator;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
@@ -997,8 +998,8 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
-            throw new InternalExpressionException("set_biome is WIP on 19w36a");/*
+        this.expr.addLazyFunction("set_biome", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
             if (lv.size() == locator.offset)
@@ -1010,10 +1011,9 @@ public class CarpetExpression
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.method_22350(pos);
-            // todo these indices are wrong in 1.15 - needs fixing.
             ((class_4548Interface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
             this.forceChunkUpdate(pos, world);
-            return LazyValue.NULL; */
+            return LazyValue.NULL;
         });
         // need get_biome
 
