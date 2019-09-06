@@ -29,6 +29,6 @@ public class class_4548_getBiomeArrayMixin implements class_4548Interface
         int int_4 = (pos.getX() >> 2) & field_20650;
         int int_5 = MathHelper.clamp(seaLevel, 0, field_20651);
         int int_6 = (pos.getZ() >> 2) & field_20650;
-        field_20654[int_5 << field_20652 + field_20652 | int_6 << field_20652 | int_4] = what;
+        field_20654[(int_5 << (field_20652 + field_20652)) | (int_6 << field_20652) | int_4] = what;
     }
 }
