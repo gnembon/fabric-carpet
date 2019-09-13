@@ -434,6 +434,11 @@ public class SettingsManager
             args.add(makeSetRuleButton(rule, option, true));
             args.add("w  ");
         }
+        if (!rule.options.contains(rule.getAsString()))
+        {
+            args.add(makeSetRuleButton(rule, rule.getAsString(), true));
+            args.add("w  ");
+        }
         args.remove(args.size()-1);
         return Messenger.c(args.toArray(new Object[0]));
     }
