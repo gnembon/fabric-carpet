@@ -59,7 +59,9 @@ public class TickSpeed
         }
         if (time_bias > 0)
         {
-            return Messenger.c("l Another player is already advancing time at the moment. Try later or talk to them");
+            String who = "Another player";
+            if (time_advancerer != null) who = time_advancerer.getEntityName();
+            return Messenger.c("l "+who+" is already advancing time at the moment. Try later or ask them");
         }
         time_advancerer = player;
         time_warp_start_time = System.nanoTime();
