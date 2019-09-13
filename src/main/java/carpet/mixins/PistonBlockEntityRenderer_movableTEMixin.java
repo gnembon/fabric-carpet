@@ -22,7 +22,7 @@ public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEnti
             double double_3, float float_1, int int_1, CallbackInfo ci)
     {
         if (!((PistonBlockEntityInterface) pistonBlockEntity_1).isRenderModeSet())
-            ((PistonBlockEntityInterface) pistonBlockEntity_1).setRenderCarriedBlockEntity(CarpetSettings.movableTileEntities && ((PistonBlockEntityInterface) pistonBlockEntity_1).getCarriedBlockEntity() != null);
+            ((PistonBlockEntityInterface) pistonBlockEntity_1).setRenderCarriedBlockEntity(CarpetSettings.movableBlockEntities && ((PistonBlockEntityInterface) pistonBlockEntity_1).getCarriedBlockEntity() != null);
     }
     
     @Inject(method = "method_3576", at = @At("RETURN"))

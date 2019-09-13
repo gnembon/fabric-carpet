@@ -25,8 +25,8 @@ public class CarpetProfiler
     private static String[] DIMENSIONS = {"overworld", "the_end", "the_nether"};
     private static String[] SECTIONS = {
             "Spawning and Random Ticks", "Ticket Manager","Unloading",
-            "Blocks", "Entities", "Tile Entities",
-            "Entities (Client)", "Tile Entities (Client)",
+            "Blocks", "Entities", "Block Entities",
+            "Entities (Client)", "Block Entities (Client)",
             "Village", "Environment"};
 
     public enum TYPE

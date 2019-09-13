@@ -77,7 +77,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
               target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
     private boolean movableTEsetBlockState0(World world, BlockPos blockPos_1, BlockState blockAState_2, int int_1)
     {
-        if (!CarpetSettings.movableTileEntities)
+        if (!CarpetSettings.movableBlockEntities)
             return world.setBlockState(blockPos_1, blockAState_2, int_1);
         else
             return ((WorldInterface) (world)).setBlockStateWithBlockEntity(blockPos_1, blockAState_2, this.carriedBlockEntity, int_1);
@@ -87,7 +87,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
               target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
     private boolean movableTEsetBlockState1(World world, BlockPos blockPos_1, BlockState blockState_2, int int_1)
     {
-        if (!CarpetSettings.movableTileEntities)
+        if (!CarpetSettings.movableBlockEntities)
             return world.setBlockState(blockPos_1, blockState_2, int_1);
         else
         {
@@ -103,7 +103,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
         //Handle TNT Explosions or other ways the moving Block is broken
         //Also /setblock will cause this to be called, and drop e.g. a moving chest's contents.
         // This is MC-40380 (BlockEntities that aren't Inventories drop stuff when setblock is called )
-        if (CarpetSettings.movableTileEntities && this.carriedBlockEntity != null && !this.world.isClient && this.world.getBlockState(this.pos).getBlock() == Blocks.AIR)
+        if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null && !this.world.isClient && this.world.getBlockState(this.pos).getBlock() == Blocks.AIR)
         {
             BlockState blockState_2;
             if (this.source)
@@ -118,7 +118,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     @Inject(method = "fromTag", at = @At(value = "TAIL"))
     private void onFromTag(CompoundTag compoundTag_1, CallbackInfo ci)
     {
-        if (CarpetSettings.movableTileEntities && compoundTag_1.containsKey("carriedTileEntityCM", 10))
+        if (CarpetSettings.movableBlockEntities && compoundTag_1.containsKey("carriedTileEntityCM", 10))
         {
             if (this.pushedBlock.getBlock() instanceof BlockEntityProvider)
                 this.carriedBlockEntity = ((BlockEntityProvider) (this.pushedBlock.getBlock())).createBlockEntity(this.world);
@@ -130,7 +130,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     @Inject(method = "toTag", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
     private void onToTag(CompoundTag compoundTag_1, CallbackInfoReturnable<CompoundTag> cir)
     {
-        if (CarpetSettings.movableTileEntities && this.carriedBlockEntity != null)
+        if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null)
         {
             //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
             compoundTag_1.put("carriedTileEntityCM", this.carriedBlockEntity.toTag(new CompoundTag()));

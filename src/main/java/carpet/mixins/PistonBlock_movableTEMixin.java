@@ -35,13 +35,13 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     {
         Block block_1 = blockState_1.getBlock();
         //Make CommandBlocks movable, either use instanceof CommandBlock or the 3 cmd block objects,
-        if (CarpetSettings.movableTileEntities && block_1 instanceof CommandBlock)
+        if (CarpetSettings.movableBlockEntities && block_1 instanceof CommandBlock)
         {
             cir.setReturnValue(true);
         }
     }
     
-    private static boolean isPushableTileEntityBlock(Block block)
+    private static boolean isPushableBlockEntity(Block block)
     {
         //Making PISTON_EXTENSION (BlockPistonMoving) pushable would not work as its createNewTileEntity()-method returns null
         return block != Blocks.ENDER_CHEST && block != Blocks.ENCHANTING_TABLE &&
@@ -58,7 +58,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
         }
         else
         {
-            return !(CarpetSettings.movableTileEntities && isPushableTileEntityBlock(block));
+            return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(block));
         }
     }
     @Inject(method = "move", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
@@ -69,7 +69,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
             Direction direction_2, Set set_1)
     {
         //Get the blockEntities and remove them from the world before any magic starts to happen
-        if (CarpetSettings.movableTileEntities)
+        if (CarpetSettings.movableBlockEntities)
         {
             list1_BlockEntities.set(Lists.<BlockEntity>newArrayList());
             for (int i = 0; i < list_1.size(); ++i)
@@ -99,7 +99,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     {
         BlockEntity blockEntityPiston = PistonExtensionBlock.createBlockEntityPiston((BlockState) list_2.get(int_3),
                 direction_1, boolean_1, false);
-        if (CarpetSettings.movableTileEntities)
+        if (CarpetSettings.movableBlockEntities)
             ((PistonBlockEntityInterface) blockEntityPiston).setCarriedBlockEntity(list1_BlockEntities.get().get(int_3));
         world_1.setBlockEntity(blockPos_4, blockEntityPiston);
     }

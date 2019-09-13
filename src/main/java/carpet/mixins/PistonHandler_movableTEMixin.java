@@ -66,7 +66,7 @@ public abstract class PistonHandler_movableTEMixin
      * @author 2No2Name
      */
     private boolean stickToStickySide(BlockPos blockPos_1){
-        if(!CarpetSettings.movableTileEntities)
+        if(!CarpetSettings.movableBlockEntities)
             return true;
 
         BlockState blockState_1 = this.world.getBlockState(blockPos_1);
@@ -107,7 +107,7 @@ public abstract class PistonHandler_movableTEMixin
      * @author 2No2Nameb
      */
     private Block redirectSlimeBlock() {
-        if (CarpetSettings.movableTileEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
+        if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
             return blockState_1.getBlock(); //this makes the comparison in the while condition "while(blockState_1.getBlock() == redirectSlimeBlock())" evaluate to true, so the block is treated as sticky
         else
             return Blocks.SLIME_BLOCK; //vanilla behavior

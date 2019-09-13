@@ -36,7 +36,7 @@ public abstract class World_tickMixin implements WorldInterface
 
     @Inject(method = "tickBlockEntities", at = @At("HEAD"))
     private void startBlockEntities(CallbackInfo ci) {
-        currentSection = CarpetProfiler.start_section((World) (Object) this, "Tile Entities", CarpetProfiler.TYPE.GENERAL);
+        currentSection = CarpetProfiler.start_section((World) (Object) this, "Block Entities", CarpetProfiler.TYPE.GENERAL);
     }
 
     @Inject(method = "tickBlockEntities", at = @At("TAIL"))
