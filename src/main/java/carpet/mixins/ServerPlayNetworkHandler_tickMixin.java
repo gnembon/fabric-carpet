@@ -36,7 +36,9 @@ public class ServerPlayNetworkHandler_tickMixin
     ))
     private void checkMove(PlayerMoveC2SPacket p, CallbackInfo ci)
     {
-        if (p.getX(player.x) - lastTickX > 0.0001D || p.getY(player.y) - lastTickY > 0.0001D || p.getY(player.y) - lastTickY > 0.0001D)
+        if (Math.abs(p.getX(player.x) - lastTickX) > 0.0001D
+                || Math.abs(p.getY(player.y) - lastTickY) > 0.0001D
+                || Math.abs(p.getY(player.y) - lastTickY) > 0.0001D)
         {
             TickSpeed.reset_player_active_timeout();
         }

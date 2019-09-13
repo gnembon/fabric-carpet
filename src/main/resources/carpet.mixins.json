@@ -138,7 +138,8 @@
     "ClientPlayerInteractionManager_ghostBlocksMixin",
 
     "BlockEntityRenderDispatcher_movableTEMixin",
-    "PistonBlockEntityRenderer_movableTEMixin"
+    "PistonBlockEntityRenderer_movableTEMixin",
+    "MinecraftClient_pausedShakeMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"
