@@ -89,15 +89,7 @@ public class TickSpeed
             CommandManager icommandmanager = tick_warp_sender.getMinecraftServer().getCommandManager();
             try
             {
-                int j = icommandmanager.execute(tick_warp_sender, tick_warp_callback);
-
-                if (j < 1)
-                {
-                    if (time_advancerer != null)
-                    {
-                        Messenger.m(time_advancerer, "r Command Callback failed: ", "rb /"+tick_warp_callback,"/"+tick_warp_callback);
-                    }
-                }
+                icommandmanager.execute(tick_warp_sender, tick_warp_callback);
             }
             catch (Throwable var23)
             {
