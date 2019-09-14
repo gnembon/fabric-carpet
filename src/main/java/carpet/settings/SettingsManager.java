@@ -11,6 +11,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerTask;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
@@ -168,10 +169,13 @@ public class SettingsManager
         {
             return;
         }
-        for (ServerPlayerEntity entityplayermp : server.getPlayerManager().getPlayerList())
+        server.method_18858(new ServerTask(this.server.getTicks(), () ->
         {
-            server.getCommandManager().sendCommandTree(entityplayermp);
-        }
+            for (ServerPlayerEntity entityplayermp : server.getPlayerManager().getPlayerList())
+            {
+                server.getCommandManager().sendCommandTree(entityplayermp);
+            }
+        }));
     }
 
     private void loadConfigurationFromConf()

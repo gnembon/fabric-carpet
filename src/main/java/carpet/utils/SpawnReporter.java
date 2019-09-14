@@ -109,7 +109,7 @@ public class SpawnReporter
                 int rounds = spawn_tries.get(enumcreaturetype);
                 lst.add(Messenger.c(String.format("w   %s: ", enumcreaturetype.getName()),
                         (cur < 0) ? "g -" : (color + " " + cur), "g  / ", mobColor + " " + max,
-                        (rounds == 1) ? "w " : String.format("fi  (%d rounds/tick)", spawn_tries.get(enumcreaturetype))
+                        (rounds == 1) ? "w " : String.format("gi  (%d rounds/tick)", spawn_tries.get(enumcreaturetype))
                 ));
             }
             else
