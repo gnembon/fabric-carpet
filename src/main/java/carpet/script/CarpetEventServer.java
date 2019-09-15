@@ -302,7 +302,7 @@ public class CarpetEventServer
     {
         eventHandlers.get("player_clicks_block").call( () -> Arrays.asList(
                 ((c, t) -> new EntityValue(player)),
-                ((c, t) -> new BlockValue(null, player.world, blockpos)),
+                ((c, t) -> new BlockValue(null, player.getServerWorld(), blockpos)),
                 ((c, t) -> new StringValue(facing.getName()))
         ), player::getCommandSource);
     }
@@ -319,7 +319,7 @@ public class CarpetEventServer
                     ((c, t) -> new EntityValue(player)),
                     ((c, t) -> ListValue.fromItemStack(itemstack)),
                     ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")),
-                    ((c, t) -> new BlockValue(null, player.world, blockpos)),
+                    ((c, t) -> new BlockValue(null, player.getServerWorld(), blockpos)),
                     ((c, t) -> new StringValue(enumfacing.getName())),
                     ((c, t) -> ListValue.of(
                             new NumericValue(vec3d.x),
@@ -330,11 +330,11 @@ public class CarpetEventServer
         }, player::getCommandSource);
     }
 
-    public void onBlockBroken(PlayerEntity player, BlockPos pos, BlockState previousBS)
+    public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS)
     {
         eventHandlers.get("player_breaks_block").call( () -> Arrays.asList(
                 ((c, t) -> new EntityValue(player)),
-                ((c, t) -> new BlockValue(previousBS, player.getEntityWorld(), pos))
+                ((c, t) -> new BlockValue(previousBS, player.getServerWorld(), pos))
         ), player::getCommandSource);
     }
 
@@ -355,22 +355,22 @@ public class CarpetEventServer
         ), player::getCommandSource);
     }
 
-    public void onStartSneaking(PlayerEntity player)
+    public void onStartSneaking(ServerPlayerEntity player)
     {
         eventHandlers.get("player_starts_sneaking").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
     }
 
-    public void onStopSneaking(PlayerEntity player)
+    public void onStopSneaking(ServerPlayerEntity player)
     {
         eventHandlers.get("player_stops_sneaking").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
     }
 
-    public void onStartSprinting(PlayerEntity player)
+    public void onStartSprinting(ServerPlayerEntity player)
     {
         eventHandlers.get("player_starts_sprinting").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
     }
 
-    public void onStopSprinting(PlayerEntity player)
+    public void onStopSprinting(ServerPlayerEntity player)
     {
         eventHandlers.get("player_stops_sprinting").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
     }

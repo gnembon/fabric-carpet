@@ -7,12 +7,10 @@ import carpet.helpers.Tracer;
 import carpet.script.CarpetContext;
 import carpet.script.Fluff;
 import carpet.script.exception.InternalExpressionException;
-import carpet.settings.CarpetSettings;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.client.network.packet.EntityPassengersSetS2CPacket;
 import net.minecraft.client.network.packet.EntityPositionS2CPacket;
-import net.minecraft.client.network.packet.EntityVelocityUpdateS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
 import net.minecraft.command.arguments.NbtPathArgumentType;
@@ -234,7 +232,7 @@ public class EntityValue extends Value
         put("home", (e, a) -> {
             if (e instanceof MobEntity)
             {
-                return (((MobEntity) e).getWalkTargetRange () > 0)?new BlockValue(null, e.getEntityWorld(), ((MobEntityWithAi) e).getWalkTarget()):Value.FALSE;
+                return (((MobEntity) e).getWalkTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((MobEntityWithAi) e).getWalkTarget()):Value.FALSE;
             }
             return Value.NULL;
         });
@@ -379,7 +377,7 @@ public class EntityValue extends Value
             switch (hitres.getType())
             {
                 case MISS: return Value.NULL;
-                case BLOCK: return new BlockValue(null, e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
+                case BLOCK: return new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((BlockHitResult)hitres).getBlockPos() );
                 case ENTITY: return new EntityValue(((EntityHitResult)hitres).getEntity());
             }
             return Value.NULL;

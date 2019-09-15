@@ -12,6 +12,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -32,7 +33,7 @@ public class BlockValue extends Value
     public static final BlockValue NULL = new BlockValue(null, null, null);
     private BlockState blockState;
     private BlockPos pos;
-    private World world;
+    private ServerWorld world;
     private CompoundTag data;
 
     public static BlockValue fromCoords(CarpetContext c, int x, int y, int z)
@@ -212,7 +213,7 @@ public class BlockValue extends Value
     }
 
 
-    public BlockValue(BlockState state, World world, BlockPos position)
+    public BlockValue(BlockState state, ServerWorld world, BlockPos position)
     {
         this.world = world;
         blockState = state;
@@ -220,7 +221,7 @@ public class BlockValue extends Value
         data = null;
     }
 
-    public BlockValue(BlockState state, World world, BlockPos position, CompoundTag nbt)
+    public BlockValue(BlockState state, ServerWorld world, BlockPos position, CompoundTag nbt)
     {
         this.world = world;
         blockState = state;
@@ -257,6 +258,8 @@ public class BlockValue extends Value
     {
         return pos;
     }
+
+    public ServerWorld getWorld() { return world;}
 
 
     public static class LocatorResult

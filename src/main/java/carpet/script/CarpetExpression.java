@@ -60,7 +60,6 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -74,6 +73,7 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.loot.context.LootContext;
 import net.minecraft.world.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
@@ -797,7 +797,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("set", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            World world = cc.s.getWorld();
+            ServerWorld world = cc.s.getWorld();
             if (lv.size() < 2 || lv.size() % 2 == 1)
                 throw new InternalExpressionException("set block should have at least 2 params and odd attributes");
             BlockValue.LocatorResult targetLocator = BlockValue.fromParams(cc, lv, 0);
@@ -1981,7 +1981,7 @@ public class CarpetExpression
         {
 
             BlockPos center = BlockValue.fromParams((CarpetContext) c, lv,0).block.getPos();
-            World world = ((CarpetContext) c).s.getWorld();
+            ServerWorld world = ((CarpetContext) c).s.getWorld();
 
             List<Value> neighbours = new ArrayList<>();
             neighbours.add(new BlockValue(null, world, center.up()));
@@ -2676,6 +2676,53 @@ public class CarpetExpression
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = new StringValue(s.getWorld().dimension.getType().toString().replaceFirst("minecraft:",""));
+            return (cc, tt) -> retval;
+        });
+
+        this.expr.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
+            ServerCommandSource outerSource = ((CarpetContext)c).s;
+            Value dimensionValue = lv.get(0).evalValue(c);
+            ServerCommandSource innerSource = outerSource;
+            if (dimensionValue instanceof EntityValue)
+            {
+                innerSource = outerSource.withWorld((ServerWorld) ((EntityValue)dimensionValue).getEntity().getEntityWorld());
+            }
+            else if (dimensionValue instanceof BlockValue)
+            {
+                BlockValue bv = (BlockValue)dimensionValue;
+                if (bv.getWorld() != null)
+                {
+                    innerSource = outerSource.withWorld(bv.getWorld());
+                }
+                else
+                {
+                    throw new InternalExpressionException("in_dimension accepts only world-localized block arguments");
+                }
+            }
+            else
+            {
+                String dimString = dimensionValue.getString().toLowerCase(Locale.ROOT);
+                switch (dimString)
+                {
+                    case "nether":
+                    case "the_nether":
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.THE_NETHER));
+                        break;
+                    case "end":
+                    case "the_end":
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.THE_END));
+                        break;
+                    case "overworld":
+                    case "over_world":
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.OVERWORLD));
+                        break;
+                    default:
+                        throw new InternalExpressionException("Incorrect dimension string: "+dimString);
+                }
+            }
+            ((CarpetContext) c).s = innerSource;
+            Value retval = lv.get(1).evalValue(c);
+            ((CarpetContext) c).s = outerSource;
             return (cc, tt) -> retval;
         });
 
