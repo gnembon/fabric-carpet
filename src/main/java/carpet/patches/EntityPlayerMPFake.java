@@ -6,6 +6,7 @@ import net.minecraft.client.network.packet.EntityPositionS2CPacket;
 import net.minecraft.client.network.packet.EntitySetHeadYawS2CPacket;
 import net.minecraft.client.network.packet.PlayerListS2CPacket;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.NetworkSide;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
@@ -117,6 +118,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     {
         super.onDeath(cause);
         setHealth(20);
+        this.hungerManager = new HungerManager();
         kill();
     }
 }
