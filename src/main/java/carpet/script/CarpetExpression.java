@@ -2306,6 +2306,10 @@ public class CarpetExpression
      * </pre>
      * <h3><code>current_dimension()</code></h3>
      * <p>Returns current dimension that scripts run in.</p>
+     * <h3><code>in_dimension(smth, expr)</code></h3>
+     * <p>Evaluates the expression <code>expr</code> with different dimension execution context. <code>smth</code> can
+     * be an entity, world-localized block, so not <code>block('stone')</code>, or a string representing a dimension like:
+     * <code>'nether'</code>, <code>'end'</code> or <code>'overworld'</code>.</p>
      * <h3><code>schedule(delay, function, args...)</code></h3>
      * <p>Schedules a user defined function to run with a specified <code>delay</code> ticks of delay.
      * Scheduled functions run at the end of the tick, and they will run in order they were scheduled.</p>
