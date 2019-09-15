@@ -81,7 +81,7 @@
     "ServerPlayerInteractionManager_cactusMixin",
     "HopperBlock_cactusMixin",
     "ItemUsageContext_cactusMixin",
-    "DispenserBehaviour_cactusMixin",
+    "DispenserBlock_cactusMixin",
 
     "ServerPlayNetworkHandler_antiCheatDisabledMixin",
 
