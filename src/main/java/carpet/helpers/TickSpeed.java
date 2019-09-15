@@ -59,7 +59,9 @@ public class TickSpeed
         }
         if (time_bias > 0)
         {
-            return Messenger.c("l Another player is already advancing time at the moment. Try later or talk to them");
+            String who = "Another player";
+            if (time_advancerer != null) who = time_advancerer.getEntityName();
+            return Messenger.c("l "+who+" is already advancing time at the moment. Try later or ask them");
         }
         time_advancerer = player;
         time_warp_start_time = System.nanoTime();
@@ -89,15 +91,7 @@ public class TickSpeed
             CommandManager icommandmanager = tick_warp_sender.getMinecraftServer().getCommandManager();
             try
             {
-                int j = icommandmanager.execute(tick_warp_sender, tick_warp_callback);
-
-                if (j < 1)
-                {
-                    if (time_advancerer != null)
-                    {
-                        Messenger.m(time_advancerer, "r Command Callback failed: ", "rb /"+tick_warp_callback,"/"+tick_warp_callback);
-                    }
-                }
+                icommandmanager.execute(tick_warp_sender, tick_warp_callback);
             }
             catch (Throwable var23)
             {

@@ -276,8 +276,8 @@ Pistons, Glass and Sponge can be broken faster with their appropriate tools
 * Required options: `true`, `false`
 * Categories: `SURVIVAL`
 
-## movableTileEntities
-Pistons can push tile entities, like hoppers, chests etc.
+## movableBlockEntities
+Pistons can push block entities, like hoppers, chests etc.
 * Type: `boolean`
 * Default value: `false`
 * Required options: `true`, `false`

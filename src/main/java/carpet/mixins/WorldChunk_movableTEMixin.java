@@ -48,7 +48,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
     private BlockEntity ifGetBlockEntity(WorldChunk worldChunk, BlockPos blockPos_1,
             WorldChunk.CreationType worldChunk$CreationType_1)
     {
-        if (!CarpetSettings.movableTileEntities)
+        if (!CarpetSettings.movableBlockEntities)
         {
             return this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
         }

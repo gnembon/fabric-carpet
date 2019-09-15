@@ -18,7 +18,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
@@ -109,7 +108,7 @@ public class SpawnReporter
                 int rounds = spawn_tries.get(enumcreaturetype);
                 lst.add(Messenger.c(String.format("w   %s: ", enumcreaturetype.getName()),
                         (cur < 0) ? "g -" : (color + " " + cur), "g  / ", mobColor + " " + max,
-                        (rounds == 1) ? "w " : String.format("fi  (%d rounds/tick)", spawn_tries.get(enumcreaturetype))
+                        (rounds == 1) ? "w " : String.format("gi  (%d rounds/tick)", spawn_tries.get(enumcreaturetype))
                 ));
             }
             else
@@ -152,7 +151,7 @@ public class SpawnReporter
             lst.add( Messenger.c(
                     "w  - ",
                     Messenger.tp("wb",pair.getRight()),
-                    String.format("w : %s", EntityType.getId(pair.getLeft()).toString().replaceFirst("minecraft.",""))
+                    String.format("w : %s", pair.getLeft().getName().getString())
                     ));
         }
         
@@ -266,7 +265,7 @@ public class SpawnReporter
                 lst.add( Messenger.c(
                         "w  - ",
                         Messenger.tp("wb",pos),
-                        String.format("w : %s", EntityType.getId(type).toString().replaceFirst("minecraft.",""))
+                        String.format("w : %s", type.getName().getString())
                         ));
             }
         }
@@ -359,7 +358,7 @@ public class SpawnReporter
                     for (EntityType type: spawn_stats.get(code).keySet())
                     {
                         report.add(Messenger.s(String.format("   - %s: %d spawns, %d per hour",
-                                Registry.ENTITY_TYPE.getId(type).toString().replaceFirst("minecraft:",""),
+                                type.getName().getString(),
                                 spawn_stats.get(code).getLong(type),
                                 (72000 * spawn_stats.get(code).getLong(type)/duration ))));
                     }
@@ -476,7 +475,7 @@ public class SpawnReporter
                         }
                     }
                     
-                    String creature_name = Registry.ENTITY_TYPE.getId(mob.getType()).toString().replaceFirst("minecraft:","");
+                    String creature_name = mob.getType().getName().getString();
                     String pack_size = String.format("%d", mob.getLimitPerChunk());//String.format("%d-%d", animal.minGroupCount, animal.maxGroupCount);
                     int weight = ((WeightedPickerEntryMixin) spawnEntry).getWeight();
                     if (canspawn)

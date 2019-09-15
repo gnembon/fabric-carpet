@@ -147,8 +147,8 @@ public class CarpetSettings
     @Rule( desc = "Guardians turn into Elder Guardian when struck by lightning", category = FEATURE )
     public static boolean renewableSponges = false;
 
-    @Rule( desc = "Pistons can push tile entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
-    public static boolean movableTileEntities = false;
+    @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
+    public static boolean movableBlockEntities = false;
 
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;
