@@ -229,7 +229,7 @@ public class BlockInfo
         }
         creature.remove();
         long total_time = (total_ticks)/1000/20;
-        return Messenger.s(String.format(" - Wander chance above: %.1f%%%%\n - Average standby above: %s",
+        return Messenger.s(String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
                 (100.0F*success)/1000,
                 ((total_time>5000)?"INFINITY":(Long.toString(total_time)+" s"))
         ));

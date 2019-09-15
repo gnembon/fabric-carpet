@@ -95,7 +95,7 @@ public class EntityInfo
     public static List<BaseText> entityInfo(Entity e, World source_world)
     {
         List<BaseText> lst = new ArrayList<>();
-        lst.add(Messenger.s("w Use /data get entity command"));
+        lst.add(Messenger.c("r Use /data get entity command"));
         return lst;
     }
 }

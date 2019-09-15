@@ -26,6 +26,7 @@
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
     "MobEntity_leashMixin",
+    "EntityTrackerEntry_leashFixMixin",
 
     "VillagerEntity_aiMixin",
 

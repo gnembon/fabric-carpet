@@ -30,9 +30,9 @@ public class DistanceCalculator
         res.add(Messenger.c("w Distance between ",
                 Messenger.tp("c",pos1),"w  and ",
                 Messenger.tp("c",pos2),"w :"));
-        res.add(Messenger.c("w  - Manhattan: ", String.format("wb %.1f", manhattan)));
         res.add(Messenger.c("w  - Spherical: ", String.format("wb %.2f", spherical)));
         res.add(Messenger.c("w  - Cylindrical: ", String.format("wb %.2f", cylindrical)));
+        res.add(Messenger.c("w  - Manhattan: ", String.format("wb %.1f", manhattan)));
         return res;
     }
 
