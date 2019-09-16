@@ -174,7 +174,7 @@ public class SpawnReporter
             }
             else
             {
-                return new ArrayList<>();
+                return printMobcapsForDimension(worldIn.dimension.getType(), true );
             }
         }
         EntityCategory creature_type = get_type_code_from_wool_code(under);
@@ -197,9 +197,7 @@ public class SpawnReporter
         }
         else
         {
-            return tracking_report(worldIn);
-            //// TODO
-            //return print_general_mobcaps(worldIn);
+            return printMobcapsForDimension(worldIn.dimension.getType(), true );
         }
         
     }

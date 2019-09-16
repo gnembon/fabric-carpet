@@ -246,6 +246,12 @@ public class EntityPlayerActionPack
                             break;
                         }
                     }
+                    ItemStack handItem = player.getStackInHand(hand);
+                    ActionResult result =player.interactionManager.interactItem(player, player.getServerWorld(), handItem, hand);
+                    if (result == ActionResult.SUCCESS)
+                    {
+                        return true;
+                    }
                 }
                 return false;
             }
