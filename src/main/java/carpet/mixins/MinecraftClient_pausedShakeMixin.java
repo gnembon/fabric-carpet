@@ -1,24 +1,18 @@
 package carpet.mixins;
 
-import carpet.helpers.TickSpeed;
+import carpet.fakes.MinecraftClientInferface;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(MinecraftClient.class)
-public class MinecraftClient_pausedShakeMixin
+public class MinecraftClient_pausedShakeMixin implements MinecraftClientInferface
 {
-    @Shadow private boolean paused;
+    @Shadow private float pausedTickDelta;
 
-    @Redirect(method =  "render", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/MinecraftClient;paused:Z",
-            ordinal = 0
-    ))
-    private boolean isPausedForRendering(MinecraftClient client)
+    @Override
+    public float getPausedTickDelta()
     {
-        return paused || !TickSpeed.process_entities;
+        return pausedTickDelta;
     }
 }

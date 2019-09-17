@@ -135,6 +135,10 @@
   "client": [
     "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
+
+    "MinecraftClient_pausedShakeMixin",
+    "GameRenderer_pausedShakeMixin",
+
     "IntegratedServerMixin",
     "InGameHudMixin",
     "PlayerListHudMixin",
@@ -142,8 +146,7 @@
     "ClientPlayerInteractionManager_ghostBlocksMixin",
 
     "BlockEntityRenderDispatcher_movableTEMixin",
-    "PistonBlockEntityRenderer_movableTEMixin",
-    "MinecraftClient_pausedShakeMixin"
+    "PistonBlockEntityRenderer_movableTEMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"

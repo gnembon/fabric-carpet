@@ -34,9 +34,9 @@ public class LoggerRegistry
         registerLogger("tnt", new Logger("tnt", "brief", new String[]{"brief", "full"}));
         registerLogger("projectiles", new Logger("projectiles", "brief",  new String[]{"brief", "full"}));
         registerLogger("fallingBlocks",new Logger("fallingBlocks", "brief", new String[]{"brief", "full"}));
-        registerLogger("kills", new Logger("kills", null, null));
-        registerLogger("damage", new Logger("damage", "all", new String[]{"all","players","me"}));
-        registerLogger("weather", new Logger("weather", null, null));
+        //registerLogger("kills", new Logger("kills", null, null));
+        //registerLogger("damage", new Logger("damage", "all", new String[]{"all","players","me"}));
+        //registerLogger("weather", new Logger("weather", null, null));
         registerLogger( "pathfinding", new Logger("pathfinding", "20", new String[]{"2", "5", "10"}));
 
         registerLogger("tps", new HUDLogger("tps", null, null));
