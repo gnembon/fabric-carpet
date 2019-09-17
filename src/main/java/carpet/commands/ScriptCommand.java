@@ -205,7 +205,7 @@ public class ScriptCommand
                                                                         )))))))));
         LiteralArgumentBuilder<ServerCommandSource> a = literal("load").requires( (player) -> player.hasPermissionLevel(2) ).
                 then(argument("package", StringArgumentType.word()).
-                        suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(),bb)).
+                        suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(true),bb)).
                         executes((cc) ->
                         {
                             boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), true);

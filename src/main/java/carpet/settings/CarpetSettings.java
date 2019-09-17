@@ -209,6 +209,13 @@ public class CarpetSettings
     @Rule(desc = "Enables /script command", extra = "An in-game scripting API for Scarpet programming language", category = COMMAND)
     public static boolean commandScript = true;
 
+    @Rule(
+            desc = "Scarpet script from world files will autoload on server/world start ",
+            extra = "if /script is enabled",
+            category = CREATIVE
+    )
+    public static boolean scriptsAutoload = false;
+
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static boolean commandPlayer = true;
 
