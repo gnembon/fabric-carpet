@@ -98,7 +98,7 @@ public abstract class MinecraftServer_tickspeedMixin
 
             this.profiler.startTick();
             this.profiler.push("tick");
-            this.tick(this::shouldKeepTicking);
+            this.tick(TickSpeed.time_warp_start_time != 0 ? ()->true : this::shouldKeepTicking);
             this.profiler.swap("nextTickWait");
             this.field_19249 = true;
             this.field_19248 = Math.max(SystemUtil.getMeasuringTimeMs() + /*50L*/ mspt, this.timeReference);
