@@ -1,5 +1,6 @@
 package carpet.script;
 
+import carpet.settings.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.CameraPathModule;
 import carpet.script.bundled.FileModule;
@@ -51,6 +52,17 @@ public class CarpetScriptServer
         stopAll = false;
         resetErrorSnooper();
         holyMoly = CarpetServer.minecraft_server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
+    }
+
+    public void loadAllWorldScripts()
+    {
+        if (CarpetSettings.scriptsAutoload)
+        {
+            for (String moduleName: listAvailableModules(false))
+            {
+                addScriptHost(CarpetServer.minecraft_server.getCommandSource(), moduleName, true);
+            }
+        }
 
     }
 
@@ -77,12 +89,15 @@ public class CarpetScriptServer
         return null;
     }
 
-    public List<String> listAvailableModules()
+    public List<String> listAvailableModules(boolean includeBuiltIns)
     {
         List<String> moduleNames = new ArrayList<>();
-        for (ModuleInterface mi: bundledModuleData)
+        if (includeBuiltIns)
         {
-            moduleNames.add(mi.getName());
+            for (ModuleInterface mi : bundledModuleData)
+            {
+                moduleNames.add(mi.getName());
+            }
         }
         File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts");

@@ -61,6 +61,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             e.onServerLoaded(server);
         });
         scriptServer = new CarpetScriptServer();
+        scriptServer.loadAllWorldScripts();
         MobAI.resetTrackers();
     }
 
