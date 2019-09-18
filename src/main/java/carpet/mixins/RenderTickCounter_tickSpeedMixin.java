@@ -14,7 +14,7 @@ public class RenderTickCounter_tickSpeedMixin {
             target = "Lnet/minecraft/client/render/RenderTickCounter;timeScale:F"
     ))
     private float adjustTickSpeed(RenderTickCounter counter) {
-        if (CarpetSettings.smoothClientAnimations)
+        if (CarpetSettings.smoothClientAnimations && TickSpeed.process_entities)
         {
             return Math.max(50.0f, TickSpeed.mspt);
         }
