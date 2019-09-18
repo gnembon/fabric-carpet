@@ -400,7 +400,7 @@ public class BlockValue extends Value
         }
 
         @Override
-        public boolean isPlayerSneaking() {
+        public boolean shouldCancelInteraction() {
             return sneakPlace;
         }
 

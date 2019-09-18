@@ -41,7 +41,7 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
                 this.cameraEntity.getPos().z - zOffset) < blockEntity_1.getSquaredRenderDistance())
         {
             GuiLighting.enable();
-            int i = this.world.method_22337(blockEntity_1.getPos());
+            int i = this.world.getLightmapIndex(blockEntity_1.getPos());
             int j = i % 65536;
             int k = i / 65536;
             RenderSystem.glMultiTexCoord2f(GL20.GL_TEXTURE1, (float) j, (float) k);

@@ -28,12 +28,14 @@ public abstract class MinecraftServer_scarpetMixin extends NonBlockingThreadExec
 
     @Shadow private long field_4557;
 
+    @Shadow public abstract boolean executeQueuedTask();
+
     @Override
     public void forceTick(BooleanSupplier isAhead)
     {
         timeReference = field_4557 = SystemUtil.getMeasuringTimeMs();
         tick(isAhead);
-        executeTaskQueue();
+        executeQueuedTasks();
     }
 
     @Inject(method = "tick", at = @At(

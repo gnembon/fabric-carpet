@@ -285,7 +285,7 @@ public class EntityPlayerActionPack
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos pos = blockHit.getBlockPos();
                         Direction side = blockHit.getSide();
-                        if (player.method_21701(player.world, pos, player.interactionManager.getGameMode())) return false;
+                        if (player.canMine(player.world, pos, player.interactionManager.getGameMode())) return false;
                         if (ap.currentBlock != null && player.world.getBlockState(ap.currentBlock).isAir())
                         {
                             ap.currentBlock = null;
@@ -294,16 +294,16 @@ public class EntityPlayerActionPack
                         BlockState state = player.world.getBlockState(pos);
                         if (player.interactionManager.getGameMode().isCreative())
                         {
-                            player.interactionManager.method_14263(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                            player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.server.getWorldHeight());
                             ap.blockHitDelay = 5;
                         }
                         else  if (ap.currentBlock == null || !ap.currentBlock.equals(pos))
                         {
                             if (ap.currentBlock != null)
                             {
-                                player.interactionManager.method_14263(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                                player.interactionManager.processBlockBreakingAction(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, side, player.server.getWorldHeight());
                             }
-                            player.interactionManager.method_14263(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                            player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.server.getWorldHeight());
                             boolean notAir = !state.isAir();
                             if (notAir && ap.curBlockDamageMP == 0)
                             {
@@ -324,7 +324,7 @@ public class EntityPlayerActionPack
                             ap.curBlockDamageMP += state.calcBlockBreakingDelta(player, player.world, pos);
                             if (ap.curBlockDamageMP >= 1)
                             {
-                                player.interactionManager.method_14263(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                                player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.server.getWorldHeight());
                                 ap.currentBlock = null;
                             }
                             player.world.setBlockBreakingProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));
@@ -344,7 +344,7 @@ public class EntityPlayerActionPack
                 EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
                 if (ap.currentBlock == null) return;
                 player.world.setBlockBreakingProgress(-1, ap.currentBlock, -1);
-                player.interactionManager.method_14263(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.server.getWorldHeight());
+                player.interactionManager.processBlockBreakingAction(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.server.getWorldHeight());
             }
         },
         JUMP(true)

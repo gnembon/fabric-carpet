@@ -67,14 +67,14 @@ public class PortalForcer_portalSuffocationMixin
 
     @Redirect(method = "method_22391",at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/pattern/BlockPattern$Result;method_18478(Lnet/minecraft/util/math/Direction;Lnet/minecraft/util/math/BlockPos;DLnet/minecraft/util/math/Vec3d;D)Lnet/minecraft/block/pattern/BlockPattern$TeleportTarget;"
+            target = "Lnet/minecraft/block/pattern/BlockPattern$Result;getTeleportTarget(Lnet/minecraft/util/math/Direction;Lnet/minecraft/util/math/BlockPos;DLnet/minecraft/util/math/Vec3d;D)Lnet/minecraft/block/pattern/BlockPattern$TeleportTarget;"
     ))
     private BlockPattern.TeleportTarget newResult(BlockPattern.Result portal, Direction direction_1, BlockPos blockPos_1, double height_position_from_top, Vec3d vec3d_1, double width_position)
     {
         if (CarpetSettings.portalSuffocationFix && CarpetSettings.currentTelepotingEntityBox != null)
         {
-            double entityWidth = CarpetSettings.currentTelepotingEntityBox.getXSize();
-            double entityHeight = CarpetSettings.currentTelepotingEntityBox.getYSize();
+            double entityWidth = CarpetSettings.currentTelepotingEntityBox.getXLength();
+            double entityHeight = CarpetSettings.currentTelepotingEntityBox.getYLength();
             if (entityWidth >= portal.getWidth())
             {
                 width_position = 0.5; // will suffocate anyways, placing in the middle
@@ -93,7 +93,7 @@ public class PortalForcer_portalSuffocationMixin
             }
 
         }
-        BlockPattern.TeleportTarget target = portal.method_18478(direction_1, blockPos_1, height_position_from_top, vec3d_1, width_position);
+        BlockPattern.TeleportTarget target = portal.getTeleportTarget(direction_1, blockPos_1, height_position_from_top, vec3d_1, width_position);
         CarpetSettings.fixedPosition = target.pos;
         return target;
     }

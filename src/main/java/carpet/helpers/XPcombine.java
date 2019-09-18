@@ -15,7 +15,7 @@ public class XPcombine
 {
     public static void searchForOtherXPNearby(ExperienceOrbEntity first)
     {
-        for (ExperienceOrbEntity entityxp : first.world.getEntities(ExperienceOrbEntity.class, first.getBoundingBox().expand(0.5D, 0.0D, 0.5D)))
+        for (ExperienceOrbEntity entityxp : first.world.getNonSpectatingEntities(ExperienceOrbEntity.class, first.getBoundingBox().expand(0.5D, 0.0D, 0.5D)))
         {
             combineItems(first, entityxp);
         }

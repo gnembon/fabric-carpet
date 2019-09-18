@@ -383,7 +383,7 @@ public class SpawnReporter
         }
         if (entity instanceof OcelotEntity)
         {
-            for (Entity e: entity.getEntityWorld().getEntities(OcelotEntity.class, entity.getBoundingBox()))
+            for (Entity e: entity.getEntityWorld().getEntities(entity, entity.getBoundingBox()))
             {
                 e.remove();
             }
@@ -395,7 +395,7 @@ public class SpawnReporter
     {
         List<BaseText> rep = new ArrayList<>();
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
-        Chunk chunk = worldIn.method_22350(pos);
+        Chunk chunk = worldIn.getChunk(pos);
         int lc = chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z) + 1;
         String where = String.format((y >= lc) ? "%d blocks above it." : "%d blocks below it.",  MathHelper.abs(y-lc));
         if (y == lc) where = "right at it.";

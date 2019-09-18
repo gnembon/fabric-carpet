@@ -3,7 +3,7 @@ package carpet.utils;
 import net.minecraft.block.*;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnType;
-import net.minecraft.entity.ai.PathfindingUtil;
+import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.mob.ZombiePigmanEntity;
@@ -171,7 +171,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
                 Math.max(world.getLightLevel(LightType.BLOCK, pos),world.getLightLevel(LightType.SKY, pos)) ,
                 Math.max(world.getLightLevel(LightType.BLOCK, pos.up()),world.getLightLevel(LightType.SKY, pos.up())))));
-        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.method_22349(pos), world.method_22349(pos.up()))));
+        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.up()))));
         lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
         lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().blocksLight())));
@@ -207,7 +207,7 @@ public class BlockInfo
         for (int i=0; i<1000; i++)
         {
 
-            Vec3d vec = PathfindingUtil.findTarget(creature, 10, 7);
+            Vec3d vec = TargetFinder.findTarget(creature, 10, 7);
             if (vec == null)
             {
                 continue;

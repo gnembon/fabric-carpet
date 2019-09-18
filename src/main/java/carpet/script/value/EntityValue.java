@@ -232,7 +232,7 @@ public class EntityValue extends Value
         put("home", (e, a) -> {
             if (e instanceof MobEntity)
             {
-                return (((MobEntity) e).getWalkTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((MobEntityWithAi) e).getWalkTarget()):Value.FALSE;
+                return (((MobEntity) e).getPositionTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((MobEntityWithAi) e).getPositionTarget()):Value.FALSE;
             }
             return Value.NULL;
         });
@@ -640,7 +640,7 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("home requires at least one position argument, and optional distance, or null to cancel");
             if (v instanceof NullValue)
             {
-                ec.setWalkTarget(BlockPos.ORIGIN, -1);
+                ec.setPositionTarget(BlockPos.ORIGIN, -1);
                 Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
                 ((MobEntityInterface)ec).getAI(false).remove(tasks.get("home"));
                 tasks.remove("home");
@@ -681,7 +681,7 @@ public class EntityValue extends Value
             }
             else throw new InternalExpressionException("home requires at least one position argument, and optional distance");
 
-            ec.setWalkTarget(pos, distance);
+            ec.setPositionTarget(pos, distance);
             Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
             if (!tasks.containsKey("home"))
             {

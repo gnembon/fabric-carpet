@@ -292,7 +292,7 @@ public class CarpetExpression
 
     private void forceChunkUpdate(BlockPos pos, ServerWorld world)
     {
-        Chunk chunk = world.method_22350(pos);
+        Chunk chunk = world.getChunk(pos);
         chunk.setShouldSave(true);
         for (int i = 0; i<16; i++)
         {
@@ -318,11 +318,11 @@ public class CarpetExpression
             if ((block_1 instanceof CommandBlock || block_1 instanceof StructureBlock || block_1 instanceof JigsawBlock) && !player.isCreativeLevelTwoOp()) {
                 player.world.updateListeners(blockPos_1, blockState_1, blockState_1, 3);
                 return false;
-            } else if (player.method_21701(player.world, blockPos_1, player.interactionManager.getGameMode())) {
+            } else if (player.canMine(player.world, blockPos_1, player.interactionManager.getGameMode())) {
                 return false;
             } else {
                 block_1.onBreak(player.world, blockPos_1, blockState_1, player);
-                boolean boolean_1 = player.world.clearBlockState(blockPos_1, false);
+                boolean boolean_1 = player.world.removeBlock(blockPos_1, false);
                 if (boolean_1) {
                     block_1.onBroken(player.world, blockPos_1, blockState_1);
                 }
@@ -749,7 +749,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("loaded", -1, (c, t, lv) ->
         {
-            Value retval = ((CarpetContext) c).s.getWorld().isHeightValidAndBlockLoaded(BlockValue.fromParams((CarpetContext) c, lv, 0).block.getPos()) ? Value.TRUE : Value.FALSE;
+            Value retval = ((CarpetContext) c).s.getWorld().isChunkLoaded(BlockValue.fromParams((CarpetContext) c, lv, 0).block.getPos()) ? Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         });
 
@@ -860,7 +860,7 @@ public class CarpetExpression
             long how = 0;
             if (lv.size() > locator.offset)
                 how = NumericValue.asNumber(lv.get(locator.offset).evalValue(cc)).getLong();
-            world.clearBlockState(where, false);
+            world.removeBlock(where, false);
             world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
             if (how < 0)
             {
@@ -1010,7 +1010,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Chunk chunk = world.method_22350(pos);
+            Chunk chunk = world.getChunk(pos);
             ((class_4548Interface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
             this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;

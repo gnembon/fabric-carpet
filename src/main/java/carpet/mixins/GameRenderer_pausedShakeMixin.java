@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(GameRenderer.class)
 public class GameRenderer_pausedShakeMixin
 {
-    @Shadow @Final private MinecraftClient client;
+    @Shadow @Final private MinecraftClient client; /*
 
     @Redirect(method = "renderCenter", at = @At(
             value = "INVOKE",
@@ -32,5 +32,5 @@ public class GameRenderer_pausedShakeMixin
         {
             worldRenderer.renderEntities(camera_1, visibleRegion_1, float_1);
         }
-    }
+    }*/
 }

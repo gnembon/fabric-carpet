@@ -168,7 +168,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
 
     private boolean method_20642(VillagerEntity villagerEntity_1, BlockPos blockPos_1) {
         Path path_1 = villagerEntity_1.getNavigation().findPathTo(blockPos_1, PointOfInterestType.HOME.method_21648());
-        return path_1 != null && path_1.method_21655();
+        return path_1 != null && path_1.reachesTarget();
     }
 
 

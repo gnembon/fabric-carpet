@@ -138,6 +138,7 @@
 
     "MinecraftClient_pausedShakeMixin",
     "GameRenderer_pausedShakeMixin",
+    "WorldRenderer_pausedShakeMixin",
 
     "IntegratedServerMixin",
     "InGameHudMixin",
