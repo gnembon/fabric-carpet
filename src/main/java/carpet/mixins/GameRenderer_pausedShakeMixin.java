@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(GameRenderer.class)
 public class GameRenderer_pausedShakeMixin
 {
-    @Shadow @Final private MinecraftClient client; /*
+    @Shadow @Final private MinecraftClient client; /* needs fixing somewhere else
 
     @Redirect(method = "renderCenter", at = @At(
             value = "INVOKE",
