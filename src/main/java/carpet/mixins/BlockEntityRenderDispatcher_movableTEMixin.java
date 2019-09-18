@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.fakes.BlockEntityRenderDispatcherInterface;
-import com.sun.istack.internal.Nullable;
 import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.BufferBuilder;
@@ -42,7 +41,7 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
         }
     }
     @Shadow
-    public abstract <T extends BlockEntity> BlockEntityRenderer<T> get(@Nullable BlockEntity blockEntity_1);
+    public abstract <T extends BlockEntity> BlockEntityRenderer<T> get(/*@Nullable*/ BlockEntity blockEntity_1);
     
     /**
      * @author 2No2Name
