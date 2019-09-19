@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PistonBlockEntityRenderer.class)
 public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEntityRenderer<PistonBlockEntity>
 {
+    /*
     @Inject(method = "method_3576", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/render/block/entity/PistonBlockEntityRenderer;method_3575(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/client/render/BufferBuilder;Lnet/minecraft/world/World;Z)Z", ordinal = 3))
     private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2,
@@ -39,4 +40,5 @@ public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEnti
             }
         }
     }
+    */
 }

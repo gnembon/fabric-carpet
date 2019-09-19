@@ -26,9 +26,9 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
     @Shadow
     public World world;
     
-    @Shadow
-    public abstract void renderEntity(BlockEntity blockEntity_1, double double_1, double double_2, double double_3,
-            float float_1, int int_1, boolean boolean_1);
+    //@Shadow
+    //public abstract void renderEntity(BlockEntity blockEntity_1, double double_1, double double_2, double double_3,
+    //        float float_1, int int_1, boolean boolean_1);
     
     /**
      * @author 2No2Name
@@ -37,7 +37,7 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
     public void renderBlockEntityOffset(BlockEntity blockEntity_1, float partialTicks, int destroyStage, double xOffset,
             double yOffset, double zOffset)
     {
-        if (blockEntity_1.getSquaredDistance(this.cameraEntity.getPos().x - xOffset, this.cameraEntity.getPos().y - yOffset,
+        /*if (blockEntity_1.getSquaredDistance(this.cameraEntity.getPos().x - xOffset, this.cameraEntity.getPos().y - yOffset,
                 this.cameraEntity.getPos().z - zOffset) < blockEntity_1.getSquaredRenderDistance())
         {
             GuiLighting.enable();
@@ -48,6 +48,6 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
             RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
             BlockPos blockpos = blockEntity_1.getPos();
             this.renderEntity(blockEntity_1, (double) blockpos.getX() - renderOffsetX + xOffset, (double) blockpos.getY() - renderOffsetY + yOffset, (double) blockpos.getZ() - renderOffsetZ + zOffset, partialTicks, destroyStage, false);
-        }
+        }*/
     }
 }

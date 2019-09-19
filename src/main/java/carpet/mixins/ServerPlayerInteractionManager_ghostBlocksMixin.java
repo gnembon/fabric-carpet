@@ -46,7 +46,7 @@ public class ServerPlayerInteractionManager_ghostBlocksMixin
         return progress;
     }*/
 
-    @ModifyConstant(method = "method_14263",
+    @ModifyConstant(method = "processBlockBreakingAction",
             constant = @Constant(doubleValue = 36D))
     private double addDistance(double original) {
         if (CarpetSettings.miningGhostBlockFix)

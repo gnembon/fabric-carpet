@@ -157,7 +157,7 @@ public abstract class MinecraftServer_tickspeedMixin
     }
     @Inject(method = "method_16208", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/MinecraftServer;waitFor(Ljava/util/function/BooleanSupplier;)V",
+            target = "Lnet/minecraft/server/MinecraftServer;executeTasks(Ljava/util/function/BooleanSupplier;)V",
             shift = At.Shift.BEFORE
     ))
     private void stopAsync(CallbackInfo ci)

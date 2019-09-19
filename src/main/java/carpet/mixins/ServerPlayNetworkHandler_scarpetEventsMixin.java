@@ -43,7 +43,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;method_14263(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/server/network/packet/PlayerActionC2SPacket$Action;Lnet/minecraft/util/math/Direction;I)V"
+            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;processBlockBreakingAction(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/server/network/packet/PlayerActionC2SPacket$Action;Lnet/minecraft/util/math/Direction;I)V"
     ))
     private void onClicked(PlayerActionC2SPacket packet, CallbackInfo ci)
     {
