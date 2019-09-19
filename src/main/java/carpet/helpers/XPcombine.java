@@ -27,6 +27,7 @@ public class XPcombine
         if (
                 first == other || first.world.isClient || first.getServer().getTicks() == lastTickCombine
                 || !first.isAlive() || !other.isAlive()
+                || first.getExperienceAmount() > 15000 || other.getExperienceAmount() > 15000
                 || first.pickupDelay == 32767 || other.pickupDelay == 32767
                 || first.age == -32768 || other.age == -32768
                 || ((ExperienceOrbInterface)first).getCombineDelay() != 0 || ((ExperienceOrbInterface)other).getCombineDelay() != 0
