@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class RenderTickCounter_tickSpeedMixin {
     @Redirect(method = "beginRenderTick", at = @At(
             value = "FIELD",
-            target = "Lnet/minecraft/client/render/RenderTickCounter;timeScale:F"
+            target = "Lnet/minecraft/client/render/RenderTickCounter;tickTime:F"
     ))
     private float adjustTickSpeed(RenderTickCounter counter) {
         if (CarpetSettings.smoothClientAnimations && TickSpeed.process_entities)
