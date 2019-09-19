@@ -15,14 +15,28 @@ public class WorldRenderer_pausedShakeMixin
 {
     @Shadow @Final private MinecraftClient client;
 
+    float initial = 0.0f;
+
     @ModifyVariable(method = "method_22710", argsOnly = true, ordinal = 0 ,at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/world/ClientWorld;getEntities()Ljava/lang/Iterable;"
     ))
     private float changeTickPhase(float previous)
     {
+        initial = previous;
         if (!TickSpeed.process_entities)
             return ((MinecraftClientInferface)client).getPausedTickDelta();
         return previous;
     }
+
+    @ModifyVariable(method = "method_22710", argsOnly = true, ordinal = 0 ,at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/render/Camera;F)V",
+            shift = At.Shift.BEFORE
+    ))
+    private float changeTickPhaseBack(float previous)
+    {
+        return initial;
+    }
+
 }
