@@ -276,15 +276,12 @@ public class SpawnReporter
     
     public static void initialize_mocking()
     {
-        reset_spawn_stats(false);
         mock_spawns = true;
         
     }
     public static void stop_mocking()
     {
-        reset_spawn_stats(false);
         mock_spawns = false;
-        
     }
     public static void reset_spawn_stats(boolean full)
     {
