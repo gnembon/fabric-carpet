@@ -212,12 +212,12 @@ public class SpawnCommand
         if (domock)
         {
             SpawnReporter.initialize_mocking();
-            Messenger.m(source, "gi Mock spawns started, Spawn statistics reset");
+            Messenger.m(source, "gi Mob spawns will now be mocked.");
         }
         else
         {
             SpawnReporter.stop_mocking();
-            Messenger.m(source, "gi  Normal mob spawning, Spawn statistics reset");
+            Messenger.m(source, "gi Normal mob spawning.");
         }
         return 1;
     }
