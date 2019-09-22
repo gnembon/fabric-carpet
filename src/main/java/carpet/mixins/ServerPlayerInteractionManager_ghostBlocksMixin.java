@@ -6,6 +6,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.network.packet.PlayerActionC2SPacket;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.BlockView;
@@ -21,6 +22,8 @@ public class ServerPlayerInteractionManager_ghostBlocksMixin
 {
     @Shadow public ServerPlayerEntity player;
 
+    @Shadow public ServerWorld world;
+
     @Redirect(method = "method_14263", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/BlockState;calcBlockBreakingDelta(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;)F")
@@ -31,7 +34,7 @@ public class ServerPlayerInteractionManager_ghostBlocksMixin
                                          BlockPos blockPos_1a, PlayerActionC2SPacket.Action playerActionC2SPacket$Action_1, Direction direction_1, int int_1)
     {
         float progress = blockState.calcBlockBreakingDelta(playerEntity_1, blockView_1, blockPos_1);
-        if (CarpetSettings.miningGhostBlockFix &&
+        if (CarpetSettings.miningGhostBlockFix && world.getServer().isDedicated() &&
                 (playerActionC2SPacket$Action_1 == PlayerActionC2SPacket.Action.START_DESTROY_BLOCK) &&
                 !playerEntity_1.onGround && !playerEntity_1.isClimbing() && !playerEntity_1.isFallFlying() &&
                 progress >= 0.2
