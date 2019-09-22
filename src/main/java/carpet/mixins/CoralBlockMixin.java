@@ -9,6 +9,7 @@ import net.minecraft.block.CoralBlock;
 import net.minecraft.block.CoralParentBlock;
 import net.minecraft.block.Fertilizable;
 import net.minecraft.block.MaterialColor;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.tag.FluidTags;
 import net.minecraft.util.math.BlockPos;
@@ -38,7 +39,7 @@ public abstract class CoralBlockMixin implements Fertilizable
         return (double)var1.random.nextFloat() < 0.15D;
     }
 
-    public void grow(World worldIn, Random random, BlockPos pos, BlockState blockUnder)
+    public void grow(ServerWorld worldIn, Random random, BlockPos pos, BlockState blockUnder)
     {
 
         CoralFeature coral;
