@@ -83,6 +83,7 @@
     "HopperBlock_cactusMixin",
     "ItemUsageContext_cactusMixin",
     "DispenserBlock_cactusMixin",
+    "PistonBlock_rotatorBlockMixin",
 
     "ServerPlayNetworkHandler_antiCheatDisabledMixin",
 

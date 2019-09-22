@@ -1,5 +1,6 @@
 package carpet.helpers;
 
+import carpet.fakes.PistonBlockInterface;
 import carpet.settings.CarpetSettings;
 import net.minecraft.block.AbstractRedstoneGateBlock;
 import net.minecraft.block.BedBlock;
@@ -27,6 +28,7 @@ import net.minecraft.block.dispenser.FallibleItemDispenserBehavior;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.enums.SlabType;
+import net.minecraft.block.piston.PistonHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
@@ -157,10 +159,14 @@ public class BlockRotator
         // Block rotation for blocks that can be placed in all 6 or 4 rotations.
         if(block instanceof FacingBlock || block instanceof DispenserBlock)
         {
-            if (block instanceof PistonBlock && (world.isReceivingRedstonePower(blockpos) || iblockstate.get(PistonBlock.EXTENDED)))
+            Direction face = iblockstate.get(FacingBlock.FACING);
+            if (block instanceof PistonBlock && (
+                    iblockstate.get(PistonBlock.EXTENDED)
+                    || ( ((PistonBlockInterface)block).publicShouldExtend(world, blockpos, face) && (new PistonHandler(world, blockpos, face, true)).calculatePush() )
+                    )
+            )
                 return stack;
 
-            Direction face = iblockstate.get(FacingBlock.FACING);
             Direction rotated_face = face.rotateClockwise(sourceFace.getAxis());
             if(sourceFace.getId() % 2 == 0 || rotated_face == face)
             {   // Flip to make blocks always rotate clockwise relative to the dispenser
