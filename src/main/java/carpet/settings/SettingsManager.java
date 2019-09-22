@@ -335,14 +335,14 @@ public class SettingsManager
                         requires(s -> !locked).
                         then(argument("rule", StringArgumentType.word()).
                                 suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
-                                then(argument("value", StringArgumentType.word()).
+                                then(argument("value", StringArgumentType.greedyString()).
                                         suggests((c, b)-> suggestMatching(contextRule(c).options, b)).
                                         executes((c) -> setDefault(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))))).
                 then(argument("rule", StringArgumentType.word()).
                         suggests( (c, b) -> suggestMatching(getRules().stream().map(r -> r.name), b)).
                         requires(s -> !locked ).
                         executes( (c) -> displayRuleMenu(c.getSource(), contextRule(c))).
-                        then(argument("value", StringArgumentType.word()).
+                        then(argument("value", StringArgumentType.greedyString()).
                                 suggests((c, b)-> suggestMatching(contextRule(c).options,b)).
                                 executes((c) -> setRule(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))));
 
