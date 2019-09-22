@@ -6,15 +6,20 @@ import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.IWorld;
+import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
@@ -106,6 +111,17 @@ public class SpawnHelperMixin
         if (!SpawnReporter.mock_spawns)
             return world.spawnEntity(entity_1);
         return false;
+    }
+
+    @Redirect(method = "spawnEntitiesInChunk", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnType;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
+    ))
+    private static EntityData spawnEntity(MobEntity mobEntity, IWorld iWorld_1, LocalDifficulty localDifficulty_1, SpawnType spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
+    {
+        if (!SpawnReporter.mock_spawns)
+            return mobEntity.initialize(iWorld_1, localDifficulty_1, spawnType_1, entityData_1, compoundTag_1);
+        return null;
     }
 
     @Redirect(method = "spawnEntitiesInChunk", at = @At(
