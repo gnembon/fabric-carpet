@@ -2,6 +2,7 @@ package carpet.helpers;
 
 import carpet.settings.CarpetSettings;
 import net.minecraft.block.AbstractRedstoneGateBlock;
+import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -153,34 +154,35 @@ public class BlockRotator
         BlockState iblockstate = world.getBlockState(blockpos);
         Block block = iblockstate.getBlock();
 
-        // Block rotation for blocks that can be placed in all 6 rotations.
+        // Block rotation for blocks that can be placed in all 6 or 4 rotations.
         if(block instanceof FacingBlock || block instanceof DispenserBlock)
         {
+            if (block instanceof PistonBlock && (world.isReceivingRedstonePower(blockpos) || iblockstate.get(PistonBlock.EXTENDED)))
+                return stack;
+
             Direction face = iblockstate.get(FacingBlock.FACING);
-            face = face.rotateClockwise(sourceFace.getAxis());
-            if(sourceFace.getId() % 2 == 0)
-            {   // Rotate twice more to make blocks always rotate clockwise relative to the dispenser
+            Direction rotated_face = face.rotateClockwise(sourceFace.getAxis());
+            if(sourceFace.getId() % 2 == 0 || rotated_face == face)
+            {   // Flip to make blocks always rotate clockwise relative to the dispenser
                 // when index is equal to zero. when index is equal to zero the dispenser is in the opposite direction.
-                face = face.rotateClockwise(sourceFace.getAxis());
-                face = face.rotateClockwise(sourceFace.getAxis());
+                rotated_face = rotated_face.getOpposite();
             }
-            world.setBlockState(blockpos, iblockstate.with(FacingBlock.FACING, face), 3);
+            world.setBlockState(blockpos, iblockstate.with(FacingBlock.FACING, rotated_face), 3);
+
 
         }
         else if(block instanceof HorizontalFacingBlock) // Block rotation for blocks that can be placed in only 4 horizontal rotations.
         {
+            if (block instanceof BedBlock)
+                return stack;
             Direction face = iblockstate.get(HorizontalFacingBlock.FACING);
-            face = face.rotateClockwise(sourceFace.getAxis());
-            if(sourceFace.getId() % 2 == 0)
+            face = face.rotateClockwise(Direction.Axis.Y);
+
+            if(sourceFace == Direction.DOWN)
             { // same as above.
-                face = face.rotateClockwise(sourceFace.getAxis());
-                face = face.rotateClockwise(sourceFace.getAxis());
+                face = face.getOpposite();
             }
-            if(sourceFace.getId() <= 1)
-            {   // Make sure to suppress rotation when index is lower then 2 as that will result in a faulty rotation for
-                // blocks that only can be placed horizontaly.
-                world.setBlockState(blockpos, iblockstate.with(FacingBlock.FACING, face), 3);
-            }
+            world.setBlockState(blockpos, iblockstate.with(HorizontalFacingBlock.FACING, face), 3);
         }
         // Send block update to the block that just have been rotated.
         world.updateNeighbor(blockpos, block, source.getBlockPos());
