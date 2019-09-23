@@ -110,6 +110,10 @@ public class Messenger
         {
             return new LiteralText("");
         }
+        if (Character.isWhitespace(message.charAt(0)))
+        {
+            message = "w"+message;
+        }
         String parts[] = message.split("\\s", 2);
         String desc = parts[0];
         String str = "";
