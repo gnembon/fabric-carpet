@@ -485,7 +485,7 @@ public class SettingsManager
         listSettings(source, "Current "+fancyName+" Settings", getNonDefault());
 
         if (version != null)
-            Messenger.m(source, fancyName+" version: "+ version);
+            Messenger.m(source, "g "+fancyName+" version: "+ version);
         try
         {
             PlayerEntity player = source.getPlayer();
