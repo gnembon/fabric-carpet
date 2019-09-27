@@ -153,6 +153,14 @@ use '_' to use the startup setting from server.properties
 * Suggested options: `_`
 * Categories: `CREATIVE`
 
+## defaultLoggers
+sets these loggers in their default configurations for all new players
+use csv, like 'tps,mobcaps' for multiple loggers, none for nothing
+* Type: `String`
+* Default value: `none`
+* Suggested options: `none`, `tps`, `mobcaps,tps`
+* Categories: `CREATIVE`, `SURVIVAL`
+
 ## desertShrubs
 Saplings turn into dead shrubs in hot climates and no water access
 * Type: `boolean`
@@ -269,6 +277,14 @@ Customizable maximal entity collision limits, 0 for no limits
 * Additional notes:
   * Must be a positive number
 
+## miningGhostBlockFix
+Fixes mining ghost blocks by trusting clients with block breaking
+Increases player allowed mining distance to 32 blocks
+* Type: `boolean`
+* Default value: `false`
+* Required options: `true`, `false`
+* Categories: `SURVIVAL`
+
 ## missingTools
 Pistons, Glass and Sponge can be broken faster with their appropriate tools
 * Type: `boolean`
@@ -373,6 +389,14 @@ Rotates block anti-clockwise if possible
 * Default value: `false`
 * Required options: `true`, `false`
 * Categories: `FEATURE`
+
+## scriptsAutoload
+Scarpet script from world files will autoload on server/world start
+if /script is enabled
+* Type: `boolean`
+* Default value: `false`
+* Required options: `true`, `false`
+* Categories: `CREATIVE`
 
 ## shulkerSpawningInEndCities
 Shulkers will respawn in end cities
