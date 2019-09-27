@@ -99,16 +99,19 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void onPlayerLoggedIn(ServerPlayerEntity player)
     {
+        LoggerRegistry.playerConnected(player);
         extensions.forEach(e -> e.onPlayerLoggedIn(player));
     }
 
     public static void onPlayerLoggedOut(ServerPlayerEntity player)
     {
+        LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
     }
 
     public static void onServerClosed(MinecraftServer server)
     {
+        LoggerRegistry.stopLoggers();
         extensions.forEach(e -> e.onServerClosed(server));
     }
 }

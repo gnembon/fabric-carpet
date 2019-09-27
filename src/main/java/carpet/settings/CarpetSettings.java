@@ -27,7 +27,7 @@ import static carpet.settings.RuleCategory.SURVIVAL;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.1.0+v190925";
+    public static final String carpetVersion = "1.1.0+v190927";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -171,6 +171,14 @@ public class CarpetSettings
             validate = Validator.WIP.class
     )
     public static boolean commandLog = true;
+
+    @Rule(
+            desc = "sets these loggers in their default configurations for all new players",
+            extra = "use csv, like 'tps,mobcaps' for multiple loggers, none for nothing",
+            category = {CREATIVE, SURVIVAL},
+            options = {"none", "tps", "mobcaps,tps"}
+    )
+    public static String defaultLoggers = "none";
 
     @Rule(
             desc = "Enables /distance command to measure in game distance between points",

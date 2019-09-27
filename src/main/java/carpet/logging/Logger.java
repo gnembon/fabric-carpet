@@ -1,13 +1,16 @@
 package carpet.logging;
 
 import carpet.CarpetServer;
+import carpet.settings.CarpetSettings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public class Logger
@@ -83,6 +86,12 @@ public class Logger
     public boolean hasOnlineSubscribers()
     {
         return subscribedOnlinePlayers.size() > 0;
+    }
+
+    public void serverStopped()
+    {
+        subscribedOnlinePlayers.clear();
+        subscribedOfflinePlayers.clear();
     }
 
     /**
@@ -162,7 +171,7 @@ public class Logger
 
     // ----- Event Handlers ----- //
 
-    public void onPlayerConnect(PlayerEntity player)
+    public void onPlayerConnect(PlayerEntity player, boolean firstTime)
     {
         // If the player was subscribed to the log and offline, move them to the set of online subscribers.
         String playerName = player.getName().getString();
@@ -170,6 +179,14 @@ public class Logger
         {
             subscribedOnlinePlayers.put(playerName, subscribedOfflinePlayers.get(playerName));
             subscribedOfflinePlayers.remove(playerName);
+        }
+        else if(firstTime)
+        {
+            Set<String> loggingOptions = new HashSet<>(Arrays.asList(CarpetSettings.defaultLoggers.split(",")));
+            if (loggingOptions.contains(getLogName()))
+            {
+                subscribedOnlinePlayers.put(playerName, getDefault());
+            }
         }
         LoggerRegistry.setAccess(this);
     }
