@@ -148,6 +148,79 @@ public class BlockRotator
         return null;
     }
 
+    private static Direction rotateClockwise(Direction direction, Direction.Axis direction$Axis_1) {
+        switch(direction$Axis_1) {
+            case X:
+                if (direction != Direction.WEST && direction != Direction.EAST) {
+                    return rotateXClockwise(direction);
+                }
+
+                return direction;
+            case Y:
+                if (direction != Direction.UP && direction != Direction.DOWN) {
+                    return rotateYClockwise(direction);
+                }
+
+                return direction;
+            case Z:
+                if (direction != Direction.NORTH && direction != Direction.SOUTH) {
+                    return rotateZClockwise(direction);
+                }
+
+                return direction;
+            default:
+                throw new IllegalStateException("Unable to get CW facing for axis " + direction$Axis_1);
+        }
+    }
+
+    private static Direction rotateYClockwise(Direction dir) {
+        switch(dir) {
+            case NORTH:
+                return Direction.EAST;
+            case EAST:
+                return Direction.SOUTH;
+            case SOUTH:
+                return Direction.WEST;
+            case WEST:
+                return Direction.NORTH;
+            default:
+                throw new IllegalStateException("Unable to get Y-rotated facing of " + dir);
+        }
+    }
+
+    private static Direction rotateXClockwise(Direction dir) {
+        switch(dir) {
+            case NORTH:
+                return Direction.DOWN;
+            case EAST:
+            case WEST:
+            default:
+                throw new IllegalStateException("Unable to get X-rotated facing of " + dir);
+            case SOUTH:
+                return Direction.UP;
+            case UP:
+                return Direction.NORTH;
+            case DOWN:
+                return Direction.SOUTH;
+        }
+    }
+
+    private static Direction rotateZClockwise(Direction dir) {
+        switch(dir) {
+            case EAST:
+                return Direction.DOWN;
+            case SOUTH:
+            default:
+                throw new IllegalStateException("Unable to get Z-rotated facing of " + dir);
+            case WEST:
+                return Direction.UP;
+            case UP:
+                return Direction.EAST;
+            case DOWN:
+                return Direction.WEST;
+        }
+    }
+
     public static ItemStack dispenserRotate(BlockPointer source, ItemStack stack)
     {
         Direction sourceFace = source.getBlockState().get(DispenserBlock.FACING);
@@ -167,7 +240,7 @@ public class BlockRotator
             )
                 return stack;
 
-            Direction rotated_face = face.rotateClockwise(sourceFace.getAxis());
+            Direction rotated_face = rotateClockwise(face, sourceFace.getAxis());
             if(sourceFace.getId() % 2 == 0 || rotated_face == face)
             {   // Flip to make blocks always rotate clockwise relative to the dispenser
                 // when index is equal to zero. when index is equal to zero the dispenser is in the opposite direction.
