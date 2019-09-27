@@ -7,6 +7,7 @@ import net.minecraft.util.DyeColor;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -137,14 +138,31 @@ public class LoggerRegistry
         setAccess(logger);
     }
 
-    public static void playerConnected(PlayerEntity player)
+    private static Set<String> seenPlayers = new HashSet<>();
+
+    public static void stopLoggers()
     {
+        seenPlayers.clear();
         for(Logger log: loggerRegistry.values() )
         {
-            log.onPlayerConnect(player);
+            log.serverStopped();
         }
-
     }
+    public static void playerConnected(PlayerEntity player)
+    {
+        boolean firstTime = false;
+        if (!seenPlayers.contains(player.getName().getString()))
+        {
+            seenPlayers.add(player.getName().getString());
+            firstTime = true;
+            //subscribe them to the defualt loggers
+        }
+        for(Logger log: loggerRegistry.values() )
+        {
+            log.onPlayerConnect(player, firstTime);
+        }
+    }
+
     public static void playerDisconnected(PlayerEntity player)
     {
         for(Logger log: loggerRegistry.values() )

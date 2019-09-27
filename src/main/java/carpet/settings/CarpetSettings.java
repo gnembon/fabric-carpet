@@ -173,6 +173,14 @@ public class CarpetSettings
     public static boolean commandLog = true;
 
     @Rule(
+            desc = "sets these loggers in their default configurations for all new players",
+            extra = "use csv, like 'tps,mobcaps' for multiple loggers, none for nothing",
+            category = {CREATIVE, SURVIVAL},
+            options = {"none", "tps", "mobcaps,tps"}
+    )
+    public static String defaultLoggers = "none";
+
+    @Rule(
             desc = "Enables /distance command to measure in game distance between points",
             extra = "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
             category = COMMAND
