@@ -6,6 +6,8 @@ import carpet.fakes.PistonBlockEntityInterface;
 import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.PistonBlockEntity;
+import net.minecraft.class_4587;
+import net.minecraft.class_4597;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
@@ -20,8 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEntityRenderer<PistonBlockEntity>
 {
     @Inject(method = "method_3576", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/render/block/entity/PistonBlockEntityRenderer;method_3575(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/client/render/BufferBuilder;Lnet/minecraft/world/World;Z)Z", ordinal = 3))
-    private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2, double double_3, float float_1, int int_1, BlockRenderLayer blockRenderLayer_1, BufferBuilder bufferBuilder_1, int int_2, int int_3, CallbackInfo ci)
+            target = "Lnet/minecraft/client/render/block/entity/PistonBlockEntityRenderer;method_3575(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/class_4587;Lnet/minecraft/class_4597;Lnet/minecraft/world/World;Z)V", ordinal = 3))
+    private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2, double double_3, float float_1, class_4587 class_4587_1, class_4597 class_4597_1, int int_1, CallbackInfo ci)
     {
         if (!((PistonBlockEntityInterface) pistonBlockEntity_1).isRenderModeSet())
             ((PistonBlockEntityInterface) pistonBlockEntity_1).setRenderCarriedBlockEntity(CarpetSettings.movableBlockEntities && ((PistonBlockEntityInterface) pistonBlockEntity_1).getCarriedBlockEntity() != null);
