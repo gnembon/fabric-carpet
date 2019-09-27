@@ -5,7 +5,7 @@ import carpet.helpers.TickSpeed;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.VisibleRegion;
+//import net.minecraft.client.render.VisibleRegion;
 import net.minecraft.client.render.WorldRenderer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

@@ -60,7 +60,7 @@ public class WoolTool
                 break;
             case GRAY:
                 if (CarpetSettings.commandInfo)
-                    Messenger.send(placer, BlockInfo.blockInfo(pos.down(), worldIn));
+                    Messenger.send(placer, BlockInfo.blockInfo(pos.down(1), worldIn));
                 break;
             case YELLOW:
                 if (CarpetSettings.commandInfo)
@@ -70,7 +70,7 @@ public class WoolTool
 			case GREEN:
                 if (CarpetSettings.hopperCounters)
                 {
-                    DyeColor under = getWoolColorAtPosition(worldIn, pos.down());
+                    DyeColor under = getWoolColorAtPosition(worldIn, pos.down(1));
                     if (under == null) return;
                     HopperCounter counter = HopperCounter.getCounter(under.toString());
                     if (counter != null)
@@ -80,7 +80,7 @@ public class WoolTool
 			case RED:
                 if (CarpetSettings.hopperCounters)
                 {
-                    DyeColor under = getWoolColorAtPosition(worldIn, pos.down());
+                    DyeColor under = getWoolColorAtPosition(worldIn, pos.down(1));
                     if (under == null) return;
                     HopperCounter counter = HopperCounter.getCounter(under.toString());
                     if (counter == null) return;

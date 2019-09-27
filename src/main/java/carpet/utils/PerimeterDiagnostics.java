@@ -107,7 +107,7 @@ public class PerimeterDiagnostics
                     pos = new BlockPos(eX+x, y, eZ+z);
 
                     BlockState iblockstate = worldserver.getBlockState(pos);
-                    BlockState iblockstate_down = worldserver.getBlockState(pos.down());
+                    BlockState iblockstate_down = worldserver.getBlockState(pos.down(1));
                     BlockState iblockstate_up = worldserver.getBlockState(pos.up());
 
                     if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isSimpleFullBlock(worldserver, pos))

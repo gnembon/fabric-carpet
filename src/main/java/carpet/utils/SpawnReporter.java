@@ -165,7 +165,7 @@ public class SpawnReporter
     
     public static List<BaseText> show_mobcaps(BlockPos pos, World worldIn)
     {
-        DyeColor under = WoolTool.getWoolColorAtPosition(worldIn, pos.down());
+        DyeColor under = WoolTool.getWoolColorAtPosition(worldIn, pos.down(1));
         if (under == null)
         {
             if (track_spawns > 0L)

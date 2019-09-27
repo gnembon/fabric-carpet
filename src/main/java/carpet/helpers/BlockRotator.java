@@ -255,7 +255,7 @@ public class BlockRotator
             if (block instanceof BedBlock)
                 return stack;
             Direction face = iblockstate.get(HorizontalFacingBlock.FACING);
-            face = face.rotateClockwise(Direction.Axis.Y);
+            face = rotateClockwise(face, Direction.Axis.Y);
 
             if(sourceFace == Direction.DOWN)
             { // same as above.

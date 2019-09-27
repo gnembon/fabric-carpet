@@ -58,7 +58,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.state.StateFactory;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Clearable;
@@ -238,7 +238,7 @@ public class CarpetExpression
     private <T extends Comparable<T>> BlockState setProperty(Property<T> property, String name, String value,
                                                               BlockState bs)
     {
-        Optional<T> optional = property.getValue(value);
+        Optional<T> optional = property.parse(value);
 
         if (optional.isPresent())
         {
@@ -807,7 +807,7 @@ public class CarpetExpression
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
             if (sourceLocator.offset < lv.size())
             {
-                StateFactory<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
+                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
                 for (int i = sourceLocator.offset; i < lv.size(); i += 2)
                 {
                     String paramString = lv.get(i).evalValue(c).getString();
@@ -979,7 +979,7 @@ public class CarpetExpression
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("property requires to specify a property to query");
             String tag = lv.get(locator.offset).evalValue(c).getString();
-            StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
+            StateManager<Block, BlockState> states = state.getBlock().getStateFactory();
             Property<?> property = states.getProperty(tag);
             if (property == null)
                 return LazyValue.NULL;
@@ -991,7 +991,7 @@ public class CarpetExpression
         {
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
-            StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
+            StateManager<Block, BlockState> states = state.getBlock().getStateFactory();
             Value res = ListValue.wrap(states.getProperties().stream().map(
                     p -> new StringValue(p.getName())).collect(Collectors.toList())
             );
@@ -1987,7 +1987,7 @@ public class CarpetExpression
 
             List<Value> neighbours = new ArrayList<>();
             neighbours.add(new BlockValue(null, world, center.up()));
-            neighbours.add(new BlockValue(null, world, center.down()));
+            neighbours.add(new BlockValue(null, world, center.down(1)));
             neighbours.add(new BlockValue(null, world, center.north()));
             neighbours.add(new BlockValue(null, world, center.south()));
             neighbours.add(new BlockValue(null, world, center.east()));
