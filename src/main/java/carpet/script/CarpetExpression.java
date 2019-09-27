@@ -1987,7 +1987,7 @@ public class CarpetExpression
 
             List<Value> neighbours = new ArrayList<>();
             neighbours.add(new BlockValue(null, world, center.up()));
-            neighbours.add(new BlockValue(null, world, center.down(1)));
+            neighbours.add(new BlockValue(null, world, center.method_10074()));
             neighbours.add(new BlockValue(null, world, center.north()));
             neighbours.add(new BlockValue(null, world, center.south()));
             neighbours.add(new BlockValue(null, world, center.east()));

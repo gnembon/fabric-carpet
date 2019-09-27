@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(BlockEntityRenderDispatcher.class)
 public abstract class BlockEntityRenderDispatcher_movableTEMixin implements BlockEntityRenderDispatcherInterface
-{
+{/*
     @Shadow
     public static double renderOffsetX;
     @Shadow
@@ -41,11 +41,11 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
         }
     }
     @Shadow
-    public abstract <T extends BlockEntity> BlockEntityRenderer<T> get(/*@Nullable*/ BlockEntity blockEntity_1);
+    public abstract <T extends BlockEntity> BlockEntityRenderer<T> get(/@Nullable/ BlockEntity blockEntity_1);
     
-    /**
-     * @author 2No2Name
-     */
+    /
+      @author 2No2Name
+     /
     //Renders the BlockEntity offset by the amount specified in the arguments xOffset yOffset zOffset (the moving block moved in the animation by this)
     //Code copied and modified from BlockEntityRenderDispatcher::render(BlockEntity blockEntity_1, float float_1, int int_1, BlockRenderLayer blockRenderLayer_1, BufferBuilder bufferBuilder_1)
     public void renderBlockEntityOffset(BlockEntity blockEntity_1, float partialTicks, int destroyStage, BlockRenderLayer blockRenderLayer_1, BufferBuilder bufferBuilder_1, double xOffset,
@@ -67,5 +67,5 @@ public abstract class BlockEntityRenderDispatcher_movableTEMixin implements Bloc
                 }
             }
         }
-    }
+    }*/
 }
