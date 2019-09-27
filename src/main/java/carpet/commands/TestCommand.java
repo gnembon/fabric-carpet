@@ -16,7 +16,10 @@ public class TestCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         dispatcher.register(literal("test").
-                then(literal("dump").executes((c) -> CarpetServer.settingsManager.printAllRulesToLog())).
+                then(literal("dump").
+                        executes((c) -> CarpetServer.settingsManager.printAllRulesToLog(null)).
+                        then(argument("category", word()).
+                                executes( (c) -> CarpetServer.settingsManager.printAllRulesToLog(getString(c, "category"))))).
                 then(argument("first",word()).
                         executes( (c)-> test(c, getString(c, "first")+" 1"))).
                 then(argument("second", word()).

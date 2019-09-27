@@ -257,13 +257,15 @@ public class SettingsManager
         }).collect(ImmutableList.toImmutableList());
     }
 
-    public int printAllRulesToLog()
+    public int printAllRulesToLog(String category)
     {
         PrintStream ps = System.out;
         ps.println("# "+fancyName+" Settings");
         for (Map.Entry<String, ParsedRule<?>> e : new TreeMap<>(rules).entrySet())
         {
             ParsedRule<?> rule = e.getValue();
+            if (category != null && !rule.categories.contains(category))
+                continue;
             ps.println("## " + rule.name);
             ps.println(rule.description+"  ");
             for (String extra : rule.extraInfo)
