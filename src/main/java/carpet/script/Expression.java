@@ -20,6 +20,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import org.apache.commons.lang3.text.WordUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -2288,6 +2289,14 @@ public class Expression implements Cloneable
      * <hr>
      * <h2>Auxiliary functions</h2>
      *
+     * <h3><code>lower(expr), uppper(expr), title(expr)</code></h3>
+     * <p>Returns lowercase, uppercase or titlecase representation of a string representation of the passed expression</p>
+     * <pre>
+     * lower('aBc') =&gt; 'abc'
+     * upper('aBc') =&gt; 'ABC'
+     * title('aBc') =&gt; 'Abc'
+     * </pre>
+     *
      * <h3><code>length(expr)</code></h3>
      * <p>Returns length of the expression, the length of the string,
      * the length of the integer part of the number, or length of the list</p>
@@ -2482,6 +2491,13 @@ public class Expression implements Cloneable
                 throw new InternalExpressionException("Illegal string format: "+ife.getMessage());
             }
         });
+
+        addUnaryFunction("lower", v -> new StringValue(v.getString().toLowerCase(Locale.ROOT)));
+
+        addUnaryFunction("upper", v -> new StringValue(v.getString().toUpperCase(Locale.ROOT)));
+
+        addUnaryFunction("title", v -> new StringValue(WordUtils.capitalizeFully(v.getString())));
+
 
         addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
 

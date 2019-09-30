@@ -400,6 +400,8 @@ public class CarpetExpression
      *     place_item('piston,x,y,z,'down') // places a piston facing down
      *     place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
      * </pre>
+     * <h3><code>biome(pos)</code></h3>
+     * <p>returns biome at that block position.</p>
      * <h3><code>set_biome(pos, biome_name)</code></h3>
      * <p>changes biome at that block position.</p>
      * <h3><code>update(pos)</code></h3>
@@ -994,6 +996,16 @@ public class CarpetExpression
             Value res = ListValue.wrap(states.getProperties().stream().map(
                     p -> new StringValue(p.getName())).collect(Collectors.toList())
             );
+            return (_c, _t) -> res;
+        });
+
+        this.expr.addLazyFunction("biome", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            Biome biome = world.getBiome(pos);
+            Value res = new StringValue(biome.getTranslationKey().replaceFirst("^biome\\.minecraft\\.", ""));
             return (_c, _t) -> res;
         });
 
