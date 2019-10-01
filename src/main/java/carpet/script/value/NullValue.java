@@ -44,4 +44,10 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         return "null";
     }
+
+    @Override
+    public int hashCode()
+    {
+        return 0;
+    }
 }

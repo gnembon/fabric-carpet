@@ -44,6 +44,12 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             {
                 return stepp > 0?(current < limit):(current > limit);
             }
+
+            @Override
+            public String getString()
+            {
+                return String.format("[%d, %d, ..., %d]",start, start+stepp, limit);
+            }
         };
     }
 
@@ -144,5 +150,11 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         }
         ((LazyListValue)copy).reset();
         return copy;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return ("i"+getString()).hashCode();
     }
 }

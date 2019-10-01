@@ -182,4 +182,12 @@ public abstract class Value implements Comparable<Value>, Cloneable
     {
         throw new InternalExpressionException("How did you get here? Cannot get type of an intenal type.");
     }
+
+    @Override
+    public int hashCode()
+    {
+        String stringVal = getString();
+        if (stringVal.isEmpty()) return 0;
+        return ("s"+stringVal).hashCode();
+    }
 }

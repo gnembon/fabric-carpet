@@ -2402,6 +2402,8 @@ public class Expression implements Cloneable
      */
     public void SystemFunctions()
     {
+        addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
+
         addLazyFunction("bool", 1, (c, t, lv) -> {
             Value v = lv.get(0).evalValue(c, Context.BOOLEAN);
             if (v instanceof StringValue)

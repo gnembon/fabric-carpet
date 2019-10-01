@@ -4,11 +4,7 @@ import carpet.script.exception.InternalExpressionException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.registry.Registry;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
@@ -322,9 +318,16 @@ public class ListValue extends AbstractListValue
         index = index % numitems;
         return items.get((int)index);
     }
+
     @Override
     public String getTypeString()
     {
         return "list";
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return items.hashCode();
     }
 }

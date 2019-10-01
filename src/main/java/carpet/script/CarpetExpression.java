@@ -2155,6 +2155,12 @@ public class CarpetExpression
                     y = miny;
                     z = minz;
                 }
+
+                @Override
+                public String getString()
+                {
+                    return String.format("rect[(%d,%d,%d),..,(%d,%d,%d)]",minx, miny, minz, maxx, maxy, maxz);
+                }
             };
         });
 
@@ -2246,6 +2252,12 @@ public class CarpetExpression
                         curradius = 0;
                         curpos = 0;
                     }
+
+                    @Override
+                    public String getString()
+                    {
+                        return String.format("diamond[(%d,%d,%d),%d,0]",cx, cy, cz, width);
+                    }
                 };
             }
             else
@@ -2301,6 +2313,12 @@ public class CarpetExpression
                         curradius = 0;
                         curpos = 0;
                         curheight = -height;
+                    }
+
+                    @Override
+                    public String getString()
+                    {
+                        return String.format("diamond[(%d,%d,%d),%d,%d]",cx, cy, cz, width, height);
                     }
                 };
             }

@@ -179,4 +179,13 @@ public class NumericValue extends Value
         return "number";
     }
 
+    @Override
+    public int hashCode()
+    {
+        if (Math.abs(Math.floor(value + 0.5D)-value) < epsilon) // is sufficiently close to the integer value
+            return Long.hashCode(getLong());
+        return Double.hashCode(value);
+    }
+
+
 }

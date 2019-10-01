@@ -19,4 +19,10 @@ public class GlobalValue extends Value
     {
         return false;
     }
+
+    @Override
+    public int hashCode()
+    {
+        throw new UnsupportedOperationException("global value cannot be used as map key");
+    }
 }

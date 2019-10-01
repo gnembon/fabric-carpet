@@ -138,6 +138,13 @@ public class EntityValue extends Value
         return "entity";
     }
 
+
+    @Override
+    public int hashCode()
+    {
+        return entity.hashCode();
+    }
+
     public static Pair<EntityType<?>, Predicate<? super Entity>> getPredicate(String who)
     {
         Pair<EntityType<?>, Predicate<? super Entity>> res = entityPredicates.get(who);
