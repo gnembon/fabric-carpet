@@ -190,8 +190,15 @@ public class SettingsManager
         }
         for (String key: conf.getLeft().keySet())
         {
-            if (rules.get(key).set(server.getCommandSource(), conf.getLeft().get(key)) != null)
-                CarpetSettings.LOG.info("[CM]: loaded setting "+key+" as "+conf.getLeft().get(key)+" from "+identifier+".conf");
+            try
+            {
+                if (rules.get(key).set(server.getCommandSource(), conf.getLeft().get(key)) != null)
+                    CarpetSettings.LOG.info("[CM]: loaded setting " + key + " as " + conf.getLeft().get(key) + " from " + identifier + ".conf");
+            }
+            catch (Exception exc)
+            {
+                CarpetSettings.LOG.error("[CM Error]: Failed to load setting: "+key+", "+exc);
+            }
         }
         locked = conf.getRight();
     }
