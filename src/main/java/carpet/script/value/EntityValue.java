@@ -728,6 +728,6 @@ public class EntityValue extends Value
         put("on_death", (c, e, f, l) -> ((EntityInterface)e).setDeathCallback(c, f, l));
         put("on_removed", (c, e, f, l) -> ((EntityInterface)e).setRemovedCallback(c, f, l));
         put("on_tick", (c, e, f, l) -> ((EntityInterface)e).setTickCallback(c, f, l));
-        put("on_damage", (c, e, f, l) -> ((EntityInterface)e).setDamageCallback(c, f, l));
+        put("on_damaged", (c, e, f, l) -> ((EntityInterface)e).setDamageCallback(c, f, l));
     }};
 }

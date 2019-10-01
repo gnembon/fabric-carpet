@@ -235,7 +235,7 @@ public class CarpetEventServer
     private ScheduledCall makeEventCall(CarpetContext cc, String function, List<Value> extraArgs, int argCount)
     {
         UserDefinedFunction udf = cc.host.globalFunctions.get(function);
-        if (udf == null || (udf.getArguments().size()-extraArgs.size()) != argCount)
+        if (udf == null || (udf.getArguments().size()-(extraArgs == null ? 0 : extraArgs.size())) != argCount)
         {
             // call won't match arguments
             return null;
@@ -389,10 +389,8 @@ public class CarpetEventServer
     }
     public ScheduledCall makeDamageCall(CarpetContext cc, String function, List<Value> extraArgs)
     {
-        return makeEventCall(cc, function, extraArgs, 3);
+        return makeEventCall(cc, function, extraArgs, 4);
     }
-
-
 
     public void onEntityDeath(ScheduledCall call, Entity e, String reason)
     {

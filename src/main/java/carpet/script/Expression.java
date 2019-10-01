@@ -309,6 +309,7 @@ import static java.lang.Math.min;
 public class Expression implements Cloneable
 {
     private static final Map<String, Integer> precedence = new HashMap<String,Integer>() {{
+        put("attribute~.", 80);
         put("unary+-!", 60);
         put("exponent^", 40);
         put("multiplication*/%", 30);
@@ -560,7 +561,8 @@ public class Expression implements Cloneable
             return new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
         if (exc instanceof ExpressionException)
             return exc;
-        return new ExpressionException(e, token, "Error while evaluating expression: "+exc.getMessage());
+        exc.printStackTrace();
+        return new ExpressionException(e, token, "Error while evaluating expression: "+exc);
     }
 
     private void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
@@ -912,7 +914,7 @@ public class Expression implements Cloneable
     public void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
-        addLazyFunction(".",-1, (c, t, lv) -> { // adjust based on c
+        addLazyFunction(" ",-1, (c, t, lv) -> { // adjust based on c
             String name = lv.get(lv.size()-1).evalValue(c).getString();
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
@@ -1062,11 +1064,12 @@ public class Expression implements Cloneable
      *     note, that commas and brackets are not operators, but behave like them:
      *     </p>
      *     <ul>
+     *         <li>Match, Get<code>~ .</code></li>
      *         <li>Unary <code>+ - !</code></li>
      *         <li>Exponent <code>^</code></li>
      *         <li>Multiplication <code>* / %</code></li>
      *         <li>Addition <code>+ -</code></li>
-     *         <li>Comparison <code>== != &gt; &gt;= &lt;= &lt; ~</code></li>
+     *         <li>Comparison <code>== != &gt; &gt;= &lt;= &lt;</code></li>
      *         <li>Logical And<code>&amp;&amp;</code></li>
      *         <li>Logical Or <code>||</code></li>
      *         <li>Assignment <code>= += &lt;&gt;</code></li>
@@ -1140,8 +1143,14 @@ public class Expression implements Cloneable
      * null != false &amp;&amp; run('kill gnembon')  =&gt; 1 // gnembon dies, cheats allowed
      * </pre>
      *
+     * <h3><code>Get, Accessor Operator  .</code></h3>
+     * <p>Operator version of the <code>get(...)</code> function to access elements of lists, nbts, and potentially other
+     * containers. It is important to distinguish from <code>~</code> operator, which is a matching operator, meaning it
+     * is expected to perform some extra computations to retrieve the result, while <code>.</code> should be
+     * straightforward and immediate.</p>
+     *
      * <h3><code>Matching Operator  ~</code></h3>
-     * <p>This operator should be understood as 'matches', or 'in'. For strings it matches the right operand as a regular
+     * <p>This operator should be understood as 'matches', 'contains' or 'is_in'. For strings it matches the right operand as a regular
      * expression to the left one, returning the first match. This can be used to extract information from unparsed nbt's
      * in a more efficient way. For lists it checks if an element is in the list, and returns the index of that element,
      * or <code>null</code> if no such element was found, especially that the use of <code>first</code> function will not
@@ -1161,7 +1170,7 @@ public class Expression implements Cloneable
      * <pre>
      * entities = entities_area('all',x,y,z,100,10,100);
      * sid = entities ~ 'Squid';
-     * if(sid != null, run('execute as '+query(element(entities,sid),'id')+' run say I am here '+query(element(entities,sid),'pos') ) )
+     * if(sid != null, run('execute as '+query(get(entities,sid),'id')+' run say I am here '+query(get(entities,sid),'pos') ) )
      * </pre>
      * <p>Or an example to find if a player has specific enchantment on a held axe (either hand) and get its level
      * (despite obvious lack of support for json NBT's):</p>
@@ -1218,6 +1227,7 @@ public class Expression implements Cloneable
      */
     public void Operators()
     {
+        addBinaryOperator(".", precedence.get("attribute~."),true, Value::getElementAt);
         addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
         addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
         addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
@@ -1243,7 +1253,7 @@ public class Expression implements Cloneable
             return v2.getBoolean() ? ((cc, tt) -> v2) : LazyValue.FALSE;
         });
 
-        addBinaryOperator("~", precedence.get("compare>=><=<"), true, Value::in);
+        addBinaryOperator("~", precedence.get("attribute~."), true, Value::in);
 
         addBinaryOperator(">", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 v1.compareTo(v2) > 0 ? Value.TRUE : Value.FALSE);
@@ -2890,7 +2900,7 @@ public class Expression implements Cloneable
                     }
                     else // potentially unknown function or just unknown function
                     {
-                        f = functions.get(".");
+                        f = functions.get(" ");
                         p = new ArrayList<>();
                     }
                     // pop parameters off the stack until we hit the start of

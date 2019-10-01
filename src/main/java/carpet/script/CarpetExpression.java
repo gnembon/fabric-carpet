@@ -1586,6 +1586,43 @@ public class CarpetExpression
      * <p>Sets AI to stay around the home position, within <code>distance</code> blocks from it. <code>distance</code>
      * defaults to 16 blocks. <code>null</code> removes it. <i>May</i> not work fully with mobs that have this AI built in, like
      * Villagers.</p>
+     * <h2>Entity Events</h2>
+     * <p>There is a number of events that happen to entities that you can attach your own code to in the form of event
+     * handlers. The event handler is any function that runs in your package that accepts certain expected parameters, which
+     * you can expand with your own arguments. When it comes to the moment when the given command needs to be executed, it
+     * does so providing that number of arguments it accepts is equal number of event arguments, and extra arguments passed when
+     * defining the callback with <code>entity_event</code></p>
+     * <p>The following events can be handled by entities. </p>
+     * <ul>
+     *     <li><code>'on_tick'</code>: executes every tick right before entity is ticked in the game. Required arguments: <code>entity</code></li>
+     *     <li><code>'on_death'</code>: executes once when a living entity dies. Required arguments: <code>entity, reason</code></li>
+     *     <li><code>'on_removed'</code>: execute once when an entity is removed. Required arguments: <code>entity</code></li>
+     *     <li><code>'on_damaged'</code>: executed every time a living entity is about to receive damage. Required arguments:  <code>entity, amount, source, attacking_entity</code></li>
+     * </ul>
+     * <p>It doesn't mean that all entity types will have a chance to
+     * execute a given event, but entities will not error when you will attach inapplicable event to it.</p>
+     * <h3><code>entity_event(e, event, call_name, args...)</code></h3>
+     * <p>Attaches specific function from the current package to be called upon the <code>event</code>, with extra <code>args</code>
+     * curried to the original required arguments for the event handler</p>
+     * <pre>
+     * protect_villager(entity, amount, source, source_entity, healing_player) -&gt;
+     * (
+     * 	 if(source_entity &amp;&amp; source_entity~'type' != 'player',
+     * 	   modify(entity, 'health', amount + entity~'health' );
+     * 	   particle('end_rod', pos(entity)+l(0,3,0));
+     * 	   print(str('%s healed thanks to %s', entity, healing_player))
+     * 	 )
+     * );
+     *
+     * __on_player_interacts_with_entity(player, entity, hand) -&gt;
+     * (
+     *   if (entity~'type' == 'villager',
+     * 	   entity_event(entity, 'on_damage', 'protect_villager', player~'name')
+     *   )
+     * )
+     * </pre>
+     * <p>In this case this will protect a villager from entity damage (zombies, etc.) except players by granting all the health
+     * back to the villager after being harmed.</p>
      * </div>
      */
 
