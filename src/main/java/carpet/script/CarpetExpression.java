@@ -1474,9 +1474,11 @@ public class CarpetExpression
      * <h3><code>query(e,'age')</code></h3>
      * <p>Age, in ticks, of the entity, i.e. how long it existed.</p>
      * <h3><code>query(e,'item')</code></h3>
-     * <p>Name of the item if its an item entity, <code>null</code> otherwise</p>
+     * <p>The item triple (name, count, nbt) if its an item entity, <code>null</code> otherwise</p>
      * <h3><code>query(e,'count')</code></h3>
      * <p>Number of items in a stack from item entity, <code>null</code> otherwise</p>
+     * <h3><code>query(e,'pickup_delay')</code></h3>
+     * <p>Retrieves pickup delay timeout for an item entity, <code>null</code> otherwise</p>
      * <h3><code>query(e,'is_baby')</code></h3>
      * <p>Boolean, true if its a baby.</p>
      * <h3><code>query(e,'target')</code></h3>
@@ -1567,7 +1569,8 @@ public class CarpetExpression
      * <h3><code>modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', l(x, y, z) )</code></h3>
      * <p>Adds a vector to the motion vector. Most realistic way to apply a force to an entity.</p>
      * <h3><code>modify(e, 'custom_name'), modify(e, 'custom_name', name )</code></h3>
-     * <p>Sets a custom name for an entity. Removes a custom name if the argument is <code>null</code></p>
+     * <h3><code>modify(e,'pickup_delay')</code></h3>
+     * <p>Sets a custom pickup delay if the entity argument is an item entity</p>
      * <h3><code>modify(e, 'dismount')</code></h3>
      * <p>Dismounts riding entity.</p>
      * <h3><code>modify(e, 'mount', other)</code></h3>
@@ -1586,6 +1589,7 @@ public class CarpetExpression
      * <p>Sets AI to stay around the home position, within <code>distance</code> blocks from it. <code>distance</code>
      * defaults to 16 blocks. <code>null</code> removes it. <i>May</i> not work fully with mobs that have this AI built in, like
      * Villagers.</p>
+     *
      * <h2>Entity Events</h2>
      * <p>There is a number of events that happen to entities that you can attach your own code to in the form of event
      * handlers. The event handler is any function that runs in your package that accepts certain expected parameters, which
