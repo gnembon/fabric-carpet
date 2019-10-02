@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
 
-public class ListValue extends AbstractListValue
+public class ListValue extends AbstractListValue implements ContainerValueInterface
 {
     protected List<Value> items;
     @Override
@@ -98,6 +98,7 @@ public class ListValue extends AbstractListValue
         }
         return output;
     }
+    @Override
     public void append(Value v)
     {
         items.add(v);
@@ -271,6 +272,8 @@ public class ListValue extends AbstractListValue
             super(list);
         }
     }
+
+    @Override
     public int length()
     {
         return items.size();
@@ -309,7 +312,30 @@ public class ListValue extends AbstractListValue
     }
 
     @Override
-    public Value getElementAt(Value value)
+    public Value put(Value ind, Value value)
+    {
+        if (ind == Value.NULL)
+        {
+            items.add(value);
+            return items.get(items.size()-1);
+        }
+        else
+        {
+            int numitems = items.size();
+            int index = (int) NumericValue.asNumber(ind).getLong();
+            if (index < 0)
+            {
+                long range = abs(index) / numitems;
+                index += (range + 2) * numitems;
+                index = index % numitems;
+            }
+            while (index >= items.size()) items.add(Value.NULL);
+            return items.set(index, value);
+        }
+    }
+
+    @Override
+    public Value get(Value value)
     {
         long index = NumericValue.asNumber(value).getLong();
         int numitems = items.size();
@@ -317,6 +343,24 @@ public class ListValue extends AbstractListValue
         index += (range+2)*numitems;
         index = index % numitems;
         return items.get((int)index);
+    }
+
+    @Override
+    public boolean has(Value where)
+    {
+        long index = NumericValue.asNumber(where).getLong();
+        return index >= 0 && index < items.size();
+    }
+
+    @Override
+    public Value remove(Value where)
+    {
+        long index = NumericValue.asNumber(where).getLong();
+        int numitems = items.size();
+        long range = abs(index)/numitems;
+        index += (range+2)*numitems;
+        index = index % numitems;
+        return items.remove((int)index);
     }
 
     @Override

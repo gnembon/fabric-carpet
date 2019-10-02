@@ -13,10 +13,12 @@ import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
+import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
 import carpet.script.value.GlobalValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -1227,7 +1229,12 @@ public class Expression implements Cloneable
      */
     public void Operators()
     {
-        addBinaryOperator(".", precedence.get("attribute~."),true, Value::getElementAt);
+        addBinaryOperator(".", precedence.get("attribute~."),true, (container, key) ->
+        {
+            if (container instanceof ContainerValueInterface)
+                return ((ContainerValueInterface) container).get(key);
+            throw new InternalExpressionException("Cannot access elements of a non-container");
+        });
         addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
         addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
         addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
@@ -1322,7 +1329,7 @@ public class Expression implements Cloneable
             v1.assertAssignable();
             String varname = v1.getVariable();
             LazyValue boundedLHS;
-            if (v1 instanceof ListValue)
+            if (v1 instanceof ListValue || v1 instanceof MapValue)
             {
                 ((ListValue) v1).append(v2);
                 boundedLHS = (cc, tt)-> v1;
@@ -1872,7 +1879,46 @@ public class Expression implements Cloneable
             return LazyListValue.range(from, to, step);
         });
 
-        addBinaryFunction("get", Value::getElementAt);
+        addFunction("m", lv ->
+        {
+            if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
+                return new MapValue(((LazyListValue) lv.get(0)).unroll());
+            return new MapValue(lv);
+        });
+
+        addUnaryFunction("keys", v -> {
+            if (v instanceof MapValue)
+                return new ListValue(((MapValue) v).getMap().keySet());
+            throw new InternalExpressionException("keys applies only to maps");
+        });
+
+        addUnaryFunction("values", v -> {
+            if (v instanceof MapValue)
+                return new ListValue(((MapValue) v).getMap().values());
+            throw new InternalExpressionException("keys applies only to maps");
+        });
+
+        addUnaryFunction("pairs", v -> {
+            if (v instanceof MapValue)
+                return new ListValue(((MapValue) v).getMap().entrySet().stream().map(
+                        (p) -> ListValue.of(p.getKey(), p.getValue())
+                        ).collect(Collectors.toList()));
+            throw new InternalExpressionException("pairs applies only to maps");
+        });
+
+        addBinaryFunction("get", (container, key) ->
+        {
+            if (container instanceof ContainerValueInterface)
+                return ((ContainerValueInterface) container).get(key);
+            throw new InternalExpressionException("Cannot access elements of a non-container");
+        });
+
+        addBinaryFunction("has", (container, key) ->
+        {
+            if (container instanceof ContainerValueInterface)
+                return new NumericValue(((ContainerValueInterface) container).has(key));
+            throw new InternalExpressionException("Cannot access elements of a non-container");
+        });
 
         //Deprecated, use "get" instead
         addBinaryFunction("element", (v1, v2) ->
@@ -1892,26 +1938,35 @@ public class Expression implements Cloneable
         {
             if(lv.size()<3)
             {
-                throw new InternalExpressionException("put takes at least three arguments, a list, index, and values to insert at that index");
+                throw new InternalExpressionException("put takes at least three arguments, a container, address, and values to insert at that index");
             }
-            Value list = lv.get(0);
-            if (!(list instanceof ListValue))
+            Value container = lv.get(0);
+            if (!(container instanceof ContainerValueInterface))
             {
-                throw new InternalExpressionException("First argument of element should be a list");
+                throw new InternalExpressionException("First argument of put should be a container: list, map or nbt");
             }
-            int size = lv.size();
-            //List<Value> items = ((ListValue)lv.get(0)).getItems();
-            Value index = lv.get(1);
-            if (index == Value.NULL)
+            Value where = lv.get(1);
+            Value what = lv.get(2);
+            Value ret;
+            if (lv.size()>3)
             {
-                ((ListValue) list).extend(lv.subList(2,size));
+                return ((ContainerValueInterface) container).put(where, what, lv.get(3));
             }
             else
             {
-                ((ListValue) list).addAtIndex((int) NumericValue.asNumber(index).getLong(), lv.subList(2,size));
+                return ((ContainerValueInterface) container).put(where, what);
             }
-            return new NumericValue(size-2);
         });
+
+        addBinaryFunction("delete", (container, address) ->
+        {
+            if (container instanceof ContainerValueInterface)
+            {
+                return ((ContainerValueInterface) container).remove(address);
+            }
+            throw new InternalExpressionException("First argument of remove should be a container: list, map or nbt");
+        });
+
 
         //condition and expression will get a bound 'i'
         //returns last successful expression or false

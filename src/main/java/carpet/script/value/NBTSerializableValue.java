@@ -3,6 +3,7 @@ package carpet.script.value;
 import carpet.script.CarpetContext;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.settings.CarpetSettings;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.entity.HopperBlockEntity;
@@ -20,17 +21,18 @@ import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class NBTSerializableValue extends Value
+public class NBTSerializableValue extends Value implements ContainerValueInterface
 {
     private String nbtString = null;
     private Tag nbtTag = null;
-    private Supplier<CompoundTag> nbtSupplier = null;
+    private Supplier<Tag> nbtSupplier = null;
 
     public NBTSerializableValue(ItemStack stack)
     {
@@ -43,7 +45,7 @@ public class NBTSerializableValue extends Value
         {
             try
             {
-                return (new StringNbtReader(new StringReader(nbtString))).parseCompoundTag();
+                return (new StringNbtReader(new StringReader(nbtString))).parseTag();
             }
             catch (CommandSyntaxException e)
             {
@@ -207,6 +209,82 @@ public class NBTSerializableValue extends Value
         }
     }
 
+    @Override
+    public Value put(Value where, Value value)
+    {
+        /// WIP
+
+        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
+        Tag tagToInsert = value instanceof NBTSerializableValue ?
+            ((NBTSerializableValue) value).getTag() :
+            new NBTSerializableValue(value.getString()).getTag();
+        CarpetSettings.LOG.error("Inserting tag of class: "+tagToInsert.getClass().getSimpleName());
+
+        Tag tag = getTag().copy();
+        try
+        {
+            Collection<Tag> collection_1 = path.get(tag); //, CompoundTag::new);
+            for(Tag t: collection_1)
+            {
+                ((CompoundTag)t).copyFrom((CompoundTag) tagToInsert);
+            }
+            if (collection_1.size() > 0)
+            {
+                nbtSupplier = () -> tag;
+                nbtTag = tag;
+            }
+            return this;
+        }
+        catch (CommandSyntaxException e)
+        {
+            return Value.NULL;
+        }
+    }
+
+    @Override
+    public Value put(Value where, Value value, Value conditions)
+    {
+        throw new InternalExpressionException("not implemented");
+    }
+
+    @Override
+    public Value get(Value value)
+    {
+        NbtPathArgumentType.NbtPath path = cachePath(value.getString());
+        try
+        {
+            List<Tag> tags = path.get(getTag());
+            if (tags.size()==0)
+                return Value.NULL;
+            if (tags.size()==1)
+                return NBTSerializableValue.decodeTag(tags.get(0));
+            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
+        }
+        catch (CommandSyntaxException ignored) { }
+        return Value.NULL;
+    }
+
+    @Override
+    public boolean has(Value where)
+    {
+        return cachePath(where.getString()).count(getTag()) > 0;
+    }
+
+    @Override
+    public Value remove(Value where)
+    {
+        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
+        Tag tag = getTag().copy();
+        int removed = path.remove(tag);
+        if (removed > 0)
+        {
+            nbtSupplier = null;
+            nbtTag = tag;
+            return Value.TRUE;
+        }
+        return Value.FALSE;
+    }
+
     public static class InventoryLocator
     {
         public Object owner;
@@ -242,22 +320,7 @@ public class NBTSerializableValue extends Value
         return res;
     }
 
-    @Override
-    public Value getElementAt(Value value)
-    {
-        NbtPathArgumentType.NbtPath path = cachePath(value.getString());
-        try
-        {
-            List<Tag> tags = path.get(getTag());
-            if (tags.size()==0)
-                return Value.NULL;
-            if (tags.size()==1)
-                return NBTSerializableValue.decodeTag(tags.get(0));
-            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
-        }
-        catch (CommandSyntaxException ignored) { }
-        return Value.NULL;
-    }
+
 
     @Override
     public String getTypeString()
