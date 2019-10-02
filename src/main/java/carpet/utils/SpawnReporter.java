@@ -439,7 +439,7 @@ public class SpawnReporter
                             
                             for (int i = 0; i < 20; ++i)
                             {
-                                if (SpawnRestriction.method_20638(mob.getType(),mob.getEntityWorld(), SpawnType.NATURAL, mob.getBlockPos(), mob.getEntityWorld().random))
+                                if (SpawnRestriction.canSpawn(mob.getType(),mob.getEntityWorld(), SpawnType.NATURAL, mob.getBlockPos(), mob.getEntityWorld().random))
                                 {
                                     will_spawn += 1;
                                 }

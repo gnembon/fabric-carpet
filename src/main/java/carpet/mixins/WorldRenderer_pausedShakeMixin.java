@@ -17,7 +17,7 @@ public class WorldRenderer_pausedShakeMixin
 
     float initial = 0.0f;
 
-    @ModifyVariable(method = "method_22710", argsOnly = true, ordinal = 0 ,at = @At(
+    @ModifyVariable(method = "render", argsOnly = true, ordinal = 0 ,at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/world/ClientWorld;getEntities()Ljava/lang/Iterable;"
     ))
@@ -29,7 +29,7 @@ public class WorldRenderer_pausedShakeMixin
         return previous;
     }
 
-    @ModifyVariable(method = "method_22710", argsOnly = true, ordinal = 0 ,at = @At(
+    @ModifyVariable(method = "render", argsOnly = true, ordinal = 0 ,at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/render/Camera;F)V",
             shift = At.Shift.BEFORE

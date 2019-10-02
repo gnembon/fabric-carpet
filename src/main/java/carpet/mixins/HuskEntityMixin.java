@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(HuskEntity.class)
 public class HuskEntityMixin
 {
-    @Redirect(method = "method_20677", at = @At(value = "INVOKE", target="Lnet/minecraft/world/IWorld;isSkyVisible(Lnet/minecraft/util/math/BlockPos;)Z"))
+    @Redirect(method = "canSpawn", at = @At(value = "INVOKE", target="Lnet/minecraft/world/IWorld;isSkyVisible(Lnet/minecraft/util/math/BlockPos;)Z"))
     private static boolean isSkylightOrTempleVisible(IWorld iWorld, BlockPos blockPos_1)
     {
         return iWorld.isSkyVisible(blockPos_1) ||
