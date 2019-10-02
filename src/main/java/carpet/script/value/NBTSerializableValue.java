@@ -218,14 +218,15 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Tag tagToInsert = value instanceof NBTSerializableValue ?
             ((NBTSerializableValue) value).getTag() :
             new NBTSerializableValue(value.getString()).getTag();
-        CarpetSettings.LOG.error("Inserting tag of class: "+tagToInsert.getClass().getSimpleName());
+        CarpetSettings.LOG.error("Inserting tag "+tagToInsert.asString()+" of class: "+tagToInsert.getClass().getSimpleName());
 
         Tag tag = getTag().copy();
         try
         {
-            Collection<Tag> collection_1 = path.get(tag); //, CompoundTag::new);
+            Collection<Tag> collection_1 = path.putIfAbsent(tag, CompoundTag::new);
             for(Tag t: collection_1)
             {
+                CarpetSettings.LOG.error("Found target: "+t.asString());
                 ((CompoundTag)t).copyFrom((CompoundTag) tagToInsert);
             }
             if (collection_1.size() > 0)
