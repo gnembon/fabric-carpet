@@ -27,6 +27,6 @@ public class MinecraftClientMixin
     @Overwrite
     public String getVersionType()
     {
-        return "carpet "+ CarpetSettings.carpetVersion;
+        return "snapshot";
     }
 }

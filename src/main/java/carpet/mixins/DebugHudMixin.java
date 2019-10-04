@@ -15,7 +15,7 @@ public class DebugHudMixin
     ))
     private String getCarpetClient(MinecraftClient minecraftClient)
     {
-        return "vanilla enough";
+        return "19w41b";
     }
 
     @Redirect(method = "getLeftText", at = @At(
@@ -24,7 +24,7 @@ public class DebugHudMixin
     ))
     private String getModName()
     {
-        return "don't even...";
+        return "vanilla";
     }
 
     @Redirect(method = "getLeftText", at = @At(
@@ -33,7 +33,7 @@ public class DebugHudMixin
     ))
     private String getVersionType(MinecraftClient minecraftClient)
     {
-        return "release";
+        return "snapshot";
     }
 
 }

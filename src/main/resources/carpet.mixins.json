@@ -4,6 +4,10 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "CommandManagerMixin",
+    "__LivingEntity_honeyMixin",
+    "__PistonBlockEntity_honeyMixin",
+    "__Block_honeyMixin",
+    "__MinecraftVersion_honeyMixin",
 
     "FillCommandMixin",
     "CloneCommandMixin",
@@ -136,6 +140,8 @@
   "client": [
     "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
+    "__ClientPlayerEntity_honeyClientMixin",
+    "DebugHudMixin",
 
     "MinecraftClient_pausedShakeMixin",
     "GameRenderer_pausedShakeMixin",
