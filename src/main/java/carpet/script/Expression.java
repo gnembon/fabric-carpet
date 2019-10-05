@@ -1947,7 +1947,6 @@ public class Expression implements Cloneable
             }
             Value where = lv.get(1);
             Value what = lv.get(2);
-            Value ret;
             if (lv.size()>3)
             {
                 return ((ContainerValueInterface) container).put(where, what, lv.get(3));

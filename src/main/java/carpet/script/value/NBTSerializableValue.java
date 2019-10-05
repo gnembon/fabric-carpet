@@ -3,7 +3,6 @@ package carpet.script.value;
 import carpet.script.CarpetContext;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
-import carpet.settings.CarpetSettings;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.entity.HopperBlockEntity;
@@ -15,8 +14,10 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.AbstractListTag;
 import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.math.BlockPos;
@@ -158,7 +159,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return slot;
     }
 
-    public static Value decodeTag(Tag t)
+    private static Value decodeTag(Tag t)
     {
         if (t instanceof CompoundTag)
             return new NBTSerializableValue(t);
@@ -168,11 +169,18 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return new StringValue(t.asString());
     }
 
-    public Tag getTag()
+    private Tag getTag()
     {
         if (nbtTag == null)
             nbtTag = nbtSupplier.get();
         return nbtTag;
+    }
+
+    private void replaceTag(Tag newTag)
+    {
+        nbtTag = newTag;
+        nbtString = null;
+        nbtSupplier = null;  // just to be sure
     }
 
     @Override
@@ -212,40 +220,115 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     @Override
     public Value put(Value where, Value value)
     {
-        /// WIP
-
-        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
-        Tag tagToInsert = value instanceof NBTSerializableValue ?
-            ((NBTSerializableValue) value).getTag() :
-            new NBTSerializableValue(value.getString()).getTag();
-        CarpetSettings.LOG.error("Inserting tag "+tagToInsert.asString()+" of class: "+tagToInsert.getClass().getSimpleName());
-
-        Tag tag = getTag().copy();
-        try
-        {
-            Collection<Tag> collection_1 = path.putIfAbsent(tag, CompoundTag::new);
-            for(Tag t: collection_1)
-            {
-                CarpetSettings.LOG.error("Found target: "+t.asString());
-                ((CompoundTag)t).copyFrom((CompoundTag) tagToInsert);
-            }
-            if (collection_1.size() > 0)
-            {
-                nbtSupplier = () -> tag;
-                nbtTag = tag;
-            }
-            return this;
-        }
-        catch (CommandSyntaxException e)
-        {
-            return Value.NULL;
-        }
+        return put(where, value, new StringValue("replace"));
     }
 
     @Override
     public Value put(Value where, Value value, Value conditions)
     {
-        throw new InternalExpressionException("not implemented");
+        /// WIP
+
+        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
+        Tag tagToInsert = value instanceof NBTSerializableValue ?
+                ((NBTSerializableValue) value).getTag() :
+                new NBTSerializableValue(value.getString()).getTag();
+        Tag modifiedTag;
+        if (conditions instanceof NumericValue)
+        {
+            modifiedTag = modify_insert((int)((NumericValue) conditions).getLong(), path, tagToInsert);
+        }
+        else
+        {
+            String ops = conditions.getString();
+            if (ops.equalsIgnoreCase("merge"))
+            {
+                modifiedTag = modify_merge(path, tagToInsert);
+            }
+            else if (ops.equalsIgnoreCase("replace"))
+            {
+                modifiedTag = modify_replace(path, tagToInsert);
+            }
+            else
+            {
+                return this;
+            }
+        }
+        if (modifiedTag != null)
+        {
+            replaceTag(modifiedTag);
+        }
+        return this;
+    }
+
+
+    private Tag modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, Tag newElement)
+    {
+        Collection<Tag> targets;
+        Tag currentTag = getTag().copy();
+        try
+        {
+            targets = nbtPath.putIfAbsent(currentTag, ListTag::new);
+        }
+        catch (CommandSyntaxException e)
+        {
+            return null;
+        }
+
+        boolean modified = false;
+        for (Tag target : targets)
+        {
+            if (!(target instanceof AbstractListTag))
+            {
+                continue;
+            }
+            try
+            {
+                AbstractListTag<?> targetList = (AbstractListTag) target;
+                targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy());
+                modified = true;
+            }
+            catch (IndexOutOfBoundsException ignored)
+            {
+            }
+        }
+        return modified?currentTag:null;
+    }
+
+
+    private Tag modify_merge(NbtPathArgumentType.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    {
+        if (!(replacement instanceof CompoundTag))
+        {
+            return getTag();
+        }
+        Tag originalTag = getTag().copy();
+        try
+        {
+            for (Tag target : nbtPath.putIfAbsent(originalTag, CompoundTag::new))
+            {
+                if (!(target instanceof CompoundTag))
+                {
+                    continue;
+                }
+                ((CompoundTag) target).copyFrom((CompoundTag) replacement);
+            }
+        }
+        catch (CommandSyntaxException ignored) { }
+        return originalTag;
+    }
+
+    private Tag modify_replace(NbtPathArgumentType.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    {
+        Tag originalTag = getTag().copy();
+        try
+        {
+            nbtPath.put(originalTag, () -> replacement);
+        }
+        catch (CommandSyntaxException e)
+        {
+            return null;
+        }
+        return originalTag;
     }
 
     @Override
@@ -279,8 +362,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         int removed = path.remove(tag);
         if (removed > 0)
         {
-            nbtSupplier = null;
-            nbtTag = tag;
+            replaceTag(tag);
             return Value.TRUE;
         }
         return Value.FALSE;
@@ -302,7 +384,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
     private static Map<String, NbtPathArgumentType.NbtPath> pathCache = new HashMap<>();
-    public static NbtPathArgumentType.NbtPath cachePath(String arg)
+    private static NbtPathArgumentType.NbtPath cachePath(String arg)
     {
         NbtPathArgumentType.NbtPath res = pathCache.get(arg);
         if (res != null)
@@ -320,8 +402,6 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         pathCache.put(arg, res);
         return res;
     }
-
-
 
     @Override
     public String getTypeString()

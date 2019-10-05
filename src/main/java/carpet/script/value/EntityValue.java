@@ -393,21 +393,11 @@ public class EntityValue extends Value
         put("nbt",(e, a) -> {
             CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
             if (a==null)
-                return new NBTSerializableValue(nbttagcompound);//StringValue(nbttagcompound.toString());
-            NbtPathArgumentType.NbtPath path = NBTSerializableValue.cachePath(a.getString());
-            try
-            {
-                List<Tag> tags = path.get(nbttagcompound);
-                if (tags.size()==0)
-                    return Value.NULL;
-                if (tags.size()==1)
-                    return NBTSerializableValue.decodeTag(tags.get(0));
-                return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
-            }
-            catch (CommandSyntaxException ignored) { }
-            return Value.NULL;
+                return new NBTSerializableValue(nbttagcompound);
+            return new NBTSerializableValue(nbttagcompound).get(a);
         });
     }};
+
     private static <Req extends Entity> Req assertEntityArgType(Class<Req> klass, Value arg)
     {
         if (!(arg instanceof EntityValue))
