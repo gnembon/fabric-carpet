@@ -176,14 +176,10 @@ public class EntityPlayerActionPack
     public void onUpdate()
     {
         boolean used = false;
+        actions.entrySet().removeIf((e) -> e.getValue().done);
         for (Map.Entry<ActionType, Action> e : actions.entrySet())
         {
             Action action = e.getValue();
-            if (action.done)
-            {
-                actions.remove(e.getKey());
-                continue;
-            }
             if (used && e.getKey() == ActionType.ATTACK)
                 continue;
             if (action.tick(this, e.getKey()))
