@@ -124,12 +124,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     {
         if (o instanceof MapValue)
         {
-            MapValue ol = (MapValue)o;
-            int this_size = this.map.keySet().size();
-            int o_size = ol.map.keySet().size();
-            if (this_size != o_size) return false;
-            if (this_size == 0) return true;
-            return this.map.keySet().equals(ol.map.keySet());
+            return map.equals(((MapValue) o).map);
         }
         return false;
     }

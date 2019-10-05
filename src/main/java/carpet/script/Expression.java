@@ -1900,7 +1900,7 @@ public class Expression implements Cloneable
 
         addUnaryFunction("pairs", v -> {
             if (v instanceof MapValue)
-                return new ListValue(((MapValue) v).getMap().entrySet().stream().map(
+                return ListValue.wrap(((MapValue) v).getMap().entrySet().stream().map(
                         (p) -> ListValue.of(p.getKey(), p.getValue())
                         ).collect(Collectors.toList()));
             throw new InternalExpressionException("pairs applies only to maps");
@@ -1920,7 +1920,7 @@ public class Expression implements Cloneable
             throw new InternalExpressionException("Cannot access elements of a non-container");
         });
 
-        //Deprecated, use "get" instead
+        //Deprecated, use "get" instead, or . operator
         addBinaryFunction("element", (v1, v2) ->
         {
             if (!(v1 instanceof ListValue))
