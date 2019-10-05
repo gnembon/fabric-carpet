@@ -6,6 +6,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.item.AxeItem;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.packet.PlayerInteractBlockC2SPacket;
@@ -42,9 +43,9 @@ public abstract class ClientPlayerInteractionManager_ghostBlocksMixin
         )
         {
             ItemStack handItem = client.player.getMainHandStack();
-            if (handItem.isEmpty() ||
+            if (handItem.isEmpty() || ( (
                     handItem.getItem().getGroup() == ItemGroup.TOOLS ||
-                    handItem.getItem().getGroup() == ItemGroup.COMBAT
+                    handItem.getItem().getGroup() == ItemGroup.COMBAT ) && !(handItem.getItem() instanceof AxeItem ))
             )
                 client.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(
                         Hand.MAIN_HAND,
