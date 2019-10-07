@@ -305,7 +305,22 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
+    public Value put(Value where, Value value, Value conditionValue)
+    {
+        String condition = conditionValue.getString();
+        if (condition.equalsIgnoreCase("insert"))
+            return put(where, value, false);
+        if (condition.equalsIgnoreCase("replace"))
+            return put(where, value, true);
+        throw new  InternalExpressionException("list put modifier could be either insert, or replace");
+    }
+
+    @Override
     public Value put(Value ind, Value value)
+    {
+        return put(ind, value, true);
+    }
+    private Value  put(Value ind, Value value, boolean replace)
     {
         if (ind == Value.NULL)
         {
@@ -323,7 +338,15 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
                 index = index % numitems;
             }
             while (index >= items.size()) items.add(Value.NULL);
-            return items.set(index, value);
+            if (replace)
+            {
+                return items.set(index, value);
+            }
+            else
+            {
+                items.add(index, value);
+                return value;
+            }
         }
     }
 

@@ -1557,7 +1557,9 @@ public class Expression implements Cloneable
      * <h1>Loops, and higher order functions</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <p>Efficient use of these functions can greatly simplify your programs and speed them up, as these functions
-     * will internalize most of the operations that need to be applied on multiple values at the same time</p>
+     * will internalize most of the operations that need to be applied on multiple values at the same time. Most
+     * of them take a <code>list</code> argument which can be any iterable structure in scarpet, including
+     * generators, like <code>rect</code>, or <code>range</code>, and maps, where the iterator returns all the map keys</p>
      * <h2>Loops</h2>
      *
      * <h3><code>for(list,expr(_,_i),exit(_,_i)?)</code></h3>
@@ -1656,12 +1658,9 @@ public class Expression implements Cloneable
      */
     public void LoopsAndHigherOrderFunctions()
     {
-
-
-
-        //condition and expression will get a bound 'i'
-        //returns last successful expression or false
-                // while(cond, limit, expr) => ??
+        // condition and expression will get a bound '_i'
+        // returns last successful expression or false
+        // while(cond, limit, expr) => ??
         addLazyFunction("while", 3, (c, t, lv) ->
         {
             long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
@@ -2005,20 +2004,21 @@ public class Expression implements Cloneable
      * <h3><code>has(container, address)</code></h3>
      * <p>Similar to <code>get</code>, but returns boolean value indicating if the given index / key / path is in the
      * container. Can be used to determine if <code>get(...)==null</code> means the element doesn't exist, or the stored value
-     * for this address is <code>null</code>.</p>
+     * for this address is <code>null</code>, and is cheaper to run than <code>get</code></p>
      *
      * <h3><code>delete(container, address)</code></h3>
      * <p>Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it
      * removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous
-     * entry at the address, for nbt's - number of removed objects.</p>
+     * entry at the address, for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.</p>
      *
+     * <h3><code>put(container, address, value), put(container, address, value, condition)</code></h3>
+     * <p>Modifies the container by replacing the value under the address with the supplied <code>value</code>.
+     * For lists, a valid index is required, but can be negative as well. If <code>null</code> is supplied as the address, it
+     * appends that value to the end of the table.
      *
-     * <h3><code>put(list, index, values ...), put(list, null, values ...)</code></h3>
-     * <p>Modifies the list by replacing values starting from <code>index</code> with <code>values</code>.
-     * use negative numbers to reach elements from the end of the list. <code>put</code>
-     * call will always be able to find the index. In case there is few items, it will loop over. In case end
-     * of the list is reached before <code>values</code> run out, list is extended to accomodate for more values. in case you
-     * want to append at the end of the list, use <code>null</code> as index. returns number of elements inserted.</p>
+     * ............
+     *
+     * returns number of elements inserted.</p>
      * <pre>
      *     a = l(1, 2, 3); put(a, 1, 4); a  =&gt; [1, 4, 3]
      *     a = l(1, 2, 3); put(a, null, 4, 5, 6); a  =&gt; [1, 2, 3, 4, 5, 6]
