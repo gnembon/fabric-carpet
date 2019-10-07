@@ -366,29 +366,6 @@ public class Expression implements Cloneable
     private Map<String, ILazyFunction> functions = new HashMap<>();
     Set<String> getFunctionNames() {return functions.keySet();}
 
-    //static final Map<String, UserDefinedFunction> globalFunctions = new HashMap<>();
-
-    //static final Map<String, LazyValue> globalVariables = new HashMap<>();
-
-    /*static
-    {
-        setGlobals();
-    }
-    static void setGlobals()
-    {
-        globalVariables.put("euler", (c, t) -> euler);
-        globalVariables.put("pi", (c, t) -> PI);
-        globalVariables.put("null", (c, t) -> Value.NULL);
-        globalVariables.put("true", (c, t) -> Value.TRUE);
-        globalVariables.put("false", (c, t) -> Value.FALSE);
-
-        //special variables for second order functions so we don't need to check them all the time
-        globalVariables.put("_", (c, t) -> Value.ZERO);
-        globalVariables.put("_i", (c, t) -> Value.ZERO);
-        globalVariables.put("_a", (c, t) -> Value.ZERO);
-    }
-    */
-
     @Override
     protected Expression clone() throws CloneNotSupportedException
     {
@@ -563,6 +540,7 @@ public class Expression implements Cloneable
             return new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
         if (exc instanceof ExpressionException)
             return exc;
+        // unexpected really - should be caught earlier and converted to InternalExpressionException
         exc.printStackTrace();
         return new ExpressionException(e, token, "Error while evaluating expression: "+exc);
     }
@@ -1062,24 +1040,76 @@ public class Expression implements Cloneable
      * has to deal with</p>
      * <h2>Operator Precedence</h2>
      * <p>
-     *     Here is the complete list of operators in <code>scarpet</code> including control flow operators.
-     *     note, that commas and brackets are not operators, but behave like them:
-     *     </p>
-     *     <ul>
-     *         <li>Match, Get<code>~ .</code></li>
-     *         <li>Unary <code>+ - !</code></li>
-     *         <li>Exponent <code>^</code></li>
-     *         <li>Multiplication <code>* / %</code></li>
-     *         <li>Addition <code>+ -</code></li>
-     *         <li>Comparison <code>== != &gt; &gt;= &lt;= &lt;</code></li>
-     *         <li>Logical And<code>&amp;&amp;</code></li>
-     *         <li>Logical Or <code>||</code></li>
-     *         <li>Assignment <code>= += &lt;&gt;</code></li>
-     *         <li>Definition <code>-&gt;</code></li>
-     *         <li>Next statement<code>;</code></li>
-     *         <li>Comma <code>,</code></li>
-     *         <li>Bracket <code>( )</code></li>
-     *     </ul>
+     * Here is the complete list of operators in <code>scarpet</code> including control flow operators.
+     * Note, that commas and brackets are not technically operators, but part of the language,
+     * even if they look like them:
+     * </p>
+     * <ul>
+     *     <li>Match, Get<code>~ .</code></li>
+     *     <li>Unary <code>+ - !</code></li>
+     *     <li>Exponent <code>^</code></li>
+     *     <li>Multiplication <code>* / %</code></li>
+     *     <li>Addition <code>+ -</code></li>
+     *     <li>Comparison <code>== != &gt; &gt;= &lt;= &lt;</code></li>
+     *     <li>Logical And<code>&amp;&amp;</code></li>
+     *     <li>Logical Or <code>||</code></li>
+     *     <li>Assignment <code>= += &lt;&gt;</code></li>
+     *     <li>Definition <code>-&gt;</code></li>
+     *     <li>Next statement<code>;</code></li>
+     *     <li>Comma <code>,</code></li>
+     *     <li>Bracket <code>( )</code></li>
+     * </ul>
+     *
+     * <h3><code>Get, Accessor Operator  .</code></h3>
+     * <p>Operator version of the <code>get(...)</code> function to access elements of lists, maps, and potentially other
+     * containers (i.e. NBTs). It is important to distinguish from <code>~</code> operator, which is a matching operator,
+     * which is expected to perform some extra computations to retrieve the result, while <code>.</code> should be
+     * straightforward and immediate, and the source object should behave like a container and support full container
+     * API, meaning <code>get(...)</code>, <code>put(...)</code>, <code>delete(...)</code>,
+     * and <code>has(...)</code> functions</p>
+     *
+     * <h3><code>Matching Operator  ~</code></h3>
+     * <p>This operator should be understood as 'matches', 'contains', 'is_in',
+     * or 'find me some stuff about something else. For strings it matches the right operand as a regular
+     * expression to the left, returning the first match. This can be used to extract information from unparsed nbt's
+     * in a more convoluted way (use <code>get(...)</code> for more appropriate way of doing it).
+     * For lists it checks if an element is in the list, and returns the index of that element,
+     * or <code>null</code> if no such element was found, especially that the use of <code>first(...)</code> function will not
+     * return the index. Currently it doesn't have any special behaviour for numbers - it checks for existence of characters
+     * in string representation of the left operand with respect of the regular expression on the right hand side.
+     * string</p>
+     * <p>in Minecraft API portion <code>entity ~ feature</code> is a shortcode for <code>query(entity,feature)</code>
+     * for queries that do not take any extra arguments.</p>
+     * <pre>
+     * l(1,2,3) ~ 2  =&gt; 1
+     * l(1,2,3) ~ 4  =&gt; null
+     * 'foobar' ~ '.b'  =&gt; 'ob'
+     * player('*') ~ 'gnembon'  // null unless player gnembon is logged in (better to use player('gnembon') instead
+     * p ~ 'sneaking' // if p is an entity returns whether p is sneaking
+     * </pre>
+     * <p>Or a longer example of an ineffective way to searching for a squid</p>
+     * <pre>
+     * entities = entities_area('all',x,y,z,100,10,100);
+     * sid = entities ~ 'Squid';
+     * if(sid != null, run('execute as '+query(get(entities,sid),'id')+' run say I am here '+query(get(entities,sid),'pos') ) )
+     * </pre>
+     * <p>Or an example to find if a player has specific enchantment on a held axe (either hand) and get its level
+     * (not using proper NBTs query support via <code>get(...)</code>):</p>
+     * <pre>
+     * global_get_enchantment(p, ench) -&gt; (
+     * $   for(l('main','offhand'),
+     * $      holds = query(p, 'holds', _);
+     * $      if( holds,
+     * $         l(what, count, nbt) = holds;
+     * $         if( what ~ '_axe' &amp;&amp; nbt ~ ench,
+     * $            lvl = max(lvl, number(nbt ~ '(?&lt;=lvl:)\\d') )
+     * $         )
+     * $      )
+     * $   );
+     * $   lvl
+     * $);
+     * /script run global_get_enchantment(players(), 'sharpness')
+     * </pre>
      *
      * <h3><code>Basic Arithmetic Operators  +  -  *  /</code></h3>
      * <p>Allows to add the results of two expressions. If the operands resolve to numbers, the result is
@@ -1145,52 +1175,7 @@ public class Expression implements Cloneable
      * null != false &amp;&amp; run('kill gnembon')  =&gt; 1 // gnembon dies, cheats allowed
      * </pre>
      *
-     * <h3><code>Get, Accessor Operator  .</code></h3>
-     * <p>Operator version of the <code>get(...)</code> function to access elements of lists, nbts, and potentially other
-     * containers. It is important to distinguish from <code>~</code> operator, which is a matching operator, meaning it
-     * is expected to perform some extra computations to retrieve the result, while <code>.</code> should be
-     * straightforward and immediate.</p>
-     *
-     * <h3><code>Matching Operator  ~</code></h3>
-     * <p>This operator should be understood as 'matches', 'contains' or 'is_in'. For strings it matches the right operand as a regular
-     * expression to the left one, returning the first match. This can be used to extract information from unparsed nbt's
-     * in a more efficient way. For lists it checks if an element is in the list, and returns the index of that element,
-     * or <code>null</code> if no such element was found, especially that the use of <code>first</code> function will not
-     * return the index. Currently it doesn't have any special behaviour for numbers - it checks for existence of characters
-     * in string representation of the left operand with respect of the regular expression on the right hand side.
-     * string</p>
-     * <p>in Minecraft API portion <code>entity ~ feature</code> is a shortcode for <code>query(entity,feature)</code>
-     * for queries that do not take any extra arguments.</p>
-     * <pre>
-     * l(1,2,3) ~ 2  =&gt; 1
-     * l(1,2,3) ~ 4  =&gt; null
-     * 'foobar' ~ '.b'  =&gt; 'ob'
-     * player('*') ~ 'gnembon'  // null unless player gnembon is logged in (better to use player('gnembon') instead
-     * p ~ 'sneaking' // if p is an entity returns whether p is sneaking
-     * </pre>
-     * <p>Or a longer example of an ineffective way to searching for a squid</p>
-     * <pre>
-     * entities = entities_area('all',x,y,z,100,10,100);
-     * sid = entities ~ 'Squid';
-     * if(sid != null, run('execute as '+query(get(entities,sid),'id')+' run say I am here '+query(get(entities,sid),'pos') ) )
-     * </pre>
-     * <p>Or an example to find if a player has specific enchantment on a held axe (either hand) and get its level
-     * (despite obvious lack of support for json NBT's):</p>
-     * <pre>
-     * global_get_enchantment(p, ench) -&gt; (
-     * $   for(l('main','offhand'),
-     * $      holds = query(p, 'holds', _);
-     * $      if( holds,
-     * $         l(what, count, nbt) = holds;
-     * $         if( what ~ '_axe' &amp;&amp; nbt ~ ench,
-     * $            lvl = max(lvl, number(nbt ~ '(?&lt;=lvl:)\\d') )
-     * $         )
-     * $      )
-     * $   );
-     * $   lvl
-     * $);
-     * /script run global_get_enchantment(players(), 'sharpness')
-     * </pre>
+
      * <h3><code>Assignment Operators  =  &lt;&gt;  +=</code></h3>
      * <p>A set of assignment operators. All require bounded variable on the LHS, <code>&lt;&gt;</code> requires
      * bounded arguments on the right hand side as well (bounded, meaning being variables). Additionally they can also
@@ -1569,118 +1554,22 @@ public class Expression implements Cloneable
     }
 
     /**
-     * <h1>Lists, loops, and higher order functions</h1>
+     * <h1>Loops, and higher order functions</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
-     * <p>Efficient use of these functions cangreatly simplify your programs and speed them up, as these functions
-     * will internalize  most of the operations that need to be applied on multiple values at the same time</p>
-     * <h2>Basic list operations</h2>
-     * <h3><code>l(values ...), l(iterator) </code></h3>
-     * <p>Creates a list of values of the expressions passed as parameters. It can be used as an L-value and if all
-     * elements are variables, you coujld use it to return multiple results from one function call, if that function returns
-     * a list of results with the same size as the <code>l</code> call uses. In case there is only one argument and it is
-     * an iterator (vanilla expression specification has <code>range</code>, but Minecraft API implements
-     * a bunch of them, like <code>diamond</code>), it will convert it to a proper list. Iterators can only be used in
-     * high order functions, and are treated as empty lists, unless unrolled with <code>l</code></p>
+     * <p>Efficient use of these functions can greatly simplify your programs and speed them up, as these functions
+     * will internalize most of the operations that need to be applied on multiple values at the same time</p>
+     * <h2>Loops</h2>
+     *
+     * <h3><code>for(list,expr(_,_i),exit(_,_i)?)</code></h3>
+     * <p>Evaluates expression over list of items from the <code>list</code>, and can optionally stop early if
+     * <code>exit</code> expression is specified and evaluates <code>true</code> for a given iteration. Supplies
+     * <code>_</code>(value) and <code>_i</code>(iteration number) to both <code>expr</code> and <code>exit</code>.
+     * Returns the number of times <code>expr</code> was successful</p>
      * <pre>
-     * l(1,2,'foo') =&gt; [1, 2, foo]
-     * l() =&gt; [] (empty list)
-     * l(range(10)) =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-     * l(1, 2) = l(3, 4) =&gt; Error: l is not a variable
-     * l(foo, bar) = l(3,4); foo==3 &amp;&amp; bar==4 =&gt; 1
-     * l(foo, bar, baz) = l(2, 4, 6); l(min(foo, bar), baz) = l(3, 5); l(foo, bar, baz)  =&gt; [3, 4, 5]
+     *     check_prime(n) -&gt; !first( range(2, sqrt(n)+1), !(n % _) );
+     *        for(range(1000000,1100000),check_prime(_))  =&gt; 7216
      * </pre>
-     * <p>In the last example <code>l(min(foo, bar), baz)</code> creates a valid L-value, as min(foo, bar) finds the
-     * lower of the variables (in this case <code>foo</code>) creating a valid assignable L-list of [foo, baz], and these
-     * values will be assigned new values</p>
-     *
-     * <h3><code>join(delim, list), join(delim, values ...) </code></h3>
-     * <p>Returns a string that contains joined elements of the list, iterator, or all values, concatenated with <code>delim</code> delimiter</p>
-     * <pre>
-     *     join('-',range(10))  =&gt; 0-1-2-3-4-5-6-7-8-9
-     *     join('-','foo')  =&gt; foo
-     *     join('-', 'foo', 'bar')  =&gt; foo-bar
-     * </pre>
-     *
-     * <h3><code>split(delim, expr)</code></h3>
-     * <p>Splits a string undr <code>expr</code> by <code>delim</code> which can be a regular expression</p>
-     * <pre>
-     *     split('',foo)  =&gt; [f, o, o]
-     *     split('.','foo.bar')  =&gt; []
-     *     split('\\.','foo.bar')  =&gt; [foo, bar]
-     * </pre>
-     *
-     * <h3><code>slice(expr, from, to?)</code></h3>
-     * <p>extracts a substring, or sublist (based on the type of the result of the expression under expr with starting index
-     * of <code>from</code>, and ending at <code>to</code> if provided, or the end, if omitted</p>
-     * <pre>
-     *     slice(l(0,1,2,3,4,5), 1, 3)  =&gt; [1, 2, 3] 
-     *     slice('foobar', 0, 1)  =&gt; 'f'
-     *     slice('foobar', 3)  =&gt; 'bar'
-     *     slice(range(10), 3, 5)  =&gt; [3, 4, 5]
-     *     slice(range(10), 5)  =&gt; [5, 6, 7, 8, 9]
-     * </pre>
-     *
-     *
-     *
-     * <h3><code>sort(list), sort(values ...) </code></h3>
-     * <p>Sorts in the default sortographical order either all arguments, or a list if its the only argument. It returns a new
-     * sorted list, not affecting the list passed to the argument</p>
-     * <pre>
-     * sort(3,2,1)  =&gt; [1, 2, 3]
-     * sort('a',3,11,1)  =&gt; [1, 3, 11, 'a']
-     * list = l(4,3,2,1); sort(list)  =&gt; [1, 2, 3, 4]
-     * </pre>
-     *
-     * <h3><code>sort_key(list, key_expr)</code></h3>
-     * <p>Sorts a copy of the list in the order or keys as defined by the <code>key_expr</code> for each element</p>
-     * <pre>
-     *     sort_key([1,3,2],_)  =&gt; [1, 2, 3]
-     *     sort_key([1,3,2],-_)  =&gt; [3, 2, 1]
-     *     sort_key(l(range(10)),rand(1))  =&gt; [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
-     *     sort_key(l(range(20)),str(_))  =&gt; [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
-     * </pre>
-     *
-     * <h3><code>range(to), range(from, to), range(from, to, step)</code></h3>
-     * <p>Creates a range of numbers from <code>from</code>, no greater/larger than <code>to</code>.
-     * The <code>step</code> parameter dictates not only the increment size, but also direction (can be negative).
-     * The returned value is not a proper list, just the iterator
-     * but if for whatever reason you need a proper list with all items evaluated, use <code>l(range(to))</code>.
-     * Primarily to be used in higher order functions</p>
-     * <pre>
-     *     range(10)  =&gt; [...]
-     *     l(range(10))  =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-     *     map(range(10),_*_)  =&gt; [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
-     *     reduce(range(10),_a+_, 0)  =&gt; 45
-     *     range(5,10)  =&gt; [5, 6, 7, 8, 9]
-     *     range(20, 10, -2)  =&gt; [20, 18, 16, 14, 12]
-     * </pre>
-     *
-     * <h3><code>get(value, address), element(value, address)(deprecated)</code></h3>
-     * <p>Returns the value at <code>address</code> element from the <code>value</code>.
-     * For lists it indicates an index, use negative numbers to reach elements from the end of the list. <code>get</code>
-     * call will always be able to find the index. In case there is few items, it will loop over </p>
-     * <p>[Minecraft specific usecase]: In case <code>value</code> is of <code>nbt</code> type, uses addess as the nbt path to query,
-     * returning null, if path is not found, one value if there was one match, or list of values if result is a list.
-     * Returned elements can be of numerical type, string texts, or another compound nbt tags</p>
-     * <pre>
-     *     get(l(range(10)), 5)  =&gt; 5
-     *     get(l(range(10)), -1)  =&gt; 9
-     *     get(l(range(10)), 10)  =&gt; 0
-     *     get(l(range(10)), 93)  =&gt; 3
-     *     get(player() ~ 'nbt', 'Health') =&gt; 20 // inefficient way to get player health
-     * </pre>
-     *
-     * <h3><code>put(list, index, values ...), put(list, null, values ...)</code></h3>
-     * <p>Modifies the list by replacing values starting from <code>index</code> with <code>values</code>.
-     * use negative numbers to reach elements from the end of the list. <code>put</code>
-     * call will always be able to find the index. In case there is few items, it will loop over. In case end
-     * of the list is reached before <code>values</code> run out, list is extended to accomodate for more values. in case you
-     * want to append at the end of the list, use <code>null</code> as index. returns number of elements inserted.</p>
-     * <pre>
-     *     a = l(1, 2, 3); put(a, 1, 4); a  =&gt; [1, 4, 3]
-     *     a = l(1, 2, 3); put(a, null, 4, 5, 6); a  =&gt; [1, 2, 3, 4, 5, 6]
-     *     a = l(l(0,0,0),l(0,0,0),l(0,0,0)); put(element(a, 1), 1, 1); a =&gt; [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
-     * </pre>
+     * <p>From which we can learn that there is 7216 primes between 1M and 1.1M</p>
      * <h3><code>while(cond, limit, expr)</code></h3>
      * <p>Evaluates expression <code>expr</code> repeatedly until condition <code>cond</code> becomes false,
      * but not more than <code>limit</code> times. Returns the result of the last <code>expr</code> evaluation,
@@ -1710,6 +1599,7 @@ public class Expression implements Cloneable
      *
      *     // outputs: [0, 1, 2, 3, 5, 7, 11, 13, 17, 19]
      * </pre>
+     * <h2>Higher Order Functions</h2>
      * <h3><code>map(list,expr(_,_i), exit(_,_i)?)</code></h3>
      * <p>Converts a <code>list</code> of values, to another list where each value is result of an expression
      * <code>v = expr(_, _i)</code> where <code>_</code> is passed as each element of the list, and <code>_i</code> is
@@ -1754,17 +1644,6 @@ public class Expression implements Cloneable
      *         // ditto, but requiring at most 7 bedrock block in the 18 blocks below them
      * </pre>
      *
-     *
-     * <h3><code>for(list,expr(_,_i),exit(_,_i)?)</code></h3>
-     * <p>Evaluates expression over list of items from the <code>list</code>, and can optionally stop early if
-     * <code>exit</code> expression is specified and evaluates <code>true</code> for a given iteration. Supplies
-     * <code>_</code>(value) and <code>_i</code>(iteration number) to both <code>expr</code> and <code>exit</code>.
-     * Returns the number of times <code>expr</code> was successful</p>
-     * <pre>
-     *     check_prime(n) -&gt; !first( range(2, sqrt(n)+1), !(n % _) );
-     *        for(range(1000000,1100000),check_prime(_))  =&gt; 7216
-     * </pre>
-     * <p>From which we can learn that there is 7216 primes between 1M and 1.1M</p>
      * <h3><code>reduce(list,expr(_a,_,_i), initial)</code></h3>
      * <p>Applies <code>expr</code> for each element of the list and saves the result in <code>_a</code> accumulator.
      * Consecutive calls to <code>expr</code> can access that value to apply more values. You also need to specify
@@ -1775,196 +1654,9 @@ public class Expression implements Cloneable
      * </pre>
      * </div>
      */
-    public void ListsLoopsAndHigherOrderFunctions()
+    public void LoopsAndHigherOrderFunctions()
     {
-        addFunction("l", lv ->
-        {
-            if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
-                return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
-            return new ListValue.ListConstructorValue(lv);
-        });
 
-        addFunction("join", (lv) ->
-        {
-            if (lv.size() < 2)
-                throw new InternalExpressionException("join takes at least 2 arguments");
-            String delimiter = lv.get(0).getString();
-            List<Value> toJoin;
-            if (lv.size()==2 && lv.get(1) instanceof LazyListValue)
-            {
-                toJoin = ((LazyListValue) lv.get(1)).unroll();
-
-            }
-            else if (lv.size() == 2 && lv.get(1) instanceof ListValue)
-            {
-                toJoin = new ArrayList<>(((ListValue)lv.get(1)).getItems());
-            }
-            else
-            {
-                toJoin = lv.subList(1,lv.size());
-            }
-            return new StringValue(toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter)));
-        });
-
-        addBinaryFunction("split", (d, v) -> {
-            String delimiter = d.getString();
-            String hwat = v.getString();
-            return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
-        });
-
-        addFunction("slice", (lv) -> {
-
-            if (lv.size() != 2 && lv.size() != 3)
-                throw new InternalExpressionException("slice takes 2 or 3 arguments");
-            Value hwat = lv.get(0);
-            long from = NumericValue.asNumber(lv.get(1)).getLong();
-            long to = -1;
-            if (lv.size()== 3)
-                to = NumericValue.asNumber(lv.get(2)).getLong();
-            return hwat.slice(from, to);
-        });
-
-        addFunction("sort", (lv) ->
-        {
-            List<Value> toSort = lv;
-            if (lv.size()==1 && lv.get(0) instanceof ListValue)
-            {
-                toSort = new ArrayList<>(((ListValue)lv.get(0)).getItems());
-            }
-            Collections.sort(toSort);
-            return ListValue.wrap(toSort);
-        });
-
-        addLazyFunction("sort_key", 2, (c, t, lv) ->  //get working with iterators
-        {
-            Value v = lv.get(0).evalValue(c);
-            if (!(v instanceof ListValue))
-                throw new InternalExpressionException("First argument for sort_key should be a List");
-            LazyValue sortKey = lv.get(1);
-            //scoping
-            LazyValue __ = c.getVariable("_");
-
-            List<Value> toSort = new ArrayList<>(((ListValue) v).getItems());
-
-            Collections.sort(toSort,(v1, v2) -> {
-                c.setVariable("_",(cc, tt) -> v1);
-                Value ev1 = sortKey.evalValue(c);
-                c.setVariable("_",(cc, tt) -> v2);
-                Value ev2 = sortKey.evalValue(c);
-                return ev1.compareTo(ev2);
-            });
-            //revering scope
-            c.setVariable("_", __);
-            return (cc, tt) -> ListValue.wrap(toSort);
-        });
-
-        addFunction("range", (lv) ->
-        {
-            long from = 0;
-            long to = 0;
-            long step = 1;
-            int argsize = lv.size();
-            if (argsize == 0 || argsize > 3)
-                throw new InternalExpressionException("range accepts from 1 to 3 arguments, not "+argsize);
-            to = NumericValue.asNumber(lv.get(0)).getLong();
-            if (lv.size() > 1)
-            {
-                from = to;
-                to = NumericValue.asNumber(lv.get(1)).getLong();
-                if (lv.size() > 2)
-                {
-                    step = NumericValue.asNumber(lv.get(2)).getLong();
-                }
-            }
-            return LazyListValue.range(from, to, step);
-        });
-
-        addFunction("m", lv ->
-        {
-            if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
-                return new MapValue(((LazyListValue) lv.get(0)).unroll());
-            return new MapValue(lv);
-        });
-
-        addUnaryFunction("keys", v -> {
-            if (v instanceof MapValue)
-                return new ListValue(((MapValue) v).getMap().keySet());
-            throw new InternalExpressionException("keys applies only to maps");
-        });
-
-        addUnaryFunction("values", v -> {
-            if (v instanceof MapValue)
-                return new ListValue(((MapValue) v).getMap().values());
-            throw new InternalExpressionException("keys applies only to maps");
-        });
-
-        addUnaryFunction("pairs", v -> {
-            if (v instanceof MapValue)
-                return ListValue.wrap(((MapValue) v).getMap().entrySet().stream().map(
-                        (p) -> ListValue.of(p.getKey(), p.getValue())
-                        ).collect(Collectors.toList()));
-            throw new InternalExpressionException("pairs applies only to maps");
-        });
-
-        addBinaryFunction("get", (container, key) ->
-        {
-            if (container instanceof ContainerValueInterface)
-                return ((ContainerValueInterface) container).get(key);
-            throw new InternalExpressionException("Cannot access elements of a non-container");
-        });
-
-        addBinaryFunction("has", (container, key) ->
-        {
-            if (container instanceof ContainerValueInterface)
-                return new NumericValue(((ContainerValueInterface) container).has(key));
-            throw new InternalExpressionException("Cannot access elements of a non-container");
-        });
-
-        //Deprecated, use "get" instead, or . operator
-        addBinaryFunction("element", (v1, v2) ->
-        {
-            if (!(v1 instanceof ListValue))
-                throw new InternalExpressionException("First argument of get should be a list");
-            List<Value> items = ((ListValue)v1).getItems();
-            long index = NumericValue.asNumber(v2).getLong();
-            int numitems = items.size();
-            long range = abs(index)/numitems;
-            index += (range+2)*numitems;
-            index = index % numitems;
-            return items.get((int)index);
-        });
-
-        addFunction("put", (lv) ->
-        {
-            if(lv.size()<3)
-            {
-                throw new InternalExpressionException("put takes at least three arguments, a container, address, and values to insert at that index");
-            }
-            Value container = lv.get(0);
-            if (!(container instanceof ContainerValueInterface))
-            {
-                throw new InternalExpressionException("First argument of put should be a container: list, map or nbt");
-            }
-            Value where = lv.get(1);
-            Value what = lv.get(2);
-            if (lv.size()>3)
-            {
-                return ((ContainerValueInterface) container).put(where, what, lv.get(3));
-            }
-            else
-            {
-                return ((ContainerValueInterface) container).put(where, what);
-            }
-        });
-
-        addBinaryFunction("delete", (container, address) ->
-        {
-            if (container instanceof ContainerValueInterface)
-            {
-                return ((ContainerValueInterface) container).remove(address);
-            }
-            throw new InternalExpressionException("First argument of remove should be a container: list, map or nbt");
-        });
 
 
         //condition and expression will get a bound 'i'
@@ -2279,6 +1971,341 @@ public class Expression implements Cloneable
 
             Value hopeItsEnoughPromise = acc;
             return (cc, tt) -> hopeItsEnoughPromise;
+        });
+    }
+
+    /**
+     * <h1>Lists, Maps and API support for Containers</h1>
+     * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
+     * <p>Scarpet supports basic container types: lists and maps (aka hashmaps, dicts etc..)</p>
+     * <h2>Container manipulation</h2>
+     * <p>Here is a list of operations that work on all types of containers: lists, maps, as well as other Minecraft
+     * specific modifyable containers, like NBTs</p>
+     *
+     * <h3><code>get(container, address), '.' operator</code></h3>
+     * <p>Returns the value at <code>address</code> element from the <code>value</code>.
+     * For lists it indicates an index, use negative numbers to reach elements from the end of the list. <code>get</code>
+     * call will always be able to find the index. In case there is few items, it will loop over </p>
+     * <p>for maps, retrieves the value under the key specified in the <code>address</code> or null otherwise</p>
+     * <p>[Minecraft specific usecase]: In case <code>value</code> is of <code>nbt</code> type, uses address as the
+     * nbt path to query,
+     * returning null, if path is not found, one value if there was one match, or list of values if result is a list.
+     * Returned elements can be of numerical type, string texts, or another compound nbt tags</p>
+     * <pre>
+     *     get(l(range(10)), 5)  =&gt; 5
+     *     get(l(range(10)), -1)  =&gt; 9
+     *     get(l(range(10)), 10)  =&gt; 0
+     *     l(range(10)).93  =&gt; 3
+     *
+     *     get(player() ~ 'nbt', 'Health') =&gt; 20 // inefficient way to get player health, use player() ~ 'health' instead
+     *
+     *     get(m( l('foo',2), l('bar',3), l('baz',4) ), 'bar')  =&gt; 3
+     * </pre>
+     *
+     * <h3><code>has(container, address)</code></h3>
+     * <p>Similar to <code>get</code>, but returns boolean value indicating if the given index / key / path is in the
+     * container. Can be used to determine if <code>get(...)==null</code> means the element doesn't exist, or the stored value
+     * for this address is <code>null</code>.</p>
+     *
+     * <h3><code>delete(container, address)</code></h3>
+     * <p>Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it
+     * removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous
+     * entry at the address, for nbt's - number of removed objects.</p>
+     *
+     *
+     * <h3><code>put(list, index, values ...), put(list, null, values ...)</code></h3>
+     * <p>Modifies the list by replacing values starting from <code>index</code> with <code>values</code>.
+     * use negative numbers to reach elements from the end of the list. <code>put</code>
+     * call will always be able to find the index. In case there is few items, it will loop over. In case end
+     * of the list is reached before <code>values</code> run out, list is extended to accomodate for more values. in case you
+     * want to append at the end of the list, use <code>null</code> as index. returns number of elements inserted.</p>
+     * <pre>
+     *     a = l(1, 2, 3); put(a, 1, 4); a  =&gt; [1, 4, 3]
+     *     a = l(1, 2, 3); put(a, null, 4, 5, 6); a  =&gt; [1, 2, 3, 4, 5, 6]
+     *     a = l(l(0,0,0),l(0,0,0),l(0,0,0)); put(element(a, 1), 1, 1); a =&gt; [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
+     * </pre>
+     *
+     * <h2>List operations</h2>
+     * <h3><code>l(values ...), l(iterator) </code></h3>
+     * <p>Creates a list of values of the expressions passed as parameters. It can be used as an L-value and if all
+     * elements are variables, you coujld use it to return multiple results from one function call, if that function returns
+     * a list of results with the same size as the <code>l</code> call uses. In case there is only one argument and it is
+     * an iterator (vanilla expression specification has <code>range</code>, but Minecraft API implements
+     * a bunch of them, like <code>diamond</code>), it will convert it to a proper list. Iterators can only be used in
+     * high order functions, and are treated as empty lists, unless unrolled with <code>l</code></p>
+     * <pre>
+     * l(1,2,'foo') =&gt; [1, 2, foo]
+     * l() =&gt; [] (empty list)
+     * l(range(10)) =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+     * l(1, 2) = l(3, 4) =&gt; Error: l is not a variable
+     * l(foo, bar) = l(3,4); foo==3 &amp;&amp; bar==4 =&gt; 1
+     * l(foo, bar, baz) = l(2, 4, 6); l(min(foo, bar), baz) = l(3, 5); l(foo, bar, baz)  =&gt; [3, 4, 5]
+     * </pre>
+     * <p>In the last example <code>l(min(foo, bar), baz)</code> creates a valid L-value, as min(foo, bar) finds the
+     * lower of the variables (in this case <code>foo</code>) creating a valid assignable L-list of [foo, baz], and these
+     * values will be assigned new values</p>
+     *
+     * <h3><code>join(delim, list), join(delim, values ...) </code></h3>
+     * <p>Returns a string that contains joined elements of the list, iterator, or all values, concatenated with <code>delim</code> delimiter</p>
+     * <pre>
+     *     join('-',range(10))  =&gt; 0-1-2-3-4-5-6-7-8-9
+     *     join('-','foo')  =&gt; foo
+     *     join('-', 'foo', 'bar')  =&gt; foo-bar
+     * </pre>
+     *
+     * <h3><code>split(delim, expr)</code></h3>
+     * <p>Splits a string undr <code>expr</code> by <code>delim</code> which can be a regular expression</p>
+     * <pre>
+     *     split('',foo)  =&gt; [f, o, o]
+     *     split('.','foo.bar')  =&gt; []
+     *     split('\\.','foo.bar')  =&gt; [foo, bar]
+     * </pre>
+     *
+     * <h3><code>slice(expr, from, to?)</code></h3>
+     * <p>extracts a substring, or sublist (based on the type of the result of the expression under expr with starting index
+     * of <code>from</code>, and ending at <code>to</code> if provided, or the end, if omitted</p>
+     * <pre>
+     *     slice(l(0,1,2,3,4,5), 1, 3)  =&gt; [1, 2, 3]
+     *     slice('foobar', 0, 1)  =&gt; 'f'
+     *     slice('foobar', 3)  =&gt; 'bar'
+     *     slice(range(10), 3, 5)  =&gt; [3, 4, 5]
+     *     slice(range(10), 5)  =&gt; [5, 6, 7, 8, 9]
+     * </pre>
+     *
+     * <h3><code>sort(list), sort(values ...) </code></h3>
+     * <p>Sorts in the default sortographical order either all arguments, or a list if its the only argument. It returns a new
+     * sorted list, not affecting the list passed to the argument</p>
+     * <pre>
+     * sort(3,2,1)  =&gt; [1, 2, 3]
+     * sort('a',3,11,1)  =&gt; [1, 3, 11, 'a']
+     * list = l(4,3,2,1); sort(list)  =&gt; [1, 2, 3, 4]
+     * </pre>
+     *
+     * <h3><code>sort_key(list, key_expr)</code></h3>
+     * <p>Sorts a copy of the list in the order or keys as defined by the <code>key_expr</code> for each element</p>
+     * <pre>
+     *     sort_key([1,3,2],_)  =&gt; [1, 2, 3]
+     *     sort_key([1,3,2],-_)  =&gt; [3, 2, 1]
+     *     sort_key(l(range(10)),rand(1))  =&gt; [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
+     *     sort_key(l(range(20)),str(_))  =&gt; [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
+     * </pre>
+     *
+     * <h3><code>range(to), range(from, to), range(from, to, step)</code></h3>
+     * <p>Creates a range of numbers from <code>from</code>, no greater/larger than <code>to</code>.
+     * The <code>step</code> parameter dictates not only the increment size, but also direction (can be negative).
+     * The returned value is not a proper list, just the iterator
+     * but if for whatever reason you need a proper list with all items evaluated, use <code>l(range(to))</code>.
+     * Primarily to be used in higher order functions</p>
+     * <pre>
+     *     range(10)  =&gt; [...]
+     *     l(range(10))  =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+     *     map(range(10),_*_)  =&gt; [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+     *     reduce(range(10),_a+_, 0)  =&gt; 45
+     *     range(5,10)  =&gt; [5, 6, 7, 8, 9]
+     *     range(20, 10, -2)  =&gt; [20, 18, 16, 14, 12]
+     * </pre>
+     *
+     * <h3><code>element(list, index)(deprecated)</code></h3>
+     * <p>Legacy support for older method that worked only on lists. Please use <code>get(...)</code> for equivalent
+     * support, or <code>.</code> operator. Also previous unique behaviours with <code>put</code> on lists has been
+     * removed to support all type of container types.</p>
+     *
+     * <h2>Map operations</h2>
+     * <p>Scarpet supports map structures, aka hashmaps, dicts etc. Map structure can also be used, with <code>null</code>
+     * values as sets. Apart from container access functions, (<code>. , get, put, has, delete</code>),
+     * the following functions:</p>
+     * </div>
+     */
+
+    void BasicDataStructures()
+    {
+        addFunction("l", lv ->
+        {
+            if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
+                return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
+            return new ListValue.ListConstructorValue(lv);
+        });
+
+        addFunction("join", (lv) ->
+        {
+            if (lv.size() < 2)
+                throw new InternalExpressionException("join takes at least 2 arguments");
+            String delimiter = lv.get(0).getString();
+            List<Value> toJoin;
+            if (lv.size()==2 && lv.get(1) instanceof LazyListValue)
+            {
+                toJoin = ((LazyListValue) lv.get(1)).unroll();
+
+            }
+            else if (lv.size() == 2 && lv.get(1) instanceof ListValue)
+            {
+                toJoin = new ArrayList<>(((ListValue)lv.get(1)).getItems());
+            }
+            else
+            {
+                toJoin = lv.subList(1,lv.size());
+            }
+            return new StringValue(toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter)));
+        });
+
+        addBinaryFunction("split", (d, v) -> {
+            String delimiter = d.getString();
+            String hwat = v.getString();
+            return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
+        });
+
+        addFunction("slice", (lv) -> {
+
+            if (lv.size() != 2 && lv.size() != 3)
+                throw new InternalExpressionException("slice takes 2 or 3 arguments");
+            Value hwat = lv.get(0);
+            long from = NumericValue.asNumber(lv.get(1)).getLong();
+            long to = -1;
+            if (lv.size()== 3)
+                to = NumericValue.asNumber(lv.get(2)).getLong();
+            return hwat.slice(from, to);
+        });
+
+        addFunction("sort", (lv) ->
+        {
+            List<Value> toSort = lv;
+            if (lv.size()==1 && lv.get(0) instanceof ListValue)
+            {
+                toSort = new ArrayList<>(((ListValue)lv.get(0)).getItems());
+            }
+            Collections.sort(toSort);
+            return ListValue.wrap(toSort);
+        });
+
+        addLazyFunction("sort_key", 2, (c, t, lv) ->  //get working with iterators
+        {
+            Value v = lv.get(0).evalValue(c);
+            if (!(v instanceof ListValue))
+                throw new InternalExpressionException("First argument for sort_key should be a List");
+            LazyValue sortKey = lv.get(1);
+            //scoping
+            LazyValue __ = c.getVariable("_");
+
+            List<Value> toSort = new ArrayList<>(((ListValue) v).getItems());
+
+            Collections.sort(toSort,(v1, v2) -> {
+                c.setVariable("_",(cc, tt) -> v1);
+                Value ev1 = sortKey.evalValue(c);
+                c.setVariable("_",(cc, tt) -> v2);
+                Value ev2 = sortKey.evalValue(c);
+                return ev1.compareTo(ev2);
+            });
+            //revering scope
+            c.setVariable("_", __);
+            return (cc, tt) -> ListValue.wrap(toSort);
+        });
+
+        addFunction("range", (lv) ->
+        {
+            long from = 0;
+            long to = 0;
+            long step = 1;
+            int argsize = lv.size();
+            if (argsize == 0 || argsize > 3)
+                throw new InternalExpressionException("range accepts from 1 to 3 arguments, not "+argsize);
+            to = NumericValue.asNumber(lv.get(0)).getLong();
+            if (lv.size() > 1)
+            {
+                from = to;
+                to = NumericValue.asNumber(lv.get(1)).getLong();
+                if (lv.size() > 2)
+                {
+                    step = NumericValue.asNumber(lv.get(2)).getLong();
+                }
+            }
+            return LazyListValue.range(from, to, step);
+        });
+
+        addFunction("m", lv ->
+        {
+            if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
+                return new MapValue(((LazyListValue) lv.get(0)).unroll());
+            return new MapValue(lv);
+        });
+
+        addUnaryFunction("keys", v -> {
+            if (v instanceof MapValue)
+                return new ListValue(((MapValue) v).getMap().keySet());
+            throw new InternalExpressionException("keys applies only to maps");
+        });
+
+        addUnaryFunction("values", v -> {
+            if (v instanceof MapValue)
+                return new ListValue(((MapValue) v).getMap().values());
+            throw new InternalExpressionException("keys applies only to maps");
+        });
+
+        addUnaryFunction("pairs", v -> {
+            if (v instanceof MapValue)
+                return ListValue.wrap(((MapValue) v).getMap().entrySet().stream().map(
+                        (p) -> ListValue.of(p.getKey(), p.getValue())
+                ).collect(Collectors.toList()));
+            throw new InternalExpressionException("pairs applies only to maps");
+        });
+
+        addBinaryFunction("get", (container, key) ->
+        {
+            if (container instanceof ContainerValueInterface)
+                return ((ContainerValueInterface) container).get(key);
+            throw new InternalExpressionException("Cannot access elements of a non-container");
+        });
+
+        addBinaryFunction("has", (container, key) ->
+        {
+            if (container instanceof ContainerValueInterface)
+                return new NumericValue(((ContainerValueInterface) container).has(key));
+            throw new InternalExpressionException("Cannot access elements of a non-container");
+        });
+
+        //Deprecated, use "get" instead, or . operator
+        addBinaryFunction("element", (v1, v2) ->
+        {
+            if (!(v1 instanceof ListValue))
+                throw new InternalExpressionException("First argument of get should be a list");
+            List<Value> items = ((ListValue)v1).getItems();
+            long index = NumericValue.asNumber(v2).getLong();
+            int numitems = items.size();
+            long range = abs(index)/numitems;
+            index += (range+2)*numitems;
+            index = index % numitems;
+            return items.get((int)index);
+        });
+
+        addFunction("put", (lv) ->
+        {
+            if(lv.size()<3)
+            {
+                throw new InternalExpressionException("put takes at least three arguments, a container, address, and values to insert at that index");
+            }
+            Value container = lv.get(0);
+            if (!(container instanceof ContainerValueInterface))
+            {
+                throw new InternalExpressionException("First argument of put should be a container: list, map or nbt");
+            }
+            Value where = lv.get(1);
+            Value what = lv.get(2);
+            if (lv.size()>3)
+            {
+                return ((ContainerValueInterface) container).put(where, what, lv.get(3));
+            }
+            else
+            {
+                return ((ContainerValueInterface) container).put(where, what);
+            }
+        });
+
+        addBinaryFunction("delete", (container, address) ->
+        {
+            if (container instanceof ContainerValueInterface)
+            {
+                return ((ContainerValueInterface) container).delete(address);
+            }
+            throw new InternalExpressionException("First argument of delete should be a container: list, map or nbt");
         });
     }
 
@@ -2695,7 +2722,8 @@ public class Expression implements Cloneable
         Operators();
         ArithmeticOperations();
         SystemFunctions();
-        ListsLoopsAndHigherOrderFunctions();
+        LoopsAndHigherOrderFunctions();
+        BasicDataStructures();
     }
 
     private List<Tokenizer.Token> shuntingYard()

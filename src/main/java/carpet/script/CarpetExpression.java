@@ -1542,9 +1542,9 @@ public class CarpetExpression
      * that corresponds to the path. For specification of <code>path</code> attribute, consult
      * vanilla <code>/data get entity</code> command.</p>
      * <p>Note that calls to <code>nbt</code> are considerably more expensive comparing to other
-     * calls in Minecraft API, and should only be used when there is no other option.A returned value is of type <code>nbt</code>,
+     * calls in Minecraft API, and should only be used when there is no other option. Returned value is of type <code>nbt</code>,
      * which can be further manipulated with nbt type objects via <code>get, put, has, delete</code>, so try to use API calls
-     * first</p>
+     * first for that.</p>
      * <h2>Entity Modification</h2>
      * <p>Like with entity querying, entity modifications happen through one function. Most position and movements
      * modifications don't work currently on players as their position is controlled by clients.</p>
@@ -3080,22 +3080,25 @@ public class CarpetExpression
      * <h2></h2>
      * <h3>Event list</h3>
      * <p>Here is a list of events that can be handled by scarpet. This list includes prefixes required by modules to
-     * autoload them, but you can add any function to any event if it had required parameters:</p>
+     * autoload them, but you can add any function to any event if it accepts required number of parameters:</p>
      * <pre>
      * __on_tick()         // can access blocks and entities in the overworld
      * __on_tick_nether()  // can access blocks and entities in the nether
      * __on_tick_ender()   // can access blocks and entities in the end
+     *
      * // player specific callbacks
+     * __on_player_uses_item(player, item_tuple, hand)  // right click action
+     * __on_player_releases_item(player, item_tuple, hand)  // client action (e.g. bow)
+     * __on_player_finishes_using_item(player, item_tuple, hand))  // server action (e.g. food), called item is from before it is used.
+     * __on_player_clicks_block(player, block, face)  // left click attack on a block
+     * __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)
+     * __on_player_breaks_block(player, block) // called after block is broken (the caller receives previous blockstate)
+     * __on_player_interacts_with_entity(player, entity, hand)
+     * __on_player_attacks_entity(player, entity)
+     * __on_player_rides(player, forward, strafe, jumping, sneaking)
      * __on_player_jumps(player)
      * __on_player_deploys_elytra(player)
      * __on_player_wakes_up(player)
-     * __on_player_rides(player, forward, strafe, jumping, sneaking)
-     * __on_player_uses_item(player, item_tuple, hand)
-     * __on_player_clicks_block(player, block, face)
-     * __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)
-     * __on_player_breaks_block(player, block)
-     * __on_player_interacts_with_entity(player, entity, hand)
-     * __on_player_attacks_entity(player, entity)
      * __on_player_starts_sneaking(player)
      * __on_player_stops_sneaking(player)
      * __on_player_starts_sprinting(player)
@@ -3103,7 +3106,10 @@ public class CarpetExpression
      * </pre>
      * <h3><code>/script event</code> command</h3>
      * <p>used to display current events and bounded functions. use <code>add_to</code> ro register new event, or <code>remove_from</code>
-     * to unbind a specific function from an event.</p>
+     * to unbind a specific function from an event. Function to be bounded to an event needs to have the same
+     * number of parameters as the action is attempting to bind to (see list above). All calls in modules
+     * loaded via <code>/script load</code> that have functions listed above will be automatically bounded and unbounded when
+     * script is unloaded.</p>
      * </div>
      */
     public void gameEventsSystem()

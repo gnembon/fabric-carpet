@@ -121,7 +121,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         return false;
     }

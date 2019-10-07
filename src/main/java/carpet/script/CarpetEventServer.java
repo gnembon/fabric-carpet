@@ -327,7 +327,7 @@ public class CarpetEventServer
             }
         },
 
-        PLAYER_RELEASED_ITEM("player_released_item",new CallbackList(3))
+        PLAYER_RELEASED_ITEM("player_releases_item",new CallbackList(3))
         {
             @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
@@ -343,7 +343,7 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
-        PLAYER_FINISHED_USING_ITEM("player_finished_using_item",new CallbackList(3))
+        PLAYER_FINISHED_USING_ITEM("player_finishes_using_item",new CallbackList(3))
         {
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
             {

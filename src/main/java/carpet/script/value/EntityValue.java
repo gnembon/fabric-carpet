@@ -101,13 +101,13 @@ public class EntityValue extends Value
     }
 
     @Override
-    public boolean equals(Value v)
+    public boolean equals(Object v)
     {
         if (v instanceof EntityValue)
         {
             return entity.getEntityId()==((EntityValue) v).entity.getEntityId();
         }
-        return super.equals(v);
+        return super.equals((Value)v);
     }
 
     @Override

@@ -202,11 +202,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         if (o instanceof NBTSerializableValue)
             return getTag().equals(((NBTSerializableValue) o).getTag());
-        return super.equals(o);
+        return super.equals((Value)o);
     }
 
     @Override
@@ -408,17 +408,13 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
     @Override
-    public Value remove(Value where)
+    public Value delete(Value where)
     {
         NbtPathArgumentType.NbtPath path = cachePath(where.getString());
         Tag tag = getTag().copy();
         int removed = path.remove(tag);
-        if (removed > 0)
-        {
-            replaceTag(tag);
-            return Value.TRUE;
-        }
-        return Value.FALSE;
+        if (removed > 0) replaceTag(tag);
+        return new NumericValue(removed);
     }
 
     public static class InventoryLocator

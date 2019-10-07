@@ -212,7 +212,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         if (o instanceof ListValue)
         {
@@ -346,7 +346,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value remove(Value where)
+    public Value delete(Value where)
     {
         long index = NumericValue.asNumber(where).getLong();
         int numitems = items.size();

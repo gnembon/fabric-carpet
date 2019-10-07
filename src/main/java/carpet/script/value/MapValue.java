@@ -120,7 +120,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         if (o instanceof MapValue)
         {
@@ -177,7 +177,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Value remove(Value where)
+    public Value delete(Value where)
     {
         return map.remove(where);
     }

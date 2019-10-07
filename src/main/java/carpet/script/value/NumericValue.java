@@ -125,7 +125,7 @@ public class NumericValue extends Value
         return getString().compareTo(o.getString());
     }
     @Override
-    public boolean equals(Value o)
+    public boolean equals(Object o)
     {
         if (o instanceof NullValue)
         {
@@ -133,7 +133,7 @@ public class NumericValue extends Value
         }
         if (o instanceof NumericValue)
         {
-            return !this.subtract(o).getBoolean();
+            return !this.subtract((Value) o).getBoolean();
         }
         return super.equals(o);
     }

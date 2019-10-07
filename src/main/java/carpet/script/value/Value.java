@@ -115,6 +115,16 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
         return getString().compareTo(o.getString());
     }
+
+    @Override // for hashmap key access
+    public boolean equals(final Object o)
+    {
+        if (o instanceof Value)
+            return this.compareTo((Value) o)==0;
+        return false;
+    }
+
+    // for general use
     public boolean equals(final Value o)
     {
         return this.compareTo(o)==0;

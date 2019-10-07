@@ -9,5 +9,5 @@ public interface ContainerValueInterface
     }
     public Value get(Value where);
     public boolean has(Value where);
-    public Value remove(Value where);
+    public Value delete(Value where);
 }
