@@ -7,13 +7,10 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.settings.CarpetSettings;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
@@ -21,9 +18,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,10 +30,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class CarpetEventServer
 {
+    public List<ScheduledCall> scheduledCalls = new LinkedList<>();
+
     public static class Callback
     {
         public String host;
@@ -146,9 +141,262 @@ public class CarpetEventServer
         }
     }
 
-    public Map<String, CallbackList> eventHandlers = new HashMap<>();
+    public enum Event
+    {
+        TICK("tick", new CallbackList(0))
+        {
+            @Override
+            public void onTick()
+            {
+                handler.call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
+            }
+        },
+        NETHER_TICK("tick_nether",new CallbackList(0))
+        {
+            @Override
+            public void onTick()
+            {
+                handler.call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
+            }
+        },
+        ENDER_TICK("tick_ender",new CallbackList(0))
+        {
+            @Override
+            public void onTick()
+            {
+                handler.call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
+            }
+        },
+        PLAYER_JUMPS("player_jumps", new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_DEPLOYS_ELYTRA("player_deploys_elytra",new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_WAKES_UP("player_wakes_up",new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_RIDES("player_rides",new CallbackList(5))
+        {
+            @Override
+            public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new NumericValue(forwardSpeed)),
+                        ((c, t) -> new NumericValue(strafeSpeed)),
+                        ((c, t) -> new NumericValue(jumping)),
+                        ((c, t) -> new NumericValue(sneaking))
+                ), player::getCommandSource);
+            }
+        },
+        PLAYER_USES_ITEM("player_uses_item",new CallbackList(3))
+        {
+            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            {
+                handler.call( () ->
+                {
+                    //ItemStack itemstack = player.getStackInHand(enumhand);
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> ListValue.fromItemStack(itemstack)),
+                            ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"))
+                    );
+                }, player::getCommandSource);
+            }
+        },
+        PLAYER_CLICKS_BLOCK("player_clicks_block",new CallbackList(3))
+        {
+            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            {
+                handler.call( () ->
+                {
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> ListValue.fromItemStack(itemstack)),
+                            ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"))
+                    );
+                }, player::getCommandSource);
+            }
+        },
+        PLAYER_RIGHT_CLICKS_BLOCK("player_right_clicks_block",new CallbackList(6))
+        {
+            @Override
+            public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes)//ItemStack itemstack, Hand enumhand, BlockPos blockpos, Direction enumfacing, Vec3d vec3d)
+            {
+                handler.call( () ->
+                {
+                    ItemStack itemstack = player.getStackInHand(enumhand);
+                    BlockPos blockpos = hitRes.getBlockPos();
+                    Direction enumfacing = hitRes.getSide();
+                    Vec3d vec3d = hitRes.getPos().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> ListValue.fromItemStack(itemstack)),
+                            ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")),
+                            ((c, t) -> new BlockValue(null, player.getServerWorld(), blockpos)),
+                            ((c, t) -> new StringValue(enumfacing.getName())),
+                            ((c, t) -> ListValue.of(
+                                    new NumericValue(vec3d.x),
+                                    new NumericValue(vec3d.y),
+                                    new NumericValue(vec3d.z)
+                            ))
+                    );
+                }, player::getCommandSource);
+            }
+        },
+        PLAYER_BREAK_BLOCK("player_breaks_block",new CallbackList(2))
+        {
+            @Override
+            public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new BlockValue(previousBS, player.getServerWorld(), pos))
+                ), player::getCommandSource);
+            }
+        },
+        PLAYER_INERACTSW_WITH_ENTITY("player_interacts_with_entity",new CallbackList(3))
+        {
+            @Override
+            public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new EntityValue(entity)),
+                        ((c, t) -> new StringValue(enumhand==Hand.MAIN_HAND?"mainhand":"offhand"))
+                ), player::getCommandSource);
+            }
+        },
+        PLAYER_ATTACKS_ENTITY("player_attacks_entity",new CallbackList(2))
+        {
+            @Override
+            public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new EntityValue(entity))
+                ), player::getCommandSource);
+            }
+        },
+        PLAYER_STARTS_SNEAKING("player_starts_sneaking",new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_STOPS_SNEAKING("player_stops_sneaking",new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_STARTS_SPRINTING("player_starts_sprinting",new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_STOPS_SPRINTING("player_stops_sprinting",new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
 
-    public List<ScheduledCall> scheduledCalls = new LinkedList<>();
+        PLAYER_RELEASED_ITEM("player_released_item",new CallbackList(3))
+        {
+            @Override
+            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            {
+                // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
+                handler.call( () ->
+                {
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> ListValue.fromItemStack(itemstack)),
+                            ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"))
+                    );
+                }, player::getCommandSource);
+            }
+        },
+        PLAYER_FINISHED_USING_ITEM("player_finished_using_item",new CallbackList(3))
+        {
+            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            {
+                // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
+                handler.call( () ->
+                {
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> ListValue.fromItemStack(itemstack)),
+                            ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"))
+                    );
+                }, player::getCommandSource);
+            }
+        };
+        // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
+
+
+
+
+        public String name;
+        public static Map<String, Event> byName = new HashMap<String, Event>(){{
+            for (Event e: Event.values())
+            {
+                put(e.name, e);
+            }
+        }};
+        public CallbackList handler;
+        Event(String name, CallbackList eventHandler)
+        {
+            this.name = name;
+            this.handler = eventHandler;
+        }
+        public boolean isNeeded()
+        {
+            return handler.callList.size() > 0;
+        }
+        //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
+        public void onTick() { }
+        public void onPlayerEvent(ServerPlayerEntity player) { }
+        public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
+        public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) { }
+        public void onBlockAction(ServerPlayerEntity player, BlockPos blockpos, Direction facing) { }
+        public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes) { }
+        public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
+        public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+    }
+
+
+    public CarpetEventServer()
+    {
+        for (Event e: Event.values())
+            e.handler.callList.clear();
+    }
 
     public void tick()
     {
@@ -175,50 +423,28 @@ public class CarpetEventServer
         scheduledCalls.add(new ScheduledCall(context, function, args, due));
     }
 
-
-    public CarpetEventServer()
-    {
-        eventHandlers.put("tick",new CallbackList(0));
-        eventHandlers.put("tick_nether",new CallbackList(0));
-        eventHandlers.put("tick_ender",new CallbackList(0));
-        eventHandlers.put("player_jumps",new CallbackList(1));
-        eventHandlers.put("player_deploys_elytra",new CallbackList(1));
-        eventHandlers.put("player_wakes_up",new CallbackList(1));
-        eventHandlers.put("player_rides",new CallbackList(5));
-        eventHandlers.put("player_uses_item",new CallbackList(3));
-        eventHandlers.put("player_clicks_block",new CallbackList(3));
-        eventHandlers.put("player_right_clicks_block",new CallbackList(6));
-        eventHandlers.put("player_breaks_block",new CallbackList(2));
-        eventHandlers.put("player_interacts_with_entity",new CallbackList(3));
-        eventHandlers.put("player_attacks_entity",new CallbackList(2));
-        eventHandlers.put("player_starts_sneaking",new CallbackList(1));
-        eventHandlers.put("player_stops_sneaking",new CallbackList(1));
-        eventHandlers.put("player_starts_sprinting",new CallbackList(1));
-        eventHandlers.put("player_stops_sprinting",new CallbackList(1));
-    }
-
     public boolean addEvent(String event, String host, String funName)
     {
-        if (!eventHandlers.containsKey(event))
+        if (!Event.byName.containsKey(event))
         {
             return false;
         }
-        return eventHandlers.get(event).addEventCall(host, funName);
+        return Event.byName.get(event).handler.addEventCall(host, funName);
     }
 
     public boolean removeEvent(String event, String funName)
     {
 
-        if (!eventHandlers.containsKey(event))
+        if (!Event.byName.containsKey(event))
             return false;
         Callback callback= decodeCallback(funName);
-        eventHandlers.get(event).removeEventCall(callback.host, callback.udf);
+        Event.byName.get(event).handler.removeEventCall(callback.host, callback.udf);
         return true;
     }
 
     public void removeAllHostEvents(String hostName)
     {
-        eventHandlers.forEach((e, a) -> a.removeAllCalls(hostName));
+        Event.byName.values().forEach((e) -> e.handler.removeAllCalls(hostName));
     }
 
     private Callback decodeCallback(String funName)
@@ -248,131 +474,6 @@ public class CarpetEventServer
                 lazyArgs.add( (c, t) -> v);
         }
         return new ScheduledCall(cc, function, lazyArgs, 0);
-    }
-
-    public void onTick()
-    {
-        eventHandlers.get("tick").call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
-        eventHandlers.get("tick_nether").call(Collections::emptyList, () ->
-                CarpetServer.minecraft_server.getCommandSource().withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_NETHER)));
-        eventHandlers.get("tick_ender").call(Collections::emptyList, () ->
-                CarpetServer.minecraft_server.getCommandSource().withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_END)));
-    }
-
-    public void onPlayerJumped(PlayerEntity player)
-    {
-        eventHandlers.get("player_jumps").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
-    }
-
-    public void onElytraDeploy(ServerPlayerEntity player)
-    {
-        eventHandlers.get("player_deploys_elytra").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
-    }
-
-    public void onOutOfBed(ServerPlayerEntity player)
-    {
-        eventHandlers.get("player_wakes_up").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
-    }
-
-    public void onMountControls(PlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
-    {
-        eventHandlers.get("player_rides").call( () -> Arrays.asList(
-                ((c, t) -> new EntityValue(player)),
-                ((c, t) -> new NumericValue(forwardSpeed)),
-                ((c, t) -> new NumericValue(strafeSpeed)),
-                ((c, t) -> new NumericValue(jumping)),
-                ((c, t) -> new NumericValue(sneaking))
-        ), player::getCommandSource);
-    }
-
-    public void onRightClick(ServerPlayerEntity player, Hand enumhand)
-    {
-        eventHandlers.get("player_uses_item").call( () ->
-        {
-            ItemStack itemstack = player.getStackInHand(enumhand);
-            return Arrays.asList(
-                    ((c, t) -> new EntityValue(player)),
-                    ((c, t) -> ListValue.fromItemStack(itemstack)),
-                    ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"))
-            );
-        }, player::getCommandSource);
-    }
-
-    public void onBlockClicked(ServerPlayerEntity player, BlockPos blockpos, Direction facing)
-    {
-        eventHandlers.get("player_clicks_block").call( () -> Arrays.asList(
-                ((c, t) -> new EntityValue(player)),
-                ((c, t) -> new BlockValue(null, player.getServerWorld(), blockpos)),
-                ((c, t) -> new StringValue(facing.getName()))
-        ), player::getCommandSource);
-    }
-
-    public void onRightClickBlock(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes)//ItemStack itemstack, Hand enumhand, BlockPos blockpos, Direction enumfacing, Vec3d vec3d)
-    {
-        eventHandlers.get("player_right_clicks_block").call( () ->
-        {
-            ItemStack itemstack = player.getStackInHand(enumhand);
-            BlockPos blockpos = hitRes.getBlockPos();
-            Direction enumfacing = hitRes.getSide();
-            Vec3d vec3d = hitRes.getPos().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
-            return Arrays.asList(
-                    ((c, t) -> new EntityValue(player)),
-                    ((c, t) -> ListValue.fromItemStack(itemstack)),
-                    ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")),
-                    ((c, t) -> new BlockValue(null, player.getServerWorld(), blockpos)),
-                    ((c, t) -> new StringValue(enumfacing.getName())),
-                    ((c, t) -> ListValue.of(
-                            new NumericValue(vec3d.x),
-                            new NumericValue(vec3d.y),
-                            new NumericValue(vec3d.z)
-                    ))
-            );
-        }, player::getCommandSource);
-    }
-
-    public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS)
-    {
-        eventHandlers.get("player_breaks_block").call( () -> Arrays.asList(
-                ((c, t) -> new EntityValue(player)),
-                ((c, t) -> new BlockValue(previousBS, player.getServerWorld(), pos))
-        ), player::getCommandSource);
-    }
-
-    public void onEntityInteracted(ServerPlayerEntity player, Entity entity, Hand enumhand)
-    {
-        eventHandlers.get("player_interacts_with_entity").call( () -> Arrays.asList(
-                ((c, t) -> new EntityValue(player)),
-                ((c, t) -> new EntityValue(entity)),
-                ((c, t) -> new StringValue(enumhand==Hand.MAIN_HAND?"mainhand":"offhand"))
-        ), player::getCommandSource);
-    }
-
-    public void onEntityAttacked(ServerPlayerEntity player, Entity entity)
-    {
-        eventHandlers.get("player_attacks_entity").call( () -> Arrays.asList(
-                ((c, t) -> new EntityValue(player)),
-                ((c, t) -> new EntityValue(entity))
-        ), player::getCommandSource);
-    }
-
-    public void onStartSneaking(ServerPlayerEntity player)
-    {
-        eventHandlers.get("player_starts_sneaking").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
-    }
-
-    public void onStopSneaking(ServerPlayerEntity player)
-    {
-        eventHandlers.get("player_stops_sneaking").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
-    }
-
-    public void onStartSprinting(ServerPlayerEntity player)
-    {
-        eventHandlers.get("player_starts_sprinting").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
-    }
-
-    public void onStopSprinting(ServerPlayerEntity player)
-    {
-        eventHandlers.get("player_stops_sprinting").call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
     }
 
     public ScheduledCall makeDeathCall(CarpetContext cc, String function, List<Value> extraArgs)
@@ -413,7 +514,4 @@ public class CarpetEventServer
                 (c, t) -> source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
         ));
     }
-
-
-
 }

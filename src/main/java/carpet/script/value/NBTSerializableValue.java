@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class NBTSerializableValue extends Value implements ContainerValueInterface
@@ -53,6 +55,22 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 throw new InternalExpressionException("Incorrect nbt data: "+nbtString);
             }
         };
+    }
+
+    public static NBTSerializableValue parseString(String nbtString)
+    {
+        Tag tag;
+        try
+        {
+            tag = (new StringNbtReader(new StringReader(nbtString))).parseTag();
+        }
+        catch (CommandSyntaxException e)
+        {
+            return null;
+        }
+        NBTSerializableValue value = new NBTSerializableValue(tag);
+        value.nbtString = nbtString;
+        return value;
     }
 
     public NBTSerializableValue(Tag tag)
@@ -261,10 +279,15 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
 
+
     private Tag modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, Tag newElement)
     {
+        return modify_insert(index, nbtPath, newElement, this.getTag().copy());
+    }
+
+    private Tag modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, Tag newElement, Tag currentTag)
+    {
         Collection<Tag> targets;
-        Tag currentTag = getTag().copy();
         try
         {
             targets = nbtPath.putIfAbsent(currentTag, ListTag::new);
@@ -284,7 +307,8 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             try
             {
                 AbstractListTag<?> targetList = (AbstractListTag) target;
-                targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy());
+                if (!targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
+                    return null;
                 modified = true;
             }
             catch (IndexOutOfBoundsException ignored)
@@ -320,6 +344,35 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     private Tag modify_replace(NbtPathArgumentType.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
     {
         Tag originalTag = getTag().copy();
+        String pathText = nbtPath.toString();
+        if (pathText.endsWith("]")) // workaround for array replacement or item in the array replacement
+        {
+            if (nbtPath.remove(originalTag)==0)
+                return null;
+            Pattern pattern = Pattern.compile("\\[[^\\[]*]$");
+            Matcher matcher = pattern.matcher(pathText);
+            if (!matcher.find()) // malformed path
+            {
+                return null;
+            }
+            String arrAccess = matcher.group();
+            int pos;
+            if (arrAccess.length()==2) // we just removed entire array
+                pos = 0;
+            else
+            {
+                try
+                {
+                    pos = Integer.parseInt(arrAccess.substring(1, arrAccess.length() - 1));
+                }
+                catch (NumberFormatException e)
+                {
+                    return null;
+                }
+            }
+            NbtPathArgumentType.NbtPath newPath = cachePath(pathText.substring(0, pathText.length()-arrAccess.length()));
+            return modify_insert(pos,newPath,replacement, originalTag);
+        }
         try
         {
             nbtPath.put(originalTag, () -> replacement);

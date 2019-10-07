@@ -347,7 +347,7 @@ public class CarpetExpression
      * <h1>Blocks / World API</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <h2>Specifying blocks</h2>
-     * <h3><code>block(x, y, z), block(state)</code></h3>
+     * <h3><code>block(x, y, z), block(l(x,y,z)), block(state)</code></h3>
      * <p>Returns either a block from specified location, or block with a specific state
      * (as used by <code>/setblock</code> command), so allowing for block properties, block entity data etc.
      * Blocks otherwise can be referenced everywhere by its simple string name, but its only used in its default state</p>
@@ -1189,6 +1189,8 @@ public class CarpetExpression
                 Value nbtValue = lv.get(inventoryLocator.offset+3).evalValue(c);
                 if (nbtValue instanceof NBTSerializableValue)
                     nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
+                else if (nbtValue instanceof NullValue)
+                    nbt = null;
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
@@ -1251,7 +1253,7 @@ public class CarpetExpression
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
             if (lv.size() <= inventoryLocator.offset)
-                throw new InternalExpressionException("inventory_set requires at least an item to be removed");
+                throw new InternalExpressionException("inventory_remove requires at least an item to be removed");
             ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).evalValue(c).getString());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset+1)
@@ -1540,10 +1542,9 @@ public class CarpetExpression
      * that corresponds to the path. For specification of <code>path</code> attribute, consult
      * vanilla <code>/data get entity</code> command.</p>
      * <p>Note that calls to <code>nbt</code> are considerably more expensive comparing to other
-     * calls in Minecraft API, and should only be used when there is no other option. Also returned
-     * NBT is just a string to any retrieval of information post can currently only be done with matching
-     * operator <code>~</code>. With time we are hoping not to support the <code>'nbt'</code> call better,
-     * but rather to fill the API, so that <code>'nbt'</code> calls are not needed</p>
+     * calls in Minecraft API, and should only be used when there is no other option.A returned value is of type <code>nbt</code>,
+     * which can be further manipulated with nbt type objects via <code>get, put, has, delete</code>, so try to use API calls
+     * first</p>
      * <h2>Entity Modification</h2>
      * <p>Like with entity querying, entity modifications happen through one function. Most position and movements
      * modifications don't work currently on players as their position is controlled by clients.</p>
@@ -1724,8 +1725,12 @@ public class CarpetExpression
             boolean hasTag = false;
             if (lv.size() > position.offset)
             {
-                hasTag = true;
-                tag = new NBTSerializableValue(lv.get(position.offset).evalValue(c).getString()).getCompoundTag();
+                NBTSerializableValue v = NBTSerializableValue.parseString(lv.get(position.offset).evalValue(c).getString());
+                if (v != null)
+                {
+                    hasTag = true;
+                    tag = v.getCompoundTag();
+                }
             }
             tag.putString("id", entityId.toString());
             Vec3d vec3d = position.vec;
@@ -2355,8 +2360,7 @@ public class CarpetExpression
      * <h2>System function</h2>
      * <h3><code>nbt(expr)</code></h3>
      * <p>Treats the argument as a nbt serializable string and returns its nbt value.
-     * In case nbt is not in a correct nbt compound tag format, the execution of a script will stop with an error,
-     * whenever that tag is used.</p>
+     * In case nbt is not in a correct nbt compound tag format, it will return <code>null</code> value.</p>
      * <h3><code>print(expr)</code></h3>
      * <p>Displays the result of the expression to the chat. Overrides default <code>scarpet</code> behaviour of
      * sending everyting to stderr.</p>
@@ -2376,11 +2380,11 @@ public class CarpetExpression
      * loop(1000,tick(100)) // runs the game twice as slow for 1000 ticks
      * </pre>
      * <h3><code>current_dimension()</code></h3>
-     * <p>Returns current dimension that scripts run in.</p>
+     * <p>Returns current dimension that the script runs in.</p>
      * <h3><code>in_dimension(smth, expr)</code></h3>
      * <p>Evaluates the expression <code>expr</code> with different dimension execution context. <code>smth</code> can
      * be an entity, world-localized block, so not <code>block('stone')</code>, or a string representing a dimension like:
-     * <code>'nether'</code>, <code>'end'</code> or <code>'overworld'</code>.</p>
+     * <code>'nether'</code>, <code>'the_nether'</code>, <code>'end'</code> or <code>'overworld'</code>, etc.</p>
      * <h3><code>schedule(delay, function, args...)</code></h3>
      * <p>Schedules a user defined function to run with a specified <code>delay</code> ticks of delay.
      * Scheduled functions run at the end of the tick, and they will run in order they were scheduled.</p>
@@ -2677,7 +2681,9 @@ public class CarpetExpression
             Value v = lv.get(0).evalValue(c);
             if (v instanceof NBTSerializableValue)
                 return (cc, tt) -> v;
-            Value ret = new NBTSerializableValue(v.getString());
+            Value ret = NBTSerializableValue.parseString(v.getString());
+            if (ret == null)
+                return LazyValue.NULL;
             return (cc, tt) -> ret;
         });
 

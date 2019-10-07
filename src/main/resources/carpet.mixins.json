@@ -123,6 +123,7 @@
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
     "DamageTracker_scarpetEventMixin",
+    "ServerPlayerEntity_scarpetEventMixin",
 
 
     "PistonBlock_movableTEMixin",

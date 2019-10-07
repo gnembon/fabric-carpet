@@ -200,7 +200,7 @@ public class CarpetScriptServer
             if (!fun.startsWith("__on_"))
                 continue;
             String event = fun.replaceFirst("__on_","");
-            if (!events.eventHandlers.containsKey(event))
+            if (!CarpetEventServer.Event.byName.containsKey(event))
                 continue;
             events.addEvent(event, hostName, fun);
         }

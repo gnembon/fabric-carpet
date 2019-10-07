@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.CarpetServer;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -14,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+import static carpet.script.CarpetEventServer.Event.PLAYER_BREAK_BLOCK;
+
 @Mixin(ServerPlayerInteractionManager.class)
 public class ServerPlayerInteractionManager_scarpetEventsMixin
 {
@@ -26,6 +27,6 @@ public class ServerPlayerInteractionManager_scarpetEventsMixin
     ))
     private void onBlockBroken(BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, BlockEntity be, Block b, boolean boolean_1)
     {
-        CarpetServer.scriptServer.events.onBlockBroken(player, blockPos_1, blockState_1);
+        PLAYER_BREAK_BLOCK.onBlockBroken(player, blockPos_1, blockState_1);
     }
 }

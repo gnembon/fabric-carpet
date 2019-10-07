@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.CarpetServer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.packet.ClientCommandC2SPacket;
@@ -16,7 +16,24 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import static carpet.script.CarpetEventServer.Event.PLAYER_ATTACKS_ENTITY;
+import static carpet.script.CarpetEventServer.Event.PLAYER_CLICKS_BLOCK;
+import static carpet.script.CarpetEventServer.Event.PLAYER_DEPLOYS_ELYTRA;
+import static carpet.script.CarpetEventServer.Event.PLAYER_INERACTSW_WITH_ENTITY;
+import static carpet.script.CarpetEventServer.Event.PLAYER_RELEASED_ITEM;
+import static carpet.script.CarpetEventServer.Event.PLAYER_RIDES;
+import static carpet.script.CarpetEventServer.Event.PLAYER_JUMPS;
+import static carpet.script.CarpetEventServer.Event.PLAYER_RIGHT_CLICKS_BLOCK;
+import static carpet.script.CarpetEventServer.Event.PLAYER_STARTS_SNEAKING;
+import static carpet.script.CarpetEventServer.Event.PLAYER_STARTS_SPRINTING;
+import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SNEAKING;
+import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SPRINTING;
+import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
+import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
+
 
 @Mixin(ServerPlayNetworkHandler.class)
 public class ServerPlayNetworkHandler_scarpetEventsMixin
@@ -26,9 +43,9 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     @Inject(method = "onPlayerInput", at = @At(value = "RETURN"))
     private void checkMoves(PlayerInputC2SPacket p, CallbackInfo ci)
     {
-        if (p.getSideways() != 0.0F || p.getForward() != 0.0F || p.isJumping() || p.isSneaking())
+        if (PLAYER_RIDES.isNeeded() && (p.getSideways() != 0.0F || p.getForward() != 0.0F || p.isJumping() || p.isSneaking()))
         {
-            CarpetServer.scriptServer.events.onMountControls(player, p.getSideways(), p.getForward(), p.isJumping(), p.isSneaking());
+            PLAYER_RIDES.onMountControls(player, p.getSideways(), p.getForward(), p.isJumping(), p.isSneaking());
         }
     }
 
@@ -38,17 +55,37 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onJump(PlayerMoveC2SPacket playerMoveC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onPlayerJumped(player);
+        PLAYER_JUMPS.onPlayerEvent(player);
     }
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;method_14263(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/server/network/packet/PlayerActionC2SPacket$Action;Lnet/minecraft/util/math/Direction;I)V"
+            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;method_14263(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/server/network/packet/PlayerActionC2SPacket$Action;Lnet/minecraft/util/math/Direction;I)V",
+            shift = At.Shift.AFTER
     ))
     private void onClicked(PlayerActionC2SPacket packet, CallbackInfo ci)
     {
         if (packet.getAction() == PlayerActionC2SPacket.Action.START_DESTROY_BLOCK)
-            CarpetServer.scriptServer.events.onBlockClicked(player, packet.getPos(), packet.getDirection());
+            PLAYER_CLICKS_BLOCK.onBlockAction(player, packet.getPos(), packet.getDirection());
+    }
+
+    @Redirect(method = "onPlayerAction", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;stopUsingItem()V"
+    ))
+    private void onStopUsing(ServerPlayerEntity serverPlayerEntity)
+    {
+        if (PLAYER_RELEASED_ITEM.isNeeded())
+        {
+            Hand hand = serverPlayerEntity.getActiveHand();
+            ItemStack stack = serverPlayerEntity.getActiveItem().copy();
+            serverPlayerEntity.stopUsingItem();
+            PLAYER_RELEASED_ITEM.onItemAction(player, hand, stack);
+        }
+        else
+        {
+            serverPlayerEntity.stopUsingItem();
+        }
     }
 
     @Inject(method = "onPlayerInteractBlock", at = @At(
@@ -57,9 +94,12 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onBlockInteracted(PlayerInteractBlockC2SPacket playerInteractBlockC2SPacket_1, CallbackInfo ci)
     {
-        Hand hand = playerInteractBlockC2SPacket_1.getHand();
-        BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getHitY();
-        CarpetServer.scriptServer.events.onRightClickBlock(player, hand, hitRes );
+        if (PLAYER_RIGHT_CLICKS_BLOCK.isNeeded())
+        {
+            Hand hand = playerInteractBlockC2SPacket_1.getHand();
+            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getHitY();
+            PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes);
+        }
     }
 
     @Inject(method = "onPlayerInteractItem", at = @At(
@@ -68,7 +108,11 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onItemClicked(PlayerInteractItemC2SPacket playerInteractItemC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onRightClick(player, playerInteractItemC2SPacket_1.getHand());
+        if (PLAYER_USES_ITEM.isNeeded())
+        {
+            Hand hand = playerInteractItemC2SPacket_1.getHand();
+            PLAYER_USES_ITEM.onItemAction(player, hand, player.getStackInHand(hand).copy());
+        }
     }
 
     @Inject(method = "onClientCommand", at = @At(
@@ -78,7 +122,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onStartSneaking(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onStartSneaking(player);
+        PLAYER_STARTS_SNEAKING.onPlayerEvent(player);
     }
 
     @Inject(method = "onClientCommand", at = @At(
@@ -88,7 +132,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onStopSneaking(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onStopSneaking(player);
+        PLAYER_STOPS_SNEAKING.onPlayerEvent(player);
     }
 
     @Inject(method = "onClientCommand", at = @At(
@@ -98,7 +142,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onStartSprinting(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onStartSprinting(player);
+        PLAYER_STARTS_SPRINTING.onPlayerEvent(player);
     }
 
     @Inject(method = "onClientCommand", at = @At(
@@ -108,7 +152,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onStopSprinting(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onStopSprinting(player);
+        PLAYER_STOPS_SPRINTING.onPlayerEvent(player);
     }
 
     @Inject(method = "onClientCommand", at = @At(
@@ -119,7 +163,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     private void onWakeUp(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         //weird one - doesn't seem to work, maybe MP
-        CarpetServer.scriptServer.events.onOutOfBed(player);
+        PLAYER_WAKES_UP.onPlayerEvent(player);
     }
 
     @Inject(method = "onClientCommand", at = @At(
@@ -129,7 +173,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onElytraEngage(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onElytraDeploy(player);
+        PLAYER_DEPLOYS_ELYTRA.onPlayerEvent(player);
     }
 
     @Inject(method = "onPlayerInteractEntity", at = @At(
@@ -138,7 +182,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onEntityInteract(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onEntityInteracted(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), playerInteractEntityC2SPacket_1.getHand());
+        PLAYER_INERACTSW_WITH_ENTITY.onEntityAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), playerInteractEntityC2SPacket_1.getHand());
     }
 
     @Inject(method = "onPlayerInteractEntity", at = @At(
@@ -148,6 +192,6 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     private void onEntityAttack(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
     {
         //todo add hit and hand in the future
-        CarpetServer.scriptServer.events.onEntityAttacked(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()));
+        PLAYER_ATTACKS_ENTITY.onEntityAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), null);
     }
 }
