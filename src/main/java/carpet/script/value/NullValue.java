@@ -28,7 +28,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     public NullValue() {super(0.0D);}
 
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         return o instanceof NullValue;
     }
@@ -43,5 +43,11 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     public String getTypeString()
     {
         return "null";
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return 0;
     }
 }

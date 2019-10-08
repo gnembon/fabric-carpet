@@ -14,23 +14,28 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.AbstractListTag;
 import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class NBTSerializableValue extends Value
+public class NBTSerializableValue extends Value implements ContainerValueInterface
 {
     private String nbtString = null;
     private Tag nbtTag = null;
-    private Supplier<CompoundTag> nbtSupplier = null;
+    private Supplier<Tag> nbtSupplier = null;
 
     public NBTSerializableValue(ItemStack stack)
     {
@@ -43,7 +48,7 @@ public class NBTSerializableValue extends Value
         {
             try
             {
-                return (new StringNbtReader(new StringReader(nbtString))).parseCompoundTag();
+                return (new StringNbtReader(new StringReader(nbtString))).parseTag();
             }
             catch (CommandSyntaxException e)
             {
@@ -52,6 +57,26 @@ public class NBTSerializableValue extends Value
         };
     }
 
+    public static NBTSerializableValue parseString(String nbtString)
+    {
+        Tag tag;
+        try
+        {
+            tag = (new StringNbtReader(new StringReader(nbtString))).parseTag();
+        }
+        catch (CommandSyntaxException e)
+        {
+            return null;
+        }
+        NBTSerializableValue value = new NBTSerializableValue(tag);
+        value.nbtString = nbtString;
+        return value;
+    }
+
+    public Value clone()
+    {
+        return new NBTSerializableValue(getTag().copy());
+    }
     public NBTSerializableValue(Tag tag)
     {
         nbtTag = tag;
@@ -156,7 +181,7 @@ public class NBTSerializableValue extends Value
         return slot;
     }
 
-    public static Value decodeTag(Tag t)
+    private static Value decodeTag(Tag t)
     {
         if (t instanceof CompoundTag)
             return new NBTSerializableValue(t);
@@ -166,19 +191,26 @@ public class NBTSerializableValue extends Value
         return new StringValue(t.asString());
     }
 
-    public Tag getTag()
+    private Tag getTag()
     {
         if (nbtTag == null)
             nbtTag = nbtSupplier.get();
         return nbtTag;
     }
 
+    private void replaceTag(Tag newTag)
+    {
+        nbtTag = newTag;
+        nbtString = null;
+        nbtSupplier = null;  // just to be sure
+    }
+
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         if (o instanceof NBTSerializableValue)
             return getTag().equals(((NBTSerializableValue) o).getTag());
-        return super.equals(o);
+        return super.equals((Value)o);
     }
 
     @Override
@@ -207,6 +239,188 @@ public class NBTSerializableValue extends Value
         }
     }
 
+    @Override
+    public Value put(Value where, Value value)
+    {
+        return put(where, value, new StringValue("replace"));
+    }
+
+    @Override
+    public Value put(Value where, Value value, Value conditions)
+    {
+        /// WIP
+
+        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
+        Tag tagToInsert = value instanceof NBTSerializableValue ?
+                ((NBTSerializableValue) value).getTag() :
+                new NBTSerializableValue(value.getString()).getTag();
+        Tag modifiedTag;
+        if (conditions instanceof NumericValue)
+        {
+            modifiedTag = modify_insert((int)((NumericValue) conditions).getLong(), path, tagToInsert);
+        }
+        else
+        {
+            String ops = conditions.getString();
+            if (ops.equalsIgnoreCase("merge"))
+            {
+                modifiedTag = modify_merge(path, tagToInsert);
+            }
+            else if (ops.equalsIgnoreCase("replace"))
+            {
+                modifiedTag = modify_replace(path, tagToInsert);
+            }
+            else
+            {
+                return this;
+            }
+        }
+        if (modifiedTag != null)
+        {
+            replaceTag(modifiedTag);
+        }
+        return this;
+    }
+
+
+
+    private Tag modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, Tag newElement)
+    {
+        return modify_insert(index, nbtPath, newElement, this.getTag().copy());
+    }
+
+    private Tag modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, Tag newElement, Tag currentTag)
+    {
+        Collection<Tag> targets;
+        try
+        {
+            targets = nbtPath.putIfAbsent(currentTag, ListTag::new);
+        }
+        catch (CommandSyntaxException e)
+        {
+            return null;
+        }
+
+        boolean modified = false;
+        for (Tag target : targets)
+        {
+            if (!(target instanceof AbstractListTag))
+            {
+                continue;
+            }
+            try
+            {
+                AbstractListTag<?> targetList = (AbstractListTag) target;
+                if (!targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
+                    return null;
+                modified = true;
+            }
+            catch (IndexOutOfBoundsException ignored)
+            {
+            }
+        }
+        return modified?currentTag:null;
+    }
+
+
+    private Tag modify_merge(NbtPathArgumentType.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    {
+        if (!(replacement instanceof CompoundTag))
+        {
+            return getTag();
+        }
+        Tag originalTag = getTag().copy();
+        try
+        {
+            for (Tag target : nbtPath.putIfAbsent(originalTag, CompoundTag::new))
+            {
+                if (!(target instanceof CompoundTag))
+                {
+                    continue;
+                }
+                ((CompoundTag) target).copyFrom((CompoundTag) replacement);
+            }
+        }
+        catch (CommandSyntaxException ignored) { }
+        return originalTag;
+    }
+
+    private Tag modify_replace(NbtPathArgumentType.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    {
+        Tag originalTag = getTag().copy();
+        String pathText = nbtPath.toString();
+        if (pathText.endsWith("]")) // workaround for array replacement or item in the array replacement
+        {
+            if (nbtPath.remove(originalTag)==0)
+                return null;
+            Pattern pattern = Pattern.compile("\\[[^\\[]*]$");
+            Matcher matcher = pattern.matcher(pathText);
+            if (!matcher.find()) // malformed path
+            {
+                return null;
+            }
+            String arrAccess = matcher.group();
+            int pos;
+            if (arrAccess.length()==2) // we just removed entire array
+                pos = 0;
+            else
+            {
+                try
+                {
+                    pos = Integer.parseInt(arrAccess.substring(1, arrAccess.length() - 1));
+                }
+                catch (NumberFormatException e)
+                {
+                    return null;
+                }
+            }
+            NbtPathArgumentType.NbtPath newPath = cachePath(pathText.substring(0, pathText.length()-arrAccess.length()));
+            return modify_insert(pos,newPath,replacement, originalTag);
+        }
+        try
+        {
+            nbtPath.put(originalTag, () -> replacement);
+        }
+        catch (CommandSyntaxException e)
+        {
+            return null;
+        }
+        return originalTag;
+    }
+
+    @Override
+    public Value get(Value value)
+    {
+        NbtPathArgumentType.NbtPath path = cachePath(value.getString());
+        try
+        {
+            List<Tag> tags = path.get(getTag());
+            if (tags.size()==0)
+                return Value.NULL;
+            if (tags.size()==1)
+                return NBTSerializableValue.decodeTag(tags.get(0));
+            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
+        }
+        catch (CommandSyntaxException ignored) { }
+        return Value.NULL;
+    }
+
+    @Override
+    public boolean has(Value where)
+    {
+        return cachePath(where.getString()).count(getTag()) > 0;
+    }
+
+    @Override
+    public Value delete(Value where)
+    {
+        NbtPathArgumentType.NbtPath path = cachePath(where.getString());
+        Tag tag = getTag().copy();
+        int removed = path.remove(tag);
+        if (removed > 0) replaceTag(tag);
+        return new NumericValue(removed);
+    }
+
     public static class InventoryLocator
     {
         public Object owner;
@@ -223,7 +437,7 @@ public class NBTSerializableValue extends Value
     }
 
     private static Map<String, NbtPathArgumentType.NbtPath> pathCache = new HashMap<>();
-    public static NbtPathArgumentType.NbtPath cachePath(String arg)
+    private static NbtPathArgumentType.NbtPath cachePath(String arg)
     {
         NbtPathArgumentType.NbtPath res = pathCache.get(arg);
         if (res != null)
@@ -240,23 +454,6 @@ public class NBTSerializableValue extends Value
             pathCache.clear();
         pathCache.put(arg, res);
         return res;
-    }
-
-    @Override
-    public Value getElementAt(Value value)
-    {
-        NbtPathArgumentType.NbtPath path = cachePath(value.getString());
-        try
-        {
-            List<Tag> tags = path.get(getTag());
-            if (tags.size()==0)
-                return Value.NULL;
-            if (tags.size()==1)
-                return NBTSerializableValue.decodeTag(tags.get(0));
-            return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
-        }
-        catch (CommandSyntaxException ignored) { }
-        return Value.NULL;
     }
 
     @Override

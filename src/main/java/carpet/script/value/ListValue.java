@@ -4,16 +4,13 @@ import carpet.script.exception.InternalExpressionException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.registry.Registry;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.lang.Math.abs;
 
-public class ListValue extends AbstractListValue
+public class ListValue extends AbstractListValue implements ContainerValueInterface
 {
     protected List<Value> items;
     @Override
@@ -102,6 +99,7 @@ public class ListValue extends AbstractListValue
         }
         return output;
     }
+    @Override
     public void append(Value v)
     {
         items.add(v);
@@ -215,18 +213,11 @@ public class ListValue extends AbstractListValue
     }
 
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         if (o instanceof ListValue)
         {
-            ListValue ol = (ListValue)o;
-            int this_size = this.getItems().size();
-            int o_size = ol.getItems().size();
-            if (this_size != o_size) return false;
-            if (this_size == 0) return true;
-            for (int i = 0; i < this_size; i++)
-                if (!this.items.get(i).equals(ol.items.get(i))) return false;
-            return true;
+            return getItems().equals(((ListValue) o).getItems());
         }
         return false;
     }
@@ -275,6 +266,8 @@ public class ListValue extends AbstractListValue
             super(list);
         }
     }
+
+    @Override
     public int length()
     {
         return items.size();
@@ -313,7 +306,69 @@ public class ListValue extends AbstractListValue
     }
 
     @Override
-    public Value getElementAt(Value value)
+    public Value put(Value where, Value value, Value conditionValue)
+    {
+        String condition = conditionValue.getString();
+        if (condition.equalsIgnoreCase("insert"))
+            return put(where, value, false, false);
+        if (condition.equalsIgnoreCase("extend"))
+            return put(where, value, false, true);
+        if (condition.equalsIgnoreCase("replace"))
+            return put(where, value, true, false);
+        throw new  InternalExpressionException("list put modifier could be either insert, or replace");
+    }
+
+    @Override
+    public Value put(Value ind, Value value)
+    {
+        return put(ind, value, true, false);
+    }
+    private Value  put(Value ind, Value value, boolean replace, boolean extend)
+    {
+        if (ind == Value.NULL)
+        {
+            if (extend && value instanceof AbstractListValue)
+            {
+                ((AbstractListValue) value).iterator().forEachRemaining((v)-> items.add(v));
+            }
+            else
+            {
+                items.add(value);
+            }
+            return items.get(items.size()-1);
+        }
+        else
+        {
+            int numitems = items.size();
+            int index = (int) NumericValue.asNumber(ind).getLong();
+            if (index < 0)
+            {
+                long range = abs(index) / numitems;
+                index += (range + 2) * numitems;
+                index = index % numitems;
+            }
+            if (replace)
+            {
+                while (index >= items.size()) items.add(Value.NULL);
+                return items.set(index, value);
+            }
+            while (index > items.size()) items.add(Value.NULL);
+
+            if (extend && value instanceof AbstractListValue)
+            {
+                Iterable<Value> iterable = ((AbstractListValue) value)::iterator;
+                List<Value> appendix = StreamSupport.stream( iterable.spliterator(), false).collect(Collectors.toList());
+                items.addAll(index, appendix );
+                return items.get(index+appendix.size()-1);
+            }
+            items.add(index, value);
+            return value;
+
+        }
+    }
+
+    @Override
+    public Value get(Value value)
     {
         long index = NumericValue.asNumber(value).getLong();
         int numitems = items.size();
@@ -322,9 +377,34 @@ public class ListValue extends AbstractListValue
         index = index % numitems;
         return items.get((int)index);
     }
+
+    @Override
+    public boolean has(Value where)
+    {
+        long index = NumericValue.asNumber(where).getLong();
+        return index >= 0 && index < items.size();
+    }
+
+    @Override
+    public Value delete(Value where)
+    {
+        long index = NumericValue.asNumber(where).getLong();
+        int numitems = items.size();
+        long range = abs(index)/numitems;
+        index += (range+2)*numitems;
+        index = index % numitems;
+        return items.remove((int)index);
+    }
+
     @Override
     public String getTypeString()
     {
         return "list";
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return items.hashCode();
     }
 }

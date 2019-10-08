@@ -94,7 +94,8 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
         boolean isHex = false;
 
-        if (Character.isDigit(ch) || (ch == decimalSeparator && Character.isDigit(peekNextChar())))
+        if (Character.isDigit(ch)) // || (ch == decimalSeparator && Character.isDigit(peekNextChar())))
+                                   // decided to no support this notation to favour element access via . operator
         {
             if (ch == '0' && (peekNextChar() == 'x' || peekNextChar() == 'X'))
                 isHex = true;

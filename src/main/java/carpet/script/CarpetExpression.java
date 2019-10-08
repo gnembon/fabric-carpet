@@ -99,7 +99,7 @@ import static java.lang.Math.sqrt;
 /**
  * <h1>Minecraft specific API and <code>scarpet</code> language add-ons and commands</h1>
  * <p>Here is the gist of the Minecraft related functions. Otherwise the CarpetScript could live without Minecraft.</p>
- * <h2>Dimension issues</h2>
+ * <h2>Dimension warning</h2>
  * <p>One note, which is important is that most of the calls for entities and blocks
  * would refer to the current dimension of the caller, meaning, that if we for example
  * list all the players using <code>player('all')</code> function, if a player is in the
@@ -108,7 +108,8 @@ import static java.lang.Math.sqrt;
  * refer to the overworld blocks and entities.
  * In case you would want to run commands across all dimensions, just run three of them, using
  * <code>/execute in overworld/the_nether/the_end run script run ...</code> and query
- * players using <code>player('*')</code>, which only returns players in current dimension.</p>
+ * players using <code>player('*')</code>, which only returns players in current dimension, or use
+ * <code>in_dimension(expr)</code> function.</p>
  */
 public class CarpetExpression 
 {
@@ -347,7 +348,7 @@ public class CarpetExpression
      * <h1>Blocks / World API</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <h2>Specifying blocks</h2>
-     * <h3><code>block(x, y, z), block(state)</code></h3>
+     * <h3><code>block(x, y, z), block(l(x,y,z)), block(state)</code></h3>
      * <p>Returns either a block from specified location, or block with a specific state
      * (as used by <code>/setblock</code> command), so allowing for block properties, block entity data etc.
      * Blocks otherwise can be referenced everywhere by its simple string name, but its only used in its default state</p>
@@ -400,6 +401,8 @@ public class CarpetExpression
      *     place_item('piston,x,y,z,'down') // places a piston facing down
      *     place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
      * </pre>
+     * <h3><code>biome(pos)</code></h3>
+     * <p>returns biome at that block position.</p>
      * <h3><code>set_biome(pos, biome_name)</code></h3>
      * <p>changes biome at that block position.</p>
      * <h3><code>update(pos)</code></h3>
@@ -997,6 +1000,16 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
 
+        this.expr.addLazyFunction("biome", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            Biome biome = world.getBiome(pos);
+            Value res = new StringValue(biome.getTranslationKey().replaceFirst("^biome\\.minecraft\\.", ""));
+            return (_c, _t) -> res;
+        });
+
         this.expr.addLazyFunction("set_biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
@@ -1177,6 +1190,8 @@ public class CarpetExpression
                 Value nbtValue = lv.get(inventoryLocator.offset+3).evalValue(c);
                 if (nbtValue instanceof NBTSerializableValue)
                     nbt = ((NBTSerializableValue)nbtValue).getCompoundTag();
+                else if (nbtValue instanceof NullValue)
+                    nbt = null;
                 else
                     nbt = new NBTSerializableValue(nbtValue.getString()).getCompoundTag();
             }
@@ -1239,7 +1254,7 @@ public class CarpetExpression
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
             if (lv.size() <= inventoryLocator.offset)
-                throw new InternalExpressionException("inventory_set requires at least an item to be removed");
+                throw new InternalExpressionException("inventory_remove requires at least an item to be removed");
             ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).evalValue(c).getString());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset+1)
@@ -1462,9 +1477,11 @@ public class CarpetExpression
      * <h3><code>query(e,'age')</code></h3>
      * <p>Age, in ticks, of the entity, i.e. how long it existed.</p>
      * <h3><code>query(e,'item')</code></h3>
-     * <p>Name of the item if its an item entity, <code>null</code> otherwise</p>
+     * <p>The item triple (name, count, nbt) if its an item entity, <code>null</code> otherwise</p>
      * <h3><code>query(e,'count')</code></h3>
      * <p>Number of items in a stack from item entity, <code>null</code> otherwise</p>
+     * <h3><code>query(e,'pickup_delay')</code></h3>
+     * <p>Retrieves pickup delay timeout for an item entity, <code>null</code> otherwise</p>
      * <h3><code>query(e,'is_baby')</code></h3>
      * <p>Boolean, true if its a baby.</p>
      * <h3><code>query(e,'target')</code></h3>
@@ -1526,10 +1543,9 @@ public class CarpetExpression
      * that corresponds to the path. For specification of <code>path</code> attribute, consult
      * vanilla <code>/data get entity</code> command.</p>
      * <p>Note that calls to <code>nbt</code> are considerably more expensive comparing to other
-     * calls in Minecraft API, and should only be used when there is no other option. Also returned
-     * NBT is just a string to any retrieval of information post can currently only be done with matching
-     * operator <code>~</code>. With time we are hoping not to support the <code>'nbt'</code> call better,
-     * but rather to fill the API, so that <code>'nbt'</code> calls are not needed</p>
+     * calls in Minecraft API, and should only be used when there is no other option. Returned value is of type <code>nbt</code>,
+     * which can be further manipulated with nbt type objects via <code>get, put, has, delete</code>, so try to use API calls
+     * first for that.</p>
      * <h2>Entity Modification</h2>
      * <p>Like with entity querying, entity modifications happen through one function. Most position and movements
      * modifications don't work currently on players as their position is controlled by clients.</p>
@@ -1555,7 +1571,8 @@ public class CarpetExpression
      * <h3><code>modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', l(x, y, z) )</code></h3>
      * <p>Adds a vector to the motion vector. Most realistic way to apply a force to an entity.</p>
      * <h3><code>modify(e, 'custom_name'), modify(e, 'custom_name', name )</code></h3>
-     * <p>Sets a custom name for an entity. Removes a custom name if the argument is <code>null</code></p>
+     * <h3><code>modify(e,'pickup_delay')</code></h3>
+     * <p>Sets a custom pickup delay if the entity argument is an item entity</p>
      * <h3><code>modify(e, 'dismount')</code></h3>
      * <p>Dismounts riding entity.</p>
      * <h3><code>modify(e, 'mount', other)</code></h3>
@@ -1574,6 +1591,44 @@ public class CarpetExpression
      * <p>Sets AI to stay around the home position, within <code>distance</code> blocks from it. <code>distance</code>
      * defaults to 16 blocks. <code>null</code> removes it. <i>May</i> not work fully with mobs that have this AI built in, like
      * Villagers.</p>
+     *
+     * <h2>Entity Events</h2>
+     * <p>There is a number of events that happen to entities that you can attach your own code to in the form of event
+     * handlers. The event handler is any function that runs in your package that accepts certain expected parameters, which
+     * you can expand with your own arguments. When it comes to the moment when the given command needs to be executed, it
+     * does so providing that number of arguments it accepts is equal number of event arguments, and extra arguments passed when
+     * defining the callback with <code>entity_event</code></p>
+     * <p>The following events can be handled by entities. </p>
+     * <ul>
+     *     <li><code>'on_tick'</code>: executes every tick right before entity is ticked in the game. Required arguments: <code>entity</code></li>
+     *     <li><code>'on_death'</code>: executes once when a living entity dies. Required arguments: <code>entity, reason</code></li>
+     *     <li><code>'on_removed'</code>: execute once when an entity is removed. Required arguments: <code>entity</code></li>
+     *     <li><code>'on_damaged'</code>: executed every time a living entity is about to receive damage. Required arguments:  <code>entity, amount, source, attacking_entity</code></li>
+     * </ul>
+     * <p>It doesn't mean that all entity types will have a chance to
+     * execute a given event, but entities will not error when you will attach inapplicable event to it.</p>
+     * <h3><code>entity_event(e, event, call_name, args...)</code></h3>
+     * <p>Attaches specific function from the current package to be called upon the <code>event</code>, with extra <code>args</code>
+     * curried to the original required arguments for the event handler</p>
+     * <pre>
+     * protect_villager(entity, amount, source, source_entity, healing_player) -&gt;
+     * (
+     * 	 if(source_entity &amp;&amp; source_entity~'type' != 'player',
+     * 	   modify(entity, 'health', amount + entity~'health' );
+     * 	   particle('end_rod', pos(entity)+l(0,3,0));
+     * 	   print(str('%s healed thanks to %s', entity, healing_player))
+     * 	 )
+     * );
+     *
+     * __on_player_interacts_with_entity(player, entity, hand) -&gt;
+     * (
+     *   if (entity~'type' == 'villager',
+     * 	   entity_event(entity, 'on_damage', 'protect_villager', player~'name')
+     *   )
+     * )
+     * </pre>
+     * <p>In this case this will protect a villager from entity damage (zombies, etc.) except players by granting all the health
+     * back to the villager after being harmed.</p>
      * </div>
      */
 
@@ -1671,8 +1726,12 @@ public class CarpetExpression
             boolean hasTag = false;
             if (lv.size() > position.offset)
             {
-                hasTag = true;
-                tag = new NBTSerializableValue(lv.get(position.offset).evalValue(c).getString()).getCompoundTag();
+                NBTSerializableValue v = NBTSerializableValue.parseString(lv.get(position.offset).evalValue(c).getString());
+                if (v != null)
+                {
+                    hasTag = true;
+                    tag = v.getCompoundTag();
+                }
             }
             tag.putString("id", entityId.toString());
             Vec3d vec3d = position.vec;
@@ -2102,6 +2161,12 @@ public class CarpetExpression
                     y = miny;
                     z = minz;
                 }
+
+                @Override
+                public String getString()
+                {
+                    return String.format("rect[(%d,%d,%d),..,(%d,%d,%d)]",minx, miny, minz, maxx, maxy, maxz);
+                }
             };
         });
 
@@ -2193,6 +2258,12 @@ public class CarpetExpression
                         curradius = 0;
                         curpos = 0;
                     }
+
+                    @Override
+                    public String getString()
+                    {
+                        return String.format("diamond[(%d,%d,%d),%d,0]",cx, cy, cz, width);
+                    }
                 };
             }
             else
@@ -2249,6 +2320,12 @@ public class CarpetExpression
                         curpos = 0;
                         curheight = -height;
                     }
+
+                    @Override
+                    public String getString()
+                    {
+                        return String.format("diamond[(%d,%d,%d),%d,%d]",cx, cy, cz, width, height);
+                    }
                 };
             }
         });
@@ -2284,8 +2361,8 @@ public class CarpetExpression
      * <h2>System function</h2>
      * <h3><code>nbt(expr)</code></h3>
      * <p>Treats the argument as a nbt serializable string and returns its nbt value.
-     * In case nbt is not in a correct nbt compound tag format, the execution of a script will stop with an error,
-     * whenever that tag is used.</p>
+     * In case nbt is not in a correct nbt compound tag format, it will return <code>null</code> value.</p>
+     * <p>Consult section about container operations in <code>Expression</code> to learn about possible operations on nbt values.</p>
      * <h3><code>print(expr)</code></h3>
      * <p>Displays the result of the expression to the chat. Overrides default <code>scarpet</code> behaviour of
      * sending everyting to stderr.</p>
@@ -2305,11 +2382,11 @@ public class CarpetExpression
      * loop(1000,tick(100)) // runs the game twice as slow for 1000 ticks
      * </pre>
      * <h3><code>current_dimension()</code></h3>
-     * <p>Returns current dimension that scripts run in.</p>
+     * <p>Returns current dimension that the script runs in.</p>
      * <h3><code>in_dimension(smth, expr)</code></h3>
      * <p>Evaluates the expression <code>expr</code> with different dimension execution context. <code>smth</code> can
      * be an entity, world-localized block, so not <code>block('stone')</code>, or a string representing a dimension like:
-     * <code>'nether'</code>, <code>'end'</code> or <code>'overworld'</code>.</p>
+     * <code>'nether'</code>, <code>'the_nether'</code>, <code>'end'</code> or <code>'overworld'</code>, etc.</p>
      * <h3><code>schedule(delay, function, args...)</code></h3>
      * <p>Schedules a user defined function to run with a specified <code>delay</code> ticks of delay.
      * Scheduled functions run at the end of the tick, and they will run in order they were scheduled.</p>
@@ -2606,7 +2683,9 @@ public class CarpetExpression
             Value v = lv.get(0).evalValue(c);
             if (v instanceof NBTSerializableValue)
                 return (cc, tt) -> v;
-            Value ret = new NBTSerializableValue(v.getString());
+            Value ret = NBTSerializableValue.parseString(v.getString());
+            if (ret == null)
+                return LazyValue.NULL;
             return (cc, tt) -> ret;
         });
 
@@ -3003,22 +3082,25 @@ public class CarpetExpression
      * <h2></h2>
      * <h3>Event list</h3>
      * <p>Here is a list of events that can be handled by scarpet. This list includes prefixes required by modules to
-     * autoload them, but you can add any function to any event if it had required parameters:</p>
+     * autoload them, but you can add any function to any event if it accepts required number of parameters:</p>
      * <pre>
      * __on_tick()         // can access blocks and entities in the overworld
      * __on_tick_nether()  // can access blocks and entities in the nether
      * __on_tick_ender()   // can access blocks and entities in the end
+     *
      * // player specific callbacks
+     * __on_player_uses_item(player, item_tuple, hand)  // right click action
+     * __on_player_releases_item(player, item_tuple, hand)  // client action (e.g. bow)
+     * __on_player_finishes_using_item(player, item_tuple, hand))  // server action (e.g. food), called item is from before it is used.
+     * __on_player_clicks_block(player, block, face)  // left click attack on a block
+     * __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)
+     * __on_player_breaks_block(player, block) // called after block is broken (the caller receives previous blockstate)
+     * __on_player_interacts_with_entity(player, entity, hand)
+     * __on_player_attacks_entity(player, entity)
+     * __on_player_rides(player, forward, strafe, jumping, sneaking)
      * __on_player_jumps(player)
      * __on_player_deploys_elytra(player)
      * __on_player_wakes_up(player)
-     * __on_player_rides(player, forward, strafe, jumping, sneaking)
-     * __on_player_uses_item(player, item_tuple, hand)
-     * __on_player_clicks_block(player, block, face)
-     * __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)
-     * __on_player_breaks_block(player, block)
-     * __on_player_interacts_with_entity(player, entity, hand)
-     * __on_player_attacks_entity(player, entity)
      * __on_player_starts_sneaking(player)
      * __on_player_stops_sneaking(player)
      * __on_player_starts_sprinting(player)
@@ -3026,7 +3108,10 @@ public class CarpetExpression
      * </pre>
      * <h3><code>/script event</code> command</h3>
      * <p>used to display current events and bounded functions. use <code>add_to</code> ro register new event, or <code>remove_from</code>
-     * to unbind a specific function from an event.</p>
+     * to unbind a specific function from an event. Function to be bounded to an event needs to have the same
+     * number of parameters as the action is attempting to bind to (see list above). All calls in modules
+     * loaded via <code>/script load</code> that have functions listed above will be automatically bounded and unbounded when
+     * script is unloaded.</p>
      * </div>
      */
     public void gameEventsSystem()

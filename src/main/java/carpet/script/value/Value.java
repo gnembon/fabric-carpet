@@ -115,6 +115,16 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
         return getString().compareTo(o.getString());
     }
+
+    @Override // for hashmap key access
+    public boolean equals(final Object o)
+    {
+        if (o instanceof Value)
+            return this.compareTo((Value) o)==0;
+        return false;
+    }
+
+    // for general use
     public boolean equals(final Value o)
     {
         return this.compareTo(o)==0;
@@ -173,13 +183,16 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return (long)readNumber();
     }
 
-    public Value getElementAt(Value v2)
-    {
-        throw new InternalExpressionException("get element can only be obtained for lists and nbt values");
-    }
-
     public String getTypeString()
     {
         throw new InternalExpressionException("How did you get here? Cannot get type of an intenal type.");
+    }
+
+    @Override
+    public int hashCode()
+    {
+        String stringVal = getString();
+        if (stringVal.isEmpty()) return 0;
+        return ("s"+stringVal).hashCode();
     }
 }

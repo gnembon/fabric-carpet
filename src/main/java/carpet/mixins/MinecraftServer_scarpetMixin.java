@@ -14,6 +14,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.BooleanSupplier;
 
+import static carpet.script.CarpetEventServer.Event.ENDER_TICK;
+import static carpet.script.CarpetEventServer.Event.NETHER_TICK;
+import static carpet.script.CarpetEventServer.Event.TICK;
+
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServer_scarpetMixin extends NonBlockingThreadExecutor<ServerTask> implements MinecraftServerInterface
 {
@@ -42,6 +46,8 @@ public abstract class MinecraftServer_scarpetMixin extends NonBlockingThreadExec
     ))
     public void tickTasks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
-        CarpetServer.scriptServer.events.onTick();
+        TICK.onTick();
+        NETHER_TICK.onTick();
+        ENDER_TICK.onTick();
     }
 }
