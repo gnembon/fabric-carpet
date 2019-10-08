@@ -6,6 +6,7 @@ import net.minecraft.util.registry.Registry;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.lang.Math.abs;
 
@@ -309,22 +310,31 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         String condition = conditionValue.getString();
         if (condition.equalsIgnoreCase("insert"))
-            return put(where, value, false);
+            return put(where, value, false, false);
+        if (condition.equalsIgnoreCase("extend"))
+            return put(where, value, false, true);
         if (condition.equalsIgnoreCase("replace"))
-            return put(where, value, true);
+            return put(where, value, true, false);
         throw new  InternalExpressionException("list put modifier could be either insert, or replace");
     }
 
     @Override
     public Value put(Value ind, Value value)
     {
-        return put(ind, value, true);
+        return put(ind, value, true, false);
     }
-    private Value  put(Value ind, Value value, boolean replace)
+    private Value  put(Value ind, Value value, boolean replace, boolean extend)
     {
         if (ind == Value.NULL)
         {
-            items.add(value);
+            if (extend && value instanceof AbstractListValue)
+            {
+                ((AbstractListValue) value).iterator().forEachRemaining((v)-> items.add(v));
+            }
+            else
+            {
+                items.add(value);
+            }
             return items.get(items.size()-1);
         }
         else
@@ -337,16 +347,23 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
                 index += (range + 2) * numitems;
                 index = index % numitems;
             }
-            while (index >= items.size()) items.add(Value.NULL);
             if (replace)
             {
+                while (index >= items.size()) items.add(Value.NULL);
                 return items.set(index, value);
             }
-            else
+            while (index > items.size()) items.add(Value.NULL);
+
+            if (extend && value instanceof AbstractListValue)
             {
-                items.add(index, value);
-                return value;
+                Iterable<Value> iterable = ((AbstractListValue) value)::iterator;
+                List<Value> appendix = StreamSupport.stream( iterable.spliterator(), false).collect(Collectors.toList());
+                items.addAll(index, appendix );
+                return items.get(index+appendix.size()-1);
             }
+            items.add(index, value);
+            return value;
+
         }
     }
 
