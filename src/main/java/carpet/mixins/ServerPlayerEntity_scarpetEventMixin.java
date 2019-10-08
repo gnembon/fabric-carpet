@@ -21,11 +21,11 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
         super(world_1, gameProfile_1);
     }
 
-    @Shadow protected abstract void method_6040();
+    @Shadow protected abstract void consumeItem();
 
-    @Redirect(method = "method_6040", at = @At(
+    @Redirect(method = "consumeItem", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/player/PlayerEntity;method_6040()V"
+            target = "Lnet/minecraft/entity/player/PlayerEntity;consumeItem()V"
     ))
     private void finishedUsingItem(PlayerEntity playerEntity)
     {
@@ -34,13 +34,13 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
             Hand hand = getActiveHand();
             ItemStack stack = getActiveItem().copy();
             // do vanilla
-            super.method_6040();
+            super.consumeItem();
             PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayerEntity) (Object)this, hand, stack);
         }
         else
         {
             // do vanilla
-            super.method_6040();
+            super.consumeItem();
         }
     }
 }

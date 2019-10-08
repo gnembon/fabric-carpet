@@ -294,7 +294,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Collection<Tag> targets;
         try
         {
-            targets = nbtPath.putIfAbsent(currentTag, ListTag::new);
+            targets = nbtPath.getOrInit(currentTag, ListTag::new);
         }
         catch (CommandSyntaxException e)
         {
@@ -332,7 +332,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Tag originalTag = getTag().copy();
         try
         {
-            for (Tag target : nbtPath.putIfAbsent(originalTag, CompoundTag::new))
+            for (Tag target : nbtPath.getOrInit(originalTag, CompoundTag::new))
             {
                 if (!(target instanceof CompoundTag))
                 {
