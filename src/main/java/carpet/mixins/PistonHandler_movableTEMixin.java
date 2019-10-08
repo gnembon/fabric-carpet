@@ -87,7 +87,7 @@ public abstract class PistonHandler_movableTEMixin
 
 
     //Get access to the blockstate to check if it is a chest
-    @Shadow private Direction direction;
+    @Shadow @Final private Direction direction;
     private BlockState blockState_1;
     @Redirect(method = "tryMove",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;", ordinal = 0))
