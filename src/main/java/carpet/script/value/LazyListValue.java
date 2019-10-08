@@ -44,6 +44,12 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             {
                 return stepp > 0?(current < limit):(current > limit);
             }
+
+            @Override
+            public String getString()
+            {
+                return String.format("[%d, %d, ..., %d]",start, start+stepp, limit);
+            }
         };
     }
 
@@ -115,16 +121,11 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public boolean equals(final Value o)
+    public boolean equals(final Object o)
     {
         return false;
     }
 
-    @Override
-    public Value getElementAt(Value v2)
-    {
-        throw new InternalExpressionException("get element can only be obtained for regular lists");
-    }
     @Override
     public String getTypeString()
     {
@@ -144,5 +145,11 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         }
         ((LazyListValue)copy).reset();
         return copy;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return ("i"+getString()).hashCode();
     }
 }

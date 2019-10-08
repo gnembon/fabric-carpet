@@ -13,6 +13,7 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.GlobalPos;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -252,6 +253,14 @@ public class BlockValue extends Value
     public Value clone()
     {
         return new BlockValue(blockState, world, pos);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        if (world != null && pos != null )
+            return GlobalPos.create(world.getDimension().getType(), pos).hashCode();
+        return ("b"+getString()).hashCode();
     }
 
     public BlockPos getPos()

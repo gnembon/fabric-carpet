@@ -1,5 +1,6 @@
 {
   "required": true,
+  "refmap": "carpet-refmap.json",
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
@@ -125,6 +126,7 @@
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
     "DamageTracker_scarpetEventMixin",
+    "ServerPlayerEntity_scarpetEventMixin",
 
 
     "PistonBlock_movableTEMixin",

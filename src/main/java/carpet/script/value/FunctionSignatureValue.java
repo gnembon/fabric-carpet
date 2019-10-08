@@ -43,5 +43,11 @@ public class FunctionSignatureValue extends Value
     }
     public List<String> getGlobals() {return globals;}
 
+    @Override
+    public int hashCode()
+    {
+        throw new UnsupportedOperationException("function signature value cannot be used as map key");
+    }
+
 
 }

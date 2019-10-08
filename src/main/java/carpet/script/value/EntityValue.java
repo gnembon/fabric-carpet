@@ -101,13 +101,13 @@ public class EntityValue extends Value
     }
 
     @Override
-    public boolean equals(Value v)
+    public boolean equals(Object v)
     {
         if (v instanceof EntityValue)
         {
             return entity.getEntityId()==((EntityValue) v).entity.getEntityId();
         }
-        return super.equals(v);
+        return super.equals((Value)v);
     }
 
     @Override
@@ -136,6 +136,13 @@ public class EntityValue extends Value
     public String getTypeString()
     {
         return "entity";
+    }
+
+
+    @Override
+    public int hashCode()
+    {
+        return entity.hashCode();
     }
 
     public static Pair<EntityType<?>, Predicate<? super Entity>> getPredicate(String who)
@@ -386,21 +393,11 @@ public class EntityValue extends Value
         put("nbt",(e, a) -> {
             CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
             if (a==null)
-                return new NBTSerializableValue(nbttagcompound);//StringValue(nbttagcompound.toString());
-            NbtPathArgumentType.NbtPath path = NBTSerializableValue.cachePath(a.getString());
-            try
-            {
-                List<Tag> tags = path.get(nbttagcompound);
-                if (tags.size()==0)
-                    return Value.NULL;
-                if (tags.size()==1)
-                    return NBTSerializableValue.decodeTag(tags.get(0));
-                return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
-            }
-            catch (CommandSyntaxException ignored) { }
-            return Value.NULL;
+                return new NBTSerializableValue(nbttagcompound);
+            return new NBTSerializableValue(nbttagcompound).get(a);
         });
     }};
+
     private static <Req extends Entity> Req assertEntityArgType(Class<Req> klass, Value arg)
     {
         if (!(arg instanceof EntityValue))
@@ -728,6 +725,6 @@ public class EntityValue extends Value
         put("on_death", (c, e, f, l) -> ((EntityInterface)e).setDeathCallback(c, f, l));
         put("on_removed", (c, e, f, l) -> ((EntityInterface)e).setRemovedCallback(c, f, l));
         put("on_tick", (c, e, f, l) -> ((EntityInterface)e).setTickCallback(c, f, l));
-        put("on_damage", (c, e, f, l) -> ((EntityInterface)e).setDamageCallback(c, f, l));
+        put("on_damaged", (c, e, f, l) -> ((EntityInterface)e).setDamageCallback(c, f, l));
     }};
 }
