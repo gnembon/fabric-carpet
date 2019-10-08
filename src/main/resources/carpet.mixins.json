@@ -1,5 +1,6 @@
 {
   "required": true,
+  "refmap": "carpet-refmap.json",
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [

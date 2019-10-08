@@ -50,7 +50,7 @@ import static java.lang.Math.min;
 
 
 /**
- * <h1>Fundamental components of <code>scarpet</code> programming language.</h1>
+ * <h1>Fundamental components of <code>scarpet</code> programming language (towards upcoming version 1.5).</h1>
  *
  * <p>Scarpet (a.k.a. Carpet Script, or Script for Carpet) is a programming language designed to provide
  * the ability to write custom programs to run within Minecraft and
@@ -74,7 +74,7 @@ import static java.lang.Math.min;
  * <pre>
  * script run print('Hello World!')
  * </pre>
- * <p>or an overly complex example:</p>
+ * <p>or an OVERLY complex example:</p>
  * <pre>
  * /script run
  *     block_check(x1, y1, z1, x2, y2, z2, block_to_check) -&gt;
@@ -83,7 +83,7 @@ import static java.lang.Math.min;
  *         l(miny, maxy) = sort(l(y1, y2));
  *         l(minz, maxz) = sort(l(z1, z2));
  *         'Need to compute the size of the area of course';
- *         'Cause this language doesn\'t support comments';
+ *         'Cause this language doesn\'t support comments in the command mode';
  *         xsize = maxx - minx + 1;
  *         ysize = maxy - miny + 1;
  *         zsize = maxz - minz + 1;
@@ -202,11 +202,36 @@ import static java.lang.Math.min;
  * Variables from outer scopes have a similar behaviour to, for example, <code>nonlocal</code> variables from python. </p>
  *
  *
- * <h2>Line indicators</h2>
+ * <h2>Code delivery, line indicators</h2>
  * <p>Note that this should only apply to pasting your code to execute with commandblock. Scarpet recommends placing your
  * code in packages (files with <code>.sc</code> extension that can be placed inside "/scripts" folder in the world files
  * and loaded as a module with command <code>/script load [package_name]</code>. Scarpet modules loaded from disk should only
  * contain code, no need to start with "/script run" prefix</p>
+ * <p>The following is the code that could be provided in a <code>foo.sc</code> file located in world <code>/scripts</code> folder</p>
+ *
+ * <pre>
+ * run_program() -&gt; (
+ *   loop( 10,
+ *     // looping 10 times
+ *     // comments are allowed in scripts located in world files
+ *     // since we can tell where that line ends
+ *     foo = floor(rand(10));
+ *     check_not_zero(foo);
+ *     print(_+' - foo: '+foo);
+ *     print('  reciprocal: '+  _/foo )
+ *   )
+ * );
+ * check_not_zero(foo) -&gt; (
+ *   if (foo==0, foo = 1)
+ * )
+ * </pre>
+ * <p>Which we then call in-game with:</p>
+ * <pre>
+ *     /script load foo
+ *     /script in foo invoke run_program
+ * </pre>
+ * <p>However the following code can also be input as a command, or in a command block.</p>
+ *
  * <p>Since the maximum command that can be input to the chat is limited in length, you will be probably inserting your
  * programs by pasting them to command blocks or reading from world files, however pasting to command blocks will remove some whitespaces and squish
  * your newlines making the code not readable. If you are pasting a program that is perfect and will never cause an error,
@@ -833,7 +858,8 @@ public class Expression implements Cloneable
      * Names in the signature don't need to be used anywhere else, other occurrences of these names
      * will be masked in this function scope.
      * Function call creates new scope for variables inside <code>expr</code>, so all non-global variables are not
-     * visible from the caller scope. All parameters are passed by value to the new scope, including lists</p>
+     * visible from the caller scope. All parameters are passed by value to the new scope, including lists and other
+     * containers, however their copy will be shallow.</p>
      * <pre>
      * a(lst) -&gt; lst+=1; list = l(1,2,3); a(list); a(list); list  // =&gt; [1,2,3]
      * </pre>
@@ -1045,7 +1071,7 @@ public class Expression implements Cloneable
      * even if they look like them:
      * </p>
      * <ul>
-     *     <li>Match, Get<code>~ .</code></li>
+     *     <li>Match, Get <code>~ .</code></li>
      *     <li>Unary <code>+ - !</code></li>
      *     <li>Exponent <code>^</code></li>
      *     <li>Multiplication <code>* / %</code></li>
@@ -1067,6 +1093,8 @@ public class Expression implements Cloneable
      * straightforward and immediate, and the source object should behave like a container and support full container
      * API, meaning <code>get(...)</code>, <code>put(...)</code>, <code>delete(...)</code>,
      * and <code>has(...)</code> functions</p>
+     * <p>WARNING: Unlike for some languages, where item access operator can be an L-value, to assign new values to
+     * container elements, use <code>put</code> function instead, i.e. <code>a.1='foo'</code> won't work.</p>
      *
      * <h3><code>Matching Operator  ~</code></h3>
      * <p>This operator should be understood as 'matches', 'contains', 'is_in',
@@ -1400,14 +1428,14 @@ public class Expression implements Cloneable
      * <h3><code>log10(n)</code></h3>
      * <p>Decimal logarithm of <code>n</code>. Its ceiling is the length of its floor.</p>
      * <h3><code>log(n)</code></h3>
-     * <p>Binary logarithm of <code>n</code>. Finally, a proper one, not like the other 100.</p>
+     * <p>Binary logarithm of <code>n</code>. Finally, a proper one, not like the previous 11.</p>
      * <h3><code>log1p(n)</code></h3>
      * <p>Binary logarithm of <code>n+1</code>. Also always positive.</p>
      * <h3><code>mandelbrot(a, b, limit)</code></h3>
      * <p>Computes the value of the mandelbrot set, for set <code>a</code> and <code>b</code> spot.
      * Spot the beetle. Why not.</p>
      * <h3><code>min(arg, ...), min(list), max(arg, ...), max(list)</code></h3>
-     * <p>Compute minimum or maximum of supplied arguments assuming default sortraphical order. In case you are
+     * <p>Compute minimum or maximum of supplied arguments assuming default sorthoraphical order. In case you are
      * missing <code>argmax</code>, just use <code>a ~ max(a)</code>, little less efficient, but still fun.
      * </p>
      * <p>
@@ -2011,18 +2039,61 @@ public class Expression implements Cloneable
      * removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous
      * entry at the address, for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.</p>
      *
-     * <h3><code>put(container, address, value), put(container, address, value, condition)</code></h3>
+     * <h3><code>put(container, address, value), put(container, address, value, mode)</code></h3>
+     * <p><u><b>Lists</b></u></p>
      * <p>Modifies the container by replacing the value under the address with the supplied <code>value</code>.
-     * For lists, a valid index is required, but can be negative as well. If <code>null</code> is supplied as the address, it
-     * appends that value to the end of the table.
+     * For lists, a valid index is required, but can be negative as well to indicate positions from the end of the list.
+     * If <code>null</code> is supplied as the address, it always means - add to the end of the list. </p>
+     * <p>There are three modes that lists can have items added to them:
+     * <ul>
+     *     <li><code>replace</code>(default): Replaces item under given index(address). Doesn't change the size of the array
+     *     unless <code>null</code> address is used, which is an exception and then it appends to the end</li>
+     *     <li><code>insert</code>: Inserts given element at a specified index, shifting the rest of the array to make space
+     *     for the item. Note that index of -1 points to the last element of the list, thus inserting at that position and
+     *     moving the previous last element to the new last element position. To insert at the end, use <code>+=</code>
+     *     operator, or <code>null</code> address in put</li>
+     *     <li><code>extend</code>: treats the supplied value as an iterable set of values to insert at a given index,
+     *     extending the list by this amount of items. Again use <code>null</code> address/index to point to the end of
+     *     the list</li>
+     * </ul>
+     * <p><u><b>Maps</b></u></p>
+     * <p>For maps there are no modes available (yet, seems there is no reason to). It replaces the value under the supplied
+     * key (address), or sets it if not currently present.</p>
+     * <p><u><b>NBT Tags</b></u></p>
+     * <p>
+     * The address for nbt values is a valid nbt path that you would use with <code>/data</code> command, and tag is any
+     * tag that would be applicable for a given insert operation. Note that to distinguish between proper types (like integer
+     * types, you need to use command notation, i.e. regular ints is <code>123</code>, while byte size int would be <code>123b</code>
+     * and an explicit string would be <code>"5"</code>, so it helps that scarpet uses single quotes in his strings. Unlike
+     * for lists and maps, it returns the number of affected nodes, or 0 if none were affected.
+     * </p>
+     * <p>There are three modes that NBT tags can have items added to them:
+     * <ul>
+     *     <li><code>replace</code>(default): Replaces item under given path(address). Removes them first if possible, and then
+     *     adds given element to the supplied position. The target path can indicate compound tag keys, lists, or individual
+     *     elements of the lists.</li>
+     *     <li><code>&lt;N&gt;</code>: Index for list insertions. Inserts given element at a specified index, inside a list
+     *     specified with the path address. Fails if list is not specified. It behaves like <code>insert</code> mode for lists,
+     *     i.e. it is not removing any of the existing elements. Use <code>replace</code> to remove and replace existing element.
+     *     </li>
+     *     <li><code>merge</code>: assumes that both path and replacement target are of compound type (dictionaries, maps,
+     *     <code>{}</code> types), and merges keys from <code>value</code> with the compound tag under the path</li>
+     * </ul>
      *
-     * ............
-     *
-     * returns number of elements inserted.</p>
      * <pre>
      *     a = l(1, 2, 3); put(a, 1, 4); a  =&gt; [1, 4, 3]
-     *     a = l(1, 2, 3); put(a, null, 4, 5, 6); a  =&gt; [1, 2, 3, 4, 5, 6]
-     *     a = l(l(0,0,0),l(0,0,0),l(0,0,0)); put(element(a, 1), 1, 1); a =&gt; [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
+     *     a = l(1, 2, 3); put(a, null, 4); a  =&gt; [1, 2, 3, 4]
+     *     a = l(1, 2, 3); put(a, 1, 4, 'insert'); a  =&gt; [1, 4, 2, 3]
+     *     a = l(1, 2, 3); put(a, null, l(4, 5, 6), 'extend'); a  =&gt; [1, 2, 3, 4, 5, 6]
+     *     a = l(1, 2, 3); put(a, 1, l(4, 5, 6), 'extend'); a  =&gt; [1, 4, 5, 6, 2, 3]
+     *     a = l(l(0,0,0),l(0,0,0),l(0,0,0)); put(a.1, 1, 1); a  =&gt; [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
+     *     a = m(1,2,3,4); put(a, 5, null); a  =&gt; {1: null, 2: null, 3: null, 4: null, 5: null}
+     *     tag = nbt('{}'); put(tag, 'BlockData.Properties', '[1,2,3,4]'); tag  =&gt; {BlockData:{Properties:[1,2,3,4]}}
+     *     tag = nbt('{a:[{lvl:3},{lvl:5},{lvl:2}]}'); put(tag, 'a[].lvl', 1); tag  =&gt; {a:[{lvl:1},{lvl:1},{lvl:1}]}
+     *     tag = nbt('{a:[{lvl:[1,2,3]},{lvl:[3,2,1]},{lvl:[4,5,6]}]}'); put(tag, 'a[].lvl', 1, 2); tag
+     *          =&gt; {a:[{lvl:[1,2,1,3]},{lvl:[3,2,1,1]},{lvl:[4,5,1,6]}]}
+     *     tag = nbt('{a:[{lvl:[1,2,3]},{lvl:[3,2,1]},{lvl:[4,5,6]}]}'); put(tag, 'a[].lvl[1]', 1); tag
+     *          =&gt; {a:[{lvl:[1,1,3]},{lvl:[3,1,1]},{lvl:[4,1,6]}]}
      * </pre>
      *
      * <h2>List operations</h2>
@@ -2114,10 +2185,26 @@ public class Expression implements Cloneable
      * <p>Scarpet supports map structures, aka hashmaps, dicts etc. Map structure can also be used, with <code>null</code>
      * values as sets. Apart from container access functions, (<code>. , get, put, has, delete</code>),
      * the following functions:</p>
+     * <h3><code>m(values ...), m(iterator), m(key_value_pairs)  </code></h3>
+     * <p>creates and initializes a map with supplied keys, and values. If the arguments contains a flat list,
+     * these are all treated as keys with no value, same goes with the iterator - creates a map that behaves like a set.
+     * If the arguments is a list of lists, they have to have two elements each, and then first is a key, and second,
+     * a value</p>
+     * <pre>
+     * m(1,2,'foo') =&gt; {1: null, 2: null, foo: null}
+     * m() =&gt; {} (empty map)
+     * m(range(10)) =&gt; {0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null}
+     * m(l(1, 2), l(3, 4)) =&gt; {1: 2, 3: 4}
+     * reduce(range(10), put(_a, _, _*_); _a, m())
+     *      =&gt; {0: 0, 1: 1, 2: 4, 3: 9, 4: 16, 5: 25, 6: 36, 7: 49, 8: 64, 9: 81}
+     * </pre>
+     * <h3><code>keys(map), values(map), pairs(map)  </code></h3>
+     * <p>Returns full lists of keys, values and key-value pairs (2-element lists) for all the entries in the map</p>
+     *
      * </div>
      */
 
-    void BasicDataStructures()
+    public void BasicDataStructures()
     {
         addFunction("l", lv ->
         {
@@ -2380,7 +2467,7 @@ public class Expression implements Cloneable
      * <hr>
      * <h2>Auxiliary functions</h2>
      *
-     * <h3><code>lower(expr), uppper(expr), title(expr)</code></h3>
+     * <h3><code>lower(expr), upper(expr), title(expr)</code></h3>
      * <p>Returns lowercase, uppercase or titlecase representation of a string representation of the passed expression</p>
      * <pre>
      * lower('aBc') =&gt; 'abc'
@@ -2439,8 +2526,13 @@ public class Expression implements Cloneable
      *     print(str('this took %d milliseconds',time()-start_time))
      * </pre>
      *
+     * <h3><code>profile_expr(expression)</code></h3>
+     * <p>Returns number of times given expression can be run in 50ms time. Useful to profile and optimize your
+     * code. Note that, even if its only a number, it WILL run these commands, so if they are destructive,
+     * you need to be careful.</p>
+     *
      * <hr>
-     * <h2>Access to variables and stored functions</h2>
+     * <h2>Access to variables and stored functions (use with caution)</h2>
      *
      * <h3><code>var(expr)</code></h3>
      * <p>Returns the variable under the name of the string value of the expression. Allows to

@@ -99,7 +99,7 @@ import static java.lang.Math.sqrt;
 /**
  * <h1>Minecraft specific API and <code>scarpet</code> language add-ons and commands</h1>
  * <p>Here is the gist of the Minecraft related functions. Otherwise the CarpetScript could live without Minecraft.</p>
- * <h2>Dimension issues</h2>
+ * <h2>Dimension warning</h2>
  * <p>One note, which is important is that most of the calls for entities and blocks
  * would refer to the current dimension of the caller, meaning, that if we for example
  * list all the players using <code>player('all')</code> function, if a player is in the
@@ -108,7 +108,8 @@ import static java.lang.Math.sqrt;
  * refer to the overworld blocks and entities.
  * In case you would want to run commands across all dimensions, just run three of them, using
  * <code>/execute in overworld/the_nether/the_end run script run ...</code> and query
- * players using <code>player('*')</code>, which only returns players in current dimension.</p>
+ * players using <code>player('*')</code>, which only returns players in current dimension, or use
+ * <code>in_dimension(expr)</code> function.</p>
  */
 public class CarpetExpression 
 {
@@ -2361,6 +2362,7 @@ public class CarpetExpression
      * <h3><code>nbt(expr)</code></h3>
      * <p>Treats the argument as a nbt serializable string and returns its nbt value.
      * In case nbt is not in a correct nbt compound tag format, it will return <code>null</code> value.</p>
+     * <p>Consult section about container operations in <code>Expression</code> to learn about possible operations on nbt values.</p>
      * <h3><code>print(expr)</code></h3>
      * <p>Displays the result of the expression to the chat. Overrides default <code>scarpet</code> behaviour of
      * sending everyting to stderr.</p>

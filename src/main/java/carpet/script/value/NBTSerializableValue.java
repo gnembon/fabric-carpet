@@ -73,6 +73,10 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return value;
     }
 
+    public Value clone()
+    {
+        return new NBTSerializableValue(getTag().copy());
+    }
     public NBTSerializableValue(Tag tag)
     {
         nbtTag = tag;
