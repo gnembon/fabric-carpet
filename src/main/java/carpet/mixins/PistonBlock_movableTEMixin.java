@@ -36,7 +36,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
         {
             Block block = blockState_1.getBlock();
             if (block != Blocks.GOLD_BLOCK && block != Blocks.SLIME_BLOCK) return;
-            Block otherBlock = world_1.getBlockState(blockPos_1.offset(direction_2.getOpposite(),1)).getBlock();
+            Block otherBlock = world_1.getBlockState(blockPos_1.method_10079(direction_2.getOpposite(),1)).getBlock();
             if (otherBlock != Blocks.GOLD_BLOCK && otherBlock != Blocks.SLIME_BLOCK) return;
             cir.setReturnValue(block == otherBlock);
         }
