@@ -58,7 +58,7 @@ public abstract class PistonHandler_movableTEMixin
      */
     private void stickToStickySide(CallbackInfoReturnable<Boolean> cir, int int_1){
         BlockPos pos = this.movedBlocks.get(int_1);
-        if (CarpetSettings.stickyHoney && world.getBlockState(pos).getBlock() == Blocks.GOLD_BLOCK)
+        if (CarpetSettings.stickyHoney && world.getBlockState(pos).getBlock() == Blocks.GOLD_BLOCK && !method_11538(pos))
         {
             cir.setReturnValue(false);
             return;
@@ -120,10 +120,11 @@ public abstract class PistonHandler_movableTEMixin
      * @author 2No2Nameb
      */
     private Block redirectSlimeBlock() {
+        if (CarpetSettings.stickyHoney && blockState_1.getBlock() == Blocks.GOLD_BLOCK)
+            return Blocks.GOLD_BLOCK;
         if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
             return blockState_1.getBlock(); //this makes the comparison in the while condition "while(blockState_1.getBlock() == redirectSlimeBlock())" evaluate to true, so the block is treated as sticky
-        else
-            return Blocks.SLIME_BLOCK; //vanilla behavior
+        return Blocks.SLIME_BLOCK; //vanilla behavior
     }
 
 

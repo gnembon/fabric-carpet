@@ -150,6 +150,13 @@ public class CarpetSettings
     @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
     public static boolean movableBlockEntities = false;
 
+    @Rule(
+            desc = "Honey blocks can stick to each other and other blocks",
+            extra = "but not to slime blocks and vice versa",
+            category = {EXPERIMENTAL, FEATURE}
+    )
+    public static boolean stickyHoney = false;
+
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;
 
