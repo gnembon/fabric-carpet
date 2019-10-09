@@ -2,7 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.class_4548Interface;
+import carpet.fakes.BiomeArrayInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
@@ -676,7 +676,7 @@ public class CarpetExpression
                 Entity e = ((EntityValue) arg).getEntity();
                 if (e == null)
                     throw new InternalExpressionException("Null entity");
-                Value retval = ListValue.of(new NumericValue(e.x), new NumericValue(e.y), new NumericValue(e.z));
+                Value retval = ListValue.of(new NumericValue(e.method_23317()), new NumericValue(e.method_23318()), new NumericValue(e.method_23321()));
                 return (c_, t_) -> retval;
             }
             else
@@ -785,7 +785,7 @@ public class CarpetExpression
                 booleanStateTest(c, "block_tick", lv, (s, p) ->
                 {
                     ServerWorld w = ((CarpetContext)c).s.getWorld();
-                    s.onRandomTick(w, p, w.random);
+                    s.randomTick(w, p, w.random);
                     return true;
                 }));
 
@@ -794,7 +794,7 @@ public class CarpetExpression
                 {
                     ServerWorld w = ((CarpetContext)c).s.getWorld();
                     if (s.hasRandomTicks() || s.getFluidState().hasRandomTicks())
-                        s.onRandomTick(w, p, w.random);
+                        s.randomTick(w, p, w.random);
                     return true;
                 }));
 
@@ -1024,7 +1024,7 @@ public class CarpetExpression
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos);
-            ((class_4548Interface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
+            ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
             this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;
         });
@@ -1332,8 +1332,8 @@ public class CarpetExpression
             {
                 LivingEntity villager = (LivingEntity)owner;
                 // stolen from LookTargetUtil.give((VillagerEntity)owner, droppedStack, (LivingEntity) owner);
-                double double_1 = villager.y - 0.30000001192092896D + (double)villager.getStandingEyeHeight();
-                item = new ItemEntity(villager.world, villager.x, double_1, villager.z, droppedStack);
+                double double_1 = villager.method_23318() - 0.30000001192092896D + (double)villager.getStandingEyeHeight();
+                item = new ItemEntity(villager.world, villager.method_23317(), double_1, villager.method_23321(), droppedStack);
                 Vec3d vec3d_1 = villager.getRotationVec(1.0F).normalize().multiply(0.3);//  new Vec3d(0, 0.3, 0);
                 item.setVelocity(vec3d_1);
                 item.setToDefaultPickupDelay();
@@ -1808,7 +1808,7 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Unknown entity selection criterion: "+who);
             }
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntities(pair.getKey(), area, pair.getValue());
+            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntities((EntityType<Entity>) pair.getKey(), area, pair.getValue());
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
@@ -2811,7 +2811,7 @@ public class CarpetExpression
             return (cc, tt) -> retval;
         });
 
-        this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
+        /*this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("plop needs extra argument indicating what to plop");
@@ -2822,7 +2822,7 @@ public class CarpetExpression
             if (what.equalsIgnoreCase("boulder"))  // there might be more of those
                 this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext)c).s.getWorld());
             return (c_, t_) -> new NumericValue(res);
-        });
+        });*/
 
         this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
             if (lv.size()<2)

@@ -9,6 +9,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -101,6 +102,10 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
 
     private StructureStart forceStructureStart(IWorld worldIn, ChunkGenerator <? extends ChunkGeneratorConfig > generator, Random rand, long packedChunkPos)
     {
+        if (2+1==3)
+        {
+            throw new RuntimeException("reimplement it");
+        }
         ChunkPos chunkpos = new ChunkPos(packedChunkPos);
         StructureStart structurestart;
 
@@ -115,7 +120,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
                 return structurestart;
             }
         }
-        Biome biome_1 = generator.getBiomeSource().getBiome((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
+        Biome biome_1 = Biomes.PLAINS;//  generator.getBiomeSource().getBiome((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
         StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,generator.getSeed());
         structurestart1.initialize(generator, ((ServerWorld)worldIn).getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;

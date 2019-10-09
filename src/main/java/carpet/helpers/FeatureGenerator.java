@@ -14,24 +14,11 @@ import net.minecraft.world.biome.source.VanillaLayeredBiomeSourceConfig;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.OverworldChunkGenerator;
 import net.minecraft.world.gen.chunk.OverworldChunkGeneratorConfig;
-import net.minecraft.world.gen.feature.BoulderFeatureConfig;
-import net.minecraft.world.gen.feature.DefaultFeatureConfig;
-import net.minecraft.world.gen.feature.DoublePlantFeatureConfig;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.FeatureConfig;
-import net.minecraft.world.gen.feature.IcebergFeatureConfig;
-import net.minecraft.world.gen.feature.JungleGroundBushFeature;
-import net.minecraft.world.gen.feature.LakeFeatureConfig;
-import net.minecraft.world.gen.feature.MineshaftFeature;
-import net.minecraft.world.gen.feature.MineshaftFeatureConfig;
-import net.minecraft.world.gen.feature.OceanRuinFeature;
-import net.minecraft.world.gen.feature.OceanRuinFeatureConfig;
-import net.minecraft.world.gen.feature.PlantedFeatureConfig;
-import net.minecraft.world.gen.feature.SeaPickleFeatureConfig;
-import net.minecraft.world.gen.feature.SeagrassFeatureConfig;
-import net.minecraft.world.gen.feature.ShipwreckFeatureConfig;
-import net.minecraft.world.gen.feature.StructureFeature;
-import net.minecraft.world.gen.feature.VillageFeatureConfig;
+import net.minecraft.world.gen.feature.*;
+//import net.minecraft.world.gen.feature.DoublePlantFeatureConfig;
+//import net.minecraft.world.gen.feature.IcebergFeatureConfig;
+//import net.minecraft.world.gen.feature.LakeFeatureConfig;
+//import net.minecraft.world.gen.feature.PlantedFeatureConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,6 +48,8 @@ public class FeatureGenerator
 
     private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
     {
+        if (1+2==3)
+            throw new RuntimeException("rebuild me");
         return (w, p) -> {
             ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.method_14178().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
             {
@@ -75,7 +64,7 @@ public class FeatureGenerator
                 {
                     return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties()))
                     {
-                        @Override
+                        // // // @Override
                         public Biome getBiome(int i, int j, int k)
                         {
                             return biome;
@@ -99,48 +88,48 @@ public class FeatureGenerator
     private static Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
 
 
-        put("oak", simplePlop(Feature.NORMAL_TREE));
-        put("oak_large", simplePlop(Feature.FANCY_TREE));
-        put("birch", simplePlop(Feature.BIRCH_TREE));
-        put("birch_large", simplePlop(Feature.SUPER_BIRCH_TREE));
-        put("shrub", simplePlop(Feature.JUNGLE_GROUND_BUSH));
-        put("shrub_acacia", simplePlop(new JungleGroundBushFeature((d) -> FeatureConfig.DEFAULT, Blocks.ACACIA_WOOD.getDefaultState(), Blocks.ACACIA_LEAVES.getDefaultState())));
-        put("shrub_birch", simplePlop(new JungleGroundBushFeature((d) -> FeatureConfig.DEFAULT, Blocks.BIRCH_WOOD.getDefaultState(), Blocks.BIRCH_LEAVES.getDefaultState())));
-        put("shrub_snowy", simplePlop(new JungleGroundBushFeature((d) -> FeatureConfig.DEFAULT, Blocks.BONE_BLOCK.getDefaultState(), Blocks.COBWEB.getDefaultState())));
-        put("jungle", simplePlop(Feature.JUNGLE_TREE));
-        put("spruce_matchstick", simplePlop(Feature.PINE_TREE));
-        put("dark_oak", simplePlop(Feature.DARK_OAK_TREE));
-        put("acacia", simplePlop(Feature.SAVANNA_TREE));
-        put("spruce", simplePlop(Feature.SPRUCE_TREE));
-        put("oak_swamp", simplePlop(Feature.SWAMP_TREE));
-        put("jungle_large", simplePlop(Feature.MEGA_JUNGLE_TREE));
+        //put("oak", simplePlop(Feature.NORMAL_TREE));
+        //put("oak_large", simplePlop(Feature.FANCY_TREE));
+        //put("birch", simplePlop(Feature.BIRCH_TREE));
+        //put("birch_large", simplePlop(Feature.SUPER_BIRCH_TREE));
+        //put("shrub", simplePlop(Feature.JUNGLE_GROUND_BUSH));
+        //put("shrub_acacia", simplePlop(new JungleGroundBushFeature((d) -> FeatureConfig.DEFAULT, Blocks.ACACIA_WOOD.getDefaultState(), Blocks.ACACIA_LEAVES.getDefaultState())));
+        //put("shrub_birch", simplePlop(new JungleGroundBushFeature((d) -> FeatureConfig.DEFAULT, Blocks.BIRCH_WOOD.getDefaultState(), Blocks.BIRCH_LEAVES.getDefaultState())));
+        //put("shrub_snowy", simplePlop(new JungleGroundBushFeature((d) -> FeatureConfig.DEFAULT, Blocks.BONE_BLOCK.getDefaultState(), Blocks.COBWEB.getDefaultState())));
+        //put("jungle", simplePlop(Feature.JUNGLE_TREE));
+        //put("spruce_matchstick", simplePlop(Feature.PINE_TREE));
+        //put("dark_oak", simplePlop(Feature.DARK_OAK_TREE));
+        //put("acacia", simplePlop(Feature.SAVANNA_TREE));
+        //put("spruce", simplePlop(Feature.SPRUCE_TREE));
+        //put("oak_swamp", simplePlop(Feature.SWAMP_TREE));
+        //put("jungle_large", simplePlop(Feature.MEGA_JUNGLE_TREE));
         //put("spruce_matchstick_large", simplePlop(Feature.MEGA_PINE_TREE));??
-        put("spruce_large", simplePlop(Feature.MEGA_SPRUCE_TREE));
+        //put("spruce_large", simplePlop(Feature.MEGA_SPRUCE_TREE));
         put("well", simplePlop(Feature.DESERT_WELL));
-        put("grass_jungle", simplePlop(Feature.JUNGLE_GRASS));
-        put("fern", simplePlop(Feature.TAIGA_GRASS));
-        put("grass", simplePlop(Feature.DOUBLE_PLANT, new DoublePlantFeatureConfig(Blocks.TALL_GRASS.getDefaultState())));
+        //put("grass_jungle", simplePlop(Feature.JUNGLE_GRASS));
+        //put("fern", simplePlop(Feature.TAIGA_GRASS));
+        //put("grass", simplePlop(Feature.DOUBLE_PLANT, new DoublePlantFeatureConfig(Blocks.TALL_GRASS.getDefaultState())));
         //put("", simplePlop(Feature.));
         //put("", simplePlop(Feature.));
         //put("", simplePlop(Feature.));
         //put("", simplePlop(Feature.));
 
-        put("cactus", simplePlop(Feature.CACTUS));
-        put("dead_bush", simplePlop(Feature.DEAD_BUSH));
+        //put("cactus", simplePlop(Feature.CACTUS));
+        //put("dead_bush", simplePlop(Feature.DEAD_BUSH));
         put("fossils", simplePlop(Feature.FOSSIL)); // spawn above, spawn invisible
-        put("mushroom_brown", simplePlop(Feature.HUGE_BROWN_MUSHROOM, new PlantedFeatureConfig(false)));
-        put("mushroom_red", simplePlop(Feature.HUGE_RED_MUSHROOM, new PlantedFeatureConfig(false)));
+        //put("mushroom_brown", simplePlop(Feature.HUGE_BROWN_MUSHROOM, new class_4635(false)));
+       // put("mushroom_red", simplePlop(Feature.HUGE_RED_MUSHROOM, new class_4635(false)));
         put("ice_spike", simplePlop(Feature.ICE_SPIKE));
         put("glowstone", simplePlop(Feature.GLOWSTONE_BLOB));
-        put("melon", simplePlop(Feature.MELON));
-        put("pumpkin", simplePlop(Feature.PUMPKIN));
-        put("sugarcane", simplePlop(Feature.REED));
-        put("lilypad", simplePlop(Feature.WATERLILY));
+        //put("melon", simplePlop(Feature.MELON));
+        //put("pumpkin", simplePlop(Feature.PUMPKIN));
+        //put("sugarcane", simplePlop(Feature.REED));
+        //put("lilypad", simplePlop(Feature.WATERLILY));
         put("dungeon", simplePlop(Feature.MONSTER_ROOM));
-        put("iceberg", simplePlop(Feature.ICEBERG, new IcebergFeatureConfig(Blocks.PACKED_ICE.getDefaultState())));
-        put("iceberg_blue", simplePlop(Feature.ICEBERG, new IcebergFeatureConfig(Blocks.BLUE_ICE.getDefaultState())));
-        put("lake", simplePlop(Feature.LAKE, new LakeFeatureConfig(Blocks.WATER.getDefaultState())));
-        put("lake_lava", simplePlop(Feature.LAKE, new LakeFeatureConfig(Blocks.LAVA.getDefaultState())));
+        put("iceberg", simplePlop(Feature.ICEBERG, new BushFeatureConfig(Blocks.PACKED_ICE.getDefaultState())));
+        put("iceberg_blue", simplePlop(Feature.ICEBERG, new BushFeatureConfig(Blocks.BLUE_ICE.getDefaultState())));
+        put("lake", simplePlop(Feature.LAKE, new BushFeatureConfig(Blocks.WATER.getDefaultState())));
+        put("lake_lava", simplePlop(Feature.LAKE, new BushFeatureConfig(Blocks.LAVA.getDefaultState())));
         //put("end tower", simplePlop(Feature.END_CRYSTAL_TOWER)); // requires more complex setup
         put("end_island", simplePlop(Feature.END_ISLAND));
         put("chorus", simplePlop(Feature.CHORUS_PLANT));

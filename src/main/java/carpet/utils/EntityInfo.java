@@ -65,7 +65,7 @@ public class EntityInfo
         {
             return "None";
         }
-        return String.format("%s at [%.1f, %.1f, %.1f]",e.getDisplayName().getString(), e.x, e.y, e.y);
+        return String.format("%s at [%.1f, %.1f, %.1f]",e.getDisplayName().getString(), e.method_23317(), e.method_23318(), e.method_23321());
     }
 
     private static double get_speed(double internal)

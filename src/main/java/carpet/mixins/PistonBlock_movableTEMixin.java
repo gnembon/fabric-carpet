@@ -35,9 +35,9 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
         if (CarpetSettings.stickyHoney && direction_1 != direction_2)
         {
             Block block = blockState_1.getBlock();
-            if (block != Blocks.GOLD_BLOCK && block != Blocks.SLIME_BLOCK) return;
+            if (block != Blocks.HONEY_BLOCK && block != Blocks.SLIME_BLOCK) return;
             Block otherBlock = world_1.getBlockState(blockPos_1.method_10079(direction_2.getOpposite(),1)).getBlock();
-            if (otherBlock != Blocks.GOLD_BLOCK && otherBlock != Blocks.SLIME_BLOCK) return;
+            if (otherBlock != Blocks.HONEY_BLOCK && otherBlock != Blocks.SLIME_BLOCK) return;
             cir.setReturnValue(block == otherBlock);
         }
     }

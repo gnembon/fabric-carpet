@@ -41,10 +41,6 @@ public abstract class PistonHandler_movableTEMixin
      * @author 2No2Name
      */
     private void stickToStickySide(BlockPos blockPos_1, Direction direction_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, Block block_1, int int_1, int int_2, int int_4, BlockPos blockPos_3, int int_5, int int_6){
-        if (CarpetSettings.stickyHoney && this.world.getBlockState(blockPos_1).getBlock() == Blocks.GOLD_BLOCK && !method_11538(blockPos_1)) {
-            cir.setReturnValue(false);
-            return;
-        }
         if(!stickToStickySide(blockPos_3)){
             cir.setReturnValue(false);
             cir.cancel();
@@ -58,11 +54,6 @@ public abstract class PistonHandler_movableTEMixin
      */
     private void stickToStickySide(CallbackInfoReturnable<Boolean> cir, int int_1){
         BlockPos pos = this.movedBlocks.get(int_1);
-        if (CarpetSettings.stickyHoney && world.getBlockState(pos).getBlock() == Blocks.GOLD_BLOCK && !method_11538(pos))
-        {
-            cir.setReturnValue(false);
-            return;
-        }
         if(!stickToStickySide(pos)){
             cir.setReturnValue(false);
             cir.cancel();
@@ -112,19 +103,15 @@ public abstract class PistonHandler_movableTEMixin
     private BlockState redirectGetBlockState_1_B(World world, BlockPos pos) {
         return blockState_1 = world.getBlockState(pos);
     }
-    @Redirect(method = "tryMove",
-            at = @At(value = "FIELD", target = "Lnet/minecraft/block/Blocks;SLIME_BLOCK:Lnet/minecraft/block/Block;"))
+    @Inject(method = "method_23367", at = @At(value = "HEAD"), cancellable = true)
     //Thanks to Earthcomputer for showing how to redirect FIELD access like this
     /**
      * Makes backwards stickyness work with sticky non-slimeblocks as well.
      * @author 2No2Nameb
      */
-    private Block redirectSlimeBlock() {
-        if (CarpetSettings.stickyHoney && blockState_1.getBlock() == Blocks.GOLD_BLOCK)
-            return Blocks.GOLD_BLOCK;
+    private void redirectSlimeBlock(Block block_1, CallbackInfoReturnable<Boolean> cir) {
         if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
-            return blockState_1.getBlock(); //this makes the comparison in the while condition "while(blockState_1.getBlock() == redirectSlimeBlock())" evaluate to true, so the block is treated as sticky
-        return Blocks.SLIME_BLOCK; //vanilla behavior
+            cir.setReturnValue(true);
     }
 
 

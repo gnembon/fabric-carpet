@@ -236,7 +236,7 @@ public class EntityPlayerActionPack
                             player.updateLastActionTime();
                             EntityHitResult entityHit = (EntityHitResult) hit;
                             Entity entity = entityHit.getEntity();
-                            Vec3d relativeHitPos = entityHit.getPos().subtract(entity.x, entity.y, entity.z);
+                            Vec3d relativeHitPos = entityHit.getPos().subtract(entity.method_23317(), entity.method_23318(), entity.method_23321());
                             if (entity.interactAt(player, relativeHitPos, hand) == ActionResult.SUCCESS) return true;
                             if (player.interact(entity, hand) == ActionResult.SUCCESS) return true;
                             break;

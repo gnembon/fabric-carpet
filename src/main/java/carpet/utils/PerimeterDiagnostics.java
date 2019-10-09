@@ -7,7 +7,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.SpawnType;
-import net.minecraft.entity.WaterCreatureEntity;
+import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.mob.AmbientEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.Monster;

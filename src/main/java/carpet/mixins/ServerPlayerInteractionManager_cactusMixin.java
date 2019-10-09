@@ -17,7 +17,7 @@ public class ServerPlayerInteractionManager_cactusMixin
 
     @Redirect(method = "interactBlock", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/BlockState;activate(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Z"
+            target = "Lnet/minecraft/block/BlockState;onUse(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Z"
     ))
     private boolean activateWithOptionalCactus(BlockState blockState, World world_1, PlayerEntity playerEntity_1, Hand hand_1, BlockHitResult blockHitResult_1)
     {
@@ -25,6 +25,6 @@ public class ServerPlayerInteractionManager_cactusMixin
         if (flipped)
             return true;
 
-        return blockState.activate(world_1, playerEntity_1, hand_1, blockHitResult_1);
+        return blockState.onUse(world_1, playerEntity_1, hand_1, blockHitResult_1);
     }
 }

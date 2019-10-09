@@ -20,6 +20,8 @@ public class ServerPlayNetworkHandler_tickMixin
 
     @Shadow private double lastTickY;
 
+    @Shadow private double lastTickZ;
+
     @Inject(method = "onPlayerInput", at = @At(value = "RETURN"))
     private void checkMoves(PlayerInputC2SPacket p, CallbackInfo ci)
     {
@@ -36,9 +38,9 @@ public class ServerPlayNetworkHandler_tickMixin
     ))
     private void checkMove(PlayerMoveC2SPacket p, CallbackInfo ci)
     {
-        if (Math.abs(p.getX(player.x) - lastTickX) > 0.0001D
-                || Math.abs(p.getY(player.y) - lastTickY) > 0.0001D
-                || Math.abs(p.getY(player.y) - lastTickY) > 0.0001D)
+        if (Math.abs(p.getX(player.method_23317()) - lastTickX) > 0.0001D
+                || Math.abs(p.getY(player.method_23318()) - lastTickY) > 0.0001D
+                || Math.abs(p.getY(player.method_23321()) - lastTickZ) > 0.0001D)
         {
             TickSpeed.reset_player_active_timeout();
         }

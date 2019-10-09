@@ -123,7 +123,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                 if (bedPos == null || bedPos.getDimension() != dimension)
                 {
                     sayNo();
-                    ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, x, y + getStandingEyeHeight() + 1, z, 1, 0.1, 0.1, 0.1, 0.0);
+                    ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, method_23317(), method_23318() + getStandingEyeHeight() + 1, method_23321(), 1, 0.1, 0.1, 0.1, 0.0);
                 }
                 else
                 {
@@ -181,7 +181,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
-            ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, x, y+3, z, 1, 0.1, 0.1, 0.1, 0.0);
+            ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, method_23317(), method_23318()+3, method_23321(), 1, 0.1, 0.1, 0.1, 0.0);
         }
     }
 

@@ -38,7 +38,7 @@ public abstract class TntEntityMixin extends Entity
     {
         if (LoggerRegistry.__tnt && logHelper != null && !logHelper.initialized)
         {
-            logHelper.onPrimed(x, y, z, getVelocity());
+            logHelper.onPrimed(method_23317(), method_23318(), method_23321(), getVelocity());
         }
     }
 
@@ -56,6 +56,6 @@ public abstract class TntEntityMixin extends Entity
     private void onExplode(CallbackInfo ci)
     {
         if (LoggerRegistry.__tnt && logHelper != null)
-            logHelper.onExploded(x, y, z);
+            logHelper.onExploded(method_23317(), method_23318(), method_23321());
     }
 }

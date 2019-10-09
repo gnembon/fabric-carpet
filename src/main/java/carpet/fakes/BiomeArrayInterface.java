@@ -4,7 +4,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 
-public interface class_4548Interface
+public interface BiomeArrayInterface
 {
     void setBiomeAtIndex(BlockPos pos, World world, Biome what);
 }
