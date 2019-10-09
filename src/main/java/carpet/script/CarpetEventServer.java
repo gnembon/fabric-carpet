@@ -207,6 +207,7 @@ public class CarpetEventServer
         },
         PLAYER_USES_ITEM("player_uses_item",new CallbackList(3))
         {
+            @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
             {
                 handler.call( () ->
@@ -222,14 +223,15 @@ public class CarpetEventServer
         },
         PLAYER_CLICKS_BLOCK("player_clicks_block",new CallbackList(3))
         {
-            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
+            @Override
+            public void onBlockAction(ServerPlayerEntity player, BlockPos blockpos, Direction facing)
             {
                 handler.call( () ->
                 {
                     return Arrays.asList(
                             ((c, t) -> new EntityValue(player)),
-                            ((c, t) -> ListValue.fromItemStack(itemstack)),
-                            ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"))
+                            ((c, t) -> new BlockValue(null, player.getServerWorld(), blockpos)),
+                            ((c, t) -> new StringValue(facing.getName()))
                     );
                 }, player::getCommandSource);
             }
@@ -345,6 +347,7 @@ public class CarpetEventServer
         },
         PLAYER_FINISHED_USING_ITEM("player_finishes_using_item",new CallbackList(3))
         {
+            @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
             {
                 // this.getStackInHand(this.getActiveHand()), this.activeItemStack)
@@ -359,9 +362,6 @@ public class CarpetEventServer
             }
         };
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
-
-
-
 
         public String name;
         public static Map<String, Event> byName = new HashMap<String, Event>(){{
