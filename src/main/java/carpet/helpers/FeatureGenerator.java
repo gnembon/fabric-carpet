@@ -2,10 +2,10 @@ package carpet.helpers;
 
 import carpet.settings.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
+import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.biome.source.BiomeSource;
@@ -22,6 +22,7 @@ import net.minecraft.world.gen.feature.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class FeatureGenerator
 {
@@ -48,8 +49,8 @@ public class FeatureGenerator
 
     private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
     {
-        if (1+2==3)
-            throw new RuntimeException("rebuild me");
+        //if (1+2==3)
+        //    throw new RuntimeException("rebuild me");
         return (w, p) -> {
             ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.method_14178().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
             {
@@ -64,10 +65,16 @@ public class FeatureGenerator
                 {
                     return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties()))
                     {
-                        // // // @Override
-                        public Biome getBiome(int i, int j, int k)
+                        @Override
+                        public Biome getStoredBiome(int i, int j, int k)
                         {
                             return biome;
+                        }
+
+                        @Override
+                        public Set<Biome> getBiomesInArea(int int_1, int int_2, int int_3, int int_4)
+                        {
+                            return Sets.newHashSet(biome);
                         }
                     };
                 }
@@ -84,6 +91,7 @@ public class FeatureGenerator
             return featureMap.get(name).plop(world, pos);
         return null;
     }
+    public static void noop() {System.out.println("boo");}
 
     private static Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
 
