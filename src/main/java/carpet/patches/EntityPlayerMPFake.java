@@ -110,7 +110,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             this.getServerWorld().method_14178().updateCameraPosition(this);
         }
         super.tick();
-        this.method_14226();
+        this.playerTick();
     }
 
     @Override

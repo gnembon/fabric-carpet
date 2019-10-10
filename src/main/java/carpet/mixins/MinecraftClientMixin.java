@@ -14,7 +14,7 @@ public class MinecraftClientMixin
 {
     //to inject right before
     // this.tickWorlds(booleanSupplier_1);
-    @Inject(method = "start", at = @At(value = "HEAD")
+    @Inject(method = "run", at = @At(value = "HEAD")
     )
     private void onInit(CallbackInfo ci) {
         //CM start game hook

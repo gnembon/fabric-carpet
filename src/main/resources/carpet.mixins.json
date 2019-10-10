@@ -68,7 +68,7 @@
     "SaplingBlockMixin",
     "EntityMixin",
 
-    "class_4548_getBiomeArrayMixin",
+    "BiomeArray_getBiomeArrayMixin",
 
     "GuardianEntityMixin",
     "DesertPyramidFeatureMixin",

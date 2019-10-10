@@ -2811,8 +2811,8 @@ public class CarpetExpression
             return (cc, tt) -> retval;
         });
 
-        /*this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
+        this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
+            return LazyValue.NULL;/*BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("plop needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).evalValue(c).getString();
@@ -2821,8 +2821,8 @@ public class CarpetExpression
                 return (c_, t_) -> Value.NULL;
             if (what.equalsIgnoreCase("boulder"))  // there might be more of those
                 this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext)c).s.getWorld());
-            return (c_, t_) -> new NumericValue(res);
-        });*/
+            return (c_, t_) -> new NumericValue(res);*/
+        });
 
         this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
             if (lv.size()<2)
