@@ -151,9 +151,8 @@ public class CarpetSettings
     public static boolean movableBlockEntities = false;
 
     @Rule(
-            desc = "Honey blocks can stick to each other and other blocks",
-            extra = {"... but not to slime blocks and vice versa.",
-                "In 1.14 that behaviour is applied to gold blocks instead"},
+            desc = "Honey doesn't stick to Slime and vice versa",
+            extra = "In 1.14 that behaviour is applied to orange stained glass instead",
             category = {EXPERIMENTAL, FEATURE}
     )
     public static boolean honeyGlidingSlime = false;
