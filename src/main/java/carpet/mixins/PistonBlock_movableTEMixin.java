@@ -32,12 +32,12 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     @Inject(method = "isMovable", at = @At("HEAD"), cancellable = true)
     private static void slimeHoney(BlockState blockState_1, World world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1, Direction direction_2, CallbackInfoReturnable<Boolean> cir)
     {
-        if (CarpetSettings.stickyHoney && direction_1 != direction_2)
+        if (CarpetSettings.honeyGlidingSlime && direction_1 != direction_2)
         {
             Block block = blockState_1.getBlock();
-            if (block != Blocks.GOLD_BLOCK && block != Blocks.SLIME_BLOCK) return;
+            if (block != Blocks.ORANGE_STAINED_GLASS && block != Blocks.SLIME_BLOCK) return;
             Block otherBlock = world_1.getBlockState(blockPos_1.offset(direction_2.getOpposite(),1)).getBlock();
-            if (otherBlock != Blocks.GOLD_BLOCK && otherBlock != Blocks.SLIME_BLOCK) return;
+            if (otherBlock != Blocks.ORANGE_STAINED_GLASS && otherBlock != Blocks.SLIME_BLOCK) return;
             cir.setReturnValue(block == otherBlock);
         }
     }

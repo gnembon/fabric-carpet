@@ -156,7 +156,7 @@ public class CarpetSettings
                 "In 1.14 that behaviour is applied to gold blocks instead"},
             category = {EXPERIMENTAL, FEATURE}
     )
-    public static boolean stickyHoney = false;
+    public static boolean honeyGlidingSlime = false;
 
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;
