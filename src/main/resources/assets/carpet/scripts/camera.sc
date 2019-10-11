@@ -57,7 +57,7 @@ __add_path_segment(vector, duration, mode) ->
    if ( (l('sharp','smooth') ~ mode) == null, exit('use smooth or sharp point'));
    if(!global_points, exit('Cannot add point to path that didn\'t started yet!'));
    l(v, end_time, m) = global_points.(-1);
-   put(vector, -2, __adjusted_rot(v.(-2) , vector.(-2) ));
+   vector.(-2) = __adjusted_rot(v.(-2) , vector.(-2) );
    global_points += l(vector, end_time+duration, mode)
 );
 // adjusts current rotation so we don\'t spin around like crazy
@@ -76,7 +76,7 @@ repeat(times, last_section_duration) ->
    positions = map(global_points, _.0);
    modes = map(global_points, _.(-1));
    durations = map(global_points, global_points.(_i+1).1 - _.1 );
-   put(durations, -1, last_section_duration);
+   durations.(-1) = last_section_duration;
    loop(times,
        loop( length(positions),
            __add_path_segment(positions._, durations._, modes._)
@@ -92,7 +92,7 @@ speed(percentage) ->
    );
    ratio = percentage/100;
    previous_path_length = global_points.(-1).1;
-   for(global_points, put(_, 1, _.1*ratio ) );
+   for(global_points, _.1 = _. 1 *ratio );
    undef('global_path_precalculated');
    str('path %s from %d to %d ticks',
        if(ratio<1,'shortened','extended'),
@@ -135,7 +135,7 @@ __get_path_at(segment, start, index) ->
    v = global_path_precalculated.(start+index);
    if(v == null,
        v = __find_position_for_point(segment, index);
-       put(global_path_precalculated, start+index, v)
+       global_path_precalculated.(start+index) =  v
     );
     v
 );
