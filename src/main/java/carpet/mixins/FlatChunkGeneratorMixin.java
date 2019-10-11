@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.settings.CarpetSettings;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
@@ -57,6 +58,24 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator<FlatChunkGe
                 if (Feature.OCEAN_MONUMENT.isApproximatelyInsideStructure(this.world, pos))
                 {
                     return Feature.OCEAN_MONUMENT.getMonsterSpawns();
+                }
+    
+                if (Feature.NETHER_BRIDGE.isInsideStructure(this.world, pos))
+                {
+                    return Feature.NETHER_BRIDGE.getMonsterSpawns();
+                }
+    
+                if (Feature.NETHER_BRIDGE.isApproximatelyInsideStructure(this.world, pos) && this.world.getBlockState(pos.down()).getBlock() == Blocks.NETHER_BRICKS)
+                {
+                    return Feature.NETHER_BRIDGE.getMonsterSpawns();
+                }
+    
+                if (CarpetSettings.shulkerSpawningInEndCities)
+                {
+                    if (Feature.END_CITY.isInsideStructure(this.world, pos))
+                    {
+                        return Feature.END_CITY.getMonsterSpawns();
+                    }
                 }
             }
         }
