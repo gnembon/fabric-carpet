@@ -183,8 +183,8 @@ public class EntityValue extends Value
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.method_23317()), new NumericValue(e.method_23318()), new NumericValue(e.method_23321())));
         put("location", (e, a) -> ListValue.of(new NumericValue(e.method_23317()), new NumericValue(e.method_23318()), new NumericValue(e.method_23321()), new NumericValue(e.yaw), new NumericValue(e.pitch)));
         put("x", (e, a) -> new NumericValue(e.method_23317()));
-        put("y", (e, a) -> new NumericValue(e.method_23317()));
-        put("z", (e, a) -> new NumericValue(e.method_23317()));
+        put("y", (e, a) -> new NumericValue(e.method_23318()));
+        put("z", (e, a) -> new NumericValue(e.method_23321()));
         put("motion", (e, a) ->
         {
             Vec3d velocity = e.getVelocity();
