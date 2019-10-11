@@ -221,11 +221,10 @@ __find_position_for_gauss(from_index, point) ->
                0.6*reduce(devs, _a+_, 0)/length(devs)
            );
            impact = __norm_prob(path_point+point, ptime, dev);
-           if(rtotal && impact < 0.000001*rtotal, throw(null));
+           if(rtotal && impact < 0.000001*rtotal, throw());
            components += l(v, impact);
            rtotal += impact
        )
-       ,null
    );
    try(
        for(range(from_index, -1, -1),
@@ -237,11 +236,10 @@ __find_position_for_gauss(from_index, point) ->
                0.6*reduce(devs, _a+_, 0)/length(devs)
            );
            impact = __norm_prob(path_point+point, ptime, dev);
-           if(ltotal && impact < 0.000001*ltotal, throw(null));
+           if(ltotal && impact < 0.000001*ltotal, throw());
            components += l(v, impact);
            ltotal += impact
        )
-       ,null
    );
    total = rtotal+ltotal;
    reduce(components, _a+_.0*(_.1/total), l(0,0,0,0,0))
