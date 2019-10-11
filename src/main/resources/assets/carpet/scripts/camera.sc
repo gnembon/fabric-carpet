@@ -35,36 +35,33 @@ __command() ->
    ''
 );
 
-start() -> 
+start() ->
 (
    p = player();
    global_points = l(l(p ~ 'location', 0,'sharp'));
    undef('global_path_precalculated');
    str('Started path at %.1f %.1f %.1f', p~'x', p~'y', p~'z')
 );
-
-add(delay) -> 
-( 
-   p = player(); 
+add(delay) ->
+(
+   p = player();
    mode = 'sharp';
    //mode is currently unused, run_path does always sharp, gauss interpolator is always smooth
    // but this option could be used could be used at some point by more robust interpolators
    __add_path_segment(p ~ 'location', delay, mode);
    str('Added point %d: %.1f %.1f %.1f', length(global_points), p~'x', p~'y', p~'z')
 );
-
-__add_path_segment(vector, duration, mode) -> 
+__add_path_segment(vector, duration, mode) ->
 (
    undef('global_path_precalculated');
-   if ( (l('sharp','smooth') ~ mode) == null, exit('use smooth or sharp point'));  
+   if ( (l('sharp','smooth') ~ mode) == null, exit('use smooth or sharp point'));
    if(!global_points, exit('Cannot add point to path that didn\'t started yet!'));
    l(v, end_time, m) = get(global_points, -1);
    put(vector,-2, __adjusted_rot(get(v, -2), get(vector, -2)));
    global_points += l(vector, end_time+duration, mode)
 );
-
 // adjusts current rotation so we don\'t spin around like crazy
-__adjusted_rot(previous_rot, current_rot) -> 
+__adjusted_rot(previous_rot, current_rot) ->
 (
    while( abs(previous_rot-current_rot) > 180, 1000,
        current_rot += if(previous_rot < current_rot, -360, 360)
@@ -73,7 +70,7 @@ __adjusted_rot(previous_rot, current_rot) ->
 );
 
 
-repeat(times, last_section_duration) -> 
+repeat(times, last_section_duration) ->
 (
    undef('global_path_precalculated');
    positions = map(global_points, k = get(_, 0));
@@ -87,11 +84,10 @@ repeat(times, last_section_duration) ->
    );
    str('Add %d points %d times', length(positions), times)
 );
-
 speed(percentage) ->
 (
    undef('global_path_precalculated');
-   if (percentage < 25 || percentage > 400, 
+   if (percentage < 25 || percentage > 400,
        exit('path speed can only be speed, or slowed down 4 times. Recall command for larger changes')
    );
    ratio = percentage/100;
@@ -104,7 +100,6 @@ speed(percentage) ->
        get(get(global_points, -1),1)
    )
 );
-
 select_interpolation(method) ->
 (
    undef('global_path_precalculated');
@@ -123,21 +118,18 @@ select_interpolation(method) ->
            global_interpol_option = if(type=='auto',0,number(type));
            __find_position_for_point(s, p) -> __find_position_for_gauss(s, p)
        ),
-       
+
        exit('Choose one of the following methods: linear, gauss:auto, gauss:<deviation>')
    );
    'Ok'
 );
-
 select_interpolation('gauss_auto');
-
 __assert_valid_for_motion() ->
 (
    if(!global_points, exit('Path not defined yet'));
    if(length(global_points)<2, exit('Path not complete - add more points'));
-   null    
+   null
 );
-
 __get_path_at(segment, start, index) ->
 (
    v = get(global_path_precalculated, start+index);
@@ -147,10 +139,8 @@ __get_path_at(segment, start, index) ->
     );
     v
 );
-
 __invalidate_points_cache() -> global_path_precalculated = map(range(get(get(global_points, -1),1)), null);
-
-show() -> 
+show() ->
 (
    loop(100,
        _show_path_tick('dust 0.9 0.1 0.1 1', 100);
@@ -158,15 +148,14 @@ show() ->
    );
    'Done!'
 );
-
-play(fps) -> 
+play(fps) ->
 (
    p = player();
    __assert_valid_for_motion();
    __prepare_path_if_needed();
    if ((fps % 20 != 0) || fps < 20, exit('FPS needs to be multiples of 20') );
 	tpt = round(fps / 20);
-   mspt = 50 / tpt; 
+   mspt = 50 / tpt;
    start_time = time();
    point = 0;
    loop( length(global_points)-1,
@@ -187,8 +176,7 @@ play(fps) ->
    game_tick(1000);
    'Done!'
 );
-
-_show_path_tick(particle_type, total) -> 
+_show_path_tick(particle_type, total) ->
 (
    __assert_valid_for_motion();
    __prepare_path_if_needed();
@@ -202,12 +190,10 @@ _show_path_tick(particle_type, total) ->
    );
    null
 );
-
 __prepare_path_if_needed_generic() ->
 (
    if(!global_path_precalculated, __invalidate_points_cache())
 );
-
 __find_position_for_linear(segment, point) ->
 (
    l(va, start, mode_a) = get(global_points,segment);
@@ -216,22 +202,19 @@ __find_position_for_linear(segment, point) ->
    dt = point/section;
    dt*vb+(1-dt)*va
 );
-
-
-//(1/sqrt(2*pi*d*d))*euler^(-((x-miu)^2)/(2*d*d)) 
+//(1/sqrt(2*pi*d*d))*euler^(-((x-miu)^2)/(2*d*d))
 // but we will be normalizing anyways, so who cares
 __norm_prob(x, miu, d) -> euler^(-((x-miu)^2)/(2*d*d));
-
-__find_position_for_gauss(from_index, point) -> 
+__find_position_for_gauss(from_index, point) ->
 (
    dev = global_interpol_option;
    components = l();
    path_point = get(get(global_points, from_index),1);
-   
+
    try(
        for(range(from_index+1, length(global_points)),
            l(v,ptime,mode) = get(global_points, _);
-           dev = if (global_interpol_option > 0, global_interpol_option, 
+           dev = if (global_interpol_option > 0, global_interpol_option,
                devs = l();
                if (_+1 < length(global_points), devs += get(get(global_points, _+1),1)-ptime);
                if (_-1 >= 0, devs += ptime-get(get(global_points, _-1),1));
@@ -247,7 +230,7 @@ __find_position_for_gauss(from_index, point) ->
    try(
        for(range(from_index, -1, -1),
            l(v,ptime,mode) = get(global_points, _);
-           dev = if (global_interpol_option > 0, global_interpol_option, 
+           dev = if (global_interpol_option > 0, global_interpol_option,
                devs = l();
                if (_+1 < length(global_points), devs += get(get(global_points, _+1),1)-ptime);
                if (_-1 >= 0, devs += ptime-get(get(global_points, _-1),1));

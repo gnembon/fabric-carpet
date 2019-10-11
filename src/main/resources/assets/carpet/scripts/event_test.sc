@@ -85,7 +85,7 @@ __on_player_starts_sprinting(player) -> print('Player '+player+' starts sprintin
 
 __on_player_stops_sprinting(player) -> print('Player '+player+' stops sprinting.');
 
-__on_player_releases_item(player, item_tuple, hand) -> 
+__on_player_releases_item(player, item_tuple, hand) ->
 (
 	l(item, count, nbt) = item_tuple || l('None', 0, null);
 	print('');
@@ -98,7 +98,7 @@ __on_player_releases_item(player, item_tuple, hand) ->
 	print('  - hand: '+hand)
 );
 
-__on_player_finishes_using_item(player, item_tuple, hand) -> 
+__on_player_finishes_using_item(player, item_tuple, hand) ->
 (
 	l(item, count, nbt) = item_tuple || l('None', 0, null);
 	print('');
