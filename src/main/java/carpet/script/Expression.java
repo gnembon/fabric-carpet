@@ -16,6 +16,7 @@ import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
 import carpet.script.value.GlobalValue;
+import carpet.script.value.LContainerValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
@@ -1242,11 +1243,18 @@ public class Expression implements Cloneable
      */
     public void Operators()
     {
-        addBinaryOperator(".", precedence.get("attribute~."),true, (container, key) ->
+        addLazyBinaryOperator(".", precedence.get("attribute~."),true, (c, t, container_lv, key_lv) ->
         {
-            if (container instanceof ContainerValueInterface)
-                return ((ContainerValueInterface) container).get(key);
-            throw new InternalExpressionException("Cannot access elements of a non-container");
+            Value container = container_lv.evalValue(c);
+            if (!(container instanceof ContainerValueInterface))
+                throw new InternalExpressionException("Cannot access elements of a non-container");
+            Value address = key_lv.evalValue(c);
+            if (t != Context.LVALUE)
+            {
+                Value retVal = ((ContainerValueInterface) container).get(address);
+                return (cc, ct) -> retVal;
+            }
+            return (cc, ct) -> new LContainerValue((ContainerValueInterface) container, address);
         });
         addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
         addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
@@ -1290,7 +1298,7 @@ public class Expression implements Cloneable
 
         addLazyBinaryOperator("=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
         {
-            Value v1 = lv1.evalValue(c);
+            Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
             if (v1 instanceof ListValue.ListConstructorValue && v2 instanceof ListValue)
             {
@@ -1308,6 +1316,11 @@ public class Expression implements Cloneable
                     c.setVariable(lname, (cc, tt) -> vval);
                 }
                 return (cc, tt) -> Value.TRUE;
+            }
+            if (v1 instanceof LContainerValue)
+            {
+                Value ret = ((LContainerValue) v1).getContainer().put(((LContainerValue) v1).getAddress(), v2);
+                return (cc, tt) -> ret;
             }
             v1.assertAssignable();
             String varname = v1.getVariable();
