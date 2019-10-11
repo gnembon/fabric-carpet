@@ -2399,13 +2399,27 @@ public class Expression implements Cloneable
             }
         });
 
-        addBinaryFunction("delete", (container, address) ->
+        addLazyFunction("delete", -1, (c, t, lv) ->
         {
-            if (container instanceof ContainerValueInterface)
+            Value containerOrLValue = lv.get(0).evalValue(c, Context.LVALUE);
+            ContainerValueInterface container;
+            Value address;
+            if (containerOrLValue instanceof LContainerValue)
             {
-                return ((ContainerValueInterface) container).delete(address);
+                container = ((LContainerValue) containerOrLValue).getContainer();
+                address = ((LContainerValue) containerOrLValue).getAddress();
             }
-            throw new InternalExpressionException("First argument of delete should be a container: list, map or nbt");
+            else if (containerOrLValue instanceof ContainerValueInterface)
+            {
+                container = (ContainerValueInterface) containerOrLValue;
+                address = lv.get(1).evalValue(c);
+            }
+            else
+            {
+                throw new InternalExpressionException("First argument of delete should be a container: list, map or nbt");
+            }
+            Value ret = container.delete(address);
+            return (cc, tt) -> ret;
         });
     }
 
