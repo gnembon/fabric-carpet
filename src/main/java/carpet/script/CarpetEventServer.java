@@ -301,7 +301,7 @@ public class CarpetEventServer
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
             {
-                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
         PLAYER_STOPS_SNEAKING("player_stops_sneaking",new CallbackList(1))
@@ -309,7 +309,7 @@ public class CarpetEventServer
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
             {
-                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
         PLAYER_STARTS_SPRINTING("player_starts_sprinting",new CallbackList(1))
@@ -317,7 +317,7 @@ public class CarpetEventServer
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
             {
-                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
         PLAYER_STOPS_SPRINTING("player_stops_sprinting",new CallbackList(1))
@@ -325,7 +325,7 @@ public class CarpetEventServer
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
             {
-                handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
 
@@ -360,7 +360,24 @@ public class CarpetEventServer
                     );
                 }, player::getCommandSource);
             }
+        },
+        PLAYER_DROPS_ITEM("player_drops_item", new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_DROPS_STACK("player_drops_stack", new CallbackList(1))
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
         };
+
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 
         public String name;
