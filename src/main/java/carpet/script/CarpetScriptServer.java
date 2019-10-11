@@ -1,8 +1,8 @@
 package carpet.script;
 
+import carpet.script.bundled.BundledModule;
 import carpet.settings.CarpetSettings;
 import carpet.CarpetServer;
-import carpet.script.bundled.CameraPathModule;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.ModuleInterface;
 import carpet.script.exception.CarpetExpressionException;
@@ -40,7 +40,8 @@ public class CarpetScriptServer
     public CarpetEventServer events;
 
     public static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
-        add(new CameraPathModule());
+        add(new BundledModule("camera"));
+        add(new BundledModule("event_test"));
     }};
 
     public CarpetScriptServer()

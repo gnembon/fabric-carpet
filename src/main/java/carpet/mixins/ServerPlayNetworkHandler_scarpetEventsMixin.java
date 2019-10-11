@@ -22,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import static carpet.script.CarpetEventServer.Event.PLAYER_ATTACKS_ENTITY;
 import static carpet.script.CarpetEventServer.Event.PLAYER_CLICKS_BLOCK;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DEPLOYS_ELYTRA;
+import static carpet.script.CarpetEventServer.Event.PLAYER_DROPS_ITEM;
+import static carpet.script.CarpetEventServer.Event.PLAYER_DROPS_STACK;
 import static carpet.script.CarpetEventServer.Event.PLAYER_INERACTSW_WITH_ENTITY;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RELEASED_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RIDES;
@@ -48,6 +50,30 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
             PLAYER_RIDES.onMountControls(player, p.getSideways(), p.getForward(), p.isJumping(), p.isSneaking());
         }
     }
+
+    @Inject(method = "onPlayerAction", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Lnet/minecraft/entity/ItemEntity;",
+            ordinal = 0,
+            shift = At.Shift.BEFORE
+    ))
+    private void onQItem(PlayerActionC2SPacket playerActionC2SPacket_1, CallbackInfo ci)
+    {
+        PLAYER_DROPS_ITEM.onPlayerEvent(player);
+    }
+
+    @Inject(method = "onPlayerAction", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Lnet/minecraft/entity/ItemEntity;",
+            ordinal = 1,
+            shift = At.Shift.BEFORE
+    ))
+    private void onCtrlQItem(PlayerActionC2SPacket playerActionC2SPacket_1, CallbackInfo ci)
+    {
+        PLAYER_DROPS_STACK.onPlayerEvent(player);
+    }
+
+
 
     @Inject(method = "onPlayerMove", at = @At(
             value = "INVOKE",
