@@ -32,6 +32,7 @@ import net.minecraft.block.CommandBlock;
 import net.minecraft.block.JigsawBlock;
 import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.network.packet.GuiSlotUpdateS2CPacket;
 import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ParticleArgumentType;
@@ -46,10 +47,14 @@ import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.NetworkSyncedItem;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Packet;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
@@ -1053,6 +1058,13 @@ public class CarpetExpression
      *     stack_limit('ender_pearl') =&gt; 16
      *     stack_limit('stone') =&gt; 64
      * </pre>
+     * <h3><code>item_category(item)</code></h3>
+     * <p>Returns the string representing the category of a given item, like `building_blocks`, `combat`, or `tools`.</p>
+     * <pre>
+     *     item_category('wooden_axe') =&gt; tools
+     *     item_category('ender_pearl') =&gt; misc
+     *     item_category('stone') =&gt; building_blocks
+     * </pre>
      * <h3><code>inventory_size(inventory)</code></h3>
      * <p>Returns the size of the inventory for the entity or block in question. Returns null if the block or entity
      * don't have an inventory</p>
@@ -1122,6 +1134,15 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
 
+        this.expr.addLazyFunction("item_category", 1, (c, t, lv) ->
+        {
+            ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
+            Value res = new StringValue(item.getItem().getGroup().getName());
+            return (_c, _t) -> res;
+        });
+
+
+
         this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
@@ -1175,6 +1196,7 @@ public class CarpetExpression
             {
                 // clear slot
                 ItemStack removedStack = inventoryLocator.inventory.removeInvStack(slot);
+                syncPlayerInventory(inventoryLocator, slot);
                 //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
                 return (_c, _t) -> ListValue.fromItemStack(removedStack);
             }
@@ -1184,6 +1206,7 @@ public class CarpetExpression
                 ItemStack newStack = previousStack.copy();
                 newStack.setCount(count);
                 inventoryLocator.inventory.setInvStack(slot, newStack);
+                syncPlayerInventory(inventoryLocator, slot);
                 return (_c, _t) -> ListValue.fromItemStack(previousStack);
             }
             CompoundTag nbt = null; // skipping one argument
@@ -1206,6 +1229,7 @@ public class CarpetExpression
             try
             {
                 inventoryLocator.inventory.setInvStack(slot, newitem.createStack(count, false));
+                syncPlayerInventory(inventoryLocator, slot);
             }
             catch (CommandSyntaxException e)
             {
@@ -1281,11 +1305,13 @@ public class CarpetExpression
                 {
                     stack.setCount(left);
                     inventoryLocator.inventory.setInvStack(i, stack);
+                    syncPlayerInventory(inventoryLocator, i);
                     return (_c, _t) -> Value.TRUE;
                 }
                 else
                 {
                     inventoryLocator.inventory.removeInvStack(i);
+                    syncPlayerInventory(inventoryLocator, i);
                     amount -= stack.getCount();
                 }
             }
@@ -1346,10 +1372,21 @@ public class CarpetExpression
                 item.setToDefaultPickupDelay();
                 cc.s.getWorld().spawnEntity(item);
             }
-            inventoryLocator.inventory.markDirty();
             Value res = new NumericValue(item.getStack().getCount());
             return (_c, _t) -> res;
         });
+    }
+    private void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
+    {
+        if (inventory.owner instanceof ServerPlayerEntity)
+        {
+            ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
+            player.networkHandler.sendPacket(new GuiSlotUpdateS2CPacket(
+                    -2,
+                    int_1,
+                    inventory.inventory.getInvStack(int_1)
+            ));
+        }
     }
 
 
@@ -3107,6 +3144,8 @@ public class CarpetExpression
      * __on_player_stops_sneaking(player)
      * __on_player_starts_sprinting(player)
      * __on_player_stops_sprinting(player)
+     * __on_player_drops_item(player)
+     * __on_player_drops_stack(player)
      * </pre>
      * <h3><code>/script event</code> command</h3>
      * <p>used to display current events and bounded functions. use <code>add_to</code> ro register new event, or <code>remove_from</code>
