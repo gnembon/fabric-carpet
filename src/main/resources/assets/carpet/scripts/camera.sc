@@ -56,8 +56,8 @@ __add_path_segment(vector, duration, mode) ->
    undef('global_path_precalculated');
    if ( (l('sharp','smooth') ~ mode) == null, exit('use smooth or sharp point'));
    if(!global_points, exit('Cannot add point to path that didn\'t started yet!'));
-   l(v, end_time, m) = get(global_points, -1);
-   put(vector,-2, __adjusted_rot(get(v, -2), get(vector, -2)));
+   l(v, end_time, m) = global_points.(-1);
+   put(vector, -2, __adjusted_rot(v.(-2) , vector.(-2) ));
    global_points += l(vector, end_time+duration, mode)
 );
 // adjusts current rotation so we don\'t spin around like crazy
@@ -73,13 +73,13 @@ __adjusted_rot(previous_rot, current_rot) ->
 repeat(times, last_section_duration) ->
 (
    undef('global_path_precalculated');
-   positions = map(global_points, k = get(_, 0));
-   modes = map(global_points, get(_, -1));
-   durations = map(global_points, get(get(global_points, _i+1), 1)-get(_, 1));
+   positions = map(global_points, _.0);
+   modes = map(global_points, _.(-1));
+   durations = map(global_points, global_points.(_i+1).1 - _.1 );
    put(durations, -1, last_section_duration);
    loop(times,
        loop( length(positions),
-           __add_path_segment(get(positions, _), get(durations, _), get(modes, _))
+           __add_path_segment(positions._, durations._, modes._)
        )
    );
    str('Add %d points %d times', length(positions), times)
@@ -91,13 +91,13 @@ speed(percentage) ->
        exit('path speed can only be speed, or slowed down 4 times. Recall command for larger changes')
    );
    ratio = percentage/100;
-   previous_path_length = get(get(global_points, -1),1);
-   for(global_points, put(_, 1, get(_, 1)*ratio ) );
+   previous_path_length = global_points.(-1).1;
+   for(global_points, put(_, 1, _.1*ratio ) );
    undef('global_path_precalculated');
    str('path %s from %d to %d ticks',
        if(ratio<1,'shortened','extended'),
        previous_path_length,
-       get(get(global_points, -1),1)
+       global_points.(-1).1
    )
 );
 select_interpolation(method) ->
@@ -132,14 +132,14 @@ __assert_valid_for_motion() ->
 );
 __get_path_at(segment, start, index) ->
 (
-   v = get(global_path_precalculated, start+index);
+   v = global_path_precalculated.(start+index);
    if(v == null,
        v = __find_position_for_point(segment, index);
        put(global_path_precalculated, start+index, v)
     );
     v
 );
-__invalidate_points_cache() -> global_path_precalculated = map(range(get(get(global_points, -1),1)), null);
+__invalidate_points_cache() -> global_path_precalculated = map(range(global_points. (-1) . 1), null);
 show() ->
 (
    loop(100,
@@ -160,8 +160,8 @@ play(fps) ->
    point = 0;
    loop( length(global_points)-1,
        segment = _;
-       start = get(get(global_points, segment),1);
-       end = get(get(global_points, segment+1),1);
+       start = global_points.segment.1;
+       end = global_points.(segment+1).1;
        loop(end-start,
            v = __get_path_at(segment, start, _);
            modify(p, 'location', v);
@@ -182,8 +182,8 @@ _show_path_tick(particle_type, total) ->
    __prepare_path_if_needed();
    loop(total,
        segment = floor(rand(length(global_points)-1));
-       start = get(get(global_points, segment),1);
-       end = get(get(global_points, segment+1),1);
+       start = global_points.segment.1;
+       end = global_points.(segment+1).1;
        index = floor(rand(end-start));
        l(x, y, z) = slice(__get_path_at(segment, start, index), 0, 3);
        particle(particle_type, x, y, z, 1, 0, 0)
@@ -196,8 +196,8 @@ __prepare_path_if_needed_generic() ->
 );
 __find_position_for_linear(segment, point) ->
 (
-   l(va, start, mode_a) = get(global_points,segment);
-   l(vb, end, mode_b)   = get(global_points,segment+1);
+   l(va, start, mode_a) = global_points.segment;
+   l(vb, end, mode_b)   = global_points.(segment+1);
    section = end-start;
    dt = point/section;
    dt*vb+(1-dt)*va
@@ -209,40 +209,38 @@ __find_position_for_gauss(from_index, point) ->
 (
    dev = global_interpol_option;
    components = l();
-   path_point = get(get(global_points, from_index),1);
+   path_point = global_points.from_index.1;
 
    try(
        for(range(from_index+1, length(global_points)),
-           l(v,ptime,mode) = get(global_points, _);
+           l(v,ptime,mode) = global_points._;
            dev = if (global_interpol_option > 0, global_interpol_option,
                devs = l();
-               if (_+1 < length(global_points), devs += get(get(global_points, _+1),1)-ptime);
-               if (_-1 >= 0, devs += ptime-get(get(global_points, _-1),1));
+               if (_+1 < length(global_points), devs += global_points.(_+1).1-ptime);
+               if (_-1 >= 0, devs += ptime-global_points.(_-1).1);
                0.6*reduce(devs, _a+_, 0)/length(devs)
            );
            impact = __norm_prob(path_point+point, ptime, dev);
-           if(rtotal && impact < 0.000001*rtotal, throw(null));
+           if(rtotal && impact < 0.000001*rtotal, throw());
            components += l(v, impact);
            rtotal += impact
        )
-       ,null
    );
    try(
        for(range(from_index, -1, -1),
-           l(v,ptime,mode) = get(global_points, _);
+           l(v,ptime,mode) = global_points._;
            dev = if (global_interpol_option > 0, global_interpol_option,
                devs = l();
-               if (_+1 < length(global_points), devs += get(get(global_points, _+1),1)-ptime);
-               if (_-1 >= 0, devs += ptime-get(get(global_points, _-1),1));
+               if (_+1 < length(global_points), devs += global_points.(_+1).1-ptime);
+               if (_-1 >= 0, devs += ptime-global_points.(_-1).1);
                0.6*reduce(devs, _a+_, 0)/length(devs)
            );
            impact = __norm_prob(path_point+point, ptime, dev);
-           if(ltotal && impact < 0.000001*ltotal, throw(null));
+           if(ltotal && impact < 0.000001*ltotal, throw());
            components += l(v, impact);
            ltotal += impact
        )
-       ,null
    );
    total = rtotal+ltotal;
-   reduce(components, _a+get(_,0)*(get(_,1)/total), l(0,0,0,0,0))
+   reduce(components, _a+_.0*(_.1/total), l(0,0,0,0,0))
 )
