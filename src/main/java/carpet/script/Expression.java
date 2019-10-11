@@ -23,6 +23,7 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import com.sun.xml.internal.fastinfoset.algorithm.IntEncodingAlgorithm;
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.math.BigInteger;
@@ -2401,6 +2402,8 @@ public class Expression implements Cloneable
 
         addLazyFunction("delete", -1, (c, t, lv) ->
         {
+            if (lv.size() < 1)
+                throw new InternalExpressionException("delete requires arguments");
             Value containerOrLValue = lv.get(0).evalValue(c, Context.LVALUE);
             ContainerValueInterface container;
             Value address;
@@ -2412,6 +2415,8 @@ public class Expression implements Cloneable
             else if (containerOrLValue instanceof ContainerValueInterface)
             {
                 container = (ContainerValueInterface) containerOrLValue;
+                if (lv.size() < 2)
+                    throw new InternalExpressionException("delete requires two arguments, container (list, map) and address");
                 address = lv.get(1).evalValue(c);
             }
             else
