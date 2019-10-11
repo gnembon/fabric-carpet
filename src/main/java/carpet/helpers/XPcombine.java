@@ -47,7 +47,7 @@ public class XPcombine
         if (getTextureByXP(first.getExperienceAmount()) != size)
         {
             newOrb =  new ExperienceOrbEntity(EntityType.EXPERIENCE_ORB, first.world);
-            newOrb.setPositionAndAngles(first.method_23317(), first.method_23318(), first.method_23321(), first.yaw, first.pitch);
+            newOrb.setPositionAndAngles(first.getX(), first.getY(), first.getZ(), first.yaw, first.pitch);
             ((ExperienceOrbInterface)newOrb).setAmount(first.getExperienceAmount());
 
             first.world.spawnEntity(newOrb);

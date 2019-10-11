@@ -180,11 +180,11 @@ public class EntityValue extends Value
         put("removed", (entity, arg) -> new NumericValue(entity.removed));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getEntityId()));
-        put("pos", (e, a) -> ListValue.of(new NumericValue(e.method_23317()), new NumericValue(e.method_23318()), new NumericValue(e.method_23321())));
-        put("location", (e, a) -> ListValue.of(new NumericValue(e.method_23317()), new NumericValue(e.method_23318()), new NumericValue(e.method_23321()), new NumericValue(e.yaw), new NumericValue(e.pitch)));
-        put("x", (e, a) -> new NumericValue(e.method_23317()));
-        put("y", (e, a) -> new NumericValue(e.method_23318()));
-        put("z", (e, a) -> new NumericValue(e.method_23321()));
+        put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
+        put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.yaw), new NumericValue(e.pitch)));
+        put("x", (e, a) -> new NumericValue(e.getX()));
+        put("y", (e, a) -> new NumericValue(e.getY()));
+        put("z", (e, a) -> new NumericValue(e.getZ()));
         put("motion", (e, a) ->
         {
             Vec3d velocity = e.getVelocity();
@@ -422,7 +422,7 @@ public class EntityValue extends Value
     private static void updatePosition(Entity e)
     {
         if (e instanceof ServerPlayerEntity)
-            ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.method_23317(), e.method_23318(), e.method_23321(), e.yaw, e.pitch);
+            ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.getX(), e.getY(), e.getZ(), e.yaw, e.pitch);
         else
             ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e,new EntityPositionS2CPacket(e));
     }
@@ -446,16 +446,15 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("expected a list of 5 parameters as second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.method_23327(
-            NumericValue.asNumber(coords.get(0)).getDouble(),
-            NumericValue.asNumber(coords.get(1)).getDouble(),
-            NumericValue.asNumber(coords.get(2)).getDouble()
-            );
             e.pitch = (float) NumericValue.asNumber(coords.get(4)).getDouble();
             e.prevPitch = e.pitch;
             e.yaw = (float) NumericValue.asNumber(coords.get(3)).getDouble();
             e.prevYaw = e.yaw;
-            e.setPosition(e.method_23317(), e.method_23318(), e.method_23321());
+            e.setPosition(
+                    NumericValue.asNumber(coords.get(0)).getDouble(),
+                    NumericValue.asNumber(coords.get(1)).getDouble(),
+                    NumericValue.asNumber(coords.get(2)).getDouble())
+            ;
             updatePosition(e);
         });
         put("pos", (e, v) ->
@@ -465,30 +464,29 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("expected a list of 3 parameters as second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.method_23327(
-            NumericValue.asNumber(coords.get(0)).getDouble(),
-            NumericValue.asNumber(coords.get(1)).getDouble(),
-            NumericValue.asNumber(coords.get(2)).getDouble()
+            e.setPosition(
+                    NumericValue.asNumber(coords.get(0)).getDouble(),
+                    NumericValue.asNumber(coords.get(1)).getDouble(),
+                    NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            e.setPosition(e.method_23317(), e.method_23318(), e.method_23321());
             updatePosition(e);
         });
         put("x", (e, v) ->
         {
             //e.x = NumericValue.asNumber(v).getDouble();
-            e.setPosition(NumericValue.asNumber(v).getDouble(), e.method_23318(), e.method_23321());
+            e.setPosition(NumericValue.asNumber(v).getDouble(), e.getY(), e.getZ());
             updatePosition(e);
         });
         put("y", (e, v) ->
         {
             //e.y = NumericValue.asNumber(v).getDouble();
-            e.setPosition(e.method_23317(), NumericValue.asNumber(v).getDouble(), e.method_23321());
+            e.setPosition(e.getX(), NumericValue.asNumber(v).getDouble(), e.getZ());
             updatePosition(e);
         });
         put("z", (e, v) ->
         {
             //e.z = NumericValue.asNumber(v).getDouble();
-            e.setPosition(e.method_23317(), e.method_23318(), NumericValue.asNumber(v).getDouble());
+            e.setPosition(e.getX(), e.getY(), NumericValue.asNumber(v).getDouble());
             updatePosition(e);
         });
         put("pitch", (e, v) ->

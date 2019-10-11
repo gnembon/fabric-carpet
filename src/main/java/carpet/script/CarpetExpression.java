@@ -681,7 +681,7 @@ public class CarpetExpression
                 Entity e = ((EntityValue) arg).getEntity();
                 if (e == null)
                     throw new InternalExpressionException("Null entity");
-                Value retval = ListValue.of(new NumericValue(e.method_23317()), new NumericValue(e.method_23318()), new NumericValue(e.method_23321()));
+                Value retval = ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()));
                 return (c_, t_) -> retval;
             }
             else
@@ -1365,8 +1365,8 @@ public class CarpetExpression
             {
                 LivingEntity villager = (LivingEntity)owner;
                 // stolen from LookTargetUtil.give((VillagerEntity)owner, droppedStack, (LivingEntity) owner);
-                double double_1 = villager.method_23318() - 0.30000001192092896D + (double)villager.getStandingEyeHeight();
-                item = new ItemEntity(villager.world, villager.method_23317(), double_1, villager.method_23321(), droppedStack);
+                double double_1 = villager.getY() - 0.30000001192092896D + (double)villager.getStandingEyeHeight();
+                item = new ItemEntity(villager.world, villager.getX(), double_1, villager.getZ(), droppedStack);
                 Vec3d vec3d_1 = villager.getRotationVec(1.0F).normalize().multiply(0.3);//  new Vec3d(0, 0.3, 0);
                 item.setVelocity(vec3d_1);
                 item.setToDefaultPickupDelay();
