@@ -45,6 +45,14 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator<FlatChunkGe
                 {
                     return Feature.PILLAGER_OUTPOST.getMonsterSpawns();
                 }
+    
+                if (CarpetSettings.huskSpawningInTemples)
+                {
+                    if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(this.world, pos))
+                    {
+                        return Feature.DESERT_PYRAMID.getMonsterSpawns();
+                    }
+                }
         
                 if (Feature.OCEAN_MONUMENT.isApproximatelyInsideStructure(this.world, pos))
                 {
