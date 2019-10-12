@@ -1291,7 +1291,7 @@ public class Expression implements Cloneable
             return v2.getBoolean() ? ((cc, tt) -> v2) : LazyValue.FALSE;
         });
 
-        addBinaryOperator("~", precedence.get("attribute~."), true, Value::in);
+        addBinaryOperator("~", precedence.get("attribute~:"), true, Value::in);
 
         addBinaryOperator(">", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 v1.compareTo(v2) > 0 ? Value.TRUE : Value.FALSE);
