@@ -23,7 +23,6 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.sun.xml.internal.fastinfoset.algorithm.IntEncodingAlgorithm;
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.math.BigInteger;
@@ -338,7 +337,7 @@ import static java.lang.Math.min;
 public class Expression implements Cloneable
 {
     private static final Map<String, Integer> precedence = new HashMap<String,Integer>() {{
-        put("attribute~.", 80);
+        put("attribute~:", 80);
         put("unary+-!", 60);
         put("exponent^", 40);
         put("multiplication*/%", 30);
@@ -1073,7 +1072,7 @@ public class Expression implements Cloneable
      * even if they look like them:
      * </p>
      * <ul>
-     *     <li>Match, Get <code>~ .</code></li>
+     *     <li>Match, Get <code>~ :</code></li>
      *     <li>Unary <code>+ - !</code></li>
      *     <li>Exponent <code>^</code></li>
      *     <li>Multiplication <code>* / %</code></li>
@@ -1088,7 +1087,7 @@ public class Expression implements Cloneable
      *     <li>Bracket <code>( )</code></li>
      * </ul>
      *
-     * <h3><code>Get, Accessor Operator  .</code></h3>
+     * <h3><code>Get, Accessor Operator  :</code></h3>
      * <p>Operator version of the <code>get(...)</code> function to access elements of lists, maps, and potentially other
      * containers (i.e. NBTs). It is important to distinguish from <code>~</code> operator, which is a matching operator,
      * which is expected to perform some extra computations to retrieve the result, while <code>.</code> should be
@@ -1096,7 +1095,7 @@ public class Expression implements Cloneable
      * API, meaning <code>get(...)</code>, <code>put(...)</code>, <code>delete(...)</code>,
      * and <code>has(...)</code> functions</p>
      * <p>WARNING: Unlike for some languages, where item access operator can be an L-value, to assign new values to
-     * container elements, use <code>put</code> function instead, i.e. <code>a.1='foo'</code> won't work.</p>
+     * container elements, use <code>put</code> function instead, i.e. <code>a:1='foo'</code> won't work.</p>
      *
      * <h3><code>Matching Operator  ~</code></h3>
      * <p>This operator should be understood as 'matches', 'contains', 'is_in',
@@ -1244,9 +1243,19 @@ public class Expression implements Cloneable
      */
     public void Operators()
     {
-        addLazyBinaryOperator(".", precedence.get("attribute~."),true, (c, t, container_lv, key_lv) ->
+        addLazyBinaryOperator(":", precedence.get("attribute~:"),true, (c, t, container_lv, key_lv) ->
         {
             Value container = container_lv.evalValue(c);
+            if (container instanceof LContainerValue)
+            {
+                ContainerValueInterface outerContainer = ((LContainerValue) container).getContainer();
+                Value outerAddress = ((LContainerValue) container).getAddress();
+                Value innerContainer = outerContainer.get(outerAddress);
+                if (!(innerContainer instanceof  ContainerValueInterface))
+                    throw new InternalExpressionException("Cannot access elements of a non-container");
+                Value innerLValue = new LContainerValue((ContainerValueInterface) innerContainer, key_lv.evalValue(c));
+                return (cc, tt) -> innerLValue;
+            }
             if (!(container instanceof ContainerValueInterface))
                 throw new InternalExpressionException("Cannot access elements of a non-container");
             Value address = key_lv.evalValue(c);
@@ -2023,7 +2032,7 @@ public class Expression implements Cloneable
      * <p>Here is a list of operations that work on all types of containers: lists, maps, as well as other Minecraft
      * specific modifyable containers, like NBTs</p>
      *
-     * <h3><code>get(container, address), '.' operator</code></h3>
+     * <h3><code>get(container, address), ':' operator</code></h3>
      * <p>Returns the value at <code>address</code> element from the <code>value</code>.
      * For lists it indicates an index, use negative numbers to reach elements from the end of the list. <code>get</code>
      * call will always be able to find the index. In case there is few items, it will loop over </p>
@@ -2036,7 +2045,7 @@ public class Expression implements Cloneable
      *     get(l(range(10)), 5)  =&gt; 5
      *     get(l(range(10)), -1)  =&gt; 9
      *     get(l(range(10)), 10)  =&gt; 0
-     *     l(range(10)).93  =&gt; 3
+     *     l(range(10)):93  =&gt; 3
      *
      *     get(player() ~ 'nbt', 'Health') =&gt; 20 // inefficient way to get player health, use player() ~ 'health' instead
      *
