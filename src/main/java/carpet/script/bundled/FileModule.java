@@ -1,9 +1,9 @@
 package carpet.script.bundled;
 
 import carpet.CarpetServer;
-import net.minecraft.nbt.EndTag;
 import net.minecraft.nbt.PositionTracker;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagReaders;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -63,14 +63,12 @@ public class FileModule implements ModuleInterface
             byte byte_1 = dataInput_1.readByte();
             if (byte_1 == 0)
             {
-                return new EndTag();
+                return null;
             }
             else
             {
                 dataInput_1.readUTF();
-                Tag tag_1 = Tag.createTag(byte_1);
-                tag_1.read(dataInput_1, 0, PositionTracker.DEFAULT);
-                return tag_1;
+                return TagReaders.of(byte_1).read(dataInput_1, 0, PositionTracker.DEFAULT);
             }
         }
         catch (IOException ignored)
