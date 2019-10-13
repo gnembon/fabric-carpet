@@ -177,21 +177,17 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Value delete(Value where)
+    public boolean delete(Value where)
     {
         Value ret = map.remove(where);
-        if (ret == null)
-            return Value.NULL;
-        return ret;
+        return ret != null;
     }
 
     @Override
-    public Value put(Value key, Value value)
+    public boolean put(Value key, Value value)
     {
         Value ret = map.put(key, value);
-        if (ret == null)
-            return Value.NULL;
-        return ret;
+        return ret != null;
     }
 
     @Override

@@ -445,4 +445,10 @@ public class CarpetSettings
             category = BUGFIX
     )
     public static boolean horseWanderingFix = false;
+    
+    @Rule(
+            desc = "Allows structure mobs to spawn in flat worlds",
+            category = {EXPERIMENTAL, CREATIVE}
+    )
+    public static boolean flatWorldStructureSpawning = false;
 }

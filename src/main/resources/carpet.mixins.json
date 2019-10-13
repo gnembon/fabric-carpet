@@ -67,6 +67,7 @@
     "PlayerEntity_parrotMixin",
     "SaplingBlockMixin",
     "EntityMixin",
+    "FlatChunkGeneratorMixin",
 
     "BiomeArray_getBiomeArrayMixin",
 

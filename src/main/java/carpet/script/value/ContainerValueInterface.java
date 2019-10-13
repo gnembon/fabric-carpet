@@ -2,12 +2,12 @@ package carpet.script.value;
 
 public interface ContainerValueInterface
 {
-    public Value put(Value where, Value value);
-    default Value put(Value where, Value value, Value conditions)
+    boolean put(Value where, Value value);
+    default boolean put(Value where, Value value, Value conditions)
     {
         return put(where, value);
     }
-    public Value get(Value where);
-    public boolean has(Value where);
-    public Value delete(Value where);
+    Value get(Value where);
+    boolean has(Value where);
+    boolean delete(Value where);
 }

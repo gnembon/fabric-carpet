@@ -126,7 +126,7 @@ public class CarpetScriptServer
 
     private ScriptHost createMinecraftScriptHost(String name, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
     {
-        ScriptHost host = new ScriptHost(name, module, perPlayer );
+        ScriptHost host = new ScriptHost(name, module, perPlayer, null );
         host.globalVariables.put("_x", (c, t) -> Value.ZERO);
         host.globalVariables.put("_y", (c, t) -> Value.ZERO);
         host.globalVariables.put("_z", (c, t) -> Value.ZERO);
@@ -360,5 +360,17 @@ public class CarpetScriptServer
     public void tick()
     {
         events.tick();
+        for (ScriptHost host : modules.values())
+        {
+            host.tick();
+        }
+    }
+
+    public void onClose()
+    {
+        for (ScriptHost host : modules.values())
+        {
+            host.onClose();
+        }
     }
 }

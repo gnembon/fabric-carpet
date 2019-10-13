@@ -306,7 +306,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value put(Value where, Value value, Value conditionValue)
+    public boolean put(Value where, Value value, Value conditionValue)
     {
         String condition = conditionValue.getString();
         if (condition.equalsIgnoreCase("insert"))
@@ -319,11 +319,12 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value put(Value ind, Value value)
+    public boolean put(Value ind, Value value)
     {
         return put(ind, value, true, false);
     }
-    private Value  put(Value ind, Value value, boolean replace, boolean extend)
+
+    private boolean put(Value ind, Value value, boolean replace, boolean extend)
     {
         if (ind == Value.NULL)
         {
@@ -335,12 +336,14 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             {
                 items.add(value);
             }
-            return items.get(items.size()-1);
+            return true;
         }
         else
         {
             int numitems = items.size();
-            int index = (int) NumericValue.asNumber(ind).getLong();
+            if (!(ind instanceof NumericValue))
+                return false;
+            int index = (int)((NumericValue) ind).getLong();
             if (index < 0)
             {
                 long range = abs(index) / numitems;
@@ -350,7 +353,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             if (replace)
             {
                 while (index >= items.size()) items.add(Value.NULL);
-                return items.set(index, value);
+                items.set(index, value);
+                return true;
             }
             while (index > items.size()) items.add(Value.NULL);
 
@@ -359,11 +363,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
                 Iterable<Value> iterable = ((AbstractListValue) value)::iterator;
                 List<Value> appendix = StreamSupport.stream( iterable.spliterator(), false).collect(Collectors.toList());
                 items.addAll(index, appendix );
-                return items.get(index+appendix.size()-1);
+                return true;
             }
             items.add(index, value);
-            return value;
-
+            return true;
         }
     }
 
@@ -386,14 +389,16 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value delete(Value where)
+    public boolean delete(Value where)
     {
-        long index = NumericValue.asNumber(where).getLong();
+        if (!(where instanceof NumericValue) || items.isEmpty()) return false;
+        long index = ((NumericValue) where).getLong();
         int numitems = items.size();
         long range = abs(index)/numitems;
         index += (range+2)*numitems;
         index = index % numitems;
-        return items.remove((int)index);
+        items.remove((int)index);
+        return true;
     }
 
     @Override

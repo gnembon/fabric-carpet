@@ -16,6 +16,7 @@ public class Context
     static final int ITERATOR = 6;
     static final int SIGNATURE = 7;
     static final int LOCALIZATION = 8;
+    static final int LVALUE = 9;
 
     private Map<String, LazyValue> variables = new HashMap<>();
 
