@@ -206,6 +206,13 @@ fill/clone/setblock and structure blocks cause block updates
 * Required options: `true`, `false`
 * Categories: `CREATIVE`
 
+## flatWorldStructureSpawning
+Allows structure mobs to spawn in flat worlds  
+* Type: `boolean`  
+* Default value: `false`  
+* Required options: `true`, `false`  
+* Categories: `EXPERIMENTAL`, `CREATIVE`  
+
 ## flippinCactus
 Players can flip and rotate blocks when holding cactus
 Doesn't cause block updates when rotated/flipped
