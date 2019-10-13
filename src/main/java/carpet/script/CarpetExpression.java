@@ -50,6 +50,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
@@ -2872,6 +2873,34 @@ public class CarpetExpression
                         cc.host.globalFunctions.get(funname).getArguments().size()+" arguments, "+args.size()+" provided.");
             CarpetServer.scriptServer.events.scheduleCall(cc, funname, args, delay);
             return (c_, t_) -> Value.TRUE;
+        });
+
+        this.expr.addLazyFunction("get_global_state", -1, (c, t, lv) ->
+        {
+            String file = null;
+            if (lv.size()>0)
+                file = lv.get(0).evalValue(c).getString();
+            Tag state = ((CarpetContext)c).host.getGlobalState(file);
+            if (state == null)
+                return (cc, tt) -> Value.NULL;
+            Value retVal = new NBTSerializableValue(state);
+            return (cc, tt) -> retVal;
+        });
+
+        this.expr.addLazyFunction("set_global_state", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0)
+                throw new InternalExpressionException("save_state needs nbt tag and optional file");
+            Value val = lv.get(0).evalValue(c);
+            String file = null;
+            if (lv.size()>1)
+                file = lv.get(1).evalValue(c).getString();
+            NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
+                    ? (NBTSerializableValue) val
+                    : new NBTSerializableValue(val.getString());
+            Tag tag = tagValue.getTag();
+            ((CarpetContext)c).host.setGlobalState(tag, file);
+            return (cc, tt) -> Value.NULL;
         });
     }
 

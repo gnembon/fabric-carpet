@@ -191,7 +191,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return new StringValue(t.asString());
     }
 
-    private Tag getTag()
+    public Tag getTag()
     {
         if (nbtTag == null)
             nbtTag = nbtSupplier.get();
@@ -210,7 +210,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     {
         if (o instanceof NBTSerializableValue)
             return getTag().equals(((NBTSerializableValue) o).getTag());
-        return super.equals((Value)o);
+        return super.equals(o);
     }
 
     @Override
@@ -240,13 +240,13 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
     @Override
-    public Value put(Value where, Value value)
+    public boolean put(Value where, Value value)
     {
         return put(where, value, new StringValue("replace"));
     }
 
     @Override
-    public Value put(Value where, Value value, Value conditions)
+    public boolean put(Value where, Value value, Value conditions)
     {
         /// WIP
 
@@ -272,14 +272,15 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             else
             {
-                return this;
+                return false;
             }
         }
         if (modifiedTag != null)
         {
             replaceTag(modifiedTag);
+            return  true;
         }
-        return this;
+        return false;
     }
 
 
@@ -412,13 +413,13 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
     @Override
-    public Value delete(Value where)
+    public boolean delete(Value where)
     {
         NbtPathArgumentType.NbtPath path = cachePath(where.getString());
         Tag tag = getTag().copy();
         int removed = path.remove(tag);
         if (removed > 0) replaceTag(tag);
-        return new NumericValue(removed);
+        return removed > 0;
     }
 
     public static class InventoryLocator

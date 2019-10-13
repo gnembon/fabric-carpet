@@ -9,6 +9,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
@@ -25,18 +26,25 @@ import static java.lang.Math.max;
 
 public class ScriptHost
 {
-    public final Map<String, ScriptHost> userHosts = new HashMap<>();
+    private final Map<String, ScriptHost> userHosts = new HashMap<>();
     public Map<String, UserDefinedFunction> globalFunctions = new HashMap<>();
     public Map<String, LazyValue> globalVariables = new HashMap<>();
+
+    private Tag globalState;
+    private int saveTimeout;
+
+    private ScriptHost parent;
 
     private String name;
     public String getName() {return name;}
 
     private final ModuleInterface myCode;
-    public final boolean perUser;
+    private final boolean perUser;
 
-    ScriptHost(String name, ModuleInterface code, boolean perUser)
+    ScriptHost(String name, ModuleInterface code, boolean perUser, ScriptHost parent)
     {
+        this.saveTimeout = 0;
+        this.parent = parent;
         this.name = name;
         this.myCode = code;
         this.perUser = perUser;
@@ -50,16 +58,19 @@ public class ScriptHost
         globalVariables.put("_", (c, t) -> Value.ZERO);
         globalVariables.put("_i", (c, t) -> Value.ZERO);
         globalVariables.put("_a", (c, t) -> Value.ZERO);
+
+        if (parent == null && name != null)
+            globalState = loadState();
     }
 
-    public ScriptHost retrieveForExecution(String /*Nullable*/ user)
+    private ScriptHost retrieveForExecution(String /*Nullable*/ user)
     {
         if (!perUser)
             return this;
         ScriptHost userHost = userHosts.get(user);
         if (userHost != null)
             return userHost;
-        userHost = new ScriptHost(this.name, myCode, false);
+        userHost = new ScriptHost(this.name, myCode, false, this);
         userHost.globalVariables.putAll(this.globalVariables);
         userHost.globalFunctions.putAll(this.globalFunctions);
         userHosts.put(user, userHost);
@@ -221,5 +232,60 @@ public class ScriptHost
         }
     }
 
+    private void dumpState()
+    {
+        myCode.saveData(null, globalState);
+    }
 
+    private Tag loadState()
+    {
+        return myCode.getData(null);
+    }
+
+    public Tag getGlobalState(String file)
+    {
+        if (name == null || myCode.isInternal()) return null;
+        if (file != null)
+            myCode.getData(file);
+        if (parent == null)
+            return globalState;
+        return parent.globalState;
+    }
+
+    public void setGlobalState(Tag tag, String file)
+    {
+        if (name == null || myCode.isInternal()) return;
+
+        if (file!= null)
+        {
+            myCode.saveData(file, tag);
+            return;
+        }
+
+        ScriptHost responsibleHost = (parent != null)?parent:this;
+        responsibleHost.globalState = tag;
+        if (responsibleHost.saveTimeout == 0)
+        {
+            responsibleHost.dumpState();
+            responsibleHost.saveTimeout = 200;
+        }
+    }
+
+    public void tick()
+    {
+        if (this.saveTimeout > 0)
+        {
+            this.saveTimeout --;
+            if (this.saveTimeout == 0)
+            {
+                dumpState();
+            }
+        }
+    }
+
+    public void onClose()
+    {
+        if (this.saveTimeout > 0)
+            dumpState();
+    }
 }

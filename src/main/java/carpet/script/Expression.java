@@ -1243,29 +1243,6 @@ public class Expression implements Cloneable
      */
     public void Operators()
     {
-        addLazyBinaryOperator(":", precedence.get("attribute~:"),true, (c, t, container_lv, key_lv) ->
-        {
-            Value container = container_lv.evalValue(c);
-            if (container instanceof LContainerValue)
-            {
-                ContainerValueInterface outerContainer = ((LContainerValue) container).getContainer();
-                Value outerAddress = ((LContainerValue) container).getAddress();
-                Value innerContainer = outerContainer.get(outerAddress);
-                if (!(innerContainer instanceof  ContainerValueInterface))
-                    throw new InternalExpressionException("Cannot access elements of a non-container");
-                Value innerLValue = new LContainerValue((ContainerValueInterface) innerContainer, key_lv.evalValue(c));
-                return (cc, tt) -> innerLValue;
-            }
-            if (!(container instanceof ContainerValueInterface))
-                throw new InternalExpressionException("Cannot access elements of a non-container");
-            Value address = key_lv.evalValue(c);
-            if (t != Context.LVALUE)
-            {
-                Value retVal = ((ContainerValueInterface) container).get(address);
-                return (cc, ct) -> retVal;
-            }
-            return (cc, ct) -> new LContainerValue((ContainerValueInterface) container, address);
-        });
         addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
         addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
         addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
@@ -1329,8 +1306,12 @@ public class Expression implements Cloneable
             }
             if (v1 instanceof LContainerValue)
             {
-                Value ret = ((LContainerValue) v1).getContainer().put(((LContainerValue) v1).getAddress(), v2);
-                return (cc, tt) -> ret;
+                ContainerValueInterface container = ((LContainerValue) v1).getContainer();
+                if (container == null)
+                    return (cc, tt) -> Value.NULL;
+                Value address = ((LContainerValue) v1).getAddress();
+                if (!(container.put(address, v2))) return (cc, tt) -> Value.NULL;
+                return (cc, tt) -> v2;
             }
             v1.assertAssignable();
             String varname = v1.getVariable();
@@ -2341,13 +2322,13 @@ public class Expression implements Cloneable
         addUnaryFunction("keys", v -> {
             if (v instanceof MapValue)
                 return new ListValue(((MapValue) v).getMap().keySet());
-            throw new InternalExpressionException("keys applies only to maps");
+            return Value.NULL;
         });
 
         addUnaryFunction("values", v -> {
             if (v instanceof MapValue)
                 return new ListValue(((MapValue) v).getMap().values());
-            throw new InternalExpressionException("keys applies only to maps");
+            return Value.NULL;
         });
 
         addUnaryFunction("pairs", v -> {
@@ -2355,21 +2336,93 @@ public class Expression implements Cloneable
                 return ListValue.wrap(((MapValue) v).getMap().entrySet().stream().map(
                         (p) -> ListValue.of(p.getKey(), p.getValue())
                 ).collect(Collectors.toList()));
-            throw new InternalExpressionException("pairs applies only to maps");
+            return Value.NULL;
         });
 
-        addBinaryFunction("get", (container, key) ->
+        addLazyBinaryOperator(":", precedence.get("attribute~:"),true, (c, t, container_lv, key_lv) ->
         {
-            if (container instanceof ContainerValueInterface)
-                return ((ContainerValueInterface) container).get(key);
-            throw new InternalExpressionException("Cannot access elements of a non-container");
+            Value container = container_lv.evalValue(c);
+            if (container instanceof LContainerValue)
+            {
+                ContainerValueInterface outerContainer = ((LContainerValue) container).getContainer();
+                if (outerContainer == null)
+                {
+                    Value innerLValue = new LContainerValue(null, null);
+                    return (cc, tt) -> innerLValue;
+                }
+                Value innerContainer = outerContainer.get(((LContainerValue) container).getAddress());
+                if (!(innerContainer instanceof  ContainerValueInterface))
+                {
+                    Value innerLValue = new LContainerValue(null, null);
+                    return (cc, tt) -> innerLValue;
+                }
+                Value innerLValue = new LContainerValue((ContainerValueInterface) innerContainer, key_lv.evalValue(c));
+                return (cc, tt) -> innerLValue;
+            }
+            if (!(container instanceof ContainerValueInterface))
+                return (cc, tt) -> Value.NULL;
+            Value address = key_lv.evalValue(c);
+            if (t != Context.LVALUE)
+            {
+                Value retVal = ((ContainerValueInterface) container).get(address);
+                return (cc, ct) -> retVal;
+            }
+            Value retVal = new LContainerValue((ContainerValueInterface) container, address);
+            return (cc, ct) -> retVal;
         });
 
-        addBinaryFunction("has", (container, key) ->
+        addLazyFunction("get", -1, (c, t, lv) ->
         {
-            if (container instanceof ContainerValueInterface)
-                return new NumericValue(((ContainerValueInterface) container).has(key));
-            throw new InternalExpressionException("Cannot access elements of a non-container");
+            if (lv.size() == 0)
+                throw new InternalExpressionException("get requires parameters");
+            if (lv.size() == 1)
+            {
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
+                if (!(v  instanceof LContainerValue))
+                    return (cc, tt) -> Value.NULL;
+                ContainerValueInterface container = ((LContainerValue) v).getContainer();
+                if (container == null)
+                    return (cc, tt) -> Value.NULL;
+                Value ret = container.get(((LContainerValue) v).getAddress());
+                return (cc, tt) -> ret;
+            }
+            Value container = lv.get(0).evalValue(c);
+            for (int i = 1; i < lv.size(); i++)
+            {
+                if (!(container instanceof ContainerValueInterface)) return (cc, tt) -> Value.NULL;
+                container = ((ContainerValueInterface) container).get(lv.get(i).evalValue(c));
+            }
+            if (container == null)
+                return (cc, tt) -> Value.NULL;
+            Value finalContainer = container;
+            return (cc, tt) -> finalContainer;
+        });
+
+        addLazyFunction("has", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0)
+                throw new InternalExpressionException("get requires parameters");
+            if (lv.size() == 1)
+            {
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
+                if (!(v  instanceof LContainerValue))
+                    return (cc, tt) -> Value.NULL;
+                ContainerValueInterface container = ((LContainerValue) v).getContainer();
+                if (container == null)
+                    return (cc, tt) -> Value.NULL;
+                Value ret = new NumericValue(container.has(((LContainerValue) v).getAddress()));
+                return (cc, tt) -> ret;
+            }
+            Value container = lv.get(0).evalValue(c);
+            for (int i = 1; i < lv.size()-1; i++)
+            {
+                if (!(container instanceof ContainerValueInterface)) return (cc, tt) -> Value.NULL;
+                container = ((ContainerValueInterface) container).get(lv.get(i).evalValue(c));
+            }
+            if (!(container instanceof ContainerValueInterface))
+                return (cc, tt) -> Value.NULL;
+            Value ret = new NumericValue(((ContainerValueInterface) container).has(lv.get(lv.size()-1).evalValue(c)));
+            return (cc, tt) -> ret;
         });
 
         //Deprecated, use "get" instead, or . operator
@@ -2386,53 +2439,68 @@ public class Expression implements Cloneable
             return items.get((int)index);
         });
 
-        addFunction("put", (lv) ->
+        addLazyFunction("put", -1, (c, t, lv) ->
         {
+            if(lv.size()<2)
+            {
+                throw new InternalExpressionException("put takes at least three arguments, a container, address, and values to insert at that index");
+            }
+            Value container = lv.get(0).evalValue(c, Context.LVALUE);
+            if (container instanceof LContainerValue)
+            {
+                ContainerValueInterface internalContainer = ((LContainerValue) container).getContainer();
+                if (internalContainer == null)
+                {
+                    return (cc, tt) -> Value.NULL;
+                }
+                Value address = ((LContainerValue) container).getAddress();
+                Value what = lv.get(1).evalValue(c);
+                Value retVal = new NumericValue( (lv.size() > 2)
+                        ? internalContainer.put(address, what, lv.get(3).evalValue(c))
+                        : internalContainer.put(address, what));
+                return (cc, tt) -> retVal;
+
+            }
             if(lv.size()<3)
             {
                 throw new InternalExpressionException("put takes at least three arguments, a container, address, and values to insert at that index");
             }
-            Value container = lv.get(0);
             if (!(container instanceof ContainerValueInterface))
             {
-                throw new InternalExpressionException("First argument of put should be a container: list, map or nbt");
+                return (cc, tt) -> Value.NULL;
             }
-            Value where = lv.get(1);
-            Value what = lv.get(2);
-            if (lv.size()>3)
-            {
-                return ((ContainerValueInterface) container).put(where, what, lv.get(3));
-            }
-            else
-            {
-                return ((ContainerValueInterface) container).put(where, what);
-            }
+            Value where = lv.get(1).evalValue(c);
+            Value what = lv.get(2).evalValue(c);
+            Value retVal = new NumericValue( (lv.size()>3)
+                    ? ((ContainerValueInterface) container).put(where, what, lv.get(3).evalValue(c))
+                    : ((ContainerValueInterface) container).put(where, what));
+            return (cc, tt) -> retVal;
         });
 
         addLazyFunction("delete", -1, (c, t, lv) ->
         {
-            if (lv.size() < 1)
-                throw new InternalExpressionException("delete requires arguments");
-            Value containerOrLValue = lv.get(0).evalValue(c, Context.LVALUE);
-            ContainerValueInterface container;
-            Value address;
-            if (containerOrLValue instanceof LContainerValue)
+            if (lv.size() == 0)
+                throw new InternalExpressionException("delete requires parameters");
+            if (lv.size() == 1)
             {
-                container = ((LContainerValue) containerOrLValue).getContainer();
-                address = ((LContainerValue) containerOrLValue).getAddress();
+                Value v = lv.get(0).evalValue(c, Context.LVALUE);
+                if (!(v  instanceof LContainerValue))
+                    return (cc, tt) -> Value.NULL;
+                ContainerValueInterface container = ((LContainerValue) v).getContainer();
+                if (container == null)
+                    return (cc, tt) -> Value.NULL;
+                Value ret = new NumericValue(container.delete(((LContainerValue) v).getAddress()));
+                return (cc, tt) -> ret;
             }
-            else if (containerOrLValue instanceof ContainerValueInterface)
+            Value container = lv.get(0).evalValue(c);
+            for (int i = 1; i < lv.size()-1; i++)
             {
-                container = (ContainerValueInterface) containerOrLValue;
-                if (lv.size() < 2)
-                    throw new InternalExpressionException("delete requires two arguments, container (list, map) and address");
-                address = lv.get(1).evalValue(c);
+                if (!(container instanceof ContainerValueInterface)) return (cc, tt) -> Value.NULL;
+                container = ((ContainerValueInterface) container).get(lv.get(i).evalValue(c));
             }
-            else
-            {
-                throw new InternalExpressionException("First argument of delete should be a container: list, map or nbt");
-            }
-            Value ret = container.delete(address);
+            if (!(container instanceof ContainerValueInterface))
+                return (cc, tt) -> Value.NULL;
+            Value ret = new NumericValue(((ContainerValueInterface) container).delete(lv.get(lv.size()-1).evalValue(c)));
             return (cc, tt) -> ret;
         });
     }
