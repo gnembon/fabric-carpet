@@ -701,7 +701,7 @@ public class CarpetExpression
             int howMuch = 1;
             if (lv.size() > locator.offset+1)
                 howMuch = (int) NumericValue.asNumber(lv.get(locator.offset+1).evalValue(c)).getLong();
-            BlockPos retpos = pos.offset(dir, howMuch);
+            BlockPos retpos = pos.method_10079(dir, howMuch);
             Value ret = ListValue.of(new NumericValue(retpos.getX()), new NumericValue(retpos.getY()), new NumericValue(retpos.getZ()));
             return (cc, tt) -> ret;
         });
