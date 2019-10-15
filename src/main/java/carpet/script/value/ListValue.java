@@ -227,10 +227,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return items;
     }
 
-    public Iterator<Value> iterator()
-    {
-        return items.iterator();
-    }
+    public Iterator<Value> iterator() { return new ArrayList<>(items).iterator(); }
 
     public void extend(List<Value> subList)
     {

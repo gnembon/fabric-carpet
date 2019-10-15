@@ -18,6 +18,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -148,7 +149,10 @@ public class CarpetEventServer
             @Override
             public void onTick()
             {
-                handler.call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
+                handler.call(Collections::emptyList, () ->
+                        CarpetServer.minecraft_server.getCommandSource().
+                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD))
+                );
             }
         },
         NETHER_TICK("tick_nether",new CallbackList(0))
@@ -156,7 +160,10 @@ public class CarpetEventServer
             @Override
             public void onTick()
             {
-                handler.call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
+                handler.call(Collections::emptyList, () ->
+                        CarpetServer.minecraft_server.getCommandSource().
+                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_NETHER))
+                );
             }
         },
         ENDER_TICK("tick_ender",new CallbackList(0))
@@ -164,7 +171,10 @@ public class CarpetEventServer
             @Override
             public void onTick()
             {
-                handler.call(Collections::emptyList, CarpetServer.minecraft_server::getCommandSource);
+                handler.call(Collections::emptyList, () ->
+                        CarpetServer.minecraft_server.getCommandSource().
+                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_END))
+                );
             }
         },
         PLAYER_JUMPS("player_jumps", new CallbackList(1))

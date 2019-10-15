@@ -39,7 +39,7 @@ public class ScriptHost
     public String getName() {return name;}
 
     private final ModuleInterface myCode;
-    private final boolean perUser;
+    private boolean perUser;
 
     ScriptHost(String name, ModuleInterface code, boolean perUser, ScriptHost parent)
     {
@@ -207,10 +207,10 @@ public class ScriptHost
         }
     }
 
-    public void callUDF(BlockPos pos, ServerCommandSource source, UserDefinedFunction acf, List<LazyValue> argv) throws InvalidCallbackException
+    public Value callUDF(BlockPos pos, ServerCommandSource source, UserDefinedFunction acf, List<LazyValue> argv) throws InvalidCallbackException
     {
         if (CarpetServer.scriptServer.stopAll)
-            return;
+            return Value.NULL;
 
         List<String> args = acf.getArguments();
         if (argv.size() != args.size())
@@ -221,7 +221,7 @@ public class ScriptHost
         {
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, pos);
-            Expression.evalValue(
+            return Expression.evalValue(
                     () -> acf.lazyEval(context, Context.VOID, acf.expression, acf.token, argv),
                     context,
                     Context.VOID);
@@ -230,6 +230,7 @@ public class ScriptHost
         {
             CarpetSettings.LOG.error("Callback failed: "+e.getMessage());
         }
+        return Value.NULL;
     }
 
     private void dumpState()
@@ -287,5 +288,11 @@ public class ScriptHost
     {
         if (this.saveTimeout > 0)
             dumpState();
+    }
+
+    public void setPerPlayer(boolean isPerUser)
+    {
+        CarpetSettings.LOG.error("Setting per player for "+name+" of "+isPerUser);
+        perUser = isPerUser;
     }
 }

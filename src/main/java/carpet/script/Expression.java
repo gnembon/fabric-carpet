@@ -1323,7 +1323,7 @@ public class Expression implements Cloneable
 
         addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
         {
-            Value v1 = lv1.evalValue(c);
+            Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
             if (v1 instanceof ListValue.ListConstructorValue && v2 instanceof ListValue)
             {
@@ -1342,6 +1342,18 @@ public class Expression implements Cloneable
                     c.setVariable(lname, (cc, tt) -> result);
                 }
                 return (cc, tt) -> Value.TRUE;
+            }
+            if (v1 instanceof LContainerValue)
+            {
+                ContainerValueInterface cvi = ((LContainerValue) v1).getContainer();
+                if (cvi == null)
+                {
+                    throw new InternalExpressionException("Failed to resolve left hand side of the += operation");
+                }
+                Value key = ((LContainerValue) v1).getAddress();
+                Value res = cvi.get(key).add(v2);
+                cvi.put(key, res);
+                return (cc, tt) -> res;
             }
             v1.assertAssignable();
             String varname = v1.getVariable();
@@ -2360,7 +2372,10 @@ public class Expression implements Cloneable
                 return (cc, tt) -> innerLValue;
             }
             if (!(container instanceof ContainerValueInterface))
-                return (cc, tt) -> Value.NULL;
+                if (t == Context.LVALUE)
+                    return (cc, tt) -> new LContainerValue(null, null);
+                else
+                    return (cc, tt) -> Value.NULL;
             Value address = key_lv.evalValue(c);
             if (t != Context.LVALUE)
             {
@@ -2456,7 +2471,7 @@ public class Expression implements Cloneable
                 Value address = ((LContainerValue) container).getAddress();
                 Value what = lv.get(1).evalValue(c);
                 Value retVal = new NumericValue( (lv.size() > 2)
-                        ? internalContainer.put(address, what, lv.get(3).evalValue(c))
+                        ? internalContainer.put(address, what, lv.get(2).evalValue(c))
                         : internalContainer.put(address, what));
                 return (cc, tt) -> retVal;
 

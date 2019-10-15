@@ -174,8 +174,8 @@ public class CarpetSettings
 
     @Rule(
             desc = "Enables /log command to monitor events in the game via chat and overlays",
-            category = COMMAND,
-            validate = Validator.WIP.class
+            category = COMMAND//,
+            //validate = Validator.WIP.class
     )
     public static boolean commandLog = true;
 

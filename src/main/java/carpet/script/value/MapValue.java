@@ -30,7 +30,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public Iterator<Value> iterator()
     {
-        return map.keySet().iterator();
+        return new ArrayList<>(map.keySet()).iterator();
     }
 
     @Override
