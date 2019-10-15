@@ -1090,12 +1090,14 @@ public class Expression implements Cloneable
      * <h3><code>Get, Accessor Operator  :</code></h3>
      * <p>Operator version of the <code>get(...)</code> function to access elements of lists, maps, and potentially other
      * containers (i.e. NBTs). It is important to distinguish from <code>~</code> operator, which is a matching operator,
-     * which is expected to perform some extra computations to retrieve the result, while <code>.</code> should be
+     * which is expected to perform some extra computations to retrieve the result, while <code>:</code> should be
      * straightforward and immediate, and the source object should behave like a container and support full container
      * API, meaning <code>get(...)</code>, <code>put(...)</code>, <code>delete(...)</code>,
      * and <code>has(...)</code> functions</p>
-     * <p>WARNING: Unlike for some languages, where item access operator can be an L-value, to assign new values to
-     * container elements, use <code>put</code> function instead, i.e. <code>a:1='foo'</code> won't work.</p>
+     * <p>For certain operators and functions (get, put, delete, has, =, +=) objects can use <code>:</code> annotated
+     * fields as l-values, meaning construct like <code>foo:0 = 5</code>, would act like <code>put(foo, 0, 5)</code>,
+     * rather than <code>get(foo, 0) = 5</code>, which would result in an error.</p>
+     * <p>TODO: add more information about l-value behaviour.</p>
      *
      * <h3><code>Matching Operator  ~</code></h3>
      * <p>This operator should be understood as 'matches', 'contains', 'is_in',
@@ -2025,7 +2027,7 @@ public class Expression implements Cloneable
      * <p>Here is a list of operations that work on all types of containers: lists, maps, as well as other Minecraft
      * specific modifyable containers, like NBTs</p>
      *
-     * <h3><code>get(container, address), ':' operator</code></h3>
+     * <h3><code>get(container, address, ...), get(lvalue), ':' operator</code></h3>
      * <p>Returns the value at <code>address</code> element from the <code>value</code>.
      * For lists it indicates an index, use negative numbers to reach elements from the end of the list. <code>get</code>
      * call will always be able to find the index. In case there is few items, it will loop over </p>
@@ -2034,6 +2036,9 @@ public class Expression implements Cloneable
      * nbt path to query,
      * returning null, if path is not found, one value if there was one match, or list of values if result is a list.
      * Returned elements can be of numerical type, string texts, or another compound nbt tags</p>
+     * <p>In case to simplify the access with nested objects, you can add chain of addresses to the arguments of
+     * <code>get</code> rather than calling it multiple times. <code>get(get(foo,a),b)</code> is equivalent to
+     * <code>get(foo, a, b)</code>, or <code>foo:a:b</code>.</p>
      * <pre>
      *     get(l(range(10)), 5)  =&gt; 5
      *     get(l(range(10)), -1)  =&gt; 9
@@ -2045,17 +2050,24 @@ public class Expression implements Cloneable
      *     get(m( l('foo',2), l('bar',3), l('baz',4) ), 'bar')  =&gt; 3
      * </pre>
      *
-     * <h3><code>has(container, address)</code></h3>
+     * <h3><code>has(container, address, ...), has(lvalue)</code></h3>
      * <p>Similar to <code>get</code>, but returns boolean value indicating if the given index / key / path is in the
      * container. Can be used to determine if <code>get(...)==null</code> means the element doesn't exist, or the stored value
-     * for this address is <code>null</code>, and is cheaper to run than <code>get</code></p>
+     * for this address is <code>null</code>, and is cheaper to run than <code>get</code>.</p>
+     * <p>Like get, it can accept multiple addresses for chains in nested containers. In this case <code>has(foo:a:b)</code>
+     * is equivalent to <code>has(get(foo,a), b)</code> or <code>has(foo, a, b)</code></p>
      *
-     * <h3><code>delete(container, address)</code></h3>
+     * <h3><code>delete(container, address, ...), delete(lvalue)</code></h3>
      * <p>Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it
      * removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous
      * entry at the address, for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.</p>
+     * <p>Like with the <code>get</code> and <code>has</code>, <code>delete</code> can accept chained addresses, as well as
+     * l-value container access, removing the value
+     * from the leaf of the path provided, so <code>delete(foo, a, b)</code> is the same as <code>delete(get(foo,a),b)</code>
+     * or <code>delete(foo:a:b)</code></p>
+     * <p>Returns true, if container was changed, false, if it was left unchanged, and null if operation was invalid.</p>
      *
-     * <h3><code>put(container, address, value), put(container, address, value, mode)</code></h3>
+     * <h3><code>put(container, address, value), put(container, address, value, mode), put(lvalue, value)</code></h3>
      * <p><u><b>Lists</b></u></p>
      * <p>Modifies the container by replacing the value under the address with the supplied <code>value</code>.
      * For lists, a valid index is required, but can be negative as well to indicate positions from the end of the list.
@@ -2072,6 +2084,11 @@ public class Expression implements Cloneable
      *     extending the list by this amount of items. Again use <code>null</code> address/index to point to the end of
      *     the list</li>
      * </ul>
+     * <p>Due to the extra mode parameter, there is no chaining for <code>put</code>, but you can still use l-value
+     * container access to indicate container and address, so <code>put(foo, key, value)</code> is the same as
+     * <code>put(foo:key, value)</code> or <code>foo:key=value</code></p>
+     * <p>Returns true, if container got modified, false otherwise, and null if operation was invalid.</p>
+     *
      * <p><u><b>Maps</b></u></p>
      * <p>For maps there are no modes available (yet, seems there is no reason to). It replaces the value under the supplied
      * key (address), or sets it if not currently present.</p>

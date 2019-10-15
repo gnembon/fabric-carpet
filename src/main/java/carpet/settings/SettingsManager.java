@@ -171,7 +171,7 @@ public class SettingsManager
 
     public void notifyPlayersCommandsChanged()
     {
-        if (server.getPlayerManager() == null)
+        if (server == null || server.getPlayerManager() == null)
         {
             return;
         }
