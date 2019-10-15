@@ -208,13 +208,13 @@ public class ScriptCommand
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(true),bb)).
                         executes((cc) ->
                         {
-                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), true);
+                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), true, false);
                             return success?1:0;
                         }).
                         then(literal("shared").
                                 executes((cc) ->
                                 {
-                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), false);
+                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), false, false);
                                     return success?1:0;
                                 }
                                 )

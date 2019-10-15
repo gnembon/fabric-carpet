@@ -112,6 +112,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void onServerClosed(MinecraftServer server)
     {
         scriptServer.onClose();
+        settingsManager.detachServer();
         LoggerRegistry.stopLoggers();
         extensions.forEach(e -> e.onServerClosed(server));
     }

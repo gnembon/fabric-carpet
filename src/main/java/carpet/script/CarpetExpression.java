@@ -68,6 +68,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
@@ -687,6 +688,24 @@ public class CarpetExpression
             }
         });
 
+        this.expr.addLazyFunction("pos_offset", -1, (c, t, lv) ->
+        {
+            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            if (lv.size() <= locator.offset)
+                throw new InternalExpressionException("block_offset needs at least position, and direction");
+            String directionString = lv.get(locator.offset).evalValue(c).getString();
+            Direction dir = Direction.byName(directionString);
+            if (dir == null)
+                throw new InternalExpressionException("Unknown direction: "+directionString);
+            int howMuch = 1;
+            if (lv.size() > locator.offset+1)
+                howMuch = (int) NumericValue.asNumber(lv.get(locator.offset+1).evalValue(c)).getLong();
+            BlockPos retpos = pos.offset(dir, howMuch);
+            Value ret = ListValue.of(new NumericValue(retpos.getX()), new NumericValue(retpos.getY()), new NumericValue(retpos.getZ()));
+            return (cc, tt) -> ret;
+        });
+
         this.expr.addLazyFunction("solid", -1, (c, t, lv) ->
                 genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.isSimpleFullBlock(w, p))));
 
@@ -1154,6 +1173,16 @@ public class CarpetExpression
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
             Value res = new NumericValue(inventoryLocator.inventory.getInvSize());
+            return (_c, _t) -> res;
+        });
+
+        this.expr.addLazyFunction("inventory_has_items", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
+            if (inventoryLocator == null)
+                return (_c, _t) -> Value.NULL;
+            Value res = new NumericValue(!inventoryLocator.inventory.isInvEmpty());
             return (_c, _t) -> res;
         });
 
@@ -2748,6 +2777,12 @@ public class CarpetExpression
             return (_c, _t) -> res; // pass through for variables
         });
 
+        this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
+        {
+            Value res = lv.get(0).evalValue(c);
+            CarpetSettings.LOG.error(res.getString());
+            return (_c, _t) -> res; // pass through for variables
+        });
 
         this.expr.addLazyFunction("run", 1, (c, t, lv) -> {
             BlockPos target = ((CarpetContext)c).origin;
@@ -2886,7 +2921,7 @@ public class CarpetExpression
             return (c_, t_) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("get_global_state", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
             String file = null;
             if (lv.size()>0)
@@ -2898,10 +2933,10 @@ public class CarpetExpression
             return (cc, tt) -> retVal;
         });
 
-        this.expr.addLazyFunction("set_global_state", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("store_app_data", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("save_state needs nbt tag and optional file");
+                throw new InternalExpressionException("store_app_data needs nbt tag and optional file");
             Value val = lv.get(0).evalValue(c);
             String file = null;
             if (lv.size()>1)
