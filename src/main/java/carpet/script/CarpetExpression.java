@@ -434,6 +434,14 @@ public class CarpetExpression
      *     pos(players()) =&gt; l(12.3, 45.6, 32.05)
      *     pos(block('stone'))  =&gt; Error: Cannot fetch position of an unrealized block
      * </pre>
+     * <h3><code>pos_offset(pos, direction, amount?)</code></h3>
+     * <p>Returns a coords triple that is offset in a specified <code>direction</code> by <code>amount</code> of blocks.
+     * The default offset amount is 1 block. To offset into opposite facing, use negative numbers for the <code>amount</code>.
+     * </p>
+     * <pre>
+     *     pos_offset(block(0,5,0), 'up', 2)  =&gt; l(0,7,0)
+     *     pos_offset(l(0,5,0), 'up', -2 ) =&gt; l(0,3,0)
+     * </pre>
      * <h3><code>block_properties(pos)</code></h3>
      * <p>Returns a list of available block properties for a particular block. If a block has no properties, returns an empty list.</p>
      * <h3><code>property(pos, name)</code></h3>
@@ -1088,6 +1096,13 @@ public class CarpetExpression
      *     inventory_size(player()) =&gt; 41
      *     inventory_size(x,y,z) =&gt; 27 // chest
      *     inventory_size(block(pos)) =&gt; 5 // hopper
+     * </pre>
+     * <h3><code>inventory_has_items(inventory)</code></h3>
+     * <p>Returns true, if the inventory is not empty, false if it is empty, and null, if its not an inventory.</p>
+     * <pre>
+     *     inventory_has_items(player()) =&gt; true
+     *     inventory_has_items(x,y,z) =&gt; false // empty chest
+     *     inventory_has_items(block(pos)) =&gt; null // stone
      * </pre>
      * <h3><code>inventory_get(inventory, slot)</code></h3>
      * <p>Returns the item in the corresponding inventory slot, or null if slot empty or inventory is invalid.
@@ -2438,11 +2453,22 @@ public class CarpetExpression
      * <h3><code>print(expr)</code></h3>
      * <p>Displays the result of the expression to the chat. Overrides default <code>scarpet</code> behaviour of
      * sending everyting to stderr.</p>
+     * <h3><code>logger(expr)</code></h3>
+     * <p>Prints the message to system logs, and not to chat.</p>
      * <h3><code>run(expr)</code></h3>
      * <p>Runs a command from the string result of the <code>expr</code> expression, and returns its success count</p>
      * <h3><code>save()</code></h3>
      * <p>Performs autosave, saves all chunks, player data, etc. Useful for programs where autosave is disabled
      * due to performance reasons and saves the world only on demand.</p>
+     * <h3><code>load_app_data(), load_app_data(file)</code></h3>
+     * <p>Loads the app data associated with the app from the world /scripts folder. Without argument returns the memory
+     * managed and buffered / throttled NBT tag. With a file name - reads explicitly a file with that name from the scripts
+     * floder.</p>
+     * <p> You can use app data to save non-vanilla information separately from the world and other scripts.</p>
+     * <h3><code>store_app_data(tag), store_app_data(tag, file)</code></h3>
+     * <p>Stores the app data associated with the app from the world /scripts folder. With the <code>file</code> parameter
+     * saves immediately and with every call, without <code>file</code> parameter, it may take up to 10 seconds for the output
+     * file to sync preventing flickering in case this tag changes frequently. It will be synced when server closes.</p>
      * <h3><code>tick_time()</code></h3>
      * <p>Returns game tick counter. Can be used to run certain operations every n-th ticks, or to count in-game time</p>
      * <h3><code>game_tick(mstime?)</code></h3>
@@ -3159,6 +3185,19 @@ public class CarpetExpression
      * <p>Loading a module, if it contains a <code>__command()</code> method, will attempt to registed a command with that
      * module name, and register all public (no underscore) functions available in the module as subcommands. It will also
      * bind specific events to the event system (check Events section for details).</p>
+     * <p>If an app defines <code>__config</code> method, and that method returns a map, it will be used to apply custom
+     * settings for this app. Currently the following options are supported:</p>
+     * <ul>
+     *     <li><code>scope</code>: default scope for global variables for the app, Default is 'player' which means
+     *     that globals and defined functions will be unique for each player so that apps for each player will run in
+     *     isolation. This is useful in tool-like applications. Another option is 'global' which shares global state for all
+     *     runs on the server - applicable to 'block' like solutions, where custom behaviours are applied to blocks.</li>
+     *     <li><code>stay_loaded</code>: defaults to false. If true, and <code>/carpet scriptsAutoload</code> is turned on,
+     *     the following apps will stay loaded after startup. Otherwise, after reading a code, and fetching the config, server
+     *     will drop them down. This is to allow to store multiple apps on the server/world and selectively decide which one
+     *     should be running at startup. WARNING: all apps will run once at startup anyways, so be aware that their actions
+     *     that are called statically, will be performed once anyways.</li>
+     * </ul>
      * <p>Unloading a module removes all of its state from the game, disables commands, and removes bounded events</p>
      * <p>Scripts can be loaded in shared and player mode. Default is player, so all globals and stored functions are
      * individual for each player, meaning scripts don't need to worry about making sure they store some intermittent data
