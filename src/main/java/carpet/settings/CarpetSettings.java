@@ -27,7 +27,7 @@ import static carpet.settings.RuleCategory.SURVIVAL;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.1.2+v191009";
+    public static final String carpetVersion = "1.1.3+v191016";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -151,11 +151,11 @@ public class CarpetSettings
     public static boolean movableBlockEntities = false;
 
     @Rule(
-            desc = "Honey doesn't stick to Slime and vice versa",
-            extra = "In 1.14 that behaviour is applied to orange stained glass instead",
+            desc = "Orange stained glass behaves like slime, but doesn't stick to it",
+            extra = "Only available for 1.14. in 1.15 use honey instead",
             category = {EXPERIMENTAL, FEATURE}
     )
-    public static boolean honeyGlidingSlime = false;
+    public static boolean honeySlime = false;
 
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;
