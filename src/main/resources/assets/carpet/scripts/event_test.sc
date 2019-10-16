@@ -32,7 +32,7 @@ __on_player_uses_item(player, item_tuple, hand) ->
 __on_player_clicks_block(player, block, face) ->
 (
 	print('');
-	print('player clicks an item:');
+	print('player clicks a block:');
 	print('  - player: '+player);
 	print('  - block: '+block+' at '+map(pos(block), str('%.2f',_)));
 	print('  - face: '+face)

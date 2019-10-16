@@ -2949,6 +2949,7 @@ public class Expression implements Cloneable
     {
         this.expression = expression.trim().
                 replaceAll("\\r\\n?", "\n").
+                replaceAll("\\t","   ").
                 replaceAll(";+$", "");
         VariablesAndConstants();
         UserDefinedFunctionsAndControlFlow();
