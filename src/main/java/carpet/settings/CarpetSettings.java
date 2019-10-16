@@ -150,12 +150,12 @@ public class CarpetSettings
     @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
     public static boolean movableBlockEntities = false;
 
-    @Rule(
+    /*@Rule(
             desc = "Orange stained glass behaves like slime, but doesn't stick to it",
             extra = "Only available for 1.14. in 1.15 use honey instead",
             category = {EXPERIMENTAL, FEATURE}
     )
-    public static boolean honeySlime = false;
+    public static boolean honeySlime = false;*/
 
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;

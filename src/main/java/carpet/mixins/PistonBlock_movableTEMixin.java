@@ -29,19 +29,6 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     
     private ThreadLocal<List<BlockEntity>> list1_BlockEntities = new ThreadLocal<>(); //Unneccessary ThreadLocal if client and server use different PistonBlock instances
 
-    @Inject(method = "isMovable", at = @At("HEAD"), cancellable = true)
-    private static void slimeHoney(BlockState blockState_1, World world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1, Direction direction_2, CallbackInfoReturnable<Boolean> cir)
-    {
-        if (CarpetSettings.honeySlime && direction_1 != direction_2)
-        {
-            Block block = blockState_1.getBlock();
-            if (block != Blocks.HONEY_BLOCK && block != Blocks.SLIME_BLOCK) return;
-            Block otherBlock = world_1.getBlockState(blockPos_1.method_10079(direction_2.getOpposite(),1)).getBlock();
-            if (otherBlock != Blocks.HONEY_BLOCK && otherBlock != Blocks.SLIME_BLOCK) return;
-            cir.setReturnValue(block == otherBlock);
-        }
-    }
-
     @Inject(method = "isMovable", at = @At(value = "RETURN", ordinal = 3, shift = At.Shift.BEFORE))
     private static void movableCMD(BlockState blockState_1, World world_1, BlockPos blockPos_1,
             Direction direction_1, boolean boolean_1, Direction direction_2, CallbackInfoReturnable<Boolean> cir)
