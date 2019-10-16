@@ -92,6 +92,11 @@ public abstract class PistonHandler_movableTEMixin
 
     @Shadow protected abstract boolean method_11538(BlockPos blockPos_1);
 
+    @Shadow protected static boolean method_23367(Block block_1)
+    {
+        return method_23367(block_1);
+    }
+
     private BlockState blockState_1;
     @Redirect(method = "tryMove",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;", ordinal = 0))
@@ -103,15 +108,16 @@ public abstract class PistonHandler_movableTEMixin
     private BlockState redirectGetBlockState_1_B(World world, BlockPos pos) {
         return blockState_1 = world.getBlockState(pos);
     }
-    @Inject(method = "method_23367", at = @At(value = "HEAD"), cancellable = true)
+    @Redirect(method = "tryMove", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/piston/PistonHandler;method_23367(Lnet/minecraft/block/Block;)Z"))
     //Thanks to Earthcomputer for showing how to redirect FIELD access like this
     /**
      * Makes backwards stickyness work with sticky non-slimeblocks as well.
      * @author 2No2Nameb
      */
-    private void redirectSlimeBlock(Block block_1, CallbackInfoReturnable<Boolean> cir) {
+    private boolean redirectSlimeBlock(Block block_1) {
         if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
-            cir.setReturnValue(true);
+            return true;
+        return method_23367(block_1);
     }
 
 
