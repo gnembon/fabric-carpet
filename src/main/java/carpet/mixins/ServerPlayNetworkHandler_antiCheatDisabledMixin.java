@@ -53,26 +53,4 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
     {
         return CarpetSettings.antiCheatDisabled || serverPlayerEntity.isInTeleportationState();
     }
-
-    @Redirect(method = "onClientCommand", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;getVelocity()Lnet/minecraft/util/math/Vec3d;"
-    ))
-    private Vec3d getFallingVelocity(ServerPlayerEntity serverPlayerEntity)
-    {
-        if (CarpetSettings.antiCheatDisabled)
-            return new Vec3d(0,-1,0);
-        return serverPlayerEntity.getVelocity();
-    }
-
-    @Redirect(method = "onClientCommand", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;onGround:Z"
-    ))
-    private boolean getNotOnGround(ServerPlayerEntity serverPlayerEntity)
-    {
-        if (CarpetSettings.antiCheatDisabled)
-            return false;
-        return serverPlayerEntity.onGround;
-    }
 }
