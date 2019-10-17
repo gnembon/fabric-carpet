@@ -2951,7 +2951,14 @@ public class CarpetExpression
         {
             String file = null;
             if (lv.size()>0)
-                file = lv.get(0).evalValue(c).getString();
+            {
+                String origfile = lv.get(0).evalValue(c).getString();
+                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
+                if (file.isEmpty())
+                {
+                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                }
+            }
             Tag state = ((CarpetContext)c).host.getGlobalState(file);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
@@ -2966,7 +2973,14 @@ public class CarpetExpression
             Value val = lv.get(0).evalValue(c);
             String file = null;
             if (lv.size()>1)
-                file = lv.get(1).evalValue(c).getString();
+            {
+                String origfile = lv.get(0).evalValue(c).getString();
+                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
+                if (file.isEmpty())
+                {
+                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                }
+            }
             NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
