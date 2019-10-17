@@ -51,7 +51,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return ListValue.of(
                 new StringValue(Registry.ITEM.getId(itemstack.getItem()).getPath()),
                 new NumericValue(itemstack.getCount()),
-                new NBTSerializableValue(itemstack)
+                NBTSerializableValue.fromStack(itemstack)
         );
     }
 
