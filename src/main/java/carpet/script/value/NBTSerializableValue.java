@@ -19,6 +19,7 @@ import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringNbtReader;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.math.BlockPos;
 
@@ -37,10 +38,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     private Tag nbtTag = null;
     private Supplier<Tag> nbtSupplier = null;
 
-    public NBTSerializableValue(ItemStack stack)
-    {
-        nbtSupplier = () -> stack.hasTag() ? stack.getTag(): new CompoundTag();
-    }
+    private NBTSerializableValue() {}
 
     public NBTSerializableValue(String nbtString)
     {
@@ -55,6 +53,22 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 throw new InternalExpressionException("Incorrect nbt data: "+nbtString);
             }
         };
+    }
+
+    public NBTSerializableValue(Tag tag)
+    {
+        nbtTag = tag;
+    }
+
+    public static Value fromStack(ItemStack stack)
+    {
+        if (stack.hasTag())
+        {
+            NBTSerializableValue value = new NBTSerializableValue();
+            value.nbtSupplier = stack::getTag;
+            return value;
+        }
+        return Value.NULL;
     }
 
     public static NBTSerializableValue parseString(String nbtString)
@@ -77,10 +91,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     {
         return new NBTSerializableValue(getTag().copy());
     }
-    public NBTSerializableValue(Tag tag)
-    {
-        nbtTag = tag;
-    }
+
 
     public static InventoryLocator locateInventory(CarpetContext c, List<LazyValue> params, int offset)
     {
@@ -224,6 +235,15 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     @Override
     public boolean getBoolean()
     {
+        Tag tag = getTag();
+        if (tag instanceof CompoundTag)
+            return !((CompoundTag) tag).isEmpty();
+        if (tag instanceof AbstractListTag)
+            return ((AbstractListTag) tag).isEmpty();
+        if (tag instanceof AbstractNumberTag)
+            return ((AbstractNumberTag) tag).getDouble()!=0.0;
+        if (tag instanceof StringTag)
+            return tag.asString().isEmpty();
         return true;
     }
 
