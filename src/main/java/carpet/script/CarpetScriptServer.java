@@ -372,10 +372,10 @@ public class CarpetScriptServer
     public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, String udf_name, List<LazyValue> argv)
     {
         ScriptHost host = globalHost;
-        if (hostname != null)
-            host = modules.get(hostname).retrieveForExecution(source);
         try
         {
+            if (hostname != null)
+                host = modules.get(hostname).retrieveForExecution(source);
             host.callUDF(origin, source, host.globalFunctions.get(udf_name), argv);
         }
         catch (NullPointerException | InvalidCallbackException npe)
