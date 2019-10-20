@@ -2958,7 +2958,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("store_app_data", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("'store_app_data' needs nbt tag and optional file");
+                throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             Value val = lv.get(0).evalValue(c);
             String file = null;
             if (lv.size()>1)
@@ -3165,7 +3165,7 @@ public class CarpetExpression
     }
 
     /**
-     * <h1><code>/script load / unload &lt;module&gt; (shared?)</code>, <code>/script in &lt;module&gt;</code> commands</h1>
+     * <h1><code>/script load / unload &lt;app&gt; (global?)</code>, <code>/script in &lt;app&gt;</code> commands</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <p><code>load / unload</code> commands allow for very conventient way of writing your code, providing it to the game
      * and distribute with your worlds without the need of use of commandblocks. Just place your scarpet code in the /scripts
@@ -3181,13 +3181,15 @@ public class CarpetExpression
      * // baz = foo()
      * </pre>
      * <h2></h2>
-     * <h3><code>/script load/unload &lt;module&gt; (?shared) </code></h3>
+     * <h3><code>/script load/unload &lt;app&gt; (?global) </code></h3>
      * <p>Loading operation will load that script code from disk and execute it right away. You would probably use it to
      * load some stored procedures to be used for later. To reload the module, just type <code>/script load</code> again.
      * Reloading removes all the current global state (globals and functions) that were added later by the module. </p>
      * <p>Loading a module, if it contains a <code>__command()</code> method, will attempt to registed a command with that
-     * module name, and register all public (no underscore) functions available in the module as subcommands. It will also
+     * app name, and register all public (no underscore) functions available in the module as subcommands. It will also
      * bind specific events to the event system (check Events section for details).</p>
+     * <p>Loaded apps have the ability to store and load external files, especially their persistent tag state.
+     * For that check <code>load_app_data</code> and <code>store_app_data</code> functions.</p>
      * <p>If an app defines <code>__config</code> method, and that method returns a map, it will be used to apply custom
      * settings for this app. Currently the following options are supported:</p>
      * <ul>
@@ -3201,16 +3203,16 @@ public class CarpetExpression
      *     should be running at startup. WARNING: all apps will run once at startup anyways, so be aware that their actions
      *     that are called statically, will be performed once anyways.</li>
      * </ul>
-     * <p>Unloading a module removes all of its state from the game, disables commands, and removes bounded events</p>
-     * <p>Scripts can be loaded in shared and player mode. Default is player, so all globals and stored functions are
+     * <p>Unloading an app removes all of its state from the game, disables commands, and removes bounded events</p>
+     * <p>Scripts can be loaded in shared(global) and player mode. Default is player, so all globals and stored functions are
      * individual for each player, meaning scripts don't need to worry about making sure they store some intermittent data
-     * for each player independently. In shared mode - all global values and stored functions are shared among all players.
-     * To access specific player data with commandblocks, use <code>/execute as (player) run script in (module) run ... </code>
+     * for each player independently. In global mode - all global values and stored functions are shared among all players.
+     * To access specific player data with commandblocks, use <code>/execute as (player) run script in (app) run ... </code>
      * To access global/server state, you need to disown the command from any player, so use a commandblock, or any arbitrary
      * entity: <code>/execute as @e[type=bat,limit=1] run script in (module) globals</code> for instance.
      * </p>
-     * <h3><code>/script in &lt;module&gt; ... </code></h3>
-     * <p>Allows to run normal /script commands in a specific module, like <code>run, invoke,..., globals</code> etc...</p>
+     * <h3><code>/script in &lt;app&gt; ... </code></h3>
+     * <p>Allows to run normal /script commands in a specific app, like <code>run, invoke,..., globals</code> etc...</p>
      * </div>
      */
     public void loadScriptsFromFilesCommand()

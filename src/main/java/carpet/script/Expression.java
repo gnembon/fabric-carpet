@@ -51,7 +51,7 @@ import static java.lang.Math.min;
 
 
 /**
- * <h1>Fundamental components of <code>scarpet</code> programming language (towards upcoming version 1.5).</h1>
+ * <h1>Fundamental components of <code>scarpet</code> programming language (version 1.5).</h1>
  *
  * <p>Scarpet (a.k.a. Carpet Script, or Script for Carpet) is a programming language designed to provide
  * the ability to write custom programs to run within Minecraft and
@@ -205,10 +205,10 @@ import static java.lang.Math.min;
  *
  * <h2>Code delivery, line indicators</h2>
  * <p>Note that this should only apply to pasting your code to execute with commandblock. Scarpet recommends placing your
- * code in packages (files with <code>.sc</code> extension that can be placed inside "/scripts" folder in the world files
- * and loaded as a module with command <code>/script load [package_name]</code>. Scarpet modules loaded from disk should only
+ * code in apps (files with <code>.sc</code> extension that can be placed inside "/scripts" folder in the world files
+ * and loaded as a scarpet app with command <code>/script load [app_name]</code>. Scarpet apps loaded from disk should only
  * contain code, no need to start with "/script run" prefix</p>
- * <p>The following is the code that could be provided in a <code>foo.sc</code> file located in world <code>/scripts</code> folder</p>
+ * <p>The following is the code that could be provided in a <code>foo.sc</code> app file located in world <code>/scripts</code> folder</p>
  *
  * <pre>
  * run_program() -&gt; (
