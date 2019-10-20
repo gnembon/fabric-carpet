@@ -113,7 +113,7 @@ public class ScriptHost
     public String call(ServerCommandSource source, String call, List<Integer> coords, String arg)
     {
         if (CarpetServer.scriptServer.stopAll)
-            return "SCRIPTING PAUSED";
+            return "SCARPET PAUSED";
         UserDefinedFunction acf = globalFunctions.get(call);
         if (acf == null)
             return "UNDEFINED";
@@ -292,7 +292,6 @@ public class ScriptHost
 
     public void setPerPlayer(boolean isPerUser)
     {
-        CarpetSettings.LOG.error("Setting per player for "+name+" of "+isPerUser);
         perUser = isPerUser;
     }
 }

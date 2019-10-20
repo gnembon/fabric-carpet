@@ -10,6 +10,6 @@ public abstract class AbstractListValue extends Value
     public void fatality() { }
     public void append(Value v)
     {
-        throw new InternalExpressionException("Cannot append a value to abstract list");
+        throw new InternalExpressionException("Cannot append a value to an abstract list");
     }
 }

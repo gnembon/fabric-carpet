@@ -50,7 +50,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             catch (CommandSyntaxException e)
             {
-                throw new InternalExpressionException("Incorrect nbt data: "+nbtString);
+                throw new InternalExpressionException("Incorrect NBT data: "+nbtString);
             }
         };
     }

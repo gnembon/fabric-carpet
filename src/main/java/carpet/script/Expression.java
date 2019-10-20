@@ -964,7 +964,7 @@ public class Expression implements Cloneable
         });
         addLazyFunction("outer", 1, (c, t, lv) -> {
             if (t != Context.LOCALIZATION)
-                throw new InternalExpressionException("outer scoping of variables is only possible in function signatures");
+                throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures");
             return (cc, tt) -> new GlobalValue(lv.get(0).evalValue(c));
         });
 
@@ -998,7 +998,7 @@ public class Expression implements Cloneable
         addLazyFunction("try", -1, (c, t, lv) ->
         {
             if (lv.size()==0)
-                throw new InternalExpressionException("try needs at least an expression block");
+                throw new InternalExpressionException("'try' needs at least an expression block");
             try
             {
                 Value retval = lv.get(0).evalValue(c, t);
@@ -1020,7 +1020,7 @@ public class Expression implements Cloneable
         addLazyFunction("if", -1, (c, t, lv) ->
         {
             if ( lv.size() < 2 )
-                throw new InternalExpressionException("if statement needs to have at least one condition and one case");
+                throw new InternalExpressionException("'if' statement needs to have at least one condition and one case");
             for (int i=0; i<lv.size()-1; i+=2)
             {
                 if (lv.get(i).evalValue(c, Context.BOOLEAN).getBoolean())
@@ -1571,7 +1571,7 @@ public class Expression implements Cloneable
         addFunction("max", (lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("MAX requires at least one parameter");
+                throw new InternalExpressionException("'max' requires at least one parameter");
             Value max = null;
             if (lv.size()==1 && lv.get(0) instanceof ListValue)
                 lv = ((ListValue) lv.get(0)).getItems();
@@ -1585,7 +1585,7 @@ public class Expression implements Cloneable
         addFunction("min", (lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("MIN requires at least one parameter");
+                throw new InternalExpressionException("'min' requires at least one parameter");
             Value min = null;
             if (lv.size()==1 && lv.get(0) instanceof ListValue)
                 lv = ((ListValue) lv.get(0)).getItems();
@@ -1737,7 +1737,7 @@ public class Expression implements Cloneable
         {
             if (lv.size()<2 || lv.size()>3)
             {
-                throw new InternalExpressionException("Incorrect number of attributes for loop, should be 2 or 3, not "+lv.size());
+                throw new InternalExpressionException("Incorrect number of attributes for 'loop', should be 2 or 3, not "+lv.size());
             }
             long limit = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             Value lastOne = Value.NULL;
@@ -1766,13 +1766,13 @@ public class Expression implements Cloneable
         {
             if (lv.size()<2 || lv.size()>3)
             {
-                throw new InternalExpressionException("Incorrect number of attributes for map, should be 2 or 3, not "+lv.size());
+                throw new InternalExpressionException("Incorrect number of attributes for 'map', should be 2 or 3, not "+lv.size());
             }
 
             Value rval= lv.get(0).evalValue(c);
 
             if (!(rval instanceof AbstractListValue))
-                throw new InternalExpressionException("First argument of map function should be a list or iterator");
+                throw new InternalExpressionException("First argument of 'map' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
@@ -1812,12 +1812,12 @@ public class Expression implements Cloneable
         {
             if (lv.size()<2 || lv.size()>3)
             {
-                throw new InternalExpressionException("Incorrect number of attributes for filter, should be 2 or 3, not "+lv.size());
+                throw new InternalExpressionException("Incorrect number of attributes for 'filter', should be 2 or 3, not "+lv.size());
             }
 
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
-                throw new InternalExpressionException("First argument of filter function should be a list or iterator");
+                throw new InternalExpressionException("First argument of 'filter' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             LazyValue cond = null;
@@ -2249,7 +2249,7 @@ public class Expression implements Cloneable
         addFunction("join", (lv) ->
         {
             if (lv.size() < 2)
-                throw new InternalExpressionException("join takes at least 2 arguments");
+                throw new InternalExpressionException("'join' takes at least 2 arguments");
             String delimiter = lv.get(0).getString();
             List<Value> toJoin;
             if (lv.size()==2 && lv.get(1) instanceof LazyListValue)
@@ -2277,7 +2277,7 @@ public class Expression implements Cloneable
         addFunction("slice", (lv) -> {
 
             if (lv.size() != 2 && lv.size() != 3)
-                throw new InternalExpressionException("slice takes 2 or 3 arguments");
+                throw new InternalExpressionException("'slice' takes 2 or 3 arguments");
             Value hwat = lv.get(0);
             long from = NumericValue.asNumber(lv.get(1)).getLong();
             long to = -1;
@@ -2301,7 +2301,7 @@ public class Expression implements Cloneable
         {
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof ListValue))
-                throw new InternalExpressionException("First argument for sort_key should be a List");
+                throw new InternalExpressionException("First argument for 'sort_key' should be a List");
             LazyValue sortKey = lv.get(1);
             //scoping
             LazyValue __ = c.getVariable("_");
@@ -2327,7 +2327,7 @@ public class Expression implements Cloneable
             long step = 1;
             int argsize = lv.size();
             if (argsize == 0 || argsize > 3)
-                throw new InternalExpressionException("range accepts from 1 to 3 arguments, not "+argsize);
+                throw new InternalExpressionException("'range' accepts from 1 to 3 arguments, not "+argsize);
             to = NumericValue.asNumber(lv.get(0)).getLong();
             if (lv.size() > 1)
             {
@@ -2406,7 +2406,7 @@ public class Expression implements Cloneable
         addLazyFunction("get", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("get requires parameters");
+                throw new InternalExpressionException("'get' requires parameters");
             if (lv.size() == 1)
             {
                 Value v = lv.get(0).evalValue(c, Context.LVALUE);
@@ -2433,7 +2433,7 @@ public class Expression implements Cloneable
         addLazyFunction("has", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("get requires parameters");
+                throw new InternalExpressionException("'has' requires parameters");
             if (lv.size() == 1)
             {
                 Value v = lv.get(0).evalValue(c, Context.LVALUE);
@@ -2461,7 +2461,7 @@ public class Expression implements Cloneable
         addBinaryFunction("element", (v1, v2) ->
         {
             if (!(v1 instanceof ListValue))
-                throw new InternalExpressionException("First argument of get should be a list");
+                throw new InternalExpressionException("First argument of 'get' should be a list");
             List<Value> items = ((ListValue)v1).getItems();
             long index = NumericValue.asNumber(v2).getLong();
             int numitems = items.size();
@@ -2475,7 +2475,7 @@ public class Expression implements Cloneable
         {
             if(lv.size()<2)
             {
-                throw new InternalExpressionException("put takes at least three arguments, a container, address, and values to insert at that index");
+                throw new InternalExpressionException("'put' takes at least three arguments, a container, address, and values to insert at that index");
             }
             Value container = lv.get(0).evalValue(c, Context.LVALUE);
             if (container instanceof LContainerValue)
@@ -2495,7 +2495,7 @@ public class Expression implements Cloneable
             }
             if(lv.size()<3)
             {
-                throw new InternalExpressionException("put takes at least three arguments, a container, address, and values to insert at that index");
+                throw new InternalExpressionException("'put' takes at least three arguments, a container, address, and values to insert at that index");
             }
             if (!(container instanceof ContainerValueInterface))
             {
@@ -2512,7 +2512,7 @@ public class Expression implements Cloneable
         addLazyFunction("delete", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("delete requires parameters");
+                throw new InternalExpressionException("'delete' requires parameters");
             if (lv.size() == 1)
             {
                 Value v = lv.get(0).evalValue(c, Context.LVALUE);
@@ -2742,7 +2742,7 @@ public class Expression implements Cloneable
         addFunction("str", lv ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("str requires at least one argument");
+                throw new InternalExpressionException("'str' requires at least one argument");
             String format = lv.get(0).getString();
             if (lv.size() == 1)
                 return new StringValue(format);
@@ -2797,7 +2797,7 @@ public class Expression implements Cloneable
                     }
                     else
                     {
-                        throw new InternalExpressionException("format not supported: "+m.group(6));
+                        throw new InternalExpressionException("Format not supported: "+m.group(6));
                     }
 
                     i = m.end();

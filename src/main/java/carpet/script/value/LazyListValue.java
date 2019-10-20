@@ -15,7 +15,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         {
             {
                 if (step == 0)
-                    throw new InternalExpressionException("range will never end with zero step");
+                    throw new InternalExpressionException("Range will never end with a zero step");
                 this.start = from;
                 this.current = this.start;
                 this.limit = to;
@@ -141,7 +141,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
         }
         catch (CloneNotSupportedException e)
         {
-            throw new InternalExpressionException("cannot copy iterator");
+            throw new InternalExpressionException("Cannot copy iterators");
         }
         ((LazyListValue)copy).reset();
         return copy;

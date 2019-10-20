@@ -71,25 +71,25 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public Value add(Value o)
     {
-        throw new InternalExpressionException("cannot add to a map value");
+        throw new InternalExpressionException("Cannot add to a map value");
     }
 
     @Override
     public Value subtract(Value v)
     {
-        throw new InternalExpressionException("cannot subtract to a map value");
+        throw new InternalExpressionException("Cannot subtract from a map value");
     }
 
     @Override
     public Value multiply(Value v)
     {
-        throw new InternalExpressionException("cannot multiply to a map value");
+        throw new InternalExpressionException("Cannot multiply with a map value");
     }
 
     @Override
     public Value divide(Value v)
     {
-        throw new InternalExpressionException("cannot divide to a map value");
+        throw new InternalExpressionException("Cannot divide a map value");
     }
 
     public void put(Value v)
@@ -102,7 +102,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         ListValue pair = (ListValue)v;
         if (pair.getItems().size() != 2)
         {
-            throw new InternalExpressionException("map constructor requires elements that have two elements");
+            throw new InternalExpressionException("Map constructor requires elements that have two items");
         }
         map.put(pair.getItems().get(0), pair.getItems().get(1));
     }
@@ -116,7 +116,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public int compareTo(Value o)
     {
-        throw new InternalExpressionException("cannot compare to a map value");
+        throw new InternalExpressionException("Cannot compare with a map value");
     }
 
     @Override
@@ -155,7 +155,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public Value slice(long from, long to)
     {
-        throw new InternalExpressionException("cannot slice a map value");
+        throw new InternalExpressionException("Cannot slice a map value");
     }
 
     @Override
