@@ -204,28 +204,28 @@ public class ScriptCommand
                                                                                 "outline"
                                                                         )))))))));
         LiteralArgumentBuilder<ServerCommandSource> a = literal("load").requires( (player) -> player.hasPermissionLevel(2) ).
-                then(argument("package", StringArgumentType.word()).
+                then(argument("app", StringArgumentType.word()).
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(true),bb)).
                         executes((cc) ->
                         {
-                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), true, false);
+                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), true, false);
                             return success?1:0;
                         }).
-                        then(literal("shared").
+                        then(literal("global").
                                 executes((cc) ->
                                 {
-                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"), false, false);
+                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), false, false);
                                     return success?1:0;
                                 }
                                 )
                         )
                 );
         LiteralArgumentBuilder<ServerCommandSource> f = literal("unload").requires( (player) -> player.hasPermissionLevel(2) ).
-                then(argument("package", StringArgumentType.word()).
+                then(argument("app", StringArgumentType.word()).
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(),bb)).
                         executes((cc) ->
                         {
-                            boolean success =CarpetServer.scriptServer.removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "package"));
+                            boolean success =CarpetServer.scriptServer.removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"));
                             return success?1:0;
                         }));
 
@@ -242,13 +242,13 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0)).
                                 then(literal("from").
-                                        then(argument("package", StringArgumentType.word()).
+                                        then(argument("app", StringArgumentType.word()).
                                                 suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
                                                 then(argument("call", StringArgumentType.word()).
                                                         suggests( (cc, bb) -> suggestMatching(suggestFunctionCalls(cc), bb)).
                                                         executes( (cc) -> CarpetServer.scriptServer.events.addEvent(
                                                                 StringArgumentType.getString(cc, "event"),
-                                                                StringArgumentType.getString(cc, "package"),
+                                                                StringArgumentType.getString(cc, "app"),
                                                                 StringArgumentType.getString(cc, "call")
                                                         )?1:0)))))).
                 then(literal("remove_from").
@@ -268,7 +268,7 @@ public class ScriptCommand
         dispatcher.register(literal("script").
                 requires((player) -> CarpetSettings.commandScript).
                 then(literal("in").
-                        then(argument("package", StringArgumentType.word()).
+                        then(argument("app", StringArgumentType.word()).
                                 suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
                                 then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t))));
     }
@@ -276,7 +276,7 @@ public class ScriptCommand
     {
         try
         {
-            String name = StringArgumentType.getString(context, "package").toLowerCase(Locale.ROOT);
+            String name = StringArgumentType.getString(context, "app").toLowerCase(Locale.ROOT);
             ScriptHost parentHost = CarpetServer.scriptServer.modules.getOrDefault(name, CarpetServer.scriptServer.globalHost);
             return parentHost.retrieveForExecution(context.getSource());
         }

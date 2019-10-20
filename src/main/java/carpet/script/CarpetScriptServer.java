@@ -62,7 +62,7 @@ public class CarpetScriptServer
     {
         if (CarpetSettings.scriptsAutoload)
         {
-            Messenger.m(CarpetServer.minecraft_server.getCommandSource(), "Autoloading world scarpet apps");
+            Messenger.m(CarpetServer.minecraft_server.getCommandSource(), "Auto-loading world scarpet apps");
             for (String moduleName: listAvailableModules(false))
             {
                 addScriptHost(CarpetServer.minecraft_server.getCommandSource(), moduleName, true, true);
@@ -142,7 +142,7 @@ public class CarpetScriptServer
                 String code = module.getCode();
                 if (code == null)
                 {
-                    Messenger.m(source, "r Unable to load the package - not found");
+                    Messenger.m(source, "r Unable to load "+name+" app - code not found");
                     return null;
                 }
                 setChatErrorSnooper(source);
@@ -245,12 +245,12 @@ public class CarpetScriptServer
         }
         if (!host.globalFunctions.containsKey("__command"))
         {
-            Messenger.m(source, "gi Package "+hostName+" loaded.");
+            Messenger.m(source, "gi "+hostName+" app loaded.");
             return;
         }
         if (holyMoly.contains(hostName))
         {
-            Messenger.m(source, "gi Package "+hostName+" loaded with no command.");
+            Messenger.m(source, "gi "+hostName+" app loaded with no command.");
             Messenger.m(source, "gi Tried to mask vanilla command.");
             return;
         }
@@ -294,7 +294,7 @@ public class CarpetScriptServer
                                         return 1;
                                     })));
         }
-        Messenger.m(source, "gi Package "+hostName+" loaded with /"+hostName+" command");
+        Messenger.m(source, "gi "+hostName+" app loaded with /"+hostName+" command");
         CarpetServer.minecraft_server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
@@ -353,14 +353,14 @@ public class CarpetScriptServer
         name = name.toLowerCase(Locale.ROOT);
         if (!modules.containsKey(name))
         {
-            Messenger.m(source, "r No such host found: ", "wb  " + name);
+            Messenger.m(source, "r No such app found: ", "wb  " + name);
             return false;
         }
         // stop all events associated with name
         events.removeAllHostEvents(name);
         modules.remove(name);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
-        Messenger.m(source, "w Removed host "+name);
+        Messenger.m(source, "gi Removed "+name+" app");
         return true;
     }
 

@@ -23,6 +23,6 @@ public class GlobalValue extends Value
     @Override
     public int hashCode()
     {
-        throw new UnsupportedOperationException("global value cannot be used as map key");
+        throw new UnsupportedOperationException("Global value cannot be used as a map key");
     }
 }

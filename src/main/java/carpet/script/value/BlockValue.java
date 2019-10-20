@@ -187,7 +187,7 @@ public class BlockValue extends Value
             blockState = world.getBlockState(pos);
             return blockState;
         }
-        throw new InternalExpressionException("Attemted to fetch blockstate without world or stored blockstate");
+        throw new InternalExpressionException("Attempted to fetch block state without world or stored block state");
     }
 
     public CompoundTag getData()

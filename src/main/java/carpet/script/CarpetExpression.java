@@ -172,7 +172,7 @@ public class CarpetExpression
         CarpetContext cc = (CarpetContext) c;
         if (params.size() == 0)
         {
-            throw new InternalExpressionException(name + " requires at least one parameter");
+            throw new InternalExpressionException("'" + name + "' requires at least one parameter");
         }
         Value v0 = params.get(0).evalValue(c);
         if (v0 instanceof BlockValue)
@@ -195,7 +195,7 @@ public class CarpetExpression
         CarpetContext cc = (CarpetContext) c;
         if (params.size() == 0)
         {
-            throw new InternalExpressionException(name + " requires at least one parameter");
+            throw new InternalExpressionException("'" + name + "' requires at least one parameter");
         }
 
         Value v0 = params.get(0).evalValue(c);
@@ -219,7 +219,7 @@ public class CarpetExpression
         CarpetContext cc = (CarpetContext) c;
         if (params.size() == 0)
         {
-            throw new InternalExpressionException(name + " requires at least one parameter");
+            throw new InternalExpressionException("'" + name + "' requires at least one parameter");
         }
         Value v0 = params.get(0).evalValue(c);
         if (v0 instanceof BlockValue)
@@ -231,7 +231,7 @@ public class CarpetExpression
             }
             catch (NullPointerException ignored)
             {
-                throw new InternalExpressionException(name + " function requires a block that is positioned in the world");
+                throw new InternalExpressionException("'" + name + "' function requires a block that is positioned in the world");
             }
         }
         BlockValue block = BlockValue.fromParams(cc, params, 0).block;
@@ -692,7 +692,7 @@ public class CarpetExpression
             }
             else
             {
-                throw new InternalExpressionException("pos works only with a block or an entity type");
+                throw new InternalExpressionException("'pos' works only with a block or an entity type");
             }
         });
 
@@ -701,7 +701,7 @@ public class CarpetExpression
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
             BlockPos pos = locator.block.getPos();
             if (lv.size() <= locator.offset)
-                throw new InternalExpressionException("block_offset needs at least position, and direction");
+                throw new InternalExpressionException("'pos_offset' needs at least position, and direction");
             String directionString = lv.get(locator.offset).evalValue(c).getString();
             Direction dir = Direction.byName(directionString);
             if (dir == null)
@@ -832,7 +832,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             if (lv.size() < 2 || lv.size() % 2 == 1)
-                throw new InternalExpressionException("set block should have at least 2 params and odd attributes");
+                throw new InternalExpressionException("'set' should have at least 2 params and odd attributes");
             BlockValue.LocatorResult targetLocator = BlockValue.fromParams(cc, lv, 0);
             BlockValue.LocatorResult sourceLocator = BlockValue.fromParams(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
@@ -845,7 +845,7 @@ public class CarpetExpression
                     String paramString = lv.get(i).evalValue(c).getString();
                     Property<?> property = states.getProperty(paramString);
                     if (property == null)
-                        throw new InternalExpressionException("property " + paramString + " doesn't apply to " + sourceLocator.block.getString());
+                        throw new InternalExpressionException("Property " + paramString + " doesn't apply to " + sourceLocator.block.getString());
                     String paramValue = lv.get(i + 1).evalValue(c).getString();
                     sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
                 }
@@ -920,7 +920,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("harvest", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
-                throw new InternalExpressionException("harvest takes at least 2 parameters: entity and block, or position, to harvest");
+                throw new InternalExpressionException("'harvest' takes at least 2 parameters: entity and block, or position, to harvest");
             CarpetContext cc = (CarpetContext)c;
             World world = cc.s.getWorld();
             Value entityValue = lv.get(0).evalValue(cc);
@@ -945,7 +945,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
-                throw new InternalExpressionException("place_item takes at least 2 parameters: item and block, or position, to place onto");
+                throw new InternalExpressionException("'place_item' takes at least 2 parameters: item and block, or position, to place onto");
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).evalValue(c).getString();
             BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
@@ -1009,7 +1009,7 @@ public class CarpetExpression
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             if (lv.size() <= locator.offset)
-                throw new InternalExpressionException("property requires to specify a property to query");
+                throw new InternalExpressionException("'property' requires to specify a property to query");
             String tag = lv.get(locator.offset).evalValue(c).getString();
             StateManager<Block, BlockState> states = state.getBlock().getStateFactory();
             Property<?> property = states.getProperty(tag);
@@ -1045,7 +1045,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
             if (lv.size() == locator.offset)
-                throw new InternalExpressionException("set_biome needs a biome name as an argument");
+                throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
             Biome biome = Registry.BIOME.get(new Identifier(biomeName));
             if (biome == null)
@@ -1234,7 +1234,7 @@ public class CarpetExpression
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
             if (lv.size() < inventoryLocator.offset+2)
-                throw new InternalExpressionException("inventory_set requires at least slot number and new stack size, and optional new item");
+                throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
             int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0).evalValue(c)).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
             if (slot == inventoryLocator.inventory.getInvSize())
@@ -1328,7 +1328,7 @@ public class CarpetExpression
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
             if (lv.size() <= inventoryLocator.offset)
-                throw new InternalExpressionException("inventory_remove requires at least an item to be removed");
+                throw new InternalExpressionException("'inventory_remove' requires at least an item to be removed");
             ItemStackArgument searchItem = NBTSerializableValue.parseItem(lv.get(inventoryLocator.offset).evalValue(c).getString());
             int amount = 1;
             if (lv.size() > inventoryLocator.offset+1)
@@ -1376,7 +1376,7 @@ public class CarpetExpression
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
             if (lv.size() == inventoryLocator.offset)
-                throw new InternalExpressionException("slot number is required for inventory_drop");
+                throw new InternalExpressionException("Slot number is required for inventory_drop");
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
             if (slot == inventoryLocator.inventory.getInvSize())
@@ -1791,7 +1791,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("spawn", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 2)
-                throw new InternalExpressionException("spawn function takes mob name, and position to spawn");
+                throw new InternalExpressionException("'spawn' function takes mob name, and position to spawn");
             String entityString = lv.get(0).evalValue(c).getString();
             Identifier entityId;
             try
@@ -1912,11 +1912,11 @@ public class CarpetExpression
         this.expr.addLazyFunction("query", -1, (c, t, lv) -> {
             if (lv.size()<2)
             {
-                throw new InternalExpressionException("query_entity takes entity as a first argument, and queried feature as a second");
+                throw new InternalExpressionException("'query' takes entity as a first argument, and queried feature as a second");
             }
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof EntityValue))
-                throw new InternalExpressionException("First argument to query_entity should be an entity");
+                throw new InternalExpressionException("First argument to query should be an entity");
             String what = lv.get(1).evalValue(c).getString();
             Value retval;
             if (lv.size()==2)
@@ -1932,11 +1932,11 @@ public class CarpetExpression
         this.expr.addLazyFunction("modify", -1, (c, t, lv) -> {
             if (lv.size()<2)
             {
-                throw new InternalExpressionException("modify_entity takes entity as a first argument, and queried feature as a second");
+                throw new InternalExpressionException("'modify' takes entity as a first argument, and queried feature as a second");
             }
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof EntityValue))
-                throw new InternalExpressionException("First argument to get should be an entity");
+                throw new InternalExpressionException("First argument to modify should be an entity");
             String what = lv.get(1).evalValue(c).getString();
             if (lv.size()==2)
                 ((EntityValue) v).set(what, null);
@@ -1951,10 +1951,10 @@ public class CarpetExpression
         this.expr.addLazyFunction("entity_event", -1, (c, t, lv) ->
         {
             if (lv.size()<3)
-                throw new InternalExpressionException("entity_event requires at least 3 arguments, entity, event to be handled, and function name, with optional arguments");
+                throw new InternalExpressionException("'entity_event' requires at least 3 arguments, entity, event to be handled, and function name, with optional arguments");
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof EntityValue))
-                throw new InternalExpressionException("First argument to get should be an entity");
+                throw new InternalExpressionException("First argument to entity_event should be an entity");
             String what = lv.get(1).evalValue(c).getString();
             Value functionValue = lv.get(2).evalValue(c);
             String function = null;
@@ -2011,7 +2011,7 @@ public class CarpetExpression
         {
             int lvsise = lv.size();
             if (lvsise != 7 && lvsise != 10)
-                throw new InternalExpressionException("scan takes 2, or 3 triples of coords, and the expression");
+                throw new InternalExpressionException("'scan' takes 2, or 3 triples of coords, and the expression");
             int cx = (int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             int cy = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
             int cz = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
@@ -2144,7 +2144,7 @@ public class CarpetExpression
         {
             if (lv.size() != 3 && lv.size() != 6 && lv.size() != 9)
             {
-                throw new InternalExpressionException("rectangular region should be specified with 3, 6, or 9 coordinates");
+                throw new InternalExpressionException("Rectangular region should be specified with 3, 6, or 9 coordinates");
             }
             int cx;
             int cy;
@@ -2262,7 +2262,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() != 3 && lv.size() != 4 && lv.size() != 5)
             {
-                throw new InternalExpressionException("diamond region should be specified with 3 to 5 coordinates");
+                throw new InternalExpressionException("'diamond' region should be specified with 3 to 5 coordinates");
             }
 
             int cx;
@@ -2737,7 +2737,7 @@ public class CarpetExpression
             }
             catch (IndexOutOfBoundsException e)
             {
-                throw new InternalExpressionException("create_marker requires a name and three coordinates, with optional direction, and optional block on its head");
+                throw new InternalExpressionException("'create_marker' requires a name and three coordinates, with optional direction, and optional block on its head");
             }
 
             ArmorStandEntity armorstand = new ArmorStandEntity(EntityType.ARMOR_STAND, cc.s.getWorld());
@@ -2883,7 +2883,7 @@ public class CarpetExpression
                 }
                 else
                 {
-                    throw new InternalExpressionException("in_dimension accepts only world-localized block arguments");
+                    throw new InternalExpressionException("'in_dimension' accepts only world-localized block arguments");
                 }
             }
             else
@@ -2916,7 +2916,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
             if (lv.size() <= locator.offset)
-                throw new InternalExpressionException("plop needs extra argument indicating what to plop");
+                throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).evalValue(c).getString();
             Boolean res = FeatureGenerator.spawn(what, ((CarpetContext)c).s.getWorld(), locator.block.getPos());
             if (res == null)
@@ -2928,12 +2928,12 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
             if (lv.size()<2)
-                throw new InternalExpressionException("schedule should have at least 2 arguments, delay and call name");
+                throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             Long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             String funname = lv.get(1).evalValue(c).getString();
             CarpetContext cc = (CarpetContext)c;
             if (!cc.host.globalFunctions.containsKey(funname))
-                throw new InternalExpressionException("function "+funname+" is not defined");
+                throw new InternalExpressionException("Function "+funname+" is not defined");
             List<LazyValue> args = new ArrayList<>();
             for (int i=2; i < lv.size(); i++)
             {
@@ -2941,7 +2941,7 @@ public class CarpetExpression
                 args.add( (_c, _t) -> arg);
             }
             if (cc.host.globalFunctions.get(funname).getArguments().size() != args.size())
-                throw new InternalExpressionException("function "+funname+" takes "+
+                throw new InternalExpressionException("Function "+funname+" takes "+
                         cc.host.globalFunctions.get(funname).getArguments().size()+" arguments, "+args.size()+" provided.");
             CarpetServer.scriptServer.events.scheduleCall(cc, funname, args, delay);
             return (c_, t_) -> Value.TRUE;
@@ -2969,7 +2969,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("store_app_data", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
-                throw new InternalExpressionException("store_app_data needs nbt tag and optional file");
+                throw new InternalExpressionException("'store_app_data' needs nbt tag and optional file");
             Value val = lv.get(0).evalValue(c);
             String file = null;
             if (lv.size()>1)
@@ -3082,7 +3082,7 @@ public class CarpetExpression
         }
         catch (ArithmeticException ae)
         {
-            throw new CarpetExpressionException("math doesn't compute... "+ae.getMessage());
+            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage());
         }
     }
 
@@ -3129,7 +3129,7 @@ public class CarpetExpression
         }
         catch (ArithmeticException ae)
         {
-            throw new CarpetExpressionException("math doesn't compute... "+ae.getMessage());
+            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage());
         }
     }
 
