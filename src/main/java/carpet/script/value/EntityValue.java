@@ -40,6 +40,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import org.apache.commons.lang3.tuple.Pair;
@@ -489,13 +490,19 @@ public class EntityValue extends Value
         });
         put("pitch", (e, v) ->
         {
-            e.pitch = (float) NumericValue.asNumber(v).getDouble();
+            float p = (float) NumericValue.asNumber(v).getDouble();
+            if (Float.isNaN(p))
+                return;
+            e.pitch = MathHelper.clamp(p, -90, 90);
             e.prevPitch = e.pitch;
             updatePosition(e);
         });
         put("yaw", (e, v) ->
         {
-            e.yaw = (float) NumericValue.asNumber(v).getDouble();
+            float p = (float) NumericValue.asNumber(v).getDouble();
+            if (Float.isNaN(p))
+                return;
+            e.yaw = p % 360;
             e.prevYaw = e.yaw;
             updatePosition(e);
         });
