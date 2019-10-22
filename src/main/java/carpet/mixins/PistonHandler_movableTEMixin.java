@@ -112,9 +112,9 @@ public abstract class PistonHandler_movableTEMixin
     //Thanks to Earthcomputer for showing how to redirect FIELD access like this
     /**
      * Makes backwards stickyness work with sticky non-slimeblocks as well.
-     * @author 2No2Nameb
+     * @author 2No2Name
      */
-    private boolean redirectSlimeBlock(Block block_1) {
+    private boolean redirectIsStickyBlock(Block block_1) {
         if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
             return true;
         return method_23367(block_1);
