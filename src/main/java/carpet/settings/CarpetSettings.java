@@ -17,7 +17,14 @@ import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static carpet.settings.RuleCategory.*;
+import static carpet.settings.RuleCategory.BUGFIX;
+import static carpet.settings.RuleCategory.COMMAND;
+import static carpet.settings.RuleCategory.CREATIVE;
+import static carpet.settings.RuleCategory.EXPERIMENTAL;
+import static carpet.settings.RuleCategory.FEATURE;
+import static carpet.settings.RuleCategory.OPTIMIZATION;
+import static carpet.settings.RuleCategory.SURVIVAL;
+import static carpet.settings.RuleCategory.TNT;
 
 public class CarpetSettings
 {
@@ -80,7 +87,7 @@ public class CarpetSettings
     )
     public static boolean stackableShulkerBoxes = false;
 
-    @Rule( desc = "Explosions won't destroy blocks", category = CREATIVE )
+    @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
 
     @Rule( desc = "Removes random TNT momentum when primed", category = {CREATIVE, TNT} )
@@ -152,7 +159,7 @@ public class CarpetSettings
     @Rule(desc = "Entities pushed or moved into unloaded chunks no longer disappear", category = {EXPERIMENTAL, BUGFIX})
     public static boolean unloadedEntityFix = false;
 
-    @Rule( desc = "TNT doesn't update when placed against a power source", category = CREATIVE )
+    @Rule( desc = "TNT doesn't update when placed against a power source", category = {CREATIVE, TNT} )
     public static boolean tntDoNotUpdate = false;
 
     @Rule(
