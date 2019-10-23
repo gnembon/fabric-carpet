@@ -106,6 +106,7 @@
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",
+    "ExplosionAccessor",
 
     "TntEntityMixin",
     "ProjectileEntityMixin",
@@ -125,6 +126,7 @@
     "PickaxeItem_missingToolsMixin",
     "ShearsItem_missingToolsMixin",
 
+    "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
     "DamageTracker_scarpetEventMixin",

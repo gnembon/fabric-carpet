@@ -2748,7 +2748,8 @@ public class CarpetExpression
                     (float)pointLocator.yaw,
                     (float) pointLocator.pitch
             );
-            armorstand.addScoreboardTag("__scarpet_marker");
+            armorstand.addScoreboardTag(ExpressionInspector.MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName()));
+            armorstand.addScoreboardTag(ExpressionInspector.MARKER_STRING);
             if (targetBlock != null)
                 armorstand.equipStack(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
             if (!name.isEmpty())
@@ -2768,7 +2769,8 @@ public class CarpetExpression
         this.expr.addLazyFunction("remove_all_markers", 0, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             int total = 0;
-            for (Entity e : cc.s.getWorld().getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains("__scarpet_marker")))
+            String markerName = ExpressionInspector.MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName());
+            for (Entity e : cc.s.getWorld().getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {
                 total ++;
                 e.remove();

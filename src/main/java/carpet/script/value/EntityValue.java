@@ -13,7 +13,6 @@ import net.minecraft.client.network.packet.EntityPassengersSetS2CPacket;
 import net.minecraft.client.network.packet.EntityPositionS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
-import net.minecraft.command.arguments.NbtPathArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
@@ -28,7 +27,6 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -423,6 +421,7 @@ public class EntityValue extends Value
     private static void updatePosition(Entity e)
     {
         if (e instanceof ServerPlayerEntity)
+            // TODO next - figure out proper way of informting client about pos changes
             ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.getX(), e.getY(), e.getZ(), e.yaw, e.pitch);
         else
             ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e,new EntityPositionS2CPacket(e));
