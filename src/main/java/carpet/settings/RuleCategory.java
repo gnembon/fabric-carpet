@@ -9,5 +9,6 @@ public class RuleCategory
     public static final String OPTIMIZATION = "optimization";
     public static final String FEATURE = "feature";
     public static final String COMMAND = "command";
+    public static final String TNT = "tnt";
 
 }

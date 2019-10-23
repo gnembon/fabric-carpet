@@ -17,13 +17,7 @@ import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static carpet.settings.RuleCategory.BUGFIX;
-import static carpet.settings.RuleCategory.COMMAND;
-import static carpet.settings.RuleCategory.CREATIVE;
-import static carpet.settings.RuleCategory.EXPERIMENTAL;
-import static carpet.settings.RuleCategory.FEATURE;
-import static carpet.settings.RuleCategory.OPTIMIZATION;
-import static carpet.settings.RuleCategory.SURVIVAL;
+import static carpet.settings.RuleCategory.*;
 
 public class CarpetSettings
 {
@@ -89,8 +83,52 @@ public class CarpetSettings
     @Rule( desc = "Explosions won't destroy blocks", category = CREATIVE )
     public static boolean explosionNoBlockDamage = false;
 
-    @Rule( desc = "Removes random TNT momentum when primed", category = CREATIVE )
+    @Rule( desc = "Removes random TNT momentum when primed", category = {CREATIVE, TNT} )
     public static boolean tntPrimerMomentumRemoved = false;
+
+    @Rule( desc = "TNT causes less lag when exploding in the same spot and in liquids", category = TNT)
+    public static boolean optimizedTNT = false;
+
+    @Rule( desc = "Sets the tnt random explosion range to a fixed value", category = TNT, options = "-1",
+            validate = TNTRandomRangeValidator.class, extra = "Set to -1 for default behavior")
+    public static double tntRandomRange = -1;
+
+    private static class TNTRandomRangeValidator extends Validator<Double> {
+        @Override
+        public Double validate(ServerCommandSource source, ParsedRule<Double> currentRule, Double newValue, String string) {
+            if (newValue == -1)
+                return newValue;
+            if (!optimizedTNT)
+                return null;
+            return newValue >= 0 ? newValue : null;
+        }
+
+        @Override
+        public String description() {
+            if (!optimizedTNT)
+                return "Requires optimizedTNT to be enabled";
+            return "Cannot be negative, except for -1";
+        }
+    }
+
+    @Rule( desc = "Sets the horizontal random angle on TNT for debugging of TNT contraptions", category = TNT, options = "-1",
+            validate = TNTAngleValidator.class, extra = "Set to -1 for default behavior")
+    public static double hardcodeTNTangle;
+
+    private static class TNTAngleValidator extends Validator<Double> {
+        @Override
+        public Double validate(ServerCommandSource source, ParsedRule<Double> currentRule, Double newValue, String string) {
+            return (newValue >= 0 && newValue < Math.PI * 2) || newValue == -1 ? newValue : null;
+        }
+
+        @Override
+        public String description() {
+            return "Must be between 0 and 2pi, or -1";
+        }
+    }
+
+    @Rule( desc = "Merges stationary primed TNT entities", category = TNT )
+    public static boolean mergeTNT = false;
 
     @Rule(
             desc = "Lag optimizations for redstone dust",
