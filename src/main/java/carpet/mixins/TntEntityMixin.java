@@ -116,4 +116,9 @@ public abstract class TntEntityMixin extends Entity implements TntEntityInterfac
             mergeBool = true;
         }
     }
+
+    @Override
+    public int getMergedTNT() {
+        return mergedTNT;
+    }
 }
