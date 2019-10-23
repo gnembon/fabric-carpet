@@ -113,9 +113,9 @@ public class OptimizedExplosion
             }
 
             if (entity instanceof TntEntity &&
-                    entity.x == eAccess.getEntity().x &&
-                    entity.y == eAccess.getEntity().y &&
-                    entity.z == eAccess.getEntity().z) {
+                    entity.getX() == eAccess.getEntity().getX() &&
+                    entity.getY() == eAccess.getEntity().getY() &&
+                    entity.getZ() == eAccess.getEntity().getZ()) {
                 continue;
             }
 
@@ -123,9 +123,9 @@ public class OptimizedExplosion
                 double d12 = MathHelper.sqrt(entity.squaredDistanceTo(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
 
                 if (d12 <= 1.0D) {
-                    double d5 = entity.x - eAccess.getX();
-                    double d7 = entity.y + (double) entity.getStandingEyeHeight() - eAccess.getY();
-                    double d9 = entity.z - eAccess.getZ();
+                    double d5 = entity.getX() - eAccess.getX();
+                    double d7 = entity.getY() + (double) entity.getStandingEyeHeight() - eAccess.getY();
+                    double d9 = entity.getZ() - eAccess.getZ();
                     double d13 = (double) MathHelper.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
 
                     if (d13 != 0.0D) {
@@ -258,7 +258,7 @@ public class OptimizedExplosion
                 // Use the same Chunk reference because the positions are in the same xz-column
                 Chunk chunk = world.getChunk(blockpos1.getX() >> 4, blockpos1.getZ() >> 4);
 
-                BlockPos down = blockpos1.down();
+                BlockPos down = blockpos1.down(1);
                 if (chunk.getBlockState(blockpos1).getMaterial() == Material.AIR &&
                         chunk.getBlockState(down).isFullOpaque(world, down) &&
                         eAccess.getRandom().nextInt(3) == 0)
