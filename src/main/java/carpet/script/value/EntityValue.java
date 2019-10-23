@@ -11,6 +11,7 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.client.network.packet.EntityPassengersSetS2CPacket;
 import net.minecraft.client.network.packet.EntityPositionS2CPacket;
+import net.minecraft.client.network.packet.PlayerPositionLookS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
 import net.minecraft.entity.Entity;
@@ -43,11 +44,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -418,13 +415,43 @@ public class EntityValue extends Value
         featureModifiers.get(what).accept(entity, toWhat);
     }
 
-    private static void updatePosition(Entity e)
+    private static void updatePosition(Entity e, double x, double y, double z, float yaw, float pitch)
     {
+        if (
+                !Double.isFinite(x) || Double.isNaN(x) ||
+                !Double.isFinite(y) || Double.isNaN(y) ||
+                !Double.isFinite(z) || Double.isNaN(z) ||
+                !Float.isFinite(yaw) || Float.isNaN(yaw) ||
+                !Float.isFinite(pitch) || Float.isNaN(pitch)
+        )
+            return;
         if (e instanceof ServerPlayerEntity)
+        {
             // TODO next - figure out proper way of informting client about pos changes
-            ((ServerPlayerEntity)e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            //((ServerPlayerEntity) e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
+            Set<PlayerPositionLookS2CPacket.Flag> set_1 = EnumSet.allOf(PlayerPositionLookS2CPacket.Flag.class);
+            double prevX = e.x;
+            double prevY = e.y;
+            double prevZ = e.z;
+            float prevYaw = e.yaw;
+            float prevPitch = e.pitch;
+
+            e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
+            ((ServerPlayerEntity) e).networkHandler.sendPacket(new PlayerPositionLookS2CPacket(
+                    x - prevX,
+                    y - prevY,
+                    z - prevZ,
+                    yaw - prevYaw,
+                    pitch - prevPitch,
+                    set_1, -1)
+            );
+        }
         else
-            ((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e,new EntityPositionS2CPacket(e));
+        {
+            e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
+            ((ServerWorld) e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
+        }
+
     }
 
     private static void updateVelocity(Entity e)
@@ -446,15 +473,13 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 5 parameters as a second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.x = NumericValue.asNumber(coords.get(0)).getDouble();
-            e.y = NumericValue.asNumber(coords.get(1)).getDouble();
-            e.z = NumericValue.asNumber(coords.get(2)).getDouble();
-            e.pitch = (float) NumericValue.asNumber(coords.get(4)).getDouble();
-            e.prevPitch = e.pitch;
-            e.yaw = (float) NumericValue.asNumber(coords.get(3)).getDouble();
-            e.prevYaw = e.yaw;
-            e.setPosition(e.x, e.y, e.z);
-            updatePosition(e);
+            updatePosition(e,
+                    NumericValue.asNumber(coords.get(0)).getDouble(),
+                    NumericValue.asNumber(coords.get(1)).getDouble(),
+                    NumericValue.asNumber(coords.get(2)).getDouble(),
+                    (float) NumericValue.asNumber(coords.get(3)).getDouble(),
+                    (float) NumericValue.asNumber(coords.get(4)).getDouble()
+            );
         });
         put("pos", (e, v) ->
         {
@@ -463,48 +488,35 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.x = NumericValue.asNumber(coords.get(0)).getDouble();
-            e.y = NumericValue.asNumber(coords.get(1)).getDouble();
-            e.z = NumericValue.asNumber(coords.get(2)).getDouble();
-            e.setPosition(e.x, e.y, e.z);
-            updatePosition(e);
+            updatePosition(e,
+                    NumericValue.asNumber(coords.get(0)).getDouble(),
+                    NumericValue.asNumber(coords.get(1)).getDouble(),
+                    NumericValue.asNumber(coords.get(2)).getDouble(),
+                    e.yaw,
+                    e.pitch
+            );
         });
         put("x", (e, v) ->
         {
-            e.x = NumericValue.asNumber(v).getDouble();
-            e.setPosition(e.x, e.y, e.z);
-            updatePosition(e);
+            updatePosition(e, NumericValue.asNumber(v).getDouble(), e.y, e.z, e.yaw, e.pitch);
         });
         put("y", (e, v) ->
         {
-            e.y = NumericValue.asNumber(v).getDouble();
-            e.setPosition(e.x, e.y, e.z);
-            updatePosition(e);
+            updatePosition(e, e.x, NumericValue.asNumber(v).getDouble(), e.z, e.yaw, e.pitch);
         });
         put("z", (e, v) ->
         {
-            e.z = NumericValue.asNumber(v).getDouble();
-            e.setPosition(e.x, e.y, e.z);
-            updatePosition(e);
-        });
-        put("pitch", (e, v) ->
-        {
-            float p = (float) NumericValue.asNumber(v).getDouble();
-            if (Float.isNaN(p))
-                return;
-            e.pitch = MathHelper.clamp(p, -90, 90);
-            e.prevPitch = e.pitch;
-            updatePosition(e);
+            updatePosition(e, e.x, e.y, NumericValue.asNumber(v).getDouble(), e.yaw, e.pitch);
         });
         put("yaw", (e, v) ->
         {
-            float p = (float) NumericValue.asNumber(v).getDouble();
-            if (Float.isNaN(p))
-                return;
-            e.yaw = p % 360;
-            e.prevYaw = e.yaw;
-            updatePosition(e);
+            updatePosition(e, e.x, e.y, e.z, ((float)NumericValue.asNumber(v).getDouble()) % 360, e.pitch);
         });
+        put("pitch", (e, v) ->
+        {
+            updatePosition(e, e.x, e.y, e.z, e.yaw, MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
+        });
+
         //"look"
         //"turn"
         //"nod"
@@ -516,11 +528,13 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.x += NumericValue.asNumber(coords.get(0)).getDouble();
-            e.y += NumericValue.asNumber(coords.get(1)).getDouble();
-            e.z += NumericValue.asNumber(coords.get(2)).getDouble();
-            e.setPosition(e.x, e.y, e.z);
-            updatePosition(e);
+            updatePosition(e,
+                    e.x + NumericValue.asNumber(coords.get(0)).getDouble(),
+                    e.y + NumericValue.asNumber(coords.get(1)).getDouble(),
+                    e.z + NumericValue.asNumber(coords.get(2)).getDouble(),
+                    e.yaw,
+                    e.pitch
+            );
         });
 
         put("motion", (e, v) ->
