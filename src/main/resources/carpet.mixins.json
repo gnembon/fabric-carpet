@@ -103,6 +103,7 @@
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",
+    "ExplosionAccessor",
 
     "TntEntityMixin",
     "ProjectileEntityMixin",
