@@ -157,11 +157,11 @@ public class OptimizedExplosion
                         entity.setVelocity(entity.getVelocity().add(d5 * d11, d7 * d11, d9 * d11));
 
                         if (entity instanceof PlayerEntity) {
-                            PlayerEntity PlayerEntity = (PlayerEntity) entity;
+                            PlayerEntity player = (PlayerEntity) entity;
 
-                            if (!PlayerEntity.isSpectator()
-                                    && (!PlayerEntity.isCreative() || !PlayerEntity.abilities.flying)) {
-                                e.getAffectedPlayers().put(PlayerEntity, new Vec3d(d5 * d10, d7 * d10, d9 * d10));
+                            if (!player.isSpectator()
+                                    && (!player.isCreative() || !player.abilities.flying)) {
+                                e.getAffectedPlayers().put(player, new Vec3d(d5 * d10, d7 * d10, d9 * d10));
                             }
                         }
                     }
@@ -202,8 +202,8 @@ public class OptimizedExplosion
         {
             for (BlockPos blockpos : e.getAffectedBlocks())
             {
-                BlockState BlockState = world.getBlockState(blockpos);
-                Block block = BlockState.getBlock();
+                BlockState state = world.getBlockState(blockpos);
+                Block block = state.getBlock();
 
                 if (spawnParticles)
                 {
@@ -227,7 +227,7 @@ public class OptimizedExplosion
                     world.addParticle(ParticleTypes.SMOKE, d0, d1, d2, d3, d4, d5);
                 }
 
-                if (BlockState.getMaterial() != Material.AIR)
+                if (state.getMaterial() != Material.AIR)
                 {
                     if (block.shouldDropItemsOnExplosion(e))
                     {
@@ -242,7 +242,7 @@ public class OptimizedExplosion
                         if (eAccess.getBlockDestructionType() == Explosion.DestructionType.DESTROY)
                             lootBuilder.put(LootContextParameters.EXPLOSION_RADIUS, eAccess.getPower());
 
-                        Block.dropStacks(BlockState, lootBuilder);
+                        Block.dropStacks(state, lootBuilder);
                     }
 
                     world.setBlockState(blockpos, Blocks.AIR.getDefaultState(), 3);
@@ -301,18 +301,18 @@ public class OptimizedExplosion
 
                         for (float f1 = 0.3F; f > 0.0F; f -= 0.22500001F) {
                             BlockPos blockpos = new BlockPos(d4, d6, d8);
-                            BlockState BlockState = eAccess.getWorld().getBlockState(blockpos);
+                            BlockState state = eAccess.getWorld().getBlockState(blockpos);
                             FluidState fluidState = eAccess.getWorld().getFluidState(blockpos);
 
-                            if (BlockState.getMaterial() != Material.AIR) {
-                                float f2 = Math.max(BlockState.getBlock().getBlastResistance(), fluidState.getBlastResistance());
+                            if (state.getMaterial() != Material.AIR) {
+                                float f2 = Math.max(state.getBlock().getBlastResistance(), fluidState.getBlastResistance());
                                 if (eAccess.getEntity() != null)
-                                    f2 = eAccess.getEntity().getEffectiveExplosionResistance(e, eAccess.getWorld(), blockpos, BlockState, fluidState, f2);
+                                    f2 = eAccess.getEntity().getEffectiveExplosionResistance(e, eAccess.getWorld(), blockpos, state, fluidState, f2);
                                 f -= (f2 + 0.3F) * 0.3F;
                             }
 
                             if (f > 0.0F && (eAccess.getEntity() == null ||
-                                    eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), blockpos, BlockState, f)))
+                                    eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), blockpos, state, f)))
                             {
                                 affectedBlockPositionsSet.add(blockpos);
                             }
@@ -492,18 +492,18 @@ public class OptimizedExplosion
 
                         for (float f1 = 0.3F; f > 0.0F; f -= 0.22500001F) {
                             BlockPos blockpos = new BlockPos(d4, d6, d8);
-                            BlockState BlockState = eAccess.getWorld().getBlockState(blockpos);
+                            BlockState state = eAccess.getWorld().getBlockState(blockpos);
                             FluidState fluidState = eAccess.getWorld().getFluidState(blockpos);
 
-                            if (BlockState.getMaterial() != Material.AIR) {
-                                float f2 = Math.max(BlockState.getBlock().getBlastResistance(), fluidState.getBlastResistance());
+                            if (state.getMaterial() != Material.AIR) {
+                                float f2 = Math.max(state.getBlock().getBlastResistance(), fluidState.getBlastResistance());
                                 if (eAccess.getEntity() != null)
-                                    f2 = eAccess.getEntity().getEffectiveExplosionResistance(e, eAccess.getWorld(), blockpos, BlockState, fluidState, f2);
+                                    f2 = eAccess.getEntity().getEffectiveExplosionResistance(e, eAccess.getWorld(), blockpos, state, fluidState, f2);
                                 f -= (f2 + 0.3F) * 0.3F;
                             }
 
                             if (f > 0.0F && (eAccess.getEntity() == null ||
-                                    eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), blockpos, BlockState, f))) {
+                                    eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), blockpos, state, f))) {
                                 if(!found && blockpos.equals(blastChanceLocation)){
                                     chances.add(f);
                                     found = true;
