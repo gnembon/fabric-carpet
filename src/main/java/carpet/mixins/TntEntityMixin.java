@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.fakes.TntEntityInterface;
 import carpet.settings.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -7,7 +8,9 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.TntEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.world.explosion.Explosion;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -15,13 +18,26 @@ import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.TNTLogHelper;
 
 @Mixin(TntEntity.class)
-public abstract class TntEntityMixin extends Entity
+public abstract class TntEntityMixin extends Entity implements TntEntityInterface
 {
+    @Shadow private int fuseTimer;
+
     private TNTLogHelper logHelper;
+    private boolean mergeBool = false;
+    private int mergedTNT = 1;
 
     public TntEntityMixin(EntityType<?> entityType_1, World world_1)
     {
         super(entityType_1, world_1);
+    }
+
+
+    @Inject(method = "<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/entity/LivingEntity;)V",
+                at = @At("RETURN"))
+    private void modifyTNTAngle(World world, double x, double y, double z, LivingEntity entity, CallbackInfo ci)
+    {
+        if (CarpetSettings.hardcodeTNTangle != -1)
+            setVelocity(-Math.sin(CarpetSettings.hardcodeTNTangle) * 0.02, 0.2, -Math.cos(CarpetSettings.hardcodeTNTangle) * 0.02);
     }
 
     @Inject(method = "<init>(Lnet/minecraft/entity/EntityType;Lnet/minecraft/world/World;)V", at = @At("RETURN"))
@@ -57,5 +73,52 @@ public abstract class TntEntityMixin extends Entity
     {
         if (LoggerRegistry.__tnt && logHelper != null)
             logHelper.onExploded(x, y, z);
+
+        if (mergedTNT > 1)
+            for (int i = 0; i < mergedTNT - 1; i++)
+                this.world.createExplosion(this, this.x, this.y + (double)(this.getHeight() / 16.0F), this.z, 4.0F, Explosion.DestructionType.BREAK);
+    }
+
+    @Inject(method = "tick", at = @At(value = "INVOKE",
+                                        target = "Lnet/minecraft/entity/TntEntity;setVelocity(Lnet/minecraft/util/math/Vec3d;)V",
+                                        ordinal = 2))
+    private void tryMergeTnt(CallbackInfo ci)
+    {
+        // Merge code for combining tnt into a single entity if they happen to exist in the same spot, same fuse, no motion CARPET-XCOM
+        if(CarpetSettings.mergeTNT){
+            Vec3d velocity = getVelocity();
+            if(!world.isClient && mergeBool && velocity.x == 0 && velocity.y == 0 && velocity.z == 0){
+                mergeBool = false;
+                for(Entity entity : world.getEntities(this, this.getBoundingBox())){
+                    if(entity instanceof TntEntity && !entity.removed){
+                        TntEntity entityTNTPrimed = (TntEntity)entity;
+                        Vec3d tntVelocity = entityTNTPrimed.getVelocity();
+                        if(tntVelocity.x == 0 && tntVelocity.y == 0 && tntVelocity.z == 0
+                                && this.x == entityTNTPrimed.x && this.z == entityTNTPrimed.z && this.y == entityTNTPrimed.y
+                                && this.fuseTimer == entityTNTPrimed.getFuseTimer()){
+                            mergedTNT += ((TntEntityInterface) entityTNTPrimed).getMergedTNT();
+                            entityTNTPrimed.remove();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Inject(method = "tick", at = @At(value = "FIELD",
+                                        target = "Lnet/minecraft/entity/TntEntity;fuseTimer:I",
+                                        ordinal = 0))
+    private void setMergeable(CallbackInfo ci)
+    {
+        // Merge code, merge only tnt that have had a chance to move CARPET-XCOM
+        Vec3d velocity = getVelocity();
+        if(!world.isClient && (velocity.y != 0 || velocity.x != 0 || velocity.z != 0)){
+            mergeBool = true;
+        }
+    }
+
+    @Override
+    public int getMergedTNT() {
+        return mergedTNT;
     }
 }

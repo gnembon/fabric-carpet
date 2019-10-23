@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.helpers.OptimizedExplosion;
 import carpet.settings.CarpetSettings;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.explosion.Explosion;
@@ -18,6 +19,28 @@ public abstract class ExplosionMixin
     @Shadow
     @Final
     private List<BlockPos> affectedBlocks;
+
+    @Inject(method = "collectBlocksAndDamageEntities", at = @At("HEAD"),
+            cancellable = true)
+    private void onExplosionA(CallbackInfo ci)
+    {
+        if (CarpetSettings.optimizedTNT)
+        {
+            OptimizedExplosion.doExplosionA((Explosion) (Object) this);
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "affectWorld", at = @At("HEAD"),
+            cancellable = true)
+    private void onExplosionB(boolean spawnParticles, CallbackInfo ci)
+    {
+        if (CarpetSettings.optimizedTNT)
+        {
+            OptimizedExplosion.doExplosionB((Explosion) (Object) this, spawnParticles);
+            ci.cancel();
+        }
+    }
     
     @Inject(method = "collectBlocksAndDamageEntities", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
             target = "Ljava/util/List;addAll(Ljava/util/Collection;)Z"))

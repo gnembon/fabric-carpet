@@ -89,6 +89,10 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         {
             return set(source, (T) (Object) Integer.parseInt(value), value);
         }
+        else if (type == double.class)
+        {
+            return set(source, (T) (Object) Double.parseDouble(value), value);
+        }
         else if (type.isEnum())
         {
             String ucValue = value.toUpperCase(Locale.ROOT);
@@ -111,6 +115,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                 if (value == null)
                 {
                     Messenger.m(source, "r Wrong value for " + name + ": " + stringValue);
+                    Messenger.m(source, "r " + validator.description());
                     return null;
                 }
             }
