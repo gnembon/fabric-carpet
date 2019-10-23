@@ -358,6 +358,7 @@ public class CarpetScriptServer
         }
         // stop all events associated with name
         events.removeAllHostEvents(name);
+        modules.get(name).onClose();
         modules.remove(name);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         Messenger.m(source, "gi Removed "+name+" app");

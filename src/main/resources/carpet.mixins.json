@@ -122,6 +122,7 @@
     "PickaxeItem_missingToolsMixin",
     "ShearsItem_missingToolsMixin",
 
+    "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
     "DamageTracker_scarpetEventMixin",

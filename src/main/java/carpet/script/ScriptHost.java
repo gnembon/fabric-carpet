@@ -9,9 +9,12 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.math.BigInteger;
@@ -288,6 +291,14 @@ public class ScriptHost
     {
         if (this.saveTimeout > 0)
             dumpState();
+        String markerName = ExpressionInspector.MARKER_STRING+"_"+((getName()==null)?"":getName());
+        for (ServerWorld world : CarpetServer.minecraft_server.getWorlds())
+        {
+            for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
+            {
+                e.remove();
+            }
+        }
     }
 
     public void setPerPlayer(boolean isPerUser)

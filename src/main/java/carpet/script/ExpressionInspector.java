@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
  */
 public class ExpressionInspector
 {
+    public static final String MARKER_STRING = "__scarpet_marker";
     public static List<String> Expression_getExpressionSnippet(Tokenizer.Token token, Expression expr)
     {
         return Expression.getExpressionSnippet(token, expr);

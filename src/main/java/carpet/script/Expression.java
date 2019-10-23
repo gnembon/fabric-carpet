@@ -2824,6 +2824,8 @@ public class Expression implements Cloneable
 
         addUnaryFunction("title", v -> new StringValue(WordUtils.capitalizeFully(v.getString())));
 
+        // TODO: split, replace, replace_first, escape_special (to make nbt to string)
+
 
         addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
 
