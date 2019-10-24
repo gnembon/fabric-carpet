@@ -71,7 +71,8 @@ public class ScriptCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> b = literal("globals").
-                executes(ScriptCommand::listGlobals);
+                executes(context -> listGlobals(context, false)).
+                then(literal("all").executes(context -> listGlobals(context, true)));
         LiteralArgumentBuilder<ServerCommandSource> o = literal("stop").
                 executes( (cc) -> { CarpetServer.scriptServer.stopAll = true; return 1;});
         LiteralArgumentBuilder<ServerCommandSource> u = literal("resume").
@@ -308,13 +309,13 @@ public class ScriptCommand
         }
         return 1;
     }
-    private static int listGlobals(CommandContext<ServerCommandSource> context)
+    private static int listGlobals(CommandContext<ServerCommandSource> context, boolean all)
     {
         ScriptHost host = getHost(context);
         ServerCommandSource source = context.getSource();
 
         Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        for (String fname : host.getAvailableFunctions())
+        for (String fname : host.getAvailableFunctions(all))
         {
             Expression expr = host.getExpressionForFunction(fname);
             Tokenizer.Token tok = host.getTokenForFunction(fname);
