@@ -921,7 +921,7 @@ public class Expression implements Cloneable
     public void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
-        addLazyFunction(" ",-1, (c, t, lv) -> { // adjust based on c
+        addLazyFunction("call",-1, (c, t, lv) -> { // adjust based on c
             String name = lv.get(lv.size()-1).evalValue(c).getString();
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
@@ -3223,7 +3223,7 @@ public class Expression implements Cloneable
                     }
                     else // potentially unknown function or just unknown function
                     {
-                        f = functions.get(" ");
+                        f = functions.get("call");
                         p = new ArrayList<>();
                     }
                     // pop parameters off the stack until we hit the start of
