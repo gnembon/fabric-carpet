@@ -978,17 +978,20 @@ public class Expression implements Cloneable
         addLazyBinaryOperatorWithDelegation("->", precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.SIGNATURE);
+            String result;
             if (v1 instanceof FunctionSignatureValue)
             {
                 FunctionSignatureValue sign = (FunctionSignatureValue) v1;
                 addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getGlobals(), lv2);
+                result = sign.getName();
             }
             else
             {
                 v1.assertAssignable();
                 c.setVariable(v1.getVariable(), lv2);
+                result = v1.getVariable();
             }
-            return (cc, tt) -> new StringValue("OK");
+            return (cc, tt) -> new StringValue(result);
         });
 
         addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });

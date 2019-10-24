@@ -108,9 +108,9 @@ public class ScriptHost
     {
         return globalFunctions.keySet().stream().filter((str) -> !str.startsWith("_")).collect(Collectors.toList());
     }
-    public List<String> getAvailableFunctions()
+    public List<String> getAvailableFunctions(boolean all)
     {
-        return globalFunctions.keySet().stream().filter((str) -> !str.startsWith("__")).collect(Collectors.toList());
+        return globalFunctions.keySet().stream().filter((str) -> all || !str.startsWith("__")).collect(Collectors.toList());
     }
 
     public String call(ServerCommandSource source, String call, List<Integer> coords, String arg)
