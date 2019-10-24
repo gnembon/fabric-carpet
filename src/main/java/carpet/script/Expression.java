@@ -8,6 +8,7 @@ import carpet.script.Fluff.AbstractUnaryOperator;
 import carpet.script.Fluff.ILazyFunction;
 import carpet.script.Fluff.ILazyOperator;
 import carpet.script.Fluff.QuadFunction;
+import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.ExpressionException;
@@ -535,6 +536,26 @@ public class Expression implements Cloneable
         });
     }
 
+    private void addLazyFunctionWithDelegation(String name, int numpar,
+                                                     QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
+    {
+        functions.put(name, new AbstractLazyFunction(numpar)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
+            {
+                try
+                {
+                    return lazyfun.apply(c, type, e, t, lv);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(exc, e, t);
+                }
+            }
+        });
+    }
+
     private void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc,
                                        QuadFunction<Context, Integer, LazyValue, LazyValue, LazyValue> lazyfun)
     {
@@ -921,8 +942,10 @@ public class Expression implements Cloneable
     public void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
-        addLazyFunction("call",-1, (c, t, lv) -> { // adjust based on c
-            String name = lv.get(lv.size()-1).evalValue(c).getString();
+        addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
+            if (lv.size() == 0)
+                throw new InternalExpressionException("'call' expects at least function name to call");
+            String name = lv.get(0).evalValue(c).getString();
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
@@ -931,7 +954,7 @@ public class Expression implements Cloneable
                     throw new InternalExpressionException("Function "+name+" is not defined yet");
                 }
                 List<LazyValue> lvargs = new ArrayList<>(lv.size()-1);
-                for (int i=0; i< lv.size()-1; i++)
+                for (int i=1; i< lv.size(); i++)
                 {
                     lvargs.add(lv.get(i));
                 }
@@ -943,7 +966,7 @@ public class Expression implements Cloneable
             // gimme signature
             List<String> args = new ArrayList<>();
             List<String> globals = new ArrayList<>();
-            for (int i = 0; i < lv.size() - 1; i++)
+            for (int i = 1; i < lv.size(); i++)
             {
                 Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
                 if (!v.isBound())
@@ -959,6 +982,8 @@ public class Expression implements Cloneable
                     args.add(v.boundVariable);
                 }
             }
+            if (name.equals("_"))
+                name = "__lambda_"+tok.lineno+"_"+tok.linepos;
             Value retval = new FunctionSignatureValue(name, args, globals);
             return (cc, tt) -> retval;
         });
@@ -3230,9 +3255,10 @@ public class Expression implements Cloneable
                     // this function's parameter list
                     while (!stack.isEmpty() && stack.peek() != LazyValue.PARAMS_START)
                     {
-                        p.add(0, stack.pop());
+                        p.add(stack.pop());
                     }
                     if (!isKnown) p.add( (c, t) -> new StringValue(name));
+                    Collections.reverse(p);
 
                     if (stack.peek() == LazyValue.PARAMS_START)
                     {
