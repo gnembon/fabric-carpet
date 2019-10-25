@@ -51,6 +51,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
@@ -2786,6 +2787,13 @@ public class CarpetExpression
             Value ret = NBTSerializableValue.parseString(v.getString());
             if (ret == null)
                 return LazyValue.NULL;
+            return (cc, tt) -> ret;
+        });
+
+        this.expr.addLazyFunction("escape_nbt", 1, (c, t, lv) -> {
+            Value v = lv.get(0).evalValue(c);
+            String string = v.getString();
+            Value ret = new StringValue(StringTag.escape(string));
             return (cc, tt) -> ret;
         });
 
