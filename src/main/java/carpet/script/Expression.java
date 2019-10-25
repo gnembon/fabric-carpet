@@ -45,6 +45,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
@@ -2852,8 +2853,29 @@ public class Expression implements Cloneable
 
         addUnaryFunction("title", v -> new StringValue(WordUtils.capitalizeFully(v.getString())));
 
-        // TODO: split, replace, replace_first, escape_special (to make nbt to string)
+        addFunction("replace", (lv) ->
+        {
+            if (lv.size() != 3 && lv.size() !=2)
+                throw new InternalExpressionException("'replace' expects string to read, pattern regex, and optional replacement string");
+            String data = lv.get(0).getString();
+            String regex = lv.get(1).getString();
+            String replacement = "";
+            if (lv.size() == 3)
+                replacement = lv.get(2).getString();
+            return new StringValue(data.replaceAll(regex, replacement));
+        });
 
+        addFunction("replace_first", (lv) ->
+        {
+            if (lv.size() != 3 && lv.size() !=2)
+                throw new InternalExpressionException("'replace_first' expects string to read, pattern regex, and optional replacement string");
+            String data = lv.get(0).getString();
+            String regex = lv.get(1).getString();
+            String replacement = "";
+            if (lv.size() == 3)
+                replacement = lv.get(2).getString();
+            return new StringValue(data.replaceFirst(regex, replacement));
+        });
 
         addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
 
@@ -2977,10 +2999,7 @@ public class Expression implements Cloneable
      */
     public Expression(String expression)
     {
-        this.expression = expression.trim().
-                replaceAll("\\r\\n?", "\n").
-                replaceAll("\\t","   ").
-                replaceAll(";+$", "");
+        this.expression = expression.trim().replaceAll("\\r\\n?", "\n").replaceAll("\\t","   ");
         VariablesAndConstants();
         UserDefinedFunctionsAndControlFlow();
         Operators();
@@ -2996,20 +3015,27 @@ public class Expression implements Cloneable
         Stack<Tokenizer.Token> stack = new Stack<>();
 
         Tokenizer tokenizer = new Tokenizer(this, expression, allowComments, allowNewlineSubstitutions);
+        // stripping lousy but acceptable semicolons
+        Iterable<Tokenizer.Token> iterable = () -> tokenizer;
+        List<Tokenizer.Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        List<Tokenizer.Token> cleanedTokens = new ArrayList<>();
+        Tokenizer.Token last = null;
+        while (originalTokens.size() > 0)
+        {
+            Tokenizer.Token current = originalTokens.remove(originalTokens.size()-1);
+            if (current.type != Tokenizer.Token.TokenType.OPERATOR
+                    || !current.surface.equals(";")
+                    || (last != null && last.type != Tokenizer.Token.TokenType.CLOSE_PAREN && last.type != Tokenizer.Token.TokenType.COMMA && !last.surface.equals(";")))
+                cleanedTokens.add(current);
+            if (current.type != Tokenizer.Token.TokenType.MARKER)
+                last = current;
+        }
+        Collections.reverse(cleanedTokens);
 
         Tokenizer.Token lastFunction = null;
         Tokenizer.Token previousToken = null;
-        while (tokenizer.hasNext())
+        for (Tokenizer.Token token : cleanedTokens)
         {
-            Tokenizer.Token token;
-            try
-            {
-                token = tokenizer.next();
-            }
-            catch (StringIndexOutOfBoundsException e)
-            {
-                throw new ExpressionException("Script ended prematurely");
-            }
             switch (token.type)
             {
                 case STRINGPARAM:

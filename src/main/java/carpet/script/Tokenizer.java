@@ -193,14 +193,14 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             token.append(ch);
             pos++;
             linepos++;
-            if (expression != null && previousToken != null && previousToken.type == Token.TokenType.OPERATOR && (ch == ')' || ch == ',')  )
-            {
-                if (previousToken.surface.equalsIgnoreCase(";"))
-                    throw new ExpressionException(this.expression, previousToken,
-                            "Cannot have semicolon at the end of the expression");
+
+            if (expression != null && previousToken != null &&
+                    previousToken.type == Token.TokenType.OPERATOR &&
+                    (ch == ')' || ch == ',') &&
+                    !previousToken.surface.equalsIgnoreCase(";")
+            )
                 throw new ExpressionException(this.expression, previousToken,
-                        "Can't have operator "+previousToken.surface+" at the end of a subexpression");
-            }
+                        "Can't have operator " + previousToken.surface + " at the end of a subexpression");
         }
         else
         {

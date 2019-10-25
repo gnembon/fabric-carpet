@@ -722,6 +722,14 @@ public class EntityValue extends Value
             }
         });
 
+        put("ai", (e, v) ->
+        {
+            if (e instanceof MobEntity)
+            {
+                ((MobEntity) e).setAiDisabled(!v.getBoolean());
+            }
+        });
+
         // gamemode
         // spectate
         // "fire"
