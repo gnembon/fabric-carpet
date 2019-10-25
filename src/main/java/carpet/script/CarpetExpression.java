@@ -2432,14 +2432,20 @@ public class CarpetExpression
      * <p>Renders a cuboid of particles between point <code>pos</code> to <code>pos2</code> with supplied density.</p>
      * <h2>Markers</h2>
      * <h3><code>create_marker(text, pos, rotation?, block?)</code></h3>
-     * <p>Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations</p>
+     * <p>Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations.
+     * Unloading the app that spawned them will cause all the markers from the loaded portion of the world to be removed.
+     * Also - if the game loads that marker in the future and the app is not loaded, it will be removed as well.</p>
      * <h3><code>remove_all_markers()</code></h3>
-     * <p>Removes all scarpet markers from the loaded portion of the world in case you didn't want to do the cleanup</p>
+     * <p>Removes all scarpet markers from the loaded portion of the world created by this app, in case you didn't want
+     * to do the proper cleanup</p>
      * <h2>System function</h2>
      * <h3><code>nbt(expr)</code></h3>
      * <p>Treats the argument as a nbt serializable string and returns its nbt value.
      * In case nbt is not in a correct nbt compound tag format, it will return <code>null</code> value.</p>
      * <p>Consult section about container operations in <code>Expression</code> to learn about possible operations on nbt values.</p>
+     * <h3><code>escape_nbt(expr)</code></h3>
+     * <p>Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly as
+     * a string value.</p>
      * <h3><code>print(expr)</code></h3>
      * <p>Displays the result of the expression to the chat. Overrides default <code>scarpet</code> behaviour of
      * sending everyting to stderr.</p>
@@ -3137,7 +3143,8 @@ public class CarpetExpression
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <p><code>invoke</code> family of commands provide convenient way to invoke stored procedures (i.e. functions
      * that has been defined previously by any running script. To view current stored procedure set,
-     * run <code>/script globals</code>, to define a new stored procedure, just run a <code>/script run function(a,b) -&gt; ( ... )</code>
+     * run <code>/script globals</code>(or <code>/script globals all</code> to display all functions even hidden ones),
+     * to define a new stored procedure, just run a <code>/script run function(a,b) -&gt; ( ... )</code>
      * command with your procedure once, and to forget a procedure, use <code>undef</code> function:
      * <code>/script run undef('function')</code></p>
      * <h2></h2>

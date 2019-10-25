@@ -883,6 +883,9 @@ public class Expression implements Cloneable
      * Function call creates new scope for variables inside <code>expr</code>, so all non-global variables are not
      * visible from the caller scope. All parameters are passed by value to the new scope, including lists and other
      * containers, however their copy will be shallow.</p>
+     * <p>The function returns its name as a string, which means it can be used to call it later with the <code>call</code> function</p>
+     * <p>Using <code>_</code> as the function name creates anonymous function, so each time <code>_</code> function is defined,
+     * it will be given a unique name, which you can pass somewhere else to get this function <code>call</code>ed.</p>
      * <pre>
      * a(lst) -&gt; lst+=1; list = l(1,2,3); a(list); a(list); list  // =&gt; [1,2,3]
      * </pre>
