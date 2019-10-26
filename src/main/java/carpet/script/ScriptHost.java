@@ -9,6 +9,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.Tag;
@@ -29,9 +30,9 @@ import static java.lang.Math.max;
 
 public class ScriptHost
 {
-    private final Map<String, ScriptHost> userHosts = new HashMap<>();
-    public Map<String, UserDefinedFunction> globalFunctions = new HashMap<>();
-    public Map<String, LazyValue> globalVariables = new HashMap<>();
+    private final Map<String, ScriptHost> userHosts = new Object2ObjectOpenHashMap<>();
+    public Map<String, UserDefinedFunction> globalFunctions = new Object2ObjectOpenHashMap<>();
+    public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
 
     private Tag globalState;
     private int saveTimeout;

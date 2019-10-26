@@ -24,6 +24,7 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.math.BigInteger;
@@ -388,10 +389,10 @@ public class Expression implements Cloneable
     private LazyValue ast = null;
 
     /** script specific operatos and built-in functions */
-    private Map<String, ILazyOperator> operators = new HashMap<>();
+    private Map<String, ILazyOperator> operators = new Object2ObjectOpenHashMap<>();
     boolean isAnOperator(String opname) { return operators.containsKey(opname) || operators.containsKey(opname+"u");}
 
-    private Map<String, ILazyFunction> functions = new HashMap<>();
+    private Map<String, ILazyFunction> functions = new  Object2ObjectOpenHashMap<>();
     Set<String> getFunctionNames() {return functions.keySet();}
 
     @Override
