@@ -839,8 +839,7 @@ public class Expression implements Cloneable
      * <p>To effectively write programs that have more than one line, a programmer needs way to specify a sequence of
      * commands that execute one after another. In <code>scarpet</code> this can be achieved with <code>;</code>. Its an operator,
      * and by separating statements with semicolons. And since whitespaces and <code>$</code> signs are all treats as
-     * whitespaces, how you layout your code doesn't matter, as long as it is readable to everyone involved. The
-     * usefulness of preceding all the lines of the script with <code>$</code> is explained in the preamble</p>
+     * whitespaces, how you layout your code doesn't matter, as long as it is readable to everyone involved.</p>
      * <pre>
      * expr;
      * expr;
@@ -848,22 +847,22 @@ public class Expression implements Cloneable
      * expr
      * </pre>
      * <p>Notice that the last expression is not followed by a semicolon. Since instruction separation is functional
-     * in <code>scarpet</code>, and not barely an instruction delimiter,
-     * terminating the code with a dangling operator wouldn't be valid.</p>
+     * in <code>scarpet</code>, and not barely an instruction delimiter, terminating the code with a dangling operator
+     * wouldn't be valid. Having said that, since many programming languages don't care about the number of op terminators
+     * programmers use, carpet preprocessor will remove all unnecessary semicolons from scripts when compiled.</p>
      * <p>In general <code>expr; expr; expr; expr</code> is equivalent to
-     * <code>(((expr ; expr) ; expr) ; expr)</code>. In case the programmer forgets that it should be warned with a
-     * helpful error at compile time.</p>
+     * <code>(((expr ; expr) ; expr) ; expr)</code>.</p>
      * <p>Result of the evaluated expression is the same as the result of the second expression, but first expression is
      * also evaluated for sideeffects</p>
      * <pre>
      * expr1 ; expr2 =&gt; expr2  // with expr1 as a sideeffect
      * </pre>
+     * <h2>Global variables</h2>
      * <p>All defined functions are compiled, stored persistently, and available globally -
      * accessible to all other scripts. Functions can only be undefined via call to <code>undef('fun')</code>, which
      * would erase global entry for function <code>fun</code>. Since all variables have local scope inside each function,
      * one way to share large objects is via global variables
      * </p>
-     * <h2>Global variables</h2>
      * <p>Any variable that is used with a name that starts with <code>'global_'</code> will be stored and accessible globally,
      * not, inside current scope. It will also persist across scripts, so if a procedure needs to use its own construct, it needs to
      * define it, or initialize it explicitly, or undefine it via <code>undef</code></p>
@@ -883,6 +882,9 @@ public class Expression implements Cloneable
      * Function call creates new scope for variables inside <code>expr</code>, so all non-global variables are not
      * visible from the caller scope. All parameters are passed by value to the new scope, including lists and other
      * containers, however their copy will be shallow.</p>
+     * <p>The function returns its name as a string, which means it can be used to call it later with the <code>call</code> function</p>
+     * <p>Using <code>_</code> as the function name creates anonymous function, so each time <code>_</code> function is defined,
+     * it will be given a unique name, which you can pass somewhere else to get this function <code>call</code>ed.</p>
      * <pre>
      * a(lst) -&gt; lst+=1; list = l(1,2,3); a(list); a(list); list  // =&gt; [1,2,3]
      * </pre>
@@ -904,6 +906,23 @@ public class Expression implements Cloneable
      * </pre>
      * <p>Ability to combine more statements into one expression, with functions, passing parameters, and global and outer
      * scoping allow to organize even larger scripts</p>
+     * <h3><code>call(function, args.....)</code></h3>
+     * <p>calls a user defined function with specified arguments. It is equivalent to calling <code>function(args...)</code>
+     * directly except you can use it with function name instead. This means you can pass functions to other user defined
+     * functions as arguments and call them with <code>call</code> internally. And since function definitions return the
+     * defined function name, they can be defined in place</p>
+     * <p>Little technical note: the use of <code>_</code> in expression passed to built in functions is much more efficient due to
+     * not creating new call stacks for each invoked function, but anonymous functions is the only mechanism available
+     * for programmers with their own lambda arguments</p>
+     * <pre>
+     * my_map(list, function) -&gt; map(list, call(function, _));
+     * my_map(l(1,2,3), _(x) -&gt; x*x);    // =&gt; [1,4,9]
+     *
+     * profile_expr(my_map(l(1,2,3), _(x) -&gt; x*x));   // =&gt; ~32000
+     * sq(x) -&gt; x*x; profile_expr(my_map(l(1,2,3),'sq'));   // =&gt; ~38000
+     * profile_expr(map(l(1,2,3), _*_));   // =&gt; ~80000
+     *
+     * </pre>
      * <h2>Control flow</h2>
      * <h3><code>return(expr?)</code></h3>
      * <p>Sometimes its convenient to break the organized control flow, or it is not practical to pass
@@ -2643,6 +2662,14 @@ public class Expression implements Cloneable
      * lower('aBc') =&gt; 'abc'
      * upper('aBc') =&gt; 'ABC'
      * title('aBc') =&gt; 'Abc'
+     * </pre>
+     *
+     * <h3><code>replace(string, regex, repl?); replace_first(string, regex, repl?)</code></h3>
+     * <p>Replaces all, or first occurence of a regular expression in the string with <code>repl</code> expression, or
+     * nothing, if not specified</p>
+     * <pre>
+     * replace('abbccddebfg','b+','z')  // =&gt; azccddezfg
+     * replace_first('abbccddebfg','b+','z')  // =&gt; azccddebfg
      * </pre>
      *
      * <h3><code>length(expr)</code></h3>
