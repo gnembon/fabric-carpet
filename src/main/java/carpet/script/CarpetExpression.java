@@ -1664,6 +1664,8 @@ public class CarpetExpression
      * <p>Removes tag from entity.</p>
      * <h3><code>modify(e, 'talk')</code></h3>
      * <p>Make noises.</p>
+     * <h3><code>modify(e, 'ai', boolean)</code></h3>
+     * <p>If called with <code>false</code> value, it will disable AI in the mob. <code>true</code> will enable it again.</p>
      * <h3><code>modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)</code></h3>
      * <p>Sets AI to stay around the home position, within <code>distance</code> blocks from it. <code>distance</code>
      * defaults to 16 blocks. <code>null</code> removes it. <i>May</i> not work fully with mobs that have this AI built in, like
