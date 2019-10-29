@@ -41,6 +41,10 @@ public abstract class PistonHandler_movableTEMixin
      * @author 2No2Name
      */
     private void stickToStickySide(BlockPos blockPos_1, Direction direction_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, Block block_1, int int_1, int int_2, int int_4, BlockPos blockPos_3, int int_5, int int_6){
+        if (this.world.getBlockState(blockPos_1).getBlock() == Blocks.ORANGE_STAINED_GLASS && !method_11538(blockPos_1)) {
+            cir.setReturnValue(false);
+            return;
+        }
         if(!stickToStickySide(blockPos_3)){
             cir.setReturnValue(false);
             cir.cancel();
@@ -54,6 +58,11 @@ public abstract class PistonHandler_movableTEMixin
      */
     private void stickToStickySide(CallbackInfoReturnable<Boolean> cir, int int_1){
         BlockPos pos = this.movedBlocks.get(int_1);
+        if (world.getBlockState(pos).getBlock() == Blocks.ORANGE_STAINED_GLASS && !method_11538(pos))
+        {
+            cir.setReturnValue(false);
+            return;
+        }
         if(!stickToStickySide(pos)){
             cir.setReturnValue(false);
             cir.cancel();
@@ -115,6 +124,8 @@ public abstract class PistonHandler_movableTEMixin
      * @author 2No2Name
      */
     private boolean redirectIsStickyBlock(Block block_1) {
+        if (blockState_1.getBlock() == Blocks.ORANGE_STAINED_GLASS)
+            return true;
         if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
             return true;
         return method_23367(block_1);
@@ -155,5 +166,36 @@ public abstract class PistonHandler_movableTEMixin
         //if(block == Blocks.STICKY_PISTON)
         //    return blockState.get(FacingBlock.FACING) == direction.getOpposite();
         return false;
+    }
+
+    @Inject(method = "method_23367", at = @At("HEAD"), cancellable = true)
+    private static void isStickyBlock(Block block_1, CallbackInfoReturnable<Boolean> cir)
+    {
+        if (block_1 == Blocks.ORANGE_STAINED_GLASS)
+            cir.setReturnValue(true);
+    }
+
+    @Inject(method = "method_23675", at = @At("HEAD"), cancellable = true)
+    private static void shouldTwoBlocksStick(Block block_1, Block block_2, CallbackInfoReturnable<Boolean> cir)
+    {
+        boolean leftSticky = method_23367(block_1);
+        boolean rightSticky = method_23367(block_2);
+        if (!leftSticky && !rightSticky)
+        {
+            cir.setReturnValue(false);
+            return;
+        }
+        if (leftSticky ^ rightSticky)
+        {
+            cir.setReturnValue(true);
+            return;
+        }
+
+        if ((block_1 == Blocks.ORANGE_STAINED_GLASS && block_2 == Blocks.SLIME_BLOCK)
+            || (block_1 == Blocks.SLIME_BLOCK && block_2 == Blocks.ORANGE_STAINED_GLASS)) {
+            cir.setReturnValue(false);
+        } else {
+            cir.setReturnValue(true);
+        }
     }
 }
