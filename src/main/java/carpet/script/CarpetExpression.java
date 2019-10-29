@@ -80,8 +80,8 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.loot.context.LootContext;
-import net.minecraft.world.loot.context.LootContextParameters;
+import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;

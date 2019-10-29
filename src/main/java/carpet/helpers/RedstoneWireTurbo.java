@@ -11,13 +11,8 @@ import carpet.fakes.RedstoneWireBlockInterface;
 import net.minecraft.block.Block;
 import net.minecraft.block.RedstoneWireBlock;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.loot.context.LootContext;
-import net.minecraft.world.loot.context.LootContextParameter;
-import net.minecraft.world.loot.context.LootContextParameters;
 
 public class RedstoneWireTurbo
 {
