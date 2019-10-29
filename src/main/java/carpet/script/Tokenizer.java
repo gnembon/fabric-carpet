@@ -121,12 +121,9 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         {
             pos++;
             linepos++;
-            if (pos == input.length())
-            {
-                token.type = Token.TokenType.STRINGPARAM;
-                if (expression != null)
-                    throw new ExpressionException(this.expression, token, "Program truncated");
-            }
+            token.type = Token.TokenType.STRINGPARAM;
+            if (pos == input.length() && expression != null)
+                throw new ExpressionException(this.expression, token, "Program truncated");
             ch = input.charAt(pos);
             while (ch != '\'')
             {
@@ -134,20 +131,18 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 {
                     pos++;
                     linepos++;
-                    if (pos == input.length())
-                    {
-                        token.type = Token.TokenType.STRINGPARAM;
-                        if (expression != null)
-                            throw new ExpressionException(this.expression, token, "Program truncated");
-                    }
+                    if (pos == input.length() && expression != null)
+                        throw new ExpressionException(this.expression, token, "Program truncated");
                 }
                 token.append(input.charAt(pos++));
                 linepos++;
-                ch = pos == input.length() ? 0 : input.charAt(pos);
+                if (pos == input.length() && expression != null)
+                    throw new ExpressionException(this.expression, token, "Program truncated");
+                ch = input.charAt(pos);
             }
             pos++;
             linepos++;
-            token.type = Token.TokenType.STRINGPARAM;
+
         }
         else if (Character.isLetter(ch) || "_".indexOf(ch) >= 0)
         {
