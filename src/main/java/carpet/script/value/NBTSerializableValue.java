@@ -21,6 +21,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Collection;
@@ -69,6 +70,13 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             return value;
         }
         return Value.NULL;
+    }
+
+    public static String nameFromRegistryId(Identifier id)
+    {
+        if (id.getNamespace().equals("minecraft"))
+            return id.getPath();
+        return id.toString();
     }
 
     public static NBTSerializableValue parseString(String nbtString)
