@@ -77,6 +77,7 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.loot.context.LootContext;
 import net.minecraft.world.loot.context.LootContextParameters;
@@ -95,6 +96,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -789,8 +791,16 @@ public class CarpetExpression
         {
             BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
             Value retval = ((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos))?Value.TRUE : Value.FALSE;
-            //Value retval = ((CarpetContext)c).s.getWorld().isAreaLoaded(pos.getX() - 32, 0, pos.getZ() - 32,
-            //        pos.getX() + 32, 0, pos.getZ() + 32) ? Value.TRUE : Value.FALSE;
+            return (c_, t_) -> retval;
+        });
+
+        this.expr.addLazyFunction("loaded_status", -1, (c, t, lv) ->
+        {
+            BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
+            WorldChunk chunk = ((CarpetContext)c).s.getWorld().getChunkManager().getWorldChunk(pos.getX()>>4, pos.getZ()>>4, false);
+            if (chunk == null)
+                return LazyValue.ZERO;
+            Value retval = new NumericValue(chunk.getLevelType().ordinal());
             return (c_, t_) -> retval;
         });
 
@@ -2869,7 +2879,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new StringValue(s.getWorld().dimension.getType().toString().replaceFirst("minecraft:",""));
+            Value retval = new StringValue(nameFromRegistryId(Registry.DIMENSION.getId(s.getWorld().dimension.getType())));
             return (cc, tt) -> retval;
         });
 

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
+
 public class BlockValue extends Value
 {
     public static final BlockValue AIR = new BlockValue(Blocks.AIR.getDefaultState(), null, BlockPos.ORIGIN);
@@ -234,7 +236,7 @@ public class BlockValue extends Value
     @Override
     public String getString()
     {
-        return Registry.BLOCK.getId(getBlockState().getBlock()).getPath();
+        return nameFromRegistryId(Registry.BLOCK.getId(getBlockState().getBlock()));
     }
 
     @Override
