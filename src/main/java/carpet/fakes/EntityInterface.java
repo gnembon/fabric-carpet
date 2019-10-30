@@ -18,4 +18,5 @@ public interface EntityInterface
     void setDamageCallback(CarpetContext cc, String function, List<Value> extraArgs);
     void setRemovedCallback(CarpetContext cc, String function, List<Value> extraArgs);
     void setTickCallback(CarpetContext cc, String function, List<Value> extraArgs);
+    CarpetEventServer.ScheduledCall getTickCallback();
 }
