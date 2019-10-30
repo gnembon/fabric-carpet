@@ -49,6 +49,12 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     }
 
     @Override
+    public CarpetEventServer.ScheduledCall getTickCallback()
+    {
+        return tickCall;
+    }
+
+    @Override
     public void setDamageCallback(CarpetContext cc, String function, List<Value> extraArgs)
     {
         damageCall = CarpetServer.scriptServer.events.makeDamageCall(cc, function, extraArgs);
