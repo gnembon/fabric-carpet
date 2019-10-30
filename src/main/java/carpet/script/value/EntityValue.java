@@ -420,7 +420,14 @@ public class EntityValue extends Value
     {
         if (!(featureModifiers.containsKey(what)))
             throw new InternalExpressionException("Unknown entity action: " + what);
-        featureModifiers.get(what).accept(entity, toWhat);
+        try
+        {
+            featureModifiers.get(what).accept(entity, toWhat);
+        }
+        catch (NullPointerException npe)
+        {
+            throw new InternalExpressionException("'modify' for '"+what+"' expects a value");
+        }
     }
 
     private static void updatePosition(Entity e, double x, double y, double z, float yaw, float pitch)
@@ -732,7 +739,13 @@ public class EntityValue extends Value
             }
         });
 
-        put("no_clip", (e, v) -> e.noClip = v.getBoolean());
+        put("no_clip", (e, v) ->
+        {
+            if (v == null)
+                e.noClip = true;
+            else
+                e.noClip = v.getBoolean();
+        });
 
         // gamemode
         // spectate
