@@ -8,7 +8,7 @@ import net.minecraft.client.render.LayeredVertexConsumerStorage;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.PistonBlockEntityRenderer;
-import net.minecraft.util.math.MatrixStack;
+import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,7 +24,7 @@ public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEnti
     }
 
     @Inject(method = "method_3576", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/render/block/entity/PistonBlockEntityRenderer;method_3575(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/MatrixStack;Lnet/minecraft/client/render/LayeredVertexConsumerStorage;Lnet/minecraft/world/World;ZI)V", ordinal = 3))
+            target = "Lnet/minecraft/client/render/block/entity/PistonBlockEntityRenderer;method_3575(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/LayeredVertexConsumerStorage;Lnet/minecraft/world/World;ZI)V", ordinal = 3))
     private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2, double double_3, float float_1, MatrixStack matrixStack_1, LayeredVertexConsumerStorage layeredVertexConsumerStorage_1, int int_1, int int_2, CallbackInfo ci)
     //private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2, double double_3, float float_1, class_4587 class_4587_1, class_4597 class_4597_1, int int_1, CallbackInfo ci)
     {

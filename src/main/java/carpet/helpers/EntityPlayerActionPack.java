@@ -323,7 +323,7 @@ public class EntityPlayerActionPack
                                 player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.server.getWorldHeight());
                                 ap.currentBlock = null;
                             }
-                            player.world.setBlockBreakingProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));
+                            player.world.setBlockBreakingInfo(-1, pos, (int) (ap.curBlockDamageMP * 10));
 
                         }
                         player.updateLastActionTime();
@@ -339,7 +339,7 @@ public class EntityPlayerActionPack
             {
                 EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
                 if (ap.currentBlock == null) return;
-                player.world.setBlockBreakingProgress(-1, ap.currentBlock, -1);
+                player.world.setBlockBreakingInfo(-1, ap.currentBlock, -1);
                 player.interactionManager.processBlockBreakingAction(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.server.getWorldHeight());
             }
         },
