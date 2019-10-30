@@ -732,6 +732,8 @@ public class EntityValue extends Value
             }
         });
 
+        put("no_clip", (e, v) -> e.noClip = v.getBoolean());
+
         // gamemode
         // spectate
         // "fire"
