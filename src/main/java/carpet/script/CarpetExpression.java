@@ -2464,7 +2464,11 @@ public class CarpetExpression
      * <h3><code>logger(expr)</code></h3>
      * <p>Prints the message to system logs, and not to chat.</p>
      * <h3><code>run(expr)</code></h3>
-     * <p>Runs a command from the string result of the <code>expr</code> expression, and returns its success count</p>
+     * <p>Runs a vanilla command in single quotes '', and returns its success count</p>
+     * <pre>
+     * run('give @s stone 15') // gives the player 15 stone blocks, adding them to any existing stack, and droppinf them if inventory is full
+     * run('say hi') // Server says hi
+     * </pre>
      * <h3><code>save()</code></h3>
      * <p>Performs autosave, saves all chunks, player data, etc. Useful for programs where autosave is disabled
      * due to performance reasons and saves the world only on demand.</p>
