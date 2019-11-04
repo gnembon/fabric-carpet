@@ -95,11 +95,26 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return value;
     }
 
+
+    @Override
     public Value clone()
     {
-        return new NBTSerializableValue(getTag().copy());
+        // sets only nbttag, even if emtpy;
+        NBTSerializableValue copy = new NBTSerializableValue(nbtTag);
+        copy.nbtSupplier = this.nbtSupplier;
+        copy.nbtString = this.nbtString;
+        return copy;
     }
 
+    @Override
+    public Value deepcopy()
+    {
+        NBTSerializableValue copy = (NBTSerializableValue) clone();
+        // same fields except when tag is set - need to copy it.
+        if (copy.nbtTag != null)
+            copy.nbtTag = copy.getTag().copy();
+        return copy;
+    }
 
     public static InventoryLocator locateInventory(CarpetContext c, List<LazyValue> params, int offset)
     {
