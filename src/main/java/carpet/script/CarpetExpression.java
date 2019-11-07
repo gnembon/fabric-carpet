@@ -816,7 +816,7 @@ public class CarpetExpression
             Chunk chunk = ((CarpetContext)c).s.getWorld().getChunk(pos.getX()>>4, pos.getZ()>>4, ChunkStatus.EMPTY, forceLoad);
             if (chunk == null)
                 return LazyValue.NULL;
-            Value retval = new StringValue(chunk.getStatus().getName());
+            Value retval = new StringValue(chunk.getStatus().getId());
             return (c_, t_) -> retval;
         });
 
