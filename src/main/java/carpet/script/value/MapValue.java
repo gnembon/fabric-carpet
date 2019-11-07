@@ -63,6 +63,15 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     {
         return new MapValue(map);
     }
+
+    @Override
+    public Value deepcopy()
+    {
+        Map<Value, Value> copyMap = new HashMap<>();
+        map.forEach((key, value) -> copyMap.put(key.deepcopy(), value.deepcopy()));
+        return new MapValue(copyMap);
+    }
+
     public MapValue(Map<Value,Value> other)
     {
         map = new HashMap<>(other);

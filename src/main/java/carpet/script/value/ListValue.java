@@ -43,6 +43,15 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         return new ListValue(items);
     }
+
+    @Override
+    public Value deepcopy()
+    {
+        List<Value> copyItems = new ArrayList<>(items.size());
+        for (Value entry: items) copyItems.add(entry.deepcopy());
+        return new ListValue(copyItems);
+    }
+
     public ListValue(Collection<? extends Value> list)
     {
         items = new ArrayList<>();

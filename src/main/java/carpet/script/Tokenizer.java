@@ -4,8 +4,11 @@ import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Expression tokenizer that allows to iterate over a {@link String}
@@ -38,6 +41,32 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         this.newLinesMarkers = allowNewLineMakers;
     }
 
+    public List<Token> fixSemicolons()
+    {
+        Iterable<Token> iterable = () -> this;
+        List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        List<Token> cleanedTokens = new ArrayList<>();
+        Token last = null;
+        while (originalTokens.size() > 0)
+        {
+            Token current = originalTokens.remove(originalTokens.size()-1);
+            if (!isSemicolon(current)
+                    || (last != null && last.type != Token.TokenType.CLOSE_PAREN && last.type != Token.TokenType.COMMA && !isSemicolon(last)))
+            {
+                if (isSemicolon(current))
+                {
+                    current.surface = ";";
+                    current.type = Token.TokenType.OPERATOR;
+                }
+                cleanedTokens.add(current);
+            }
+            if (current.type != Token.TokenType.MARKER)
+                last = current;
+        }
+        Collections.reverse(cleanedTokens);
+        return cleanedTokens;
+    }
+
     @Override
     public boolean hasNext()
     {
@@ -58,6 +87,12 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     {
         return ch == 'x' || ch == 'X' || (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')
                 || (ch >= 'A' && ch <= 'F');
+    }
+
+    public static boolean isSemicolon(Token tok)
+    {
+        return (    tok.type == Token.TokenType.OPERATOR && tok.surface.equals(";") )
+                || (tok.type == Token.TokenType.UNARY_OPERATOR && tok.surface.equals(";u") );
     }
 
     public static List<Token> simplepass(String input)

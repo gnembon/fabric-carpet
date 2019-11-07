@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 
+// TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
 {
     private Entity entity;

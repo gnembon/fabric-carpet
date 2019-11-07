@@ -46,7 +46,6 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
@@ -711,6 +710,21 @@ public class Expression implements Cloneable
             throw new ExpressionException(expr, token, "Problems in allocating global function "+name);
         }
 
+        Map<String, LazyValue> contextValues = new HashMap<>();
+        for (String global : globals)
+        {
+            LazyValue  lv = context.getVariable(global);
+            if (lv == null)
+            {
+                Value zero = Value.ZERO.reboundedTo(global);
+                contextValues.put(global, (cc, tt) -> zero);
+            }
+            else
+            {
+                contextValues.put(global, lv);
+            }
+        }
+
         context.host.globalFunctions.put(name, new UserDefinedFunction(arguments, function_context, token)
         {
             @Override
@@ -725,19 +739,7 @@ public class Expression implements Cloneable
                 }
                 Context newFrame = c.recreate();
 
-                for (String global : globals)
-                {
-                    LazyValue  lv = c.getVariable(global);
-                    if (lv == null)
-                    {
-                        Value zero = Value.ZERO.reboundedTo(global);
-                        newFrame.setVariable(global, (cc, tt) -> zero);
-                    }
-                    else
-                    {
-                        newFrame.setVariable(global, lv);
-                    }
-                }
+                contextValues.forEach(newFrame::setVariable);
                 for (int i=0; i<arguments.size(); i++)
                 {
                     String arg = arguments.get(i);
@@ -774,14 +776,6 @@ public class Expression implements Cloneable
                 catch (Exception exc)
                 {
                     throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
-                }
-                for (String global: globals)
-                {
-                    LazyValue lv = newFrame.getVariable(global);
-                    if (lv != null)
-                    {
-                        c.setVariable(global, lv);
-                    }
                 }
                 if (rethrow)
                 {
@@ -2775,6 +2769,8 @@ public class Expression implements Cloneable
     {
         addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
 
+        addUnaryFunction("copy", Value::deepcopy);
+
         addLazyFunction("bool", 1, (c, t, lv) -> {
             Value v = lv.get(0).evalValue(c, Context.BOOLEAN);
             if (v instanceof StringValue)
@@ -3044,21 +3040,7 @@ public class Expression implements Cloneable
 
         Tokenizer tokenizer = new Tokenizer(this, expression, allowComments, allowNewlineSubstitutions);
         // stripping lousy but acceptable semicolons
-        Iterable<Tokenizer.Token> iterable = () -> tokenizer;
-        List<Tokenizer.Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
-        List<Tokenizer.Token> cleanedTokens = new ArrayList<>();
-        Tokenizer.Token last = null;
-        while (originalTokens.size() > 0)
-        {
-            Tokenizer.Token current = originalTokens.remove(originalTokens.size()-1);
-            if (current.type != Tokenizer.Token.TokenType.OPERATOR
-                    || !current.surface.equals(";")
-                    || (last != null && last.type != Tokenizer.Token.TokenType.CLOSE_PAREN && last.type != Tokenizer.Token.TokenType.COMMA && !last.surface.equals(";")))
-                cleanedTokens.add(current);
-            if (current.type != Tokenizer.Token.TokenType.MARKER)
-                last = current;
-        }
-        Collections.reverse(cleanedTokens);
+        List<Tokenizer.Token> cleanedTokens = tokenizer.fixSemicolons();
 
         Tokenizer.Token lastFunction = null;
         Tokenizer.Token previousToken = null;

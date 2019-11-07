@@ -189,4 +189,17 @@ public abstract class Value implements Comparable<Value>, Cloneable
         if (stringVal.isEmpty()) return 0;
         return ("s"+stringVal).hashCode();
     }
+
+    public Value deepcopy()
+    {
+        try
+        {
+            return (Value)this.clone();
+        }
+        catch (CloneNotSupportedException e)
+        {
+            // should never happen
+            throw new InternalExpressionException("Cannot make a copy of value: "+this);
+        }
+    };
 }
