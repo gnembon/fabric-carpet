@@ -31,7 +31,7 @@ public class WorldRenderer_pausedShakeMixin
 
     @ModifyVariable(method = "render", argsOnly = true, ordinal = 0 ,at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/render/Camera;F)V",
+            target = "Lnet/minecraft/client/particle/ParticleManager;renderParticles(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/render/LightmapTextureManager;Lnet/minecraft/client/render/Camera;F)V",
             shift = At.Shift.BEFORE
     ))
     private float changeTickPhaseBack(float previous)
