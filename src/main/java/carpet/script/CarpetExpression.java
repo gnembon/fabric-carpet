@@ -807,8 +807,14 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("generation_status", -1, (c, t, lv) ->
         {
-            BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
-            Chunk chunk = ((CarpetContext)c).s.getWorld().getChunk(pos.getX()>>4, pos.getZ()>>4, ChunkStatus.EMPTY);
+            BlockValue.LocatorResult locatorResult = BlockValue.fromParams((CarpetContext)c, lv, 0);
+            BlockPos pos = locatorResult.block.getPos();
+            boolean forceLoad = false;
+            if (lv.size() > locatorResult.offset)
+                forceLoad = lv.get(locatorResult.offset).evalValue(c, Context.BOOLEAN).getBoolean();
+            Chunk chunk = ((CarpetContext)c).s.getWorld().getChunk(pos.getX()>>4, pos.getZ()>>4, ChunkStatus.EMPTY, forceLoad);
+            if (chunk == null)
+                return LazyValue.NULL;
             Value retval = new StringValue(chunk.getStatus().getName());
             return (c_, t_) -> retval;
         });
