@@ -28,7 +28,7 @@ import static carpet.settings.RuleCategory.TNT;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.2.2+v191107";
+    public static final String carpetVersion = "1.2.2+v191108";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;

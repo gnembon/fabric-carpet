@@ -511,15 +511,28 @@ public class CarpetExpression
      * top('ocean_floor', x, y, z)  =&gt; 41
      * </pre>
      * <h3><code>loaded(pos)</code></h3>
-     * <p>Boolean function, true if the block is loaded. Normally <code>scarpet</code> doesn't check if operates on
+     * <p>Boolean function, true if the block is accessible forthe game mechanics.
+     * Normally <code>scarpet</code> doesn't check if operates on
      * loaded area - the game will automatically load missing blocks. We see this as advantage.
      * Vanilla <code>fill/clone</code> commands only check the specified corners for loadness.</p>
+     * <p>To check if block is truly loaded, I mean in memory, use <code>generation_status(x) != null</code>, as
+     * chunks can still be loaded outside of the playable area, just are not used any of the game mechanics processes.</p>
      * <pre>
      * loaded(pos(players()))  =&gt; 1
      * loaded(100000,100,1000000)  =&gt; 0
      * </pre>
-     * <h3><code>loaded_ep(pos)</code></h3>
+     * <h3><code>(Deprecated) loaded_ep(pos)</code></h3>
      * <p>Boolean function, true if the block is loaded and entity processing, as per 1.13.2</p>
+     * <p>Deprecated as of scarpet 1.6, use <code>loaded_status(x) &gt; 0</code>, or
+     * just <code>loaded(x)</code> with the same effect</p>
+     * <h3><code>loaded_status(pos)</code></h3>
+     * <p>Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk,
+     * 2 for ticking, 3 for entity ticking</p>
+     * <h3><code>generation_status(pos), generation_status(pos, true)</code></h3>
+     * <p>Returns generation status as per new 1.14 chunk ticket system. Can return any value from several available
+     * but chunks can only be valid in a few states: <code>full</code>, <code>features</code>, <code>liquid_carvers</code>,
+     * and <code>structure_starts</code>. Returns <code>null</code> if the chunk is not in memory unless called with optional
+     * <code>true</code>.</p>
      * <h3><code>suffocates(pos)</code></h3>
      * <p>Boolean function, true if the block causes suffocation.</p>
      * <h3><code>power(pos)</code></h3>
@@ -789,6 +802,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
+        // Deprecated, use loaded_status as more indicative
         this.expr.addLazyFunction("loaded_ep", -1, (c, t, lv) ->
         {
             BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
