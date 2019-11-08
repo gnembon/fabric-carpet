@@ -11,7 +11,7 @@ import java.util.Random;
 @Mixin(KelpFeature.class)
 public class KelpFeatureMixin
 {
-    @Redirect(method = "method_13460", at = @At(value = "INVOKE", target = "Ljava/util/Random;nextInt(I)I"))
+    /*@Redirect(method = "method_13460", at = @At(value = "INVOKE", target = "Ljava/util/Random;nextInt(I)I"))
     private int getRandom(Random random, int bound)
     {
         if (bound==10)
@@ -20,5 +20,5 @@ public class KelpFeatureMixin
         if (limit == 0)
             return random.nextInt(bound);
         return 25-limit+random.nextInt(Math.min(23,limit+1));
-    }
+    }*/
 }

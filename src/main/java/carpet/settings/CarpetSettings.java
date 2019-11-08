@@ -458,7 +458,7 @@ public class CarpetSettings
     )
     public static boolean disableSpawnChunks = false;
 
-    private static class KelpLimit extends Validator<Integer>
+    /*private static class KelpLimit extends Validator<Integer>
     {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue>=0 && newValue <=25)?newValue:null;
@@ -472,7 +472,7 @@ public class CarpetSettings
             category = FEATURE,
             validate = KelpLimit.class
     )
-    public static int kelpGenerationGrowthLimit = 25;
+    public static int kelpGenerationGrowthLimit = 25;*/
 
     @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
     public static boolean renewableCoral = false;
