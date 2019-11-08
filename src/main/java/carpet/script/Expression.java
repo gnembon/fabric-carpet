@@ -199,10 +199,9 @@ import static java.lang.Math.min;
  * by adding them to the function signature wrapped around built-in function <code>outer</code>. What this does is
  * it borrows the reference to that variable from the outer scope to be used inside the function and any modifications to that outer
  * variable would result in changes of that value in the outer scope as well. Its like passing the parameters by reference,
- * except the calling function itself decides what variables its borrowing and what its name. This can be used to
- * return more than one result from a function call, although its a very ugly way of doing it -
- * I would still recommend returning a list of values instead.
- * Variables from outer scopes have a similar behaviour to, for example, <code>nonlocal</code> variables from python. </p>
+ * except the calling function itself decides what variables its borrowing. Variables are borrowed from the local scope
+ * when the function is defined, not used, so this can be used to modify static mutable values, without using global
+ * variables. Check <code>outer(var)</code> for details.</p>
  *
  *
  * <h2>Code delivery, line indicators</h2>
@@ -250,53 +249,53 @@ import static java.lang.Math.min;
  * /script run
  * run_program() -&gt; (
  *   loop( 10,
- *     foo = floor(rand(10));
+ *     foo = floor(rand(_));
  *     check_not_zero(foo);
  *     print(_+' - foo: '+foo);
  *     print('  reciprocal: '+  _/foo )
  *   )
  * );
  * check_not_zero(foo) -&gt; (
- *   if (foo==0, foo = 1)
+ *    if (foo==0, foo = 1)
  * )
+ *
  * </pre>
  * <p>Lets say that the intention was to check if the bar is zero and prevent division by zero in print,
  * but because the <code>foo</code> is passed as a variable, it never changes the original foo value.
  * Because of the inevitable division by zero, we get the following message:
  * </p>
  * <pre>
- * Your math is wrong, Incorrect number format for Infinity at pos 112
- * run_program() -&gt; (  loop( 10,    foo = floor(rand(10));    check_not_zero(foo);
- * print(_+' - foo: '+foo);     HERE&gt;&gt; print('  reciprocal: '+  _/foo )  ));
- * check_not_zero(foo) -&gt; (  if (foo==0, foo = 1))
+ * Your math is wrong, Incorrect number format for NaN at pos 98
+ * run_program() -> ( loop( 10, foo = floor(rand(_)); check_not_zero(foo); print(_+' - foo: '+foo);
+ * HERE>> print(' reciprocal: '+ _/foo ) ));check_not_zero(foo) -> ( if (foo==0, foo = 1))
  * </pre>
  *
- * As we can see, we got our problem where the result of the mathematical operation was not a number (<code>Infinity</code>, so not a number),
+ * As we can see, we got our problem where the result of the mathematical operation was not a number (infinity, so not a number),
  * however by pasting our program
  * into the command made it squish the newlines so while it is clear where the error happened and we still can track the error down,
- * the position of the error (112) is not very helpful and wouldn't be useful if the program gets significantly longer.
+ * the position of the error (98) is not very helpful and wouldn't be useful if the program gets significantly longer.
  * To combat this issue we can precede every line of the script with dollar signs <code>$</code>:
  * <pre>
  * /script run
  * $run_program() -&gt; (
  * $  loop( 10,
- * $    foo = floor(rand(10));
+ * $    foo = floor(rand(_));
  * $    check_not_zero(foo);
  * $    print(_+' - foo: '+foo);
  * $    print('  reciprocal: '+  _/foo )
  * $  )
  * $);
  * $check_not_zero(foo) -&gt; (
- * $  if (foo==0, foo = 1)
+ * $   if (foo==0, foo = 1)
  * $)
  * </pre>
  *
  * <p>Then we get the following error message</p>
  *
  * <pre>
- * Your math is wrong, Incorrect number format for Infinity at line 7, pos 5
- *     print(_+' - foo: '+foo);
- *      HERE&gt;&gt; print('  reciprocal: '+  _/foo )
+ * Your math is wrong, Incorrect number format for NaN at line 7, pos 2
+ *   print(_+' - foo: '+foo);
+ *    HERE>> print(' reciprocal: '+ _/foo )
  *   )
  * </pre>
  *
@@ -319,20 +318,6 @@ import static java.lang.Math.min;
  *     ...
  *     check_foo_not_zero() -&gt; if(global_foo == 0, global_foo = 1)
  * </pre>
- * <p>.. or scope foo from the outer function - in this case the inner function has to determine what it is accessing</p>
- * <pre>
- *     foo = floor(rand(10));
- *     check_foo_not_zero();
- *     ...
- *     check_foo_not_zero(outer(foo)) -&gt; if(foo == 0, foo = 1)
- * </pre>
- *<p><code>outer</code> scope can only be used in
- * function signatures to indicate outer variables. They are not arguments, but still you would want to use
- * locally without affecting other uses of foo in your program.
- * </p>
- * <p>For the most part - passing arguments as values, and using returned values   .
- * The main usecase of <code>Scarpet</code> would rather be simpler scripts, default scope for all variables is global, unless variable
- * is declared with <code>local</code> scope explicitly.
  * </p>
  */
 
@@ -716,8 +701,7 @@ public class Expression implements Cloneable
             LazyValue  lv = context.getVariable(global);
             if (lv == null)
             {
-                Value zero = Value.ZERO.reboundedTo(global);
-                contextValues.put(global, (cc, tt) -> zero);
+                throw new InternalExpressionException("Variable "+global+" needs to be defined in outer scope to be used as outer parameter");
             }
             else
             {
@@ -888,11 +872,11 @@ public class Expression implements Cloneable
      * <h3><code>outer(arg)</code></h3>
      * <p><code>outer</code> function can only be used in the function signature, and it will
      * cause an error everywhere else. It borrows the reference to that variable from the outer scope and allows
-     * its modification in the inner scope. Any modification of outer variable will result in change of them in
-     * the outer function. In case the variable was not set yet in the outer scope - it will be created. This construct
-     * is similar to <code>nonlocal</code> scoping from python</p>
+     * its modification in the inner scope. This is a similar behaviour to using local variables in lambda function definitions
+     * from Java, except here you have to specify which variables you want to use, and borrow</p>
+     * <p>This mechanism can be used to use static mutable objects without the need of using <code>global_...</code> variables</p>
      * <pre>
-     * a(outer(list)) -&gt; list+=1; list = l(1,2,3); a(); a(); list  // =&gt; [1,2,3,1,1]
+     * list = l(1,2,3); a(outer(list)) -&gt; list+=1;  a(); a(); list  // =&gt; [1,2,3,1,1]
      * </pre>
      * <p>The return value of a function is the value of the last expression. This as the same effect as using outer
      * or global lists, but is more expensive</p>
@@ -2586,6 +2570,8 @@ public class Expression implements Cloneable
      * <h1>System functions</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <h2>Type conversion functions</h2>
+     * <h3><code>copy(expr)</code></h3>
+     * <p>Returns the deep copy of the expression. Can be used to copy mutable objects, like maps and lists</p>
      * <h3><code>type(expr)</code></h3>
      * <p>Returns the string value indicating type of the expression. Possible outcomes are
      * <code>null, number, string, list, iterator</code>, as well as minecraft related concepts like
