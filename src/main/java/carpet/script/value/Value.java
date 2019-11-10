@@ -48,6 +48,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         {
             // should not happen
             e.printStackTrace();
+            throw new InternalExpressionException("Variable of type "+getTypeString()+" is not cloneable. Tell gnembon about it, this shoudn't happen");
         }
         copy.boundVariable = var;
         return copy;

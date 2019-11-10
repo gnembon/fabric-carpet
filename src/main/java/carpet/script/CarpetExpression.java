@@ -365,6 +365,23 @@ public class CarpetExpression
      * block(0,0,0) == block('bedrock')  =&gt; 1
      * block('hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') =&gt; hopper
      * </pre>
+     * <p>Retrieving a block with <code>block</code> function has also a side-effect of evaluating its current state and data.
+     * so if you use it later it will reflect block state and data of the block that was when block was called, rather than
+     * when it was used. Block values passed in various places like <code>scan</code> functions, etc, are not fully evaluated
+     * unless its properties are needed. This means that if the block at the location changes before its queried in the program
+     * this might result in getting the later state, which might not be desired. Consider the following example:</p>
+     * <pre>
+     * set(10,10,10,'stone');
+     * scan(10,10,10,0,0,0, b = _);
+     * set(10,10,10,'air');
+     * print(b); // 'air', block was remembered 'lazily', and evaluated by `print`, when it was already set to air
+     *
+     * set(10,10,10,'stone');
+     * scan(10,10,10,0,0,0, b = block(_));
+     * set(10,10,10,'air');
+     * print(b); // 'stone', block was evaluated 'eagerly' but call to `block`
+     *
+     * </pre>
      * <h2>World Manipulation</h2>
      * <p>All the functions below can be used with block value, queried with coord triple, or 3-long list.
      * All <code>pos</code> in the functions referenced below refer to either method of passing block position</p>
@@ -669,7 +686,10 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Block requires at least one parameter");
             }
-            Value retval = BlockValue.fromParams(cc, lv, 0, true).block;
+            BlockValue retval = BlockValue.fromParams(cc, lv, 0, true).block;
+            // fixing block state and data
+            retval.getBlockState();
+            retval.getData();
             return (c_, t_) -> retval;
         });
 
@@ -2086,7 +2106,8 @@ public class CarpetExpression
                         c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
                         Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
                         c.setVariable( "_", (cc_, t_c) -> blockValue);
-                        if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                        Value result = expr.evalValue(c, t);
+                        if (t != Context.VOID && result.getBoolean())
                         {
                             sCount += 1;
                         }
@@ -2138,7 +2159,8 @@ public class CarpetExpression
                         c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
                         Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
                         c.setVariable( "_", (cc_, t_c) -> blockValue);
-                        if (expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                        Value result = expr.evalValue(c, t);
+                        if (t != Context.VOID && result.getBoolean())
                         {
                             sCount += 1;
                         }
