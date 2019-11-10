@@ -994,8 +994,9 @@ public class Expression implements Cloneable
 
         addLazyBinaryOperator(";",precedence.get("nextop;"), true, (c, t, lv1, lv2) ->
         {
-            Value v1 = lv1.evalValue(c, Context.VOID);
-            return lv2;
+            lv1.evalValue(c, Context.VOID);
+            Value v2 = lv2.evalValue(c, t);
+            return (cc, tt) -> v2;
         });
 
         //assigns const procedure to the lhs, returning its previous value
@@ -1053,13 +1054,13 @@ public class Expression implements Cloneable
                 if (lv.get(i).evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     //int iFinal = i;
-                    Value ret = lv.get(i+1).evalValue(c);
+                    Value ret = lv.get(i+1).evalValue(c, t);
                     return (cc, tt) -> ret;
                 }
             }
             if (lv.size()%2 == 1)
             {
-                Value ret = lv.get(lv.size() - 1).evalValue(c);
+                Value ret = lv.get(lv.size() - 1).evalValue(c, t);
                 return (cc, tt) -> ret;
             }
             return (cc, tt) -> Value.NULL;
@@ -1746,7 +1747,7 @@ public class Expression implements Cloneable
             c.setVariable("_",(cc, tt) -> new NumericValue(0).bindTo("_"));
             while (i<limit && condition.evalValue(c, Context.BOOLEAN).getBoolean() )
             {
-                lastOne = expr.evalValue(c);
+                lastOne = expr.evalValue(c, t);
                 i++;
                 long seriously = i;
                 c.setVariable("_", (cc, tt) -> new NumericValue(seriously).bindTo("_"));
@@ -1777,8 +1778,8 @@ public class Expression implements Cloneable
             {
                 long whyYouAsk = i;
                 c.setVariable("_", (cc, tt) -> new NumericValue(whyYouAsk).bindTo("_"));
-                lastOne = expr.evalValue(c);
-                if (cond != null && cond.evalValue(c).getBoolean())
+                lastOne = expr.evalValue(c, t);
+                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
                     break;
             }
             //revering scope
@@ -1817,7 +1818,7 @@ public class Expression implements Cloneable
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(doYouReally).bindTo("_i"));
                 result.add(expr.evalValue(c));
-                if (cond != null && cond.evalValue(c).getBoolean())
+                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     next.boundVariable = var;
                     break;
@@ -1861,9 +1862,9 @@ public class Expression implements Cloneable
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
-                if(expr.evalValue(c).getBoolean())
+                if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
                     result.add(next);
-                if (cond != null && cond.evalValue(c).getBoolean())
+                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     next.boundVariable = var;
                     break;
@@ -1901,7 +1902,7 @@ public class Expression implements Cloneable
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
-                if(expr.evalValue(c).getBoolean())
+                if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     result = next;
                     next.boundVariable = var;
@@ -1939,7 +1940,7 @@ public class Expression implements Cloneable
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
-                if(!expr.evalValue(c).getBoolean())
+                if(!expr.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     result = LazyValue.FALSE;
                     next.boundVariable = var;
@@ -1983,9 +1984,10 @@ public class Expression implements Cloneable
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
-                if(expr.evalValue(c).getBoolean())
+                Value result = expr.evalValue(c, t);
+                if(t != Context.VOID && result.getBoolean())
                     successCount++;
-                if (cond != null && cond.evalValue(c).getBoolean())
+                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
                 {
                     next.boundVariable = var;
                     break;
@@ -2033,7 +2035,7 @@ public class Expression implements Cloneable
                 Value promiseWontChangeYou = acc;
                 c.setVariable("_a", (cc, tt) -> promiseWontChangeYou.bindTo("_a"));
                 c.setVariable("_", (cc, tt) -> next);
-                acc = expr.evalValue(c);
+                acc = expr.evalValue(c, t);
                 next.boundVariable = var;
             }
             //reverting scope

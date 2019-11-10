@@ -144,8 +144,6 @@ public class BlockValue extends Value
             }
             if (v1 instanceof BlockValue)
             {
-                ((BlockValue) v1).getBlockState();
-                ((BlockValue) v1).getData();
                 return new LocatorResult(((BlockValue) v1), 1+offset);
             }
             if (v1 instanceof ListValue)
@@ -256,7 +254,7 @@ public class BlockValue extends Value
     @Override
     public Value clone()
     {
-        return new BlockValue(blockState, world, pos);
+        return new BlockValue(blockState, world, pos, data);
     }
 
     @Override

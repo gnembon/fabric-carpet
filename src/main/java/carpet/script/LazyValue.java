@@ -19,6 +19,6 @@ public interface LazyValue
     Value evalValue(Context c, Integer type);
 
     default Value evalValue(Context c){
-        return evalValue(c, 0);
+        return evalValue(c, Context.NONE);
     }
 }
