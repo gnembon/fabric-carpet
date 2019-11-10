@@ -5,6 +5,7 @@ import net.minecraft.container.Container;
 import net.minecraft.container.Slot;
 import net.minecraft.container.SlotActionType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -41,7 +42,8 @@ public abstract class ContainerMixin
             {
                 if(int_1 == 0 && int_2 == 1)
                 {
-                    while(slot_4.hasStack())
+                    Item craftedItem = slot_4.getStack().getItem();
+                    while(slot_4.hasStack() && slot_4.getStack().getItem() == craftedItem)
                     {
                         this.onSlotClick(int_1, 0, SlotActionType.THROW, playerEntity_1);
                     }
