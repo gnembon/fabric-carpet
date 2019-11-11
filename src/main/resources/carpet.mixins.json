@@ -4,7 +4,6 @@
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "__Enchantments_Mixin",
     "CommandManagerMixin",
 
     "FillCommandMixin",
