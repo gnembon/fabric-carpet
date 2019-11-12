@@ -225,6 +225,7 @@ public class EntityValue extends Value
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight(EntityPose.STANDING)));
         put("age", (e, a) -> new NumericValue(e.age));
+        put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
         put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelay()):Value.NULL);
@@ -729,6 +730,14 @@ public class EntityValue extends Value
             if (e instanceof ItemEntity)
             {
                 ((ItemEntity) e).setPickupDelay((int)NumericValue.asNumber(v).getLong());
+            }
+        });
+
+        put("despawn_timer", (e, v) ->
+        {
+            if (e instanceof LivingEntity)
+            {
+                ((LivingEntity) e).setDespawnCounter((int)NumericValue.asNumber(v).getLong());
             }
         });
 
