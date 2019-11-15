@@ -53,11 +53,6 @@ public class CarpetProfiler
         }
     }
 
-    private static String getWorldString(World world)
-    {
-        return world.getDimension().getType().toString().replaceFirst("minecraft:", "") + (world.isClient ? "(Client)" : "");
-    }
-
     private static String getSectionString(World world, String section)
     {
         return String.format("%s.%s%s",
@@ -136,7 +131,7 @@ public class CarpetProfiler
 
     public static void end_current_section(ProfilerToken tok)
     {
-        if (tick_health_requested == 0L || test_type != TYPE.GENERAL || current_tick_start == 0)
+        if (tick_health_requested == 0L || test_type != TYPE.GENERAL || current_tick_start == 0 || tok == null)
             return;
         long end_time = System.nanoTime();
         if (tok.type == TYPE.GENERAL)
@@ -154,7 +149,7 @@ public class CarpetProfiler
 
     public static void end_current_entity_section(ProfilerToken tok)
     {
-        if (tick_health_requested == 0L || test_type != TYPE.ENTITY || current_tick_start == 0)
+        if (tick_health_requested == 0L || test_type != TYPE.ENTITY || current_tick_start == 0 || tok == null)
             return;
         long end_time = System.nanoTime();
         String section;
