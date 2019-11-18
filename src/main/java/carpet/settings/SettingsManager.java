@@ -3,6 +3,7 @@ package carpet.settings;
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -264,8 +265,10 @@ public class SettingsManager
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return rules.values().stream().filter(rule ->
         {
-            if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true;
-            for (String c : rule.categories) if (c.toLowerCase(Locale.ROOT).equals(search)) return true;
+            if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
+            for (String c : rule.categories) if (c.equals(search)) return true; // category exactly, case sensitive
+            if (Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch))
+                return true; // contains full term in description, but case insensitive
             return false;
         }).collect(ImmutableList.toImmutableList());
     }

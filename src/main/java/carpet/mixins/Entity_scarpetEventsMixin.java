@@ -4,12 +4,10 @@ import carpet.CarpetServer;
 import carpet.fakes.EntityInterface;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
-import carpet.script.ScriptHost;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
-import carpet.settings.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
-import org.lwjgl.system.CallbackI;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,23 +25,20 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     private CarpetEventServer.ScheduledCall tickCall;
     private CarpetEventServer.ScheduledCall damageCall;
 
-
-
-
     @Override
-    public void setDeathCallback(CarpetContext cc, String function, List<Value> extraArgs)
+    public void setDeathCallback(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         deathCall = CarpetServer.scriptServer.events.makeDeathCall(cc, function, extraArgs);
     }
 
     @Override
-    public void setRemovedCallback(CarpetContext cc, String function, List<Value> extraArgs)
+    public void setRemovedCallback(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         removeCall = CarpetServer.scriptServer.events.makeRemovedCall(cc, function, extraArgs);
     }
 
     @Override
-    public void setTickCallback(CarpetContext cc, String function, List<Value> extraArgs)
+    public void setTickCallback(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         tickCall = CarpetServer.scriptServer.events.makeTickCall(cc, function, extraArgs);
     }
@@ -55,7 +50,7 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     }
 
     @Override
-    public void setDamageCallback(CarpetContext cc, String function, List<Value> extraArgs)
+    public void setDamageCallback(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         damageCall = CarpetServer.scriptServer.events.makeDamageCall(cc, function, extraArgs);
     }

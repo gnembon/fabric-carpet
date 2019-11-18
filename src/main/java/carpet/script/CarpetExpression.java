@@ -5,10 +5,12 @@ import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
+import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
@@ -2012,9 +2014,16 @@ public class CarpetExpression
                 throw new InternalExpressionException("First argument to entity_event should be an entity");
             String what = lv.get(1).evalValue(c).getString();
             Value functionValue = lv.get(2).evalValue(c);
-            String function = null;
-            if (!(functionValue instanceof NullValue))
-                function = functionValue.getString();
+            if (functionValue instanceof NullValue)
+                functionValue = null;
+            else if (!(functionValue instanceof FunctionValue))
+            {
+                String name = functionValue.getString();
+                functionValue = c.host.globalFunctions.get(name);
+                if (functionValue == null)
+                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+            }
+            FunctionValue function = (FunctionValue)functionValue;
             List<Value> args = null;
             if (lv.size()==4)
                 args = Collections.singletonList(lv.get(3).evalValue(c));
@@ -2928,7 +2937,7 @@ public class CarpetExpression
             CarpetServer.scriptServer.tickStart = System.nanoTime(); // for the next tick
             Thread.yield();
             if(CarpetServer.scriptServer.stopAll)
-                throw new Expression.ExitStatement(Value.NULL);
+                throw new ExitStatement(Value.NULL);
             return (cc, tt) -> Value.TRUE;
         });
 
@@ -3002,20 +3011,28 @@ public class CarpetExpression
             if (lv.size()<2)
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             Long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-            String funname = lv.get(1).evalValue(c).getString();
+
+            Value functionValue = lv.get(1).evalValue(c);
+            if (!(functionValue instanceof FunctionValue))
+            {
+                String name = functionValue.getString();
+                functionValue = c.host.globalFunctions.get(name);
+                if (functionValue == null)
+                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+            }
+            FunctionValue function = (FunctionValue)functionValue;
+
             CarpetContext cc = (CarpetContext)c;
-            if (!cc.host.globalFunctions.containsKey(funname))
-                throw new InternalExpressionException("Function "+funname+" is not defined");
             List<LazyValue> args = new ArrayList<>();
             for (int i=2; i < lv.size(); i++)
             {
                 Value arg = lv.get(i).evalValue(cc);
                 args.add( (_c, _t) -> arg);
             }
-            if (cc.host.globalFunctions.get(funname).getArguments().size() != args.size())
-                throw new InternalExpressionException("Function "+funname+" takes "+
-                        cc.host.globalFunctions.get(funname).getArguments().size()+" arguments, "+args.size()+" provided.");
-            CarpetServer.scriptServer.events.scheduleCall(cc, funname, args, delay);
+            if (function.getArguments().size() != args.size())
+                throw new InternalExpressionException("Function "+function.getString()+" takes "+
+                        function.getArguments().size()+" arguments, "+args.size()+" provided.");
+            CarpetServer.scriptServer.events.scheduleCall(cc, function, args, delay);
             return (c_, t_) -> Value.TRUE;
         });
 
