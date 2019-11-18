@@ -37,7 +37,7 @@ public class Context
         return host.globalVariables.get(name);
     }
 
-    void setVariable(String name, LazyValue lv)
+    public void setVariable(String name, LazyValue lv)
     {
         if (name.startsWith("global_"))
         {

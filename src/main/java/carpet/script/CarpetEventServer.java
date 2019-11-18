@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -19,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.dimension.DimensionType;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,9 +41,9 @@ public class CarpetEventServer
     public static class Callback
     {
         public String host;
-        public String udf;
+        public FunctionValue udf;
 
-        public Callback(String host, String udf)
+        public Callback(String host, FunctionValue udf)
         {
             this.host = host;
             this.udf = udf;
@@ -50,7 +52,7 @@ public class CarpetEventServer
         @Override
         public String toString()
         {
-            return udf+((host==null)?"":"(from "+host+")");
+            return udf.getString()+((host==null)?"":"(from "+host+")");
         }
     }
 
@@ -61,7 +63,7 @@ public class CarpetEventServer
         public BlockPos context_origin;
         public long dueTime;
 
-        public ScheduledCall(CarpetContext context, String udf, List<LazyValue> args, long dueTime)
+        public ScheduledCall(CarpetContext context, FunctionValue udf, List<LazyValue> args, long dueTime)
         {
             super(context.host.getName(), udf);
             this.args = args;
@@ -119,7 +121,7 @@ public class CarpetEventServer
                 // impossible call to add
                 return false;
             }
-            UserDefinedFunction udf = host.globalFunctions.get(funName);
+            FunctionValue udf = host.globalFunctions.get(funName);
             if (udf == null || udf.getArguments().size() != reqArgs)
             {
                 // call won't match arguments
@@ -127,13 +129,13 @@ public class CarpetEventServer
             }
             //all clear
             //remove duplicates
-            removeEventCall(hostName, funName);
-            callList.add(new Callback(hostName, funName));
+            removeEventCall(hostName, udf.getString());
+            callList.add(new Callback(hostName, udf));
             return true;
         }
-        public void removeEventCall(String hostName, String callName)
+        public void removeEventCall(String hostName, String funName)
         {
-            callList.removeIf((c)->  c.udf.equalsIgnoreCase(callName) && ( hostName == null || c.host.equalsIgnoreCase(hostName) ) );
+            callList.removeIf((c)->  c.udf.getString().equals(funName) && ( hostName == null || c.host.equalsIgnoreCase(hostName) ) );
         }
 
         public void removeAllCalls(String hostName)
@@ -445,7 +447,7 @@ public class CarpetEventServer
         }
 
     }
-    public void scheduleCall(CarpetContext context, String function, List<LazyValue> args, long due)
+    public void scheduleCall(CarpetContext context, FunctionValue function, List<LazyValue> args, long due)
     {
         scheduledCalls.add(new ScheduledCall(context, function, args, due));
     }
@@ -464,8 +466,8 @@ public class CarpetEventServer
 
         if (!Event.byName.containsKey(event))
             return false;
-        Callback callback= decodeCallback(funName);
-        Event.byName.get(event).handler.removeEventCall(callback.host, callback.udf);
+        Pair<String,String> call = decodeCallback(funName);
+        Event.byName.get(event).handler.removeEventCall(call.getLeft(), call.getRight());
         return true;
     }
 
@@ -474,21 +476,20 @@ public class CarpetEventServer
         Event.byName.values().forEach((e) -> e.handler.removeAllCalls(hostName));
     }
 
-    private Callback decodeCallback(String funName)
+    private Pair<String,String> decodeCallback(String funName)
     {
         Pattern find = Pattern.compile("(\\w+)\\(from (\\w+)\\)");
         Matcher matcher = find.matcher(funName);
         if(matcher.matches())
         {
-            return new Callback(matcher.group(2), matcher.group(1));
+            return Pair.of(matcher.group(2), matcher.group(1));
         }
-        return new Callback(null, funName);
+        return Pair.of(null, funName);
     }
 
-    private ScheduledCall makeEventCall(CarpetContext cc, String function, List<Value> extraArgs, int argCount)
+    private ScheduledCall makeEventCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs, int argCount)
     {
-        UserDefinedFunction udf = cc.host.globalFunctions.get(function);
-        if (udf == null || (udf.getArguments().size()-(extraArgs == null ? 0 : extraArgs.size())) != argCount)
+        if (function == null || (function.getArguments().size()-(extraArgs == null ? 0 : extraArgs.size())) != argCount)
         {
             // call won't match arguments
             return null;
@@ -503,19 +504,19 @@ public class CarpetEventServer
         return new ScheduledCall(cc, function, lazyArgs, 0);
     }
 
-    public ScheduledCall makeDeathCall(CarpetContext cc, String function, List<Value> extraArgs)
+    public ScheduledCall makeDeathCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         return makeEventCall(cc, function, extraArgs, 2);
     }
-    public ScheduledCall makeRemovedCall(CarpetContext cc, String function, List<Value> extraArgs)
+    public ScheduledCall makeRemovedCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         return makeEventCall(cc, function, extraArgs, 1);
     }
-    public ScheduledCall makeTickCall(CarpetContext cc, String function, List<Value> extraArgs)
+    public ScheduledCall makeTickCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         return makeEventCall(cc, function, extraArgs, 1);
     }
-    public ScheduledCall makeDamageCall(CarpetContext cc, String function, List<Value> extraArgs)
+    public ScheduledCall makeDamageCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
     {
         return makeEventCall(cc, function, extraArgs, 4);
     }

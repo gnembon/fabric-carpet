@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.script.bundled.BundledModule;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
 import carpet.settings.CarpetSettings;
@@ -365,19 +366,19 @@ public class CarpetScriptServer
         return true;
     }
 
-    public boolean runas(ServerCommandSource source, String hostname, String udf_name, List<LazyValue> argv)
+    public boolean runas(ServerCommandSource source, String hostname, FunctionValue udf, List<LazyValue> argv)
     {
-        return runas(BlockPos.ORIGIN, source, hostname, udf_name, argv);
+        return runas(BlockPos.ORIGIN, source, hostname, udf, argv);
     }
 
-    public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, String udf_name, List<LazyValue> argv)
+    public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, FunctionValue udf, List<LazyValue> argv)
     {
         ScriptHost host = globalHost;
         try
         {
             if (hostname != null)
                 host = modules.get(hostname).retrieveForExecution(source);
-            host.callUDF(origin, source, host.globalFunctions.get(udf_name), argv);
+            host.callUDF(origin, source, udf, argv);
         }
         catch (NullPointerException | InvalidCallbackException npe)
         {
