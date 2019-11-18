@@ -11,11 +11,15 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
+import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ReturnStatement;
+import carpet.script.exception.ThrowStatement;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.GlobalValue;
 import carpet.script.value.LContainerValue;
 import carpet.script.value.LazyListValue;
@@ -389,31 +393,6 @@ public class Expression implements Cloneable
         return copy;
     }
 
-    /* Exception thrown to terminate execution mid expression (aka return statement) */
-    static class ExitStatement extends RuntimeException
-    {
-        Value retval;
-        ExitStatement(Value value)
-        {
-            retval = value;
-        }
-    }
-    static class ReturnStatement extends ExitStatement
-    {
-
-        ReturnStatement(Value value)
-        {
-            super(value);
-        }
-    }
-    static class ThrowStatement extends ExitStatement
-    {
-        ThrowStatement(Value value)
-        {
-            super(value);
-        }
-    }
-
 
     static List<String> getExpressionSnippet(Tokenizer.Token token, Expression expr)
     {
@@ -679,22 +658,11 @@ public class Expression implements Cloneable
             }
         });
     }
-    private void addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> globals, LazyValue code)
+    private FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> globals, LazyValue code)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (functions.containsKey(name))
             throw new ExpressionException(expr, token, "Function "+name+" would mask a built-in function");
-        Expression function_context;
-        try
-        {
-            function_context = expr.clone();
-            function_context.name = name;
-        }
-        catch (CloneNotSupportedException e)
-        {
-            throw new ExpressionException(expr, token, "Problems in allocating global function "+name);
-        }
-
         Map<String, LazyValue> contextValues = new HashMap<>();
         for (String global : globals)
         {
@@ -708,67 +676,12 @@ public class Expression implements Cloneable
                 contextValues.put(global, lv);
             }
         }
+        if (contextValues.isEmpty()) contextValues = null;
 
-        context.host.globalFunctions.put(name, new UserDefinedFunction(arguments, function_context, token)
-        {
-            @Override
-            public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
-            {
-                if (arguments.size() != lazyParams.size()) // something that might be subject to change in the future
-                {
-                    throw new ExpressionException(e, t,
-                            "Incorrect number of arguments for function "+name+
-                            ". Should be "+arguments.size()+", not "+lazyParams.size()+" like "+arguments
-                    );
-                }
-                Context newFrame = c.recreate();
-
-                contextValues.forEach(newFrame::setVariable);
-                for (int i=0; i<arguments.size(); i++)
-                {
-                    String arg = arguments.get(i);
-                    Value val = lazyParams.get(i).evalValue(c).reboundedTo(arg);
-                    newFrame.setVariable(arg, (cc, tt) -> val);
-                }
-                Value retVal;
-                boolean rethrow = false;
-                try
-                {
-                    retVal = code.evalValue(newFrame, type); // todo not sure if we need to propagete type / consider boolean context in defined functions - answer seems ye
-                }
-                catch (ReturnStatement returnStatement)
-                {
-                    retVal = returnStatement.retval;
-                }
-                catch (ThrowStatement throwStatement) // might not be really necessary
-                {
-                    retVal = throwStatement.retval;
-                    rethrow = true;
-                }
-                catch (InternalExpressionException exc)
-                {
-                    throw new ExpressionException(function_context, t, exc.getMessage());
-                }
-                catch (ArithmeticException exc)
-                {
-                    throw new ExpressionException(function_context, t, "Your math is wrong, "+exc.getMessage());
-                }
-                catch (ExitStatement | ExpressionException exit)
-                {
-                    throw exit;
-                }
-                catch (Exception exc)
-                {
-                    throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
-                }
-                if (rethrow)
-                {
-                    throw new ThrowStatement(retVal);
-                }
-                Value otherRetVal = retVal;
-                return (cc, tt) -> otherRetVal;
-            }
-        });
+        FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, contextValues);
+        // do not store lambda definitions
+        if (!name.equals("_")) context.host.globalFunctions.put(name, result);
+        return result;
     }
 
     /**
@@ -944,25 +857,28 @@ public class Expression implements Cloneable
         addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
             if (lv.size() == 0)
                 throw new InternalExpressionException("'call' expects at least function name to call");
-            String name = lv.get(0).evalValue(c).getString();
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
-                if (!c.host.globalFunctions.containsKey(name))
+                Value functionValue = lv.get(0).evalValue(c);
+                if (!(functionValue instanceof FunctionValue))
                 {
-                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+                    String name = functionValue.getString();
+                    functionValue = c.host.globalFunctions.get(name);
+                    if (functionValue == null)
+                        throw new InternalExpressionException("Function "+name+" is not defined yet");
                 }
                 List<LazyValue> lvargs = new ArrayList<>(lv.size()-1);
                 for (int i=1; i< lv.size(); i++)
                 {
                     lvargs.add(lv.get(i));
                 }
-                UserDefinedFunction acf = c.host.globalFunctions.get(name);
-                Value retval = acf.lazyEval(c, t, acf.expression, acf.token, lvargs).evalValue(c);
+                FunctionValue fun = (FunctionValue)functionValue;
+                Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), lvargs).evalValue(c);
                 return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
             }
-
             // gimme signature
+            String name = lv.get(0).evalValue(c).getString();
             List<String> args = new ArrayList<>();
             List<String> globals = new ArrayList<>();
             for (int i = 1; i < lv.size(); i++)
@@ -981,8 +897,6 @@ public class Expression implements Cloneable
                     args.add(v.boundVariable);
                 }
             }
-            if (name.equals("_"))
-                name = "__lambda_"+tok.lineno+"_"+tok.linepos;
             Value retval = new FunctionSignatureValue(name, args, globals);
             return (cc, tt) -> retval;
         });
@@ -1003,20 +917,11 @@ public class Expression implements Cloneable
         addLazyBinaryOperatorWithDelegation("->", precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.SIGNATURE);
-            String result;
-            if (v1 instanceof FunctionSignatureValue)
-            {
-                FunctionSignatureValue sign = (FunctionSignatureValue) v1;
-                addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getGlobals(), lv2);
-                result = sign.getName();
-            }
-            else
-            {
-                v1.assertAssignable();
-                c.setVariable(v1.getVariable(), lv2);
-                result = v1.getVariable();
-            }
-            return (cc, tt) -> new StringValue(result);
+            if (!(v1 instanceof FunctionSignatureValue))
+                throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
+            FunctionSignatureValue sign = (FunctionSignatureValue) v1;
+            Value result = addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getGlobals(), lv2);
+            return (cc, tt) -> result;
         });
 
         addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });

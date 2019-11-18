@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.script.bundled.ModuleInterface;
+import carpet.script.value.FunctionValue;
 import carpet.settings.CarpetSettings;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InvalidCallbackException;
@@ -20,7 +21,6 @@ import net.minecraft.util.math.BlockPos;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -31,7 +31,7 @@ import static java.lang.Math.max;
 public class ScriptHost
 {
     private final Map<String, ScriptHost> userHosts = new Object2ObjectOpenHashMap<>();
-    public Map<String, UserDefinedFunction> globalFunctions = new Object2ObjectOpenHashMap<>();
+    public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
     public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
 
     private Tag globalState;
@@ -118,8 +118,8 @@ public class ScriptHost
     {
         if (CarpetServer.scriptServer.stopAll)
             return "SCARPET PAUSED";
-        UserDefinedFunction acf = globalFunctions.get(call);
-        if (acf == null)
+        FunctionValue function = globalFunctions.get(call);
+        if (function == null)
             return "UNDEFINED";
         List<LazyValue> argv = new ArrayList<>();
         if (coords != null)
@@ -185,7 +185,7 @@ public class ScriptHost
                     return "Fail: "+tok.surface+" is not allowed in invoke";
             }
         }
-        List<String> args = acf.getArguments();
+        List<String> args = function.getArguments();
         if (argv.size() != args.size())
         {
             String error = "Fail: stored function "+call+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
@@ -200,7 +200,7 @@ public class ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
             return Expression.evalValue(
-                    () -> acf.lazyEval(context, Context.VOID, acf.expression, acf.token, argv),
+                    () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
             ).getString();
@@ -211,13 +211,11 @@ public class ScriptHost
         }
     }
 
-    public Value callUDF(BlockPos pos, ServerCommandSource source, UserDefinedFunction acf, List<LazyValue> argv) throws InvalidCallbackException
+    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<LazyValue> argv) throws InvalidCallbackException
     {
         if (CarpetServer.scriptServer.stopAll)
             return Value.NULL;
-
-        List<String> args = acf.getArguments();
-        if (argv.size() != args.size())
+        if (argv.size() != fun.getArguments().size())
         {
             throw new InvalidCallbackException();
         }
@@ -226,7 +224,7 @@ public class ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, pos);
             return Expression.evalValue(
-                    () -> acf.lazyEval(context, Context.VOID, acf.expression, acf.token, argv),
+                    () -> fun.lazyEval(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
                     context,
                     Context.VOID);
         }

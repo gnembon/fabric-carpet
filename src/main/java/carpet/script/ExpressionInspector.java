@@ -1,6 +1,6 @@
 package carpet.script;
 
-import carpet.CarpetServer;
+import carpet.script.exception.ExpressionException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
@@ -24,6 +24,20 @@ public class ExpressionInspector
     public static String Expression_getName(Expression e)
     {
         return e.getName();
+    }
+
+    public static Expression Expression_cloneWithName(Expression e, String name, Tokenizer.Token token)
+    {
+        Expression copy = null;
+        try
+        {
+            copy = e.clone();
+        }
+        catch (CloneNotSupportedException ex)
+        {
+            throw new ExpressionException(e, token, "Problems in allocating global function "+name);
+        }
+        return copy.withName(name);
     }
 
     private static TreeSet<String> scarpetFunctions;
