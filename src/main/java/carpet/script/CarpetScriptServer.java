@@ -131,7 +131,7 @@ public class CarpetScriptServer
 
     private ScriptHost createMinecraftScriptHost(String name, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
     {
-        ScriptHost host = new ScriptHost(name, module, perPlayer, null );
+        ScriptHost host = new ScriptHost(this, name, module, perPlayer, null );
         host.globalVariables.put("_x", (c, t) -> Value.ZERO);
         host.globalVariables.put("_y", (c, t) -> Value.ZERO);
         host.globalVariables.put("_z", (c, t) -> Value.ZERO);
@@ -192,7 +192,7 @@ public class CarpetScriptServer
             removeScriptHost(source, name);
             return false;
         }
-        addEvents(source, name);
+        //addEvents(source, name);
         addCommand(source, name);
         return true;
     }
@@ -220,6 +220,7 @@ public class CarpetScriptServer
     }
     private void addEvents(ServerCommandSource source, String hostName)
     {
+        if (1+2 == 3) throw new RuntimeException("This should run when code is evaluated");
         ScriptHost host = modules.get(hostName);
         if (host == null)
         {
