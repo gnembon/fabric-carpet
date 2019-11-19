@@ -45,7 +45,9 @@ public class ScriptHost
     private final ModuleInterface myCode;
     private boolean perUser;
 
-    ScriptHost(String name, ModuleInterface code, boolean perUser, ScriptHost parent)
+    private CarpetScriptServer scriptServer;
+
+    ScriptHost(CarpetScriptServer server, String name, ModuleInterface code, boolean perUser, ScriptHost parent)
     {
         this.saveTimeout = 0;
         this.parent = parent;
@@ -65,6 +67,23 @@ public class ScriptHost
 
         if (parent == null && name != null)
             globalState = loadState();
+
+        this.scriptServer = server;
+    }
+
+    public void addUserDefinedFunction(String funName, FunctionValue function)
+    {
+        // generic
+        globalFunctions.put(funName, function);
+        // mcarpet
+        if (funName.startsWith("__on_"))
+        {
+            // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
+            String event = funName.replaceFirst("__on_","");
+            if (CarpetEventServer.Event.byName.containsKey(event))
+                scriptServer.events.addEventDirectly(event, this, function);
+        }
+
     }
 
     private ScriptHost retrieveForExecution(String /*Nullable*/ user)
@@ -74,7 +93,7 @@ public class ScriptHost
         ScriptHost userHost = userHosts.get(user);
         if (userHost != null)
             return userHost;
-        userHost = new ScriptHost(this.name, myCode, false, this);
+        userHost = new ScriptHost(this.scriptServer, this.name, myCode, false, this);
         userHost.globalVariables.putAll(this.globalVariables);
         userHost.globalFunctions.putAll(this.globalFunctions);
         userHosts.put(user, userHost);

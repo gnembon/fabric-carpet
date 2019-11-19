@@ -680,7 +680,7 @@ public class Expression implements Cloneable
 
         FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, contextValues);
         // do not store lambda definitions
-        if (!name.equals("_")) context.host.globalFunctions.put(name, result);
+        if (!name.equals("_")) context.host.addUserDefinedFunction(name, result);
         return result;
     }
 

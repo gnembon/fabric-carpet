@@ -133,6 +133,19 @@ public class CarpetEventServer
             callList.add(new Callback(hostName, udf));
             return true;
         }
+        public boolean addEventCallDirect(ScriptHost host, FunctionValue function)
+        {
+            if (function == null || function.getArguments().size() != reqArgs)
+            {
+                return false;
+            }
+            //all clear
+            //remove duplicates
+            removeEventCall(host.getName(), function.getString());
+            callList.add(new Callback(host.getName(), function));
+            return true;
+        }
+
         public void removeEventCall(String hostName, String funName)
         {
             callList.removeIf((c)->  c.udf.getString().equals(funName) && ( hostName == null || c.host.equalsIgnoreCase(hostName) ) );
@@ -459,6 +472,11 @@ public class CarpetEventServer
             return false;
         }
         return Event.byName.get(event).handler.addEventCall(host, funName);
+    }
+
+    public boolean addEventDirectly(String event, ScriptHost host, FunctionValue function)
+    {
+        return Event.byName.get(event).handler.addEventCallDirect(host, function);
     }
 
     public boolean removeEvent(String event, String funName)
