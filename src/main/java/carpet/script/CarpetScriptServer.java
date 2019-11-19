@@ -36,8 +36,8 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class CarpetScriptServer
 {
     //make static for now, but will change that later:
-    public ScriptHost globalHost;
-    public Map<String, ScriptHost> modules;
+    public CarpetScriptHost globalHost;
+    public Map<String, CarpetScriptHost> modules;
     long tickStart;
     public boolean stopAll;
     Set<String> holyMoly;
@@ -129,9 +129,9 @@ public class CarpetScriptServer
     }
 
 
-    private ScriptHost createMinecraftScriptHost(String name, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
+    private CarpetScriptHost createMinecraftScriptHost(String name, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
     {
-        ScriptHost host = new ScriptHost(this, name, module, perPlayer, null );
+        CarpetScriptHost host = new CarpetScriptHost(this, name, module, perPlayer, null );
         host.globalVariables.put("_x", (c, t) -> Value.ZERO);
         host.globalVariables.put("_y", (c, t) -> Value.ZERO);
         host.globalVariables.put("_z", (c, t) -> Value.ZERO);
@@ -166,7 +166,7 @@ public class CarpetScriptServer
         //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
         ModuleInterface module = getModule(name);
-        ScriptHost newHost = createMinecraftScriptHost(name, module, perPlayer, source);
+        CarpetScriptHost newHost = createMinecraftScriptHost(name, module, perPlayer, source);
         if (newHost == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -200,7 +200,7 @@ public class CarpetScriptServer
 
     private boolean addConfig(ServerCommandSource source, String hostName)
     {
-        ScriptHost host = modules.get(hostName);
+        CarpetScriptHost host = modules.get(hostName);
         if (host == null || !host.globalFunctions.containsKey("__config"))
         {
             return false;
@@ -374,7 +374,7 @@ public class CarpetScriptServer
 
     public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, FunctionValue udf, List<LazyValue> argv)
     {
-        ScriptHost host = globalHost;
+        CarpetScriptHost host = globalHost;
         try
         {
             if (hostname != null)
@@ -391,7 +391,7 @@ public class CarpetScriptServer
     public void tick()
     {
         events.tick();
-        for (ScriptHost host : modules.values())
+        for (CarpetScriptHost host : modules.values())
         {
             host.tick();
         }

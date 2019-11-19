@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.CarpetServer;
+import carpet.script.CarpetScriptHost;
 import carpet.settings.CarpetSettings;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
@@ -273,12 +274,12 @@ public class ScriptCommand
                                 suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
                                 then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t))));
     }
-    private static ScriptHost getHost(CommandContext<ServerCommandSource> context)
+    private static CarpetScriptHost getHost(CommandContext<ServerCommandSource> context)
     {
         try
         {
             String name = StringArgumentType.getString(context, "app").toLowerCase(Locale.ROOT);
-            ScriptHost parentHost = CarpetServer.scriptServer.modules.getOrDefault(name, CarpetServer.scriptServer.globalHost);
+            CarpetScriptHost parentHost = CarpetServer.scriptServer.modules.getOrDefault(name, CarpetServer.scriptServer.globalHost);
             return parentHost.retrieveForExecution(context.getSource());
         }
         catch (IllegalArgumentException ignored)
@@ -370,7 +371,7 @@ public class ScriptCommand
     private static int invoke(CommandContext<ServerCommandSource> context, String call, BlockPos pos1, BlockPos pos2,  String args)
     {
         ServerCommandSource source = context.getSource();
-        ScriptHost host = getHost(context);
+        CarpetScriptHost host = getHost(context);
         if (call.startsWith("__"))
         {
             Messenger.m(source, "r Hidden functions are only callable in scripts");

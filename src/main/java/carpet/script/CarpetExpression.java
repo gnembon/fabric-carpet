@@ -3048,7 +3048,7 @@ public class CarpetExpression
                     throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
                 }
             }
-            Tag state = ((CarpetContext)c).host.getGlobalState(file);
+            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).getGlobalState(file);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -3074,7 +3074,7 @@ public class CarpetExpression
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
             Tag tag = tagValue.getTag();
-            ((CarpetContext)c).host.setGlobalState(tag, file);
+            ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file);
             return (cc, tt) -> Value.NULL;
         });
     }
