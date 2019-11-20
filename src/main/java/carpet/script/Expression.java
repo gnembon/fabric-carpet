@@ -191,8 +191,11 @@ import static java.lang.Math.min;
  * <h2>Functions and scoping</h2>
  * <p>
  * Users can define functions in the form <code>fun(args....) -&gt; expression </code> and they are compiled and saved
- * for further execution in this but also subsequent calls of /script command. This means that once defined functions
- * are saved with the world for further use. There are two types of variables,
+ * for further execution in this but also subsequent calls of /script command. Functions can also be assigned to variables,
+ * passed as arguments, called with <code>call</code> function, but in most cases you would want to call them directly
+ * by name, in the form of <code>fun(args...)</code>.
+ * This means that once defined functions
+ * are saved with the world for further use. For variables, there are two types of them,
  * global - which are shared anywhere in the code, and those are all which name starts with 'global_', and
  * local variables which is everything else and those are only visible inside each function.
  * This also means that all the parameters in functions are passed 'by value', not 'by reference'.
@@ -200,12 +203,12 @@ import static java.lang.Math.min;
  *
  * <h2>Outer variables</h2>
  * <p>Functions can still 'borrow' variables from the outer scope,
- * by adding them to the function signature wrapped around built-in function <code>outer</code>. What this does is
- * it borrows the reference to that variable from the outer scope to be used inside the function and any modifications to that outer
- * variable would result in changes of that value in the outer scope as well. Its like passing the parameters by reference,
- * except the calling function itself decides what variables its borrowing. Variables are borrowed from the local scope
- * when the function is defined, not used, so this can be used to modify static mutable values, without using global
- * variables. Check <code>outer(var)</code> for details.</p>
+ * by adding them to the function signature wrapped around built-in function <code>outer</code>.
+ * It adds the specified value to the function call stack so they behave exactly like capturing lambdas in Java, but
+ * unlike java captured variables don't need to be final. Scarpet will just attach their new values at the time of the
+ * function definition, even if they change later. Most value will be copied, but mutable values, like maps or lists, allow
+ * to keep the 'state' with the function, allowing them to have memory and act like objects so to speak.
+ * . Check <code>outer(var)</code> for details.</p>
  *
  *
  * <h2>Code delivery, line indicators</h2>
@@ -784,8 +787,8 @@ public class Expression implements Cloneable
      * scope, but not global, it needs to use <code>outer</code> function in function signature</p>
      * <h3><code>outer(arg)</code></h3>
      * <p><code>outer</code> function can only be used in the function signature, and it will
-     * cause an error everywhere else. It borrows the reference to that variable from the outer scope and allows
-     * its modification in the inner scope. This is a similar behaviour to using local variables in lambda function definitions
+     * cause an error everywhere else. It saves the value of that variable from the outer scope and allows
+     * its use in the inner scope. This is a similar behaviour to using outer variables in lambda function definitions
      * from Java, except here you have to specify which variables you want to use, and borrow</p>
      * <p>This mechanism can be used to use static mutable objects without the need of using <code>global_...</code> variables</p>
      * <pre>
@@ -800,9 +803,9 @@ public class Expression implements Cloneable
      * scoping allow to organize even larger scripts</p>
      * <h3><code>call(function, args.....)</code></h3>
      * <p>calls a user defined function with specified arguments. It is equivalent to calling <code>function(args...)</code>
-     * directly except you can use it with function name instead. This means you can pass functions to other user defined
+     * directly except you can use it with function value, or name instead. This means you can pass functions to other user defined
      * functions as arguments and call them with <code>call</code> internally. And since function definitions return the
-     * defined function name, they can be defined in place</p>
+     * defined function, they can be defined in place as anonymous functions.</p>
      * <p>Little technical note: the use of <code>_</code> in expression passed to built in functions is much more efficient due to
      * not creating new call stacks for each invoked function, but anonymous functions is the only mechanism available
      * for programmers with their own lambda arguments</p>
@@ -811,7 +814,8 @@ public class Expression implements Cloneable
      * my_map(l(1,2,3), _(x) -&gt; x*x);    // =&gt; [1,4,9]
      *
      * profile_expr(my_map(l(1,2,3), _(x) -&gt; x*x));   // =&gt; ~32000
-     * sq(x) -&gt; x*x; profile_expr(my_map(l(1,2,3),'sq'));   // =&gt; ~38000
+     * sq(x) -&gt; x*x; profile_expr(my_map(l(1,2,3), 'sq'));   // =&gt; ~36000
+     * sq = (_(x) -&gt; x*x); profile_expr(my_map(l(1,2,3), sq));   // =&gt; ~36000
      * profile_expr(map(l(1,2,3), _*_));   // =&gt; ~80000
      *
      * </pre>
