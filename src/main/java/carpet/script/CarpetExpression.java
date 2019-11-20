@@ -901,7 +901,7 @@ public class CarpetExpression
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
             if (sourceLocator.offset < lv.size())
             {
-                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
+                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateManager();
                 for (int i = sourceLocator.offset; i < lv.size(); i += 2)
                 {
                     String paramString = lv.get(i).evalValue(c).getString();
@@ -1073,7 +1073,7 @@ public class CarpetExpression
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'property' requires to specify a property to query");
             String tag = lv.get(locator.offset).evalValue(c).getString();
-            StateManager<Block, BlockState> states = state.getBlock().getStateFactory();
+            StateManager<Block, BlockState> states = state.getBlock().getStateManager();
             Property<?> property = states.getProperty(tag);
             if (property == null)
                 return LazyValue.NULL;
@@ -1085,7 +1085,7 @@ public class CarpetExpression
         {
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
-            StateManager<Block, BlockState> states = state.getBlock().getStateFactory();
+            StateManager<Block, BlockState> states = state.getBlock().getStateManager();
             Value res = ListValue.wrap(states.getProperties().stream().map(
                     p -> new StringValue(p.getName())).collect(Collectors.toList())
             );
