@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import java.util.Random;
 
 @Mixin(CoralBlock.class)
-@Interface(iface = Fertilizable.class, prefix = "fert$")
+//@Interface(iface = Fertilizable.class, prefix = "fert$")
 public abstract class CoralBlockMixin implements Fertilizable
 {
     public boolean isFertilizable(BlockView var1, BlockPos var2, BlockState var3, boolean var4)
