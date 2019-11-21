@@ -9,10 +9,13 @@ import java.util.List;
 import carpet.mixins.ExplosionAccessor;
 import carpet.settings.CarpetSettings;
 import carpet.utils.Messenger;
+import com.google.common.collect.Lists;
+import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.TntEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.fluid.FluidState;
@@ -27,9 +30,6 @@ import net.minecraft.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.ProtectionEnchantment;
 import net.minecraft.entity.Entity;
@@ -200,6 +200,9 @@ public class OptimizedExplosion
 
         if (damagesTerrain)
         {
+            ObjectArrayList<ItemStack> objectArrayList = new ObjectArrayList<>();
+            List<BlockPos> list = Lists.newArrayList();
+
             for (BlockPos blockpos : e.getAffectedBlocks())
             {
                 BlockState state = world.getBlockState(blockpos);
@@ -231,6 +234,8 @@ public class OptimizedExplosion
                 {
                     if (block.shouldDropItemsOnExplosion(e))
                     {
+                        list.add(blockpos.toImmutable());
+
                         BlockEntity blockEntity = block.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;
 
                         LootContext.Builder lootBuilder = new LootContext.Builder((ServerWorld) eAccess.getWorld())
@@ -242,12 +247,20 @@ public class OptimizedExplosion
                         if (eAccess.getBlockDestructionType() == Explosion.DestructionType.DESTROY)
                             lootBuilder.put(LootContextParameters.EXPLOSION_RADIUS, eAccess.getPower());
 
-                        Block.dropStacks(state, lootBuilder);
+                        state.getDroppedStacks(lootBuilder).forEach((itemStackx) -> {
+                            method_24023(objectArrayList, itemStackx);
+                        });
                     }
 
                     world.setBlockState(blockpos, Blocks.AIR.getDefaultState(), 3);
                     block.onDestroyedByExplosion(world, blockpos, e);
                 }
+            }
+            int i = list.size();
+
+            for (ItemStack itemStack : objectArrayList)
+            {
+                Block.dropStack(world, list.get(world.random.nextInt(i)), itemStack);
             }
         }
 
@@ -267,6 +280,25 @@ public class OptimizedExplosion
                 }
             }
         }
+    }
+
+    // copied from Explosion, need to move the code to the explosion code anyways and use shadows for
+    // simplicity, its not jarmodding anyways
+    private static void method_24023(ObjectArrayList<ItemStack> objectArrayList, ItemStack itemStack) {
+        int i = objectArrayList.size();
+
+        for(int j = 0; j < i; ++j) {
+            ItemStack itemStack2 = (ItemStack)objectArrayList.get(j);
+            if (ItemEntity.method_24017(itemStack2, itemStack)) {
+                ItemStack itemStack3 = ItemEntity.method_24018(itemStack2, itemStack, 16);
+                objectArrayList.set(j, itemStack3);
+                if (itemStack.isEmpty()) {
+                    return;
+                }
+            }
+        }
+
+        objectArrayList.add(itemStack);
     }
 
     private static void removeFast(List<Entity> lst, int index) {
