@@ -72,9 +72,9 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         return new MapValue(copyMap);
     }
 
-    public MapValue(Map<Value,Value> other)
+    private MapValue(Map<Value,Value> other)
     {
-        map = new HashMap<>(other);
+        map = other;
     }
 
     @Override

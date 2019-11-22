@@ -2343,7 +2343,7 @@ public class CarpetExpression
                 cz = (int)((NumericValue) lv.get(2).evalValue(c)).getLong();
                 if (lv.size()==3)
                 {
-                    Value retval = new ListValue(Arrays.asList(
+                    Value retval = ListValue.of(
                             BlockValue.fromCoords(cc, cx, cy-1, cz),
                             BlockValue.fromCoords(cc, cx, cy, cz),
                             BlockValue.fromCoords(cc, cx-1, cy, cz),
@@ -2351,7 +2351,7 @@ public class CarpetExpression
                             BlockValue.fromCoords(cc, cx+1, cy, cz),
                             BlockValue.fromCoords(cc, cx, cy, cz+1),
                             BlockValue.fromCoords(cc, cx, cy+1, cz)
-                    ));
+                    );
                     return (_c, _t ) -> retval;
                 }
                 else if (lv.size()==4)
