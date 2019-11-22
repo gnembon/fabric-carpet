@@ -2864,26 +2864,48 @@ public class Expression implements Cloneable
 
         addLazyFunction("undef", 1, (c, t, lv) ->
         {
-            String varname = lv.get(0).evalValue(c).getString();
-            if (varname.startsWith("_"))
-                throw new InternalExpressionException("Cannot replace local built-in variables, i.e. those that start with '_'");
-            if (varname.endsWith("*"))
+            Value remove = lv.get(0).evalValue(c);
+            if (remove instanceof FunctionValue)
             {
+                c.host.delFunction(remove.getString());
+                return (cc, tt) -> Value.NULL;
+            }
+            String varname = remove.getString();
+            boolean isPrefix = varname.endsWith("*");
+            if (isPrefix)
                 varname = varname.replaceAll("\\*+$", "");
+            if (isPrefix)
+            {
                 for (String key: c.host.globalFunctions.keySet())
                 {
-                    if (key.startsWith(varname)) c.host.globalFunctions.remove(key);
+                    if (key.startsWith(varname)) c.host.delFunction(key);
                 }
-                for (String key: c.host.globalVariables.keySet())
+                if (varname.startsWith("global_"))
                 {
-                    if (key.startsWith(varname)) c.host.globalVariables.remove(key);
+                    for (String key : c.host.globalVariables.keySet())
+                    {
+                        if (key.startsWith(varname)) c.host.delGlobalVariable(key);
+                    }
                 }
-                c.clearAll(varname);
+                if (!varname.startsWith("_"))
+                {
+                    for (String key : c.variables.keySet())
+                    {
+                        if (key.startsWith(varname)) c.delVariable(key);
+                    }
+                }
             }
             else
             {
-                c.host.globalFunctions.remove(varname);
-                c.delVariable(varname);
+                c.host.delFunction(varname);
+                if (varname.startsWith("global_"))
+                {
+                    c.host.delGlobalVariable(varname);
+                }
+                if (!varname.startsWith("_"))
+                {
+                    c.delVariable(varname);
+                }
             }
             return (cc, tt) -> Value.NULL;
         });

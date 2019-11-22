@@ -61,6 +61,20 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
+    @Override
+    public void delFunction(String funName)
+    {
+        super.delFunction(funName);
+        // mcarpet
+        if (funName.startsWith("__on_"))
+        {
+            // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
+            String event = funName.replaceFirst("__on_","");
+            if (CarpetEventServer.Event.byName.containsKey(event))
+                scriptServer.events.removeEventDirectly(event, this, funName);
+        }
+    }
+
     public CarpetScriptHost retrieveForExecution(ServerCommandSource source)
     {
         if (!perUser)
