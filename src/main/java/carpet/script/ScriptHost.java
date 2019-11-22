@@ -46,6 +46,16 @@ public class ScriptHost
         globalFunctions.put(funName, function);
     }
 
+    public void delFunction(String funName)
+    {
+        globalFunctions.remove(funName);
+    }
+
+    public void delGlobalVariable(String varName)
+    {
+        globalFunctions.remove(varName);
+    }
+
     public ScriptHost retrieveForExecution(String /*Nullable*/ user)
     {
         if (!perUser)

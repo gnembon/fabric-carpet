@@ -479,6 +479,7 @@ public class CarpetEventServer
         return Event.byName.get(event).handler.addEventCallDirect(host, function);
     }
 
+
     public boolean removeEvent(String event, String funName)
     {
 
@@ -487,6 +488,11 @@ public class CarpetEventServer
         Pair<String,String> call = decodeCallback(funName);
         Event.byName.get(event).handler.removeEventCall(call.getLeft(), call.getRight());
         return true;
+    }
+
+    public void removeEventDirectly(String event, ScriptHost host, String funName)
+    {
+        Event.byName.get(event).handler.removeEventCall(host.getName(), funName);
     }
 
     public void removeAllHostEvents(String hostName)

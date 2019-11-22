@@ -58,6 +58,11 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         items.addAll(list);
     }
 
+    private ListValue(List<Value> list)
+    {
+        items = list;
+    }
+
     public static Value fromItemStack(ItemStack itemstack)
     {
         if (itemstack == null || itemstack.isEmpty())
@@ -307,7 +312,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         if (from < 0 || from > size) from = size;
         if (from > to)
             return ListValue.of();
-        return new ListValue(getItems().subList((int)from, (int) to));
+        return new ListValue((Collection<? extends Value>) getItems().subList((int)from, (int) to));
     }
 
     @Override
