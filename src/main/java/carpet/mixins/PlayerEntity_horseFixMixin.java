@@ -28,7 +28,7 @@ public abstract class PlayerEntity_horseFixMixin extends Entity
     {
         super(entityType_1, world_1);
     }
-
+    /* fixed in 1.15 pre-2
     @Inject(method = "stopRiding", at = @At("HEAD"))
     private void resetNavigation(CallbackInfo ci)
     {
@@ -38,11 +38,11 @@ public abstract class PlayerEntity_horseFixMixin extends Entity
                 ((MobEntity) getVehicle()).getNavigation().stop();
             if (!getEntityWorld().isClient)
             {
-                ((ServerWorld) getEntityWorld()).method_14178().sendToNearbyPlayers(this, new EntityPositionS2CPacket(getVehicle()));
+                ((ServerWorld) getEntityWorld()).getChunkManager().sendToNearbyPlayers(this, new EntityPositionS2CPacket(getVehicle()));
                 // not sure if player at this point is actually considered to be next to the exiting vehicle
                 ((ServerPlayerEntity)(Object)this).networkHandler.sendPacket(new EntityPositionS2CPacket(getVehicle()));
                 ((ServerPlayerEntity)(Object)this).networkHandler.sendPacket(new VehicleMoveS2CPacket(getVehicle()));
             }
         }
-    }
+    }*/
 }

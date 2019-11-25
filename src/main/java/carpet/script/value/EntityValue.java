@@ -466,7 +466,7 @@ public class EntityValue extends Value
         else
         {
             e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
-            ((ServerWorld) e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
+            ((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
         }
 
     }

@@ -107,7 +107,7 @@ public class PerimeterDiagnostics
                     pos = new BlockPos(eX+x, y, eZ+z);
 
                     BlockState iblockstate = worldserver.getBlockState(pos);
-                    BlockState iblockstate_down = worldserver.getBlockState(pos.method_10074());
+                    BlockState iblockstate_down = worldserver.getBlockState(pos.down());
                     BlockState iblockstate_up = worldserver.getBlockState(pos.up());
 
                     if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isSimpleFullBlock(worldserver, pos))
@@ -155,10 +155,10 @@ public class PerimeterDiagnostics
 
     private boolean check_entity_spawn(BlockPos pos)
     {
-        if (sle == null || !worldServer.method_14178().getChunkGenerator().getEntitySpawnList(ctype, pos).contains(sle))
+        if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(ctype, pos).contains(sle))
         {
             sle = null;
-            for (Biome.SpawnEntry sle: worldServer.method_14178().getChunkGenerator().getEntitySpawnList(ctype, pos))
+            for (Biome.SpawnEntry sle: worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(ctype, pos))
             {
                 if (el.getType() == sle.type)
                 {
@@ -166,7 +166,7 @@ public class PerimeterDiagnostics
                     break;
                 }
             }
-            if (sle == null || !worldServer.method_14178().getChunkGenerator().getEntitySpawnList(ctype, pos).contains(sle))
+            if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(ctype, pos).contains(sle))
             {
                 return false;
             }

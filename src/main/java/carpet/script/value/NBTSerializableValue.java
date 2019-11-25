@@ -488,7 +488,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             return res;
         try
         {
-            res = NbtPathArgumentType.nbtPath().method_9362(new StringReader(arg));
+            res = NbtPathArgumentType.nbtPath().parse(new StringReader(arg));
         }
         catch (CommandSyntaxException exc)
         {

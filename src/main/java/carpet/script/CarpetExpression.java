@@ -307,10 +307,10 @@ public class CarpetExpression
         for (int i = 0; i<16; i++)
         {
             BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
-            world.method_14178().markForUpdate(section);
-            world.method_14178().markForUpdate(section.east());
-            world.method_14178().markForUpdate(section.west());
-            world.method_14178().markForUpdate(section.north());
+            world.getChunkManager().markForUpdate(section);
+            world.getChunkManager().markForUpdate(section.east());
+            world.getChunkManager().markForUpdate(section.west());
+            world.getChunkManager().markForUpdate(section.north());
         }
     }
 
@@ -748,7 +748,7 @@ public class CarpetExpression
             int howMuch = 1;
             if (lv.size() > locator.offset+1)
                 howMuch = (int) NumericValue.asNumber(lv.get(locator.offset+1).evalValue(c)).getLong();
-            BlockPos retpos = pos.method_10079(dir, howMuch);
+            BlockPos retpos = pos.offset(dir, howMuch);
             Value ret = ListValue.of(new NumericValue(retpos.getX()), new NumericValue(retpos.getY()), new NumericValue(retpos.getZ()));
             return (cc, tt) -> ret;
         });
@@ -927,7 +927,7 @@ public class CarpetExpression
                 BlockEntity be = world.getBlockEntity(targetPos);
                 if (be != null)
                 {
-                    CompoundTag destTag = data.method_10553();
+                    CompoundTag destTag = data.copy();
                     destTag.putInt("x", targetPos.getX());
                     destTag.putInt("y", targetPos.getY());
                     destTag.putInt("z", targetPos.getZ());
@@ -2208,7 +2208,7 @@ public class CarpetExpression
 
             List<Value> neighbours = new ArrayList<>();
             neighbours.add(new BlockValue(null, world, center.up()));
-            neighbours.add(new BlockValue(null, world, center.method_10074()));
+            neighbours.add(new BlockValue(null, world, center.down()));
             neighbours.add(new BlockValue(null, world, center.north()));
             neighbours.add(new BlockValue(null, world, center.south()));
             neighbours.add(new BlockValue(null, world, center.east()));

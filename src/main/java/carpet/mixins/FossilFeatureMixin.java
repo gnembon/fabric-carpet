@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(FossilFeature.class)
 public class FossilFeatureMixin
 {
-    @Redirect(method = "method_13236", at = @At(
+    @Redirect(method = "generate", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/IWorld;getTopY(Lnet/minecraft/world/Heightmap$Type;II)I"
     ))

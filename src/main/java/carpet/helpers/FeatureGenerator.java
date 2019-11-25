@@ -40,7 +40,7 @@ public class FeatureGenerator
     {
         return (w, p) -> {
             CarpetSettings.skipGenerationChecks=true;
-            boolean res = feature.generate(w, w.method_14178().getChunkGenerator(), w.random, p, config);
+            boolean res = feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p, config);
             CarpetSettings.skipGenerationChecks=false;
             return res;
         };
@@ -52,7 +52,7 @@ public class FeatureGenerator
         //if (1+2==3)
         //    throw new RuntimeException("rebuild me");
         return (w, p) -> {
-            ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.method_14178().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
+            ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.getChunkManager().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
             {
                 @Override
                 public <C extends FeatureConfig> C getStructureConfig(Biome biome_1, StructureFeature<C> structureFeature_1)

@@ -165,7 +165,7 @@ public class SpawnReporter
     
     public static List<BaseText> show_mobcaps(BlockPos pos, World worldIn)
     {
-        DyeColor under = WoolTool.getWoolColorAtPosition(worldIn, pos.method_10074());
+        DyeColor under = WoolTool.getWoolColorAtPosition(worldIn, pos.down());
         if (under == null)
         {
             if (track_spawns > 0L)
@@ -401,7 +401,7 @@ public class SpawnReporter
         for (EntityCategory enumcreaturetype : EntityCategory.values())
         {
             String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
-            List<Biome.SpawnEntry> lst = ((ChunkGenerator)worldIn.method_14178().getChunkGenerator()).getEntitySpawnList(enumcreaturetype, pos);
+            List<Biome.SpawnEntry> lst = ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(enumcreaturetype, pos);
             if (lst != null && !lst.isEmpty())
             {
                 for (Biome.SpawnEntry spawnEntry : lst)

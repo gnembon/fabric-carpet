@@ -35,7 +35,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos)
     {
-        return plopAnywhere(world, pos, world.method_14178().getChunkGenerator());
+        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator());
     }
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator)
