@@ -28,7 +28,6 @@ import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import net.minecraft.block.BarrierBlock;
 import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
@@ -73,6 +72,7 @@ import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.SortedArraySet;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
@@ -93,7 +93,6 @@ import net.minecraft.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -865,7 +864,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("chunk_tickets", -1, (c, t, lv) ->
         {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
-            Long2ObjectOpenHashMap<ObjectSortedSet<ChunkTicket<?>>> levelTickets = (
+            Long2ObjectOpenHashMap<SortedArraySet<ChunkTicket<?>>> levelTickets = (
                     (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.getChunkManager())
                             .getTicketManager()
             ).getTicketsByPosition();
@@ -890,7 +889,7 @@ public class CarpetExpression
             {
                 BlockValue.LocatorResult locatorResult = BlockValue.fromParams((CarpetContext) c, lv, 0);
                 BlockPos pos = locatorResult.block.getPos();
-                ObjectSortedSet<ChunkTicket<?>> tickets = levelTickets.get(new ChunkPos(pos).toLong());
+                SortedArraySet<ChunkTicket<?>> tickets = levelTickets.get(new ChunkPos(pos).toLong());
                 if (tickets != null)
                 {
                     for (ChunkTicket ticket : tickets)
