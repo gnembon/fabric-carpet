@@ -866,7 +866,7 @@ public class CarpetExpression
         {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
             Long2ObjectOpenHashMap<ObjectSortedSet<ChunkTicket<?>>> levelTickets = (
-                    (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.method_14178())
+                    (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.getChunkManager())
                             .getTicketManager()
             ).getTicketsByPosition();
             List<Value> res = new ArrayList<>();
