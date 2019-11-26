@@ -4,6 +4,8 @@ import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.mixins.ChunkTicketManager_scarpetMixin;
+import carpet.mixins.ServerChunkManager_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExitStatement;
@@ -25,6 +27,8 @@ import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import net.minecraft.block.BarrierBlock;
 import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
@@ -60,6 +64,7 @@ import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
@@ -90,6 +95,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -854,6 +860,51 @@ public class CarpetExpression
                 return LazyValue.NULL;
             Value retval = new StringValue(chunk.getStatus().getId());
             return (c_, t_) -> retval;
+        });
+
+        this.expr.addLazyFunction("chunk_tickets", -1, (c, t, lv) ->
+        {
+            ServerWorld world = ((CarpetContext) c).s.getWorld();
+            Long2ObjectOpenHashMap<ObjectSortedSet<ChunkTicket<?>>> levelTickets = (
+                    (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.method_14178())
+                            .getTicketManager()
+            ).getTicketsByPosition();
+            List<Value> res = new ArrayList<>();
+            if (lv.size() == 0)
+            {
+                for (long key : levelTickets.keySet())
+                {
+                    ChunkPos chpos = new ChunkPos(key);
+                    for (ChunkTicket ticket : levelTickets.get(key))
+                    {
+                        res.add(ListValue.of(
+                                new StringValue(ticket.getType().toString()),
+                                new NumericValue(33 - ticket.getLevel()),
+                                new NumericValue(chpos.x),
+                                new NumericValue(chpos.z)
+                        ));
+                    }
+                }
+            }
+            else
+            {
+                BlockValue.LocatorResult locatorResult = BlockValue.fromParams((CarpetContext) c, lv, 0);
+                BlockPos pos = locatorResult.block.getPos();
+                ObjectSortedSet<ChunkTicket<?>> tickets = levelTickets.get(new ChunkPos(pos).toLong());
+                if (tickets != null)
+                {
+                    for (ChunkTicket ticket : tickets)
+                    {
+                        res.add(ListValue.of(
+                                new StringValue(ticket.getType().toString()),
+                                new NumericValue(33 - ticket.getLevel())
+                        ));
+                    }
+                }
+            }
+            res.sort(Comparator.comparing(e -> ((ListValue) e).getItems().get(1)).reversed());
+            Value returnValue = ListValue.wrap(res);
+            return (_c, _t) -> returnValue;
         });
 
         this.expr.addLazyFunction("suffocates", -1, (c, t, lv) ->
