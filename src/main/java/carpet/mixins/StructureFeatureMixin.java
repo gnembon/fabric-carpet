@@ -116,7 +116,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
                 return structurestart;
             }
         }
-        Biome biome_1 = generator.getBiomeSource().getStoredBiome((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
+        Biome biome_1 = generator.getBiomeSource().getBiomeForNoiseGen((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
         StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,generator.getSeed());
         structurestart1.initialize(generator, ((ServerWorld)worldIn).getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;

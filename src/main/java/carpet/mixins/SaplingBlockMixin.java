@@ -23,7 +23,7 @@ public abstract class SaplingBlockMixin
             cancellable = true)
     private void onGenerate(ServerWorld serverWorld_1, BlockPos blockPos_1, BlockState blockState_1, Random random_1, CallbackInfo ci)
     {
-        if(CarpetSettings.desertShrubs && serverWorld_1.method_23753(blockPos_1) == Biomes.DESERT && !BlockSaplingHelper.hasWater(serverWorld_1, blockPos_1))
+        if(CarpetSettings.desertShrubs && serverWorld_1.getBiome(blockPos_1) == Biomes.DESERT && !BlockSaplingHelper.hasWater(serverWorld_1, blockPos_1))
         {
             serverWorld_1.setBlockState(blockPos_1, Blocks.DEAD_BUSH.getDefaultState(), 3);
             ci.cancel();

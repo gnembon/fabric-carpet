@@ -1147,7 +1147,7 @@ public class CarpetExpression
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Biome biome = world.method_23753(pos);
+            Biome biome = world.getBiome(pos);
             Value res = new StringValue(biome.getTranslationKey().replaceFirst("^biome\\.minecraft\\.", ""));
             return (_c, _t) -> res;
         });
