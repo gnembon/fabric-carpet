@@ -33,27 +33,14 @@ public class PortalForcer_portalSuffocationMixin
 
     @Redirect(method = "usePortal", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;setPositionAndAngles(DDDFF)V"
+            target = "Lnet/minecraft/entity/Entity;method_24203(DDD)V"
     ))
-    private void alternativeSetPositionAndAngles(Entity entity, double double_1, double double_2, double double_3, float float_1, float float_2)
+    private void alternativeSetPositionAndAngles(Entity entity, double d, double e, double f)
     {
         if (CarpetSettings.portalSuffocationFix && CarpetSettings.fixedPosition != null)
-            entity.setPositionAndAngles(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z, float_1, float_2);
+            entity.method_24203(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z);
         else
-            entity.setPositionAndAngles(double_1, double_2, double_3, float_1, float_2);
-
-    }
-
-    @Redirect(method = "usePortal", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;requestTeleport(DDDFF)V"
-    ))
-    private void alternativeSetPositionAndAngles(ServerPlayNetworkHandler serverPlayNetworkHandler, double double_1, double double_2, double double_3, float float_1, float float_2)
-    {
-        if (CarpetSettings.portalSuffocationFix && CarpetSettings.fixedPosition != null)
-            serverPlayNetworkHandler.requestTeleport(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z, float_1, float_2);
-        else
-            serverPlayNetworkHandler.requestTeleport(double_1, double_2, double_3, float_1, float_2);
+            entity.method_24203(d, e, f);
 
     }
 
