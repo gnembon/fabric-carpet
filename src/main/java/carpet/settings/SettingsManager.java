@@ -259,9 +259,7 @@ public class SettingsManager
         }
     }
 
-
-
-    public Collection<ParsedRule<?>> getRulesMatching(String search) {
+    private Collection<ParsedRule<?>> getRulesMatching(String search) {
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return rules.values().stream().filter(rule ->
         {
@@ -270,7 +268,7 @@ public class SettingsManager
             if (Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch))
                 return true; // contains full term in description, but case insensitive
             return false;
-        }).collect(ImmutableList.toImmutableList());
+        }).sorted().collect(ImmutableList.toImmutableList());
     }
 
     public int printAllRulesToLog(String category)
