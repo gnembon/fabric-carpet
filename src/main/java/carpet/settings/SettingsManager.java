@@ -270,7 +270,7 @@ public class SettingsManager
             if (Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch))
                 return true; // contains full term in description, but case insensitive
             return false;
-        }).collect(ImmutableList.toImmutableList());
+        }).sorted().collect(ImmutableList.toImmutableList());
     }
 
     public int printAllRulesToLog(String category)
