@@ -9,7 +9,6 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class CarpetEventServer
 {
@@ -41,53 +41,55 @@ public class CarpetEventServer
     public static class Callback
     {
         public String host;
-        public FunctionValue udf;
+        public FunctionValue function;
 
-        public Callback(String host, FunctionValue udf)
+        public Callback(String host, FunctionValue function)
         {
             this.host = host;
-            this.udf = udf;
+            this.function = function;
         }
 
         @Override
         public String toString()
         {
-            return udf.getString()+((host==null)?"":"(from "+host+")");
+            return function.getString()+((host==null)?"":"(from "+host+")");
         }
     }
 
     public static class ScheduledCall extends Callback
     {
-        public List<LazyValue> args;
-        public ServerCommandSource context_source;
-        public BlockPos context_origin;
+        public List<Value> args;
+        private CarpetContext ctx;
         public long dueTime;
 
-        public ScheduledCall(CarpetContext context, FunctionValue udf, List<LazyValue> args, long dueTime)
+        public ScheduledCall(CarpetContext context, FunctionValue function, List<Value> args, long dueTime)
         {
-            super(context.host.getName(), udf);
+            super(context.host.getName(), function);
             this.args = args;
-            this.context_source = context.s;
-            this.context_origin = context.origin;
+            this.ctx = context;
             this.dueTime = dueTime;
         }
 
         public void execute()
         {
-            CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, args);
+            CarpetServer.scriptServer.runas(ctx.origin, ctx.s, host, function, lazify(args));
         }
 
-        public void execute(List<LazyValue> args)
+        public void execute(List<Value> args)
         {
-            if (this.args == null)
-                CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, args);
+            if (this.args == null || this.args.isEmpty())
+                CarpetServer.scriptServer.runas(ctx.origin, ctx.s, host, function, lazify(args));
             else
             {
-                List<LazyValue> combinedArgs = new ArrayList<>();
+                List<Value> combinedArgs = new ArrayList<>();
                 combinedArgs.addAll(args);
                 combinedArgs.addAll(this.args);
-                CarpetServer.scriptServer.runas(context_origin, context_source, host, udf, combinedArgs);
+                CarpetServer.scriptServer.runas(ctx.origin, ctx.s, host, function, lazify(combinedArgs));
             }
+        }
+        private List<LazyValue> lazify(List<Value> args)
+        {
+            return args.stream().map(v -> (LazyValue) (c, t) -> v ).collect(Collectors.toList());
         }
     }
 
@@ -110,7 +112,7 @@ public class CarpetEventServer
                 List<LazyValue> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source = cmdSourceSupplier.get();
                 assert argv.size() == reqArgs;
-                callList.removeIf(call -> !CarpetServer.scriptServer.runas(source, call.host, call.udf, argv)); // this actually does the calls
+                callList.removeIf(call -> !CarpetServer.scriptServer.runas(source, call.host, call.function, argv)); // this actually does the calls
             }
         }
         public boolean addEventCall(String hostName, String funName)
@@ -148,7 +150,7 @@ public class CarpetEventServer
 
         public void removeEventCall(String hostName, String funName)
         {
-            callList.removeIf((c)->  c.udf.getString().equals(funName) && ( hostName == null || c.host.equalsIgnoreCase(hostName) ) );
+            callList.removeIf((c)->  c.function.getString().equals(funName) && ( hostName == null || c.host.equalsIgnoreCase(hostName) ) );
         }
 
         public void removeAllCalls(String hostName)
@@ -460,7 +462,7 @@ public class CarpetEventServer
         }
 
     }
-    public void scheduleCall(CarpetContext context, FunctionValue function, List<LazyValue> args, long due)
+    public void scheduleCall(CarpetContext context, FunctionValue function, List<Value> args, long due)
     {
         scheduledCalls.add(new ScheduledCall(context, function, args, due));
     }
@@ -509,61 +511,5 @@ public class CarpetEventServer
             return Pair.of(matcher.group(2), matcher.group(1));
         }
         return Pair.of(null, funName);
-    }
-
-    private ScheduledCall makeEventCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs, int argCount)
-    {
-        if (function == null || (function.getArguments().size()-(extraArgs == null ? 0 : extraArgs.size())) != argCount)
-        {
-            // call won't match arguments
-            return null;
-        }
-        List<LazyValue> lazyArgs = null;
-        if (extraArgs != null)
-        {
-            lazyArgs = new ArrayList<>();
-            for (Value v : extraArgs)
-                lazyArgs.add( (c, t) -> v);
-        }
-        return new ScheduledCall(cc, function, lazyArgs, 0);
-    }
-
-    public ScheduledCall makeDeathCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
-    {
-        return makeEventCall(cc, function, extraArgs, 2);
-    }
-    public ScheduledCall makeRemovedCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
-    {
-        return makeEventCall(cc, function, extraArgs, 1);
-    }
-    public ScheduledCall makeTickCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
-    {
-        return makeEventCall(cc, function, extraArgs, 1);
-    }
-    public ScheduledCall makeDamageCall(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
-    {
-        return makeEventCall(cc, function, extraArgs, 4);
-    }
-
-    public void onEntityDeath(ScheduledCall call, Entity e, String reason)
-    {
-        call.execute( Arrays.asList( (c, t)-> new EntityValue(e), (c, t)-> new StringValue(reason)));
-    }
-    public void onEntityRemoved(ScheduledCall removeCall, Entity entity)
-    {
-        removeCall.execute(Collections.singletonList((c, t) -> new EntityValue(entity)));
-    }
-    public void onEntityTick(ScheduledCall tickCall, Entity entity)
-    {
-        tickCall.execute(Collections.singletonList((c, t) -> new EntityValue(entity)));
-    }
-    public void onEntityDamage(ScheduledCall call, Entity e, float amount, DamageSource source)
-    {
-        call.execute(Arrays.asList(
-                (c, t) -> new EntityValue(e),
-                (c, t) -> new NumericValue(amount),
-                (c, t) -> new StringValue(source.getName()),
-                (c, t) -> source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
-        ));
     }
 }
