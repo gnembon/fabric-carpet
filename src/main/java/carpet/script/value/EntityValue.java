@@ -5,7 +5,7 @@ import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
 import carpet.script.CarpetContext;
-import carpet.script.Fluff;
+import carpet.script.EntityEventsGroup;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -775,17 +775,11 @@ public class EntityValue extends Value
         // "nbt" <-big one, for now use run('data merge entity ...
     }};
 
-    public void setEvent(CarpetContext cc, String event, FunctionValue fun, List<Value> args)
+    public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
     {
-        if (!(events.containsKey(event)))
-            throw new InternalExpressionException("Unknown entity event: " + event);
-        events.get(event).accept(cc, entity, fun, args);
+        EntityEventsGroup.EntityEventType event = EntityEventsGroup.EntityEventType.byName.get(eventName);
+        if (event == null)
+            throw new InternalExpressionException("Unknown entity event: " + eventName);
+        ((EntityInterface)entity).getEventContainer().addEvent(event, cc, fun, args);
     }
-
-    private static Map<String, Fluff.QuadConsumer<CarpetContext, Entity, FunctionValue, List<Value>>> events = new HashMap<String, Fluff.QuadConsumer<CarpetContext, Entity, FunctionValue, List<Value>>>() {{
-        put("on_death", (c, e, f, l) -> ((EntityInterface)e).setDeathCallback(c, f, l));
-        put("on_removed", (c, e, f, l) -> ((EntityInterface)e).setRemovedCallback(c, f, l));
-        put("on_tick", (c, e, f, l) -> ((EntityInterface)e).setTickCallback(c, f, l));
-        put("on_damaged", (c, e, f, l) -> ((EntityInterface)e).setDamageCallback(c, f, l));
-    }};
 }

@@ -15,7 +15,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -26,7 +25,6 @@ import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.command.arguments.BlockStateArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
@@ -305,7 +303,7 @@ public class ScriptCommand
                     Messenger.m(source, "w Handlers for "+event.name+": ");
                     shownEvent = true;
                 }
-                Messenger.m(source, "w  - "+c.udf+(c.host==null?"":" (from "+c.host+")"));
+                Messenger.m(source, "w  - "+c.function +(c.host==null?"":" (from "+c.host+")"));
             }
         }
         return 1;

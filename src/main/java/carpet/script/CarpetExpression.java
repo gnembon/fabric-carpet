@@ -3084,11 +3084,11 @@ public class CarpetExpression
             FunctionValue function = (FunctionValue)functionValue;
 
             CarpetContext cc = (CarpetContext)c;
-            List<LazyValue> args = new ArrayList<>();
+            List<Value> args = new ArrayList<>();
             for (int i=2; i < lv.size(); i++)
             {
                 Value arg = lv.get(i).evalValue(cc);
-                args.add( (_c, _t) -> arg);
+                args.add(arg);
             }
             if (function.getArguments().size() != args.size())
                 throw new InternalExpressionException("Function "+function.getString()+" takes "+

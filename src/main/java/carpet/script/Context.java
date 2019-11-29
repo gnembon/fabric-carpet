@@ -3,7 +3,6 @@ package carpet.script;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public class Context
 {
@@ -20,7 +19,7 @@ public class Context
 
     public Map<String, LazyValue> variables = new HashMap<>();
 
-    protected ScriptHost host;
+    public ScriptHost host;
 
     Context(ScriptHost host)
     {
