@@ -413,8 +413,8 @@ public class SettingsManager
     {
         if (rule.set(source, newValue) != null)
             Messenger.m(source, "w "+rule.toString()+", ", "c [change permanently?]",
-                    "^w Click to keep the settings in carpet.conf to save across restarts",
-                    "?/carpet setDefault "+rule.name+" "+rule.getAsString());
+                    "^w Click to keep the settings in "+identifier+".conf to save across restarts",
+                    "?/"+identifier+" setDefault "+rule.name+" "+rule.getAsString());
         return 1;
     }
 
