@@ -174,7 +174,7 @@ public class BlockValue extends Value
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Position should be defined either by three coordinates, or a block value");
+            throw new InternalExpressionException("Block should be defined either by three coordinates, a block value, or a proper string");
         }
     }
 
