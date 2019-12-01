@@ -4,6 +4,7 @@ import carpet.helpers.EntityPlayerActionPack;
 import carpet.settings.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
+import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
@@ -44,7 +45,7 @@ public class PlayerCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("player")
-                .requires((player) -> CarpetSettings.commandPlayer)
+                .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandPlayer))
                 .then(argument("player", StringArgumentType.word())
                         .suggests( (c, b) -> suggestMatching(getPlayers(c.getSource()), b))
                         .then(literal("stop").executes(PlayerCommand::stop))

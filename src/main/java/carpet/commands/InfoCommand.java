@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.settings.CarpetSettings;
+import carpet.settings.SettingsManager;
 import carpet.utils.BlockInfo;
 import carpet.utils.EntityInfo;
 import carpet.utils.Messenger;
@@ -29,7 +30,7 @@ public class InfoCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> command = literal("info").
-                requires((player) -> CarpetSettings.commandInfo).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandInfo)).
                 then(literal("block").
                         then(argument("block position", BlockPosArgumentType.blockPos()).
                                 executes( (c) -> infoBlock(

@@ -3,6 +3,7 @@ package carpet.commands;
 import carpet.settings.CarpetSettings;
 import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
+import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -26,7 +27,7 @@ public class LogCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = CommandManager.literal("log").
-                requires((player) -> CarpetSettings.commandLog).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandLog)).
                 executes((context) -> listLogs(context.getSource())).
                 then(CommandManager.literal("clear").
                         executes( (c) -> unsubFromAll(c.getSource(), c.getSource().getName())).

@@ -25,6 +25,7 @@ import static carpet.settings.RuleCategory.FEATURE;
 import static carpet.settings.RuleCategory.OPTIMIZATION;
 import static carpet.settings.RuleCategory.SURVIVAL;
 import static carpet.settings.RuleCategory.TNT;
+import static carpet.settings.RuleCategory.DISPENSER;
 
 public class CarpetSettings
 {
@@ -108,7 +109,7 @@ public class CarpetSettings
         }
     }
 
-    @Rule( desc = "Sets the tnt random explosion range to a fixed value", category = TNT, options = "-1",
+    @Rule( desc = "Sets the tnt random explosion range to a fixed value", category = TNT, options = "-1", strict = false,
             validate = {CheckOptimizedTntEnabledValidator.class, TNTRandomRangeValidator.class}, extra = "Set to -1 for default behavior")
     public static double tntRandomRange = -1;
 
@@ -124,7 +125,7 @@ public class CarpetSettings
         }
     }
 
-    @Rule( desc = "Sets the horizontal random angle on TNT for debugging of TNT contraptions", category = TNT, options = "-1",
+    @Rule( desc = "Sets the horizontal random angle on TNT for debugging of TNT contraptions", category = TNT, options = "-1", strict = false,
             validate = TNTAngleValidator.class, extra = "Set to -1 for default behavior")
     public static double hardcodeTNTangle;
 
@@ -218,23 +219,20 @@ public class CarpetSettings
     public static boolean summonNaturalLightning = false;
 
     @Rule(desc = "Enables /spawn command for spawn tracking", category = COMMAND)
-    public static boolean commandSpawn = true;
+    public static String commandSpawn = "true";
 
     @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND)
-    public static boolean commandTick = true;
+    public static String commandTick = "true";
 
-    @Rule(
-            desc = "Enables /log command to monitor events in the game via chat and overlays",
-            category = COMMAND//,
-            //validate = Validator.WIP.class
-    )
-    public static boolean commandLog = true;
+    @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
+    public static String commandLog = "true";
 
     @Rule(
             desc = "sets these loggers in their default configurations for all new players",
             extra = "use csv, like 'tps,mobcaps' for multiple loggers, none for nothing",
             category = {CREATIVE, SURVIVAL},
-            options = {"none", "tps", "mobcaps,tps"}
+            options = {"none", "tps", "mobcaps,tps"},
+            strict = false
     )
     public static String defaultLoggers = "none";
 
@@ -243,7 +241,7 @@ public class CarpetSettings
             extra = "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
             category = COMMAND
     )
-    public static boolean commandDistance = true;
+    public static String commandDistance = "true";
 
     @Rule(
             desc = "Enables /info command for blocks",
@@ -253,24 +251,24 @@ public class CarpetSettings
             },
             category = COMMAND
     )
-    public static boolean commandInfo = true;
+    public static String commandInfo = "true";
 
     @Rule(
             desc = "Enables /c and /s commands to quickly switch between camera and survival modes",
             extra = "/c and /s commands are available to all players regardless of their permission levels",
             category = COMMAND
     )
-    public static boolean commandCameramode = true;
+    public static String commandCameramode = "true";
 
     @Rule(
             desc = "Enables /perimeterinfo command",
             extra = "... that scans the area around the block for potential spawnable spots",
             category = COMMAND
     )
-    public static boolean commandPerimeterInfo = true;
+    public static String commandPerimeterInfo = "true";
 
     @Rule(desc = "Enables /draw commands", extra = "... allows for drawing simple shapes", category = COMMAND)
-    public static boolean commandDraw = true;
+    public static String commandDraw = "true";
 
     @Rule(desc = "Enables /script command", extra = "An in-game scripting API for Scarpet programming language", category = COMMAND)
     public static boolean commandScript = true;
@@ -283,10 +281,10 @@ public class CarpetSettings
     public static boolean scriptsAutoload = false;
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
-    public static boolean commandPlayer = true;
+    public static String commandPlayer = "true";
 
     @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND)
-    public static boolean commandTrackAI = true;
+    public static String commandTrackAI = "true";
 
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
     public static boolean carpets = false;
@@ -308,7 +306,7 @@ public class CarpetSettings
             extra="Increases player allowed mining distance to 32 blocks",
             category = SURVIVAL
     )
-    public static boolean miningGhostBlockFix;
+    public static boolean miningGhostBlockFix = false;
 
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
@@ -321,6 +319,7 @@ public class CarpetSettings
             desc = "Customizable piston push limit",
             options = {"10", "12", "14", "100"},
             category = CREATIVE,
+            strict = false,
             validate = PushLimitLimits.class
     )
     public static int pushLimit = 12;
@@ -329,6 +328,7 @@ public class CarpetSettings
             desc = "Customizable powered rail power range",
             options = {"9", "15", "30"},
             category = CREATIVE,
+            strict = false,
             validate = PushLimitLimits.class
     )
     public static int railPowerLimit = 9;
@@ -344,6 +344,7 @@ public class CarpetSettings
             desc = "Customizable fill/clone volume limit",
             options = {"32768", "250000", "1000000"},
             category = CREATIVE,
+            strict = false,
             validate = FillLimitLimits.class
     )
     public static int fillLimit = 32768;
@@ -352,17 +353,12 @@ public class CarpetSettings
             desc = "Customizable maximal entity collision limits, 0 for no limits",
             options = {"0", "1", "20"},
             category = OPTIMIZATION,
+            strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
     public static int maxEntityCollisions = 0;
 
     /*
-    @Rule(
-            desc = "Fix for piston ghost blocks",
-            category = BUGFIX,
-            validate = Validator.WIP.class
-    )
-    public static boolean pistonGhostBlocksFix = true;
 
     @Rule(
             desc = "fixes water performance issues",
@@ -379,11 +375,16 @@ public class CarpetSettings
             desc = "Sets a different motd message on client trying to connect to the server",
             extra = "use '_' to use the startup setting from server.properties",
             options = "_",
+            strict = false,
             category = CREATIVE
     )
     public static String customMOTD = "_";
 
-    @Rule(desc = "Cactus in dispensers rotates blocks.", extra = "Rotates block anti-clockwise if possible", category = FEATURE)
+    @Rule(
+            desc = "Cactus in dispensers rotates blocks.",
+            extra = "Rotates block anti-clockwise if possible",
+            category = {FEATURE, DISPENSER}
+    )
     public static boolean rotatorBlock = false;
 
     private static class ViewDistanceValidator extends Validator<Integer>
@@ -422,6 +423,7 @@ public class CarpetSettings
             extra = "Set to 0 to not override the value in server settings.",
             options = {"0", "12", "16", "32"},
             category = CREATIVE,
+            strict = false,
             validate = ViewDistanceValidator.class
     )
     public static int viewDistance = 0;
@@ -470,6 +472,7 @@ public class CarpetSettings
             desc = "limits growth limit of newly naturally generated kelp to this amount of blocks",
             options = {"0", "2", "25"},
             category = FEATURE,
+            strict = false,
             validate = KelpLimit.class
     )
     public static int kelpGenerationGrowthLimit = 25;*/

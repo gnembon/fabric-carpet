@@ -50,7 +50,7 @@ public @interface Rule
      * any of the options
      * For enums, its always strict, same for booleans - no need to set that for them.
      */
-    boolean strict() default false;
+    boolean strict() default true;
 
     /**
      * The class of the validator checked when the rule is changed.
