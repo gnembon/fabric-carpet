@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.settings.CarpetSettings;
+import carpet.settings.SettingsManager;
 import carpet.utils.MobAI;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -18,7 +19,7 @@ public class MobAICommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> command = literal("track").
-                requires((player) -> CarpetSettings.commandTrackAI).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandTrackAI)).
                 then(argument("entity type", EntitySummonArgumentType.entitySummon()).
 
                         suggests( (c, b) -> suggestMatching(MobAI.availbleTypes(), b)).

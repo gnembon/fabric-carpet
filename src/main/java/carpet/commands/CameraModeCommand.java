@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.settings.CarpetSettings;
+import carpet.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -21,13 +22,13 @@ public class CameraModeCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> camera = literal("c").
-                requires((player) -> CarpetSettings.commandCameramode).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandCameramode)).
                 executes((c) -> cameraMode(c.getSource(), c.getSource().getPlayer())).
                 then(argument("player", EntityArgumentType.player()).
                         executes( (c) -> cameraMode(c.getSource(), EntityArgumentType.getPlayer(c, "player"))));
 
         LiteralArgumentBuilder<ServerCommandSource> survival = literal("s").
-                requires((player) -> CarpetSettings.commandCameramode).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandCameramode)).
                 executes((c) -> survivalMode(
                         c.getSource(),
                         c.getSource().getPlayer())).

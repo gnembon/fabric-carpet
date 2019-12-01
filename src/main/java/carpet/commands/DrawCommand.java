@@ -1,6 +1,7 @@
 package carpet.commands;
 
 import carpet.settings.CarpetSettings;
+import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
@@ -29,7 +30,7 @@ public class DrawCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> command = literal("draw").
-                requires((player) -> CarpetSettings.commandDraw).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandDraw)).
                 then(literal("sphere").
                         then(argument("center",BlockPosArgumentType.blockPos()).
                                 then(argument("radius",IntegerArgumentType.integer(1)).

@@ -3,6 +3,7 @@ package carpet.settings;
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.lang.reflect.Constructor;
@@ -38,25 +39,43 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         for (Class v : rule.validate())
             this.validators.add((Validator<T>) callConstructor(v));
         if (categories.contains(RuleCategory.COMMAND))
+        {
             this.validators.add(callConstructor(Validator._COMMAND.class));
+            if (this.type == String.class)
+            {
+                this.isStrict = false;
+                this.validators.add((Validator<T>) callConstructor(Validator._COMMAND_LEVEL_VALIDATOR.class));
+            }
+        }
         this.defaultValue = get();
         this.defaultAsString = convertToString(this.defaultValue);
-        if (this.type == boolean.class)
+        if (rule.options().length > 0)
         {
-            this.isStrict = true; // it has no sense otherwise
+            this.options = ImmutableList.copyOf(rule.options());
+        }
+        else if (this.type == boolean.class || (this.type == String.class && categories.contains(RuleCategory.COMMAND)))
+        {
             this.options = ImmutableList.of("true", "false");
         }
         else if (this.type.isEnum())
         {
-            this.isStrict = true; // it has no sense otherwise
             this.options = Arrays.stream(this.type.getEnumConstants()).map(e -> ((Enum) e).name().toLowerCase(Locale.ROOT)).collect(ImmutableList.toImmutableList());
         }
         else
         {
-            this.options = ImmutableList.copyOf(rule.options());
+            this.options = ImmutableList.of();
         }
-        if (isStrict)
-            this.validators.add(callConstructor(Validator._STRICT.class));
+        if (isStrict && !this.options.isEmpty())
+        {
+            if (this.type == boolean.class || this.type == int.class || this.type == double.class || this.type == float.class)
+            {
+                this.validators.add(callConstructor(Validator._STRICT_IGNORECASE.class));
+            }
+            else
+            {
+                this.validators.add(callConstructor(Validator._STRICT.class));
+            }
+        }
     }
 
     private <T> T callConstructor(Class<T> cls)
@@ -115,7 +134,8 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                 if (value == null)
                 {
                     Messenger.m(source, "r Wrong value for " + name + ": " + stringValue);
-                    Messenger.m(source, "r " + validator.description());
+                    if (validator.description()!= null)
+                        Messenger.m(source, "r " + validator.description());
                     return null;
                 }
             }
