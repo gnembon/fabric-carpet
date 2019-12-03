@@ -4,13 +4,18 @@ package carpet.helpers;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import carpet.mixins.ExplosionAccessor;
 import carpet.settings.CarpetSettings;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectListIterator;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
@@ -200,8 +205,8 @@ public class OptimizedExplosion
 
         if (damagesTerrain)
         {
-            ObjectArrayList<ItemStack> objectArrayList = new ObjectArrayList<>();
-            List<BlockPos> list = Lists.newArrayList();
+            ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList();
+            Collections.shuffle(e.getAffectedBlocks(), world.random);
 
             for (BlockPos blockpos : e.getAffectedBlocks())
             {
@@ -232,10 +237,8 @@ public class OptimizedExplosion
 
                 if (state.getMaterial() != Material.AIR)
                 {
-                    if (block.shouldDropItemsOnExplosion(e))
+                    if (block.shouldDropItemsOnExplosion(e) && world instanceof ServerWorld)
                     {
-                        list.add(blockpos.toImmutable());
-
                         BlockEntity blockEntity = block.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;
 
                         LootContext.Builder lootBuilder = new LootContext.Builder((ServerWorld) eAccess.getWorld())
@@ -248,7 +251,7 @@ public class OptimizedExplosion
                             lootBuilder.put(LootContextParameters.EXPLOSION_RADIUS, eAccess.getPower());
 
                         state.getDroppedStacks(lootBuilder).forEach((itemStackx) -> {
-                            method_24023(objectArrayList, itemStackx);
+                            method_24023(objectArrayList, itemStackx, blockpos.toImmutable());
                         });
                     }
 
@@ -256,12 +259,8 @@ public class OptimizedExplosion
                     block.onDestroyedByExplosion(world, blockpos, e);
                 }
             }
-            int i = list.size();
+            objectArrayList.forEach(p -> Block.dropStack(world, p.getRight(), p.getLeft()));
 
-            for (ItemStack itemStack : objectArrayList)
-            {
-                Block.dropStack(world, list.get(world.random.nextInt(i)), itemStack);
-            }
         }
 
         if (eAccess.isCreateFire())
@@ -284,21 +283,22 @@ public class OptimizedExplosion
 
     // copied from Explosion, need to move the code to the explosion code anyways and use shadows for
     // simplicity, its not jarmodding anyways
-    private static void method_24023(ObjectArrayList<ItemStack> objectArrayList, ItemStack itemStack) {
+    private static void method_24023(ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList, ItemStack itemStack, BlockPos blockPos) {
         int i = objectArrayList.size();
 
         for(int j = 0; j < i; ++j) {
-            ItemStack itemStack2 = (ItemStack)objectArrayList.get(j);
+            Pair<ItemStack, BlockPos> pair = (Pair)objectArrayList.get(j);
+            ItemStack itemStack2 = pair.getLeft();
             if (ItemEntity.method_24017(itemStack2, itemStack)) {
                 ItemStack itemStack3 = ItemEntity.method_24018(itemStack2, itemStack, 16);
-                objectArrayList.set(j, itemStack3);
+                objectArrayList.set(j, Pair.of(itemStack3, pair.getRight()));
                 if (itemStack.isEmpty()) {
                     return;
                 }
             }
         }
 
-        objectArrayList.add(itemStack);
+        objectArrayList.add(Pair.of(itemStack, blockPos));
     }
 
     private static void removeFast(List<Entity> lst, int index) {
