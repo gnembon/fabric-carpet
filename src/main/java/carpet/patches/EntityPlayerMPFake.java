@@ -60,7 +60,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), instance.dimension);
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), instance.dimension);
         instance.getServerWorld().getChunkManager().updateCameraPosition(instance);
-        instance.dataTracker.set(PLAYER_MODEL_BIT_MASK, (byte) 0x7f); // show all model layers (incl. capes)
+        instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
         return instance;
     }
 
@@ -79,7 +79,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         interactionManagerIn.setGameMode(player.interactionManager.getGameMode());
         ((ServerPlayerEntityInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerEntityInterface) player).getActionPack());
         playerShadow.stepHeight = 0.6F;
-        playerShadow.dataTracker.set(PLAYER_MODEL_BIT_MASK, player.getDataTracker().get(PLAYER_MODEL_BIT_MASK));
+        playerShadow.dataTracker.set(PLAYER_MODEL_PARTS, player.getDataTracker().get(PLAYER_MODEL_PARTS));
 
 
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(playerShadow, (byte) (player.headYaw * 256 / 360)), playerShadow.dimension);
