@@ -137,6 +137,8 @@ public class CarpetExpression
 
     private static boolean stopAll = false;
 
+    private static final Map<String, Direction> DIRECTION_MAP = Arrays.stream(Direction.values()).collect(Collectors.toMap(Direction::getName, (direction) -> direction));
+
     /**
      * <h1><code>script stop/script resume</code> command</h1>
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
@@ -747,7 +749,7 @@ public class CarpetExpression
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'pos_offset' needs at least position, and direction");
             String directionString = lv.get(locator.offset).evalValue(c).getString();
-            Direction dir = Direction.byName(directionString);
+            Direction dir = DIRECTION_MAP.get(directionString);
             if (dir == null)
                 throw new InternalExpressionException("Unknown direction: "+directionString);
             int howMuch = 1;
