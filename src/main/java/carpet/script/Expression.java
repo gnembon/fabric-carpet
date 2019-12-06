@@ -1546,7 +1546,7 @@ public class Expression implements Cloneable
      * the current loop, using <code>break</code>. <code>break</code> and <code>continue</code> can only be used inside
      * <code>for, while, loop, map, filter and reduce</code> functions, while <code>break</code> can be used in <code>first</code> as well.
      * Outside of the internal expressions of these functions, calling <code>break</code> or <code>continue</code> will cause an
-     * error.</p>
+     * error. In case of the nexted loops, and more complex setups, use custom <code>try</code> and <code>throw</code> setup.</p>
      * <p>Please check corresponding loop function description what <code>continue</code> and <code>break</code> do in their contexts,
      * but in general case, passed values to <code>break</code> and <code>continue</code> will be used in place of the return value of the
      * internal iteration expression.</p>
