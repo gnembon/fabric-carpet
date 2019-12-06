@@ -6,6 +6,8 @@ import carpet.script.ExpressionInspector;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
+import carpet.script.exception.BreakStatement;
+import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
@@ -163,6 +165,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         try
         {
             retVal = body.evalValue(newFrame, type); // todo not sure if we need to propagete type / consider boolean context in defined functions - answer seems ye
+        }
+        catch (BreakStatement | ContinueStatement exc)
+        {
+            throw new ExpressionException(e, t, "'continue' and 'break' can only be called inside loop function bodies");
         }
         catch (ReturnStatement returnStatement)
         {

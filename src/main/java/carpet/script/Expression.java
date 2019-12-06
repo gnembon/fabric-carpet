@@ -11,11 +11,7 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
-import carpet.script.exception.ExitStatement;
-import carpet.script.exception.ExpressionException;
-import carpet.script.exception.InternalExpressionException;
-import carpet.script.exception.ReturnStatement;
-import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.*;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
@@ -1545,21 +1541,33 @@ public class Expression implements Cloneable
      * generators, like <code>rect</code>, or <code>range</code>, and maps, where the iterator returns all the map keys</p>
      * <h2>Loops</h2>
      *
-     * <h3><code>for(list,expr(_,_i),exit(_,_i)?)</code></h3>
-     * <p>Evaluates expression over list of items from the <code>list</code>, and can optionally stop early if
-     * <code>exit</code> expression is specified and evaluates <code>true</code> for a given iteration. Supplies
-     * <code>_</code>(value) and <code>_i</code>(iteration number) to both <code>expr</code> and <code>exit</code>.
-     * Returns the number of times <code>expr</code> was successful</p>
+     * <h3><code>break(), break(expr), continue(), continue(expr)</code></h3>
+     * <p>These allow to control execution of a loop either skipping current iteration code, using <code>continue</code>, or finishing
+     * the current loop, using <code>break</code>. <code>break</code> and <code>continue</code> can only be used inside
+     * <code>for, while, loop, map, filter and reduce</code> functions, while <code>break</code> can be used in <code>first</code> as well.
+     * Outside of the internal expressions of these functions, calling <code>break</code> or <code>continue</code> will cause an
+     * error.</p>
+     * <p>Please check corresponding loop function description what <code>continue</code> and <code>break</code> do in their contexts,
+     * but in general case, passed values to <code>break</code> and <code>continue</code> will be used in place of the return value of the
+     * internal iteration expression.</p>
+     *
+     *
+     * <h3><code>for(list,expr(_,_i))</code></h3>
+     * <p>Evaluates expression over list of items from the <code>list</code>. Supplies
+     * <code>_</code>(value) and <code>_i</code>(iteration number) to the <code>expr</code>.</p>
+     * <p>Returns the number of times <code>expr</code> was successful. Uses <code>continue</code> and <code>break</code> argument
+     * in place of the returned value from the <code>expr</code>(if supplied), to determine if the iteration was successful.</p>
      * <pre>
      *     check_prime(n) -&gt; !first( range(2, sqrt(n)+1), !(n % _) );
-     *        for(range(1000000,1100000),check_prime(_))  =&gt; 7216
+     *     for(range(1000000,1100000),check_prime(_))  =&gt; 7216
      * </pre>
      * <p>From which we can learn that there is 7216 primes between 1M and 1.1M</p>
-     * <h3><code>while(cond, limit, expr)</code></h3>
+     *
+     * <h3><code>while(cond, limit)</code></h3>
      * <p>Evaluates expression <code>expr</code> repeatedly until condition <code>cond</code> becomes false,
      * but not more than <code>limit</code> times. Returns the result of the last <code>expr</code> evaluation,
-     * or <code>null</code> if nothing was successful. both <code>expr</code> and <code>cond</code> will recveived a
-     * bound variable <code>_</code> indicating current iteration, so its a number</p>
+     * or <code>null</code> if nothing was successful. Both <code>expr</code> and <code>cond</code> will recveived a
+     * bound variable <code>_</code> indicating current iteration, so its a number.</p>
      * <pre>
      *  while(a&lt;100,10,a=_*_)  =&gt; 81 // loop exhausted via limit
      *  while(a&lt;100,20,a=_*_)  =&gt; 100 // loop stopped at condition, but a has already been assigned
@@ -1567,9 +1575,8 @@ public class Expression implements Cloneable
      * </pre>
      *
      * <h3><code>loop(num,expr(_),exit(_)?)</code></h3>
-     * <p>Evaluates expression <code>expr</code>, <code>num</code> number of times. Optionally,
-     * if <code>exit</code> condition is present, stops the execution if the condition becomes true.
-     * Both <code>expr</code> and <code>exit</code> receive <code>_</code> system variable indicating the iteration</p>
+     * <p>Evaluates expression <code>expr</code>, <code>num</code> number of times.
+     *<code>expr</code> receives <code>_</code> system variable indicating the iteration.</p>
      * <pre>
      *     loop(5, tick())  =&gt; repeat tick 5 times
      *     list = l(); loop(5, x = _; loop(5, list += l(x, _) ) ); list
@@ -1579,25 +1586,27 @@ public class Expression implements Cloneable
      * <pre>
      *     check_prime(n) -&gt; !first( range(2, sqrt(n)+1), !(n % _) );
      *     primes = l();
-     *     loop(10000, if(check_prime(_), primes += _), length(primes) &gt;= 10 );
+     *     loop(10000, if(check_prime(_), primes += _ ; if (length(primes) &gt;= 10, break())));
      *     primes
      *
      *     // outputs: [0, 1, 2, 3, 5, 7, 11, 13, 17, 19]
      * </pre>
+     *
      * <h2>Higher Order Functions</h2>
-     * <h3><code>map(list,expr(_,_i), exit(_,_i)?)</code></h3>
+     * <h3><code>map(list,expr(_,_i))</code></h3>
      * <p>Converts a <code>list</code> of values, to another list where each value is result of an expression
      * <code>v = expr(_, _i)</code> where <code>_</code> is passed as each element of the list, and <code>_i</code> is
-     * the index of such element, optional <code>exit</code> condition is evaluated after each mapping and if it is false,
-     * the map is terminated and returned whatever got collected so far</p>
+     * the index of such element. If <code>break</code> is called the map returns whatever collected thus far. If
+     * <code>continue</code> and <code>break</code> are used with supplied argument, it is used in place of the resulting
+     * map element, otherwise current element is skipped.</p>
      * <pre>
      *     map(range(10), _*_)  =&gt; [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
-     *     map(players('*'), _+' is stupid') [gnembon is stupid, herobrine is stupid]
+     *     map(players('*'), _+' is stoopid') [gnembon is stoopid, herobrine is stoopid]
      * </pre>
      *
-     * <h3><code>filter(list,expr(_,_i),exit(_,_i))</code></h3>
+     * <h3><code>filter(list,expr(_,_i))</code></h3>
      * <p>filters <code>list</code> elements returning only these that return positive result of the <code>expr</code>.
-     * Like with <code>map</code> if the optional condition <code>exit</code> gets true, the list is returned up to this point</p>
+     * With <code>break</code> and <code>continue</code> statements, the supplied value can be used as a boolean check instead.</p>
      * <pre>
      *     filter(range(100), !(_%5), _*_&gt;1000)  =&gt; [0, 5, 10, 15, 20, 25, 30]
      *     map(filter(entities_list('all'),_=='Witch'), query(_,'pos') )  =&gt; [[1082.5, 57, 1243.5]]
@@ -1605,7 +1614,8 @@ public class Expression implements Cloneable
      *
      * <h3><code>first(list,expr(_,_i))</code></h3>
      * <p>Finds and returns the first item in the list that satisfies <code>expr</code>. It sets <code>_</code> for current element value,
-     * and <code>_i</code> for index of that element</p>
+     * and <code>_i</code> for index of that element. <code>break</code> can be called inside the iteration code, using its argument
+     * value instead of the current item. <code>continue</code> has no sense and cannot be called inside <code>first</code> call.</p>
      * <pre>
      *     first(range(1000,10000), n=_; !first( range(2, sqrt(n)+1), !(n % _) ) )  =&gt; 1009 // first prime after 1000
      * </pre>
@@ -1615,8 +1625,10 @@ public class Expression implements Cloneable
      *
      * <h3><code>all(list,expr(_,_i))</code></h3>
      * <p>Returns <code>true</code> if all elements on the list satisfy the condition. Its roughly equivalent to
-     * <code>all(list,expr) &lt;=&gt; for(list,expr)==length(list)</code>, but works with generators. <code>expr</code>
-     * also receives bound <code>_</code> and <code>_i</code> variables</p>
+     * <code>all(list,expr) &lt;=&gt; for(list,expr)==length(list)</code>. <code>expr</code>
+     * also receives bound <code>_</code> and <code>_i</code> variables. <code>break</code> and <code>continue</code> have no sense
+     * and cannot be used inside of <code>expr</code> body.</p>
+     *
      * <pre>
      *     all([1,2,3], check_prime(_))  =&gt; 1
      *     all(neighbours(x,y,z), _=='stone')  =&gt; 1 // if all neighbours of [x, y, z] are stone
@@ -1632,7 +1644,9 @@ public class Expression implements Cloneable
      * <h3><code>reduce(list,expr(_a,_,_i), initial)</code></h3>
      * <p>Applies <code>expr</code> for each element of the list and saves the result in <code>_a</code> accumulator.
      * Consecutive calls to <code>expr</code> can access that value to apply more values. You also need to specify
-     * the initial value to apply for the accumulator</p>
+     * the initial value to apply for the accumulator. <code>break</code> can be used to terminate reduction prematurely.
+     * If a value is provided to <code>break</code> or <code>continue</code>, it will be used from now on as a new value for the
+     * accumulator.</p>
      * <pre>
      *     reduce([1,2,3,4],_a+_,0)  =&gt; 10
      *     reduce([1,2,3,4],_a*_,1)  =&gt; 24
@@ -1644,6 +1658,18 @@ public class Expression implements Cloneable
         // condition and expression will get a bound '_i'
         // returns last successful expression or false
         // while(cond, limit, expr) => ??
+        addFunction("break", lv -> {
+            if (lv.size()==0) throw new BreakStatement(null);
+            if (lv.size()==1) throw new BreakStatement(lv.get(0));
+            throw new InternalExpressionException("'break' can only be called with zero or one argument");
+        });
+
+        addFunction("continue", lv -> {
+            if (lv.size()==0) throw new ContinueStatement(null);
+            if (lv.size()==1) throw new ContinueStatement(lv.get(0));
+            throw new InternalExpressionException("'continue' can only be called with zero or one argument");
+        });
+
         addLazyFunction("while", 3, (c, t, lv) ->
         {
             long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
@@ -1656,7 +1682,15 @@ public class Expression implements Cloneable
             c.setVariable("_",(cc, tt) -> new NumericValue(0).bindTo("_"));
             while (i<limit && condition.evalValue(c, Context.BOOLEAN).getBoolean() )
             {
-                lastOne = expr.evalValue(c, t);
+                try
+                {
+                    lastOne = expr.evalValue(c, t);
+                }
+                catch (BreakStatement | ContinueStatement stmt)
+                {
+                    if (stmt.retval != null) lastOne = stmt.retval;
+                    if (stmt instanceof BreakStatement) break;
+                }
                 i++;
                 long seriously = i;
                 c.setVariable("_", (cc, tt) -> new NumericValue(seriously).bindTo("_"));
@@ -1667,29 +1701,28 @@ public class Expression implements Cloneable
             return (cc, tt) -> lastValueNoKidding;
         });
 
-        // loop(Num, expr, exit_condition) => last_value
-        // loop(list, expr)
+        // loop(Num, expr) => last_value
         // expr receives bounded variable '_' indicating iteration
-        addLazyFunction("loop", -1, (c, t, lv) ->
+        addLazyFunction("loop", 2, (c, t, lv) ->
         {
-            if (lv.size()<2 || lv.size()>3)
-            {
-                throw new InternalExpressionException("Incorrect number of attributes for 'loop', should be 2 or 3, not "+lv.size());
-            }
             long limit = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             Value lastOne = Value.NULL;
             LazyValue expr = lv.get(1);
-            LazyValue cond = null;
-            if(lv.size() > 2) cond = lv.get(2);
             //scoping
             LazyValue _val = c.getVariable("_");
             for (long i=0; i < limit; i++)
             {
                 long whyYouAsk = i;
                 c.setVariable("_", (cc, tt) -> new NumericValue(whyYouAsk).bindTo("_"));
-                lastOne = expr.evalValue(c, t);
-                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
-                    break;
+                try
+                {
+                    lastOne = expr.evalValue(c, t);
+                }
+                catch (BreakStatement | ContinueStatement stmt)
+                {
+                    if (stmt.retval != null) lastOne = stmt.retval;
+                    if (stmt instanceof BreakStatement) break;
+                }
             }
             //revering scope
             c.setVariable("_", _val);
@@ -1699,21 +1732,13 @@ public class Expression implements Cloneable
 
         // map(list or Num, expr) => list_results
         // receives bounded variable '_' with the expression
-        addLazyFunction("map", -1, (c, t, lv) ->
+        addLazyFunction("map", 2, (c, t, lv) ->
         {
-            if (lv.size()<2 || lv.size()>3)
-            {
-                throw new InternalExpressionException("Incorrect number of attributes for 'map', should be 2 or 3, not "+lv.size());
-            }
-
             Value rval= lv.get(0).evalValue(c);
-
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'map' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
-            LazyValue cond = null;
-            if(lv.size() > 2) cond = lv.get(2);
             //scoping
             LazyValue _val = c.getVariable("_");
             LazyValue _iter = c.getVariable("_i");
@@ -1726,11 +1751,18 @@ public class Expression implements Cloneable
                 int doYouReally = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(doYouReally).bindTo("_i"));
-                result.add(expr.evalValue(c));
-                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
+                try
                 {
-                    next.boundVariable = var;
-                    break;
+                    result.add(expr.evalValue(c));
+                }
+                catch (BreakStatement | ContinueStatement stmt)
+                {
+                    if (stmt.retval != null) result.add(stmt.retval);
+                    if (stmt instanceof BreakStatement)
+                    {
+                        next.boundVariable = var;
+                        break;
+                    }
                 }
                 next.boundVariable = var;
             }
@@ -1742,23 +1774,16 @@ public class Expression implements Cloneable
             return (cc, tt) ->  ret;
         });
 
-        // grep(list or num, expr, exit_expr) => list
+        // grep(list or num, expr) => list
         // receives bounded variable '_' with the expression, and "_i" with index
         // produces list of values for which the expression is true
-        addLazyFunction("filter", -1, (c, t, lv) ->
+        addLazyFunction("filter", 2, (c, t, lv) ->
         {
-            if (lv.size()<2 || lv.size()>3)
-            {
-                throw new InternalExpressionException("Incorrect number of attributes for 'filter', should be 2 or 3, not "+lv.size());
-            }
-
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'filter' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
-            LazyValue cond = null;
-            if(lv.size() > 2) cond = lv.get(2);
             //scoping
             LazyValue _val = c.getVariable("_");
             LazyValue _iter = c.getVariable("_i");
@@ -1771,12 +1796,19 @@ public class Expression implements Cloneable
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
-                if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
-                    result.add(next);
-                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
+                try
                 {
-                    next.boundVariable = var;
-                    break;
+                    if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                        result.add(next);
+                }
+                catch (BreakStatement | ContinueStatement stmt)
+                {
+                    if (stmt.retval != null && stmt.retval.getBoolean()) result.add(next);
+                    if (stmt instanceof BreakStatement)
+                    {
+                        next.boundVariable = var;
+                        break;
+                    }
                 }
                 next.boundVariable = var;
             }
@@ -1811,11 +1843,24 @@ public class Expression implements Cloneable
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
-                if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                try
                 {
-                    result = next;
+                    if(expr.evalValue(c, Context.BOOLEAN).getBoolean())
+                    {
+                        result = next;
+                        next.boundVariable = var;
+                        break;
+                    }
+                }
+                catch (BreakStatement  stmt)
+                {
+                    result = stmt.retval == null? next : stmt.retval;
                     next.boundVariable = var;
                     break;
+                }
+                catch (ContinueStatement ignored)
+                {
+                    throw new InternalExpressionException("'continue' inside 'first' function has no sense");
                 }
                 next.boundVariable = var;
             }
@@ -1865,22 +1910,15 @@ public class Expression implements Cloneable
         });
 
         // similar to map, but returns total number of successes
-        // for(list, expr, exit_expr) => success_count
+        // for(list, expr) => success_count
         // can be substituted for first and all, but first is more efficient and all doesn't require knowing list size
         addLazyFunction("for", -1, (c, t, lv) ->
         {
-            if (lv.size()<2 || lv.size()>3)
-            {
-                throw new InternalExpressionException("Incorrect number of attributes for 'for', should be 2 or 3, not "+lv.size());
-            }
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("Second argument of 'for' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
-            LazyValue cond = null;
-            if(lv.size() > 2) cond = lv.get(2);
-
             //scoping
             LazyValue _val = c.getVariable("_");
             LazyValue _iter = c.getVariable("_i");
@@ -1893,14 +1931,22 @@ public class Expression implements Cloneable
                 int seriously = i;
                 c.setVariable("_", (cc, tt) -> next);
                 c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
-                Value result = expr.evalValue(c, t);
+                Value result = Value.FALSE;
+                try
+                {
+                    result = expr.evalValue(c, t);
+                }
+                catch (BreakStatement | ContinueStatement stmt)
+                {
+                    if (stmt.retval != null) result = stmt.retval;
+                    if (stmt instanceof BreakStatement)
+                    {
+                        next.boundVariable = var;
+                        break;
+                    }
+                }
                 if(t != Context.VOID && result.getBoolean())
                     successCount++;
-                if (cond != null && cond.evalValue(c, Context.BOOLEAN).getBoolean())
-                {
-                    next.boundVariable = var;
-                    break;
-                }
                 next.boundVariable = var;
             }
             //revering scope
@@ -1944,7 +1990,19 @@ public class Expression implements Cloneable
                 Value promiseWontChangeYou = acc;
                 c.setVariable("_a", (cc, tt) -> promiseWontChangeYou.bindTo("_a"));
                 c.setVariable("_", (cc, tt) -> next);
-                acc = expr.evalValue(c, t);
+                try
+                {
+                    acc = expr.evalValue(c, t);
+                }
+                catch (BreakStatement | ContinueStatement stmt)
+                {
+                    if (stmt.retval != null) acc = stmt.retval;
+                    if (stmt instanceof BreakStatement)
+                    {
+                        next.boundVariable = var;
+                        break;
+                    }
+                }
                 next.boundVariable = var;
             }
             //reverting scope
@@ -3140,9 +3198,13 @@ public class Expression implements Cloneable
         {
             return exprProvider.get().evalValue(c, expectedType);
         }
+        catch (ContinueStatement | BreakStatement | ReturnStatement exc)
+        {
+            throw new ExpressionException("Control flow functions, like continue, break, or return, should only be used in loops and functions respectively.");
+        }
         catch (ExitStatement exit)
         {
-            return exit.retval;
+            return exit.retval==null?Value.NULL:exit.retval;
         }
         catch (StackOverflowError ignored)
         {
