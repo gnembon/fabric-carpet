@@ -33,14 +33,14 @@ public class PortalForcer_portalSuffocationMixin
 
     @Redirect(method = "usePortal", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;method_24203(DDD)V"
+            target = "Lnet/minecraft/entity/Entity;positAfterTeleport(DDD)V"
     ))
     private void alternativeSetPositionAndAngles(Entity entity, double d, double e, double f)
     {
         if (CarpetSettings.portalSuffocationFix && CarpetSettings.fixedPosition != null)
-            entity.method_24203(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z);
+            entity.positAfterTeleport(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z);
         else
-            entity.method_24203(d, e, f);
+            entity.positAfterTeleport(d, e, f);
 
     }
 
