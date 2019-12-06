@@ -2,6 +2,7 @@ package carpet.helpers;
 
 import carpet.settings.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -15,11 +16,26 @@ import net.minecraft.world.biome.source.VanillaLayeredBiomeSourceConfig;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.OverworldChunkGenerator;
 import net.minecraft.world.gen.chunk.OverworldChunkGeneratorConfig;
-import net.minecraft.world.gen.feature.*;
-//import net.minecraft.world.gen.feature.DoublePlantFeatureConfig;
-//import net.minecraft.world.gen.feature.IcebergFeatureConfig;
-//import net.minecraft.world.gen.feature.LakeFeatureConfig;
-//import net.minecraft.world.gen.feature.PlantedFeatureConfig;
+import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
+import net.minecraft.world.gen.feature.BoulderFeatureConfig;
+import net.minecraft.world.gen.feature.BranchedTreeFeatureConfig;
+import net.minecraft.world.gen.feature.BushFeatureConfig;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.world.gen.feature.DefaultFeatureConfig;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.FeatureConfig;
+import net.minecraft.world.gen.feature.MineshaftFeature;
+import net.minecraft.world.gen.feature.MineshaftFeatureConfig;
+import net.minecraft.world.gen.feature.OceanRuinFeature;
+import net.minecraft.world.gen.feature.OceanRuinFeatureConfig;
+import net.minecraft.world.gen.feature.RandomPatchFeatureConfig;
+import net.minecraft.world.gen.feature.SeaPickleFeatureConfig;
+import net.minecraft.world.gen.feature.SeagrassFeatureConfig;
+import net.minecraft.world.gen.feature.ShipwreckFeatureConfig;
+import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.gen.feature.VillageFeatureConfig;
+import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
+import net.minecraft.world.gen.stateprovider.SimpleStateProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,17 +71,6 @@ public class FeatureGenerator
     private static Thing simplePatch(RandomPatchFeatureConfig config)
     {
         return simplePlop(Feature.RANDOM_PATCH.configure(config));
-    }
-
-    private static Thing simplePlop(Feature<FeatureConfig> feature, FeatureConfig config)
-    {
-        return (w, p) -> {
-            CarpetSettings.skipGenerationChecks=true;
-            boolean res = feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p, config);
-            CarpetSettings.skipGenerationChecks=false;
-            return res;
-        };
-
     }
 
     private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
@@ -118,6 +123,13 @@ public class FeatureGenerator
 
 
         put("oak", simpleTree(DefaultBiomeFeatures.OAK_TREE_CONFIG));
+        put("oak_beehive", simpleTree(
+                (new BranchedTreeFeatureConfig.Builder(
+                        new SimpleStateProvider(Blocks.OAK_LOG.getDefaultState()),
+                        new SimpleStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
+                        new BlobFoliagePlacer(0, 0))
+                ).treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
+        ));
         put("oak_large", simplePlop(Feature.FANCY_TREE.configure(DefaultBiomeFeatures.FANCY_TREE_CONFIG)));
         put("birch", simpleTree(DefaultBiomeFeatures.BIRCH_TREE_CONFIG));
         put("birch_large", simpleTree(DefaultBiomeFeatures.LARGE_BIRCH_TREE_CONFIG));
