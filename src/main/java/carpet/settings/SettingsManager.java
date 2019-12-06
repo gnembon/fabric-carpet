@@ -146,7 +146,7 @@ public class SettingsManager
                 continue;
             if (rule.type == boolean.class)
                 ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
-            if (rule.type == String.class)
+            if (rule.type == String.class && rule.options.contains("false"))
                 ((ParsedRule<String>) rule).set(server.getCommandSource(), "false", "false");
         }
     }
