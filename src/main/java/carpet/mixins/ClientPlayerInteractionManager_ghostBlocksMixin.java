@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(ClientPlayerInteractionManager.class)
 public abstract class ClientPlayerInteractionManager_ghostBlocksMixin
 {
-
+/*
     @Shadow @Final private MinecraftClient client;
 
     @Redirect(method = "breakBlock", at = @At(
@@ -52,5 +52,5 @@ public abstract class ClientPlayerInteractionManager_ghostBlocksMixin
                         new BlockHitResult(new Vec3d(blockPos_1), Direction.DOWN, blockPos_1, false)
             ));
         }
-    }
+    }*/
 }

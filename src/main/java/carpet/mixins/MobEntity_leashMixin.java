@@ -17,12 +17,12 @@ public abstract class MobEntity_leashMixin
 
     @Shadow /*@Nullable*/ private CompoundTag leashTag;
 
-    @Inject(method = "writeCustomDataToTag", at = @At("TAIL"))
+    /*@Inject(method = "writeCustomDataToTag", at = @At("TAIL"))   // added in 1.15
     private void addLeashData(CompoundTag compoundTag_1, CallbackInfo ci)
     {
         if (holdingEntity == null && CarpetSettings.leadFix && leashTag != null)
         {
             compoundTag_1.put("Leash", leashTag);
         }
-    }
+    }*/
 }

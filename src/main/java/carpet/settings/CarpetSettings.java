@@ -165,7 +165,10 @@ public class CarpetSettings
 
     @Rule(
             desc = "Prevents players from rubberbanding when moving too fast",
-            extra = {"... or being kicked out for 'flying'","Puts more trust in clients positioning"},
+            extra = {"... or being kicked out for 'flying'",
+                    "Puts more trust in clients positioning",
+                    "Increases player allowed mining distance to 32 blocks"
+            },
             category = {CREATIVE, SURVIVAL}
     )
     public static boolean antiCheatDisabled = false;
@@ -293,7 +296,7 @@ public class CarpetSettings
     public static boolean missingTools = false;
 
     //@Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
-    public static boolean portalCaching = false;
+    //public static boolean portalCaching = false; // ineffective in 1.15
 
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
@@ -301,12 +304,12 @@ public class CarpetSettings
     @Rule(desc = "smooth client animations with low tps settings", extra = "works only in SP, and will slow down players", category = CREATIVE)
     public static boolean smoothClientAnimations;
 
-    @Rule(
-            desc="Fixes mining ghost blocks by trusting clients with block breaking",
-            extra="Increases player allowed mining distance to 32 blocks",
-            category = SURVIVAL
-    )
-    public static boolean miningGhostBlockFix = false;
+    //@Rule(
+    //        desc="Fixes mining ghost blocks by trusting clients with block breaking",
+    //        extra="Increases player allowed mining distance to 32 blocks",
+    //        category = SURVIVAL
+    //)
+    //public static boolean miningGhostBlockFix = false;
 
     private static class PushLimitLimits extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
@@ -487,18 +490,18 @@ public class CarpetSettings
             desc = "Fixes leads breaking/becoming invisible in unloaded chunks",
             extra = "You may still get visibly broken leash links on the client side, but server side the link is still there.",
             category = BUGFIX
-    )
+    )// needs checkfix for 1.15
     public static boolean leadFix = false;
 
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
 
-    @Rule(
-            desc = "Prevents horses and other mobs to wander into the distance after dismounting",
-            extra = "Fixes issues with various Joergens wandering off and disappearing client-side",
-            category = BUGFIX
-    )
-    public static boolean horseWanderingFix = false;
+    //@Rule(
+    //        desc = "Prevents horses and other mobs to wander into the distance after dismounting",
+    //        extra = "Fixes issues with various Joergens wandering off and disappearing client-side",
+    //        category = BUGFIX
+    //)
+    //public static boolean horseWanderingFix = false;
     
     @Rule(
             desc = "Allows structure mobs to spawn in flat worlds",
