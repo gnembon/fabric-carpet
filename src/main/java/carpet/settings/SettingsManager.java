@@ -138,13 +138,16 @@ public class SettingsManager
         return server.getLevelStorage().resolveFile(server.getLevelName(), identifier+".conf");
     }
 
-    public void disableBooleanFromCategory(String category)
+    public void disableBooleanCommands()
     {
         for (ParsedRule<?> rule : rules.values())
         {
-            if (rule.type != boolean.class || !rule.categories.contains(category))
+            if (!rule.categories.contains(RuleCategory.COMMAND))
                 continue;
-            ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
+            if (rule.type == boolean.class)
+                ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
+            if (rule.type == String.class)
+                ((ParsedRule<String>) rule).set(server.getCommandSource(), "false", "false");
         }
     }
 
@@ -210,7 +213,7 @@ public class SettingsManager
         if (conf.getRight())
         {
             CarpetSettings.LOG.info("[CM]: "+fancyName+" features are locked by the administrator");
-            disableBooleanFromCategory(RuleCategory.COMMAND);
+            disableBooleanCommands();
         }
         for (String key: conf.getLeft().keySet())
         {
