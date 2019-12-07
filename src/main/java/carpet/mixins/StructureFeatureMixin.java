@@ -52,7 +52,6 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             StructureStart structurestart = forceStructureStart(world, generator, rand, chId);
             if (structurestart == null || structurestart == StructureStart.DEFAULT)
             {
-                CarpetSettings.skipGenerationChecks = false;
                 return false;
             }
             //generator.ge   getStructurePositionToReferenceMap(this).computeIfAbsent(chId,
@@ -89,14 +88,16 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
                 }
             }
         }
-        catch (Exception ignored)
+        catch (Exception booboo)
         {
-            CarpetSettings.LOG.error("Unknown Exception while plopping structure: "+ignored);
-            ignored.printStackTrace();
-            CarpetSettings.skipGenerationChecks = false;
+            CarpetSettings.LOG.error("Unknown Exception while plopping structure: "+booboo);
+            booboo.printStackTrace();
             return false;
         }
-        CarpetSettings.skipGenerationChecks = false;
+        finally
+        {
+            CarpetSettings.skipGenerationChecks = false;
+        }
         return true;
     }
 

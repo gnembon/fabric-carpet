@@ -26,7 +26,6 @@
 
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
-    "MobEntity_leashMixin",
     "EntityTrackerEntry_leashFixMixin",
 
     "VillagerEntity_aiMixin",
@@ -51,17 +50,11 @@
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
     "ServerWorld_onePlayerSleepingMixin",
-    "KelpFeatureMixin",
     "CoralBlockMixin",
     "CoralFeatureMixin",
-    "StructurePieceMixin",
     "StructureFeatureMixin",
-    "ShipwreckGeneratorPieceMixin",
-    "OceanRuinGeneratorPieceMixin",
-    "IglooGeneratorPieceMixin",
-    "FossilFeatureMixin",
-    "BuriedTreasureGeneratorPieceMixin",
-    "GravityStructureProcessorMixin",
+    "World_scarpetPlopMixin",
+
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",
     "PlayerEntity_parrotMixin",
@@ -90,15 +83,10 @@
     "ServerPlayNetworkHandler_antiCheatDisabledMixin",
     "PlayerEntity_antiCheatDisabled",
 
-    "PortalForcer_portalCachingMixin",
-    "PortalBlock_portalCachingMixin",
-
     "Entity_portalSuffocationMixin",
     "PortalForcer_portalSuffocationMixin",
 
-    "PlayerEntity_horseFixMixin",
-
-    "ServerPlayerInteractionManager_ghostBlocksMixin",
+    "ServerPlayerInteractionManager_antiCheatMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",
@@ -134,8 +122,6 @@
     "FallingBlockEntity_scarpetEventsMixin",
     "ChunkTicketManager_scarpetMixin",
     "ServerChunkManager_scarpetMixin",
-
-
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
@@ -145,18 +131,11 @@
   "client": [
     "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
-
     "MinecraftClient_pausedShakeMixin",
-    "GameRenderer_pausedShakeMixin",
     "WorldRenderer_pausedShakeMixin",
-
     "IntegratedServerMixin",
     "InGameHudMixin",
     "PlayerListHudMixin",
-
-    "ClientPlayerInteractionManager_ghostBlocksMixin",
-
-    "BlockEntityRenderDispatcher_movableTEMixin",
     "PistonBlockEntityRenderer_movableTEMixin"
   ],
   "server": [
