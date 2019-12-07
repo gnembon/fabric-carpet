@@ -43,7 +43,6 @@ import java.util.Set;
 
 public class FeatureGenerator
 {
-
     @FunctionalInterface
     private interface Thing
     {
@@ -53,9 +52,14 @@ public class FeatureGenerator
     {
         return (w, p) -> {
             CarpetSettings.skipGenerationChecks=true;
-            boolean res = feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p);
-            CarpetSettings.skipGenerationChecks=false;
-            return res;
+            try
+            {
+                return feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p);
+            }
+            finally
+            {
+                CarpetSettings.skipGenerationChecks = false;
+            }
         };
     }
     private static Thing simplePlop(Feature<DefaultFeatureConfig> feature)
@@ -127,10 +131,18 @@ public class FeatureGenerator
                 (new BranchedTreeFeatureConfig.Builder(
                         new SimpleStateProvider(Blocks.OAK_LOG.getDefaultState()),
                         new SimpleStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
-                        new BlobFoliagePlacer(0, 0))
-                ).treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
+                        new BlobFoliagePlacer(2, 0))
+                ).baseHeight(4).heightRandA(2).foliageHeight(3).noVines()
+                .treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
         ));
         put("oak_large", simplePlop(Feature.FANCY_TREE.configure(DefaultBiomeFeatures.FANCY_TREE_CONFIG)));
+        put("oak_large_beehive", simplePlop(Feature.FANCY_TREE.configure(
+                (new BranchedTreeFeatureConfig.Builder(
+                        new SimpleStateProvider(Blocks.OAK_LOG.getDefaultState()),
+                        new SimpleStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
+                        new BlobFoliagePlacer(0, 0))
+                ).treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
+        )));
         put("birch", simpleTree(DefaultBiomeFeatures.BIRCH_TREE_CONFIG));
         put("birch_large", simpleTree(DefaultBiomeFeatures.LARGE_BIRCH_TREE_CONFIG));
         put("shrub", simplePlop(Feature.JUNGLE_GROUND_BUSH.configure(DefaultBiomeFeatures.JUNGLE_GROUND_BUSH_CONFIG)));
