@@ -212,7 +212,7 @@ public class CarpetProfiler
         long total_tick_time = time_repo.get("tick");
         double divider = 1.0D / tick_health_requested / 1000000;
         Messenger.m(currentRequester, "w ");
-        Messenger.m(currentRequester, String.format("gi Average tick time: %.3fms", divider * total_tick_time));
+        Messenger.m(currentRequester, String.format("gi Avg. server tick time: %.3fms", divider * total_tick_time));
         long accumulated = 0L;
 
         for (String section : GENERAL_SECTIONS)
@@ -247,7 +247,7 @@ public class CarpetProfiler
                 double amount = divider * time_repo.get(dimension + "." + section);
                 if (amount > 0.01)
                 {
-                    if (!(section.endsWith("(client)")))
+                    if (!(section.endsWith("(Client)")))
                         accumulated += time_repo.get(dimension + "." + section);
                     Messenger.m(currentRequester, String.format("gi  - %s: %.3fms", section, amount));
                 }

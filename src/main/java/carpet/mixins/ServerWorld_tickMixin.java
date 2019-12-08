@@ -108,7 +108,11 @@ public abstract class ServerWorld_tickMixin extends World
         }
     }
 
-    @Inject(method = "tick", at = @At("TAIL"))
+    @Inject(method = "tick", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/world/ServerWorld;tickBlockEntities()V",
+            shift = At.Shift.BEFORE
+    ))
     private void endEntitySection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
         CarpetProfiler.end_current_section(currentSection);
