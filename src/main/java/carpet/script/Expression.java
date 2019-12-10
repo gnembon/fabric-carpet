@@ -1912,7 +1912,7 @@ public class Expression implements Cloneable
         // similar to map, but returns total number of successes
         // for(list, expr) => success_count
         // can be substituted for first and all, but first is more efficient and all doesn't require knowing list size
-        addLazyFunction("for", -1, (c, t, lv) ->
+        addLazyFunction("for", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
