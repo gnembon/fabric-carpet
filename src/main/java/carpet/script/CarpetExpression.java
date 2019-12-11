@@ -2658,35 +2658,45 @@ public class CarpetExpression
      *     <li><code>oceanruin, oceanruin_small, oceanruin_tall</code>: Stone variants of ocean ruins.</li>
      *     <li><code>oceanruin_warm, oceanruin_warm_small, oceanruin_warm_tall</code>: Sandstone variants of ocean ruins.</li>
      *     <li><code>treasure</code>: A treasure chest. Yes, its a whole structure.</li>
+     *     <li><code>pillager_outpost</code>: A pillager outpost.</li>
      *     <li><code>mineshaft</code>: A mineshaft.</li>
      *     <li><code>mineshaft_mesa</code>: A Mesa (Badlands) version of a mineshaft.</li>
      *     <li><code>village</code>: Plains, oak village.</li>
      *     <li><code>village_desert</code>: Desert, sandstone village.</li>
      *     <li><code>village_savanna</code>: Savanna, acacia village.</li>
      *     <li><code>village_taiga</code>: Taiga, spruce village.</li>
+     *     <li><code>village_snowy</code>: Resolute, Canada.</li>
      * </ul>
      * <p>Feature list:</p>
      * <ul>
      *     <li><code>oak</code></li>
+     *     <li><code>oak_beehive</code>: oak with a hive (1.15+).</li>
      *     <li><code>oak_large</code>: oak with branches.</li>
+     *     <li><code>oak_large_beehive</code>: oak with branches and a beehive (1.15+).</li>
      *     <li><code>birch</code></li>
      *     <li><code>birch_large</code>: tall variant of birch tree.</li>
      *     <li><code>shrub</code>: low bushes that grow in jungles.</li>
-     *     <li><code>shrub_acacia</code>: low bush but configured with acacia</li>
-     *     <li><code>shrub_snowy</code>: low bush with white blocks</li>
+     *     <li><code>shrub_acacia</code>: low bush but configured with acacia (1.14 only)</li>
+     *     <li><code>shrub_snowy</code>: low bush with white blocks (1.14 only)</li>
      *     <li><code>jungle</code>: a tree</li>
-     *     <li><code>spruce_matchstick</code>: tall spruce with minimal leafage.</li>
+     *     <li><code>jungle_large</code>: 2x2 jungle tree</li>
+     *     <li><code>spruce</code></li>
+     *     <li><code>spruce_large</code>: 2x2 spruce tree</li>
+     *     <li><code>pine</code>: spruce with minimal leafage (1.15+)</li>
+     *     <li><code>pine_large</code>: 2x2 spruce with minimal leafage (1.15+)</li>
+     *     <li><code>spruce_matchstick</code>: see 1.15 pine (1.14 only).</li>
+     *     <li><code>spruce_matchstick_large</code>: see 1.15 pine_large (1.14 only).</li>
      *     <li><code>dark_oak</code></li>
      *     <li><code>acacia</code></li>
-     *     <li><code>spruce</code></li>
      *     <li><code>oak_swamp</code>: oak with more leaves and vines.</li>
-     *     <li><code>jungle_large</code>: 2x2 jungle tree</li>
-     *     <li><code>spruce_matchstick_large</code>: 2x2 spruce tree with minimal leafage</li>
-     *     <li><code>spruce_large</code>: 2x2 spruce tree</li>
+     *
+     *
      *     <li><code>well</code>: desert well</li>
      *     <li><code>grass</code>: a few spots of tall grass</li>
-     *     <li><code>grass_jungle</code>: little bushier grass feature</li>
-     *     <li><code>fern</code>: a few random ferns</li>
+     *     <li><code>grass_jungle</code>: little bushier grass feature (1.14 only)</li>
+     *     <li><code>lush_grass</code>: grass with patchy ferns (1.15+)</li>
+     *     <li><code>tall_grass</code>: 2-high grass patch (1.15+)</li>
+     *     <li><code>fern</code>: a few random 2-high ferns</li>
      *     <li><code>cactus</code>: random cacti</li>
      *     <li><code>dead_bush</code>: a few random dead bushi</li>
      *     <li><code>fossils</code>: underground fossils, placement little wonky</li>
@@ -2695,7 +2705,9 @@ public class CarpetExpression
      *     <li><code>ice_spike</code>: ice spike. Require snow block below to place.</li>
      *     <li><code>glowstone</code>: glowstone cluster. Required netherrack above it.</li>
      *     <li><code>melon</code>: a patch of melons</li>
+     *     <li><code>melon_pile</code>: a pile of melons (1.15+)</li>
      *     <li><code>pumpkin</code>: a patch of pumpkins</li>
+     *     <li><code>pumpkin_pile</code>: a pile of pumpkins (1.15+)</li>
      *     <li><code>sugarcane</code></li>
      *     <li><code>lilypad</code></li>
      *     <li><code>dungeon</code>: Dungeon. These are hard to place, and fail often.</li>
