@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.client.network.packet.EntityPositionS2CPacket;
 import net.minecraft.client.network.packet.VehicleMoveS2CPacket;
 import net.minecraft.entity.Entity;

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.CoralFeatureInterface;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -19,7 +19,6 @@ import net.minecraft.world.gen.feature.CoralFeature;
 import net.minecraft.world.gen.feature.CoralMushroomFeature;
 import net.minecraft.world.gen.feature.CoralTreeFeature;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
-import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Random;

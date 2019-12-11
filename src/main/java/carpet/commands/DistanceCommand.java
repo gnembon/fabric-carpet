@@ -1,6 +1,6 @@
 package carpet.commands;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.DistanceCalculator;
 import com.mojang.brigadier.CommandDispatcher;

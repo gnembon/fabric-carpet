@@ -4,7 +4,7 @@ import carpet.script.bundled.BundledModule;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.ModuleInterface;

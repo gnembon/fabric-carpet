@@ -20,7 +20,6 @@ import carpet.commands.TickCommand;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.settings.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.HUDController;
 import carpet.utils.MobAI;

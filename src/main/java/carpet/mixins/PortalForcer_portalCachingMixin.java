@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.PortalForcerInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ChunkTicketType;

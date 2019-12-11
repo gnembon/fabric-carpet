@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.helpers.InventoryHelper;
 import carpet.fakes.ItemEntityInterface;
 import net.minecraft.block.ShulkerBoxBlock;

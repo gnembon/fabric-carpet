@@ -1,7 +1,7 @@
 package carpet.logging;
 
 import carpet.CarpetServer;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;

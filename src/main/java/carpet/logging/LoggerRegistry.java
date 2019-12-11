@@ -1,6 +1,6 @@
 package carpet.logging;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.DyeColor;
 

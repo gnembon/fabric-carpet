@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.PortalForcerInterface;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PortalBlock;

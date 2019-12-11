@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.WorldChunkInterface;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;

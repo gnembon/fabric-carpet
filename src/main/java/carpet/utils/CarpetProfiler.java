@@ -1,6 +1,6 @@
 package carpet.utils;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.block.entity.BlockEntity;

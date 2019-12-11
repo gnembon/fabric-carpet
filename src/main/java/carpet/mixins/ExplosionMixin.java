@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.helpers.OptimizedExplosion;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.explosion.Explosion;
 import org.spongepowered.asm.mixin.Final;

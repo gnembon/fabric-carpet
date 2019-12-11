@@ -1,6 +1,6 @@
 package carpet.helpers;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;

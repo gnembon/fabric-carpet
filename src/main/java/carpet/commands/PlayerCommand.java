@@ -1,7 +1,7 @@
 package carpet.commands;
 
 import carpet.helpers.EntityPlayerActionPack;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.settings.SettingsManager;

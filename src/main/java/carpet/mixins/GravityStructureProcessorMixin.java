@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.structure.processor.GravityStructureProcessor;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.ViewableWorld;

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;

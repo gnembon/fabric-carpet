@@ -1,6 +1,6 @@
 package carpet.utils;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import net.minecraft.block.Material;
 import net.minecraft.block.MaterialColor;

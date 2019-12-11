@@ -8,7 +8,7 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;

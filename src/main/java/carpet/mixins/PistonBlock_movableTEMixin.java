@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockEntityInterface;
 import com.google.common.collect.Lists;
 import net.minecraft.block.*;

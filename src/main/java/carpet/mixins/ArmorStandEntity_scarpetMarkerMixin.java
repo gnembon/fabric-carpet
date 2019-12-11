@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import carpet.script.ExpressionInspector;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;

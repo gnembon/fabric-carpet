@@ -7,14 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import carpet.mixins.ExplosionAccessor;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.TntEntity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;

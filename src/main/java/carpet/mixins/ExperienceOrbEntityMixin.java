@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.ExperienceOrbInterface;
 import carpet.helpers.XPcombine;
 import net.minecraft.entity.ExperienceOrbEntity;

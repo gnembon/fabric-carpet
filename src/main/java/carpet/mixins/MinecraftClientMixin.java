@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
