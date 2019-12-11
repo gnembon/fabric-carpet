@@ -508,4 +508,11 @@ public class CarpetSettings
             category = {EXPERIMENTAL, CREATIVE}
     )
     public static boolean flatWorldStructureSpawning = false;
+
+    @Rule(
+            desc = "Edge cases are as frequent as common cases, for testing only!!",
+            extra = "Dispensers and Droppers will use extreme random velocity values",
+            category = CREATIVE
+    )
+    public static boolean extremeBehaviours = false;
 }
