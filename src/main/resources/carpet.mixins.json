@@ -114,6 +114,8 @@
     "PickaxeItem_missingToolsMixin",
     "ShearsItem_missingToolsMixin",
 
+    "ItemDispenserBehaviour_extremeBehavioursMixin",
+
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",

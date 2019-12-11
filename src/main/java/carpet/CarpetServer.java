@@ -30,7 +30,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
-    public static final Random rand = new Random((int)((2>>16)*Math.random()));
+    public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
