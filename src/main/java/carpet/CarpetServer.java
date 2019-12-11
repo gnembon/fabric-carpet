@@ -33,6 +33,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 {
     public static final Random rand = new Random((int)((2>>16)*Math.random()));
     public static MinecraftServer minecraft_server;
+    private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
     public static List<CarpetExtension> extensions = new ArrayList<>();
@@ -41,6 +42,13 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void manageExtension(CarpetExtension extension)
     {
         extensions.add(extension);
+        // for extensions that come late to the party, after server is created / loaded
+        // we will handle them now.
+        // that would handle all extensions, even these that add themselves really late to the party
+        if (currentCommandDispatcher != null)
+        {
+            extension.registerCommands(currentCommandDispatcher);
+        }
     }
 
     public static void onGameStarted()
@@ -93,7 +101,10 @@ public class CarpetServer // static for now - easier to handle all around the co
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
         MobAICommand.register(dispatcher);
+        // registering command of extensions that has registered before either server is created
+        // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> e.registerCommands(dispatcher));
+        currentCommandDispatcher = dispatcher;
         //TestCommand.register(dispatcher);
     }
 
@@ -111,6 +122,7 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void onServerClosed(MinecraftServer server)
     {
+        currentCommandDispatcher = null;
         scriptServer.onClose();
         settingsManager.detachServer();
         LoggerRegistry.stopLoggers();
