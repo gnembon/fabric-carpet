@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.BiomeArrayInterface;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;

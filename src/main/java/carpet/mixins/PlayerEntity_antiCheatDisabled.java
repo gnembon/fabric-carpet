@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ElytraItem;
