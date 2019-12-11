@@ -1,10 +1,8 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,14 +17,5 @@ public class MinecraftClientMixin
     private void onInit(CallbackInfo ci) {
         //CM start game hook
         CarpetServer.onGameStarted();
-    }
-
-    /**
-     * @author gnembon
-     */
-    @Overwrite
-    public String getVersionType()
-    {
-        return "carpet "+ CarpetSettings.carpetVersion;
     }
 }
