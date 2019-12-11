@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.TntEntityInterface;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;

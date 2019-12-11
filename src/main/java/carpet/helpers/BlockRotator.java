@@ -1,7 +1,7 @@
 package carpet.helpers;
 
 import carpet.fakes.PistonBlockInterface;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.AbstractRedstoneGateBlock;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;

@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 import carpet.mixins.ExplosionAccessor;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -22,7 +22,6 @@ import net.minecraft.block.Material;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.TntEntity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;

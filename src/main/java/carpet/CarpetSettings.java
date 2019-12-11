@@ -1,6 +1,8 @@
-package carpet.settings;
+package carpet;
 
-import carpet.CarpetServer;
+import carpet.settings.ParsedRule;
+import carpet.settings.Rule;
+import carpet.settings.Validator;
 import carpet.utils.Messenger;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -29,7 +31,7 @@ import static carpet.settings.RuleCategory.DISPENSER;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.2.6+v191209";
+    public static final String carpetVersion = "1.3.0+v191210";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -97,7 +99,8 @@ public class CarpetSettings
     @Rule( desc = "TNT causes less lag when exploding in the same spot and in liquids", category = TNT)
     public static boolean optimizedTNT = false;
 
-    private static class CheckOptimizedTntEnabledValidator<T> extends Validator<T> {
+    private static class CheckOptimizedTntEnabledValidator<T> extends Validator<T>
+    {
         @Override
         public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string) {
             return optimizedTNT || currentRule.defaultValue.equals(newValue) ? newValue : null;

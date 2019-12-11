@@ -1,7 +1,7 @@
 package carpet.mixins;
 
+import carpet.CarpetSettings;
 import carpet.fakes.WorldInterface;
-import carpet.settings.CarpetSettings;
 import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;

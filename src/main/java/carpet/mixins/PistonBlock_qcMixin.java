@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.PistonBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;

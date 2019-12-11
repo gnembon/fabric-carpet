@@ -2,7 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.script.CarpetScriptHost;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.Expression;

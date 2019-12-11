@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.EntityInterface;
 import carpet.helpers.BlockRotator;
 import net.minecraft.entity.Entity;

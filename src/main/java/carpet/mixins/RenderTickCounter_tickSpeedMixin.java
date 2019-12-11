@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.client.render.RenderTickCounter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

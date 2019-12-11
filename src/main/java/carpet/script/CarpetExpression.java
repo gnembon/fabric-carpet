@@ -21,7 +21,7 @@ import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.utils.BlockInfo;
 import carpet.utils.Messenger;
 import com.google.common.collect.Sets;

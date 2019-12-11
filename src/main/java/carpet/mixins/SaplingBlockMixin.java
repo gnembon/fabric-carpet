@@ -1,7 +1,7 @@
 package carpet.mixins;
 
+import carpet.CarpetSettings;
 import carpet.helpers.BlockSaplingHelper;
-import carpet.settings.CarpetSettings;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SaplingBlock;
