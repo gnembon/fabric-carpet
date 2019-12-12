@@ -446,20 +446,23 @@ public class EntityValue extends Value
         {
             // TODO next - figure out proper way of informting client about pos changes
             //((ServerPlayerEntity) e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
-            Set<PlayerPositionLookS2CPacket.Flag> set_1 = EnumSet.allOf(PlayerPositionLookS2CPacket.Flag.class);
-            double prevX = e.getX();
+            Set<PlayerPositionLookS2CPacket.Flag> set_1 = EnumSet.noneOf(PlayerPositionLookS2CPacket.Flag.class);
+            //set_1.add(PlayerPositionLookS2CPacket.Flag.X);
+            //set_1.add(PlayerPositionLookS2CPacket.Flag.Y);
+            //set_1.add(PlayerPositionLookS2CPacket.Flag.Z);
+            /*double prevX = e.getX();
             double prevY = e.getY();
             double prevZ = e.getZ();
             float prevYaw = e.yaw;
-            float prevPitch = e.pitch;
+            float prevPitch = e.pitch;*/
 
             e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
             ((ServerPlayerEntity) e).networkHandler.sendPacket(new PlayerPositionLookS2CPacket(
-                    x - prevX,
-                    y - prevY,
-                    z - prevZ,
-                    yaw - prevYaw,
-                    pitch - prevPitch,
+                    x,// - prevX,
+                    y,// - prevY,
+                    z,// - prevZ,
+                    yaw,// - prevYaw,
+                    pitch,// - prevPitch,
                     set_1, -1)
             );
         }
