@@ -115,6 +115,16 @@
     "ShearsItem_missingToolsMixin",
 
     "ItemDispenserBehaviour_extremeBehavioursMixin",
+    "ItemScatterer_extremeMixin",
+    "FishingBobberEntity_extremeMixin",
+    "SkeletonHorseTrapTriggerGoal_extremeMixin",
+    "FireworkEntity_extremeMixin",
+    "BlazeEntity_extremeMixin",
+    "BlazeEntityShootFireballGoal_extremeMixin",
+    "MobEntity_extremeMixin",
+    "ExplosiveProjectileEntity_extremeMixin",
+    "LlamaSpitEntity_extremeMixin",
+    "ProjectileEntity_extremeMixin",
 
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
