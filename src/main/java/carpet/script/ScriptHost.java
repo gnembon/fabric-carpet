@@ -53,7 +53,7 @@ public class ScriptHost
 
     public void delGlobalVariable(String varName)
     {
-        globalFunctions.remove(varName);
+        globalVariables.remove(varName);
     }
 
     public ScriptHost retrieveForExecution(String /*Nullable*/ user)
