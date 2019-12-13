@@ -444,7 +444,11 @@ public class EntityValue extends Value
             return;
         if (e instanceof ServerPlayerEntity)
         {
-            ((ServerPlayerEntity)e).networkHandler.teleportRequest(x, y, z, yaw, pitch, EnumSet.allOf(PlayerPositionLookS2CPacket.Flag.class));
+            // this forces position but doesn't angles for some reason. Need both in the API in the future.
+            EnumSet<PlayerPositionLookS2CPacket.Flag> set  = EnumSet.noneOf(PlayerPositionLookS2CPacket.Flag.class);
+            set.add(PlayerPositionLookS2CPacket.Flag.X_ROT);
+            set.add(PlayerPositionLookS2CPacket.Flag.Y_ROT);
+            ((ServerPlayerEntity)e).networkHandler.teleportRequest(x, y, z, yaw, pitch, set );
         }
         else
         {
