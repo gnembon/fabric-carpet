@@ -21,7 +21,7 @@ public class ProjectileEntity_extremeMixin
     }
 
     // calculates damage
-    @Redirect(method = "method_7435", expect = 1, at = @At(
+    @Redirect(method = "applyEnchantmentEffects", expect = 1, at = @At(
             value = "INVOKE",
             target = "Ljava/util/Random;nextGaussian()D"
     ))
