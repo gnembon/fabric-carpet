@@ -38,9 +38,9 @@ public class CarpetScriptServer
     //make static for now, but will change that later:
     public CarpetScriptHost globalHost;
     public Map<String, CarpetScriptHost> modules;
-    long tickStart;
+    public long tickStart;
     public boolean stopAll;
-    Set<String> holyMoly;
+    private Set<String> holyMoly;
     public CarpetEventServer events;
 
     public static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{

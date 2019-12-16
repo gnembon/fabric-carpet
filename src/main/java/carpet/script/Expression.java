@@ -23,6 +23,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
+import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.text.WordUtils;
@@ -2991,6 +2992,67 @@ public class Expression implements Cloneable
             Value retval = ListValue.wrap(values);
             return (cc, tt) -> retval;
         });
+
+        addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
+            Value queue = Value.NULL;
+            Value funcDesc;
+            if (lv.size()==1)
+            {
+                funcDesc = lv.get(0).evalValue(c);
+            }
+            else if (lv.size() == 2)
+            {
+                queue = lv.get(0).evalValue(c);
+                funcDesc = lv.get(1).evalValue(c);
+            }
+            else
+            {
+                throw new InternalExpressionException("'task' takes one or two parameters");
+            }
+            FunctionValue fun;
+            if (!(funcDesc instanceof FunctionValue))
+            {
+                String name = funcDesc.getString();
+                funcDesc = c.host.globalFunctions.get(name);
+                if (funcDesc == null)
+                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+            }
+            fun = (FunctionValue)funcDesc;
+            if (fun.getArguments().size() > 0)
+                throw new InternalExpressionException("tasks can only accept functions that don't take any arguments");
+            ThreadValue thread = new ThreadValue(queue, fun, expr, tok, c);
+            Thread.yield();
+            return (cc, tt) -> thread;
+        });
+
+        addFunction("task_count", (lv) ->
+        {
+            if (lv.size() > 0)
+            {
+                return new NumericValue(ThreadValue.taskCount(lv.get(0)));
+            }
+            return new NumericValue(ThreadValue.taskCount());
+        });
+
+        addUnaryFunction("join_task", (v) -> {
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'join_task' could only be used with a task value");
+            return ((ThreadValue) v).join();
+        });
+
+        addUnaryFunction("stop_task", (v) -> {
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'join_task' could only be used with a task value");
+            ((ThreadValue) v).stop();
+            return Value.NULL;
+        });
+
+        addUnaryFunction("is_task_completed", (v) -> {
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'join_task' could only be used with a task value");
+            return new NumericValue(((ThreadValue) v).isFinished());
+        });
+
 
     }
 
