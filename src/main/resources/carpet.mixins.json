@@ -143,6 +143,7 @@
     "FallingBlockEntity_scarpetEventsMixin",
     "ChunkTicketManager_scarpetMixin",
     "ServerChunkManager_scarpetMixin",
+    "ServerChunkManager_scarpetThreadingProtectionMixin",
 
 
     "PistonBlock_movableTEMixin",

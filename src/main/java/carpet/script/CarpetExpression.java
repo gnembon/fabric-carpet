@@ -944,14 +944,18 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("set", -1, (c, t, lv) ->
         {
+            CarpetSettings.LOG.error("starting");
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             if (lv.size() < 2 || lv.size() % 2 == 1)
                 throw new InternalExpressionException("'set' should have at least 2 params and odd attributes");
             BlockValue.LocatorResult targetLocator = BlockValue.fromParams(cc, lv, 0);
             BlockValue.LocatorResult sourceLocator = BlockValue.fromParams(cc, lv, targetLocator.offset, true);
+            CarpetSettings.LOG.error("dafuq");
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
+            CarpetSettings.LOG.error("finish dafuq");
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
+            CarpetSettings.LOG.error("finish dafuq 2");
             if (sourceLocator.offset < lv.size())
             {
                 StateFactory<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
@@ -965,6 +969,7 @@ public class CarpetExpression
                     sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
                 }
             }
+            CarpetSettings.LOG.error("finish properties got");
 
             CompoundTag data = sourceLocator.block.getData();
 
