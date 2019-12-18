@@ -11,7 +11,13 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
-import carpet.script.exception.*;
+import carpet.script.exception.BreakStatement;
+import carpet.script.exception.ContinueStatement;
+import carpet.script.exception.ExitStatement;
+import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ReturnStatement;
+import carpet.script.exception.ThrowStatement;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
@@ -3040,12 +3046,12 @@ public class Expression implements Cloneable
             return ((ThreadValue) v).join();
         });
 
-        addUnaryFunction("stop_task", (v) -> {
+        /*addUnaryFunction("stop_task", (v) -> {
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'join_task' could only be used with a task value");
             ((ThreadValue) v).stop();
             return Value.NULL;
-        });
+        });*/
 
         addUnaryFunction("is_task_completed", (v) -> {
             if (!(v instanceof ThreadValue))

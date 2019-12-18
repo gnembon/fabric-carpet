@@ -10,6 +10,7 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.CarpetSettings;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -19,8 +20,8 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
+import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
-import carpet.CarpetSettings;
 import carpet.utils.BlockInfo;
 import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
@@ -101,7 +102,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -944,18 +944,14 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("set", -1, (c, t, lv) ->
         {
-            CarpetSettings.LOG.error("starting");
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             if (lv.size() < 2 || lv.size() % 2 == 1)
                 throw new InternalExpressionException("'set' should have at least 2 params and odd attributes");
             BlockValue.LocatorResult targetLocator = BlockValue.fromParams(cc, lv, 0);
             BlockValue.LocatorResult sourceLocator = BlockValue.fromParams(cc, lv, targetLocator.offset, true);
-            CarpetSettings.LOG.error("dafuq");
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
-            CarpetSettings.LOG.error("finish dafuq");
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
-            CarpetSettings.LOG.error("finish dafuq 2");
             if (sourceLocator.offset < lv.size())
             {
                 StateFactory<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
@@ -969,7 +965,6 @@ public class CarpetExpression
                     sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
                 }
             }
-            CarpetSettings.LOG.error("finish properties got");
 
             CompoundTag data = sourceLocator.block.getData();
 
@@ -3009,6 +3004,17 @@ public class CarpetExpression
                 Messenger.m(s, "w "+ res.getString());
             }
             return (_c, _t) -> res; // pass through for variables
+        });
+
+        //"overidden" native call to cancel if on main thread
+        this.expr.addLazyFunction("join_task", 1, (c, t, lv) -> {
+            if (((CarpetContext)c).s.getMinecraftServer().isOnThread())
+                throw new InternalExpressionException("'join_task' cannot be called from main thread to avoid deadlocks");
+            Value v = lv.get(0).evalValue(c);
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'join_task' could only be used with a task value");
+            Value ret =  ((ThreadValue) v).join();
+            return (_c, _t) -> ret;
         });
 
         this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
