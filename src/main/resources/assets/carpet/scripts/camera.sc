@@ -153,28 +153,29 @@ play(fps) ->
    p = player();
    __assert_valid_for_motion();
    __prepare_path_if_needed();
-   if ((fps % 20 != 0) || fps < 20, exit('FPS needs to be multiples of 20') );
-	tpt = round(fps / 20);
-   mspt = 50 / tpt;
-   start_time = time();
-   point = 0;
-   loop( length(global_points)-1,
-       segment = _;
-       start = global_points:segment:1;
-       end = global_points:(segment+1):1;
-       loop(end-start,
-           v = __get_path_at(segment, start, _);
-           modify(p, 'location', v);
-           point += 1;
-           if ((point % tpt == 0), game_tick());
-           end_time = time();
-           took = end_time - start_time;
-           if (took < mspt, sleep(mspt-took));
-           start_time = time()
-       )
-   );
-   game_tick(1000);
-   'Done!'
+   task( _(outer(fps), outer(p)) -> (
+       //if ((fps % 20 != 0) || fps < 20, exit('FPS needs to be multiples of 20') );
+       tpt = fps / 20;
+        mspt = 50 / tpt;
+        start_time = time();
+        point = 0;
+        loop( length(global_points)-1,
+            segment = _;
+            start = global_points:segment:1;
+            end = global_points:(segment+1):1;
+            loop(end-start,
+                v = __get_path_at(segment, start, _);
+                modify(p, 'location', v);
+                point += 1;
+                end_time = time();
+                took = end_time - start_time;
+                if (took < mspt, sleep(mspt-took));
+                start_time = time()
+            )
+        );
+        'Done!'
+   ));
+
 );
 _show_path_tick(particle_type, total) ->
 (
