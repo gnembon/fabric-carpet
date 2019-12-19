@@ -996,60 +996,6 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("set_async", -1, (c, t, lv) ->
-        {
-            CarpetContext cc = (CarpetContext)c;
-            ServerWorld world = cc.s.getWorld();
-            if (lv.size() < 2 || lv.size() % 2 == 1)
-                throw new InternalExpressionException("'set' should have at least 2 params and odd attributes");
-            BlockValue.LocatorResult targetLocator = BlockValue.fromParams(cc, lv, 0);
-            BlockValue.LocatorResult sourceLocator = BlockValue.fromParams(cc, lv, targetLocator.offset, true);
-            BlockState sourceBlockState = sourceLocator.block.getBlockState();
-            BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
-            if (sourceLocator.offset < lv.size())
-            {
-                StateFactory<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
-                for (int i = sourceLocator.offset; i < lv.size(); i += 2)
-                {
-                    String paramString = lv.get(i).evalValue(c).getString();
-                    Property<?> property = states.getProperty(paramString);
-                    if (property == null)
-                        throw new InternalExpressionException("Property " + paramString + " doesn't apply to " + sourceLocator.block.getString());
-                    String paramValue = lv.get(i + 1).evalValue(c).getString();
-                    sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
-                }
-            }
-
-            CompoundTag data = sourceLocator.block.getData();
-
-            if (sourceBlockState == targetBlockState && data == null)
-                return (c_, t_) -> Value.FALSE;
-            BlockState finalSourceBlockState = sourceBlockState;
-            BlockPos targetPos = targetLocator.block.getPos();
-            cc.s.getMinecraftServer().execute( () ->
-            {
-                CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
-                Clearable.clear(world.getBlockEntity(targetPos));
-                world.setBlockState(targetPos, finalSourceBlockState, 2);
-                if (data != null)
-                {
-                    BlockEntity be = world.getBlockEntity(targetPos);
-                    if (be != null)
-                    {
-                        CompoundTag destTag = data.method_10553();
-                        destTag.putInt("x", targetPos.getX());
-                        destTag.putInt("y", targetPos.getY());
-                        destTag.putInt("z", targetPos.getZ());
-                        be.fromTag(destTag);
-                        be.markDirty();
-                    }
-                }
-                CarpetSettings.impendingFillSkipUpdates = false;
-            });
-            Value retval = new BlockValue(finalSourceBlockState, world, targetLocator.block.getPos());
-            return (c_, t_) -> retval;
-        });
-
         this.expr.addLazyFunction("destroy", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
