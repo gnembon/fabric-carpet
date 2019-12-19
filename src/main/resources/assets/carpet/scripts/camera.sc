@@ -140,42 +140,65 @@ __get_path_at(segment, start, index) ->
     v
 );
 __invalidate_points_cache() -> global_path_precalculated = map(range(global_points:(-1):1), null);
+
+global_showing_path = false;
+global_playing_path = false;
+
+stop() ->
+(
+   if (!global_playing_path && !global_showing_path, return('You can only stop playing or showing the path'));
+   if (global_showing_path,
+      global_showing_path = false;
+      print('stopped showing path');
+   );
+   if (global_playing_path,
+      global_playing_path = false;
+      print('stopped playing path');
+   );
+   ''
+);
+
 show() ->
 (
-   loop(100,
-       _show_path_tick('dust 0.9 0.1 0.1 1', 100);
-       game_tick(50)
-   );
-   'Done!'
+   global_showing_path = true;
+   task( _() -> (
+       loop(100,
+           if(!global_showing_path, break());
+           _show_path_tick('dust 0.9 0.1 0.1 1', 100);
+           sleep(50);
+       );
+       print('Done!');
+   ));
+   '';
 );
+
 play(fps) ->
 (
    p = player();
    __assert_valid_for_motion();
    __prepare_path_if_needed();
+   global_playing_path = true;
    task( _(outer(fps), outer(p)) -> (
-       //if ((fps % 20 != 0) || fps < 20, exit('FPS needs to be multiples of 20') );
-       tpt = fps / 20;
-        mspt = 50 / tpt;
-        start_time = time();
-        point = 0;
-        loop( length(global_points)-1,
-            segment = _;
-            start = global_points:segment:1;
-            end = global_points:(segment+1):1;
-            loop(end-start,
-                v = __get_path_at(segment, start, _);
-                modify(p, 'location', v);
-                point += 1;
-                end_time = time();
-                took = end_time - start_time;
-                if (took < mspt, sleep(mspt-took));
-                start_time = time()
-            )
-        );
-        'Done!'
+       mspt = 1000 / fps;
+       start_time = time();
+       point = 0;
+       loop( length(global_points)-1, segment = _;
+           if (!global_playing_path, break());
+           start = global_points:segment:1;
+           end = global_points:(segment+1):1;
+           loop(end-start,
+               v = __get_path_at(segment, start, _);
+               modify(p, 'location', v);
+               point += 1;
+               end_time = time();
+               took = end_time - start_time;
+               if (took < mspt, sleep(mspt-took));
+               start_time = time()
+           )
+       );
+       print('Done!');
    ));
-
+   '';
 );
 _show_path_tick(particle_type, total) ->
 (
