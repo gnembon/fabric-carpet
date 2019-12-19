@@ -21,6 +21,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -192,6 +193,15 @@ public class BlockValue extends Value
         throw new InternalExpressionException("Attempted to fetch block state without world or stored block state");
     }
 
+    public static BlockEntity getBlockEntity(ServerWorld world, BlockPos pos)
+    {
+        if (world.getServer().isOnThread())
+            return world.getBlockEntity(pos);
+        else
+            return world.getWorldChunk(pos).getBlockEntity(pos, WorldChunk.CreationType.IMMEDIATE);
+    }
+
+
     public CompoundTag getData()
     {
         if (data != null)
@@ -202,7 +212,7 @@ public class BlockValue extends Value
         }
         if (world != null && pos != null)
         {
-            BlockEntity be = world.getBlockEntity(pos);
+            BlockEntity be = getBlockEntity(world, pos);
             CompoundTag tag = new CompoundTag();
             if (be == null)
             {

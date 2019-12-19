@@ -273,6 +273,22 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
+
+        put("permission_level", (e, a) -> {
+            if (e instanceof  ServerPlayerEntity)
+            {
+                ServerPlayerEntity spe = (ServerPlayerEntity) e;
+                for (int i=4; i>=0; i--)
+                {
+                    if (spe.allowsPermissionLevel(i))
+                        return new NumericValue(i);
+
+                }
+                return new NumericValue(0);
+            }
+            return Value.NULL;
+        });
+
         //spectating_entity
         // isGlowing
         put("effect", (e, a) ->

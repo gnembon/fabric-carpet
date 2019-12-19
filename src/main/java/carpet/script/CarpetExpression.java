@@ -127,7 +127,7 @@ import static java.lang.Math.sqrt;
  * players using <code>player('*')</code>, which only returns players in current dimension, or use
  * <code>in_dimension(expr)</code> function.</p>
  */
-public class CarpetExpression 
+public class CarpetExpression
 {
 
     private ServerCommandSource source;
@@ -771,7 +771,7 @@ public class CarpetExpression
                 booleanStateTest(c, "liquid", lv, (s, p) -> !s.getFluidState().isEmpty()));
 
         this.expr.addLazyFunction("flammable", -1, (c, t, lv) ->
-                booleanStateTest(c, "flammable", lv, (s, p) -> !s.getMaterial().isBurnable()));
+                booleanStateTest(c, "flammable", lv, (s, p) -> s.getMaterial().isBurnable()));
 
         this.expr.addLazyFunction("transparent", -1, (c, t, lv) ->
                 booleanStateTest(c, "transparent", lv, (s, p) -> !s.getMaterial().isSolid()));
