@@ -69,9 +69,15 @@ __adjusted_rot(previous_rot, current_rot) ->
    current_rot
 );
 
+__print_path_size() ->
+(
+    __assert_valid_for_motion();
+    print("Path length: %d points, 0.2f secs at 60fps", length(global_points), global_points:(-1):1/60);
+);
 
 repeat(times, last_section_duration) ->
 (
+   __assert_valid_for_motion();
    undef('global_path_precalculated');
    positions = map(global_points, _:0);
    modes = map(global_points, _:(-1));
@@ -82,10 +88,12 @@ repeat(times, last_section_duration) ->
            __add_path_segment(positions:_, durations:_, modes:_)
        )
    );
-   str('Add %d points %d times', length(positions), times)
+   __print_path_size();
+   '';
 );
 speed(percentage) ->
 (
+   __assert_valid_for_motion();
    undef('global_path_precalculated');
    if (percentage < 25 || percentage > 400,
        exit('path speed can only be speed, or slowed down 4 times. Recall command for larger changes')
@@ -94,10 +102,11 @@ speed(percentage) ->
    previous_path_length = global_points:(-1):1;
    for(global_points, _:1 = _:1*ratio );
    undef('global_path_precalculated');
-   str('path %s from %d to %d ticks',
+   str('path %s from %d to %d ticks (%.2f seconds with 60fps)',
        if(ratio<1,'shortened','extended'),
        previous_path_length,
-       global_points:(-1):1
+       global_points:(-1):1,
+       global_points:(-1):1/60
    )
 );
 select_interpolation(method) ->
@@ -158,15 +167,45 @@ stop() ->
    ''
 );
 
+clear() ->
+(
+   global_points = l();
+   undef('global_path_precalculated');
+);
+
+global_needs_updating = false;
+global_selected_point = null;
+
 show() ->
 (
+   p = player();
+   __assert_valid_for_motion();
+   __print_path_size();
    global_showing_path = true;
-   task( _() -> (
-       loop(100,
-           if(!global_showing_path, break());
-           _show_path_tick('dust 0.9 0.1 0.1 1', 100);
-           sleep(50);
+   global_needs_updating= false;
+   def __create_markers()->
+   (
+       map(global_points,
+           m = create_marker(null, _:0, 'observer');
+           if (global_selected_point && _i == global_selected_point,
+               modify(m,'effect','glowing',72000);
+           );
+           m
        );
+   );
+   task( _(outer(p)) -> (
+       markers = __create_markers();
+       loop(7200,
+           if(!global_showing_path, break());
+           if (global_needs_updating,
+               global_needs_updating = false;
+               for(markers, modify(_,'remove');
+               markers = __create_markers();
+           );
+           _show_path_tick('dust 0.9 0.1 0.1 1', 100);
+           sleep(100);
+       );
+       for(markers, modify(_,'remove');
        print('Done!');
    ));
    '';
@@ -179,10 +218,12 @@ play(fps) ->
    __prepare_path_if_needed();
    global_playing_path = true;
    task( _(outer(fps), outer(p)) -> (
+       sleep(1000);
        mspt = 1000 / fps;
        start_time = time();
        point = 0;
        loop( length(global_points)-1, segment = _;
+           if (p~'sneaking', global_playing_path = false);
            if (!global_playing_path, break());
            start = global_points:segment:1;
            end = global_points:(segment+1):1;
@@ -196,6 +237,7 @@ play(fps) ->
                start_time = time()
            )
        );
+       sleep(1000);
        print('Done!');
    ));
    '';
