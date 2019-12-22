@@ -130,15 +130,24 @@ public class BlockValue extends Value
 
     public static LocatorResult fromParams(CarpetContext c, List<LazyValue> params, int offset)
     {
-        return fromParams(c, params,offset, false);
+        return fromParams(c, params,offset, false, false);
     }
 
     public static LocatorResult fromParams(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString)
+    {
+        return fromParams(c, params,offset, acceptString, false);
+    }
+
+    public static LocatorResult fromParams(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString, boolean optional)
     {
         try
         {
             Value v1 = params.get(0 + offset).evalValue(c);
             //add conditional from string name
+            if (optional && v1 instanceof NullValue)
+            {
+                return new LocatorResult(null, 1+offset);
+            }
             if (acceptString && v1 instanceof StringValue)
             {
                 return new LocatorResult(fromString(v1.getString()), 1+offset);

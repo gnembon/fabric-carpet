@@ -106,7 +106,6 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -2865,6 +2864,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             BlockState targetBlock = null;
             BlockValue.VectorLocator pointLocator;
+            boolean interactable = true;
             String name;
             try
             {
@@ -2872,8 +2872,14 @@ public class CarpetExpression
                 name = nameValue instanceof NullValue ? "" : nameValue.getString();
                 pointLocator = BlockValue.locateVec(cc, lv, 1, true);
                 if (lv.size()>pointLocator.offset)
-                    targetBlock = BlockValue.fromParams(cc, lv, pointLocator.offset, true).block.getBlockState();
-
+                {
+                    BlockValue.LocatorResult blockLocator = BlockValue.fromParams(cc, lv, pointLocator.offset, true, true);
+                    if (blockLocator.block != null) targetBlock = blockLocator.block.getBlockState();
+                    if (lv.size() > blockLocator.offset)
+                    {
+                        interactable = lv.get(blockLocator.offset).evalValue(c, Context.BOOLEAN).getBoolean();
+                    }
+                }
             }
             catch (IndexOutOfBoundsException e)
             {
@@ -2901,6 +2907,7 @@ public class CarpetExpression
             armorstand.setNoGravity(true);
             armorstand.setInvisible(true);
             armorstand.setInvulnerable(true);
+            armorstand.getDataTracker().set(ArmorStandEntity.ARMOR_STAND_FLAGS, (byte)(interactable?8 : 16|8));
             cc.s.getWorld().spawnEntity(armorstand);
             EntityValue result = new EntityValue(armorstand);
             return (_c, _t) -> result;
@@ -3023,7 +3030,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new StringValue(nameFromRegistryId(Registry.DIMENSION.getId(s.getWorld().dimension.getType())));
+            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION.getId(s.getWorld().dimension.getType())));
             return (cc, tt) -> retval;
         });
 

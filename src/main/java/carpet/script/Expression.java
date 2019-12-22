@@ -1198,16 +1198,14 @@ public class Expression implements Cloneable
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (!v1.getBoolean()) return (cc, tt) -> v1;
-            Value v2 = lv2.evalValue(c, Context.BOOLEAN);
-            return v2.getBoolean() ? ((cc, tt) -> v2) : LazyValue.FALSE;
+            return lv2;
         });
 
         addLazyBinaryOperator("||", precedence.get("or||"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (v1.getBoolean()) return (cc, tt) -> v1;
-            Value v2 = lv2.evalValue(c, Context.BOOLEAN);
-            return v2.getBoolean() ? ((cc, tt) -> v2) : LazyValue.FALSE;
+            return lv2;
         });
 
         addBinaryOperator("~", precedence.get("attribute~:"), true, Value::in);
@@ -1928,7 +1926,7 @@ public class Expression implements Cloneable
             LazyValue expr = lv.get(1);
             //scoping
             LazyValue _val = c.getVariable("_");
-            LazyValue _iter = c.getVariable("_i");
+            LazyValue _ite = c.getVariable("_i");
             int successCount = 0;
             for (int i=0; iterator.hasNext(); i++)
             {
@@ -1959,7 +1957,7 @@ public class Expression implements Cloneable
             //revering scope
             ((AbstractListValue) rval).fatality();
             c.setVariable("_", _val);
-            c.setVariable("_i", _iter);
+            c.setVariable("_i", _ite);
             long promiseWontChange = successCount;
             return (cc, tt) -> new NumericValue(promiseWontChange);
         });
@@ -1988,15 +1986,18 @@ public class Expression implements Cloneable
             //scoping
             LazyValue _val = c.getVariable("_");
             LazyValue _acc = c.getVariable("_a");
+            LazyValue _ite = c.getVariable("_i");
 
-            while (iterator.hasNext())
+            for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.boundVariable;
                 next.bindTo("_");
                 Value promiseWontChangeYou = acc;
+                int seriously = i;
                 c.setVariable("_a", (cc, tt) -> promiseWontChangeYou.bindTo("_a"));
                 c.setVariable("_", (cc, tt) -> next);
+                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
                 try
                 {
                     acc = expr.evalValue(c, t);
@@ -2016,6 +2017,7 @@ public class Expression implements Cloneable
             ((AbstractListValue) rval).fatality();
             c.setVariable("_a", _acc);
             c.setVariable("_", _val);
+            c.setVariable("_i", _ite);
 
             Value hopeItsEnoughPromise = acc;
             return (cc, tt) -> hopeItsEnoughPromise;
