@@ -5,6 +5,12 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.InventoryProvider;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ItemStringReader;
@@ -21,8 +27,12 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.world.World;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -116,6 +126,41 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return copy;
     }
 
+    // stolen from HopperBlockEntity, adjusted for threaded operation
+    public static Inventory getInventoryAt(ServerWorld world, BlockPos blockPos)
+    {
+        Inventory inventory = null;
+        BlockState blockState = world.getBlockState(blockPos);
+        Block block = blockState.getBlock();
+        if (block instanceof InventoryProvider) {
+            inventory = ((InventoryProvider)block).getInventory(blockState, world, blockPos);
+        } else if (block.hasBlockEntity()) {
+            BlockEntity blockEntity = BlockValue.getBlockEntity(world, blockPos);
+            if (blockEntity instanceof Inventory) {
+                inventory = (Inventory)blockEntity;
+                if (inventory instanceof ChestBlockEntity && block instanceof ChestBlock) {
+                    inventory = ChestBlock.getInventory(blockState, world, blockPos, true);
+                }
+            }
+        }
+
+        if (inventory == null) {
+            List<Entity> list = world.getEntities(
+                    (Entity)null,
+                    new Box(
+                            blockPos.getX() - 0.5D, blockPos.getY() - 0.5D, blockPos.getZ() - 0.5D,
+                            blockPos.getX() + 0.5D, blockPos.getY() + 0.5D, blockPos.getZ() + 0.5D),
+                    EntityPredicates.VALID_INVENTORIES
+            );
+            if (!list.isEmpty()) {
+                inventory = (Inventory)list.get(world.random.nextInt(list.size()));
+            }
+        }
+
+        return inventory;
+    }
+
+
     public static InventoryLocator locateInventory(CarpetContext c, List<LazyValue> params, int offset)
     {
         try
@@ -139,7 +184,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 BlockPos pos = ((BlockValue) v1).getPos();
                 if (pos == null)
                     throw new InternalExpressionException("Block to access inventory needs to be positioned in the world");
-                inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
+                inv = getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
@@ -151,7 +196,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
                         NumericValue.asNumber(args.get(2)).getDouble());
-                inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
+                inv = getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
@@ -160,7 +205,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset).evalValue(c)).getDouble(),
                     NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble());
-            inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
+            inv = getInventoryAt(c.s.getWorld(), pos);
             if (inv == null)
                 return null;
             return new InventoryLocator(pos, pos, inv, offset + 3);

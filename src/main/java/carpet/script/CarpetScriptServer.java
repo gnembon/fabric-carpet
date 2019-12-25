@@ -38,12 +38,12 @@ public class CarpetScriptServer
     //make static for now, but will change that later:
     public CarpetScriptHost globalHost;
     public Map<String, CarpetScriptHost> modules;
-    long tickStart;
+    public long tickStart;
     public boolean stopAll;
-    Set<String> holyMoly;
+    private Set<String> holyMoly;
     public CarpetEventServer events;
 
-    public static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
+    private static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
         add(new BundledModule("camera"));
         add(new BundledModule("event_test"));
     }};
@@ -72,7 +72,7 @@ public class CarpetScriptServer
 
     }
 
-    ModuleInterface getModule(String name)
+    private ModuleInterface getModule(String name)
     {
         File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts");
@@ -218,25 +218,6 @@ public class CarpetScriptServer
         }
         return false;
     }
-    private void addEvents(ServerCommandSource source, String hostName)
-    {
-        if (1+2 == 3) throw new RuntimeException("This should run when code is evaluated");
-        ScriptHost host = modules.get(hostName);
-        if (host == null)
-        {
-            return;
-        }
-        for (String fun : host.globalFunctions.keySet())
-        {
-            if (!fun.startsWith("__on_"))
-                continue;
-            String event = fun.replaceFirst("__on_","");
-            if (!CarpetEventServer.Event.byName.containsKey(event))
-                continue;
-            events.addEvent(event, hostName, fun);
-        }
-    }
-
 
     private void addCommand(ServerCommandSource source, String hostName)
     {
@@ -261,7 +242,9 @@ public class CarpetScriptServer
                 requires((player) -> modules.containsKey(hostName)).
                 executes( (c) ->
                 {
-                    Messenger.m(c.getSource(), "gi "+modules.get(hostName).retrieveForExecution(c.getSource()).call(c.getSource(),"__command", null, ""));
+                    String response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                            call(c.getSource(),"__command", null, "");
+                    if (!response.isEmpty()) Messenger.m(c.getSource(), "gi "+response);
                     return 1;
                 });
 
@@ -271,28 +254,16 @@ public class CarpetScriptServer
                     then(literal(function).
                             requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getPublicFunctions().contains(function)).
                             executes( (c) -> {
-                                Messenger.m(
-                                        c.getSource(),
-                                        "gi "+modules.get(hostName).retrieveForExecution(c.getSource()).call(
-                                                c.getSource(),
-                                                function,
-                                                null,
-                                                ""
-                                        )
-                                );
+                                String response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                        call(c.getSource(), function,null,"");
+                                if (!response.isEmpty()) Messenger.m(c.getSource(),"gi "+response);
                                 return 1;
                             }).
                             then(argument("args...", StringArgumentType.greedyString()).
                                     executes( (c) -> {
-                                        Messenger.m(
-                                                c.getSource(),
-                                                "gi "+modules.get(hostName).retrieveForExecution(c.getSource()).call(
-                                                        c.getSource(),
-                                                        function,
-                                                        null,
-                                                        StringArgumentType.getString(c, "args...")
-                                                )
-                                        );
+                                        String response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                                call(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                        if (!response.isEmpty()) Messenger.m(c.getSource(), "gi "+response);
                                         return 1;
                                     })));
         }

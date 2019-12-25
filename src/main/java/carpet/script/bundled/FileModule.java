@@ -56,7 +56,7 @@ public class FileModule implements ModuleInterface
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
-    private static Tag read(File file)
+    public static Tag read(File file)
     {
         try (DataInputStream dataInput_1 = new DataInputStream(new FileInputStream(file)))
         {
@@ -78,7 +78,7 @@ public class FileModule implements ModuleInterface
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    private static void write(Tag tag_1, File file)
+    public static void write(Tag tag_1, File file)
     {
         File file_2 = new File(file.getAbsolutePath() + "_tmp");
         if (file_2.exists()) file_2.delete();
@@ -98,24 +98,5 @@ public class FileModule implements ModuleInterface
         }
         if (file.exists()) file.delete();
         if (!file.exists()) file_2.renameTo(file);
-    }
-
-    @Override
-    public Tag getData(String file)
-    {
-        File dataFile =CarpetServer.minecraft_server.getLevelStorage().resolveFile(
-                CarpetServer.minecraft_server.getLevelName(), "scripts/"+name+".data"+(file==null?"":"."+file)+".nbt");
-        if (!(dataFile.isFile()))
-            return null;
-        return read(dataFile);
-    }
-
-    @Override
-    public void saveData(String file, Tag globalState)
-    {
-        File dataFile =CarpetServer.minecraft_server.getLevelStorage().resolveFile(
-                CarpetServer.minecraft_server.getLevelName(), "scripts/"+name+".data"+(file==null?"":"."+file)+".nbt");
-        write(globalState, dataFile);
-
     }
 }

@@ -6,16 +6,16 @@ import java.util.Set;
 
 public class Context
 {
-    static final int NONE = 0;
-    static final int VOID = 1;
-    static final int BOOLEAN = 2;
-    static final int NUMBER = 3;
-    static final int STRING = 4;
-    static final int LIST = 5;
-    static final int ITERATOR = 6;
-    static final int SIGNATURE = 7;
-    static final int LOCALIZATION = 8;
-    static final int LVALUE = 9;
+    public static final int NONE = 0;
+    public static final int VOID = 1;
+    public static final int BOOLEAN = 2;
+    public static final int NUMBER = 3;
+    public static final int STRING = 4;
+    public static final int LIST = 5;
+    public static final int ITERATOR = 6;
+    public static final int SIGNATURE = 7;
+    public static final int LOCALIZATION = 8;
+    public static final int LVALUE = 9;
 
     public Map<String, LazyValue> variables = new HashMap<>();
 

@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class ScriptHost
 {
-    private final Map<String, ScriptHost> userHosts = new Object2ObjectOpenHashMap<>();
+    protected final Map<String, ScriptHost> userHosts = new Object2ObjectOpenHashMap<>();
     public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
     public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
 

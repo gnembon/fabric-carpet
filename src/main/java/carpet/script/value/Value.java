@@ -110,7 +110,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     @Override
     public int compareTo(final Value o)
     {
-        if (o instanceof NumericValue || o instanceof ListValue)
+        if (o instanceof NumericValue || o instanceof ListValue || o instanceof ThreadValue)
         {
             return -o.compareTo(this);
         }
