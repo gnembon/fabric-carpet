@@ -1,137 +1,210 @@
 __command() ->
 (
-   print('camera_path module.');
+   print('camera: scarpet app.');
    print('-------------------');
-   print(' "/camera_path start" - set the starting point');
+   print(' "/camera start" - set the starting point, resets the path');
    print('');
-   print(' "/camera_path add <N>" - add another point <N> frames later');
+   print(' "/camera add <N>" - add point to the end <N> seconds later');
+   print(' "/camera prepend <N>" - prepend point <N> seconds before');
+   print(' "/camera clear" - removes entire path');
+   print(' "/camera select" - or punch a point, to select it');
+   print(' "/camera move" - moves selected camera to current player location');
+   print(' "/camera duration <X>" - resizes current selected path');
+   print(' "/camera split_point>" - splits current selected path in half');
+   print(' "/camera delete_point" - removes current keypoint');
+   print(' "/camera trim_path" - removes all keypoints from selected');
    print('');
-   print(' "/camera_path select_interpolation < linear | gauss_? >"');
-   print('    Select interpolation between points:');
+   print(' "/camera store <name>"');
+   print(' "/camera load <name>"');
+   print('    - stores and loads path from nbt files in /scripts world folder');
+   print('');
+   print(' "/camera interpolation < linear | gauss | cr | gauss_<number> >"');
+   print('    Selects interpolation between points:');
+   print('    - cr: Catmull-Rom interpolation (default).');
+   print('        smooth path that goes through all points.');
    print('    - linear: straight paths between points.');
-   print('    - gauss_auto: automatic smooth transitions.');
-   print('    - gauss_<number>: custom fixed variance ');
-   print('            (in points) for special effects.');
+   print('    - gauss: automatic smooth transitions.');
+   print('    - gauss_<N>: custom fixed variance ');
+   print('            (in seconds) for special effects.');
+   print('            use "_" for decimal separator, e.g. gauss_2_5');
+   print('        gauss makes the smoothest path,');
+   print('        but treating points as suggestions only');
    print('');
-   print(' "/camera_path repeat <N> <last_delay>" - ');
+   print(' "/camera repeat <N> <last_delay>" - ');
    print('    Repeat existing points configuration n-times');
-   print('      using <last_delay> points to link path ends');
+   print('      using <last_delay> seconds to link path ends');
    print('');
-   print(' "/camera_path speed <factor> - ');
+   print(' "/camera stretch <factor>" - ');
    print('    Change number of frames between points');
-   print('      from 25 -> 4 times faster (less points),');
-   print('      to 400 -> 4 times slower (more points)');
+   print('      from 25 -> 4x faster, to 400 -> 4x slower,');
    print('');
-   print(' "/camera_path play <fps>: run a path with a player');
-   print('    <fps> needs to be multiples of 20, (20 tps)');
+   print(' "/camera play : run a path with a player');
+   print('    use "sneak" to stop it prematurely');
+   print('    run /camera hide and F1 to clear the view');
    print('');
-   print(' "/camera_path show": shows current path for a moment');
+   print(' "/camera show": shows current path for a moment');
+   print('    color of particles used is different for different players');
+   print(' "/camera hide": hides path display');
    print('');
-   print(' "/script in camera_path invoke _show_path_tick <particle> <ppt>":');
-   print('    place this in a repeating commandblock');
-   print('      to display path continuously');
-   print('      with set particle and number of particles per tick');
-   print('      example: \'dust 0.9 0.1 0.1 1\' 100 ');
    ''
 );
 
-// camera position for the player sticks out of their eyes
-__camera_position(player) -> (player~'location' + l(0, player~'eye_height',0,0,0));
+global_points = null;
+global_dimension = null;
+global_player = null;
 
-__update() ->
-(
-    undef('global_path_precalculated');
-    global_needs_updating = true;
-);
+global_player_eye_offset = map(range(5), 0);
 
-start() ->
-(
-   p = player();
-   global_points = l(l(__camera_position(p), 0,'sharp'));
-   __update();
-   show();
-   str('Started path at %.1f %.1f %.1f', p~'x', p~'y', p~'z');
-);
-add(delay) ->
-(
-   p = player();
-   mode = 'smooth';
-   //mode is currently unused, run_path does always sharp, gauss interpolator is always smooth
-   // but this option could be used could be used at some point by more robust interpolators
-   __add_path_segment(__camera_position(p), round(60*delay), mode);
-   __print_path_size();
-);
+global_showing_path = false;
+global_playing_path = false;
 
-prepend(delay) ->
+global_needs_updating = false;
+global_selected_point = null;
+global_markers = null;
+
+global_particle_density = 100;
+
+global_color_a = null;
+global_color_b = null;
+
+global_path_precalculated = null;
+
+// starts the path with current player location
+start() -> __start_with( _() -> l(l(__camera_position(), 0,'sharp')) );
+
+// start path with customized initial points selection
+__start_with(points_supplier) ->
 (
     p = player();
-    mode = 'smooth';
-    __prepend_path_segment(__camera_position(p), round(60*delay), mode);
-    __print_path_size();
-);
+    global_player = str(p);
+    global_player_eye_offset = l(0, p~'eye_height',0,0,0);
+    global_dimension = p~'dimension';
 
-__add_path_segment(vector, duration, mode) ->
-(
-   if ( (l('sharp','smooth') ~ mode) == null, exit('use smooth or sharp point'));
-   if(!global_points, exit('Cannot add point to path that didn\'t started yet!'));
-   l(v, end_time, m) = global_points:(-1);
-   vector:(-2) = __adjusted_rot(v:(-2) , vector:(-2) );
-   global_points += l(vector, end_time+duration, mode);
-   __update();
-);
+    code = abs(hash_code(str(p))-123456);
+    global_color_a = str('dust %.1f %.1f %.1f 1',(code%10)/10,(((code/10)%10)/10), (((code/100)%10)/10) ); //    'dust 0.1 0.9 0.1 1',
+    global_color_b = str('dust %.1f %.1f %.1f 1',(((code/1000)%10)/10),(((code/10000)%10)/10), (((code/100000)%10)/10) );// 'dust 0.6 0.6 0.6 1'
 
-__prepend_path_segment(vector, duration, mode) ->
-(
-    if ( (l('sharp','smooth') ~ mode) == null, exit('use smooth or sharp point'));
-    if(!global_points, exit('Cannot add point to path that didn\'t started yet!'));
-    l(v, start_time, m) = global_points:(-1);
-    vector:(-2) = __adjusted_rot(v:(-2), vector:(-2));
-    new_points = l(l(vector, 0, mode));
-    for (global_points,
-        _:1 += duration;
-        new_points += _;
-    );
-    global_points = new_points;
+    global_points = call(points_supplier);
     __update();
+    show();
+    str('Started path at %.1f %.1f %.1f', p~'x', p~'y', p~'z');
 );
 
-// adjusts current rotation so we don\'t spin around like crazy
-__adjusted_rot(previous_rot, current_rot) ->
+// gets current player controlling the path, or fails
+__get_player() ->
 (
-   while( abs(previous_rot-current_rot) > 180, 1000,
-       current_rot += if(previous_rot < current_rot, -360, 360)
+    if (!global_player, exit('No player selected'));
+    p = player(global_player);
+    if (p == null, exit('Player logged out'));
+    p;
+);
+
+// clears current path
+clear() ->
+(
+   global_points = l();
+   global_dimension = null;
+   global_player = null;
+   global_showing_path = false;
+   global_playing_path = false;
+   __update();
+   'Path cleared';
+);
+
+// camera position for the player sticks out of their eyes
+__camera_position() -> (__get_player()~'location' + global_player_eye_offset);
+
+// path changed, now notify all processes that they need to update;
+__update() ->
+(
+   global_path_precalculated = null;
+   global_playing_path = false;
+   global_needs_updating = true;
+);
+
+// ensures that the current execution context can modify the path
+__assert_can_modify_path() ->
+(
+    if (!global_points, exit('Path is not setup for current player'));
+    if (!global_showing_path, exit('Turn on path showing to edit key points'));
+    if(!global_player || !global_dimension || __get_player()~'dimension' != global_dimension,
+       exit('Player not in dimension'));
+);
+
+// make sure selected point is correct
+__assert_point_selected(validator) ->
+(
+   __assert_can_modify_path();
+   if (!call(validator, global_selected_point), exit('No appropriate point selected'));
+);
+
+//select a custom interpolation method
+interpolation(method) -> __interpolation(method, true);
+__interpolation(method, verbose) ->
+(
+   __prepare_path_if_needed() -> __prepare_path_if_needed_generic();
+   // each supported method needs to specify its __find_position_for_point to trace the path
+   // accepting segment number, and position in the segment
+   // or optionally __prepare_path_if_needed, if path is inefficient to compute point by point
+   global_interpolator = if (
+       method == 'linear', '__interpolator_linear',
+       method == 'cr', '__interpolator_cr',
+       method == 'gauss', _(s, p) -> __interpolator_gauB(s, p, 0),
+       method ~ '^gauss_',
+            (
+                type = method - 'gauss_';
+                type = replace(type,'_','.');
+                variance = round(60*number(type));
+                _(s, p, outer(variance)) -> __interpolator_gauB(s, p, variance);
+            ),
+       exit('Choose one of the following methods: linear, gauss, gauss_<deviation>, cr')
    );
-   current_rot
+   __update();
+   if(verbose, 'Interpolation changed to '+method, '');
+);
+__interpolation('cr', false);
+
+// adds a point to the end of the path with delay in seconds
+add(delay) ->
+(
+   __assert_can_modify_path();
+   //mode is currently unused, run_path does always sharp, gauss interpolator is always smooth
+   // but this option could be used could be used at some point by more robust interpolators
+   __add_path_segment(__camera_position(), round(60*delay), 'smooth', true);
+   __update();
+   __get_path_size_string();
 );
 
-__print_path_size() ->
+// prepends the path with a new starting point, with a segment of specified delay
+prepend(delay) ->
 (
-    if (!__assert_valid_for_motion(),
-        print(str('%d points, %.1f secs', length(global_points), global_points:(-1):1/60));
-    );
-    '';
+    __assert_can_modify_path();
+    __add_path_segment(__camera_position(), round(60*delay), 'smooth', false);
+    __update();
+    __get_path_size_string();
 );
 
-repeat(times, last_section_duration) ->
+// repeats existing points seveal times, using last section delay (seconds) to join points
+repeat(times, last_section_delay) ->
 (
-   if (err = __assert_valid_for_motion(), exit(err));
+   if (err = __is_not_valid_for_motion(), exit(err));
    positions = map(global_points, _:0);
    modes = map(global_points, _:(-1));
    durations = map(global_points, global_points:(_i+1):1 - _:1 );
    durations:(-1) = round(60*last_section_duration);
    loop(times,
        loop( length(positions),
-           __add_path_segment(positions:_, durations:_, modes:_)
+           __add_path_segment(positions:_, durations:_, modes:_, true)
        )
    );
    __update();
-   __print_path_size();
-   '';
+   __get_path_size_string();
 );
+
+//stretches or shrinks current path to X percent of what it was before
 stretch(percentage) ->
 (
-   if (err = __assert_valid_for_motion(), exit(err));
-   undef('global_path_precalculated');
+   if (err = __is_not_valid_for_motion(), exit(err));
    if (percentage < 25 || percentage > 400,
        exit('path speed can only be speed, or slowed down 4 times. Re-call command for larger changes')
    );
@@ -146,98 +219,106 @@ stretch(percentage) ->
    )
 );
 
-select_interpolation(method) ->
+// moves current selected point to player location
+move() ->
 (
-   __prepare_path_if_needed() -> __prepare_path_if_needed_generic();
-   // each supported method needs to specify its __find_position_for_point to trace the path
-   // accepting segment number, and position in the segment
-   // or optionally __prepare_path_if_needed, if path is inefficient to compute point by point
-   global_interpolator = if (
-       method == 'linear', '__interpolator_linear',
-       method == 'cr', '__interpolator_cr',
-       method == 'gauss', _(s, p) -> __interpolator_gauss(s, p, 0),
-       method ~ '^gauss_',
-            (
-                type = method - 'gauss_';
-                variance = number(type);
-                _(s, p, outer(variance)) -> __interpolator_gauss(s, p, variance);
-            ),
-       exit('Choose one of the following methods: linear, gauss, gauss_<deviation>, cr')
-   );
-   __update();
-   'Ok'
+    __assert_point_selected(_(p) -> p != null);
+    global_points:global_selected_point:0 = __camera_position();
+    __update();
+    '';
 );
-select_interpolation('cr');
 
-__assert_valid_for_motion() ->
+// chenges duration of the current selected segment to X seconds
+duration(amount) ->
 (
-   if(!global_points, return('Path not defined yet'));
-   if(length(global_points)<2, return('Path not complete - add more points'));
-   null
-);
-__get_path_at(segment, start, index) ->
-(
-   v = global_path_precalculated:(start+index);
-   if(v == null,
-       v = call(global_interpolator, segment, index);
-       global_path_precalculated:(start+index) =  v
+    __assert_point_selected(_(p) -> p); // skips nulls and 0 - starting point
+    duration = number(amount);
+    new_ticks = round(duration * 60);
+    if (new_ticks < 10, return());
+    previous_ticks = global_points:global_selected_point:1-global_points:(global_selected_point-1):1;
+    delta = new_ticks - previous_ticks;
+    // adjust duration of all points after that.
+    for (range(global_selected_point, length(global_points)),
+        global_points:_:1 += delta;
     );
-    v
-);
-__invalidate_points_cache() -> global_path_precalculated = map(range(global_points:(-1):1), null);
-
-global_showing_path = false;
-global_playing_path = false;
-
-hide() ->
-(
-   if (global_showing_path,
-      global_showing_path = false;
-      print('Stopped showing path');
-   );
-   ''
+    __update();
+    __get_path_size_string();
 );
 
-clear() ->
+// deletes current keypoint without changing the path length
+delete_point() ->
 (
-   global_points = l();
-   __update();
+    __assert_point_selected(_(p) -> p != null);
+    if (length(global_points) < 2, clear(); return());
+    if (global_selected_point == 0, global_points:1:1 = 0);
+    global_points = filter(global_points, _i != global_selected_point);
+    if (global_selected_point >= length(global_points), global_selected_point = null);
+    __update();
+    __get_path_size_string();
 );
 
-global_needs_updating = false;
-global_selected_point = null;
-global_markers = null;
-
-__distsq(vec1, vec2) -> reduce(vec1 - vec2, _a + _*_, 0);
-
-__closest_point_to_center(center, points) ->
+// splits current selected segment in half by adding a keypoint in between
+split_point() ->
 (
-    dd = __distsq(points:0, center);
-    for(points,
-        d = __distsq(_, center);
-        if( d<dd,
-            dd=d;
-            index = _i
-        );
+    __assert_point_selected(_(p) -> p); // skips nulls and 0 - starting point
+    current_time = global_points:global_selected_point:1;
+    previous_time = global_points:(global_selected_point-1):1;
+    segment_duration = current_time-previous_time;
+    put(
+        global_points,
+        global_selected_point,
+        l(
+            __get_path_at(global_selected_point-1, previous_time, segment_duration/2),
+            previous_time+segment_duration/2,
+            global_points:global_selected_point:2
+        ),
+        'insert'
     );
-    index;
+    __update();
+    __get_path_size_string();
 );
 
-select() ->
+// removes all points in the path from the current point
+trim_path() ->
+(
+    __assert_point_selected(_(p) -> p != null);
+    global_points = slice(global_points, 0, global_selected_point);
+    global_selected_point = null;
+    __update();
+    __get_path_size_string();
+);
+
+// moves entire camera path keeping the angles to player position being in the starting point
+reposition() ->
+(
+    __assert_can_modify_path();
+    shift = pos(__get_player())-slice(global_points:0:0, 0, 3);
+    shift += 0; shift += 0;
+    shift = shift + global_player_eye_offset;
+    for(global_points, _:0 = _:0 + shift);
+    __update();
+    __get_path_size_string();
+);
+
+// selects either a point of certain number (starting from 1), or closest point
+select(num) ->
 (
     if (!global_points, return());
     if (!global_showing_path, return());
-    p = player();
-    selected_point = __closest_point_to_center(
-        p~'pos'+l(0,p~'eye_height',0),
-        map(global_points, slice(_:0, 0, 3))
+    p = __get_player();
+    num = (num+1000*(length(global_points)+1)) % (length(global_points)+1);
+    selected_point = if (num, num-1,
+        __closest_point_to_center(
+            p~'pos'+l(0,p~'eye_height',0),
+            map(global_points, slice(_:0, 0, 3))
+        )
     );
     global_selected_point = if (global_selected_point == selected_point, null, selected_point);
     global_needs_updating = true;
     // no need to _update since path is still valid
-
 );
 
+// player can also punch the mannequin to select/deselect it
 __on_player_attacks_entity(p, e) ->
 (
     if (e~'type' == 'armor_stand' && query(e, 'has_tag', '__scarpet_marker_camera') && global_markers,
@@ -251,12 +332,80 @@ __on_player_attacks_entity(p, e) ->
     );
 );
 
-global_show_thread = null;
+// adds new segment to the path
+__add_path_segment(vector, duration, mode, append) ->
+(
+    if ( (l('sharp','smooth') ~ mode) == null, exit('use smooth or sharp point'));
+    l(v, segment_time, m) = global_points:(if(append, -1, 0));
+    vector:(-2) = __adjusted_rot(v:(-2), vector:(-2));
+    if (append,
+       global_points += l(vector, segment_time+duration, mode);
+    ,
+       new_points = l(l(vector, 0, mode));
+       for (global_points,
+           _:1 += duration;
+           new_points += _;
+       );
+       global_points = new_points;
+    );
+    null;
+);
 
+// adjusts current rotation so we don't spin around like crazy
+__adjusted_rot(previous_rot, current_rot) ->
+(
+   while( abs(previous_rot-current_rot) > 180, 1000,
+       current_rot += if(previous_rot < current_rot, -360, 360)
+   );
+   current_rot
+);
+
+// returns current path size blurb
+__get_path_size_string() ->
+(
+    if (!__is_not_valid_for_motion(),
+        str('%d points, %.1f secs', length(global_points), global_points:(-1):1/60);
+    ,
+        'Path too small to run';
+    );
+);
+
+// checks if the current path is valid for motion
+__is_not_valid_for_motion() ->
+(
+   if(!global_points, return('Path not defined yet'));
+   if(length(global_points)<2, return('Path not complete - add more points'));
+   if(!global_dimension || __get_player()~'dimension' != global_dimension, return('Wrong dimension'));
+   false
+);
+
+// grabs position of a player for a given segment, which segment starts at start point, and offset by index points
+__get_path_at(segment, start, index) ->
+(
+   v = global_path_precalculated:(start+index);
+   if(v == null,
+       v = call(global_interpolator, segment, index);
+       global_path_precalculated:(start+index) =  v
+    );
+    v
+);
+
+// squared euclidean distance between two points
+__distsq(vec1, vec2) -> reduce(vec1 - vec2, _a + _*_, 0);
+
+//finds index of the closest point from a list to the center point
+__closest_point_to_center(center, points) ->
+(
+    reduce(points,
+        d = __distsq(_, center); if( d<dd, dd=d; _i, _a),
+        dd = __distsq(points:0, center); 0
+    );
+);
+
+// displays path particles and key point markers on its own thread
 show() ->
 (
-   p = player();
-   __print_path_size();
+   __get_path_size_string();
    if (global_showing_path, return ());
    global_showing_path = true;
    global_needs_updating= false;
@@ -264,9 +413,9 @@ show() ->
    (
        map(global_points || l(),
            is_selected = global_selected_point != null && _i == global_selected_point;
-           caption = if (_i == 0, 'start', str('%.1fs', global_points:_i:1/60); );
+           caption = if (_i == 0, '1: Start', str('%d: %.1fs', _i+1, global_points:_i:1/60); );
            if (is_selected && _i > 0,
-               caption += str(' (%.1f current segment)', (global_points:_i:1 - global_points:(_i-1):1)/60);
+               caption += str(' (%.1fs current segment)', (global_points:_i:1 - global_points:(_i-1):1)/60);
            );
            m = create_marker(caption, _:0, 'observer');
            if (is_selected,
@@ -277,11 +426,11 @@ show() ->
    );
    __show_path_tick() ->
    (
-      if (__assert_valid_for_motion(), return());
+      if (__is_not_valid_for_motion(), return());
       __prepare_path_if_needed();
-      loop(100,
+      loop(global_particle_density,
           segment = floor(rand(length(global_points)-1));
-          particle_type = if ((segment+1) == global_selected_point, 'dust 0.1 0.9 0.1 1','dust 0.6 0.6 0.6 1');
+          particle_type = if ((segment+1) == global_selected_point, global_color_a, global_color_b); //'dust 0.1 0.9 0.1 1', 'dust 0.6 0.6 0.6 1');
           start = global_points:segment:1;
           end = global_points:(segment+1):1;
           index = floor(rand(end-start));
@@ -291,10 +440,11 @@ show() ->
       null
    );
 
-   task( _(outer(p)) -> (
+   task( _() -> (
        global_markers = __create_markers();
        loop(7200,
            if(!global_showing_path, break());
+           __get_player();
            if (global_needs_updating,
                global_needs_updating = false;
                for(global_markers, modify(_,'remove'));
@@ -310,60 +460,36 @@ show() ->
    '';
 );
 
-move() ->
+// hides path display
+hide() ->
 (
-    if (global_selected_point == null, return());
-    if (!global_showing_path, return());
-    global_points:global_selected_point:0 = __camera_position(player());
-    __update();
+   if (global_showing_path,
+      global_showing_path = false;
+      'Stopped showing path';
+   ,
+       ''
+   );
 );
 
-duration(amount) ->
-(
-    if (!global_selected_point, return()); // skip nulls, and 0 (first one)
-    if (!global_showing_path, return());
-    duration = number(amount);
-    new_ticks = round(duration * 60);
-    if (new_ticks < 10, return());
-    previous_ticks = global_points:global_selected_point:1-global_points:(global_selected_point-1):1;
-    delta = new_ticks - previous_ticks;
-    // adjust duration of all points after that.
-    for (range(global_selected_point, length(global_points)),
-        global_points:_:1 += delta;
-    );
-    __update();
-);
-
-delete_point() ->
-(
-    if (global_selected_point == null, return()); // skip nulls, and 0 (first one)
-    if (!global_showing_path, return());
-    if (length(global_points) < 2, clear(); return());
-    if (global_selected_point == 0, global_points:1:1 = 0);
-    global_points = filter(global_points, _i != global_selected_point);
-    __update();
-);
-
-trim_path() ->
-(
-    if (global_selected_point == null, return()); // skip nulls, and 0 (first one)
-    if (!global_showing_path, return());
-    global_points = slice(global_points, 0, global_selected_point);
-    __update();
-);
-
+// runs the player on the path
 play() ->
 (
-   p = player();
-   if (err = __assert_valid_for_motion(), exit(err));
+   if (err = __is_not_valid_for_motion(), exit(err));
    __prepare_path_if_needed();
-   task( _(outer(fps), outer(p)) -> (
-       sleep(1000);
+   if (!__get_player() || __get_player()~'dimension' != global_dimension, exit('No player in dimension'));
+   task( _() -> (
+       if (global_playing_path, // we don't want to join_task not to lock it just in case. No need to panic here
+           global_playing_path = false; // cancel current path rendering
+           sleep(1500); // in case we interrupt previous playbacks
+       );
+       showing_path = global_showing_path;
+       hide();
+       sleep(2000); // so particles can discipate
        global_playing_path = true;
        mspt = 1000 / 60;
        start_time = time();
        point = 0;
-       player_offset = l(0,p~'eye_height',0,0,0);
+       p = __get_player();
        try (
            loop( length(global_points)-1, segment = _;
                start = global_points:segment:1;
@@ -371,7 +497,7 @@ play() ->
                loop(end-start,
                    if (p~'sneaking', global_playing_path = false);
                    if (!global_playing_path, throw());
-                   v = __get_path_at(segment, start, _)-player_offset;
+                   v = __get_path_at(segment, start, _)-global_player_eye_offset;
                    modify(p, 'location', v);
                    point += 1;
                    end_time = time();
@@ -383,15 +509,18 @@ play() ->
        );
        sleep(1000);
        global_playing_path = false;
-       print('Done!');
+       if (showing_path, show());
    ));
    '';
 );
 
+// prepares empty path to fit new points
 __prepare_path_if_needed_generic() ->
 (
-   if(!global_path_precalculated, __invalidate_points_cache())
+   if(!global_path_precalculated, global_path_precalculated = map(range(global_points:(-1):1), null))
 );
+
+// linear interpolator
 __interpolator_linear(segment, point) ->
 (
    l(va, start, mode_a) = global_points:segment;
@@ -400,10 +529,14 @@ __interpolator_linear(segment, point) ->
    dt = point/section;
    dt*vb+(1-dt)*va
 );
+
+// normal distribution should look like that
 //(1/sqrt(2*pi*d*d))*euler^(-((x-miu)^2)/(2*d*d))
 // but we will be normalizing anyways, so who cares
 __norm_prob(x, miu, d) -> euler^(-((x-miu)^2)/(2*d*d));
-__interpolator_gauss(from_index, point, deviation) ->
+
+//gauB interpolator
+__interpolator_gauB(from_index, point, deviation) ->
 (
    components = l();
    path_point = global_points:from_index:1;
@@ -417,7 +550,7 @@ __interpolator_gauss(from_index, point, deviation) ->
                0.6*reduce(devs, _a+_, 0)/length(devs)
            );
            impact = __norm_prob(path_point+point, ptime, dev);
-           if(rtotal && impact < 0.000001*rtotal, throw());
+           //if(rtotal && impact < 0.000001*rtotal, throw()); // can work badly on segments with vastly diff lengths
            components += l(v, impact);
            rtotal += impact
        )
@@ -432,7 +565,7 @@ __interpolator_gauss(from_index, point, deviation) ->
                0.6*reduce(devs, _a+_, 0)/length(devs)
            );
            impact = __norm_prob(path_point+point, ptime, dev);
-           if(ltotal && impact < 0.000001*ltotal, throw());
+           //if(ltotal && impact < 0.000001*ltotal, throw());
            components += l(v, impact);
            ltotal += impact
        )
@@ -441,6 +574,7 @@ __interpolator_gauss(from_index, point, deviation) ->
    reduce(components, _a+_:0*(_:1/total), l(0,0,0,0,0))
 );
 
+// Catmull-Rom spline
 __interpolator_cr(from_index, point) ->
 (
     total = global_points:(from_index+1):1 - global_points:from_index:1;
@@ -450,4 +584,38 @@ __interpolator_cr(from_index, point) ->
     p_2 = global_points:(if(from_index == (length(global_points)-2), -1, from_index+2)):0;
     r = point/total; // ratio within segment
     (r*((2-r)*r-1) * p__1 + (r*r*(3*r-5)+2) * p_0 + r*((4 - 3*r)*r + 1) * p_1 + (r-1)*r*r * p_2) / 2
+);
+
+// store current path in a world file
+store(file) ->
+(
+    if (!global_points, exit('No path to save'));
+    path_nbt = nbt('{}');
+    for (global_points,
+        point_nbt = nbt('{}');
+        point_nbt:'duration' = _:1;
+        point_nbt:'type' = _:2;
+        for(_:0, put(point_nbt:'pos',_,_i));
+        put(path_nbt:'points', point_nbt, _i);
+    );
+    store_app_data(path_nbt, file);
+);
+
+// loads path under the local file that
+load(file) ->
+(
+    path_nbt = load_app_data(file);
+    if (!path_nbt, exit('No path to load: '+file));
+    new_points = map(get(path_nbt, 'points[]'), l(_:'pos[]', _:'duration', _:'type'));
+    if (!new_points || first(new_points, length(_:0) != 5),
+        exit('Incorrect data for :'+file);
+    );
+    __start_with(_(outer(new_points)) -> new_points);
+);
+
+// when closing - shut-down visualization and playback threads
+__on_close() ->
+(
+    global_playing_path = false;
+    global_showing_path = false;
 );

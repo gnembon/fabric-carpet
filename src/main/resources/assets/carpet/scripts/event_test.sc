@@ -159,3 +159,8 @@ __on_player_drops_stack(player) -> (
     print('__on_player_drops_stack(player)');
     print('Player '+player+' drops current stack.')
 );
+
+__on_statistic(player, category, event, value) ->
+(
+    print('__on_statistic(player, category, event, value) -> ['+join(', ',l(player, category, event, value))+']');
+);

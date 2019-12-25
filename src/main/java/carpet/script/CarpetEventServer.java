@@ -5,6 +5,7 @@ import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -13,11 +14,15 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.stat.Stat;
+import net.minecraft.stat.Stats;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -25,10 +30,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -403,7 +410,32 @@ public class CarpetEventServer
             {
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
-        };
+        },
+        STATISTICS("statistic", new CallbackList(4))
+        {
+            private <T> Identifier getStatId(Stat<T> stat)
+            {
+                return stat.getType().getRegistry().getId(stat.getValue());
+            }
+            private Set<Identifier> skippedStats = new HashSet<Identifier>(){{
+                add(Stats.TIME_SINCE_DEATH);
+                add(Stats.TIME_SINCE_REST);
+                add(Stats.PLAY_ONE_MINUTE);
+            }};
+            @Override
+            public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount)
+            {
+                Identifier id = getStatId(stat);
+                if (skippedStats.contains(id)) return;
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STAT_TYPE.getId(stat.getType())))),
+                        ((c, t) -> new StringValue(NBTSerializableValue.nameFromRegistryId(id))),
+                        ((c, t) -> new NumericValue(amount))
+                ), player::getCommandSource);
+            }
+        }
+        ;
 
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 
@@ -427,6 +459,7 @@ public class CarpetEventServer
         //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
         public void onTick() { }
         public void onPlayerEvent(ServerPlayerEntity player) { }
+        public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount) { }
         public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
         public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) { }
         public void onBlockAction(ServerPlayerEntity player, BlockPos blockpos, Direction facing) { }

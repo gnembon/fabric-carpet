@@ -3157,7 +3157,7 @@ public class CarpetExpression
             String file = null;
             if (lv.size()>1)
             {
-                String origfile = lv.get(0).evalValue(c).getString();
+                String origfile = lv.get(1).evalValue(c).getString();
                 file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
                 if (file.isEmpty())
                 {

@@ -2,11 +2,12 @@ package carpet.script.value;
 
 import carpet.script.Context;
 import carpet.script.Expression;
+import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
 import carpet.script.exception.InternalExpressionException;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -17,18 +18,14 @@ public class ThreadValue extends Value
 {
     private CompletableFuture<Value> taskFuture;
     private long id;
-    private final Object lock;
     private static long sequence = 0L;
     private static final Map<Value,ThreadPoolExecutor> executorServices = new HashMap<>();
 
-    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx)
+    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<LazyValue> args)
     {
         id = sequence++;
-        lock = new Object();
         taskFuture = CompletableFuture.supplyAsync(
-            () -> { synchronized (lock) {
-                return function.lazyEval(ctx, Context.NONE, expr, token, Collections.emptyList()).evalValue(ctx);
-            } },
+            () -> function.lazyEval(ctx, Context.NONE, expr, token, args).evalValue(ctx),
             executorServices.computeIfAbsent(pool, (v) -> (ThreadPoolExecutor)Executors.newCachedThreadPool())
         );
         Thread.yield();
@@ -61,17 +58,6 @@ public class ThreadValue extends Value
     public boolean isFinished()
     {
         return taskFuture.isDone();
-    }
-
-    public void stop()
-    {
-        synchronized (lock)
-        {
-            if (!taskFuture.isDone())
-            {
-                taskFuture.complete(Value.NULL);
-            }
-        }
     }
 
     @Override

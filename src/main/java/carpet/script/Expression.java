@@ -3002,22 +3002,9 @@ public class Expression implements Cloneable
         });
 
         addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
-            Value queue = Value.NULL;
-            Value funcDesc;
-            if (lv.size()==1)
-            {
-                funcDesc = lv.get(0).evalValue(c);
-            }
-            else if (lv.size() == 2)
-            {
-                queue = lv.get(0).evalValue(c);
-                funcDesc = lv.get(1).evalValue(c);
-            }
-            else
-            {
-                throw new InternalExpressionException("'task' takes one or two parameters");
-            }
-            FunctionValue fun;
+            if (lv.size() == 0)
+                throw new InternalExpressionException("'task' requires at least function to call as a parameter");
+            Value funcDesc = lv.get(0).evalValue(c);
             if (!(funcDesc instanceof FunctionValue))
             {
                 String name = funcDesc.getString();
@@ -3025,10 +3012,20 @@ public class Expression implements Cloneable
                 if (funcDesc == null)
                     throw new InternalExpressionException("Function "+name+" is not defined yet");
             }
-            fun = (FunctionValue)funcDesc;
-            if (fun.getArguments().size() > 0)
-                throw new InternalExpressionException("tasks can only accept functions that don't take any arguments");
-            ThreadValue thread = new ThreadValue(queue, fun, expr, tok, c);
+            FunctionValue fun = (FunctionValue)funcDesc;
+            int extraargs = lv.size() - fun.getArguments().size();
+            if (extraargs != 1 && extraargs != 2)
+            {
+                throw new InternalExpressionException("Function takes "+fun.getArguments().size()+" arguments.");
+            }
+            List<LazyValue> lvargs = new ArrayList<>();
+            for (int i=0; i< fun.getArguments().size(); i++)
+            {
+                lvargs.add(lv.get(i+1));
+            }
+            Value queue = Value.NULL;
+            if (extraargs == 2) queue = lv.get(lv.size()-1).evalValue(c);
+            ThreadValue thread = new ThreadValue(queue, fun, expr, tok, c, lvargs);
             Thread.yield();
             return (cc, tt) -> thread;
         });
