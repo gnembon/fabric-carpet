@@ -11,7 +11,13 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
-import carpet.script.exception.*;
+import carpet.script.exception.BreakStatement;
+import carpet.script.exception.ContinueStatement;
+import carpet.script.exception.ExitStatement;
+import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ReturnStatement;
+import carpet.script.exception.ThrowStatement;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
@@ -23,6 +29,7 @@ import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
+import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.text.WordUtils;
@@ -1191,16 +1198,14 @@ public class Expression implements Cloneable
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (!v1.getBoolean()) return (cc, tt) -> v1;
-            Value v2 = lv2.evalValue(c, Context.BOOLEAN);
-            return v2.getBoolean() ? ((cc, tt) -> v2) : LazyValue.FALSE;
+            return lv2;
         });
 
         addLazyBinaryOperator("||", precedence.get("or||"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (v1.getBoolean()) return (cc, tt) -> v1;
-            Value v2 = lv2.evalValue(c, Context.BOOLEAN);
-            return v2.getBoolean() ? ((cc, tt) -> v2) : LazyValue.FALSE;
+            return lv2;
         });
 
         addBinaryOperator("~", precedence.get("attribute~:"), true, Value::in);
@@ -1921,7 +1926,7 @@ public class Expression implements Cloneable
             LazyValue expr = lv.get(1);
             //scoping
             LazyValue _val = c.getVariable("_");
-            LazyValue _iter = c.getVariable("_i");
+            LazyValue _ite = c.getVariable("_i");
             int successCount = 0;
             for (int i=0; iterator.hasNext(); i++)
             {
@@ -1952,7 +1957,7 @@ public class Expression implements Cloneable
             //revering scope
             ((AbstractListValue) rval).fatality();
             c.setVariable("_", _val);
-            c.setVariable("_i", _iter);
+            c.setVariable("_i", _ite);
             long promiseWontChange = successCount;
             return (cc, tt) -> new NumericValue(promiseWontChange);
         });
@@ -1981,15 +1986,18 @@ public class Expression implements Cloneable
             //scoping
             LazyValue _val = c.getVariable("_");
             LazyValue _acc = c.getVariable("_a");
+            LazyValue _ite = c.getVariable("_i");
 
-            while (iterator.hasNext())
+            for (int i=0; iterator.hasNext(); i++)
             {
                 Value next = iterator.next();
                 String var = next.boundVariable;
                 next.bindTo("_");
                 Value promiseWontChangeYou = acc;
+                int seriously = i;
                 c.setVariable("_a", (cc, tt) -> promiseWontChangeYou.bindTo("_a"));
                 c.setVariable("_", (cc, tt) -> next);
+                c.setVariable("_i", (cc, tt) -> new NumericValue(seriously).bindTo("_i"));
                 try
                 {
                     acc = expr.evalValue(c, t);
@@ -2009,6 +2017,7 @@ public class Expression implements Cloneable
             ((AbstractListValue) rval).fatality();
             c.setVariable("_a", _acc);
             c.setVariable("_", _val);
+            c.setVariable("_i", _ite);
 
             Value hopeItsEnoughPromise = acc;
             return (cc, tt) -> hopeItsEnoughPromise;
@@ -2991,6 +3000,57 @@ public class Expression implements Cloneable
             Value retval = ListValue.wrap(values);
             return (cc, tt) -> retval;
         });
+
+        addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
+            if (lv.size() == 0)
+                throw new InternalExpressionException("'task' requires at least function to call as a parameter");
+            Value funcDesc = lv.get(0).evalValue(c);
+            if (!(funcDesc instanceof FunctionValue))
+            {
+                String name = funcDesc.getString();
+                funcDesc = c.host.globalFunctions.get(name);
+                if (funcDesc == null)
+                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+            }
+            FunctionValue fun = (FunctionValue)funcDesc;
+            int extraargs = lv.size() - fun.getArguments().size();
+            if (extraargs != 1 && extraargs != 2)
+            {
+                throw new InternalExpressionException("Function takes "+fun.getArguments().size()+" arguments.");
+            }
+            List<LazyValue> lvargs = new ArrayList<>();
+            for (int i=0; i< fun.getArguments().size(); i++)
+            {
+                lvargs.add(lv.get(i+1));
+            }
+            Value queue = Value.NULL;
+            if (extraargs == 2) queue = lv.get(lv.size()-1).evalValue(c);
+            ThreadValue thread = new ThreadValue(queue, fun, expr, tok, c, lvargs);
+            Thread.yield();
+            return (cc, tt) -> thread;
+        });
+
+        addFunction("task_count", (lv) ->
+        {
+            if (lv.size() > 0)
+            {
+                return new NumericValue(ThreadValue.taskCount(lv.get(0)));
+            }
+            return new NumericValue(ThreadValue.taskCount());
+        });
+
+        addUnaryFunction("join_task", (v) -> {
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'join_task' could only be used with a task value");
+            return ((ThreadValue) v).join();
+        });
+
+        addUnaryFunction("task_completed", (v) -> {
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'task_completed' could only be used with a task value");
+            return new NumericValue(((ThreadValue) v).isFinished());
+        });
+
 
     }
 

@@ -10,6 +10,7 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.CarpetSettings;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -19,8 +20,8 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
+import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
-import carpet.CarpetSettings;
 import carpet.utils.BlockInfo;
 import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
@@ -105,7 +106,6 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -126,7 +126,7 @@ import static java.lang.Math.sqrt;
  * players using <code>player('*')</code>, which only returns players in current dimension, or use
  * <code>in_dimension(expr)</code> function.</p>
  */
-public class CarpetExpression 
+public class CarpetExpression
 {
 
     private ServerCommandSource source;
@@ -770,7 +770,7 @@ public class CarpetExpression
                 booleanStateTest(c, "liquid", lv, (s, p) -> !s.getFluidState().isEmpty()));
 
         this.expr.addLazyFunction("flammable", -1, (c, t, lv) ->
-                booleanStateTest(c, "flammable", lv, (s, p) -> !s.getMaterial().isBurnable()));
+                booleanStateTest(c, "flammable", lv, (s, p) -> s.getMaterial().isBurnable()));
 
         this.expr.addLazyFunction("transparent", -1, (c, t, lv) ->
                 booleanStateTest(c, "transparent", lv, (s, p) -> !s.getMaterial().isSolid()));
@@ -969,27 +969,29 @@ public class CarpetExpression
 
             if (sourceBlockState == targetBlockState && data == null)
                 return (c_, t_) -> Value.FALSE;
-            CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+            BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
-            Clearable.clear(world.getBlockEntity(targetPos));
-            world.setBlockState(targetPos, sourceBlockState, 2);
-
-            if ( data != null)
+            cc.s.getMinecraftServer().executeSync( () ->
             {
-                BlockEntity be = world.getBlockEntity(targetPos);
-                if (be != null)
+                CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+                Clearable.clear(world.getBlockEntity(targetPos));
+                world.setBlockState(targetPos, finalSourceBlockState, 2);
+                if (data != null)
                 {
-                    CompoundTag destTag = data.method_10553();
-                    destTag.putInt("x", targetPos.getX());
-                    destTag.putInt("y", targetPos.getY());
-                    destTag.putInt("z", targetPos.getZ());
-                    be.fromTag(destTag);
-                    be.markDirty();
+                    BlockEntity be = world.getBlockEntity(targetPos);
+                    if (be != null)
+                    {
+                        CompoundTag destTag = data.method_10553();
+                        destTag.putInt("x", targetPos.getX());
+                        destTag.putInt("y", targetPos.getY());
+                        destTag.putInt("z", targetPos.getZ());
+                        be.fromTag(destTag);
+                        be.markDirty();
+                    }
                 }
-            }
-
-            CarpetSettings.impendingFillSkipUpdates = false;
-            Value retval = new BlockValue(sourceBlockState, world, targetLocator.block.getPos());
+                CarpetSettings.impendingFillSkipUpdates = false;
+            });
+            Value retval = new BlockValue(finalSourceBlockState, world, targetLocator.block.getPos());
             return (c_, t_) -> retval;
         });
 
@@ -2862,6 +2864,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             BlockState targetBlock = null;
             BlockValue.VectorLocator pointLocator;
+            boolean interactable = true;
             String name;
             try
             {
@@ -2869,8 +2872,14 @@ public class CarpetExpression
                 name = nameValue instanceof NullValue ? "" : nameValue.getString();
                 pointLocator = BlockValue.locateVec(cc, lv, 1, true);
                 if (lv.size()>pointLocator.offset)
-                    targetBlock = BlockValue.fromParams(cc, lv, pointLocator.offset, true).block.getBlockState();
-
+                {
+                    BlockValue.LocatorResult blockLocator = BlockValue.fromParams(cc, lv, pointLocator.offset, true, true);
+                    if (blockLocator.block != null) targetBlock = blockLocator.block.getBlockState();
+                    if (lv.size() > blockLocator.offset)
+                    {
+                        interactable = lv.get(blockLocator.offset).evalValue(c, Context.BOOLEAN).getBoolean();
+                    }
+                }
             }
             catch (IndexOutOfBoundsException e)
             {
@@ -2898,6 +2907,7 @@ public class CarpetExpression
             armorstand.setNoGravity(true);
             armorstand.setInvisible(true);
             armorstand.setInvulnerable(true);
+            armorstand.getDataTracker().set(ArmorStandEntity.ARMOR_STAND_FLAGS, (byte)(interactable?8 : 16|8));
             cc.s.getWorld().spawnEntity(armorstand);
             EntityValue result = new EntityValue(armorstand);
             return (_c, _t) -> result;
@@ -2949,6 +2959,17 @@ public class CarpetExpression
             return (_c, _t) -> res; // pass through for variables
         });
 
+        //"overidden" native call to cancel if on main thread
+        this.expr.addLazyFunction("join_task", 1, (c, t, lv) -> {
+            if (((CarpetContext)c).s.getMinecraftServer().isOnThread())
+                throw new InternalExpressionException("'join_task' cannot be called from main thread to avoid deadlocks");
+            Value v = lv.get(0).evalValue(c);
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'join_task' could only be used with a task value");
+            Value ret =  ((ThreadValue) v).join();
+            return (_c, _t) -> ret;
+        });
+
         this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
         {
             Value res = lv.get(0).evalValue(c);
@@ -2982,6 +3003,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("game_tick", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
+            if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
             ((MinecraftServerInterface)s.getMinecraftServer()).forceTick( () -> System.nanoTime()- CarpetServer.scriptServer.tickStart<50000000L);
             if (lv.size()>0)
             {
@@ -3008,7 +3030,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new StringValue(nameFromRegistryId(Registry.DIMENSION.getId(s.getWorld().dimension.getType())));
+            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION.getId(s.getWorld().dimension.getType())));
             return (cc, tt) -> retval;
         });
 
@@ -3064,12 +3086,19 @@ public class CarpetExpression
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).evalValue(c).getString();
-            Boolean res = FeatureGenerator.spawn(what, ((CarpetContext)c).s.getWorld(), locator.block.getPos());
-            if (res == null)
-                return (c_, t_) -> Value.NULL;
-            if (what.equalsIgnoreCase("boulder"))  // there might be more of those
-                this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext)c).s.getWorld());
-            return (c_, t_) -> new NumericValue(res);
+            Value [] result = new Value[]{Value.NULL};
+            ((CarpetContext)c).s.getMinecraftServer().executeSync( () ->
+            {
+
+                Boolean res = FeatureGenerator.spawn(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
+                if (res == null)
+                    return;
+                if (what.equalsIgnoreCase("boulder"))  // there might be more of those
+                    this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
+                result[0] = new NumericValue(res);
+            });
+            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
+            return (_c, _t) -> ret;
         });
 
         this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
@@ -3128,7 +3157,7 @@ public class CarpetExpression
             String file = null;
             if (lv.size()>1)
             {
-                String origfile = lv.get(0).evalValue(c).getString();
+                String origfile = lv.get(1).evalValue(c).getString();
                 file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
                 if (file.isEmpty())
                 {

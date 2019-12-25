@@ -223,7 +223,7 @@ public class EntityValue extends Value
         put("dimension", (e, a) -> new StringValue(nameFromRegistryId(Registry.DIMENSION.getId(e.dimension))));
         put("height", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).height));
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
-        put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight(EntityPose.STANDING)));
+        put("eye_height", (e, a) -> new NumericValue(e.getStandingEyeHeight()));
         put("age", (e, a) -> new NumericValue(e.age));
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
         put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
@@ -273,6 +273,22 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
+
+        put("permission_level", (e, a) -> {
+            if (e instanceof  ServerPlayerEntity)
+            {
+                ServerPlayerEntity spe = (ServerPlayerEntity) e;
+                for (int i=4; i>=0; i--)
+                {
+                    if (spe.allowsPermissionLevel(i))
+                        return new NumericValue(i);
+
+                }
+                return new NumericValue(0);
+            }
+            return Value.NULL;
+        });
+
         //spectating_entity
         // isGlowing
         put("effect", (e, a) ->
@@ -755,6 +771,39 @@ public class EntityValue extends Value
                 e.noClip = true;
             else
                 e.noClip = v.getBoolean();
+        });
+        put("effect", (e, v) ->
+        {
+            if (!(e instanceof LivingEntity)) return;
+            LivingEntity le = (LivingEntity)e;
+            if (v == null)
+                le.clearPotionEffects();
+            else if (v instanceof ListValue)
+            {
+                List<Value> lv = ((ListValue) v).getItems();
+                if (lv.size() >= 2 && lv.size() <= 5)
+                {
+                    String effectName = lv.get(0).getString();
+                    if (effectName.startsWith("minecraft:"))
+                        effectName = "minecraft:"+effectName;
+                    StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
+                    if (effect == null)
+                        throw new InternalExpressionException("Wrong effect name: "+effectName);
+                    int duration = (int)NumericValue.asNumber(lv.get(1)).getLong();
+                    int amplifier = 0;
+                    if (lv.size() > 2)
+                        amplifier = (int)NumericValue.asNumber(lv.get(2)).getLong();
+                    boolean showParticles = true;
+                    if (lv.size() > 3)
+                        showParticles = lv.get(3).getBoolean();
+                    boolean showIcon = true;
+                    if (lv.size() > 4)
+                        showIcon = lv.get(4).getBoolean();
+                    le.addPotionEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
+                    return;
+                }
+            }
+            throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
 
         // gamemode

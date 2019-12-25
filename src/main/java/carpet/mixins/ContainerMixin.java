@@ -26,26 +26,20 @@ public abstract class ContainerMixin
     @Shadow public abstract void sendContentUpdates();
     
     @Inject( method = "onSlotClick", at = @At(value = "HEAD"), cancellable = true)
-    private void onThrowClick(
-            int int_1,
-            int int_2,
-            SlotActionType slotActionType_1,
-            PlayerEntity playerEntity_1,
-            CallbackInfoReturnable<ItemStack> cir
-    )
+    private void onThrowClick( int slotId, int clickData, SlotActionType actionType, PlayerEntity playerEntity, CallbackInfoReturnable<ItemStack> cir)
     {
-        if (slotActionType_1 == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity_1.inventory.getCursorStack().isEmpty() && int_1 >= 0)
+        if (actionType == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity.inventory.getCursorStack().isEmpty() && slotId >= 0)
         {
             ItemStack itemStack_1 = ItemStack.EMPTY;
-            Slot slot_4 = slotList.get(int_1);
-            if (slot_4 != null && slot_4.hasStack() && slot_4.canTakeItems(playerEntity_1))
+            Slot slot_4 = slotList.get(slotId);
+            if (slot_4 != null && slot_4.hasStack() && slot_4.canTakeItems(playerEntity))
             {
-                if(int_1 == 0 && int_2 == 1)
+                if(slotId == 0 && clickData == 1)
                 {
                     Item craftedItem = slot_4.getStack().getItem();
                     while(slot_4.hasStack() && slot_4.getStack().getItem() == craftedItem)
                     {
-                        this.onSlotClick(int_1, 0, SlotActionType.THROW, playerEntity_1);
+                        this.onSlotClick(slotId, 0, SlotActionType.THROW, playerEntity);
                     }
                     this.sendContentUpdates();
                     cir.setReturnValue(itemStack_1);

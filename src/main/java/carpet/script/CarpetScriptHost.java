@@ -20,6 +20,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -217,6 +218,35 @@ public class CarpetScriptHost extends ScriptHost
         super.onClose();
         if (this.saveTimeout > 0)
             dumpState();
+
+        FunctionValue closing = globalFunctions.get("__on_close");
+        if (closing != null)
+        {
+            try
+            {
+                callUDF(BlockPos.ORIGIN, CarpetServer.minecraft_server.getCommandSource(), closing, Collections.emptyList());
+            }
+            catch (InvalidCallbackException ignored)
+            {
+            }
+        }
+        userHosts.forEach((key, value) ->
+        {
+            FunctionValue userClosing = value.globalFunctions.get("__on_close");
+            if (userClosing != null)
+            {
+                ServerPlayerEntity player = CarpetServer.minecraft_server.getPlayerManager().getPlayer(key);
+                ServerCommandSource source = (player != null)?player.getCommandSource():CarpetServer.minecraft_server.getCommandSource();
+                try
+                {
+                    ((CarpetScriptHost) value).callUDF(BlockPos.ORIGIN, source, userClosing, Collections.emptyList());
+                }
+                catch (InvalidCallbackException ignored)
+                {
+                }
+            }
+        });
+
         String markerName = ExpressionInspector.MARKER_STRING+"_"+((getName()==null)?"":getName());
         for (ServerWorld world : CarpetServer.minecraft_server.getWorlds())
         {
@@ -225,6 +255,7 @@ public class CarpetScriptHost extends ScriptHost
                 e.remove();
             }
         }
+
     }
 
     private void dumpState()
@@ -239,9 +270,9 @@ public class CarpetScriptHost extends ScriptHost
 
     public Tag getGlobalState(String file)
     {
-        if (getName() == null || myCode.isInternal()) return null;
+        if (getName() == null ) return null;
         if (file != null)
-            myCode.getData(file);
+            return myCode.getData(file);
         if (parent == null)
             return globalState;
         return ((CarpetScriptHost)parent).globalState;
@@ -249,7 +280,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public void setGlobalState(Tag tag, String file)
     {
-        if (getName() == null || myCode.isInternal()) return;
+        if (getName() == null ) return;
 
         if (file!= null)
         {

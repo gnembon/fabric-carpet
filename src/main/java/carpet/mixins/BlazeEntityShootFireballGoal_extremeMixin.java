@@ -11,7 +11,7 @@ import java.util.Random;
 @Mixin(targets = "net.minecraft.entity.mob.BlazeEntity$ShootFireballGoal")
 public class BlazeEntityShootFireballGoal_extremeMixin
 {
-    @Redirect(method = "tick", expect = 2, at = @At(
+    @Redirect(method = "tick()V", expect = 2, at = @At(
             value = "INVOKE",
             target = "Ljava/util/Random;nextGaussian()D"
     ))
