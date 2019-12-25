@@ -764,7 +764,7 @@ public class EntityValue extends Value
             if (!(e instanceof LivingEntity)) return;
             LivingEntity le = (LivingEntity)e;
             if (v == null)
-                le.clearPotionEffects();
+                le.clearStatusEffects();
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
@@ -786,7 +786,7 @@ public class EntityValue extends Value
                     boolean showIcon = true;
                     if (lv.size() > 4)
                         showIcon = lv.get(4).getBoolean();
-                    le.addPotionEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
+                    le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
                     return;
                 }
             }

@@ -972,7 +972,7 @@ public class CarpetExpression
                 return (c_, t_) -> Value.FALSE;
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
-            cc.s.getMinecraftServer().executeSync( () ->
+            cc.s.getMinecraftServer().submitAndJoin( () ->
             {
                 CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
                 Clearable.clear(world.getBlockEntity(targetPos));
@@ -3089,7 +3089,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).evalValue(c).getString();
             Value [] result = new Value[]{Value.NULL};
-            ((CarpetContext)c).s.getMinecraftServer().executeSync( () ->
+            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
 
                 Boolean res = FeatureGenerator.spawn(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
