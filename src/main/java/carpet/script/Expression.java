@@ -3045,16 +3045,9 @@ public class Expression implements Cloneable
             return ((ThreadValue) v).join();
         });
 
-        /*addUnaryFunction("stop_task", (v) -> {
+        addUnaryFunction("task_completed", (v) -> {
             if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'join_task' could only be used with a task value");
-            ((ThreadValue) v).stop();
-            return Value.NULL;
-        });*/
-
-        addUnaryFunction("is_task_completed", (v) -> {
-            if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'join_task' could only be used with a task value");
+                throw new InternalExpressionException("'task_completed' could only be used with a task value");
             return new NumericValue(((ThreadValue) v).isFinished());
         });
 

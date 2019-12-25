@@ -8,7 +8,7 @@ __command() ->
    print(' "/camera prepend <N>" - prepend point <N> seconds before');
    print(' "/camera clear" - removes entire path');
    print(' "/camera select" - or punch a point, to select it');
-   print(' "/camera move" - moves selected camera to current player location');
+   print(' "/camera move" - moves selected point toplayer location');
    print(' "/camera duration <X>" - resizes current selected path');
    print(' "/camera split_point>" - splits current selected path in half');
    print(' "/camera delete_point" - removes current keypoint');
@@ -16,9 +16,9 @@ __command() ->
    print('');
    print(' "/camera store <name>"');
    print(' "/camera load <name>"');
-   print('    - stores and loads path from nbt files in /scripts world folder');
+   print('    - stores and loads paths from files in /scripts folder');
    print('');
-   print(' "/camera interpolation < linear | gauss | cr | gauss_<number> >"');
+   print(' "/camera interpolation < linear | gauss | cr | gauss_<num> >"');
    print('    Selects interpolation between points:');
    print('    - cr: Catmull-Rom interpolation (default).');
    print('        smooth path that goes through all points.');
@@ -42,7 +42,7 @@ __command() ->
    print('    use "sneak" to stop it prematurely');
    print('    run /camera hide and F1 to clear the view');
    print('');
-   print(' "/camera show": shows current path for a moment');
+   print(' "/camera show": shows current path');
    print('    color of particles used is different for different players');
    print(' "/camera hide": hides path display');
    print('');
