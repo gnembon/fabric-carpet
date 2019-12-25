@@ -1289,15 +1289,6 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("item_category", 1, (c, t, lv) ->
-        {
-            ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
-            Value res = new StringValue(item.getItem().getGroup().getName());
-            return (_c, _t) -> res;
-        });
-
-
-
         this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
