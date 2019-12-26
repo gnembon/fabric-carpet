@@ -287,8 +287,54 @@ public class CarpetExpression
         return particle;
     }
 
+
+    private boolean isStraight(Vec3d from, Vec3d to, double density)
+    {
+        if ( (from.x == to.x && from.y == to.y) || (from.x == to.x && from.z == to.z) || (from.y == to.y && from.z == to.z))
+            return from.distanceTo(to) / density > 20;
+        return false;
+    }
+
+    private int drawOptimizedParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
+    {
+        double distance = from.distanceTo(to);
+        int particles = (int)(distance/density);
+        Vec3d towards = to.subtract(from);
+        int parts = 0;
+        for (PlayerEntity player : world.getPlayers())
+        {
+            world.spawnParticles((ServerPlayerEntity)player, particle, true,
+                    (towards.x)/2+from.x, (towards.y)/2+from.y, (towards.z)/2+from.z, particles/3,
+                    towards.x/6, towards.y/6, towards.z/6, 0.0);
+            world.spawnParticles((ServerPlayerEntity)player, particle, true,
+                    from.x, from.y, from.z,1,0.0,0.0,0.0,0.0);
+            world.spawnParticles((ServerPlayerEntity)player, particle, true,
+                    to.x, to.y, to.z,1,0.0,0.0,0.0,0.0);
+            parts += particles/3+2;
+        }
+        int divider = 6;
+        while (particles/divider > 1)
+        {
+            int center = (divider*2)/3;
+            int dev = 2*divider;
+            for (PlayerEntity player : world.getPlayers())
+            {
+                world.spawnParticles((ServerPlayerEntity)player, particle, true,
+                        (towards.x)/center+from.x, (towards.y)/center+from.y, (towards.z)/center+from.z, particles/divider,
+                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
+                world.spawnParticles((ServerPlayerEntity)player, particle, true,
+                        (towards.x)*(1.0-1.0/center)+from.x, (towards.y)*(1.0-1.0/center)+from.y, (towards.z)*(1.0-1.0/center)+from.z, particles/divider,
+                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
+            }
+            parts += 2*particles/divider;
+            divider = 2*divider;
+        }
+        return parts;
+    }
+
     private int drawParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
     {
+        if (isStraight(from, to, density)) return drawOptimizedParticleLine(world, particle, from, to, density);
         double lineLengthSq = from.squaredDistanceTo(to);
         if (lineLengthSq == 0) return 0;
         Vec3d incvec = to.subtract(from).multiply(2*density/sqrt(lineLengthSq));
