@@ -29,6 +29,7 @@ import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -91,6 +92,25 @@ public class EntityValue extends Value
     public Entity getEntity()
     {
         return entity;
+    }
+
+    public static ServerPlayerEntity getPlayerByValue(MinecraftServer server, Value value)
+    {
+        ServerPlayerEntity player = null;
+        if (value instanceof EntityValue)
+        {
+            Entity e = ((EntityValue) value).getEntity();
+            if (e instanceof ServerPlayerEntity)
+            {
+                player = (ServerPlayerEntity) e;
+            }
+        }
+        else
+        {
+            String playerName = value.getString();
+            player = server.getPlayerManager().getPlayer(playerName);
+        }
+        return player;
     }
 
     @Override

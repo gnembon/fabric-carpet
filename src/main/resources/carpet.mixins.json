@@ -132,9 +132,13 @@
     "DamageTracker_scarpetEventMixin",
     "ServerPlayerEntity_scarpetEventMixin",
     "FallingBlockEntity_scarpetEventsMixin",
+    "BlockItem_scarpetEventMixin",
 
     "ChunkTicketManager_scarpetMixin",
     "ServerChunkManager_scarpetMixin",
+    "StatType_scarpetMixin",
+
+
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",

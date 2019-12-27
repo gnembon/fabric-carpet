@@ -46,6 +46,7 @@ public class CarpetScriptServer
     private static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
         add(new BundledModule("camera"));
         add(new BundledModule("event_test"));
+        add(new BundledModule("stats_test"));
     }};
 
     public CarpetScriptServer()
@@ -166,6 +167,11 @@ public class CarpetScriptServer
         //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
         ModuleInterface module = getModule(name);
+        if (module == null)
+        {
+            Messenger.m(source, "r Failed to add "+name+" app");
+            return false;
+        }
         CarpetScriptHost newHost = createMinecraftScriptHost(name, module, perPlayer, source);
         if (newHost == null)
         {

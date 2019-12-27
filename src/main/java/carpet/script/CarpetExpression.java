@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
+import carpet.fakes.StatTypeInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.ChunkTicketManager_scarpetMixin;
 import carpet.mixins.ServerChunkManager_scarpetMixin;
@@ -68,11 +69,14 @@ import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.stat.Stat;
+import net.minecraft.stat.StatType;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.SortedArraySet;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -1743,6 +1747,9 @@ public class CarpetExpression
      * <p>String with gamemode, or <code>null</code> if not a player.</p>
      * <h3><code>query(e,'gamemode_id')</code></h3>
      * <p>Good'ol gamemode id, or null if not a player.</p>
+     * <h3><code>query(e,'permission_level')</code></h3>
+     * <p>Player's permission level, or <code>null</code> if not applicable for this entity.</p>
+     *
      * <h3><code>query(e,'effect',name?)</code></h3>
      * <p>Without extra arguments, it returns list of effect active on a living entity.
      * Each entry is a triple of short effect name, amplifier, and remaining duration.
@@ -1834,6 +1841,12 @@ public class CarpetExpression
      * <p>Make noises.</p>
      * <h3><code>modify(e, 'ai', boolean)</code></h3>
      * <p>If called with <code>false</code> value, it will disable AI in the mob. <code>true</code> will enable it again.</p>
+     * <h3><code>modify(e, 'no_clip', boolean)</code></h3>
+     * <p>Sets if the entity obeys any collisions, including collisions with the terrain and basic physics.
+     * Not affecting players, since they are controlled client side</p>
+     * <h3><code>modify(e, 'effect', name, duration, amplifier?, show_particles?, show_icon?)</code></h3>
+     * <p>Applies status effect to the living entity. Takes several optional parameters, which default to <code>0</code>,
+     * <code>true</code> and <code>true</code>.</p>
      * <h3><code>modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)</code></h3>
      * <p>Sets AI to stay around the home position, within <code>distance</code> blocks from it. <code>distance</code>
      * defaults to 16 blocks. <code>null</code> removes it. <i>May</i> not work fully with mobs that have this AI built in, like
@@ -2638,7 +2651,7 @@ public class CarpetExpression
      * <h3><code>load_app_data(), load_app_data(file)</code></h3>
      * <p>Loads the app data associated with the app from the world /scripts folder. Without argument returns the memory
      * managed and buffered / throttled NBT tag. With a file name - reads explicitly a file with that name from the scripts
-     * floder.</p>
+     * folder.</p>
      * <p> You can use app data to save non-vanilla information separately from the world and other scripts.</p>
      * <h3><code>store_app_data(tag), store_app_data(tag, file)</code></h3>
      * <p>Stores the app data associated with the app from the world /scripts folder. With the <code>file</code> parameter
@@ -2663,6 +2676,25 @@ public class CarpetExpression
      * <h3><code>schedule(delay, function, args...)</code></h3>
      * <p>Schedules a user defined function to run with a specified <code>delay</code> ticks of delay.
      * Scheduled functions run at the end of the tick, and they will run in order they were scheduled.</p>
+     * <h3><code>statistic(player, category, entry)</code></h3>
+     * <p>Queries in-game statistics for certain values. Categories include:</p>
+     * <ul>
+     *     <li><code>mined</code>: blocks mined</li>
+     *     <li><code>crafted</code>: items crafted</li>
+     *     <li><code>used</code>: items used</li>
+     *     <li><code>broken</code>: items broken</li>
+     *     <li><code>picked_up</code>: items picked up</li>
+     *     <li><code>dropped</code>: items dropped</li>
+     *     <li><code>killed</code>: mobs killed</li>
+     *     <li><code>killed_by</code>: blocks mined</li>
+     *     <li><code>custom</code>: various random stats</li>
+     * </ul>
+     * <p>For the options of <code>entry</code>, consult your statistics page, or give it a guess.</p>
+     * <p>The call will return <code>null</code> if the statistics options are incorrect, or player didn't get these
+     * in their history. If the player encountered the statisitic, or game created for him empty one, it will
+     * return a number. Scarpet will not affect the entries of the statistics, even if it is just creating empty ones.
+     * With <code>null</code> response it could either mean your input is wrone, or statistic has effectively
+     * a value of <code>0</code>.</p>
      * <h3><code>plop(pos, what)</code></h3>
      * <p>Plops a structure or a feature at a given <code>pos</code>, so block, triple position coordinates
      * or a list of coordinates. To <code>what</code> gets plopped and exactly where it often depends on the
@@ -3008,12 +3040,12 @@ public class CarpetExpression
         });
 
         //"overidden" native call to cancel if on main thread
-        this.expr.addLazyFunction("join_task", 1, (c, t, lv) -> {
+        this.expr.addLazyFunction("task_join", 1, (c, t, lv) -> {
             if (((CarpetContext)c).s.getMinecraftServer().isOnThread())
-                throw new InternalExpressionException("'join_task' cannot be called from main thread to avoid deadlocks");
+                throw new InternalExpressionException("'task_join' cannot be called from main thread to avoid deadlocks");
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'join_task' could only be used with a task value");
+                throw new InternalExpressionException("'task_join' could only be used with a task value");
             Value ret =  ((ThreadValue) v).join();
             return (_c, _t) -> ret;
         });
@@ -3219,7 +3251,42 @@ public class CarpetExpression
             ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file);
             return (cc, tt) -> Value.NULL;
         });
+
+        this.expr.addLazyFunction("statistic", 3, (c, t, lv) ->
+        {
+            Value playerValue = lv.get(0).evalValue(c);
+            CarpetContext cc = (CarpetContext)c;
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), playerValue);
+            if (player == null) return LazyValue.NULL;
+            Identifier category;
+            Identifier statName;
+            try
+            {
+                category = new Identifier(lv.get(1).evalValue(c).getString());
+                statName = new Identifier(lv.get(2).evalValue(c).getString());
+            }
+            catch (InvalidIdentifierException e)
+            {
+                return LazyValue.NULL;
+            }
+            StatType<?> type = Registry.STAT_TYPE.get(category);
+            if (type == null)
+                return LazyValue.NULL;
+            Stat<?> stat = getStat(type, statName);
+            if (stat == null)
+                return LazyValue.NULL;
+            return (_c, _t) -> new NumericValue(player.getStatHandler().getStat(stat));
+        });
     }
+
+    private <T> Stat<T> getStat(StatType<T> type, Identifier id)
+    {
+        T key = type.getRegistry().get(id);
+        if (key == null || !((StatTypeInterface)type).hasStatCreated(key))
+            return null;
+        return type.getOrCreateStat(key);
+    }
+
 
     /**
      * <h1>.</h1>
@@ -3446,7 +3513,11 @@ public class CarpetExpression
      *     should be running at startup. WARNING: all apps will run once at startup anyways, so be aware that their actions
      *     that are called statically, will be performed once anyways.</li>
      * </ul>
-     * <p>Unloading an app removes all of its state from the game, disables commands, and removes bounded events</p>
+     * <p>Unloading an app removes all of its state from the game, disables commands, and removes bounded events,
+     * and saves its global state. If more
+     * cleanup is needed, one can define an <code>__on_close()</code> function which will be executed when the module is unloaded,
+     * or server is closing, or crashing. However, there is no need to do that explicitly for the things mentioned
+     * in the previous statement.</p>
      * <p>Scripts can be loaded in shared(global) and player mode. Default is player, so all globals and stored functions are
      * individual for each player, meaning scripts don't need to worry about making sure they store some intermittent data
      * for each player independently. In global mode - all global values and stored functions are shared among all players.
@@ -3486,8 +3557,10 @@ public class CarpetExpression
      * __on_player_releases_item(player, item_tuple, hand)  // client action (e.g. bow)
      * __on_player_finishes_using_item(player, item_tuple, hand))  // server action (e.g. food), called item is from before it is used.
      * __on_player_clicks_block(player, block, face)  // left click attack on a block
-     * __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)
      * __on_player_breaks_block(player, block) // called after block is broken (the caller receives previous blockstate)
+     * __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)  // player right clicks block with anything
+     * __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right click on a block resulted in activation of said block
+     * __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
      * __on_player_interacts_with_entity(player, entity, hand)
      * __on_player_attacks_entity(player, entity)
      * __on_player_rides(player, forward, strafe, jumping, sneaking)
@@ -3500,6 +3573,8 @@ public class CarpetExpression
      * __on_player_stops_sprinting(player)
      * __on_player_drops_item(player)
      * __on_player_drops_stack(player)
+     *
+     * __on_statistic(player, category, event, value) // player statistic changes
      * </pre>
      * <h3><code>/script event</code> command</h3>
      * <p>used to display current events and bounded functions. use <code>add_to</code> ro register new event, or <code>remove_from</code>

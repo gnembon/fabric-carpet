@@ -60,7 +60,7 @@ import static java.lang.Math.min;
 
 
 /**
- * <h1>Fundamental components of <code>scarpet</code> programming language (version 1.6).</h1>
+ * <h1>Fundamental components of <code>scarpet</code> programming language (towards version 1.7).</h1>
  *
  * <p>Scarpet (a.k.a. Carpet Script, or Script for Carpet) is a programming language designed to provide
  * the ability to write custom programs to run within Minecraft and
@@ -2613,6 +2613,59 @@ public class Expression implements Cloneable
      * </pre>
      *
      * <hr>
+     * <h2>Threading and Parallel Execution</h2>
+     * <p>Scarpet allows to run threads of execution in parallel to the main script execution thread. In Minecraft, the main
+     * thread scripts are executed on the main server thread. Since Minecraft is inherently NOT thread safe, it is not that
+     * beneficial to parallel execution in order to access world resources faster. Both
+     * <code>GetBlockState</code> and <code>setBlockState</code> are not thread safe and require the execution to park on the server thread,
+     * where these requests can be executed in the off-tick time in between ticks that didn't take 50ms. There are however
+     * benefits of running things in parallel, like fine time control not relying on the tick clock, or running things independent
+     * on each other. You can still run your actions on tick-by-tick basis, either taking control of the execution using
+     * <code>game_tick()</code> API function (nasty solution), or scheduling tick using <code>schedule()</code> function (much nicer solution),
+     * but threading often gives the neatest solution to solve problems in parallel (see scarpet camera).
+     * </p>
+     * <p>Due to limitations with the game, there are some limits to the threading as well. You cannot for instance <code>join_task()</code> at all
+     * from the main script and server thread, because any use of Minecraft specific function that require any world access, will
+     * require to park and join on the main thread to get world access, meaning that calling join on that task would inevitably lead to a
+     * typical deadlock. You can still join tasks from other threads, just because the only possibility of a deadlock in this case would
+     * come explicitly from your bad code, not the internal world access behaviour. Some things tough like player or entity manipulation,
+     * can be effectively parallelized.</p>
+     * <h3><code>task(function, ?args...., ?executor)</code></h3>
+     * <p>Creates and runs a parallel task, returning the handle to the task object. Task will return the return value of the function
+     * when its completed, or will return <code>null</code> immediately if task is still in progress, so grabbing a value of
+     * a task object is non-blocking. Function can be either function value, or function lambda, or a name of an existing defined function.
+     * In case function needs arguments to be called with, they should be supplied after the function name, or value.
+     * Optional <code>executor</code> identifier is to place the task in a specific queue identified by this value. The default
+     * thread value is the <code>null</code> thread. There is no limits on number of parallel tasks for any executor, so using different queues is solely
+     * for synchronization purposes. Also, since <code>task</code> function knows how many extra arguments it requires, the use of
+     * tailing optional parameter for the custom executor thread pool is not ambiguous.
+     * </p>
+     * <pre>
+     * task( _() -&gt; print('Hello Other World') )  =&gt; Runs print command on a separate thread
+     * foo(a, b) -&gt; print(a+b); task('foo',2,2)  =&gt; Uses existing function definition to start a task
+     * task('foo',3,5,'temp');  =&gt; runs function foo with a different thread executor, identified as 'temp'
+     * a = 3; task( _(outer(a), b) -&gt; foo(a,b), 5, 'temp')  =&gt; Another example of running the same thing passing arguments using closure over anonymous function as well as passing a parameter.
+     * </pre>
+     * <h3><code>task_count(executor?)</code></h3>
+     * <p>If no argument provided, returns total number of tasks being executed in parallel at this moment using scarpet threading system.
+     * If the executor is provided, returns number of active tasks for that provider. Use <code>task_count(null)</code> to
+     * get the task count of the default executor only.</p>
+     *
+     * <h3><code>task_value(task)</code></h3>
+     * <p>Returns the task return value, or <code>null</code> if task hasn't finished yet. Its a non-blocking operation.
+     * Unlike <code>join_task</code>, can be called on any task at any point</p>
+     *
+     * <h3><code>task_join(task)</code></h3>
+     * <p>Waits for the task completion and returns its computed value. If the task has already finished returns it immediately.
+     * Unless taking the task value directly, i.e. via <code>task_value</code>, this operation is blocking. Since Minecraft has
+     * a limitation that all world access operations have to be performed on the main game thread in the off-tick time, joining any tasks that use
+     * Minecraft API from the main thread would mean automatic lock, so joining from the main thread is not allowed.
+     * Join tasks from other threads, if you really need to, or communicate asynchronously with the task via globals or
+     * function data / arguments to monitor its progress, communicate, get partial results, or signal termination. </p>
+     *
+     * <h3><code>task_completed(task)</code></h3>
+     * <p>Returns true if task has completed, or false otherwise.</p>
+     *
      * <h2>Auxiliary functions</h2>
      *
      * <h3><code>lower(expr), upper(expr), title(expr)</code></h3>
@@ -3039,9 +3092,15 @@ public class Expression implements Cloneable
             return new NumericValue(ThreadValue.taskCount());
         });
 
-        addUnaryFunction("join_task", (v) -> {
+        addUnaryFunction("task_value", (v) -> {
             if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'join_task' could only be used with a task value");
+                throw new InternalExpressionException("'task_value' could only be used with a task value");
+            return ((ThreadValue) v).getValue();
+        });
+
+        addUnaryFunction("task_join", (v) -> {
+            if (!(v instanceof ThreadValue))
+                throw new InternalExpressionException("'task_join' could only be used with a task value");
             return ((ThreadValue) v).join();
         });
 

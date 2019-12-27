@@ -37,6 +37,11 @@ public class ThreadValue extends Value
         return taskFuture.getNow(Value.NULL).getString();
     }
 
+    public Value getValue()
+    {
+        return taskFuture.getNow(Value.NULL);
+    }
+
     @Override
     public boolean getBoolean()
     {
