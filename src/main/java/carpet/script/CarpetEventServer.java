@@ -296,6 +296,43 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
+        PLAYER_INTERACTS_WITH_BLOCK("player_interacts_with_block", new CallbackList(5))
+        {
+            @Override
+            public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes)
+            {
+                handler.call( () ->
+                {
+                    BlockPos blockpos = hitRes.getBlockPos();
+                    Direction enumfacing = hitRes.getSide();
+                    Vec3d vec3d = hitRes.getPos().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")),
+                            ((c, t) -> new BlockValue(null, player.getServerWorld(), blockpos)),
+                            ((c, t) -> new StringValue(enumfacing.getName())),
+                            ((c, t) -> ListValue.of(
+                                    new NumericValue(vec3d.x),
+                                    new NumericValue(vec3d.y),
+                                    new NumericValue(vec3d.z)
+                            ))
+                    );
+                }, player::getCommandSource);
+            }
+        },
+        PLAYER_PLACES_BLOCK("player_places_block", new CallbackList(4))
+        {
+            @Override
+            public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> ListValue.fromItemStack(itemstack)),
+                        ((c, t) -> new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")),
+                        ((c, t) -> new BlockValue(null, player.getServerWorld(), pos))
+                ), player::getCommandSource);
+            }
+        },
         PLAYER_BREAK_BLOCK("player_breaks_block",new CallbackList(2))
         {
             @Override
@@ -307,7 +344,7 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
-        PLAYER_INERACTSW_WITH_ENTITY("player_interacts_with_entity",new CallbackList(3))
+        PLAYER_INTERACTS_WITH_ENTITY("player_interacts_with_entity",new CallbackList(3))
         {
             @Override
             public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
@@ -465,6 +502,7 @@ public class CarpetEventServer
         public void onBlockAction(ServerPlayerEntity player, BlockPos blockpos, Direction facing) { }
         public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes) { }
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
+        public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
     }
 

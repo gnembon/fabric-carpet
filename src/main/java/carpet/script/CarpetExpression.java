@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.StatTypeInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.ChunkTicketManager_scarpetMixin;
 import carpet.mixins.ServerChunkManager_scarpetMixin;
@@ -68,11 +69,14 @@ import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.stat.Stat;
+import net.minecraft.stat.StatType;
 import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
@@ -3217,7 +3221,42 @@ public class CarpetExpression
             ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file);
             return (cc, tt) -> Value.NULL;
         });
+
+        this.expr.addLazyFunction("statistic", 3, (c, t, lv) ->
+        {
+            Value playerValue = lv.get(0).evalValue(c);
+            CarpetContext cc = (CarpetContext)c;
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), playerValue);
+            if (player == null) return LazyValue.NULL;
+            Identifier category;
+            Identifier statName;
+            try
+            {
+                category = new Identifier(lv.get(1).evalValue(c).getString());
+                statName = new Identifier(lv.get(2).evalValue(c).getString());
+            }
+            catch (InvalidIdentifierException e)
+            {
+                return LazyValue.NULL;
+            }
+            StatType<?> type = Registry.STAT_TYPE.get(category);
+            if (type == null)
+                return LazyValue.NULL;
+            Stat<?> stat = getStat(type, statName);
+            if (stat == null)
+                return LazyValue.NULL;
+            return (_c, _t) -> new NumericValue(player.getStatHandler().getStat(stat));
+        });
     }
+
+    private <T> Stat<T> getStat(StatType<T> type, Identifier id)
+    {
+        T key = type.getRegistry().get(id);
+        if (key == null || !((StatTypeInterface)type).hasStatCreated(key))
+            return null;
+        return type.getOrCreateStat(key);
+    }
+
 
     /**
      * <h1>.</h1>
