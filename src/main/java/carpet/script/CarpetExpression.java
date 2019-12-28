@@ -219,11 +219,13 @@ public class CarpetExpression
         Value v0 = params.get(0).evalValue(c);
         if (v0 instanceof BlockValue)
         {
-            Value retval = new StringValue(test.apply( ((BlockValue) v0).getBlockState(), ((BlockValue) v0).getPos()));
+            String strVal = test.apply( ((BlockValue) v0).getBlockState(), ((BlockValue) v0).getPos());
+            Value retval = strVal != null ? new StringValue(strVal) : Value.NULL;
             return (c_, t_) -> retval;
         }
         BlockValue block = BlockValue.fromParams(cc, params, 0).block;
-        Value retval = new StringValue(test.apply(block.getBlockState(), block.getPos()));
+        String strVal = test.apply(block.getBlockState(), block.getPos());
+        Value retval = strVal != null ? new StringValue(strVal) : Value.NULL;
         return (c_, t_) -> retval;
     }
 
