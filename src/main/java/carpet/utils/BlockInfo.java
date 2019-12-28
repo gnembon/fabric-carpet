@@ -129,6 +129,7 @@ public class BlockInfo
         put(Material.WOOD           , "wool"         ); // fix these
         put(Material.BAMBOO_SAPLING     , "shoots"          );
         put(Material.BAMBOO         , "bamboo"       );
+        put(Material.WOOL           , "wool"         );
         put(Material.TNT            , "tnt"          );
         put(Material.LEAVES         , "leaves"       );
         put(Material.GLASS          , "glass"        );
