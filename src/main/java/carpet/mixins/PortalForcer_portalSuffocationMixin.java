@@ -20,13 +20,13 @@ public class PortalForcer_portalSuffocationMixin
 {
     @Inject(method = "usePortal", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;getLastPortalDirectionVector()Lnet/minecraft/util/math/Vec3d;"
+            target = "Lnet/minecraft/entity/Entity;getLastNetherPortalDirectionVector()Lnet/minecraft/util/math/Vec3d;"
     ))
-    private void registerEntityDimensionChange(Entity entity_1, float float_1, CallbackInfoReturnable<Boolean> cir)
+    private void registerEntityDimensionChange(Entity entity, float f, CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.portalSuffocationFix)
         {
-            CarpetSettings.currentTelepotingEntityBox = entity_1.getBoundingBox();
+            CarpetSettings.currentTelepotingEntityBox = entity.getBoundingBox();
             CarpetSettings.fixedPosition = null;
         }
     }

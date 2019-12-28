@@ -19,9 +19,9 @@ public abstract class Entity_portalSuffocationMixin
 
     @Inject(method = "changeDimension", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;getLastPortalDirection()Lnet/minecraft/util/math/Direction;"
+            target = "Lnet/minecraft/entity/Entity;getLastNetherPortalDirection()Lnet/minecraft/util/math/Direction;"
     ))
-    private void registerEntityDimensionChange(DimensionType dimensionType_1, CallbackInfoReturnable<Entity> cir)
+    private void registerEntityDimensionChange(DimensionType newDimension, CallbackInfoReturnable<Entity> cir)
     {
         if (CarpetSettings.portalSuffocationFix)
         {
