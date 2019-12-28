@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.fakes.PortalForcerInterface;
+import carpet.fakes.TicketInfoInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
@@ -58,9 +59,10 @@ public class PortalForcer_portalCachingMixin implements PortalForcerInterface
         {
             // vanilla got removed, but we stored it meaning we not only need to add it but also let it chunkload
             map.put(key, ticketInfo);
-            ColumnPos cpos = (ColumnPos)key;
-            BlockPos fakePos = new BlockPos(((ColumnPos) key).x, 0, ((ColumnPos) key).z);
-            world.method_14178().addTicket(ChunkTicketType.PORTAL, new ChunkPos(fakePos), 3, (ColumnPos) key);
+            //((TicketInfoInterface)ticketInfo).getPos();
+            //ColumnPos cpos = (ColumnPos)key;
+            //BlockPos fakePos = new BlockPos(((ColumnPos) key).x, 0, ((ColumnPos) key).z);
+            world.method_14178().addTicket(ChunkTicketType.PORTAL, new ChunkPos( ((TicketInfoInterface)ticketInfo).getPos()), 3, (ColumnPos) key);
         }
         return ticketInfo;
     }

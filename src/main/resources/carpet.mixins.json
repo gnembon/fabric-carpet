@@ -89,6 +89,7 @@
 
     "PortalForcer_portalCachingMixin",
     "PortalBlock_portalCachingMixin",
+    "PortalForcerTicketInfo_portalCachingMixin",
 
     "Entity_portalSuffocationMixin",
     "PortalForcer_portalSuffocationMixin",
