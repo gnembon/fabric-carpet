@@ -15,7 +15,7 @@ __command() ->
    print(' "/camera delete_point" - removes current keypoint');
    print(' "/camera trim_path" - removes all keypoints from selected');
    print('');
-   print(' "/camera store <name>"');
+   print(' "/camera save_as <name>"');
    print(' "/camera load <name>"');
    print('    - stores and loads paths from files in /scripts folder');
    print('');
@@ -597,7 +597,7 @@ __interpolator_cr(from_index, point) ->
 );
 
 // store current path in a world file
-store(file) ->
+save_as(file) ->
 (
     if (!global_points, exit('No path to save'));
     path_nbt = nbt('{}');
@@ -609,6 +609,7 @@ store(file) ->
         put(path_nbt:'points', point_nbt, _i);
     );
     store_app_data(path_nbt, file);
+    'stored path as '+file;
 );
 
 // loads path under the local file that
@@ -621,6 +622,7 @@ load(file) ->
         exit('Incorrect data for :'+file);
     );
     __start_with(_(outer(new_points)) -> new_points);
+    'loaded '+file;
 );
 
 // when closing - shut-down visualization and playback threads
