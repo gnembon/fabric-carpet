@@ -8,6 +8,7 @@ __command() ->
    print(' "/camera prepend <N>" - prepend point <N> seconds before');
    print(' "/camera clear" - removes entire path');
    print(' "/camera select" - or punch a point, to select it');
+   print(' "/camera place_player - moves a player to a selected point');
    print(' "/camera move" - moves selected point toplayer location');
    print(' "/camera duration <X>" - resizes current selected path');
    print(' "/camera split_point>" - splits current selected path in half');
@@ -514,6 +515,13 @@ play() ->
        if (showing_path, show());
    ));
    '';
+);
+
+// moves player to a selected camera position
+place_player() ->
+(
+    __assert_point_selected(_(p) -> p != null);
+    modify(__get_player(), 'location', global_points:global_selected_point:0 - global_player_eye_offset);
 );
 
 // prepares empty path to fit new points
