@@ -9,15 +9,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import carpet.fakes.RedstoneWireBlockInterface;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.RedstoneWireBlock;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.loot.context.LootContext;
-import net.minecraft.world.loot.context.LootContextParameter;
-import net.minecraft.world.loot.context.LootContextParameters;
 
 public class RedstoneWireTurbo
 {
@@ -910,7 +906,10 @@ public class RedstoneWireTurbo
             // Possible optimization:  Don't commit state changes to the world until they
             // need to be known by some nearby non-redstone-wire block.
             state = state.with(RedstoneWireBlock.POWER, j);
-            worldIn.setBlockState(upd.self, state, 2);
+            // [gnembon] added state check cause other things in the tick may have popped it up already
+            // https://github.com/gnembon/fabric-carpet/issues/117
+            if (worldIn.getBlockState(upd.self).getBlock() == Blocks.REDSTONE_WIRE)
+                worldIn.setBlockState(upd.self, state, 2);
         }
  
         return state;
