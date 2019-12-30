@@ -39,6 +39,9 @@ __command() ->
    print('    Change number of frames between points');
    print('      from 25 -> 4x faster, to 400 -> 4x slower,');
    print('');
+   print(' "/camera transpose" - ');
+   print('    Move entire path with start at player position.');
+   print('');
    print(' "/camera play : run a path with a player');
    print('    use "sneak" to stop it prematurely');
    print('    run /camera hide and F1 to clear the view');
