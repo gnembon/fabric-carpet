@@ -490,7 +490,9 @@ play() ->
        );
        showing_path = global_showing_path;
        hide();
-       sleep(2000); // so particles can discipate
+       sleep(1000);
+       sound('ui.button.click', pos(__get_player()), 8, 1); // to synchro with other clips
+       sleep(1000); // so particles can discipate
        global_playing_path = true;
        mspt = 1000 / 60;
        start_time = time();
