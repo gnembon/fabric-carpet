@@ -31,7 +31,7 @@ import static carpet.settings.RuleCategory.DISPENSER;
 
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.2+v191227";
+    public static final String carpetVersion = "1.3.2+v191230";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
