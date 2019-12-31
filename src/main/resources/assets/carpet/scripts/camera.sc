@@ -197,10 +197,10 @@ repeat(times, last_section_delay) ->
    positions = map(global_points, _:0);
    modes = map(global_points, _:(-1));
    durations = map(global_points, global_points:(_i+1):1 - _:1 );
-   durations:(-1) = round(60*last_section_duration);
+   durations:(-1) = round(60*last_section_delay);
    loop(times,
        loop( length(positions),
-           __add_path_segment(positions:_, durations:_, modes:_, true)
+           __add_path_segment(copy(positions:_), durations:_, modes:_, true)
        )
    );
    __update();
@@ -229,7 +229,12 @@ stretch(percentage) ->
 move() ->
 (
     __assert_point_selected(_(p) -> p != null);
-    global_points:global_selected_point:0 = __camera_position();
+    new_position = __camera_position();
+    new_position:(-2) = __adjusted_rot(
+        global_points:global_selected_point:0:(-2),
+        new_position:(-2)
+    );
+    global_points:global_selected_point:0 = new_position;
     __update();
     '';
 );
