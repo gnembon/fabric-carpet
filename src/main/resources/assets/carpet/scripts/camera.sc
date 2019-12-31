@@ -295,7 +295,7 @@ trim_path() ->
 );
 
 // moves entire camera path keeping the angles to player position being in the starting point
-reposition() ->
+transpose() ->
 (
     __assert_can_modify_path();
     shift = pos(__get_player())-slice(global_points:0:0, 0, 3);
