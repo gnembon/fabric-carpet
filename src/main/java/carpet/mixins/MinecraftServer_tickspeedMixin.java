@@ -44,6 +44,12 @@ public abstract class MinecraftServer_tickspeedMixin
     @Shadow private volatile boolean loading;
 
     CarpetProfiler.ProfilerToken currentSection;
+    
+    private float carpetMsptAccum = 0.0f;
+    
+    /**
+     * To ensure compatibility with other mods we should allow milliseconds
+     */
 
     // Cancel a while statement
     @Redirect(method = "run", at = @At(value = "FIELD", target = "Lnet/minecraft/server/MinecraftServer;running:Z"))
@@ -67,29 +73,38 @@ public abstract class MinecraftServer_tickspeedMixin
             {
                 CarpetProfiler.start_tick_profiling();
             }
-            long mspt = 0L;
+            long msThisTick = 0L;
             long long_1 = 0L;
             if (TickSpeed.time_warp_start_time != 0 && TickSpeed.continueWarp())
             {
                 //making sure server won't flop after the warp or if the warp is interrupted
                 this.timeReference = this.field_4557 = SystemUtil.getMeasuringTimeMs();
+                carpetMsptAccum = TickSpeed.mspt;
             }
             else
             {
-                mspt = TickSpeed.mspt; // regular tick
+                if (Math.abs(carpetMsptAccum - TickSpeed.mspt) > 1.0f)
+                {
+                	// Tickrate changed. Ensure that we use the correct value.
+                	carpetMsptAccum = TickSpeed.mspt;
+                }
+                
+                msThisTick = (long)carpetMsptAccum; // regular tick
+                carpetMsptAccum += TickSpeed.mspt - msThisTick;
+                
                 long_1 = SystemUtil.getMeasuringTimeMs() - this.timeReference;
             }
             //end tick deciding
             //smoothed out delay to include mcpt component. With 50L gives defaults.
-            if (long_1 > /*2000L*/1000L+20*mspt && this.timeReference - this.field_4557 >= /*15000L*/10000L+100*mspt)
+            if (long_1 > /*2000L*/1000L+20*TickSpeed.mspt && this.timeReference - this.field_4557 >= /*15000L*/10000L+100*TickSpeed.mspt)
             {
-                long long_2 = long_1 / mspt;//50L;
+                long long_2 = (long)(long_1 / TickSpeed.mspt);//50L;
                 LOGGER.warn("Can't keep up! Is the server overloaded? Running {}ms or {} ticks behind", long_1, long_2);
-                this.timeReference += long_2 * mspt;//50L;
+                this.timeReference += (long)(long_2 * TickSpeed.mspt);//50L;
                 this.field_4557 = this.timeReference;
             }
 
-            this.timeReference += mspt;//50L;
+            this.timeReference += msThisTick;//50L;
             if (this.profilerStartQueued)
             {
                 this.profilerStartQueued = false;
@@ -101,7 +116,7 @@ public abstract class MinecraftServer_tickspeedMixin
             this.tick(TickSpeed.time_warp_start_time != 0 ? ()->true : this::shouldKeepTicking);
             this.profiler.swap("nextTickWait");
             this.field_19249 = true;
-            this.field_19248 = Math.max(SystemUtil.getMeasuringTimeMs() + /*50L*/ mspt, this.timeReference);
+            this.field_19248 = Math.max(SystemUtil.getMeasuringTimeMs() + /*50L*/ msThisTick, this.timeReference);
             this.method_16208();
             this.profiler.pop();
             this.profiler.endTick();
