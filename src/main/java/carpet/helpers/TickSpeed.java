@@ -204,7 +204,7 @@ public class TickSpeed
         }
     }
     
-    public static BiConsumer<String, Float> establishTickrateLink(String modId, BiConsumer<String, Float> tickrateListener) 
+    public static BiConsumer<String, Float> addTickrateListener(String modId, BiConsumer<String, Float> tickrateListener) 
     {
         synchronized (tickrateListeners)
         {
