@@ -101,6 +101,7 @@
     "HopperBlockEntityMixin",
     "ContainerMixin",
     "ClientConnectionMixin",
+    "CauldronBlock_stackableSBoxesMixin",
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",
