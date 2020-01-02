@@ -1,18 +1,22 @@
 package carpet.helpers;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.command.CommandManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.BaseText;
 
 public class TickSpeed
 {
     public static final int PLAYER_GRACE = 2;
     public static float tickrate = 20.0f;
-    public static long mspt = 50l;
+    public static float mspt = 50.0f;
     public static long time_bias = 0;
     public static long time_warp_start_time = 0;
     public static long time_warp_scheduled_ticks = 0;
@@ -24,6 +28,13 @@ public class TickSpeed
     public static boolean is_paused = false;
     public static boolean is_superHot = false;
 
+    /**
+     * Functional interface that listens for tickrate changes. This is
+     * implemented to allow tickrate compatibility with other mods etc.
+     */
+    private static final Map<String, BiConsumer<String, Float>> tickrateListeners = new HashMap<>();
+    private static final float MIN_TICKRATE = 0.01f;
+    
     public static void reset_player_active_timeout()
     {
         if (player_active_timeout < PLAYER_GRACE)
@@ -35,17 +46,6 @@ public class TickSpeed
     public static void add_ticks_to_run_in_pause(int ticks)
     {
         player_active_timeout = PLAYER_GRACE+ticks;
-    }
-
-    public static void tickrate(float rate)
-    {
-        tickrate = rate;
-        mspt = (long)(1000.0/tickrate);
-        if (mspt <=0)
-        {
-            mspt = 1l;
-            tickrate = 1000.0f;
-        }
     }
 
     public static BaseText tickrate_advance(PlayerEntity player, int advance, String callback, ServerCommandSource source)
@@ -156,8 +156,61 @@ public class TickSpeed
 
             }
         }
-
-
+    }
+    
+    public static void tickrate(float rate)
+    {
+        tickrate = rate;
+        long mspt = (long)(1000.0 / tickrate);
+        if (mspt <= 0L)
+        {
+            mspt = 1L;
+            tickrate = 1000.0f;
+        }
+        
+        TickSpeed.mspt = (float)mspt;
+        
+        notifyTickrateListeners("carpet");
+    }
+    
+    private static void tickrateChanged(String modId, float rate)
+    {
+    	// Other mods might change the tickrate in a slightly
+    	// different way. Also allow for tickrates that don't
+    	// divide into 1000 here.
+    	
+        if (rate < MIN_TICKRATE)
+        {
+            rate = MIN_TICKRATE;
+        }
+        
+        tickrate = rate;
+        mspt = 1000.0f / tickrate;
+        
+        notifyTickrateListeners(modId);
+    }
+    
+    private static void notifyTickrateListeners(String originModId)
+    {
+    	synchronized (tickrateListeners)
+        {
+	        for (Map.Entry<String, BiConsumer<String, Float>> listenerEntry : tickrateListeners.entrySet()) 
+	        {
+	            if (originModId == null || !originModId.equals(listenerEntry.getKey())) 
+	            {
+	                listenerEntry.getValue().accept(originModId, Float.valueOf(tickrate));
+	            }
+	        }
+        }
+    }
+    
+    public static BiConsumer<String, Float> addTickrateListener(String modId, BiConsumer<String, Float> tickrateListener) 
+    {
+        synchronized (tickrateListeners)
+        {
+            tickrateListeners.put(modId, tickrateListener);
+        }
+        return TickSpeed::tickrateChanged;
     }
 }
 
