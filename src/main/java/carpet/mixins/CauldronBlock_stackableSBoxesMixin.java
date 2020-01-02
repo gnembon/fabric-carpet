@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(CauldronBlock.class)
 public class CauldronBlock_stackableSBoxesMixin
 {
-    @Inject(method = "activate", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
+    @Inject(method = "onUse", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/item/ItemStack;hasTag()Z",
             shift = At.Shift.BEFORE
