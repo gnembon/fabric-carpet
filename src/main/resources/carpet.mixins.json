@@ -154,7 +154,8 @@
     "IntegratedServerMixin",
     "InGameHudMixin",
     "PlayerListHudMixin",
-    "PistonBlockEntityRenderer_movableTEMixin"
+    "PistonBlockEntityRenderer_movableTEMixin",
+    "ClientPlayNetworkHandler_smoothClientAnimationsMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"
