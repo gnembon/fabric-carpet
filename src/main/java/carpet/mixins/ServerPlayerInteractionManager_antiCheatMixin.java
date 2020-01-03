@@ -13,7 +13,7 @@ public class ServerPlayerInteractionManager_antiCheatMixin
 {
     @Shadow public ServerPlayerEntity player;
 
-    @ModifyConstant(method = "processBlockBreakingAction",
+    @ModifyConstant(method = "processBlockBreakingAction", require = 0,
             constant = @Constant(doubleValue = 36D))
     private double addDistance(double original) {
         if (CarpetSettings.antiCheatDisabled)
