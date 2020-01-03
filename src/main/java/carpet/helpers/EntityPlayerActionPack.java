@@ -342,6 +342,7 @@ public class EntityPlayerActionPack
                 if (ap.currentBlock == null) return;
                 player.world.setBlockBreakingProgress(-1, ap.currentBlock, -1);
                 player.interactionManager.method_14263(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.server.getWorldHeight());
+                ap.currentBlock = null;
             }
         },
         JUMP(true)
