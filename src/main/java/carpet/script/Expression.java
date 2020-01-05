@@ -809,6 +809,9 @@ public class Expression implements Cloneable
      * </pre>
      * <p>Ability to combine more statements into one expression, with functions, passing parameters, and global and outer
      * scoping allow to organize even larger scripts</p>
+     * <h3><code>import(module_name)</code></h3>
+     * <p>Imports the entire content of another scarpet app by running the code in the current code context, making all
+     * functions and global variables available in the current script to use.</p>
      * <h3><code>call(function, args.....)</code></h3>
      * <p>calls a user defined function with specified arguments. It is equivalent to calling <code>function(args...)</code>
      * directly except you can use it with function value, or name instead. This means you can pass functions to other user defined
@@ -1595,7 +1598,7 @@ public class Expression implements Cloneable
      * <p>Evaluates expression <code>expr</code>, <code>num</code> number of times.
      *<code>expr</code> receives <code>_</code> system variable indicating the iteration.</p>
      * <pre>
-     *     loop(5, tick())  =&gt; repeat tick 5 times
+     *     loop(5, game_tick())  =&gt; repeat tick 5 times
      *     list = l(); loop(5, x = _; loop(5, list += l(x, _) ) ); list
      *       // double loop, produces: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], ... , [4, 2], [4, 3], [4, 4]]
      * </pre>
@@ -2735,7 +2738,7 @@ public class Expression implements Cloneable
      *
      * <h3><code>sleep(expr)</code></h3>
      * <p>Halts the execution of the program (and the game itself) for <code>expr</code> milliseconds.
-     * All in all, its better to use <code>tick(expr)</code> to let the game do its job while the program waits</p>
+     * All in all, its better to use <code>game_tick(expr)</code> to let the game do its job while the program waits</p>
      * <pre>sleep(50)</pre>
      * <h3><code>time()</code></h3>
      * <p>Returns the number of milliseconds since 'some point',
