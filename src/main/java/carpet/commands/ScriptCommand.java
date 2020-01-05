@@ -7,9 +7,9 @@ import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.Expression;
 import carpet.script.ExpressionInspector;
-import carpet.script.ScriptHost;
 import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
+import carpet.script.value.FunctionValue;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -50,7 +50,7 @@ public class ScriptCommand
             SuggestionsBuilder suggestionsBuilder
     )
     {
-        ScriptHost currentHost = getHost(context);
+        CarpetScriptHost currentHost = getHost(context);
         String previous = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
         int strlen = previous.length();
         StringBuilder lastToken = new StringBuilder();
@@ -287,7 +287,7 @@ public class ScriptCommand
     }
     private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c)
     {
-        ScriptHost host = getHost(c);
+        CarpetScriptHost host = getHost(c);
         return host.getPublicFunctions();
     }
     private static int listEvents(ServerCommandSource source)
@@ -310,16 +310,17 @@ public class ScriptCommand
     }
     private static int listGlobals(CommandContext<ServerCommandSource> context, boolean all)
     {
-        ScriptHost host = getHost(context);
+        CarpetScriptHost host = getHost(context);
         ServerCommandSource source = context.getSource();
 
         Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
         for (String fname : host.getAvailableFunctions(all))
         {
-            Expression expr = host.getExpressionForFunction(fname);
-            Tokenizer.Token tok = host.getTokenForFunction(fname);
+            FunctionValue fun = host.globalFunctions.get(fname);
+            Expression expr = fun.getExpression();
+            Tokenizer.Token tok = fun.getToken();
             List<String> snippet = ExpressionInspector.Expression_getExpressionSnippet(tok, expr);
-            Messenger.m(source, "wb "+fname,"t  defined at: line "+(tok.lineno+1)+" pos "+(tok.linepos+1));
+            Messenger.m(source, "wb "+fun.fullName(),"t  defined at: line "+(tok.lineno+1)+" pos "+(tok.linepos+1));
             for (String snippetLine: snippet)
             {
                 Messenger.m(source, "w "+snippetLine);
@@ -338,11 +339,11 @@ public class ScriptCommand
         return 1;
     }
 
-    public static void handleCall(ServerCommandSource source, Supplier<String> call)
+    public static void handleCall(ServerCommandSource source, CarpetScriptHost host, Supplier<String> call)
     {
         try
         {
-            CarpetServer.scriptServer.setChatErrorSnooper(source);
+            host.setChatErrorSnooper(source);
             long start = System.nanoTime();
             String result = call.get();
             long time = ((System.nanoTime()-start)/1000);
@@ -361,9 +362,10 @@ public class ScriptCommand
         }
         catch (CarpetExpressionException e)
         {
-            Messenger.m(source, "r Exception white evaluating expression at "+new BlockPos(source.getPosition())+": "+e.getMessage());
+            e.printStack(source);
+            Messenger.m(source, "r Exception while evaluating expression at "+new BlockPos(source.getPosition())+": "+e.getMessage());
         }
-        CarpetServer.scriptServer.resetErrorSnooper();
+        host.resetErrorSnooper();
     }
 
     private static int invoke(CommandContext<ServerCommandSource> context, String call, BlockPos pos1, BlockPos pos2,  String args)
@@ -390,7 +392,7 @@ public class ScriptCommand
         }
         //if (!(args.trim().isEmpty()))
         //    arguments.addAll(Arrays.asList(args.trim().split("\\s+")));
-        handleCall(source, () ->  host.call(source, call, positions, args));
+        handleCall(source, host, () ->  host.call(source, call, positions, args));
         return 1;
     }
 
@@ -398,8 +400,8 @@ public class ScriptCommand
     private static int compute(CommandContext<ServerCommandSource> context, String expr)
     {
         ServerCommandSource source = context.getSource();
-        ScriptHost host = getHost(context);
-        handleCall(source, () -> {
+        CarpetScriptHost host = getHost(context);
+        handleCall(source, host, () -> {
             CarpetExpression ex = new CarpetExpression(expr, source, new BlockPos(0, 0, 0));
             return ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
         });
@@ -409,7 +411,7 @@ public class ScriptCommand
     private static int scriptScan(CommandContext<ServerCommandSource> context, BlockPos origin, BlockPos a, BlockPos b, String expr)
     {
         ServerCommandSource source = context.getSource();
-        ScriptHost host = getHost(context);
+        CarpetScriptHost host = getHost(context);
         MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
         CarpetExpression cexpr = new CarpetExpression(expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
@@ -441,6 +443,7 @@ public class ScriptCommand
         }
         catch (CarpetExpressionException exc)
         {
+            exc.printStack(source);
             Messenger.m(source, "r Error while processing command: "+exc);
             return 0;
         }
@@ -458,7 +461,7 @@ public class ScriptCommand
                                 BlockStateArgument block, Predicate<CachedBlockPosition> replacement, String mode)
     {
         ServerCommandSource source = context.getSource();
-        ScriptHost host = getHost(context);
+        CarpetScriptHost host = getHost(context);
         MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
         CarpetExpression cexpr = new CarpetExpression(expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
@@ -488,6 +491,7 @@ public class ScriptCommand
                     }
                     catch (CarpetExpressionException e)
                     {
+                        e.printStack(source);
                         Messenger.m(source, "r Exception while filling the area:\n","l "+e.getMessage());
                         return 0;
                     }
