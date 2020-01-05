@@ -148,7 +148,7 @@ public class CarpetExpression
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <p>
      * <code>/script stop</code> allows to stop execution of any script currently running that calls the
-     * <code>gametick()</code> function which
+     * <code>game_tick()</code> function which
      * allows the game loop to regain control of the game and process other commands. This will also make sure
      * that all current and future programs will stop their execution. Execution of all programs will be
      * prevented until <code>/script resume</code> command is called.
@@ -161,11 +161,11 @@ public class CarpetExpression
      * exponentially with <code>n</code>. It takes a little over 50 milliseconds to do fib(24), so above one tick,
      * but about a minute to do fib(40). Calling fib(40) will not only freeze the game, but also you woudn't be able to interrupt
      * its execution. We can modify the script as follows</p>
-     * <pre>fib(n) -&gt; ( gametick(50); if(n&lt;3, 1, fib(n-1)+fib(n-2) ) ); fib(40)</pre>
+     * <pre>fib(n) -&gt; ( game_tick(50); if(n&lt;3, 1, fib(n-1)+fib(n-2) ) ); fib(40)</pre>
      * <p>But this would never finish as such call would finish after <code>~ 2^40</code> ticks. To make our computations
      * responsive, yet able to respond to user interactions, other commands, as well as interrupt execution,
      * we could do the following:</p>
-     * <pre>fib(n) -&gt; ( if(n==23, gametick(50) ); if(n&lt;3, 1, fib(n-1)+fib(n-2) ) ); fib(40)</pre>
+     * <pre>fib(n) -&gt; ( if(n==23, game_tick(50) ); if(n&lt;3, 1, fib(n-1)+fib(n-2) ) ); fib(40)</pre>
      * <p>This would slow down the computation of fib(40) from a minute to two, but allows the game to keep continue running
      * and be responsive to commands, using about half of each tick to advance the computation.
      * Obviously depending on the problem, and available hardware, certain things can take
@@ -2644,7 +2644,11 @@ public class CarpetExpression
      * <h3><code>logger(expr)</code></h3>
      * <p>Prints the message to system logs, and not to chat.</p>
      * <h3><code>run(expr)</code></h3>
-     * <p>Runs a command from the string result of the <code>expr</code> expression, and returns its success count</p>
+     * <p>Runs a vanilla command from the string result of the <code>expr</code> and returns its success count</p>
+     * <pre>
+     * run('fill 1 1 1 10 10 10 air') -&gt; 123 // 123 block were filled, this operation was successful 123 times out of a possible 1000 blocks volume
+     * run('give @s stone 4') -&gt; 1 // this operation was successful once
+     * </pre>
      * <h3><code>save()</code></h3>
      * <p>Performs autosave, saves all chunks, player data, etc. Useful for programs where autosave is disabled
      * due to performance reasons and saves the world only on demand.</p>
@@ -2664,8 +2668,8 @@ public class CarpetExpression
      * accept expected tick length, in milliseconds. You can't use it to permanently change the game speed, but
      * setting longer commands with custom tick speeds can be interrupted via <code>/script stop</code> command</p>
      * <pre>
-     * loop(1000,tick())  // runs the game as fast as it can for 1000 ticks
-     * loop(1000,tick(100)) // runs the game twice as slow for 1000 ticks
+     * loop(1000,game_tick())  // runs the game as fast as it can for 1000 ticks
+     * loop(1000,game_tick(100)) // runs the game twice as slow for 1000 ticks
      * </pre>
      * <h3><code>current_dimension()</code></h3>
      * <p>Returns current dimension that the script runs in.</p>
