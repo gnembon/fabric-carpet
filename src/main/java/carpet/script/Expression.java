@@ -11,6 +11,7 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
+import carpet.script.bundled.ModuleInterface;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -365,10 +366,13 @@ public class Expression implements Cloneable
     private boolean allowNewlineSubstitutions = true;
     private boolean allowComments = false;
 
-    void asAModule()
+    public ModuleInterface module = null;
+
+    void asAModule(ModuleInterface mi)
     {
         allowNewlineSubstitutions = false;
         allowComments = true;
+        module = mi;
     }
 
     private String name;
@@ -396,6 +400,7 @@ public class Expression implements Cloneable
         Expression copy = (Expression) super.clone();
         copy.expression = this.expression;
         copy.name = this.name;
+        copy.module = this.module;
         return copy;
     }
 
@@ -472,14 +477,14 @@ public class Expression implements Cloneable
                 {
                     if (v2 != null)
                     {
-                        throw new ExpressionException(e, token, "Did not expect a second parameter for unary operator");
+                        throw new ExpressionException(c, e, token, "Did not expect a second parameter for unary operator");
                     }
                     Value.assertNotNull(v);
                     return lazyfun.apply(c, t, v);
                 }
                 catch (RuntimeException exc)
                 {
-                    throw handleCodeException(exc, e, token);
+                    throw handleCodeException(c, exc, e, token);
                 }
             }
         });
@@ -501,7 +506,7 @@ public class Expression implements Cloneable
                 }
                 catch (RuntimeException exc)
                 {
-                    throw handleCodeException(exc, e, t);
+                    throw handleCodeException(c, exc, e, t);
                 }
             }
         });
@@ -521,7 +526,7 @@ public class Expression implements Cloneable
                 }
                 catch (RuntimeException exc)
                 {
-                    throw handleCodeException(exc, e, t);
+                    throw handleCodeException(c, exc, e, t);
                 }
             }
         });
@@ -542,25 +547,25 @@ public class Expression implements Cloneable
                 }
                 catch (RuntimeException exc)
                 {
-                    throw handleCodeException(exc, e, token);
+                    throw handleCodeException(c, exc, e, token);
                 }
             }
         });
     }
 
-    static RuntimeException handleCodeException(RuntimeException exc, Expression e, Tokenizer.Token token)
+    static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Tokenizer.Token token)
     {
         if (exc instanceof ExitStatement)
             return exc;
         if (exc instanceof InternalExpressionException)
-            return new ExpressionException(e, token, exc.getMessage());
+            return new ExpressionException(c, e, token, exc.getMessage(), ((InternalExpressionException) exc).stack);
         if (exc instanceof ArithmeticException)
-            return new ExpressionException(e, token, "Your math is wrong, "+exc.getMessage());
+            return new ExpressionException(c, e, token, "Your math is wrong, "+exc.getMessage());
         if (exc instanceof ExpressionException)
             return exc;
         // unexpected really - should be caught earlier and converted to InternalExpressionException
         exc.printStackTrace();
-        return new ExpressionException(e, token, "Error while evaluating expression: "+exc);
+        return new ExpressionException(c, e, token, "Error while evaluating expression: "+exc);
     }
 
     private void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
@@ -659,7 +664,7 @@ public class Expression implements Cloneable
                 }
                 catch (RuntimeException exc)
                 {
-                    throw handleCodeException(exc, e, t);
+                    throw handleCodeException(c, exc, e, t);
                 }
             }
         });
@@ -668,7 +673,7 @@ public class Expression implements Cloneable
     {
         name = name.toLowerCase(Locale.ROOT);
         if (functions.containsKey(name))
-            throw new ExpressionException(expr, token, "Function "+name+" would mask a built-in function");
+            throw new ExpressionException(context, expr, token, "Function "+name+" would mask a built-in function");
         Map<String, LazyValue> contextValues = new HashMap<>();
         for (String global : globals)
         {
@@ -684,7 +689,7 @@ public class Expression implements Cloneable
         }
         if (contextValues.isEmpty()) contextValues = null;
 
-        FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, contextValues);
+        FunctionValue result =  new FunctionValue(expr, token, module, name, code, arguments, contextValues);
         // do not store lambda definitions
         if (!name.equals("_")) context.host.addUserDefinedFunction(name, result);
         return result;
@@ -861,6 +866,13 @@ public class Expression implements Cloneable
     public void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
+        addLazyFunction("import", 1, (c, t, lv) ->
+        {
+            boolean success = c.host.importModule(c, lv.get(0).evalValue(c).getString());
+            Value ret = new NumericValue(success);
+            return (cc, tt) -> ret;
+        });
+
         addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
             if (lv.size() == 0)
                 throw new InternalExpressionException("'call' expects at least function name to call");
@@ -3129,12 +3141,12 @@ public class Expression implements Cloneable
         BasicDataStructures();
     }
 
-    private List<Tokenizer.Token> shuntingYard()
+    private List<Tokenizer.Token> shuntingYard(Context c)
     {
         List<Tokenizer.Token> outputQueue = new ArrayList<>();
         Stack<Tokenizer.Token> stack = new Stack<>();
 
-        Tokenizer tokenizer = new Tokenizer(this, expression, allowComments, allowNewlineSubstitutions);
+        Tokenizer tokenizer = new Tokenizer(c, this, expression, allowComments, allowNewlineSubstitutions);
         // stripping lousy but acceptable semicolons
         List<Tokenizer.Token> cleanedTokens = tokenizer.fixSemicolons();
 
@@ -3154,7 +3166,7 @@ public class Expression implements Cloneable
                                     previousToken.type == Tokenizer.Token.TokenType.HEX_LITERAL ||
                                     previousToken.type == Tokenizer.Token.TokenType.STRINGPARAM))
                     {
-                        throw new ExpressionException(this, token, "Missing operator");
+                        throw new ExpressionException(c, this, token, "Missing operator");
                     }
                     outputQueue.add(token);
                     break;
@@ -3168,7 +3180,7 @@ public class Expression implements Cloneable
                 case COMMA:
                     if (previousToken != null && previousToken.type == Tokenizer.Token.TokenType.OPERATOR)
                     {
-                        throw new ExpressionException(this, previousToken, "Missing parameter(s) for operator ");
+                        throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator ");
                     }
                     while (!stack.isEmpty() && stack.peek().type != Tokenizer.Token.TokenType.OPEN_PAREN)
                     {
@@ -3178,11 +3190,11 @@ public class Expression implements Cloneable
                     {
                         if (lastFunction == null)
                         {
-                            throw new ExpressionException(this, token, "Unexpected comma");
+                            throw new ExpressionException(c, this, token, "Unexpected comma");
                         }
                         else
                         {
-                            throw new ExpressionException(this, lastFunction, "Parse error for function");
+                            throw new ExpressionException(c, this, lastFunction, "Parse error for function");
                         }
                     }
                     break;
@@ -3191,12 +3203,12 @@ public class Expression implements Cloneable
                     if (previousToken != null
                             && (previousToken.type == Tokenizer.Token.TokenType.COMMA || previousToken.type == Tokenizer.Token.TokenType.OPEN_PAREN))
                     {
-                        throw new ExpressionException(this, token, "Missing parameter(s) for operator '" + token+"'");
+                        throw new ExpressionException(c, this, token, "Missing parameter(s) for operator '" + token+"'");
                     }
                     ILazyOperator o1 = operators.get(token.surface);
                     if (o1 == null)
                     {
-                        throw new ExpressionException(this, token, "Unknown operator '" + token + "'");
+                        throw new ExpressionException(c, this, token, "Unknown operator '" + token + "'");
                     }
 
                     shuntOperators(outputQueue, stack, o1);
@@ -3208,12 +3220,12 @@ public class Expression implements Cloneable
                     if (previousToken != null && previousToken.type != Tokenizer.Token.TokenType.OPERATOR
                             && previousToken.type != Tokenizer.Token.TokenType.COMMA && previousToken.type != Tokenizer.Token.TokenType.OPEN_PAREN)
                     {
-                        throw new ExpressionException(this, token, "Invalid position for unary operator " + token );
+                        throw new ExpressionException(c, this, token, "Invalid position for unary operator " + token );
                     }
                     ILazyOperator o1 = operators.get(token.surface);
                     if (o1 == null)
                     {
-                        throw new ExpressionException(this, token, "Unknown unary operator '" + token.surface.substring(0, token.surface.length() - 1) + "'");
+                        throw new ExpressionException(c, this, token, "Unknown unary operator '" + token.surface.substring(0, token.surface.length() - 1) + "'");
                     }
 
                     shuntOperators(outputQueue, stack, o1);
@@ -3245,7 +3257,7 @@ public class Expression implements Cloneable
                 case CLOSE_PAREN:
                     if (previousToken != null && previousToken.type == Tokenizer.Token.TokenType.OPERATOR)
                     {
-                        throw new ExpressionException(this, previousToken, "Missing parameter(s) for operator " + previousToken);
+                        throw new ExpressionException(c, this, previousToken, "Missing parameter(s) for operator " + previousToken);
                     }
                     while (!stack.isEmpty() && stack.peek().type != Tokenizer.Token.TokenType.OPEN_PAREN)
                     {
@@ -3253,7 +3265,7 @@ public class Expression implements Cloneable
                     }
                     if (stack.isEmpty())
                     {
-                        throw new ExpressionException("Mismatched parentheses");
+                        throw new ExpressionException(c, "Mismatched parentheses");
                     }
                     stack.pop();
                     if (!stack.isEmpty() && stack.peek().type == Tokenizer.Token.TokenType.FUNCTION)
@@ -3277,7 +3289,7 @@ public class Expression implements Cloneable
             Tokenizer.Token element = stack.pop();
             if (element.type == Tokenizer.Token.TokenType.OPEN_PAREN || element.type == Tokenizer.Token.TokenType.CLOSE_PAREN)
             {
-                throw new ExpressionException(this, element, "Mismatched parentheses");
+                throw new ExpressionException(c, this, element, "Mismatched parentheses");
             }
             outputQueue.add(element);
         }
@@ -3306,7 +3318,7 @@ public class Expression implements Cloneable
     {
         if (ast == null)
         {
-            ast = getAST();
+            ast = getAST(c);
         }
         return evalValue(() -> ast, c, expectedType);
     }
@@ -3319,7 +3331,7 @@ public class Expression implements Cloneable
         }
         catch (ContinueStatement | BreakStatement | ReturnStatement exc)
         {
-            throw new ExpressionException("Control flow functions, like continue, break, or return, should only be used in loops and functions respectively.");
+            throw new ExpressionException(c, "Control flow functions, like continue, break, or return, should only be used in loops and functions respectively.");
         }
         catch (ExitStatement exit)
         {
@@ -3327,23 +3339,23 @@ public class Expression implements Cloneable
         }
         catch (StackOverflowError ignored)
         {
-            throw new ExpressionException("Your thoughts are too deep");
+            throw new ExpressionException(c, "Your thoughts are too deep");
         }
         catch (InternalExpressionException exc)
         {
-            throw new ExpressionException("Your expression result is incorrect:"+exc.getMessage());
+            throw new ExpressionException(c, "Your expression result is incorrect:"+exc.getMessage());
         }
         catch (ArithmeticException exc)
         {
-            throw new ExpressionException("The final result is incorrect, "+exc.getMessage());
+            throw new ExpressionException(c, "The final result is incorrect, "+exc.getMessage());
         }
     }
 
-    private LazyValue getAST()
+    private LazyValue getAST(Context context)
     {
         Stack<LazyValue> stack = new Stack<>();
-        List<Tokenizer.Token> rpn = shuntingYard();
-        validate(rpn);
+        List<Tokenizer.Token> rpn = shuntingYard(context);
+        validate(context, rpn);
         for (final Tokenizer.Token token : rpn)
         {
             switch (token.type)
@@ -3415,7 +3427,7 @@ public class Expression implements Cloneable
                         }
                         catch (NumberFormatException exception)
                         {
-                            throw new ExpressionException(this, token, "Not a number");
+                            throw new ExpressionException(c, this, token, "Not a number");
                         }
                     });
                     break;
@@ -3426,13 +3438,13 @@ public class Expression implements Cloneable
                     stack.push((c, t) -> new NumericValue(new BigInteger(token.surface.substring(2), 16).doubleValue()));
                     break;
                 default:
-                    throw new ExpressionException(this, token, "Unexpected token '" + token.surface + "'");
+                    throw new ExpressionException(context, this, token, "Unexpected token '" + token.surface + "'");
             }
         }
         return stack.pop();
     }
 
-    private void validate(List<Tokenizer.Token> rpn)
+    private void validate(Context c, List<Tokenizer.Token> rpn)
     {
         /*-
          * Thanks to Norman Ramsey:
@@ -3454,7 +3466,7 @@ public class Expression implements Cloneable
                 case UNARY_OPERATOR:
                     if (stack.peek() < 1)
                     {
-                        throw new ExpressionException(this, token, "Missing parameter(s) for operator " + token);
+                        throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }
                     break;
                 case OPERATOR:
@@ -3462,9 +3474,9 @@ public class Expression implements Cloneable
                     {
                         if (token.surface.equalsIgnoreCase(";"))
                         {
-                            throw new ExpressionException(this, token, "Unnecessary semicolon");
+                            throw new ExpressionException(c, this, token, "Unnecessary semicolon");
                         }
-                        throw new ExpressionException(this, token, "Missing parameter(s) for operator " + token);
+                        throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }
                     // pop the operator's 2 parameters and add the result
                     stack.set(stack.size() - 1, stack.peek() - 2 + 1);
@@ -3474,11 +3486,11 @@ public class Expression implements Cloneable
                     int numParams = stack.pop();
                     if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
                     {
-                        throw new ExpressionException(this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
+                        throw new ExpressionException(c, this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
                     }
                     if (stack.size() <= 0)
                     {
-                        throw new ExpressionException(this, token, "Too many function calls, maximum scope exceeded");
+                        throw new ExpressionException(c, this, token, "Too many function calls, maximum scope exceeded");
                     }
                     // push the result of the function
                     stack.set(stack.size() - 1, stack.peek() + 1);
@@ -3493,15 +3505,15 @@ public class Expression implements Cloneable
 
         if (stack.size() > 1)
         {
-            throw new ExpressionException("Too many unhandled function parameter lists");
+            throw new ExpressionException(c, "Too many unhandled function parameter lists");
         }
         else if (stack.peek() > 1)
         {
-            throw new ExpressionException("Too many numbers or variables");
+            throw new ExpressionException(c, "Too many numbers or variables");
         }
         else if (stack.peek() < 1)
         {
-            throw new ExpressionException("Empty expression");
+            throw new ExpressionException(c, "Empty expression");
         }
     }
 

@@ -3378,11 +3378,11 @@ public class CarpetExpression
         }
         catch (ExpressionException e)
         {
-            throw new CarpetExpressionException(e.getMessage());
+            throw new CarpetExpressionException(e.getMessage(), e.stack);
         }
         catch (ArithmeticException ae)
         {
-            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage());
+            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage(), null);
         }
     }
 
@@ -3425,11 +3425,11 @@ public class CarpetExpression
         }
         catch (ExpressionException e)
         {
-            throw new CarpetExpressionException(e.getMessage());
+            throw new CarpetExpressionException(e.getMessage(), e.stack);
         }
         catch (ArithmeticException ae)
         {
-            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage());
+            throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage(), null);
         }
     }
 

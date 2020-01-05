@@ -32,11 +32,13 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     private Token previousToken;
 
     private Expression expression;
+    private Context context;
 
-    Tokenizer(Expression expr, String input, boolean allowComments, boolean allowNewLineMakers)
+    Tokenizer(Context c, Expression expr, String input, boolean allowComments, boolean allowNewLineMakers)
     {
         this.input = input;
         this.expression = expr;
+        this.context = c;
         this.comments = allowComments;
         this.newLinesMarkers = allowNewLineMakers;
     }
@@ -89,7 +91,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 || (ch >= 'A' && ch <= 'F');
     }
 
-    public static boolean isSemicolon(Token tok)
+    private static boolean isSemicolon(Token tok)
     {
         return (    tok.type == Token.TokenType.OPERATOR && tok.surface.equals(";") )
                 || (tok.type == Token.TokenType.UNARY_OPERATOR && tok.surface.equals(";u") );
@@ -97,7 +99,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
     public static List<Token> simplepass(String input)
     {
-        Tokenizer tok = new Tokenizer(null, input, false, false);
+        Tokenizer tok = new Tokenizer(null, null, input, false, false);
         List<Token> res = new ArrayList<>();
         while (tok.hasNext()) res.add(tok.next());
         return res;
@@ -157,8 +159,8 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             pos++;
             linepos++;
             token.type = Token.TokenType.STRINGPARAM;
-            if (pos == input.length() && expression != null)
-                throw new ExpressionException(this.expression, token, "Program truncated");
+            if (pos == input.length() && expression != null && context != null)
+                throw new ExpressionException(context, this.expression, token, "Program truncated");
             ch = input.charAt(pos);
             while (ch != '\'')
             {
@@ -166,13 +168,13 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 {
                     pos++;
                     linepos++;
-                    if (pos == input.length() && expression != null)
-                        throw new ExpressionException(this.expression, token, "Program truncated");
+                    if (pos == input.length() && expression != null && context != null)
+                        throw new ExpressionException(context, this.expression, token, "Program truncated");
                 }
                 token.append(input.charAt(pos++));
                 linepos++;
-                if (pos == input.length() && expression != null)
-                    throw new ExpressionException(this.expression, token, "Program truncated");
+                if (pos == input.length() && expression != null && context != null)
+                    throw new ExpressionException(context, this.expression, token, "Program truncated");
                 ch = input.charAt(pos);
             }
             pos++;
@@ -224,12 +226,12 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             pos++;
             linepos++;
 
-            if (expression != null && previousToken != null &&
+            if (expression != null && context != null && previousToken != null &&
                     previousToken.type == Token.TokenType.OPERATOR &&
                     (ch == ')' || ch == ',') &&
                     !previousToken.surface.equalsIgnoreCase(";")
             )
-                throw new ExpressionException(this.expression, previousToken,
+                throw new ExpressionException(context, this.expression, previousToken,
                         "Can't have operator " + previousToken.surface + " at the end of a subexpression");
         }
         else
@@ -300,7 +302,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 token.type = Token.TokenType.OPERATOR;
             }
         }
-        if (expression != null && previousToken != null &&
+        if (expression != null && context != null && previousToken != null &&
             (
                 token.type == Token.TokenType.LITERAL ||
                 token.type == Token.TokenType.HEX_LITERAL ||
@@ -317,7 +319,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             )
         )
         {
-            throw new ExpressionException(this.expression, previousToken, "'"+token.surface +"' is not allowed after '"+previousToken.surface+"'");
+            throw new ExpressionException(context, this.expression, previousToken, "'"+token.surface +"' is not allowed after '"+previousToken.surface+"'");
         }
         return previousToken = token;
     }

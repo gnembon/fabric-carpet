@@ -6,6 +6,7 @@ import carpet.script.ExpressionInspector;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
+import carpet.script.bundled.ModuleInterface;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -14,6 +15,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.exception.ThrowStatement;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -22,15 +24,17 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     private Expression expression;
     private Tokenizer.Token token;
     private String name;
+    private String containedPackage;
     private LazyValue body;
     private Map<String, LazyValue> outerState;
     private List<String> args;
     private static long variantCounter = 1;
     private long variant;
 
-    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args)
+    private FunctionValue(Expression expression, Tokenizer.Token token, String cpackage, String name, LazyValue body, List<String> args)
     {
         this.expression = expression;
+        this.containedPackage = cpackage;
         this.token = token;
         this.name = name;
         this.body = body;
@@ -39,9 +43,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         variant = 0L;
     }
 
-    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, Map<String, LazyValue> outerState)
+    public FunctionValue(Expression expression, Tokenizer.Token token, ModuleInterface code, String name, LazyValue body, List<String> args, Map<String, LazyValue> outerState)
     {
         this.expression = expression;
+        this.containedPackage = code==null?null:code.getName();
         this.token = token;
         this.name = name;
         this.body = body;
@@ -56,6 +61,8 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return name;
     }
 
+    public String fullName() {return containedPackage == null?name:name+"["+containedPackage+"]";}
+
     @Override
     public boolean getBoolean()
     {
@@ -65,7 +72,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     protected Value clone()
     {
-        FunctionValue ret = new FunctionValue(expression, token, name, body, args);
+        FunctionValue ret = new FunctionValue(expression, token, containedPackage, name, body, args);
         ret.outerState = this.outerState;
         ret.variant = this.variant;
         return ret;
@@ -124,19 +131,26 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
 
     public LazyValue callInContext(Expression callingExpression, Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
     {
-        // this hole thing might not be really needed
-        Expression callContext = ExpressionInspector.Expression_cloneWithName(callingExpression, name, t);
+        // this hole thing might not be really needed (errata: needed to know the package to report with exceptions
+        Expression callContext = ExpressionInspector.Expression_cloneWithName(e, c, fullName(), t);
         try
         {
-            return lazyEval(c, type, e, t, lazyParams);
+            return lazyEval(c, type, callContext, t, lazyParams);
+        }
+        catch (ExpressionException exc)
+        {
+            exc.stack.add(this);
+            throw exc;
         }
         catch (InternalExpressionException exc)
         {
-            throw new ExpressionException(callContext, t, exc.getMessage());
+            exc.stack.add(this);
+            throw new ExpressionException(c, callContext, t, exc.getMessage(), exc.stack);
         }
+
         catch (ArithmeticException exc)
         {
-            throw new ExpressionException(callContext, t, "Your math is wrong, "+exc.getMessage());
+            throw new ExpressionException(c, callContext, t, "Your math is wrong, "+exc.getMessage(), Collections.singletonList(this));
         }
     }
 
@@ -146,7 +160,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         if (args.size() != lazyParams.size()) // something that might be subject to change in the future
                                               // in case we add variable arguments
         {
-            throw new ExpressionException(e, t,
+            throw new ExpressionException(c, e, t,
                     "Incorrect number of arguments for function "+name+
                             ". Should be "+args.size()+", not "+lazyParams.size()+" like "+args
             );
@@ -168,7 +182,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         }
         catch (BreakStatement | ContinueStatement exc)
         {
-            throw new ExpressionException(e, t, "'continue' and 'break' can only be called inside loop function bodies");
+            throw new ExpressionException(c, e, t, "'continue' and 'break' can only be called inside loop function bodies");
         }
         catch (ReturnStatement returnStatement)
         {
@@ -179,13 +193,13 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             retVal = throwStatement.retval;
             rethrow = true;
         }
-        catch (ArithmeticException | ExitStatement | ExpressionException exc)
+        catch (ArithmeticException | ExitStatement | ExpressionException | InternalExpressionException exc )
         {
             throw exc; // rethrow so could be contextualized if needed
         }
         catch (Exception exc)
         {
-            throw new ExpressionException(e, t, "Error while evaluating expression: "+exc.getMessage());
+            throw new ExpressionException(c, e, t, "Error while evaluating expression: "+exc.getMessage());
         }
         if (rethrow)
         {

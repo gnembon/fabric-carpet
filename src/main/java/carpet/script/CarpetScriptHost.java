@@ -2,13 +2,16 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.script.bundled.ModuleInterface;
+import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.CarpetSettings;
+import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -33,19 +36,52 @@ public class CarpetScriptHost extends ScriptHost
     private Tag globalState;
     private int saveTimeout;
 
-    CarpetScriptHost(CarpetScriptServer server, String name, ModuleInterface code, boolean perUser, ScriptHost parent)
+    private CarpetScriptHost(CarpetScriptServer server, ModuleInterface code, boolean perUser, ScriptHost parent)
     {
-        super(name, code, perUser, parent);
+        super(code, perUser, parent);
         this.saveTimeout = 0;
         this.scriptServer = server;
-        if (parent == null && name != null)
+        if (parent == null && code != null)
             globalState = loadState();
+    }
+
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
+    {
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null );
+        host.globalVariables.put("_x", (c, t) -> Value.ZERO);
+        host.globalVariables.put("_y", (c, t) -> Value.ZERO);
+        host.globalVariables.put("_z", (c, t) -> Value.ZERO);
+        // parse code and convert to expression
+        if (module != null)
+        {
+            try
+            {
+                String code = module.getCode();
+                if (code == null)
+                {
+                    Messenger.m(source, "r Unable to load "+module.getName()+" app - code not found");
+                    return null;
+                }
+                host.setChatErrorSnooper(source);
+                CarpetExpression ex = new CarpetExpression(code, source, new BlockPos(0, 0, 0));
+                ex.getExpr().asAModule(module);
+                ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
+            }
+            catch (CarpetExpressionException e)
+            {
+                e.printStack(source);
+                Messenger.m(source, "r Exception while evaluating expression at " + new BlockPos(source.getPosition()) + ": " + e.getMessage());
+                host.resetErrorSnooper();
+                return null;
+            }
+        }
+        return host;
     }
 
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, this.getName(), myCode, false, this);
+        return new CarpetScriptHost(scriptServer, myCode, false, this);
     }
 
     @Override
@@ -60,6 +96,32 @@ public class CarpetScriptHost extends ScriptHost
             if (CarpetEventServer.Event.byName.containsKey(event))
                 scriptServer.events.addEventDirectly(event, this, function);
         }
+    }
+
+    @Override
+    protected ModuleInterface getModuleByName(String name)
+    {
+        ModuleInterface module = scriptServer.getModule(name);
+        if (module == null || module.getCode() == null)
+            throw new InternalExpressionException("Unable to locate package: "+name);
+        return module;
+    }
+
+    @Override
+    protected boolean runModuleCode(Context c, ModuleInterface module)
+    {
+        CarpetContext cc = (CarpetContext)c;
+        try
+        {
+            CarpetExpression ex = new CarpetExpression(module.getCode(), cc.s, cc.origin);
+            ex.getExpr().asAModule(module);
+            ex.scriptRunCommand(this, cc.origin);
+        }
+        catch (CarpetExpressionException e) // hopefully that error got reported already
+        {
+            throw new InternalExpressionException(e.getMessage());
+        }
+        return true;
     }
 
     @Override
@@ -309,4 +371,43 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
+    public void setChatErrorSnooper(ServerCommandSource source)
+    {
+        errorSnooper = (expr, token, message) ->
+        {
+            try
+            {
+                source.getPlayer();
+            }
+            catch (CommandSyntaxException e)
+            {
+                return null;
+            }
+            String[] lines = expr.getCodeString().split("\n");
+            String shebang = message;
+            if (lines.length > 1)
+            {
+                shebang += " at line "+(token.lineno+1)+", pos "+(token.linepos+1);
+            }
+            else {
+                shebang += " at pos "+(token.pos+1);
+            }
+            if (expr.getName() != null)
+            {
+                shebang += " in "+expr.getName()+"";
+            }
+            Messenger.m(source, "r "+shebang);
+            if (lines.length > 1 && token.lineno > 0)
+            {
+                Messenger.m(source, "l "+lines[token.lineno-1]);
+            }
+            Messenger.m(source, "l "+lines[token.lineno].substring(0, token.linepos), "r  HERE>> ", "l "+
+                    lines[token.lineno].substring(token.linepos));
+            if (lines.length > 1 && token.lineno < lines.length-1)
+            {
+                Messenger.m(source, "l "+lines[token.lineno+1]);
+            }
+            return new ArrayList<>();
+        };
+    }
 }

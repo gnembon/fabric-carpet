@@ -8,14 +8,11 @@ import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.ModuleInterface;
-import carpet.script.exception.CarpetExpressionException;
-import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.math.BlockPos;
@@ -51,13 +48,12 @@ public class CarpetScriptServer
 
     public CarpetScriptServer()
     {
-        globalHost = createMinecraftScriptHost(null, null, false, null);
         events = new CarpetEventServer();
         modules = new HashMap<>();
         tickStart = 0L;
         stopAll = false;
-        resetErrorSnooper();
         holyMoly = CarpetServer.minecraft_server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
+        globalHost = CarpetScriptHost.create(this, null, false, null);
     }
 
     public void loadAllWorldScripts()
@@ -73,7 +69,7 @@ public class CarpetScriptServer
 
     }
 
-    private ModuleInterface getModule(String name)
+    public ModuleInterface getModule(String name)
     {
         File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts");
@@ -129,39 +125,6 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-
-    private CarpetScriptHost createMinecraftScriptHost(String name, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
-    {
-        CarpetScriptHost host = new CarpetScriptHost(this, name, module, perPlayer, null );
-        host.globalVariables.put("_x", (c, t) -> Value.ZERO);
-        host.globalVariables.put("_y", (c, t) -> Value.ZERO);
-        host.globalVariables.put("_z", (c, t) -> Value.ZERO);
-        // parse code and convert to expression
-        if (module != null)
-        {
-            try
-            {
-                String code = module.getCode();
-                if (code == null)
-                {
-                    Messenger.m(source, "r Unable to load "+name+" app - code not found");
-                    return null;
-                }
-                setChatErrorSnooper(source);
-                CarpetExpression ex = new CarpetExpression(code, source, new BlockPos(0, 0, 0));
-                ex.getExpr().asAModule();
-                ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
-            }
-            catch (CarpetExpressionException e)
-            {
-                Messenger.m(source, "r Exception white evaluating expression at " + new BlockPos(source.getPosition()) + ": " + e.getMessage());
-                resetErrorSnooper();
-                return null;
-            }
-        }
-        return host;
-    }
-
     public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload)
     {
         //TODO add per player modules to support player actions better on a server
@@ -172,7 +135,7 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to add "+name+" app");
             return false;
         }
-        CarpetScriptHost newHost = createMinecraftScriptHost(name, module, perPlayer, source);
+        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source);
         if (newHost == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -276,55 +239,6 @@ public class CarpetScriptServer
         Messenger.m(source, "gi "+hostName+" app loaded with /"+hostName+" command");
         CarpetServer.minecraft_server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
-    }
-
-    public void setChatErrorSnooper(ServerCommandSource source)
-    {
-        ExpressionException.errorSnooper = (expr, token, message) ->
-        {
-            try
-            {
-                source.getPlayer();
-            }
-            catch (CommandSyntaxException e)
-            {
-                return null;
-            }
-            String[] lines = expr.getCodeString().split("\n");
-
-            String shebang = message;
-
-            if (lines.length > 1)
-            {
-                shebang += " at line "+(token.lineno+1)+", pos "+(token.linepos+1);
-            }
-            else
-            {
-                shebang += " at pos "+(token.pos+1);
-            }
-            if (expr.getName() != null)
-            {
-                shebang += " in "+expr.getName()+"";
-            }
-            Messenger.m(source, "r "+shebang);
-
-            if (lines.length > 1 && token.lineno > 0)
-            {
-                Messenger.m(source, "l "+lines[token.lineno-1]);
-            }
-            Messenger.m(source, "l "+lines[token.lineno].substring(0, token.linepos), "r  HERE>> ", "l "+
-                    lines[token.lineno].substring(token.linepos));
-
-            if (lines.length > 1 && token.lineno < lines.length-1)
-            {
-                Messenger.m(source, "l "+lines[token.lineno+1]);
-            }
-            return new ArrayList<>();
-        };
-    }
-    public void resetErrorSnooper()
-    {
-        ExpressionException.errorSnooper=null;
     }
 
     public boolean removeScriptHost(ServerCommandSource source, String name)

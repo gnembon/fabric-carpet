@@ -26,16 +26,16 @@ public class ExpressionInspector
         return e.getName();
     }
 
-    public static Expression Expression_cloneWithName(Expression e, String name, Tokenizer.Token token)
+    public static Expression Expression_cloneWithName(Expression e, Context c, String name, Tokenizer.Token token)
     {
-        Expression copy = null;
+        Expression copy;
         try
         {
             copy = e.clone();
         }
         catch (CloneNotSupportedException ex)
         {
-            throw new ExpressionException(e, token, "Problems in allocating global function "+name);
+            throw new ExpressionException(c, e, token, "Problems in allocating global function "+name);
         }
         return copy.withName(name);
     }

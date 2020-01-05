@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 public class BundledModule implements ModuleInterface
 {
@@ -13,9 +14,9 @@ public class BundledModule implements ModuleInterface
     {
         try
         {
-            name = scriptName;
+            name = scriptName.toLowerCase(Locale.ROOT);
             code = IOUtils.toString(
-                    getClass().getClassLoader().getResourceAsStream("assets/carpet/scripts/"+scriptName+".sc"),
+                    getClass().getClassLoader().getResourceAsStream("assets/carpet/scripts/"+name+".sc"),
                     StandardCharsets.UTF_8
             );
         }

@@ -5,30 +5,36 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ScriptHost
+public abstract class ScriptHost
 {
     protected final Map<String, ScriptHost> userHosts = new Object2ObjectOpenHashMap<>();
     public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
     public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
+    private Set<String> imports = new HashSet<>();
 
     protected ScriptHost parent;
     protected boolean perUser;
 
-    private String name;
-    public String getName() {return name;}
+    //private String name;
+    public String getName() {return myCode==null?null:myCode.getName();}
 
     protected final ModuleInterface myCode;
 
-    ScriptHost(String name, ModuleInterface code, boolean perUser, ScriptHost parent)
+    public Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorSnooper = null;
+
+    ScriptHost(ModuleInterface code, boolean perUser, ScriptHost parent)
     {
         this.parent = parent;
-        this.name = name;
+        //this.name = name;
         this.myCode = code;
         this.perUser = perUser;
+        if (code != null) imports.add(code.getName());
         globalVariables.put("euler", (c, t) -> Expression.euler);
         globalVariables.put("pi", (c, t) -> Expression.PI);
         globalVariables.put("null", (c, t) -> Value.NULL);
@@ -45,6 +51,24 @@ public class ScriptHost
     {
         globalFunctions.put(funName, function);
     }
+
+    public boolean importModule(Context c, String moduleName)
+    {
+        if (imports.contains(moduleName)) return false;  // aready imported
+        ModuleInterface module = getModuleByName(moduleName);
+        if (imports.contains(module.getName())) return false;  // aready imported, once again, in case some discrepancies
+        imports.add(module.getName());
+        if (runModuleCode(c, module))
+        {
+            return true;
+        }
+        imports.remove(module.getName());
+        return false;
+    }
+
+    protected abstract ModuleInterface getModuleByName(String name); // this should be shell out in the executuor
+
+    protected abstract boolean runModuleCode(Context c, ModuleInterface module); // this should be shell out in the executuor
 
     public void delFunction(String funName)
     {
@@ -66,31 +90,20 @@ public class ScriptHost
         userHost = this.duplicate();
         userHost.globalVariables.putAll(this.globalVariables);
         userHost.globalFunctions.putAll(this.globalFunctions);
+        userHost.imports.addAll(this.imports);
         userHosts.put(user, userHost);
         return userHost;
     }
 
-    protected ScriptHost duplicate()
-    {
-        return new ScriptHost(this.name, myCode, false, this);
-    }
-
-    public Expression getExpressionForFunction(String name)
-    {
-        return globalFunctions.get(name).getExpression();
-    }
-    public Tokenizer.Token getTokenForFunction(String name)
-    {
-        return globalFunctions.get(name).getToken();
-    }
+    protected abstract ScriptHost duplicate();
 
     public List<String> getPublicFunctions()
     {
-        return globalFunctions.keySet().stream().filter((str) -> !str.startsWith("_")).collect(Collectors.toList());
+        return globalFunctions.keySet().stream().filter((str) -> !str.startsWith("_")).sorted().collect(Collectors.toList());
     }
     public List<String> getAvailableFunctions(boolean all)
     {
-        return globalFunctions.keySet().stream().filter((str) -> all || !str.startsWith("__")).collect(Collectors.toList());
+        return globalFunctions.keySet().stream().filter((str) -> all || !str.startsWith("__")).sorted().collect(Collectors.toList());
     }
 
     public void onClose() { }
@@ -98,5 +111,10 @@ public class ScriptHost
     public void setPerPlayer(boolean isPerUser)
     {
         perUser = isPerUser;
+    }
+
+    public void resetErrorSnooper()
+    {
+        errorSnooper=null;
     }
 }
