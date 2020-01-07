@@ -6,7 +6,7 @@ import net.minecraft.util.math.BlockPos;
 public class CarpetContext extends Context
 {
     public ServerCommandSource s;
-    public BlockPos origin;
+    public final BlockPos origin;
     public CarpetContext(ScriptHost host, ServerCommandSource source, BlockPos origin)
     {
         super(host);

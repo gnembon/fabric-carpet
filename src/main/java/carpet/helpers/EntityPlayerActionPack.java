@@ -25,9 +25,9 @@ import java.util.TreeMap;
 
 public class EntityPlayerActionPack
 {
-    private ServerPlayerEntity player;
+    private final ServerPlayerEntity player;
 
-    private Map<ActionType, Action> actions = new TreeMap<>();
+    private final Map<ActionType, Action> actions = new TreeMap<>();
 
     private BlockPos currentBlock;
     private int blockHitDelay;

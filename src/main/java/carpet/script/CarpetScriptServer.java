@@ -33,14 +33,14 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class CarpetScriptServer
 {
     //make static for now, but will change that later:
-    public CarpetScriptHost globalHost;
-    public Map<String, CarpetScriptHost> modules;
+    public final CarpetScriptHost globalHost;
+    public final Map<String, CarpetScriptHost> modules;
     public long tickStart;
     public boolean stopAll;
-    private Set<String> holyMoly;
-    public CarpetEventServer events;
+    private final Set<String> holyMoly;
+    public final CarpetEventServer events;
 
-    private static List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
+    private static final List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
         add(new BundledModule("camera"));
         add(new BundledModule("event_test"));
         add(new BundledModule("stats_test"));

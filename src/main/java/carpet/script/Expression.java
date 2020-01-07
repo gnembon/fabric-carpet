@@ -357,7 +357,7 @@ public class Expression implements Cloneable
             "2.71828182845904523536028747135266249775724709369995957496696762772407663");
 
     // %[argument_index$][flags][width][.precision][t]conversion
-    private static Pattern formatPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(\\<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])");
+    private static final Pattern formatPattern = Pattern.compile("%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])");
 
     /** The current infix expression */
     private String expression;
@@ -387,10 +387,10 @@ public class Expression implements Cloneable
     private LazyValue ast = null;
 
     /** script specific operatos and built-in functions */
-    private Map<String, ILazyOperator> operators = new Object2ObjectOpenHashMap<>();
+    private final Map<String, ILazyOperator> operators = new Object2ObjectOpenHashMap<>();
     boolean isAnOperator(String opname) { return operators.containsKey(opname) || operators.containsKey(opname+"u");}
 
-    private Map<String, ILazyFunction> functions = new  Object2ObjectOpenHashMap<>();
+    private final Map<String, ILazyFunction> functions = new  Object2ObjectOpenHashMap<>();
     Set<String> getFunctionNames() {return functions.keySet();}
 
     @Override
@@ -2878,7 +2878,6 @@ public class Expression implements Cloneable
                     else if (fmt == '%')
                     {
                         //skip /%%
-                        ;
                     }
                     else
                     {
@@ -3128,7 +3127,7 @@ public class Expression implements Cloneable
 
     }
 
-    static Expression none = new Expression("null");
+    static final Expression none = new Expression("null");
     /**
      * @param expression .
      */

@@ -39,7 +39,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     }
     public Value reboundedTo(String var)
     {
-        Value copy = null;
+        Value copy;
         try
         {
             copy = (Value)clone();
@@ -202,5 +202,5 @@ public abstract class Value implements Comparable<Value>, Cloneable
             // should never happen
             throw new InternalExpressionException("Cannot make a copy of value: "+this);
         }
-    };
+    }
 }

@@ -323,7 +323,7 @@ public class SpawnReporter
                     "w ' to enable"));
             return report;
         }
-        Long duration = (long) worldIn.getServer().getTicks() - track_spawns;
+        long duration = (long) worldIn.getServer().getTicks() - track_spawns;
         report.add(Messenger.c("bw --------------------"));
         String simulated = mock_spawns?"[SIMULATED] ":"";
         String location = (lower_spawning_limit != null)?String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
@@ -410,8 +410,8 @@ public class SpawnReporter
                         continue; // vanilla bug
                     boolean canspawn = SpawnHelper.canSpawn(SpawnRestriction.getLocation(spawnEntry.type), worldIn, pos, spawnEntry.type);
                     int will_spawn = -1;
-                    boolean fits = false;
-                    boolean fits1 = false;
+                    boolean fits;
+                    boolean fits1;
                     
                     MobEntity mob;
                     try

@@ -21,7 +21,7 @@ public class ServerPlayerInteractionManager_cactusMixin
     ))
     private boolean activateWithOptionalCactus(BlockState blockState, World world_1, PlayerEntity playerEntity_1, Hand hand_1, BlockHitResult blockHitResult_1)
     {
-        Boolean flipped = BlockRotator.flipBlockWithCactus(blockState, world_1, playerEntity_1, hand_1, blockHitResult_1);
+        boolean flipped = BlockRotator.flipBlockWithCactus(blockState, world_1, playerEntity_1, hand_1, blockHitResult_1);
         if (flipped)
             return true;
 

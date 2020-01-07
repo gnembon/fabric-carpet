@@ -31,7 +31,7 @@ import static java.lang.Math.max;
 
 public class CarpetScriptHost extends ScriptHost
 {
-    private CarpetScriptServer scriptServer;
+    private final CarpetScriptServer scriptServer;
 
     private Tag globalState;
     private int saveTimeout;

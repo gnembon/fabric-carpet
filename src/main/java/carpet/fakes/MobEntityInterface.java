@@ -7,7 +7,7 @@ import java.util.Map;
 
 public interface MobEntityInterface
 {
-    public GoalSelector getAI(boolean target);
+    GoalSelector getAI(boolean target);
 
-    public Map<String, Goal> getTemporaryTasks();
+    Map<String, Goal> getTemporaryTasks();
 }

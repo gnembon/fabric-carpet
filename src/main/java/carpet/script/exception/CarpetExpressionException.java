@@ -8,7 +8,7 @@ import java.util.List;
 
 public class CarpetExpressionException extends RuntimeException
 {
-    public List<FunctionValue> stack;
+    public final List<FunctionValue> stack;
 
     public CarpetExpressionException(String message, List<FunctionValue> stack)
     {

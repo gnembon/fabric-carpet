@@ -95,7 +95,7 @@ public class FeatureGenerator
         return null;
     }
 
-    private static Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
+    private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
 
 
         put("oak", simplePlop(Feature.NORMAL_TREE));

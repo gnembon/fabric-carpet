@@ -43,12 +43,12 @@ import java.util.stream.Collectors;
 
 public class CarpetEventServer
 {
-    public List<ScheduledCall> scheduledCalls = new LinkedList<>();
+    public final List<ScheduledCall> scheduledCalls = new LinkedList<>();
 
     public static class Callback
     {
-        public String host;
-        public FunctionValue function;
+        public final String host;
+        public final FunctionValue function;
 
         public Callback(String host, FunctionValue function)
         {
@@ -65,8 +65,8 @@ public class CarpetEventServer
 
     public static class ScheduledCall extends Callback
     {
-        public List<Value> args;
-        private CarpetContext ctx;
+        public final List<Value> args;
+        private final CarpetContext ctx;
         public long dueTime;
 
         public ScheduledCall(CarpetContext context, FunctionValue function, List<Value> args, long dueTime)
@@ -103,8 +103,8 @@ public class CarpetEventServer
     public static class CallbackList
     {
 
-        public List<Callback> callList;
-        public int reqArgs;
+        public final List<Callback> callList;
+        public final int reqArgs;
 
         public CallbackList(int reqArgs)
         {
@@ -454,7 +454,7 @@ public class CarpetEventServer
             {
                 return stat.getType().getRegistry().getId(stat.getValue());
             }
-            private Set<Identifier> skippedStats = new HashSet<Identifier>(){{
+            private final Set<Identifier> skippedStats = new HashSet<Identifier>(){{
                 add(Stats.TIME_SINCE_DEATH);
                 add(Stats.TIME_SINCE_REST);
                 add(Stats.PLAY_ONE_MINUTE);
@@ -476,14 +476,14 @@ public class CarpetEventServer
 
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 
-        public String name;
-        public static Map<String, Event> byName = new HashMap<String, Event>(){{
+        public final String name;
+        public static final Map<String, Event> byName = new HashMap<String, Event>(){{
             for (Event e: Event.values())
             {
                 put(e.name, e);
             }
         }};
-        public CallbackList handler;
+        public final CallbackList handler;
         Event(String name, CallbackList eventHandler)
         {
             this.name = name;

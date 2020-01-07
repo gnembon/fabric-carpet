@@ -72,7 +72,7 @@ public abstract class PlayerManagerMixin
                 serverPlayerEntity_3.kill();
                 continue;
             }
-            serverPlayerEntity_3.networkHandler.disconnect(new TranslatableText("multiplayer.disconnect.duplicate_login", new Object[0]));
+            serverPlayerEntity_3.networkHandler.disconnect(new TranslatableText("multiplayer.disconnect.duplicate_login"));
         }
     }
 

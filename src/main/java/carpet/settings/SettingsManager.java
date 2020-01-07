@@ -242,7 +242,7 @@ public class SettingsManager
             Map<String,String> result = new HashMap<String, String>();
             while ((line = reader.readLine()) != null)
             {
-                line = line.replaceAll("\\r|\\n", "");
+                line = line.replaceAll("[\\r\\n]", "");
                 if ("locked".equalsIgnoreCase(line))
                 {
                     confLocked = true;
@@ -286,9 +286,7 @@ public class SettingsManager
         {
             if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
             for (String c : rule.categories) if (c.equals(search)) return true; // category exactly, case sensitive
-            if (Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch))
-                return true; // contains full term in description, but case insensitive
-            return false;
+            return Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
         }).sorted().collect(ImmutableList.toImmutableList());
     }
 

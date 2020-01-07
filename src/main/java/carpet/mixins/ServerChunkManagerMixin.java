@@ -75,6 +75,7 @@ public abstract class ServerChunkManagerMixin
         }
     }
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "method_20801", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;)V"
@@ -88,6 +89,7 @@ public abstract class ServerChunkManagerMixin
         }
     }
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "method_20801", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/EntityCategory;getSpawnCap()I"

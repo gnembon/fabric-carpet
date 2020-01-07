@@ -193,7 +193,7 @@ public class RedstoneWireTurbo
     private static final int West = 3;
  
     // Names for debug print statements
-    private static final char dirname[] = {'N', 'E', 'S', 'W'};
+    private static final char[] dirname = {'N', 'E', 'S', 'W'};
  
     /* 
      * These lookup tables completely remap neighbor positions into a left-to-right
@@ -269,7 +269,7 @@ public class RedstoneWireTurbo
      * neighbors that will receive updates.
      */
     private static class UpdateNode {
-        public static enum Type {
+        public enum Type {
             UNKNOWN, REDSTONE, OTHER
         }
          

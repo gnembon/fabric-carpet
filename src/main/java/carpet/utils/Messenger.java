@@ -114,7 +114,7 @@ public class Messenger
         {
             message = "w"+message;
         }
-        String parts[] = message.split("\\s", 2);
+        String[] parts = message.split("\\s", 2);
         String desc = parts[0];
         String str = "";
         if (parts.length > 1) str = parts[1];

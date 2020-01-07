@@ -34,7 +34,7 @@ public abstract class World_movableTEMixin implements WorldInterface
     private Profiler profiler;
 
     @Shadow
-    protected abstract WorldChunk getWorldChunk(BlockPos blockPos_1);
+    public abstract WorldChunk getWorldChunk(BlockPos blockPos_1);
     
     @Shadow
     public abstract BlockState getBlockState(BlockPos blockPos_1);
