@@ -689,7 +689,7 @@ public class Expression implements Cloneable
         }
         if (contextValues.isEmpty()) contextValues = null;
 
-        FunctionValue result =  new FunctionValue(expr, token, module, name, code, arguments, contextValues);
+        FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, contextValues);
         // do not store lambda definitions
         if (!name.equals("_")) context.host.addUserDefinedFunction(name, result);
         return result;

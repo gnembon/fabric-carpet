@@ -24,17 +24,15 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     private Expression expression;
     private Tokenizer.Token token;
     private String name;
-    private String containedPackage;
     private LazyValue body;
     private Map<String, LazyValue> outerState;
     private List<String> args;
     private static long variantCounter = 1;
     private long variant;
 
-    private FunctionValue(Expression expression, Tokenizer.Token token, String cpackage, String name, LazyValue body, List<String> args)
+    private FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args)
     {
         this.expression = expression;
-        this.containedPackage = cpackage;
         this.token = token;
         this.name = name;
         this.body = body;
@@ -43,10 +41,9 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         variant = 0L;
     }
 
-    public FunctionValue(Expression expression, Tokenizer.Token token, ModuleInterface code, String name, LazyValue body, List<String> args, Map<String, LazyValue> outerState)
+    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, Map<String, LazyValue> outerState)
     {
         this.expression = expression;
-        this.containedPackage = code==null?null:code.getName();
         this.token = token;
         this.name = name;
         this.body = body;
@@ -61,7 +58,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return name;
     }
 
-    public String fullName() {return containedPackage == null?name:name+"["+containedPackage+"]";}
+    public String fullName() {return expression.module == null?name:name+"["+expression.module.getName()+"]";}
 
     @Override
     public boolean getBoolean()
@@ -72,7 +69,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     protected Value clone()
     {
-        FunctionValue ret = new FunctionValue(expression, token, containedPackage, name, body, args);
+        FunctionValue ret = new FunctionValue(expression, token, name, body, args);
         ret.outerState = this.outerState;
         ret.variant = this.variant;
         return ret;
