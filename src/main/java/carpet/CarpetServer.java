@@ -35,7 +35,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
-    public static List<CarpetExtension> extensions = new ArrayList<>();
+    public static final List<CarpetExtension> extensions = new ArrayList<>();
 
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     public static void manageExtension(CarpetExtension extension)

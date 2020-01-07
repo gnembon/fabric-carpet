@@ -14,7 +14,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(ServerWorld.class)
 public abstract class ServerWorld_fakePlayersMixin
 {
-    @Shadow private boolean ticking;
+    @Shadow
+    boolean ticking;
 
     @Shadow /*@Nonnull*/ public abstract MinecraftServer getServer();
 

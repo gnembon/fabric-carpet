@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class EntityEventsGroup
 {
-    private Map<EntityEventType, Map<String, CarpetEventServer.ScheduledCall>> actions;
+    private final Map<EntityEventType, Map<String, CarpetEventServer.ScheduledCall>> actions;
     public EntityEventsGroup()
     {
         actions = new EnumMap<>(EntityEventType.class);
@@ -96,10 +96,10 @@ public class EntityEventsGroup
             }
         };
 
-        public static Map<String, EntityEventType> byName = Arrays.stream(EntityEventType.values()).collect(Collectors.toMap(ev -> ev.id, ev -> ev));
+        public static final Map<String, EntityEventType> byName = Arrays.stream(EntityEventType.values()).collect(Collectors.toMap(ev -> ev.id, ev -> ev));
 
-        public int argcount;
-        public String id;
+        public final int argcount;
+        public final String id;
         EntityEventType(String identifier, int args)
         {
             id = identifier;
@@ -121,6 +121,6 @@ public class EntityEventsGroup
         protected List<Value> makeArgs(Entity entity, Object ... args)
         {
             return Collections.singletonList(new EntityValue(entity));
-        };
+        }
     }
 }

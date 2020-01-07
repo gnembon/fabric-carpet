@@ -46,7 +46,7 @@ public class ExpressionInspector
     {
         Set<String> allFunctions = (new CarpetExpression("null", null, null)).getExpr().getFunctionNames();
         scarpetFunctions = new TreeSet<>(new Expression("null").getFunctionNames());
-        APIFunctions = new TreeSet<>(allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toSet()));
+        APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
     }
 
     public static List<String> suggestFunctions(ScriptHost host, String previous, String prefix)

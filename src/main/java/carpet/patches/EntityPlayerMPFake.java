@@ -19,6 +19,7 @@ import net.minecraft.world.dimension.DimensionType;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.utils.Messenger;
 
+@SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayerEntity
 {
     public Runnable fixStartingPosition = () -> {};
@@ -92,6 +93,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     {
         super(server, worldIn, profile, interactionManagerIn);
     }
+
 
     @Override
     public void kill()

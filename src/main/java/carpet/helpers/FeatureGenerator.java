@@ -123,7 +123,7 @@ public class FeatureGenerator
     }
     public static void noop() {System.out.println("boo");}
 
-    private static Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
+    private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
 
 
         put("oak", simpleTree(DefaultBiomeFeatures.OAK_TREE_CONFIG));

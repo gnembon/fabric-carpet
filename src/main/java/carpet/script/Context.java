@@ -17,9 +17,9 @@ public class Context
     public static final int LOCALIZATION = 8;
     public static final int LVALUE = 9;
 
-    public Map<String, LazyValue> variables = new HashMap<>();
+    public final Map<String, LazyValue> variables = new HashMap<>();
 
-    public ScriptHost host;
+    public final ScriptHost host;
 
     Context(ScriptHost host)
     {

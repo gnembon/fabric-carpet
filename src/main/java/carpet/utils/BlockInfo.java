@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class BlockInfo
 {
-    public static Map<BlockSoundGroup, String> soundName = new HashMap<BlockSoundGroup, String>() {{
+    public static final Map<BlockSoundGroup, String> soundName = new HashMap<BlockSoundGroup, String>() {{
         put(BlockSoundGroup.WOOD,   "wood"  );
         put(BlockSoundGroup.GRAVEL, "gravel");
         put(BlockSoundGroup.GRASS,  "grass" );
@@ -47,7 +47,7 @@ public class BlockInfo
         put(BlockSoundGroup.LANTERN , "lantern" );
     }};
 
-    public static Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
+    public static final Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
         put(MaterialColor.AIR       , "air"       );
         put(MaterialColor.GRASS     , "grass"     );
         put(MaterialColor.SAND      , "sand"      );
@@ -102,7 +102,7 @@ public class BlockInfo
         put(MaterialColor.BLACK_TERRACOTTA     , "black_terracotta"      );
     }};
 
-    public static Map<Material, String> materialName = new HashMap<Material, String>() {{
+    public static final Map<Material, String> materialName = new HashMap<Material, String>() {{
         put(Material.AIR            , "air"          );
         put(Material.STRUCTURE_VOID , "void"         );
         put(Material.PORTAL         , "portal"       );
@@ -232,7 +232,7 @@ public class BlockInfo
         long total_time = (total_ticks)/1000/20;
         return Messenger.s(String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
                 (100.0F*success)/1000,
-                ((total_time>5000)?"INFINITY":(Long.toString(total_time)+" s"))
+                ((total_time>5000)?"INFINITY":(total_time +" s"))
         ));
     }
 }

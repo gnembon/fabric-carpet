@@ -29,6 +29,7 @@ import static carpet.settings.RuleCategory.SURVIVAL;
 import static carpet.settings.RuleCategory.TNT;
 import static carpet.settings.RuleCategory.DISPENSER;
 
+@SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
     public static final String carpetVersion = "1.3.3+v200105";

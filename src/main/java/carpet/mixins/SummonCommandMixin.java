@@ -45,7 +45,7 @@ public class SummonCommandMixin
                 world.spawnEntity(skeletonHorseEntity_1);
             }
             world.addLightning(lightningEntity_1);
-            source.sendFeedback(new TranslatableText("commands.summon.success", new Object[]{lightningEntity_1.getDisplayName()}), true);
+            source.sendFeedback(new TranslatableText("commands.summon.success", lightningEntity_1.getDisplayName()), true);
             cir.setReturnValue(1);
             cir.cancel();
 

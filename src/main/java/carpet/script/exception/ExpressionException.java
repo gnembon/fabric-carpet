@@ -15,8 +15,8 @@ import static carpet.script.ExpressionInspector.Expression_getName;
 /* The expression evaluators exception class. */
 public class ExpressionException extends RuntimeException
 {
-    public Context context;
-    public List<FunctionValue> stack = new ArrayList<>();
+    public final Context context;
+    public final List<FunctionValue> stack = new ArrayList<>();
     public ExpressionException(Context c, String message)
     {
         super(makeMessage(c, null, null, message));
@@ -35,7 +35,7 @@ public class ExpressionException extends RuntimeException
         context = c;
     }
 
-    private static Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorMaker = (expr, token, errmessage) ->
+    private static final Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorMaker = (expr, token, errmessage) ->
     {
 
         List<String> errMsg = new ArrayList<>();

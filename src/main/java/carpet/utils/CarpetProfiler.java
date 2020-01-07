@@ -21,9 +21,9 @@ public class CarpetProfiler
     private static int tick_health_elapsed = 0;
     private static TYPE test_type = TYPE.NONE; //1 for ticks, 2 for entities;
     private static long current_tick_start = 0;
-    private static String[] GENERAL_SECTIONS = {"Network", "Autosave", "Async Tasks"};
-    private static String[] DIMENSIONS = {"overworld", "the_end", "the_nether"};
-    private static String[] SECTIONS = {
+    private static final String[] GENERAL_SECTIONS = {"Network", "Autosave", "Async Tasks"};
+    private static final String[] DIMENSIONS = {"overworld", "the_end", "the_nether"};
+    private static final String[] SECTIONS = {
             "Spawning and Random Ticks", "Ticket Manager","Unloading",
             "Blocks", "Entities", "Block Entities",
             "Entities (Client)", "Block Entities (Client)",
@@ -39,10 +39,10 @@ public class CarpetProfiler
 
     public static class ProfilerToken
     {
-        public TYPE type;
-        public Object section;
-        public long start;
-        public World world;
+        public final TYPE type;
+        public final Object section;
+        public final long start;
+        public final World world;
 
         public ProfilerToken(TYPE type, Object section, World world, long start)
         {

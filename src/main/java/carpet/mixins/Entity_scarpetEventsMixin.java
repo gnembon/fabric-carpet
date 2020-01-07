@@ -14,7 +14,7 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
 {
     @Shadow public boolean removed;
 
-    private EntityEventsGroup events = new EntityEventsGroup();
+    private final EntityEventsGroup events = new EntityEventsGroup();
 
     @Override
     public EntityEventsGroup getEventContainer()

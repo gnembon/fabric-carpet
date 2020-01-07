@@ -134,9 +134,9 @@ import static java.lang.Math.sqrt;
 public class CarpetExpression
 {
 
-    private ServerCommandSource source;
-    private BlockPos origin;
-    private Expression expr;
+    private final ServerCommandSource source;
+    private final BlockPos origin;
+    private final Expression expr;
     Expression getExpr() {return expr;}
     private static long tickStart = 0L;
 
@@ -275,7 +275,7 @@ public class CarpetExpression
         return bs;
     }
 
-    private static Map<String, ParticleEffect> particleCache = new HashMap<>();
+    private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
     private ParticleEffect getParticleData(String name)
     {
         ParticleEffect particle = particleCache.get(name);
@@ -2147,7 +2147,7 @@ public class CarpetExpression
                 args = Collections.singletonList(lv.get(3).evalValue(c));
             else if (lv.size()>4)
             {
-                args = new ArrayList<>(lv.subList(3, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList()));
+                args = lv.subList(3, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList());
             }
 
             ((EntityValue) v).setEvent((CarpetContext)c, what, function, args);
@@ -2379,12 +2379,12 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             return (c_, t_) -> new LazyListValue()
             {
-                int minx = cx-sminx;
-                int miny = cy-sminy;
-                int minz = cz-sminz;
-                int maxx = cx+smaxx;
-                int maxy = cy+smaxy;
-                int maxz = cz+smaxz;
+                final int minx = cx-sminx;
+                final int miny = cy-sminy;
+                final int minz = cz-sminz;
+                final int maxx = cx+smaxx;
+                final int maxy = cy+smaxy;
+                final int maxz = cz+smaxz;
                 int x;
                 int y;
                 int z;
@@ -3190,7 +3190,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
             if (lv.size()<2)
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
-            Long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+            long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
             Value functionValue = lv.get(1).evalValue(c);
             if (!(functionValue instanceof FunctionValue))

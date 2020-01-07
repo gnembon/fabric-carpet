@@ -21,7 +21,7 @@ public abstract class DesertPyramidFeatureMixin extends AbstractTempleFeature<De
     
     static
     {
-        MONSTER_SPAWNS = Lists.newArrayList(new Biome.SpawnEntry[]{new Biome.SpawnEntry(EntityType.HUSK, 1, 1, 1)});
+        MONSTER_SPAWNS = Lists.newArrayList(new Biome.SpawnEntry(EntityType.HUSK, 1, 1, 1));
     }
     
     public DesertPyramidFeatureMixin(Function<Dynamic<?>, ? extends DefaultFeatureConfig> function_1)

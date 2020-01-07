@@ -62,14 +62,14 @@ import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 // TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
 {
-    private Entity entity;
+    private final Entity entity;
 
     public EntityValue(Entity e)
     {
         entity = e;
     }
 
-    private static Map<String, EntitySelector> selectorCache = new HashMap<>();
+    private static final Map<String, EntitySelector> selectorCache = new HashMap<>();
     public static Collection<? extends Entity > getEntitiesFromSelector(ServerCommandSource source, String selector)
     {
         try
@@ -177,7 +177,7 @@ public class EntityValue extends Value
         return res; //TODO add more here like search by tags, or type
         //if (who.startsWith('tag:'))
     }
-    private static Map<String, Pair<EntityType<?>, Predicate<? super Entity>>> entityPredicates =
+    private static final Map<String, Pair<EntityType<?>, Predicate<? super Entity>>> entityPredicates =
             new HashMap<String, Pair<EntityType<?>, Predicate<? super Entity>>>()
     {{
         put("*", Pair.of(null, EntityPredicates.VALID_ENTITY));
@@ -192,7 +192,7 @@ public class EntityValue extends Value
             throw new InternalExpressionException("Unknown entity feature: "+what);
         return featureAccessors.get(what).apply(entity, arg);
     }
-    private static Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
+    private static final Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
         put("mainhand", EquipmentSlot.MAINHAND);
         put("offhand", EquipmentSlot.OFFHAND);
         put("head", EquipmentSlot.HEAD);
@@ -200,7 +200,7 @@ public class EntityValue extends Value
         put("legs", EquipmentSlot.LEGS);
         put("feet", EquipmentSlot.FEET);
     }};
-    private static Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
+    private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
         put("removed", (entity, arg) -> new NumericValue(entity.removed));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
@@ -440,20 +440,6 @@ public class EntityValue extends Value
         });
     }};
 
-    private static <Req extends Entity> Req assertEntityArgType(Class<Req> klass, Value arg)
-    {
-        if (!(arg instanceof EntityValue))
-        {
-            return null;
-        }
-        Entity e = ((EntityValue) arg).getEntity();
-        if (!(klass.isAssignableFrom(e.getClass())))
-        {
-            return null;
-        }
-        return (Req)e;
-    }
-
     public void set(String what, Value toWhat)
     {
         if (!(featureModifiers.containsKey(what)))
@@ -502,7 +488,7 @@ public class EntityValue extends Value
 
 
 
-    private static Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
+    private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.remove());
         put("health", (e, v) -> { if (e instanceof LivingEntity) ((LivingEntity) e).setHealth((float) NumericValue.asNumber(v).getDouble()); });
         put("kill", (e, v) -> e.kill());
