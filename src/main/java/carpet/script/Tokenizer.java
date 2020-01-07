@@ -166,15 +166,44 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             {
                 if (ch == '\\')
                 {
-                    pos++;
+                    char nextChar = peekNextChar();
+                    if (nextChar == 'n')
+                    {
+                        token.append('\n');
+                    }
+                    else if (nextChar == 't')
+                    {
+                        throw new ExpressionException(context, this.expression, token,
+                                "Tab character is not supported");
+                        //token.append('\t');
+                    }
+                    else if (nextChar == 'r')
+                    {
+                        throw new ExpressionException(context, this.expression, token,
+                                "Carriage return character is not supported");
+                        //token.append('\r');
+                    }
+                    else if (nextChar == '\\' || nextChar == '\'')
+                    {
+                        token.append(nextChar);
+                    }
+                    else
+                    {
+                        pos--;
+                        linepos--;
+                    }
+                    pos+=2;
+                    linepos+=2;
+                    if (pos == input.length() && expression != null && context != null)
+                        throw new ExpressionException(context, this.expression, token, "Program truncated");
+                }
+                else
+                {
+                    token.append(input.charAt(pos++));
                     linepos++;
                     if (pos == input.length() && expression != null && context != null)
                         throw new ExpressionException(context, this.expression, token, "Program truncated");
                 }
-                token.append(input.charAt(pos++));
-                linepos++;
-                if (pos == input.length() && expression != null && context != null)
-                    throw new ExpressionException(context, this.expression, token, "Program truncated");
                 ch = input.charAt(pos);
             }
             pos++;
