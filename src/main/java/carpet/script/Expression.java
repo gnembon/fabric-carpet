@@ -11,12 +11,13 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
-import carpet.script.bundled.ModuleInterface;
+import carpet.script.bundled.Module;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ResolvedException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.value.AbstractListValue;
@@ -332,7 +333,7 @@ import static java.lang.Math.min;
  * </p>
  */
 
-public class Expression implements Cloneable
+public class Expression
 {
     private static final Map<String, Integer> precedence = new HashMap<String,Integer>() {{
         put("attribute~:", 80);
@@ -366,21 +367,18 @@ public class Expression implements Cloneable
     private boolean allowNewlineSubstitutions = true;
     private boolean allowComments = false;
 
-    public ModuleInterface module = null;
+    public Module module = null;
 
-    void asAModule(ModuleInterface mi)
+    void asATextSource()
     {
         allowNewlineSubstitutions = false;
         allowComments = true;
-        module = mi;
     }
 
-    private String name;
-    String getName() {return name;}
-    Expression withName(String alias)
+    void asAModule(Module mi)
     {
-        name = alias;
-        return this;
+
+        module = mi;
     }
 
     /** Cached AST (Abstract Syntax Tree) (root) of the expression */
@@ -392,18 +390,6 @@ public class Expression implements Cloneable
 
     private final Map<String, ILazyFunction> functions = new  Object2ObjectOpenHashMap<>();
     Set<String> getFunctionNames() {return functions.keySet();}
-
-    @Override
-    protected Expression clone() throws CloneNotSupportedException
-    {
-        // very very shallow copy for global functions to grab the context for error msgs
-        Expression copy = (Expression) super.clone();
-        copy.expression = this.expression;
-        copy.name = this.name;
-        copy.module = this.module;
-        return copy;
-    }
-
 
     static List<String> getExpressionSnippet(Tokenizer.Token token, Expression expr)
     {
@@ -561,7 +547,7 @@ public class Expression implements Cloneable
             return new ExpressionException(c, e, token, exc.getMessage(), ((InternalExpressionException) exc).stack);
         if (exc instanceof ArithmeticException)
             return new ExpressionException(c, e, token, "Your math is wrong, "+exc.getMessage());
-        if (exc instanceof ExpressionException)
+        if (exc instanceof ResolvedException)
             return exc;
         // unexpected really - should be caught earlier and converted to InternalExpressionException
         exc.printStackTrace();
@@ -669,29 +655,29 @@ public class Expression implements Cloneable
             }
         });
     }
-    private FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> globals, LazyValue code)
+    private FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> outers, LazyValue code)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (functions.containsKey(name))
             throw new ExpressionException(context, expr, token, "Function "+name+" would mask a built-in function");
         Map<String, LazyValue> contextValues = new HashMap<>();
-        for (String global : globals)
+        for (String outer : outers)
         {
-            LazyValue  lv = context.getVariable(global);
+            LazyValue  lv = context.getVariable(outer);
             if (lv == null)
             {
-                throw new InternalExpressionException("Variable "+global+" needs to be defined in outer scope to be used as outer parameter");
+                throw new InternalExpressionException("Variable "+outer+" needs to be defined in outer scope to be used as outer parameter, and cannot be global");
             }
             else
             {
-                contextValues.put(global, lv);
+                contextValues.put(outer, lv);
             }
         }
         if (contextValues.isEmpty()) contextValues = null;
 
-        FunctionValue result =  new FunctionValue(expr, token, module, name, code, arguments, contextValues);
+        FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, contextValues);
         // do not store lambda definitions
-        if (!name.equals("_")) context.host.addUserDefinedFunction(name, result);
+        if (!name.equals("_")) context.host.addUserDefinedFunction(module, name, result);
         return result;
     }
 
@@ -869,11 +855,13 @@ public class Expression implements Cloneable
     public void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
-        addLazyFunction("import", 1, (c, t, lv) ->
+        addLazyFunction("import", -1, (c, t, lv) ->
         {
-            boolean success = c.host.importModule(c, lv.get(0).evalValue(c).getString());
-            Value ret = new NumericValue(success);
-            return (cc, tt) -> ret;
+            if (lv.size() < 2) throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
+            String moduleName = lv.get(0).evalValue(c).getString();
+            c.host.importModule(c, moduleName);
+            c.host.importNames(c, module, moduleName, lv.subList(1, lv.size()).stream().map((l) -> l.evalValue(c).getString()).collect(Collectors.toList()));
+            return (cc, tt) -> Value.NULL;
         });
 
         addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
@@ -886,9 +874,7 @@ public class Expression implements Cloneable
                 if (!(functionValue instanceof FunctionValue))
                 {
                     String name = functionValue.getString();
-                    functionValue = c.host.globalFunctions.get(name);
-                    if (functionValue == null)
-                        throw new InternalExpressionException("Function "+name+" is not defined yet");
+                    functionValue = c.host.getAssertFunction(module, name);
                 }
                 List<LazyValue> lvargs = new ArrayList<>(lv.size()-1);
                 for (int i=1; i< lv.size(); i++)
@@ -1255,7 +1241,7 @@ public class Expression implements Cloneable
                 {
                     String lname = li.next().getVariable();
                     Value vval = ri.next().reboundedTo(lname);
-                    c.setVariable(lname, (cc, tt) -> vval);
+                    setAnyVariable(c, lname, (cc, tt) -> vval);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
@@ -1272,7 +1258,7 @@ public class Expression implements Cloneable
             String varname = v1.getVariable();
             Value copy = v2.reboundedTo(varname);
             LazyValue boundedLHS = (cc, tt) -> copy;
-            c.setVariable(varname, boundedLHS);
+            setAnyVariable(c, varname, boundedLHS);
             return boundedLHS;
         });
 
@@ -1294,7 +1280,7 @@ public class Expression implements Cloneable
                     Value lval = li.next();
                     String lname = lval.getVariable();
                     Value result = lval.add(ri.next()).bindTo(lname);
-                    c.setVariable(lname, (cc, tt) -> result);
+                    setAnyVariable(c, lname, (cc, tt) -> result);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
@@ -1323,7 +1309,7 @@ public class Expression implements Cloneable
                 Value result = v1.add(v2).bindTo(varname);
                 boundedLHS = (cc, tt) -> result;
             }
-            c.setVariable(varname, boundedLHS);
+            setAnyVariable(c, varname, boundedLHS);
             return boundedLHS;
         });
 
@@ -1349,8 +1335,8 @@ public class Expression implements Cloneable
                     String rname = rval.getVariable();
                     lval.reboundedTo(rname);
                     rval.reboundedTo(lname);
-                    c.setVariable(lname, (cc, tt) -> rval);
-                    c.setVariable(rname, (cc, tt) -> lval);
+                    setAnyVariable(c, lname, (cc, tt) -> rval);
+                    setAnyVariable(c, rname, (cc, tt) -> lval);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
@@ -1360,8 +1346,8 @@ public class Expression implements Cloneable
             String rvalvar = v2.getVariable();
             Value lval = v2.reboundedTo(lvalvar);
             Value rval = v1.reboundedTo(rvalvar);
-            c.setVariable(lvalvar, (cc, tt) -> lval);
-            c.setVariable(rvalvar, (cc, tt) -> rval);
+            setAnyVariable(c, lvalvar, (cc, tt) -> lval);
+            setAnyVariable(c, rvalvar, (cc, tt) -> rval);
             return (cc, tt) -> lval;
         });
 
@@ -2991,9 +2977,7 @@ public class Expression implements Cloneable
 
         addLazyFunction("var", 1, (c, t, lv) -> {
             String varname = lv.get(0).evalValue(c).getString();
-            if (!c.isAVariable(varname))
-                c.setVariable(varname, (_c, _t ) -> Value.ZERO.reboundedTo(varname));
-            return c.getVariable(varname);
+            return getOrSetAnyVariable(c, varname);
         });
 
         addLazyFunction("undef", 1, (c, t, lv) ->
@@ -3001,7 +2985,7 @@ public class Expression implements Cloneable
             Value remove = lv.get(0).evalValue(c);
             if (remove instanceof FunctionValue)
             {
-                c.host.delFunction(remove.getString());
+                c.host.delFunction(module, remove.getString());
                 return (cc, tt) -> Value.NULL;
             }
             String varname = remove.getString();
@@ -3010,33 +2994,24 @@ public class Expression implements Cloneable
                 varname = varname.replaceAll("\\*+$", "");
             if (isPrefix)
             {
-                for (String key: c.host.globalFunctions.keySet())
-                {
-                    if (key.startsWith(varname)) c.host.delFunction(key);
-                }
+                c.host.delFunctionWithPrefix(module, varname);
                 if (varname.startsWith("global_"))
                 {
-                    for (String key : c.host.globalVariables.keySet())
-                    {
-                        if (key.startsWith(varname)) c.host.delGlobalVariable(key);
-                    }
+                    c.host.delGlobalVariableWithPrefix(module, varname);
                 }
-                if (!varname.startsWith("_"))
+                else if (!varname.startsWith("_"))
                 {
-                    for (String key : c.variables.keySet())
-                    {
-                        if (key.startsWith(varname)) c.delVariable(key);
-                    }
+                    c.removeVariablesMatching(varname);
                 }
             }
             else
             {
-                c.host.delFunction(varname);
+                c.host.delFunction(module, varname);
                 if (varname.startsWith("global_"))
                 {
-                    c.host.delGlobalVariable(varname);
+                    c.host.delGlobalVariable(module, varname);
                 }
-                if (!varname.startsWith("_"))
+                else if (!varname.startsWith("_"))
                 {
                     c.delVariable(varname);
                 }
@@ -3044,25 +3019,17 @@ public class Expression implements Cloneable
             return (cc, tt) -> Value.NULL;
         });
 
-
+        //deprecate
         addLazyFunction("vars", 1, (c, t, lv) -> {
             String prefix = lv.get(0).evalValue(c).getString();
             List<Value> values = new ArrayList<>();
             if (prefix.startsWith("global"))
             {
-                for (String k: c.host.globalVariables.keySet())
-                {
-                    if (k.startsWith(prefix))
-                        values.add(new StringValue(k));
-                }
+                c.host.globaVariableNames(module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
             }
             else
             {
-                for (String k: c.getAllVariableNames())
-                {
-                    if (k.startsWith(prefix))
-                        values.add(new StringValue(k));
-                }
+                c.getAllVariableNames().stream().filter(s -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
             }
             Value retval = ListValue.wrap(values);
             return (cc, tt) -> retval;
@@ -3075,9 +3042,7 @@ public class Expression implements Cloneable
             if (!(funcDesc instanceof FunctionValue))
             {
                 String name = funcDesc.getString();
-                funcDesc = c.host.globalFunctions.get(name);
-                if (funcDesc == null)
-                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+                funcDesc = c.host.getAssertFunction(module, name);
             }
             FunctionValue fun = (FunctionValue)funcDesc;
             int extraargs = lv.size() - fun.getArguments().size();
@@ -3127,6 +3092,33 @@ public class Expression implements Cloneable
 
     }
 
+    private void setAnyVariable(Context c, String name, LazyValue lv)
+    {
+        if (name.startsWith("global_"))
+        {
+            c.host.setGlobalVariable(module, name, lv);
+        }
+        else
+        {
+            c.setVariable(name, lv);
+        }
+    }
+
+    private LazyValue getOrSetAnyVariable(Context c, String name)
+    {
+        LazyValue var = null;
+        if (!name.startsWith("global_"))
+        {
+            var = c.getVariable(name);
+            if (var != null) return var;
+        }
+        var = c.host.getGlobalVariable(module, name);
+        if (var != null) return var;
+        var = (_c, _t ) -> Value.ZERO.reboundedTo(name);
+        setAnyVariable(c, name, var);
+        return var;
+    }
+
     static final Expression none = new Expression("null");
     /**
      * @param expression .
@@ -3142,6 +3134,7 @@ public class Expression implements Cloneable
         LoopsAndHigherOrderFunctions();
         BasicDataStructures();
     }
+
 
     private List<Tokenizer.Token> shuntingYard(Context c)
     {
@@ -3267,7 +3260,7 @@ public class Expression implements Cloneable
                     }
                     if (stack.isEmpty())
                     {
-                        throw new ExpressionException(c, "Mismatched parentheses");
+                        throw new ExpressionException(c, this, "Mismatched parentheses");
                     }
                     stack.pop();
                     if (!stack.isEmpty() && stack.peek().type == Tokenizer.Token.TokenType.FUNCTION)
@@ -3325,7 +3318,7 @@ public class Expression implements Cloneable
         return evalValue(() -> ast, c, expectedType);
     }
 
-    static Value evalValue(Supplier<LazyValue> exprProvider, Context c, Integer expectedType)
+    Value evalValue(Supplier<LazyValue> exprProvider, Context c, Integer expectedType)
     {
         try
         {
@@ -3333,7 +3326,7 @@ public class Expression implements Cloneable
         }
         catch (ContinueStatement | BreakStatement | ReturnStatement exc)
         {
-            throw new ExpressionException(c, "Control flow functions, like continue, break, or return, should only be used in loops and functions respectively.");
+            throw new ExpressionException(c, this, "Control flow functions, like continue, break, or return, should only be used in loops and functions respectively.");
         }
         catch (ExitStatement exit)
         {
@@ -3341,15 +3334,15 @@ public class Expression implements Cloneable
         }
         catch (StackOverflowError ignored)
         {
-            throw new ExpressionException(c, "Your thoughts are too deep");
+            throw new ExpressionException(c, this, "Your thoughts are too deep");
         }
         catch (InternalExpressionException exc)
         {
-            throw new ExpressionException(c, "Your expression result is incorrect:"+exc.getMessage());
+            throw new ExpressionException(c, this, "Your expression result is incorrect:"+exc.getMessage());
         }
         catch (ArithmeticException exc)
         {
-            throw new ExpressionException(c, "The final result is incorrect, "+exc.getMessage());
+            throw new ExpressionException(c, this, "The final result is incorrect, "+exc.getMessage());
         }
     }
 
@@ -3376,15 +3369,7 @@ public class Expression implements Cloneable
                     stack.push(result);
                     break;
                 case VARIABLE:
-                    stack.push((c, t) ->
-                    {
-                        if (!c.isAVariable(token.surface)) // new variable
-                        {
-                            c.setVariable(token.surface, (cc, tt ) -> Value.ZERO.reboundedTo(token.surface));
-                        }
-                        LazyValue lazyVariable = c.getVariable(token.surface);
-                        return lazyVariable.evalValue(c);
-                    });
+                    stack.push((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c));
                     break;
                 case FUNCTION:
                     String name = token.surface.toLowerCase(Locale.ROOT);
@@ -3507,15 +3492,15 @@ public class Expression implements Cloneable
 
         if (stack.size() > 1)
         {
-            throw new ExpressionException(c, "Too many unhandled function parameter lists");
+            throw new ExpressionException(c, this, "Too many unhandled function parameter lists");
         }
         else if (stack.peek() > 1)
         {
-            throw new ExpressionException(c, "Too many numbers or variables");
+            throw new ExpressionException(c, this, "Too many numbers or variables");
         }
         else if (stack.peek() < 1)
         {
-            throw new ExpressionException(c, "Empty expression");
+            throw new ExpressionException(c, this, "Empty expression");
         }
     }
 

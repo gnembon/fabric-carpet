@@ -8,6 +8,7 @@ import carpet.helpers.FeatureGenerator;
 import carpet.mixins.ChunkTicketManager_scarpetMixin;
 import carpet.mixins.ServerChunkManager_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
+import carpet.script.bundled.Module;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
@@ -2137,9 +2138,7 @@ public class CarpetExpression
             else if (!(functionValue instanceof FunctionValue))
             {
                 String name = functionValue.getString();
-                functionValue = c.host.globalFunctions.get(name);
-                if (functionValue == null)
-                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+                functionValue = c.host.getAssertFunction(this.expr.module, name);
             }
             FunctionValue function = (FunctionValue)functionValue;
             List<Value> args = null;
@@ -3196,9 +3195,7 @@ public class CarpetExpression
             if (!(functionValue instanceof FunctionValue))
             {
                 String name = functionValue.getString();
-                functionValue = c.host.globalFunctions.get(name);
-                if (functionValue == null)
-                    throw new InternalExpressionException("Function "+name+" is not defined yet");
+                functionValue = c.host.getAssertFunction(this.expr.module, name);
             }
             FunctionValue function = (FunctionValue)functionValue;
 
@@ -3300,11 +3297,13 @@ public class CarpetExpression
      * @param source source
      * @param origin origin
      */
-    public CarpetExpression(String expression, ServerCommandSource source, BlockPos origin)
+    public CarpetExpression(Module module, String expression, ServerCommandSource source, BlockPos origin)
     {
         this.origin = origin;
         this.source = source;
         this.expr = new Expression(expression);
+        this.expr.asAModule(module);
+
 
         API_BlockManipulation();
         API_EntityManipulation();

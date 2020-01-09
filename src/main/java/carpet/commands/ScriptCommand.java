@@ -37,6 +37,7 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -78,7 +79,7 @@ public class ScriptCommand
                 executes( (cc) -> { CarpetServer.scriptServer.stopAll = false; return 1;});
         LiteralArgumentBuilder<ServerCommandSource> l = literal("run").
                 requires((player) -> player.hasPermissionLevel(2)).
-                then(argument("expr", StringArgumentType.greedyString()).suggests((cc, bb) -> suggestCode(cc, bb)).
+                then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
                         executes((cc) -> compute(
                                 cc,
                                 StringArgumentType.getString(cc, "expr"))));
@@ -141,7 +142,7 @@ public class ScriptCommand
                         then(argument("from", BlockPosArgumentType.blockPos()).
                                 then(argument("to", BlockPosArgumentType.blockPos()).
                                         then(argument("expr", StringArgumentType.greedyString()).
-                                                suggests((cc, bb) -> suggestCode(cc, bb)).
+                                                suggests(ScriptCommand::suggestCode).
                                                 executes( (cc) -> scriptScan(
                                                         cc,
                                                         BlockPosArgumentType.getBlockPos(cc, "origin"),
@@ -288,7 +289,7 @@ public class ScriptCommand
     private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c)
     {
         CarpetScriptHost host = getHost(c);
-        return host.getPublicFunctions();
+        return host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
     }
     private static int listEvents(ServerCommandSource source)
     {
@@ -314,9 +315,8 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
 
         Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        for (String fname : host.getAvailableFunctions(all))
-        {
-            FunctionValue fun = host.globalFunctions.get(fname);
+        host.globaFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
+            FunctionValue fun = host.getFunction(s);
             Expression expr = fun.getExpression();
             Tokenizer.Token tok = fun.getToken();
             List<String> snippet = ExpressionInspector.Expression_getExpressionSnippet(tok, expr);
@@ -326,16 +326,13 @@ public class ScriptCommand
                 Messenger.m(source, "w "+snippetLine);
             }
             Messenger.m(source, "gi ----------------");
-        }
+        });
         //Messenger.m(source, "w "+code);
         Messenger.m(source, "w  ");
         Messenger.m(source, "lb Global variables"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-
-        for (String vname : host.globalVariables.keySet())
-        {
-            if (!vname.startsWith("global")) continue;
-            Messenger.m(source, "wb "+vname+": ", "w "+ host.globalVariables.get(vname).evalValue(null).getPrettyString());
-        }
+        host.globaVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
+            Messenger.m(source, "wb "+s+": ", "w "+ host.getGlobalVariable(s).evalValue(null).getPrettyString());
+        });
         return 1;
     }
 
@@ -402,7 +399,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
         handleCall(source, host, () -> {
-            CarpetExpression ex = new CarpetExpression(expr, source, new BlockPos(0, 0, 0));
+            CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
             return ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
         });
         return 1;
@@ -413,7 +410,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
         BlockBox area = new BlockBox(a, b);
-        CarpetExpression cexpr = new CarpetExpression(expr, source, origin);
+        CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
         {
@@ -463,7 +460,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
         BlockBox area = new BlockBox(a, b);
-        CarpetExpression cexpr = new CarpetExpression(expr, source, origin);
+        CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
         {

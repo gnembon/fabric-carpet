@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Locale;
 
-public class FileModule implements ModuleInterface
+public class FileModule extends Module
 {
     private String name;
     private String code;
