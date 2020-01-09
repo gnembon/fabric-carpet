@@ -48,8 +48,8 @@ public class ExpressionInspector
         // not that useful in commandline, more so in external scripts, so skipping here
         //scarpetMatches.addAll(CarpetServer.scriptServer.events.eventHandlers.keySet().stream().
         //        filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> "__"+s+"(").collect(Collectors.toList()));
-        scarpetMatches.addAll(host.globaFunctionNames(host.myCode, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
-        scarpetMatches.addAll(host.globaVariableNames(host.myCode, s -> s.startsWith(prefix)).collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globaFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globaVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
         return scarpetMatches;
     }
 }

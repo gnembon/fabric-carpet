@@ -64,16 +64,16 @@ public abstract class ScriptHost
     protected ScriptHost parent;
     protected boolean perUser;
 
-    public String getName() {return myCode==null?null:myCode.getName();}
+    public String getName() {return main ==null?null: main.getName();}
 
-    public final Module myCode;
+    public final Module main;
 
     public Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorSnooper = null;
 
     protected ScriptHost(Module code, boolean perUser, ScriptHost parent)
     {
         this.parent = parent;
-        this.myCode = code;
+        this.main = code;
         this.perUser = perUser;
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
@@ -138,7 +138,7 @@ public abstract class ScriptHost
 
     protected abstract void runModuleCode(Context c, Module module); // this should be shell out in the executor
 
-    public FunctionValue getFunction(String name) { return getFunction(myCode, name); }
+    public FunctionValue getFunction(String name) { return getFunction(main, name); }
     public FunctionValue getAssertFunction(Module module, String name)
     {
         FunctionValue ret = getFunction(module, name);
@@ -178,7 +178,7 @@ public abstract class ScriptHost
         return null;
     }
 
-    public LazyValue getGlobalVariable(String name) { return getGlobalVariable(myCode, name); }
+    public LazyValue getGlobalVariable(String name) { return getGlobalVariable(main, name); }
     public LazyValue getGlobalVariable(Module module, String name)
     {
         ModuleData local = moduleData.get(module);

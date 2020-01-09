@@ -60,7 +60,7 @@ public class CarpetScriptHost extends ScriptHost
                     return null;
                 }
                 host.setChatErrorSnooper(source);
-                CarpetExpression ex = new CarpetExpression(host.myCode, code, source, new BlockPos(0, 0, 0));
+                CarpetExpression ex = new CarpetExpression(host.main, code, source, new BlockPos(0, 0, 0));
                 ex.getExpr().asATextSource();
                 ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
             }
@@ -78,7 +78,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, myCode, false, this);
+        return new CarpetScriptHost(scriptServer, main, false, this);
     }
 
     @Override
@@ -312,19 +312,19 @@ public class CarpetScriptHost extends ScriptHost
 
     private void dumpState()
     {
-        myCode.saveData(null, globalState);
+        main.saveData(null, globalState);
     }
 
     private Tag loadState()
     {
-        return myCode.getData(null);
+        return main.getData(null);
     }
 
     public Tag getGlobalState(String file)
     {
         if (getName() == null ) return null;
         if (file != null)
-            return myCode.getData(file);
+            return main.getData(file);
         if (parent == null)
             return globalState;
         return ((CarpetScriptHost)parent).globalState;
@@ -336,7 +336,7 @@ public class CarpetScriptHost extends ScriptHost
 
         if (file!= null)
         {
-            myCode.saveData(file, tag);
+            main.saveData(file, tag);
             return;
         }
 

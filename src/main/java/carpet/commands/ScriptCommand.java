@@ -289,7 +289,7 @@ public class ScriptCommand
     private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c)
     {
         CarpetScriptHost host = getHost(c);
-        return host.globaFunctionNames(host.myCode, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
+        return host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
     }
     private static int listEvents(ServerCommandSource source)
     {
@@ -315,7 +315,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
 
         Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        host.globaFunctionNames(host.myCode, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
+        host.globaFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
             FunctionValue fun = host.getFunction(s);
             Expression expr = fun.getExpression();
             Tokenizer.Token tok = fun.getToken();
@@ -330,7 +330,7 @@ public class ScriptCommand
         //Messenger.m(source, "w "+code);
         Messenger.m(source, "w  ");
         Messenger.m(source, "lb Global variables"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        host.globaVariableNames(host.myCode, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
+        host.globaVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
             Messenger.m(source, "wb "+s+": ", "w "+ host.getGlobalVariable(s).evalValue(null).getPrettyString());
         });
         return 1;
@@ -399,7 +399,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
         handleCall(source, host, () -> {
-            CarpetExpression ex = new CarpetExpression(host.myCode, expr, source, new BlockPos(0, 0, 0));
+            CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
             return ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
         });
         return 1;
@@ -410,7 +410,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
         MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
-        CarpetExpression cexpr = new CarpetExpression(host.myCode, expr, source, origin);
+        CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
 
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
@@ -461,7 +461,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
         MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
-        CarpetExpression cexpr = new CarpetExpression(host.myCode, expr, source, origin);
+        CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
         {

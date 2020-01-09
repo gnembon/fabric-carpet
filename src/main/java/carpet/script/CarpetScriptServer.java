@@ -217,7 +217,7 @@ public class CarpetScriptServer
                     return 1;
                 });
 
-        for (String function : host.globaFunctionNames(host.myCode, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
             command = command.
                     then(literal(function).
