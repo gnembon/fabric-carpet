@@ -10,16 +10,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static carpet.script.ExpressionInspector.Expression_getExpressionSnippet;
-import static carpet.script.ExpressionInspector.Expression_getName;
+import static carpet.script.ExpressionInspector.Expression_getModuleName;
 
 /* The expression evaluators exception class. */
-public class ExpressionException extends RuntimeException
+public class ExpressionException extends RuntimeException implements ResolvedException
 {
     public final Context context;
     public final List<FunctionValue> stack = new ArrayList<>();
-    public ExpressionException(Context c, String message)
+
+    public ExpressionException(Context c, Expression e, String message)
     {
-        super(makeMessage(c, null, null, message));
+        super(makeMessage(c, e, null, message));
         context = c;
     }
 
@@ -35,11 +36,12 @@ public class ExpressionException extends RuntimeException
         context = c;
     }
 
-    private static final Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorMaker = (expr, token, errmessage) ->
+    private static final Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorMaker = (expr, /*Nullable*/ token, errmessage) ->
     {
 
         List<String> errMsg = new ArrayList<>();
-        if (expr != null && token != null)
+        errmessage += Expression_getModuleName(expr) == null?"":(" in "+Expression_getModuleName(expr));
+        if (token != null)
         {
             List<String> snippet = Expression_getExpressionSnippet(token, expr);
             errMsg.addAll(snippet);
@@ -52,11 +54,6 @@ public class ExpressionException extends RuntimeException
             {
                 errmessage += " at pos " + (token.pos + 1);
             }
-            if (Expression_getName(expr) != null)
-            {
-                errmessage += " (" + Expression_getName(expr) + ")";
-            }
-
         }
         errMsg.add(errmessage);
         return errMsg;
