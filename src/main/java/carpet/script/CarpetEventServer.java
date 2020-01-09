@@ -130,7 +130,7 @@ public class CarpetEventServer
                 // impossible call to add
                 return false;
             }
-            FunctionValue udf = host.globalFunctions.get(funName);
+            FunctionValue udf = host.getFunction(funName);
             if (udf == null || udf.getArguments().size() != reqArgs)
             {
                 // call won't match arguments

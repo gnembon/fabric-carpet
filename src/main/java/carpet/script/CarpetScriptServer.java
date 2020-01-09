@@ -7,7 +7,7 @@ import carpet.script.value.StringValue;
 import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
-import carpet.script.bundled.ModuleInterface;
+import carpet.script.bundled.Module;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
@@ -40,7 +40,7 @@ public class CarpetScriptServer
     private final Set<String> holyMoly;
     public final CarpetEventServer events;
 
-    private static final List<ModuleInterface> bundledModuleData = new ArrayList<ModuleInterface>(){{
+    private static final List<Module> bundledModuleData = new ArrayList<Module>(){{
         add(new BundledModule("camera"));
         add(new BundledModule("event_test"));
         add(new BundledModule("stats_test"));
@@ -69,7 +69,7 @@ public class CarpetScriptServer
 
     }
 
-    public ModuleInterface getModule(String name)
+    public Module getModule(String name)
     {
         File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts");
@@ -82,7 +82,7 @@ public class CarpetScriptServer
                     return new FileModule(script);
                 }
             }
-        for (ModuleInterface moduleData : bundledModuleData)
+        for (Module moduleData : bundledModuleData)
         {
             if (moduleData.getName().equalsIgnoreCase(name))
             {
@@ -97,7 +97,7 @@ public class CarpetScriptServer
         List<String> moduleNames = new ArrayList<>();
         if (includeBuiltIns)
         {
-            for (ModuleInterface mi : bundledModuleData)
+            for (Module mi : bundledModuleData)
             {
                 moduleNames.add(mi.getName());
             }
@@ -129,7 +129,7 @@ public class CarpetScriptServer
     {
         //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
-        ModuleInterface module = getModule(name);
+        Module module = getModule(name);
         if (module == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -170,13 +170,13 @@ public class CarpetScriptServer
     private boolean addConfig(ServerCommandSource source, String hostName)
     {
         CarpetScriptHost host = modules.get(hostName);
-        if (host == null || !host.globalFunctions.containsKey("__config"))
+        if (host == null || host.getFunction("__config") == null)
         {
             return false;
         }
         try
         {
-            Value ret = host.callUDF(BlockPos.ORIGIN, source, host.globalFunctions.get("__config"), Collections.emptyList());
+            Value ret = host.callUDF(BlockPos.ORIGIN, source, host.getFunction("__config"), Collections.emptyList());
             if (!(ret instanceof MapValue)) return false;
             Map<Value, Value> config = ((MapValue) ret).getMap();
             host.setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
@@ -195,7 +195,7 @@ public class CarpetScriptServer
         {
             return;
         }
-        if (!host.globalFunctions.containsKey("__command"))
+        if (host.getFunction("__command") == null)
         {
             Messenger.m(source, "gi "+hostName+" app loaded.");
             return;
@@ -217,11 +217,11 @@ public class CarpetScriptServer
                     return 1;
                 });
 
-        for (String function : host.getPublicFunctions())
+        for (String function : host.globaFunctionNames(host.myCode, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
             command = command.
                     then(literal(function).
-                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getPublicFunctions().contains(function)).
+                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
                             executes( (c) -> {
                                 String response = modules.get(hostName).retrieveForExecution(c.getSource()).
                                         call(c.getSource(), function,null,"");

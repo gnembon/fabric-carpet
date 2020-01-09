@@ -1,5 +1,7 @@
 package carpet.script;
 
+import carpet.script.value.Value;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,36 +28,24 @@ public class Context
         this.host = host;
     }
 
-
     LazyValue getVariable(String name)
     {
-        if (variables.containsKey(name))
-        {
-            return variables.get(name);
-        }
-        return host.globalVariables.get(name);
+        return variables.get(name);
     }
 
     public void setVariable(String name, LazyValue lv)
     {
-        if (name.startsWith("global_"))
-        {
-            host.globalVariables.put(name, lv);
-            return;
-        }
         variables.put(name, lv);
     }
-
-
-    boolean isAVariable(String name)
-    {
-        return variables.containsKey(name) || host.globalVariables.containsKey(name);
-    }
-
 
     void delVariable(String variable)
     {
         variables.remove(variable);
+    }
+
+    public void removeVariablesMatching(String varname)
+    {
+        variables.entrySet().removeIf(e -> e.getKey().startsWith(varname));
     }
 
     public Context with(String variable, LazyValue lv)
@@ -70,6 +60,21 @@ public class Context
     }
 
     public Context recreate()
+    {
+        Context ctx = duplicate();
+        ctx.initialize();
+        return ctx;
+    }
+
+    protected void initialize()
+    {
+        //special variables for second order functions so we don't need to check them all the time
+        variables.put("_", (c, t) -> Value.ZERO);
+        variables.put("_i", (c, t) -> Value.ZERO);
+        variables.put("_a", (c, t) -> Value.ZERO);
+    }
+
+    public Context duplicate()
     {
         return new Context(this.host);
     }

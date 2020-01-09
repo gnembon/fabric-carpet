@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-public class BundledModule implements ModuleInterface
+public class BundledModule extends Module
 {
     private String name;
     private String code;

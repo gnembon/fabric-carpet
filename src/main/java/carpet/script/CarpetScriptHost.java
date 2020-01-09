@@ -1,7 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
-import carpet.script.bundled.ModuleInterface;
+import carpet.script.bundled.Module;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
@@ -36,7 +36,7 @@ public class CarpetScriptHost extends ScriptHost
     private Tag globalState;
     private int saveTimeout;
 
-    private CarpetScriptHost(CarpetScriptServer server, ModuleInterface code, boolean perUser, ScriptHost parent)
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -45,12 +45,9 @@ public class CarpetScriptHost extends ScriptHost
             globalState = loadState();
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, ModuleInterface module, boolean perPlayer, ServerCommandSource source)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source)
     {
         CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null );
-        host.globalVariables.put("_x", (c, t) -> Value.ZERO);
-        host.globalVariables.put("_y", (c, t) -> Value.ZERO);
-        host.globalVariables.put("_z", (c, t) -> Value.ZERO);
         // parse code and convert to expression
         if (module != null)
         {
@@ -63,8 +60,8 @@ public class CarpetScriptHost extends ScriptHost
                     return null;
                 }
                 host.setChatErrorSnooper(source);
-                CarpetExpression ex = new CarpetExpression(code, source, new BlockPos(0, 0, 0));
-                ex.getExpr().asAModule(module);
+                CarpetExpression ex = new CarpetExpression(host.myCode, code, source, new BlockPos(0, 0, 0));
+                ex.getExpr().asATextSource();
                 ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
             }
             catch (CarpetExpressionException e)
@@ -85,11 +82,11 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    public void addUserDefinedFunction(String funName, FunctionValue function)
+    public void addUserDefinedFunction(Module module, String funName, FunctionValue function)
     {
-        super.addUserDefinedFunction(funName, function);
+        super.addUserDefinedFunction(module, funName, function);
         // mcarpet
-        if (funName.startsWith("__on_"))
+        if (funName.startsWith("__on_")) // here we can make a determination if we want to only accept events from main module.
         {
             // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
             String event = funName.replaceFirst("__on_","");
@@ -99,35 +96,27 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    protected ModuleInterface getModuleByName(String name)
+    protected Module getModuleByName(String name)
     {
-        ModuleInterface module = scriptServer.getModule(name);
+        Module module = scriptServer.getModule(name);
         if (module == null || module.getCode() == null)
             throw new InternalExpressionException("Unable to locate package: "+name);
         return module;
     }
 
     @Override
-    protected boolean runModuleCode(Context c, ModuleInterface module)
+    protected void runModuleCode(Context c, Module module)
     {
         CarpetContext cc = (CarpetContext)c;
-        try
-        {
-            CarpetExpression ex = new CarpetExpression(module.getCode(), cc.s, cc.origin);
-            ex.getExpr().asAModule(module);
-            ex.scriptRunCommand(this, cc.origin);
-        }
-        catch (CarpetExpressionException e) // hopefully that error got reported already
-        {
-            throw new InternalExpressionException(e.getMessage());
-        }
-        return true;
+        CarpetExpression ex = new CarpetExpression(module, module.getCode(), cc.s, cc.origin);
+        ex.getExpr().asATextSource();
+        ex.scriptRunCommand(this, cc.origin);
     }
 
     @Override
-    public void delFunction(String funName)
+    public void delFunction(Module module, String funName)
     {
-        super.delFunction(funName);
+        super.delFunction(module, funName);
         // mcarpet
         if (funName.startsWith("__on_"))
         {
@@ -157,7 +146,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (CarpetServer.scriptServer.stopAll)
             return "SCARPET PAUSED";
-        FunctionValue function = globalFunctions.get(call);
+        FunctionValue function = getFunction(call);
         if (function == null)
             return "UNDEFINED";
         List<LazyValue> argv = new ArrayList<>();
@@ -170,9 +159,10 @@ public class CarpetScriptHost extends ScriptHost
             switch (tok.type)
             {
                 case VARIABLE:
-                    if (globalVariables.containsKey(tok.surface.toLowerCase(Locale.ROOT)))
+                    LazyValue var = getGlobalVariable(tok.surface.toLowerCase(Locale.ROOT));
+                    if (var != null)
                     {
-                        argv.add(globalVariables.get(tok.surface.toLowerCase(Locale.ROOT)));
+                        argv.add(var);
                         break;
                     }
                 case STRINGPARAM:
@@ -238,7 +228,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
-            return Expression.evalValue(
+            return function.getExpression().evalValue(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
@@ -262,7 +252,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, pos);
-            return Expression.evalValue(
+            return fun.getExpression().evalValue(
                     () -> fun.lazyEval(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
                     context,
                     Context.VOID);
@@ -281,7 +271,7 @@ public class CarpetScriptHost extends ScriptHost
         if (this.saveTimeout > 0)
             dumpState();
 
-        FunctionValue closing = globalFunctions.get("__on_close");
+        FunctionValue closing = getFunction("__on_close");
         if (closing != null)
         {
             try
@@ -294,7 +284,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         userHosts.forEach((key, value) ->
         {
-            FunctionValue userClosing = value.globalFunctions.get("__on_close");
+            FunctionValue userClosing = value.getFunction("__on_close");
             if (userClosing != null)
             {
                 ServerPlayerEntity player = CarpetServer.minecraft_server.getPlayerManager().getPlayer(key);
@@ -373,7 +363,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public void setChatErrorSnooper(ServerCommandSource source)
     {
-        errorSnooper = (expr, token, message) ->
+        errorSnooper = (expr, /*Nullable*/ token, message) ->
         {
             try
             {
@@ -383,29 +373,43 @@ public class CarpetScriptHost extends ScriptHost
             {
                 return null;
             }
-            String[] lines = expr.getCodeString().split("\n");
+
             String shebang = message;
-            if (lines.length > 1)
+            if (expr.module != null)
             {
-                shebang += " at line "+(token.lineno+1)+", pos "+(token.linepos+1);
+                shebang += " in " + expr.module.getName() + "";
             }
-            else {
-                shebang += " at pos "+(token.pos+1);
-            }
-            if (expr.getName() != null)
+            else
             {
-                shebang += " in "+expr.getName()+"";
+                shebang += " in system chat";
             }
-            Messenger.m(source, "r "+shebang);
-            if (lines.length > 1 && token.lineno > 0)
+            if (token != null)
             {
-                Messenger.m(source, "l "+lines[token.lineno-1]);
+                String[] lines = expr.getCodeString().split("\n");
+
+                if (lines.length > 1)
+                {
+                    shebang += " at line " + (token.lineno + 1) + ", pos " + (token.linepos + 1);
+                }
+                else
+                {
+                    shebang += " at pos " + (token.pos + 1);
+                }
+                Messenger.m(source, "r " + shebang);
+                if (lines.length > 1 && token.lineno > 0)
+                {
+                    Messenger.m(source, "l " + lines[token.lineno - 1]);
+                }
+                Messenger.m(source, "l " + lines[token.lineno].substring(0, token.linepos), "r  HERE>> ", "l " +
+                        lines[token.lineno].substring(token.linepos));
+                if (lines.length > 1 && token.lineno < lines.length - 1)
+                {
+                    Messenger.m(source, "l " + lines[token.lineno + 1]);
+                }
             }
-            Messenger.m(source, "l "+lines[token.lineno].substring(0, token.linepos), "r  HERE>> ", "l "+
-                    lines[token.lineno].substring(token.linepos));
-            if (lines.length > 1 && token.lineno < lines.length-1)
+            else
             {
-                Messenger.m(source, "l "+lines[token.lineno+1]);
+                Messenger.m(source, "r " + shebang);
             }
             return new ArrayList<>();
         };

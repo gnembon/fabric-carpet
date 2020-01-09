@@ -1,110 +1,291 @@
 package carpet.script;
 
-import carpet.script.bundled.ModuleInterface;
+import carpet.script.bundled.Module;
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public abstract class ScriptHost
 {
+    public class ModuleData
+    {
+        Module parent;
+        public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
+        public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
+        public Map<String, ModuleData> functionImports = new Object2ObjectOpenHashMap<>(); // imported functions string to module
+        public Map<String, ModuleData> globalsImports = new Object2ObjectOpenHashMap<>(); // imported global variables string to module
+        public Map<String, ModuleData> futureImports = new Object2ObjectOpenHashMap<>(); // imports not known before used
+
+        public ModuleData(Module parent, ModuleData other)
+        {
+            // imports are just pointers, but they still point to the wrong modules (point to the parent)
+            this.parent = parent;
+            globalFunctions.putAll(other.globalFunctions);
+            other.globalVariables.forEach((key, value) ->
+            {
+                Value var = value.evalValue(null);
+                Value copy = var.deepcopy();
+                copy.boundVariable = var.boundVariable;
+                globalVariables.put(key, (c, t) -> copy);
+            });
+        }
+
+        public void setImportsBasedOn(ScriptHost host, ModuleData other)
+        {
+            // fixing imports
+            other.functionImports.forEach((name, targetData) -> {
+                functionImports.put(name, host.moduleData.get(targetData.parent));
+            });
+            other.globalsImports.forEach((name, targetData) -> {
+                globalsImports.put(name, host.moduleData.get(targetData.parent));
+            });
+            other.futureImports.forEach((name, targetData) -> {
+                futureImports.put(name, host.moduleData.get(targetData.parent));
+            });
+
+        }
+
+        public ModuleData(Module parent)
+        {
+            this.parent = parent;
+        }
+    }
     protected final Map<String, ScriptHost> userHosts = new Object2ObjectOpenHashMap<>();
-    public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
-    public Map<String, LazyValue> globalVariables = new Object2ObjectOpenHashMap<>();
-    private Set<String> imports = new HashSet<>();
+    private Map<Module,ModuleData> moduleData = new HashMap<>(); // marking imports
+    private Map<String,Module> modules = new HashMap<>();
 
     protected ScriptHost parent;
     protected boolean perUser;
 
-    //private String name;
     public String getName() {return myCode==null?null:myCode.getName();}
 
-    protected final ModuleInterface myCode;
+    public final Module myCode;
 
     public Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorSnooper = null;
 
-    ScriptHost(ModuleInterface code, boolean perUser, ScriptHost parent)
+    protected ScriptHost(Module code, boolean perUser, ScriptHost parent)
     {
         this.parent = parent;
-        //this.name = name;
         this.myCode = code;
         this.perUser = perUser;
-        if (code != null) imports.add(code.getName());
-        globalVariables.put("euler", (c, t) -> Expression.euler);
-        globalVariables.put("pi", (c, t) -> Expression.PI);
-        globalVariables.put("null", (c, t) -> Value.NULL);
-        globalVariables.put("true", (c, t) -> Value.TRUE);
-        globalVariables.put("false", (c, t) -> Value.FALSE);
-
-        //special variables for second order functions so we don't need to check them all the time
-        globalVariables.put("_", (c, t) -> Value.ZERO);
-        globalVariables.put("_i", (c, t) -> Value.ZERO);
-        globalVariables.put("_a", (c, t) -> Value.ZERO);
+        ModuleData moduleData = new ModuleData(code);
+        initializeModuleGlobals(moduleData);
+        this.moduleData.put(code, moduleData);
+        this.modules.put(code==null?null:code.getName(), code);
     }
 
-    public void addUserDefinedFunction(String funName, FunctionValue function)
+    void initializeModuleGlobals(ModuleData md)
     {
-        globalFunctions.put(funName, function);
+        md.globalVariables.put("euler", (c, t) -> Expression.euler);
+        md.globalVariables.put("pi", (c, t) -> Expression.PI);
+        md.globalVariables.put("null", (c, t) -> Value.NULL);
+        md.globalVariables.put("true", (c, t) -> Value.TRUE);
+        md.globalVariables.put("false", (c, t) -> Value.FALSE);
     }
 
-    public boolean importModule(Context c, String moduleName)
+    public void importModule(Context c, String moduleName)
     {
-        if (imports.contains(moduleName)) return false;  // aready imported
-        ModuleInterface module = getModuleByName(moduleName);
-        if (imports.contains(module.getName())) return false;  // aready imported, once again, in case some discrepancies
-        imports.add(module.getName());
-        if (runModuleCode(c, module))
+        if (modules.containsKey(moduleName)) return;  // aready imported
+        Module module = getModuleByName(moduleName);
+        if (modules.containsKey(module.getName())) return;  // aready imported, once again, in case some discrepancies in names?
+        modules.put(module.getName(), module);
+        ModuleData data =  new ModuleData(module);
+        initializeModuleGlobals(data);
+        moduleData.put(module, data);
+        runModuleCode(c, module);
+        //moduleData.remove(module); // we are pooped already, but doesn't hurt to clean that up.
+        //modules.remove(module.getName());
+        //throw new InternalExpressionException("Failed to import a module "+moduleName);
+    }
+    public void importNames(Context c, Module targetModule, String sourceModuleName, List<String> identifiers )
+    {
+        if (!moduleData.containsKey(targetModule))
         {
-            return true;
+            throw new InternalExpressionException("Cannot import to module that doesn't exist");
         }
-        imports.remove(module.getName());
-        return false;
+        Module source = modules.get(sourceModuleName);
+        ModuleData sourceData = moduleData.get(source);
+        ModuleData targetData = moduleData.get(targetModule);
+        if (sourceData == null || targetData == null)
+        {
+            throw new InternalExpressionException("Cannot import from module that is not imported");
+        }
+        for (String identifier: identifiers)
+        {
+            if (sourceData.globalFunctions.containsKey(identifier))
+            {
+                targetData.functionImports.put(identifier, sourceData);
+            }
+            else if (sourceData.globalVariables.containsKey(identifier))
+            {
+                targetData.globalsImports.put(identifier, sourceData);
+            }
+            else
+            {
+                targetData.functionImports.put(identifier, sourceData);
+            }
+        }
     }
 
-    protected abstract ModuleInterface getModuleByName(String name); // this should be shell out in the executuor
+    protected abstract Module getModuleByName(String name); // this should be shell out in the executor
 
-    protected abstract boolean runModuleCode(Context c, ModuleInterface module); // this should be shell out in the executuor
+    protected abstract void runModuleCode(Context c, Module module); // this should be shell out in the executor
 
-    public void delFunction(String funName)
+    public FunctionValue getFunction(String name) { return getFunction(myCode, name); }
+    public FunctionValue getAssertFunction(Module module, String name)
     {
-        globalFunctions.remove(funName);
+        FunctionValue ret = getFunction(module, name);
+        if (ret == null) throw new InternalExpressionException("Function "+name+" is not defined yet");
+        return ret;
+    }
+    private FunctionValue getFunction(Module module, String name)
+    {
+        ModuleData local = moduleData.get(module);
+        FunctionValue ret = local.globalFunctions.get(name); // most uses would be from local scope anyways
+        if (ret != null) return ret;
+        ModuleData target = local.functionImports.get(name);
+        if (target != null)
+        {
+            ret = target.globalFunctions.get(name);
+            if (ret != null) return ret;
+        }
+        // not in local scope - will need to travel over import links
+        target = local.futureImports.get(name);
+        if (target == null) return null;
+        target = findModuleDataFromFunctionImports(name, target, 0);
+        if (target == null) return null;
+        local.futureImports.remove(name);
+        local.functionImports.put(name, target);
+        return target.globalFunctions.get(name);
     }
 
-    public void delGlobalVariable(String varName)
+    private ModuleData findModuleDataFromFunctionImports(String name, ModuleData source, int ttl)
     {
-        globalVariables.remove(varName);
+        if (ttl > 10) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
+        if (source.globalFunctions.containsKey(name))
+            return source;
+        if (source.functionImports.containsKey(name))
+            return findModuleDataFromFunctionImports(name, source.functionImports.get(name), ttl+1);
+        if (source.futureImports.containsKey(name))
+            return findModuleDataFromFunctionImports(name, source.futureImports.get(name), ttl+1);
+        return null;
+    }
+
+    public LazyValue getGlobalVariable(String name) { return getGlobalVariable(myCode, name); }
+    public LazyValue getGlobalVariable(Module module, String name)
+    {
+        ModuleData local = moduleData.get(module);
+        LazyValue ret = local.globalVariables.get(name); // most uses would be from local scope anyways
+        if (ret != null) return ret;
+        ModuleData target = local.globalsImports.get(name);
+        if (target != null)
+        {
+            ret = target.globalVariables.get(name);
+            if (ret != null) return ret;
+        }
+        // not in local scope - will need to travel over import links
+        target = local.futureImports.get(name);
+        if (target == null) return null;
+        target = findModuleDataFromGlobalImports(name, target, 0);
+        if (target == null) return null;
+        local.futureImports.remove(name);
+        local.globalsImports.put(name, target);
+        return target.globalVariables.get(name);
+    }
+
+    private ModuleData findModuleDataFromGlobalImports(String name, ModuleData source, int ttl)
+    {
+        if (ttl > 10) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
+        if (source.globalVariables.containsKey(name))
+            return source;
+        if (source.globalsImports.containsKey(name))
+            return findModuleDataFromGlobalImports(name, source.globalsImports.get(name), ttl+1);
+        if (source.futureImports.containsKey(name))
+            return findModuleDataFromGlobalImports(name, source.futureImports.get(name), ttl+1);
+        return null;
+    }
+
+    public void delFunctionWithPrefix(Module module, String prefix)
+    {
+        ModuleData data = moduleData.get(module);
+        data.globalFunctions.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
+        data.functionImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
+    }
+    public void delFunction(Module module, String funName)
+    {
+        ModuleData data = moduleData.get(module);
+        data.globalFunctions.remove(funName);
+        data.functionImports.remove(funName);
+    }
+
+    public void delGlobalVariableWithPrefix(Module module, String prefix)
+    {
+        ModuleData data = moduleData.get(module);
+        data.globalVariables.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
+        data.globalsImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
+    }
+
+    public void delGlobalVariable(Module module, String varName)
+    {
+        ModuleData data = moduleData.get(module);
+        data.globalFunctions.remove(varName);
+        data.functionImports.remove(varName);
+    }
+
+    public void addUserDefinedFunction(Module module, String name, FunctionValue fun)
+    {
+        moduleData.get(module).globalFunctions.put(name, fun);
+    }
+
+    public void setGlobalVariable(Module module, String name, LazyValue lv)
+    {
+        moduleData.get(module).globalVariables.put(name, lv);
+    }
+
+    public Stream<String> globaVariableNames(Module module, Predicate<String> predicate)
+    {
+        return Stream.concat(
+                moduleData.get(module).globalVariables.keySet().stream(),
+                moduleData.get(module).globalsImports.keySet().stream()
+        ).filter(predicate);
+    }
+
+    public Stream<String> globaFunctionNames(Module module, Predicate<String> predicate)
+    {
+        return Stream.concat(
+                moduleData.get(module).globalFunctions.keySet().stream(),
+                moduleData.get(module).functionImports.keySet().stream()
+        ).filter(predicate);
     }
 
     public ScriptHost retrieveForExecution(String /*Nullable*/ user)
     {
-        if (!perUser)
-            return this;
-        ScriptHost userHost = userHosts.get(user);
-        if (userHost != null)
-            return userHost;
-        userHost = this.duplicate();
-        userHost.globalVariables.putAll(this.globalVariables);
-        userHost.globalFunctions.putAll(this.globalFunctions);
-        userHost.imports.addAll(this.imports);
+        if (!perUser) return this;
+        ScriptHost oldUserHost = userHosts.get(user);
+        if (oldUserHost != null) return oldUserHost;
+        ScriptHost userHost = this.duplicate();
+        userHost.modules.putAll(this.modules);
+        for (Map.Entry<Module, ScriptHost.ModuleData> e : this.moduleData.entrySet())
+        {
+            userHost.moduleData.put(e.getKey(), new ModuleData(e.getKey(), e.getValue()));
+        }
+        // fixing imports
+        userHost.moduleData.forEach((module, data) ->
+        {
+            data.setImportsBasedOn(this, this.moduleData.get(data.parent));
+        });
         userHosts.put(user, userHost);
         return userHost;
     }
 
     protected abstract ScriptHost duplicate();
-
-    public List<String> getPublicFunctions()
-    {
-        return globalFunctions.keySet().stream().filter((str) -> !str.startsWith("_")).sorted().collect(Collectors.toList());
-    }
-    public List<String> getAvailableFunctions(boolean all)
-    {
-        return globalFunctions.keySet().stream().filter((str) -> all || !str.startsWith("__")).sorted().collect(Collectors.toList());
-    }
 
     public void onClose() { }
 

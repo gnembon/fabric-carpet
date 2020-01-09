@@ -6,7 +6,6 @@ import carpet.script.ExpressionInspector;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
-import carpet.script.bundled.ModuleInterface;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -128,11 +127,9 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
 
     public LazyValue callInContext(Expression callingExpression, Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
     {
-        // this hole thing might not be really needed (errata: needed to know the package to report with exceptions
-        Expression callContext = ExpressionInspector.Expression_cloneWithName(e, c, fullName(), t);
         try
         {
-            return lazyEval(c, type, callContext, t, lazyParams);
+            return lazyEval(c, type, e, t, lazyParams);
         }
         catch (ExpressionException exc)
         {
@@ -142,12 +139,12 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         catch (InternalExpressionException exc)
         {
             exc.stack.add(this);
-            throw new ExpressionException(c, callContext, t, exc.getMessage(), exc.stack);
+            throw new ExpressionException(c, e, t, exc.getMessage(), exc.stack);
         }
 
         catch (ArithmeticException exc)
         {
-            throw new ExpressionException(c, callContext, t, "Your math is wrong, "+exc.getMessage(), Collections.singletonList(this));
+            throw new ExpressionException(c, e, t, "Your math is wrong, "+exc.getMessage(), Collections.singletonList(this));
         }
     }
 
@@ -190,14 +187,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             retVal = throwStatement.retval;
             rethrow = true;
         }
-        catch (ArithmeticException | ExitStatement | ExpressionException | InternalExpressionException exc )
-        {
-            throw exc; // rethrow so could be contextualized if needed
-        }
-        catch (Exception exc)
-        {
-            throw new ExpressionException(c, e, t, "Error while evaluating expression: "+exc.getMessage());
-        }
+        //catch (ArithmeticException | ExitStatement | ExpressionException | InternalExpressionException exc )
+        //{
+        //    throw exc; // rethrow so could be contextualized if needed
+        //}
         if (rethrow)
         {
             throw new ThrowStatement(retVal);

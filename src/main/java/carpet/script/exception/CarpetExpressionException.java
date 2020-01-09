@@ -6,7 +6,7 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.List;
 
-public class CarpetExpressionException extends RuntimeException
+public class CarpetExpressionException extends RuntimeException implements ResolvedException
 {
     public final List<FunctionValue> stack;
 

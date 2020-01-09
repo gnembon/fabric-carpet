@@ -10,13 +10,13 @@ import java.nio.file.Files;
 import static carpet.script.bundled.FileModule.read;
 import static carpet.script.bundled.FileModule.write;
 
-public interface ModuleInterface
+public abstract class Module
 {
-    String getName();
-    String getCode();
-    default boolean isInternal() {return true; }
+    public abstract String getName();
+    public abstract String getCode();
+    public boolean isInternal() {return true; }
 
-    default Tag getData(String file)
+    public Tag getData(String file)
     {
         File dataFile = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts/"+getName()+".data"+(file==null?"":"."+file)+".nbt");
@@ -24,7 +24,7 @@ public interface ModuleInterface
         return read(dataFile);
     }
 
-    default void saveData(String file, Tag globalState)
+    public void saveData(String file, Tag globalState)
     {
         File dataFile =CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts/"+getName()+".data"+(file==null?"":"."+file)+".nbt");
@@ -40,5 +40,11 @@ public interface ModuleInterface
         }
         write(globalState, dataFile);
 
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return getName().hashCode();
     }
 }
