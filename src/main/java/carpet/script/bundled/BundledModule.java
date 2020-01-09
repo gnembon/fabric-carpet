@@ -10,13 +10,15 @@ public class BundledModule extends Module
 {
     private String name;
     private String code;
-    public BundledModule(String scriptName)
+    private boolean library;
+    public BundledModule(String scriptName, boolean isLibrary)
     {
+        library = isLibrary;
         try
         {
             name = scriptName.toLowerCase(Locale.ROOT);
             code = IOUtils.toString(
-                    getClass().getClassLoader().getResourceAsStream("assets/carpet/scripts/"+name+".sc"),
+                    getClass().getClassLoader().getResourceAsStream("assets/carpet/scripts/"+name+(isLibrary?".scl":".sc")),
                     StandardCharsets.UTF_8
             );
         }
@@ -26,15 +28,13 @@ public class BundledModule extends Module
             code = null;
         }
     }
-    @Override
-    public String getName()
-    {
-        return name;
-    }
 
     @Override
-    public String getCode()
-    {
-        return code;
-    }
+    public boolean isLibrary() { return library; }
+
+    @Override
+    public String getName() { return name; }
+
+    @Override
+    public String getCode() { return code; }
 }

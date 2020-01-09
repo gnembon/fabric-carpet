@@ -18,11 +18,13 @@ public class FileModule extends Module
 {
     private String name;
     private String code;
+    private boolean library;
     public FileModule(File sourceFile)
     {
+        library = sourceFile.getName().endsWith(".scl");
         try
         {
-            name = sourceFile.getName().replaceFirst("\\.sc","").toLowerCase(Locale.ROOT);
+            name = sourceFile.getName().replaceFirst("\\.scl?","").toLowerCase(Locale.ROOT);
             code = new String(Files.readAllBytes(sourceFile.toPath()));
         }
         catch ( IOException e)
@@ -30,12 +32,6 @@ public class FileModule extends Module
             name = null;
             code = null;
         }
-    }
-    public FileModule fromName(String name)
-    {
-        File sourceFile = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
-                CarpetServer.minecraft_server.getLevelName(), "scripts/"+name+".sc");
-        return new FileModule(sourceFile);
     }
     @Override
     public String getName()
@@ -50,9 +46,9 @@ public class FileModule extends Module
     }
 
     @Override
-    public boolean isInternal()
+    public boolean isLibrary()
     {
-        return false;
+        return library;
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.read()

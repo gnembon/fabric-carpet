@@ -14,7 +14,7 @@ public abstract class Module
 {
     public abstract String getName();
     public abstract String getCode();
-    public boolean isInternal() {return true; }
+    public abstract boolean isLibrary();
 
     public Tag getData(String file)
     {
