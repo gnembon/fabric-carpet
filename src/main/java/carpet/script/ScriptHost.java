@@ -93,7 +93,7 @@ public abstract class ScriptHost
     public void importModule(Context c, String moduleName)
     {
         if (modules.containsKey(moduleName)) return;  // aready imported
-        Module module = getModuleByName(moduleName);
+        Module module = getModuleOrLibraryByName(moduleName);
         if (modules.containsKey(module.getName())) return;  // aready imported, once again, in case some discrepancies in names?
         modules.put(module.getName(), module);
         ModuleData data =  new ModuleData(module);
@@ -134,7 +134,7 @@ public abstract class ScriptHost
         }
     }
 
-    protected abstract Module getModuleByName(String name); // this should be shell out in the executor
+    protected abstract Module getModuleOrLibraryByName(String name); // this should be shell out in the executor
 
     protected abstract void runModuleCode(Context c, Module module); // this should be shell out in the executor
 

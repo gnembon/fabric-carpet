@@ -41,9 +41,9 @@ public class CarpetScriptServer
     public final CarpetEventServer events;
 
     private static final List<Module> bundledModuleData = new ArrayList<Module>(){{
-        add(new BundledModule("camera"));
-        add(new BundledModule("event_test"));
-        add(new BundledModule("stats_test"));
+        add(new BundledModule("camera", false));
+        add(new BundledModule("event_test", false));
+        add(new BundledModule("stats_test", false));
     }};
 
     public CarpetScriptServer()
@@ -69,7 +69,7 @@ public class CarpetScriptServer
 
     }
 
-    public Module getModule(String name)
+    public Module getModule(String name, boolean allowLibraries)
     {
         File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
                 CarpetServer.minecraft_server.getLevelName(), "scripts");
@@ -81,10 +81,14 @@ public class CarpetScriptServer
                 {
                     return new FileModule(script);
                 }
+                if (allowLibraries && script.getName().equalsIgnoreCase(name+".scl"))
+                {
+                    return new FileModule(script);
+                }
             }
         for (Module moduleData : bundledModuleData)
         {
-            if (moduleData.getName().equalsIgnoreCase(name))
+            if (moduleData.getName().equalsIgnoreCase(name) && (allowLibraries || !moduleData.isLibrary()))
             {
                 return moduleData;
             }
@@ -99,7 +103,7 @@ public class CarpetScriptServer
         {
             for (Module mi : bundledModuleData)
             {
-                moduleNames.add(mi.getName());
+                if (!mi.isLibrary()) moduleNames.add(mi.getName());
             }
         }
         File folder = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
@@ -129,7 +133,7 @@ public class CarpetScriptServer
     {
         //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
-        Module module = getModule(name);
+        Module module = getModule(name, false);
         if (module == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");

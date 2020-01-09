@@ -96,9 +96,9 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    protected Module getModuleByName(String name)
+    protected Module getModuleOrLibraryByName(String name)
     {
-        Module module = scriptServer.getModule(name);
+        Module module = scriptServer.getModule(name, true);
         if (module == null || module.getCode() == null)
             throw new InternalExpressionException("Unable to locate package: "+name);
         return module;
