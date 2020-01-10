@@ -2,7 +2,6 @@ package carpet.script.value;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.ExpressionInspector;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
@@ -14,9 +13,11 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.exception.ThrowStatement;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FunctionValue extends Value implements Fluff.ILazyFunction
 {
@@ -55,6 +56,16 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     public String getString()
     {
         return name;
+    }
+
+    @Override
+    public String getPrettyString()
+    {
+        List<String> stringArgs= new ArrayList<>(args);
+        if (outerState != null)
+            stringArgs.addAll(outerState.entrySet().stream().map(e ->
+                    "outer("+e.getKey()+") = "+e.getValue().evalValue(null).getPrettyString()).collect(Collectors.toList()));
+        return (name.equals("_")?"<lambda>":name) +"("+String.join(", ",stringArgs)+")";
     }
 
     public String fullName() {return expression.module == null?name:name+"["+expression.module.getName()+"]";}
@@ -105,6 +116,12 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     public double readNumber()
     {
         throw new InternalExpressionException("Function value has no numeric value");
+    }
+
+    @Override
+    public String getTypeString()
+    {
+        return "function";
     }
 
     @Override
