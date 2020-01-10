@@ -795,9 +795,13 @@ public class Expression
      * </pre>
      * <p>Ability to combine more statements into one expression, with functions, passing parameters, and global and outer
      * scoping allow to organize even larger scripts</p>
-     * <h3><code>import(module_name)</code></h3>
-     * <p>Imports the entire content of another scarpet app by running the code in the current code context, making all
-     * functions and global variables available in the current script to use.</p>
+     * <h3><code>import(module_name, symbols ...)</code></h3>
+     * <p>Imports symbols from other apps and libraries into the current one: global variables or functions, allowing
+     * to use them in the current app. This include
+     * other symbols imported by these modules. Scarpet supports cicular dependencies, but if symbols are used directly in
+     * the module body rather than functions, it may not be able to retrieve them. Returns full list of available symbols
+     * that could be imported from this module, which can be used to debug import issues, and list contents of libraries.
+     * </p>
      * <h3><code>call(function, args.....)</code></h3>
      * <p>calls a user defined function with specified arguments. It is equivalent to calling <code>function(args...)</code>
      * directly except you can use it with function value, or name instead. This means you can pass functions to other user defined
