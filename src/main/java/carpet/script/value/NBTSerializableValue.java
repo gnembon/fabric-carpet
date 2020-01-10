@@ -11,7 +11,6 @@ import net.minecraft.block.ChestBlock;
 import net.minecraft.block.InventoryProvider;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ItemStringReader;
 import net.minecraft.command.arguments.NbtPathArgumentType;
@@ -32,7 +31,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.world.World;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -200,6 +198,17 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 if (inv == null)
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
+            }
+            else if (v1.getString().equalsIgnoreCase("enderchest"))
+            {
+                Value v2 = params.get(1 + offset).evalValue(c);
+                if (!(v2 instanceof EntityValue) || !(((EntityValue) v2).getEntity() instanceof PlayerEntity))
+                {
+                    throw new InternalExpressionException("enderchest inventory requires player argument");
+                }
+                PlayerEntity e = (PlayerEntity)((EntityValue) v2).getEntity();
+                inv = e.getEnderChestInventory();
+                return new InventoryLocator(e, e.getBlockPos(), inv, offset + 2, true);
             }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
@@ -516,12 +525,19 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         public BlockPos position;
         public Inventory inventory;
         public int offset;
+        public boolean isEnder;
         InventoryLocator(Object owner, BlockPos pos, Inventory i, int o)
+        {
+            this(owner, pos, i, o, false);
+        }
+
+        InventoryLocator(Object owner, BlockPos pos, Inventory i, int o, boolean isEnder)
         {
             this.owner = owner;
             position = pos;
             inventory = i;
             offset = o;
+            this.isEnder = isEnder;
         }
     }
 

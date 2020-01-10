@@ -3338,11 +3338,11 @@ public class Expression
         }
         catch (InternalExpressionException exc)
         {
-            throw new ExpressionException(c, this, "Your expression result is incorrect:"+exc.getMessage());
+            throw new ExpressionException(c, this, "Your expression result is incorrect: "+exc.getMessage());
         }
         catch (ArithmeticException exc)
         {
-            throw new ExpressionException(c, this, "The final result is incorrect, "+exc.getMessage());
+            throw new ExpressionException(c, this, "The final result is incorrect: "+exc.getMessage());
         }
     }
 

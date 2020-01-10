@@ -129,7 +129,7 @@ public abstract class ScriptHost
             }
             else
             {
-                targetData.functionImports.put(identifier, sourceData);
+                targetData.futureImports.put(identifier, sourceData);
             }
         }
     }
@@ -168,7 +168,7 @@ public abstract class ScriptHost
 
     private ModuleData findModuleDataFromFunctionImports(String name, ModuleData source, int ttl)
     {
-        if (ttl > 10) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
+        if (ttl > 64) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
         if (source.globalFunctions.containsKey(name))
             return source;
         if (source.functionImports.containsKey(name))
@@ -202,7 +202,7 @@ public abstract class ScriptHost
 
     private ModuleData findModuleDataFromGlobalImports(String name, ModuleData source, int ttl)
     {
-        if (ttl > 10) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
+        if (ttl > 64) throw new InternalExpressionException("Cannot import "+name+", either your imports are too deep or too loopy");
         if (source.globalVariables.containsKey(name))
             return source;
         if (source.globalsImports.containsKey(name))
@@ -251,18 +251,18 @@ public abstract class ScriptHost
 
     public Stream<String> globaVariableNames(Module module, Predicate<String> predicate)
     {
-        return Stream.concat(
+        return Stream.concat(Stream.concat(
                 moduleData.get(module).globalVariables.keySet().stream(),
                 moduleData.get(module).globalsImports.keySet().stream()
-        ).filter(predicate);
+        ), moduleData.get(module).futureImports.keySet().stream().filter(s -> s.startsWith("global_"))).filter(predicate);
     }
 
     public Stream<String> globaFunctionNames(Module module, Predicate<String> predicate)
     {
-        return Stream.concat(
+        return Stream.concat(Stream.concat(
                 moduleData.get(module).globalFunctions.keySet().stream(),
                 moduleData.get(module).functionImports.keySet().stream()
-        ).filter(predicate);
+        ),moduleData.get(module).futureImports.keySet().stream().filter(s -> !s.startsWith("global_"))).filter(predicate);
     }
 
     public ScriptHost retrieveForExecution(String /*Nullable*/ user)
@@ -279,7 +279,7 @@ public abstract class ScriptHost
         // fixing imports
         userHost.moduleData.forEach((module, data) ->
         {
-            data.setImportsBasedOn(this, this.moduleData.get(data.parent));
+            data.setImportsBasedOn(userHost, this.moduleData.get(data.parent));
         });
         userHosts.put(user, userHost);
         return userHost;

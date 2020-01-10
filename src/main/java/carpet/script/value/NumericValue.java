@@ -42,7 +42,7 @@ public class NumericValue extends Value
         }
         else
         {
-            return String.format("%.3f..", getDouble());
+            return String.format("%.1f..", getDouble());
         }
     }
 
