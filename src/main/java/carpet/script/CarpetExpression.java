@@ -1234,7 +1234,8 @@ public class CarpetExpression
      * <div style="padding-left: 20px; border-radius: 5px 45px; border:1px solid grey;">
      * <h2>Manipulating inventories of blocks and entities</h2>
      * <p>Most functions in this category require inventory as the first argument. Inventory could be specified by
-     * an entity, or a block, or position (three coordinates) of a potential block with inventory.
+     * an entity, or a block, or position (three coordinates) of a potential block with inventory. Player enderchest inventory
+     * require two arguments, keyword <code>'enderchest'</code>, followed by the player entity argument.
      * If the entity or a block doesn't
      * have an inventory, they typically do nothing and return null.</p>
      * <p>Most items returned are in the form of
@@ -1262,6 +1263,7 @@ public class CarpetExpression
      * don't have an inventory</p>
      * <pre>
      *     inventory_size(player()) =&gt; 41
+     *     inventory_size('enderchest', player()) =&gt; 27 // enderchest
      *     inventory_size(x,y,z) =&gt; 27 // chest
      *     inventory_size(block(pos)) =&gt; 5 // hopper
      * </pre>
@@ -1585,7 +1587,7 @@ public class CarpetExpression
     }
     private void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
     {
-        if (inventory.owner instanceof ServerPlayerEntity)
+        if (inventory.owner instanceof ServerPlayerEntity && !inventory.isEnder)
         {
             ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
             player.networkHandler.sendPacket(new GuiSlotUpdateS2CPacket(
