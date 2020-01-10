@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 public abstract class ScriptHost
 {
-    public class ModuleData
+    public static class ModuleData
     {
         Module parent;
         public Map<String, FunctionValue> globalFunctions = new Object2ObjectOpenHashMap<>();
@@ -96,7 +96,7 @@ public abstract class ScriptHost
         Module module = getModuleOrLibraryByName(moduleName);
         if (modules.containsKey(module.getName())) return;  // aready imported, once again, in case some discrepancies in names?
         modules.put(module.getName(), module);
-        ModuleData data =  new ModuleData(module);
+        ModuleData data = new ModuleData(module);
         initializeModuleGlobals(data);
         moduleData.put(module, data);
         runModuleCode(c, module);
@@ -132,6 +132,20 @@ public abstract class ScriptHost
                 targetData.futureImports.put(identifier, sourceData);
             }
         }
+    }
+
+    public Stream<String> availableImports(String moduleName)
+    {
+        Module source = modules.get(moduleName);
+        ModuleData sourceData = moduleData.get(source);
+        if (sourceData == null)
+        {
+            throw new InternalExpressionException("Cannot import from module that is not imported");
+        }
+        return Stream.concat(
+                globaVariableNames(source, s -> s.startsWith("global_")),
+                globaFunctionNames(source, s -> true)
+        ).distinct().sorted();
     }
 
     protected abstract Module getModuleOrLibraryByName(String name); // this should be shell out in the executor

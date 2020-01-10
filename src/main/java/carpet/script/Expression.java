@@ -857,11 +857,15 @@ public class Expression
         // artificial construct to handle user defined functions and function definitions
         addLazyFunction("import", -1, (c, t, lv) ->
         {
-            if (lv.size() < 2) throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
+            if (lv.size() < 1) throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
             String moduleName = lv.get(0).evalValue(c).getString();
             c.host.importModule(c, moduleName);
-            c.host.importNames(c, module, moduleName, lv.subList(1, lv.size()).stream().map((l) -> l.evalValue(c).getString()).collect(Collectors.toList()));
-            return (cc, tt) -> Value.NULL;
+            if (lv.size() > 1)
+                c.host.importNames(c, module, moduleName, lv.subList(1, lv.size()).stream().map((l) -> l.evalValue(c).getString()).collect(Collectors.toList()));
+            if (t == Context.VOID)
+                return LazyValue.NULL;
+            ListValue list = ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new).collect(Collectors.toList()));
+            return (cc, tt) -> list;
         });
 
         addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
