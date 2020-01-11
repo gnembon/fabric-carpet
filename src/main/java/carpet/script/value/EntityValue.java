@@ -26,6 +26,7 @@ import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.MobEntityWithAi;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.predicate.entity.EntityPredicates;
@@ -245,6 +246,7 @@ public class EntityValue extends Value
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getStandingEyeHeight()));
         put("age", (e, a) -> new NumericValue(e.age));
+        put("breeding_age", (e, a) -> e instanceof PassiveEntity?new NumericValue(((PassiveEntity) e).getBreedingAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
         put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
@@ -681,6 +683,13 @@ public class EntityValue extends Value
         //        ((MobEntity) e).setTarget(elb);
         //    }
         //});
+        put("breeding_age", (e, v) ->
+        {
+            if (e instanceof PassiveEntity)
+            {
+                ((PassiveEntity) e).setBreedingAge((int)NumericValue.asNumber(v).getLong());
+            }
+        });
         put("talk", (e, v) -> {
             // attacks indefinitely
             if (e instanceof MobEntity)
@@ -790,8 +799,6 @@ public class EntityValue extends Value
                 if (lv.size() >= 2 && lv.size() <= 5)
                 {
                     String effectName = lv.get(0).getString();
-                    if (effectName.startsWith("minecraft:"))
-                        effectName = "minecraft:"+effectName;
                     StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
                     if (effect == null)
                         throw new InternalExpressionException("Wrong effect name: "+effectName);
