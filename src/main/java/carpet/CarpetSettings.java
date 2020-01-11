@@ -356,6 +356,16 @@ public class CarpetSettings
     )
     public static int fillLimit = 32768;
 
+
+    @Rule(
+            desc = "Customizable forceload chunk limit",
+            options = {"256"},
+            category = CREATIVE,
+            strict = false,
+            validate = FillLimitLimits.class
+    )
+    public static int forceloadLimit = 256;
+
     @Rule(
             desc = "Customizable maximal entity collision limits, 0 for no limits",
             options = {"0", "1", "20"},

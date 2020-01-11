@@ -9,6 +9,7 @@
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",
+    "ForceLoadCommand_forceLoadLimitMixin",
     "World_fillUpdatesMixin",
     "WorldChunk_fillUpdatesMixin",
     "StructureBlockBlockEntity_fillUpdatesMixin",

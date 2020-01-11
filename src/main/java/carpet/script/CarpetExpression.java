@@ -1726,6 +1726,8 @@ public class CarpetExpression
      * <p>Eye height of the entity.</p>
      * <h3><code>query(e,'age')</code></h3>
      * <p>Age, in ticks, of the entity, i.e. how long it existed.</p>
+     * <h3><code>query(e,'breeding_age')</code></h3>
+     * <p>Breeding age of passive entity, in ticks. If negative it it time to adulthood, if positive, breeding cooldown</p>
      * <h3><code>query(e,'despawn_timer')</code></h3>
      * <p>For living entities - the number of ticks they fall outside of immediate player presence.</p>
      * <h3><code>query(e,'item')</code></h3>
@@ -1827,7 +1829,7 @@ public class CarpetExpression
      * <p>Adds a vector to the motion vector. Most realistic way to apply a force to an entity.</p>
      * <h3><code>modify(e, 'custom_name'), modify(e, 'custom_name', name )</code></h3>
      * <h3><code>modify(e, 'pickup_delay')</code></h3>
-     * <p>Sets a custom pickup delay if the entity argument is an item entity</p>
+     * <h3><code>modify(e, 'breeding_age')</code></h3>
      * <h3><code>modify(e, 'despawn_timer')</code></h3>
      * <p>Sets a custom despawn timer value.</p>
      * <h3><code>modify(e, 'dismount')</code></h3>

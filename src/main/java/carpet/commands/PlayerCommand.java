@@ -57,7 +57,8 @@ public class PlayerCommand
                         .then(makeActionCommand("swapHands", EntityPlayerActionPack.ActionType.SWAP_HANDS))
                         .then(literal("kill").executes(PlayerCommand::kill))
                         .then(literal("shadow"). executes(PlayerCommand::shadow))
-                        .then(literal("mount").executes(manipulation(EntityPlayerActionPack::mount)))
+                        .then(literal("mount").executes(manipulation(ap -> ap.mount(true)))
+                                .then(literal("anything").executes(manipulation(ap -> ap.mount(false)))))
                         .then(literal("dismount").executes(manipulation(EntityPlayerActionPack::dismount)))
                         .then(literal("sneak").executes(manipulation(ap -> ap.setSneaking(true))))
                         .then(literal("unsneak").executes(manipulation(ap -> ap.setSneaking(false))))
@@ -78,7 +79,7 @@ public class PlayerCommand
                                 .then(literal("back").executes(c -> manipulate(c, ap -> ap.turn(180, 0))))
                                 .then(argument("rotation", RotationArgumentType.rotation())
                                         .executes(c -> manipulate(c, ap -> ap.turn(RotationArgumentType.getRotation(c, "rotation").toAbsoluteRotation(c.getSource())))))
-                        ).then(literal("move")
+                        ).then(literal("move").executes(c -> manipulate(c, EntityPlayerActionPack::stopMovement))
                                 .then(literal("forward").executes(c -> manipulate(c, ap -> ap.setForward(1))))
                                 .then(literal("backward").executes(c -> manipulate(c, ap -> ap.setForward(-1))))
                                 .then(literal("left").executes(c -> manipulate(c, ap -> ap.setStrafing(1))))
@@ -244,7 +245,7 @@ public class PlayerCommand
     {
         if (cantManipulate(context)) return 0;
         ServerPlayerEntity player = getPlayer(context);
-        ((ServerPlayerEntityInterface) player).getActionPack().stop();
+        ((ServerPlayerEntityInterface) player).getActionPack().stopAll();
         return 1;
     }
 
