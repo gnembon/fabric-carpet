@@ -1,9 +1,11 @@
 package carpet.helpers;
 
 import carpet.fakes.ServerPlayerEntityInterface;
-import carpet.mixins.PlayerActionC2SPacketMixin;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.passive.HorseBaseEntity;
+import net.minecraft.entity.vehicle.BoatEntity;
+import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.packet.PlayerActionC2SPacket;
@@ -42,7 +44,7 @@ public class EntityPlayerActionPack
     public EntityPlayerActionPack(ServerPlayerEntity playerIn)
     {
         player = playerIn;
-        stop();
+        stopAll();
     }
     public void copyFrom(EntityPlayerActionPack other)
     {
@@ -133,11 +135,8 @@ public class EntityPlayerActionPack
         return turn(rotation.x, rotation.y);
     }
 
-
-    public EntityPlayerActionPack stop()
+    public EntityPlayerActionPack stopMovement()
     {
-        for (ActionType type : actions.keySet()) type.stop(player, actions.get(type));
-        actions.clear();
         setSneaking(false);
         setSprinting(false);
         forward = 0.0F;
@@ -145,10 +144,27 @@ public class EntityPlayerActionPack
         return this;
     }
 
-    public EntityPlayerActionPack mount()
+
+    public EntityPlayerActionPack stopAll()
+    {
+        for (ActionType type : actions.keySet()) type.stop(player, actions.get(type));
+        actions.clear();
+        return stopMovement();
+    }
+
+    public EntityPlayerActionPack mount(boolean onlyRideables)
     {
         //test what happens
-        List<Entity> entities = player.world.getEntities(player,player.getBoundingBox().expand(3.0D, 1.0D, 3.0D));
+        List<Entity> entities;
+        if (onlyRideables)
+        {
+            entities = player.world.getEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D),
+                    e -> e instanceof MinecartEntity || e instanceof BoatEntity || e instanceof HorseBaseEntity);
+        }
+            else
+        {
+            entities = player.world.getEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D));
+        }
         if (entities.size()==0)
             return this;
         Entity closest = null;
@@ -165,7 +181,11 @@ public class EntityPlayerActionPack
                 closest = e;
             }
         }
-        if (closest != null) player.startRiding(closest,true);
+        if (closest == null) return this;
+        if (closest instanceof HorseBaseEntity && onlyRideables)
+            ((HorseBaseEntity) closest).interactMob(player, Hand.MAIN_HAND);
+        else
+            player.startRiding(closest,true);
         return this;
     }
     public EntityPlayerActionPack dismount()
