@@ -616,6 +616,13 @@ public class CarpetExpression
      * but chunks can only be valid in a few states: <code>full</code>, <code>features</code>, <code>liquid_carvers</code>,
      * and <code>structure_starts</code>. Returns <code>null</code> if the chunk is not in memory unless called with optional
      * <code>true</code>.</p>
+     * <h3><code>structures(pos), structures(pos, structure_name)</code></h3>
+     * <p>Returns structure information for a given block position. Note that strucuture information is the same for
+     * all the blocks from the same chunk. <code>structures</code> function can be called with a block, or a block and
+     * structure name. In the first case it returns a map of structures at a given position, keyed by structure name,
+     * with values indicating the bounding box of the structure - a pair of two 3-value coords (see examples). When
+     * called with extra structure name, returns list of components for that structure, with their name, direction
+     * and two sets of coordinates indicating the bounding box of the structure piece.</p>
      * <h3><code>suffocates(pos)</code></h3>
      * <p>Boolean function, true if the block causes suffocation.</p>
      * <h3><code>power(pos)</code></h3>
