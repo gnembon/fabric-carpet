@@ -87,7 +87,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.EulerAngle;
-import net.minecraft.util.math.MutableIntBoundingBox;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
@@ -1247,7 +1247,7 @@ public class CarpetExpression
                     StructureStart start = entry.getValue();
                     if (start == StructureStart.DEFAULT)
                         continue;
-                    MutableIntBoundingBox box = start.getBoundingBox();
+                    BlockBox box = start.getBoundingBox();
                     ListValue coord1 = ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ));
                     ListValue coord2 = ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ));
                     strucutureList.put(new StringValue(entry.getKey()), ListValue.of(coord1, coord2));
@@ -1262,7 +1262,7 @@ public class CarpetExpression
             List<Value> pieces = new ArrayList<>();
             for (StructurePiece piece : start.getChildren())
             {
-                MutableIntBoundingBox box = piece.getBoundingBox();
+                BlockBox box = piece.getBoundingBox();
                 pieces.add(ListValue.of(
                         new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
                         (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
