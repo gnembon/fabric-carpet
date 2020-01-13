@@ -2311,17 +2311,23 @@ public class Expression
             return ListValue.wrap(toSort);
         });
 
-        addLazyFunction("sort_key", 2, (c, t, lv) ->  //get working with iterators
+        addLazyFunction("sort_key", -1, (c, t, lv) ->  //get working with iterators
         {
+            if (lv.size() == 0)
+                throw new InternalExpressionException("First argument for 'sort_key' should be a List");
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof ListValue))
                 throw new InternalExpressionException("First argument for 'sort_key' should be a List");
+            List<Value> toSort = new ArrayList<>(((ListValue) v).getItems());
+            if (lv.size()==1)
+            {
+                Collections.shuffle(toSort);
+                Value ret = ListValue.wrap(toSort);
+                return (_c, _t) -> ret;
+            }
             LazyValue sortKey = lv.get(1);
             //scoping
             LazyValue __ = c.getVariable("_");
-
-            List<Value> toSort = new ArrayList<>(((ListValue) v).getItems());
-
             Collections.sort(toSort,(v1, v2) -> {
                 c.setVariable("_",(cc, tt) -> v1);
                 Value ev1 = sortKey.evalValue(c);

@@ -82,6 +82,8 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     public static String nameFromRegistryId(Identifier id)
     {
+        if (id == null) // should be Value.NULL
+            return "";
         if (id.getNamespace().equals("minecraft"))
             return id.getPath();
         return id.toString();

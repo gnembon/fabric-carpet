@@ -77,6 +77,11 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         map = other;
     }
 
+    public static MapValue wrap(Map<Value,Value> other)
+    {
+        return new MapValue(other);
+    }
+
     @Override
     public Value add(Value o)
     {

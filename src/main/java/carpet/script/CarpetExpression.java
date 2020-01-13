@@ -18,6 +18,7 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
@@ -74,6 +75,8 @@ import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
 import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
+import net.minecraft.structure.StructurePiece;
+import net.minecraft.structure.StructureStart;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
@@ -83,6 +86,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.EulerAngle;
+import net.minecraft.util.math.MutableIntBoundingBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
@@ -1224,6 +1228,48 @@ public class CarpetExpression
             chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
             this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;
+        });
+
+        this.expr.addLazyFunction("structures", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
+            if (lv.size() == locator.offset)
+            {
+                Map<Value, Value> strucutureList = new HashMap<>();
+                for (Map.Entry<String, StructureStart> entry : structures.entrySet())
+                {
+                    StructureStart start = entry.getValue();
+                    if (start == StructureStart.DEFAULT)
+                        continue;
+                    MutableIntBoundingBox box = start.getBoundingBox();
+                    ListValue coord1 = ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ));
+                    ListValue coord2 = ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ));
+                    strucutureList.put(new StringValue(entry.getKey()), ListValue.of(coord1, coord2));
+                }
+                Value ret = MapValue.wrap(strucutureList);
+                return (_c, _t) -> ret;
+            }
+            String structureName = lv.get(locator.offset).evalValue(c).getString();
+            StructureStart start = structures.get(structureName);
+            if (start == null || start == StructureStart.DEFAULT)
+                return (_c, _t) -> Value.NULL;
+            List<Value> pieces = new ArrayList<>();
+            for (StructurePiece piece : start.getChildren())
+            {
+                MutableIntBoundingBox box = piece.getBoundingBox();
+                pieces.add(ListValue.of(
+                        new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
+                        (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
+                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
+                        ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ))
+                ));
+            }
+            Value ret = ListValue.wrap(pieces);
+            return (_c, _t) -> ret;
         });
         // need get_biome
 
