@@ -1,14 +1,15 @@
 package carpet.script;
 
 import carpet.script.bundled.BundledModule;
-import carpet.script.value.FunctionValue;
-import carpet.script.value.MapValue;
-import carpet.script.value.StringValue;
 import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.value.FunctionValue;
+import carpet.script.value.MapValue;
+import carpet.script.value.StringValue;
+import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -299,5 +300,6 @@ public class CarpetScriptServer
         {
             host.onClose();
         }
+        ThreadValue.shutdown();
     }
 }

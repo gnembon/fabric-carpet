@@ -2681,6 +2681,10 @@ public class Expression
      * <h3><code>task_completed(task)</code></h3>
      * <p>Returns true if task has completed, or false otherwise.</p>
      *
+     * <h3><code>synchronize(lock, expression)</code></h3>
+     * <p>Evaluates <code>expression</code> synchronized with respect to the lock <code>lock</code>. Returns the value of the
+     * expression.</p>
+     *
      * <hr>
      * <h2>Auxiliary functions</h2>
      *
@@ -3116,6 +3120,23 @@ public class Expression
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'task_completed' could only be used with a task value");
             return new NumericValue(((ThreadValue) v).isFinished());
+        });
+
+        addLazyFunction("synchronize", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0) throw new InternalExpressionException("'synchronize' require at least an expression to synchronize");
+            Value lockValue = Value.NULL;
+            int ind = 0;
+            if (lv.size() == 2)
+            {
+                lockValue = lv.get(0).evalValue(c);
+                ind = 1;
+            }
+            synchronized (ThreadValue.getLock(lockValue))
+            {
+                Value ret = lv.get(ind).evalValue(c, t);
+                return (_c, _t) -> ret;
+            }
         });
 
         addLazyFunction("system_variable_get", -1, (c, t, lv) ->
