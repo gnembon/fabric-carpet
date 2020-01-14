@@ -33,7 +33,6 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import net.minecraft.block.BarrierBlock;
 import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
