@@ -48,6 +48,7 @@ public class CarpetScriptServer
 
     public CarpetScriptServer()
     {
+        ScriptHost.systemGlobals.clear();
         events = new CarpetEventServer();
         modules = new HashMap<>();
         tickStart = 0L;

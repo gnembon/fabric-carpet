@@ -9,11 +9,15 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public abstract class ScriptHost
 {
+    public static Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
+
+
     public static class ModuleData
     {
         Module parent;

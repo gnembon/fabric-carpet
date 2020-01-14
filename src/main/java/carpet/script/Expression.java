@@ -2681,6 +2681,7 @@ public class Expression
      * <h3><code>task_completed(task)</code></h3>
      * <p>Returns true if task has completed, or false otherwise.</p>
      *
+     * <hr>
      * <h2>Auxiliary functions</h2>
      *
      * <h3><code>lower(expr), upper(expr), title(expr)</code></h3>
@@ -2795,6 +2796,20 @@ public class Expression
      * /script run count_blocks(player())
      * </pre>
      *
+     * <hr>
+     * <h2>System key-value storage</h2>
+     * <p>Scarpet runs apps in isolation. The can share code via use of shared libraries, but each library that is imported
+     * to each app is specific to that app. Apps can store and fetch state from disk, but its restricted to specific locations
+     * meaning apps cannot interact via disk either. To facilitate communication for interappperability, scarpet hosts its own
+     * key-value storage that is shared between all apps currently running on the host, providing methods for getting
+     * an associated value with optional setting it if not present, and an operation of modifying a content of a system global
+     * value.</p>
+     * <h3><code>system_variable_get(key, default_value ?)</code></h3>
+     * <p>Returns the variable from the system shared key-value storage keyed with a <code>key</code> value, optionally
+     * if value is not present, and default expression is provided, sets a new value to be associated with that key</p>
+     * <h3><code>system_variable_set(key, new_value)</code></h3>
+     * <p>Returns the variable from the system shared key-value storage keyed with a <code>key</code> value, and sets
+     * a new mapping for the key</p>
      * </div>
      */
     public void SystemFunctions()
@@ -3101,6 +3116,28 @@ public class Expression
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'task_completed' could only be used with a task value");
             return new NumericValue(((ThreadValue) v).isFinished());
+        });
+
+        addLazyFunction("system_variable_get", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0) throw new InternalExpressionException("'system_variable_get' expects at least a key to be fetched");
+            Value key = lv.get(0).evalValue(c);
+            if (lv.size() > 1)
+            {
+                ScriptHost.systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
+            }
+            Value res = ScriptHost.systemGlobals.get(key);
+            if (res!=null) return (cc, tt) -> res;
+            return (cc, tt) -> Value.NULL;
+        });
+
+        addLazyFunction("system_variable_set", 2, (c, t, lv) ->
+        {
+            Value key = lv.get(0).evalValue(c);
+            Value value = lv.get(1).evalValue(c);
+            Value res = ScriptHost.systemGlobals.put(key, value);
+            if (res!=null) return (cc, tt) -> res;
+            return (cc, tt) -> Value.NULL;
         });
 
 
