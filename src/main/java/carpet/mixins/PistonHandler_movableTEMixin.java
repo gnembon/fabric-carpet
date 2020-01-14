@@ -88,15 +88,13 @@ public abstract class PistonHandler_movableTEMixin
 
 
     //Get access to the blockstate to check if it is a chest
-    @Shadow @Final private Direction direction;
 
-    @Shadow protected abstract boolean method_11538(BlockPos blockPos_1);
-
-    @Shadow protected static boolean method_23367(Block block_1)
+    @Shadow protected static boolean isBlockSticky(Block block_1)
     {
-        return method_23367(block_1);
+        return isBlockSticky(block_1);
     }
 
+    @Shadow @Final private Direction motionDirection;
     private BlockState blockState_1;
     @Redirect(method = "tryMove",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;", ordinal = 0))
@@ -108,16 +106,18 @@ public abstract class PistonHandler_movableTEMixin
     private BlockState redirectGetBlockState_1_B(World world, BlockPos pos) {
         return blockState_1 = world.getBlockState(pos);
     }
-    @Redirect(method = "tryMove", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/piston/PistonHandler;method_23367(Lnet/minecraft/block/Block;)Z"))
-    //Thanks to Earthcomputer for showing how to redirect FIELD access like this
+    @Redirect(method = "tryMove", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/block/piston/PistonHandler;isBlockSticky(Lnet/minecraft/block/Block;)Z")
+    )
     /**
      * Makes backwards stickyness work with sticky non-slimeblocks as well.
      * @author 2No2Name
      */
     private boolean redirectIsStickyBlock(Block block_1) {
-        if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
+        if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.motionDirection.getOpposite()))
             return true;
-        return method_23367(block_1);
+        return isBlockSticky(block_1);
     }
 
 
