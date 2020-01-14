@@ -10,9 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ThreadValue extends Value
 {
@@ -20,6 +23,7 @@ public class ThreadValue extends Value
     private long id;
     private static long sequence = 0L;
     private static final Map<Value,ThreadPoolExecutor> executorServices = new HashMap<>();
+    private static final Map<Value, Object> locks = new ConcurrentHashMap<>();
 
     public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<LazyValue> args)
     {
@@ -100,4 +104,32 @@ public class ThreadValue extends Value
         }
         return 0;
     }
+
+    public static Object getLock(Value name)
+    {
+        return locks.computeIfAbsent(name, (n) -> new Object());
+    }
+
+
+    public static void shutdown()
+    {
+        for (ExecutorService exec : executorServices.values())
+        {
+            exec.shutdown();
+            try
+            {
+                exec.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            }
+            catch (InterruptedException ignored)
+            {
+            }
+            finally
+            {
+                exec.shutdownNow();
+            }
+        }
+        executorServices.clear();
+        locks.clear();
+    }
+
 }

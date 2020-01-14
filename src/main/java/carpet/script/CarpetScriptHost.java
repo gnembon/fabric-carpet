@@ -267,10 +267,6 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     public void onClose()
     {
-        super.onClose();
-        if (this.saveTimeout > 0)
-            dumpState();
-
         FunctionValue closing = getFunction("__on_close");
         if (closing != null)
         {
@@ -307,7 +303,9 @@ public class CarpetScriptHost extends ScriptHost
                 e.remove();
             }
         }
-
+        if (this.saveTimeout > 0)
+            dumpState();
+        super.onClose();
     }
 
     private void dumpState()
