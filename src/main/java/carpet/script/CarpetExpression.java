@@ -31,6 +31,7 @@ import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
 import net.minecraft.block.BarrierBlock;
 import net.minecraft.block.BedrockBlock;
@@ -619,10 +620,17 @@ public class CarpetExpression
      * <h3><code>structures(pos), structures(pos, structure_name)</code></h3>
      * <p>Returns structure information for a given block position. Note that strucuture information is the same for
      * all the blocks from the same chunk. <code>structures</code> function can be called with a block, or a block and
-     * structure name. In the first case it returns a map of structures at a given position, keyed by structure name,
+     * a structure name. In the first case it returns a map of structures at a given position, keyed by structure name,
      * with values indicating the bounding box of the structure - a pair of two 3-value coords (see examples). When
-     * called with extra structure name, returns list of components for that structure, with their name, direction
+     * called with an extra structure name, returns list of components for that structure, with their name, direction
      * and two sets of coordinates indicating the bounding box of the structure piece.</p>
+     * <h3><code>structure_references(pos), structure_references(pos, structure_name)</code></h3>
+     * <p>Returns structure information that a chunk with a given block position is part of.
+     * <code>structure_references</code> function can be called with a block, or a block and
+     * a structure name. In the first case it returns a list of structure names that give chunk belongs to. When
+     * called with an extra structure name, returns list of positions pointing to the lowest block position in chunks that
+     * hold structure starts for these structures. You can query that chunk structures then to get its bounding boxes.</p>
+
      * <h3><code>suffocates(pos)</code></h3>
      * <p>Boolean function, true if the block causes suffocation.</p>
      * <h3><code>power(pos)</code></h3>
@@ -1235,6 +1243,33 @@ public class CarpetExpression
             chunk.getBiomeArray()[(pos.getX() & 15) | (pos.getZ() & 15) << 4] = biome;
             this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;
+        });
+
+        this.expr.addLazyFunction("structure_references", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            Map<String, LongSet> references = world.getChunk(pos).getStructureReferences();
+            if (lv.size() == locator.offset)
+            {
+                List<Value> referenceList = references.entrySet().stream().
+                        filter(e -> e.getValue()!= null && !e.getValue().isEmpty()).
+                        map(e -> new StringValue(e.getKey())).collect(Collectors.toList());
+                return (_c, _t ) -> ListValue.wrap(referenceList);
+            }
+            String structureName = lv.get(locator.offset).evalValue(c).getString();
+            LongSet structureReferences = references.get(structureName);
+            if (structureReferences == null || structureReferences.isEmpty())
+            {
+                Value ret = ListValue.of();
+                return (_c, _t) -> ret;
+            }
+            Value ret = ListValue.wrap(structureReferences.stream().map(l -> ListValue.of(
+                    new NumericValue(16*ChunkPos.getPackedX(l)),
+                    Value.ZERO,
+                    new NumericValue(16*ChunkPos.getPackedZ(l)))).collect(Collectors.toList()));
+            return (_c, _t) -> ret;
         });
 
         this.expr.addLazyFunction("structures", -1, (c, t, lv) -> {
