@@ -73,7 +73,7 @@ public class CarpetProfiler
     {
         return String.format("%s.%s%s",
                 world.getDimension().getType().toString().replaceFirst("minecraft:", ""),
-                Registry.BLOCK_ENTITY.getId(be.getType()).toString().replaceFirst("minecraft:", ""),
+                Registry.BLOCK_ENTITY_TYPE.getId(be.getType()).toString().replaceFirst("minecraft:", ""),
                 world.isClient ? " (Client)" : "");
     }
 

@@ -241,7 +241,7 @@ public class EntityValue extends Value
         put("immune_to_fire", (e, a) -> new NumericValue(e.isFireImmune()));
 
         put("invulnerable", (e, a) -> new NumericValue(e.isInvulnerable()));
-        put("dimension", (e, a) -> new StringValue(nameFromRegistryId(Registry.DIMENSION.getId(e.dimension))));
+        put("dimension", (e, a) -> new StringValue(nameFromRegistryId(Registry.DIMENSION_TYPE.getId(e.dimension))));
         put("height", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).height));
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
         put("eye_height", (e, a) -> new NumericValue(e.getStandingEyeHeight()));
