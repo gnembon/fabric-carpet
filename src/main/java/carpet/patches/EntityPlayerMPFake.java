@@ -39,7 +39,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             gameprofile = SkullBlockEntity.loadProperties(gameprofile);
         }
         EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn);
-        instance.fixStartingPosition = () -> instance.setPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
+        instance.fixStartingPosition = () -> instance.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
         if (instance.dimension != dimension) //player was logged in in a different dimension
         {

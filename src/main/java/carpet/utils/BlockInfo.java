@@ -202,7 +202,7 @@ public class BlockInfo
     {
         MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIE_PIGMAN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);
-        creature.setPositionAndAngles(pos.getX()+0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
+        creature.refreshPositionAndAngles(pos, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);
         int success = 0;
         for (int i=0; i<1000; i++)

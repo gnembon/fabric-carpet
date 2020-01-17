@@ -2206,7 +2206,7 @@ public class CarpetExpression
             } else {
                 ServerWorld serverWorld = cc.s.getWorld();
                 Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
-                    entity_1x.setPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
+                    entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
                     return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
                 });
                 if (entity_1 == null) {
@@ -3172,7 +3172,7 @@ public class CarpetExpression
             }
 
             ArmorStandEntity armorstand = new ArmorStandEntity(EntityType.ARMOR_STAND, cc.s.getWorld());
-            armorstand.setPositionAndAngles(
+            armorstand.refreshPositionAndAngles(
                     pointLocator.vec.x,
                     pointLocator.vec.y - ((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3)),
                     pointLocator.vec.z,
