@@ -90,6 +90,7 @@ import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.MutableIntBoundingBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -787,6 +788,21 @@ public class CarpetExpression
                 return (c_, t_) -> Value.NULL;
             Value retval = new NBTSerializableValue(tag);
             return (c_, t_) -> retval;
+        });
+
+        this.expr.addLazyFunction("block_poi", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.size() == 0)
+            {
+                throw new InternalExpressionException("Block requires at least one parameter");
+            }
+            BlockPos pos = BlockValue.fromParams(cc, lv, 0, true).block.getPos();
+            PointOfInterestType poi = cc.s.getWorld().getPointOfInterestStorage().getType(pos).orElse(null);
+            if (poi == null)
+                return LazyValue.NULL;
+            Value ret = new StringValue(poi.toString());
+            return (c_, t_) -> ret;
         });
 
         this.expr.addLazyFunction("pos", 1, (c, t, lv) ->
