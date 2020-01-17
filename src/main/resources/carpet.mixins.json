@@ -149,6 +149,7 @@
     "ChunkTicketManager_scarpetMixin",
     "ServerChunkManager_scarpetMixin",
     "StatType_scarpetMixin",
+    "PointOfInterest_scarpetMixin",
 
 
     "PistonBlock_movableTEMixin",
