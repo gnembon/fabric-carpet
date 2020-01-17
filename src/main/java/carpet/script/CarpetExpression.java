@@ -807,11 +807,8 @@ public class CarpetExpression
             if (lv.size() == locator.offset)
             {
                 PointOfInterestType poiType = store.getType(pos).orElse(null);
-                if (poiType == null)
-                {
-                    CarpetSettings.LOG.error("no poi");
-                    return LazyValue.NULL;
-                }
+                if (poiType == null) return LazyValue.NULL;
+
                 // this feels wrong, but I don't want to mix-in more than I really need to.
                 // also distance adds 0.5 to each point which screws up accurate distance calculations
                 // you shoudn't be using POI with that in mind anyways, so I am not worried about it.
