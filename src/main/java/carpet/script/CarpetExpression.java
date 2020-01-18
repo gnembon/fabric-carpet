@@ -851,7 +851,8 @@ public class CarpetExpression
             Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).map( p ->
                     ListValue.of(
                             new StringValue(p.getType().toString()),
-                            new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets())
+                            new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
+                            ListValue.of(new NumericValue(p.getPos().getX()), new NumericValue(p.getPos().getY()), new NumericValue(p.getPos().getZ()))
                     )
             ).collect(Collectors.toList()));
 
