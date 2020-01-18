@@ -92,9 +92,9 @@ import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.village.PointOfInterest;
-import net.minecraft.village.PointOfInterestStorage;
-import net.minecraft.village.PointOfInterestType;
+import net.minecraft.world.poi.PointOfInterest;
+import net.minecraft.world.poi.PointOfInterestStorage;
+import net.minecraft.world.poi.PointOfInterestType;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -2207,7 +2207,7 @@ public class CarpetExpression
             } else {
                 ServerWorld serverWorld = cc.s.getWorld();
                 Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
-                    entity_1x.setPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
+                    entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
                     return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
                 });
                 if (entity_1 == null) {
@@ -3173,7 +3173,7 @@ public class CarpetExpression
             }
 
             ArmorStandEntity armorstand = new ArmorStandEntity(EntityType.ARMOR_STAND, cc.s.getWorld());
-            armorstand.setPositionAndAngles(
+            armorstand.refreshPositionAndAngles(
                     pointLocator.vec.x,
                     pointLocator.vec.y - ((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3)),
                     pointLocator.vec.z,

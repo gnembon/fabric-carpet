@@ -41,7 +41,7 @@ public class SummonCommandMixin
                 SkeletonHorseEntity skeletonHorseEntity_1 = (SkeletonHorseEntity) EntityType.SKELETON_HORSE.create(world);
                 skeletonHorseEntity_1.setTrapped(true);
                 skeletonHorseEntity_1.setBreedingAge(0);
-                skeletonHorseEntity_1.setPosition(vec3d_1.x, vec3d_1.y, vec3d_1.z);
+                skeletonHorseEntity_1.resetPosition(vec3d_1.x, vec3d_1.y, vec3d_1.z);
                 world.spawnEntity(skeletonHorseEntity_1);
             }
             world.addLightning(lightningEntity_1);
