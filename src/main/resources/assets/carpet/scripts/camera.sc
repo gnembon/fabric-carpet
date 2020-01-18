@@ -615,7 +615,8 @@ save_as(file) ->
         point_nbt = nbt('{}');
         point_nbt:'duration' = _:1;
         point_nbt:'type' = _:2;
-        for(_:0, put(point_nbt:'pos',_,_i));
+        for(_:0, put(point_nbt:'pos',str('%.6fd',_),_i)); // need to print to float string
+        //otherwise mojang will interpret 0.0d as 0i and fail to insert
         put(path_nbt:'points', point_nbt, _i);
     );
     store_app_data(path_nbt, file);
