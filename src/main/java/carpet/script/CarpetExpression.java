@@ -6,6 +6,7 @@ import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.ChunkTicketManager_scarpetMixin;
+import carpet.mixins.PointOfInterest_scarpetMixin;
 import carpet.mixins.ServerChunkManager_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.bundled.Module;
@@ -91,6 +92,9 @@ import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.village.PointOfInterest;
+import net.minecraft.village.PointOfInterestStorage;
+import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -789,6 +793,111 @@ public class CarpetExpression
             Value retval = new NBTSerializableValue(tag);
             return (c_, t_) -> retval;
         });
+
+        // poi_get(pos, radius?, type?, occupation?)
+        this.expr.addLazyFunction("poi_get", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.size() == 0)
+            {
+                throw new InternalExpressionException("'poi_get' requires at least one parameter");
+            }
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, true);
+            BlockPos pos = locator.block.getPos();
+            PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
+            if (lv.size() == locator.offset)
+            {
+                PointOfInterestType poiType = store.getType(pos).orElse(null);
+                if (poiType == null) return LazyValue.NULL;
+
+                // this feels wrong, but I don't want to mix-in more than I really need to.
+                // also distance adds 0.5 to each point which screws up accurate distance calculations
+                // you shoudn't be using POI with that in mind anyways, so I am not worried about it.
+                PointOfInterest poi = store.get(
+                        poiType.getCompletionCondition(),
+                        pos,
+                        1,
+                        PointOfInterestStorage.OccupationStatus.ANY
+                ).filter(p -> p.getPos().equals(pos)).findFirst().orElse(null);
+                if (poi == null)
+                    return LazyValue.NULL;
+                Value ret = ListValue.of(
+                        new StringValue(poi.getType().toString()),
+                        new NumericValue(poiType.getTicketCount() - ((PointOfInterest_scarpetMixin)poi).getFreeTickets())
+                );
+                return (_c, _t) -> ret;
+            }
+            long radius = NumericValue.asNumber(lv.get(locator.offset+0).evalValue(c)).getLong();
+            if (radius < 0) return ListValue.lazyEmpty();
+            Predicate<PointOfInterestType> condition = PointOfInterestType.ALWAYS_TRUE;
+            if (locator.offset + 1 < lv.size())
+            {
+                String poiType = lv.get(locator.offset+1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+                if (!"any".equals(poiType))
+                {
+                    PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.get(new Identifier(poiType));
+                    condition = (tt) -> tt == type;
+                }
+            }
+            PointOfInterestStorage.OccupationStatus status = PointOfInterestStorage.OccupationStatus.ANY;
+            if (locator.offset + 2 < lv.size())
+            {
+                String statusString = lv.get(locator.offset+2).evalValue(c).getString().toLowerCase(Locale.ROOT);
+                if ("occupied".equals(statusString))
+                    status = PointOfInterestStorage.OccupationStatus.IS_OCCUPIED;
+                else if ("available".equals(statusString))
+                    status = PointOfInterestStorage.OccupationStatus.HAS_SPACE;
+            }
+
+            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).map( p ->
+                    ListValue.of(
+                            new StringValue(p.getType().toString()),
+                            new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
+                            ListValue.of(new NumericValue(p.getPos().getX()), new NumericValue(p.getPos().getY()), new NumericValue(p.getPos().getZ()))
+                    )
+            ).collect(Collectors.toList()));
+
+            return (c_, t_) -> ret;
+        });
+
+        //poi_set(pos, null) poi_set(pos, type, occupied?,
+        this.expr.addLazyFunction("poi_set", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            if (lv.size() == 0)
+            {
+                throw new InternalExpressionException("'poi_get' requires at least one parameter");
+            }
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, true);
+            BlockPos pos = locator.block.getPos();
+            if (lv.size() < locator.offset)
+                throw new InternalExpressionException("'poi_set' requires the new poi type or null, after position argument");
+            Value poi = lv.get(locator.offset+0).evalValue(c);
+            PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
+            if (poi == Value.NULL)
+            {   // clear poi information
+                if (store.getType(pos).isPresent()) store.remove(pos);
+                return LazyValue.NULL;
+            }
+            String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
+            PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.get(new Identifier(poiTypeString));
+            // solving lack of null with defaulted registries
+            if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiTypeString))
+                throw new InternalExpressionException("unknown POI type: "+poiTypeString);
+            int occupancy = 0;
+            if (locator.offset + 1 < lv.size())
+            {
+                occupancy = (int)NumericValue.asNumber(lv.get(locator.offset + 1).evalValue(c)).getLong();
+                if (occupancy < 0)
+                    throw new InternalExpressionException("Occupancy cannot be negative");
+            }
+            if (store.getType(pos).isPresent()) store.remove(pos);
+            store.add(pos, type);
+            // setting occupancy for a
+            for (int i = 0; i < occupancy; i++) store.getPosition((p) -> p == type, p -> true, pos, 0);
+            return LazyValue.NULL;
+        });
+
 
         this.expr.addLazyFunction("pos", 1, (c, t, lv) ->
         {
