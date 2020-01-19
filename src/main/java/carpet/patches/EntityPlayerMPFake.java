@@ -52,7 +52,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             server.getPlayerManager().sendWorldInfo(instance, worldIn);
             instance.networkHandler.requestTeleport(d0, d1, d2, (float) yaw, (float) pitch);
             instance.interactionManager.setWorld(worldIn);
-            worldIn.method_18211(instance);
+            worldIn.onPlayerChangeDimension(instance);
         }
         instance.setHealth(20.0F);
         instance.removed = false;
