@@ -47,11 +47,12 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             instance.dimension = dimension;
             old_world.removePlayer(instance);
             instance.removed = false;
-            worldIn.spawnEntity(instance);
+            //worldIn.spawnEntity(instance);
             instance.setWorld(worldIn);
-            server.getPlayerManager().sendWorldInfo(instance, old_world);
+            server.getPlayerManager().sendWorldInfo(instance, worldIn);
             instance.networkHandler.requestTeleport(d0, d1, d2, (float) yaw, (float) pitch);
             instance.interactionManager.setWorld(worldIn);
+            worldIn.method_18211(instance);
         }
         instance.setHealth(20.0F);
         instance.removed = false;
