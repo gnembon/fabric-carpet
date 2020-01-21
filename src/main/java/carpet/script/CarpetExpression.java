@@ -3006,7 +3006,8 @@ public class CarpetExpression
      * all extra position / biome / random requirements for structure / feature placement, but some hardcoded limitations
      * may still cause some of strucutures/features not to place. Some features require special blocks to be present, like
      * coral -&gt; water or ice spikes -&gt; snow block, and for some features, like fossils, placement is all sorts of
-     * messed up.</p>
+     * messed up. This can be partially avoided for structures by setting their structure information via <code>structure_set</code>
+     * which sets it without looking into world blocks, and then use <code>plop</code> to fill it with blocks. This may, or may not work</p>
      * <p>
      * All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension
      * itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs
