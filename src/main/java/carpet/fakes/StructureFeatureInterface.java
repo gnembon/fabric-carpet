@@ -8,5 +8,6 @@ import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
 public interface StructureFeatureInterface
 {
     boolean plopAnywhere(ServerWorld world, BlockPos pos);
-    boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator);
+    boolean gridAnywhere(ServerWorld world, BlockPos pos);
+    boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator, boolean wireOnly);
 }
