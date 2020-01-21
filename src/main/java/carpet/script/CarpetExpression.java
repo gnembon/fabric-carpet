@@ -498,8 +498,16 @@ public class CarpetExpression
      *     place_item('piston,x,y,z,'down') // places a piston facing down
      *     place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
      * </pre>
-     * <h3><code>biome(pos)</code></h3>
-     * <p>returns biome at that block position.</p>
+     * <h3><code>set_poi(pos, type, occupancy?)</code></h3>
+     * <p>Sets a Point of Interest (POI) of a specified type with optional custom occupancy. By default new POIs are not
+     * occupied. If type is <code>null</code>, POI at position is removed. In any case, previous POI is also removed.
+     * Available POI types are:</p>
+     * <ul>
+     *     <li><code>'unemployed', 'armorer', 'butcher', 'cartographer', 'cleric', 'farmer', 'fisherman', 'fletcher', 'leatherworker',
+     *     'librarian', 'mason', 'nitwit', 'shepherd', 'toolsmith', 'weaponsmith', 'home', 'meeting'</code></li>
+     * </ul>
+     * <p>Interestingly, <code>unemployed</code>, and <code>nitwit</code> are not used in the game, meaning, they could be used
+     * as permanent spatial markers for scarpet apps. <code>meeting</code> is the only one with increased max occupancy of 6.</p>
      * <h3><code>set_biome(pos, biome_name)</code></h3>
      * <p>changes biome at that block position.</p>
      * <h3><code>update(pos)</code></h3>
@@ -555,6 +563,22 @@ public class CarpetExpression
      * <pre>
      *     block_data(x,y,z) =&gt; '{TransferCooldown:0,x:450,y:68, ... }'
      * </pre>
+     * <h3><code>poi(pos), poi(pos, radius), poi(pos, radius, status)</code></h3>
+     * <p>Queries a POI (Point of Interest) at a given position, returning <code>null</code> if none is found, or tuple of
+     * poi type and its occupancy load. With optional <code>radius</code> and <code>status</code>, returns a list of POIs
+     * around <code>pos</code> within a given <code>radius</code>. If <code>status</code> is specified (either 'available',
+     * or 'occupied') returns only POIs with that status. The return format is again, poi type, occupancy load, and extra tripple of
+     * coordinates.</p>
+     * <p>Querying for POIs using the radius is intended use of POI mechanics and ability of accessing individual POIs via
+     * <code>poi(pos)</code> in only provided for completness.</p>
+     * <pre>
+     *     poi(x,y,z) =&gt; null  // nothing set at position
+     *     poi(x,y,z) =&gt; ['meeting',3]  // its a bell-type meeting point occupied by 3 villagers
+     *     poi(x,y,z,5) =&gt; []  // nothing around
+     *     poi(x,y,z,5) =&gt; [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two portal blocks in the range
+     * </pre>
+     * <h3><code>biome(pos)</code></h3>
+     * <p>returns biome at that block position.</p>
      * <h3><code>solid(pos)</code></h3>
      * <p>Boolean function, true if the block is solid</p>
      * <h3> <code>air(pos)</code></h3>
@@ -795,12 +819,12 @@ public class CarpetExpression
         });
 
         // poi_get(pos, radius?, type?, occupation?)
-        this.expr.addLazyFunction("poi_get", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("poi", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0)
             {
-                throw new InternalExpressionException("'poi_get' requires at least one parameter");
+                throw new InternalExpressionException("'poi' requires at least one parameter");
             }
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, true);
             BlockPos pos = locator.block.getPos();
@@ -861,17 +885,17 @@ public class CarpetExpression
         });
 
         //poi_set(pos, null) poi_set(pos, type, occupied?,
-        this.expr.addLazyFunction("poi_set", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("set_poi", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0)
             {
-                throw new InternalExpressionException("'poi_get' requires at least one parameter");
+                throw new InternalExpressionException("'set_poi' requires at least one parameter");
             }
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, true);
             BlockPos pos = locator.block.getPos();
             if (lv.size() < locator.offset)
-                throw new InternalExpressionException("'poi_set' requires the new poi type or null, after position argument");
+                throw new InternalExpressionException("'set_poi' requires the new poi type or null, after position argument");
             Value poi = lv.get(locator.offset+0).evalValue(c);
             PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
             if (poi == Value.NULL)
@@ -883,7 +907,7 @@ public class CarpetExpression
             PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.get(new Identifier(poiTypeString));
             // solving lack of null with defaulted registries
             if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiTypeString))
-                throw new InternalExpressionException("unknown POI type: "+poiTypeString);
+                throw new InternalExpressionException("Unknown POI type: "+poiTypeString);
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
@@ -894,7 +918,15 @@ public class CarpetExpression
             if (store.getType(pos).isPresent()) store.remove(pos);
             store.add(pos, type);
             // setting occupancy for a
-            for (int i = 0; i < occupancy; i++) store.getPosition((p) -> p == type, p -> true, pos, 0);
+            // again - don't want to mix in unnecessarily - peeps not gonna use it that often so not worries about it.
+            if (occupancy > 0)
+            {
+                int finalO = occupancy;
+                store.get((tt) -> tt==type, pos, 1, PointOfInterestStorage.OccupationStatus.ANY
+                ).filter(p -> p.getPos().equals(pos)).findFirst().ifPresent(p -> {
+                    for (int i=0; i < finalO; i++) ((PointOfInterest_scarpetMixin)p).callReserveTicket();
+                });
+            }
             return LazyValue.NULL;
         });
 
