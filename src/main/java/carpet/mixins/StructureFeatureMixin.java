@@ -37,15 +37,15 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
     {
         return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), false);
     }
-    @Override
-    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator)
+
     @Override
     public boolean gridAnywhere(ServerWorld world, BlockPos pos)
     {
         return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), true);
     }
 
-    public boolean plopAnywhere(IWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator, boolean wireOnly)
+    @Override
+    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator, boolean wireOnly)
     {
         if (world.isClient())
             return false;
@@ -68,10 +68,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             BlockBox box = structurestart.getBoundingBox();
             if (!wireOnly)
             {
-                structurestart.generateStructure(
-                        world,
-                        generator,
-                    rand,
+                structurestart.generateStructure(world, generator, rand,
                     new BlockBox(
                                 pos.getX() - this.getRadius() * 16,
                                 pos.getZ() - this.getRadius() * 16,

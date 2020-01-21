@@ -1481,7 +1481,7 @@ public class CarpetExpression
             String structureName = FeatureGenerator.buildingToStructure.get(simpleStructureName);
 
             Value[] result = new Value[]{Value.NULL};
-            ((CarpetContext) c).s.getMinecraftServer().executeSync(() ->
+            ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
             {
                 Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
                 if (lv.size() == locator.offset + 1)
@@ -1502,7 +1502,7 @@ public class CarpetExpression
                     }
                     StructureStart start = structures.get(structureName);
                     ChunkPos structureChunkPos = new ChunkPos(start.getChunkX(), start.getChunkZ());
-                    MutableIntBoundingBox box = start.getBoundingBox();
+                    BlockBox box = start.getBoundingBox();
                     for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
                     {
                         for (int chz = box.minZ / 16; chz <= box.maxZ / 16; chz++)

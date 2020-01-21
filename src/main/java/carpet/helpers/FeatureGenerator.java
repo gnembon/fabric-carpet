@@ -134,7 +134,7 @@ public class FeatureGenerator
     }
     public static void noop() {System.out.println("boo");}
 
-    public static Boolean gridStructure(String name, World world, BlockPos pos)
+    public static Boolean gridStructure(String name, ServerWorld world, BlockPos pos)
     {
         if (gridMap.containsKey(name))
             return gridMap.get(name).plop(world, pos);
