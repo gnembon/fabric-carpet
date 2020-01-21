@@ -646,7 +646,7 @@ public class CarpetExpression
      * and <code>structure_starts</code>. Returns <code>null</code> if the chunk is not in memory unless called with optional
      * <code>true</code>.</p>
      * <h3><code>structures(pos), structures(pos, structure_name)</code></h3>
-     * <p>Returns structure information for a given block position. Note that strucuture information is the same for
+     * <p>Returns structure information for a given block position. Note that structure information is the same for
      * all the blocks from the same chunk. <code>structures</code> function can be called with a block, or a block and
      * a structure name. In the first case it returns a map of structures at a given position, keyed by structure name,
      * with values indicating the bounding box of the structure - a pair of two 3-value coords (see examples). When
@@ -658,6 +658,11 @@ public class CarpetExpression
      * a structure name. In the first case it returns a list of structure names that give chunk belongs to. When
      * called with an extra structure name, returns list of positions pointing to the lowest block position in chunks that
      * hold structure starts for these structures. You can query that chunk structures then to get its bounding boxes.</p>
+     * <h3><code>structure_set(pos, structure_name), structure_set(pos, structure_name, null)</code></h3>
+     * <p>Creates or removes structure information of a structure associated with a chunk of <code>pos</code>.
+     * Unlike <code>plop, blocks are not placed in the world, only structure information is set. For the game this is a fully
+     * functional structure even if blocks are not set.</code>. To remove structure a given point is in,
+     * use <code>structure_references</code> to find where current structure starts.</p>
 
      * <h3><code>suffocates(pos)</code></h3>
      * <p>Boolean function, true if the block causes suffocation.</p>
@@ -899,7 +904,11 @@ public class CarpetExpression
             PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
             if (poi == Value.NULL)
             {   // clear poi information
-                if (store.getType(pos).isPresent()) store.remove(pos);
+                if (store.getType(pos).isPresent())
+                {
+                    store.remove(pos);
+                    return LazyValue.TRUE;
+                }
                 return LazyValue.NULL;
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
@@ -926,7 +935,7 @@ public class CarpetExpression
                     for (int i=0; i < finalO; i++) ((PointOfInterest_scarpetMixin)p).callReserveTicket();
                 });
             }
-            return LazyValue.NULL;
+            return LazyValue.TRUE;
         });
 
 
@@ -1396,10 +1405,11 @@ public class CarpetExpression
             {
                 List<Value> referenceList = references.entrySet().stream().
                         filter(e -> e.getValue()!= null && !e.getValue().isEmpty()).
-                        map(e -> new StringValue(e.getKey())).collect(Collectors.toList());
+                        map(e -> new StringValue(FeatureGenerator.structureToBuilding.get(e.getKey()).get(0))).collect(Collectors.toList());
                 return (_c, _t ) -> ListValue.wrap(referenceList);
             }
-            String structureName = lv.get(locator.offset).evalValue(c).getString();
+            String simpleStructureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            String structureName = FeatureGenerator.buildingToStructure.get(simpleStructureName);
             LongSet structureReferences = references.get(structureName);
             if (structureReferences == null || structureReferences.isEmpty())
             {
@@ -1422,7 +1432,7 @@ public class CarpetExpression
             Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
             if (lv.size() == locator.offset)
             {
-                Map<Value, Value> strucutureList = new HashMap<>();
+                Map<Value, Value> structureList = new HashMap<>();
                 for (Map.Entry<String, StructureStart> entry : structures.entrySet())
                 {
                     StructureStart start = entry.getValue();
@@ -1431,13 +1441,13 @@ public class CarpetExpression
                     MutableIntBoundingBox box = start.getBoundingBox();
                     ListValue coord1 = ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ));
                     ListValue coord2 = ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ));
-                    strucutureList.put(new StringValue(entry.getKey()), ListValue.of(coord1, coord2));
+                    structureList.put(new StringValue(FeatureGenerator.structureToBuilding.get(entry.getKey()).get(0)), ListValue.of(coord1, coord2));
                 }
-                Value ret = MapValue.wrap(strucutureList);
+                Value ret = MapValue.wrap(structureList);
                 return (_c, _t) -> ret;
             }
-            String structureName = lv.get(locator.offset).evalValue(c).getString();
-            StructureStart start = structures.get(structureName);
+            String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            StructureStart start = structures.get(FeatureGenerator.buildingToStructure.get(structureName));
             if (start == null || start == StructureStart.DEFAULT)
                 return (_c, _t) -> Value.NULL;
             List<Value> pieces = new ArrayList<>();
@@ -1454,8 +1464,61 @@ public class CarpetExpression
             Value ret = ListValue.wrap(pieces);
             return (_c, _t) -> ret;
         });
-        // need get_biome
 
+        this.expr.addLazyFunction("structure_set", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+
+            if (lv.size() == locator.offset)
+                throw new InternalExpressionException("'structure_set requires at least position and a structure name");
+            String simpleStructureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            String structureName = FeatureGenerator.buildingToStructure.get(simpleStructureName);
+
+            Value[] result = new Value[]{Value.NULL};
+            ((CarpetContext) c).s.getMinecraftServer().executeSync(() ->
+            {
+                Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
+                if (lv.size() == locator.offset + 1)
+                {
+                    //if (newValue.getString().equalsIgnoreCase("default"))
+                    // spawn default structure for location
+                    Boolean res = FeatureGenerator.gridStructure(simpleStructureName, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
+                    if (res == null) return;
+                    result[0] = res?Value.TRUE:Value.FALSE;
+                    return;
+                }
+                Value newValue = lv.get(locator.offset+1).evalValue(c);
+                if (newValue instanceof NullValue) // remove structure
+                {
+                    if (!structures.containsKey(structureName))
+                    {
+                        return;
+                    }
+                    StructureStart start = structures.get(structureName);
+                    ChunkPos structureChunkPos = new ChunkPos(start.getChunkX(), start.getChunkZ());
+                    MutableIntBoundingBox box = start.getBoundingBox();
+                    for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
+                    {
+                        for (int chz = box.minZ / 16; chz <= box.maxZ / 16; chz++)
+                        {
+                            ChunkPos chpos = new ChunkPos(chx, chz);
+                            // getting a chunk will convert it to full, allowing to modify references
+                            Map<String, LongSet> references = world.getChunk(chpos.getCenterBlockPos()).getStructureReferences();
+                            if (references.containsKey(structureName) && references.get(structureName) != null)
+                                references.get(structureName).remove(structureChunkPos.toLong());
+                        }
+                    }
+                    structures.remove(structureName);
+                    result[0] = Value.TRUE;
+                }
+            });
+            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
+            return (_c, _t) -> ret;
+        });
     }
 
     /**

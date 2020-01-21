@@ -32,7 +32,10 @@ import net.minecraft.world.gen.feature.ShipwreckFeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.VillageFeatureConfig;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FeatureGenerator
@@ -60,6 +63,14 @@ public class FeatureGenerator
 
     private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
     {
+        return setupCustomStructure(structure, conf, biome, false);
+    }
+    private static Thing gridCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
+    {
+        return setupCustomStructure(structure, conf, biome, true);
+    }
+    private static Thing setupCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome, boolean wireOnly)
+        {
         return (w, p) -> {
             ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.getChunkManager().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
             {
@@ -84,7 +95,7 @@ public class FeatureGenerator
             };
 
 
-            return ((StructureFeatureInterface)structure).plopAnywhere(w, p, chunkgen);
+            return ((StructureFeatureInterface)structure).plopAnywhere(w, p, chunkgen, wireOnly);
         };
     }
 
@@ -95,9 +106,79 @@ public class FeatureGenerator
         return null;
     }
 
+    public static Boolean gridStructure(String name, World world, BlockPos pos)
+    {
+        if (gridMap.containsKey(name))
+            return gridMap.get(name).plop(world, pos);
+        return null;
+    }
+
+
+    public static final Map<String, List<String>> structureToBuilding = new HashMap<>();
+    public static final Map<String, String> buildingToStructure = new HashMap<>();
+    static
+    {
+        structureToBuilding.put("Monument", Collections.singletonList("monument"));
+        structureToBuilding.put("EndCity", Collections.singletonList("end_city"));
+        structureToBuilding.put("Ocean_Ruin", Arrays.asList("oceanruin", "oceanruin_warm", "oceanruin_small", "oceanruin_warm_small", "oceanruin_tall", "oceanruin_warm_tall"));
+        structureToBuilding.put("Village", Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
+        structureToBuilding.put("Mansion", Collections.singletonList("mansion"));
+        structureToBuilding.put("Buried_Treasure", Collections.singletonList("treasure"));
+        structureToBuilding.put("Swamp_Hut", Collections.singletonList("witchhut"));
+        structureToBuilding.put("Stronghold", Collections.singletonList("stronghold"));
+        structureToBuilding.put("Desert_Pyramid", Collections.singletonList("desert_temple"));
+        structureToBuilding.put("Jungle_Pyramid", Collections.singletonList("jungle_temple"));
+        structureToBuilding.put("Shipwreck", Arrays.asList("shipwreck", "shipwreck2"));
+        structureToBuilding.put("Pillager_Outpost", Collections.singletonList("pillager_outpost"));
+        structureToBuilding.put("Mineshaft", Arrays.asList("mineshaft", "mineshaft_mesa"));
+        structureToBuilding.put("Igloo", Collections.singletonList("igloo"));
+
+        structureToBuilding.forEach((key, value) -> value.forEach(el -> buildingToStructure.put(el, key)));
+    }
+
+
+    private static final Map<String, Thing> gridMap = new HashMap<String, Thing>() {{
+        put("monument",  ((StructureFeatureInterface)Feature.OCEAN_MONUMENT)::gridAnywhere);
+        put("fortress", ((StructureFeatureInterface)Feature.NETHER_BRIDGE)::gridAnywhere);
+        put("mansion", ((StructureFeatureInterface)Feature.WOODLAND_MANSION)::gridAnywhere);
+        put("jungle_temple", ((StructureFeatureInterface)Feature.JUNGLE_TEMPLE)::gridAnywhere);
+        put("desert_temple", ((StructureFeatureInterface)Feature.DESERT_PYRAMID)::gridAnywhere);
+        put("end_city", ((StructureFeatureInterface)Feature.END_CITY)::gridAnywhere);
+        put("igloo", ((StructureFeatureInterface)Feature.IGLOO)::gridAnywhere);
+        put("shipwreck", gridCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
+        put("shipwreck2", gridCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
+        put("witchhut", ((StructureFeatureInterface)Feature.SWAMP_HUT)::gridAnywhere);
+        put("stronghold", ((StructureFeatureInterface)Feature.STRONGHOLD)::gridAnywhere);
+
+        put("oceanruin_small", gridCustomStructure(Feature.OCEAN_RUIN,
+                new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 0.0F, 0.5F), Biomes.PLAINS));
+        put("oceanruin_warm_small", gridCustomStructure(Feature.OCEAN_RUIN,
+                new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 0.0F, 0.5F), Biomes.PLAINS));
+        put("oceanruin_tall", gridCustomStructure(Feature.OCEAN_RUIN,
+                new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 0.0F), Biomes.PLAINS));
+        put("oceanruin_warm_tall", gridCustomStructure(Feature.OCEAN_RUIN,
+                new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 0.0F), Biomes.PLAINS));
+        put("oceanruin", gridCustomStructure(Feature.OCEAN_RUIN,
+                new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 1.0F), Biomes.PLAINS));
+        put("oceanruin_warm", gridCustomStructure(Feature.OCEAN_RUIN,
+                new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 1.0F), Biomes.PLAINS));
+        put("treasure", ((StructureFeatureInterface)Feature.BURIED_TREASURE)::gridAnywhere);
+
+        put("pillager_outpost", ((StructureFeatureInterface)Feature.PILLAGER_OUTPOST)::gridAnywhere);
+
+
+        put("mineshaft", gridCustomStructure(Feature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.NORMAL), Biomes.PLAINS));
+        put("mineshaft_mesa", gridCustomStructure(Feature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.MESA), Biomes.PLAINS));
+
+        put("village", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/plains/town_centers",6), Biomes.PLAINS));
+        put("village_desert", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/desert/town_centers", 6), Biomes.PLAINS));
+        put("village_savanna", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/savanna/town_centers", 6), Biomes.PLAINS));
+        put("village_taiga", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
+        put("village_snowy", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
+
+    }};
+
     private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
-
-
         put("oak", simplePlop(Feature.NORMAL_TREE));
         put("oak_large", simplePlop(Feature.FANCY_TREE));
         put("birch", simplePlop(Feature.BIRCH_TREE));

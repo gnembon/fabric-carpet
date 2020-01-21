@@ -34,9 +34,15 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
     @Override
     public boolean plopAnywhere(IWorld world, BlockPos pos)
     {
-        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator());
+        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), false);
     }
-    public boolean plopAnywhere(IWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator)
+    @Override
+    public boolean gridAnywhere(IWorld world, BlockPos pos)
+    {
+        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), true);
+    }
+
+    public boolean plopAnywhere(IWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator, boolean wireOnly)
     {
         if (world.isClient())
             return false;
@@ -48,7 +54,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             int k = pos.getZ() >> 4;
             long chId = ChunkPos.toLong(j, k);
             StructureStart structurestart = forceStructureStart(world, generator, rand, chId);
-            if (structurestart == null || structurestart == StructureStart.DEFAULT)
+            if (structurestart == StructureStart.DEFAULT)
             {
                 CarpetSettings.skipGenerationChecks = false;
                 return false;
@@ -58,16 +64,19 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             world.getChunk(j, k).addStructureReference(this.getName(), chId);  //, ChunkStatus.STRUCTURE_STARTS
 
             MutableIntBoundingBox box = structurestart.getBoundingBox();
-            structurestart.generateStructure(
-                    world,
-                    rand,
-                    new MutableIntBoundingBox(
-                            pos.getX() - this.getRadius()*16,
-                            pos.getZ() - this.getRadius()*16,
-                            pos.getX() + (this.getRadius()+1)*16,
-                            pos.getZ() + (1+this.getRadius())*16),
-                    new ChunkPos(j, k)
-            );
+            if (!wireOnly)
+            {
+                structurestart.generateStructure(
+                        world,
+                        rand,
+                        new MutableIntBoundingBox(
+                                pos.getX() - this.getRadius() * 16,
+                                pos.getZ() - this.getRadius() * 16,
+                                pos.getX() + (this.getRadius() + 1) * 16,
+                                pos.getZ() + (1 + this.getRadius()) * 16),
+                        new ChunkPos(j, k)
+                );
+            }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
 
             int i = getRadius();
@@ -93,7 +102,10 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             CarpetSettings.skipGenerationChecks = false;
             return false;
         }
-        CarpetSettings.skipGenerationChecks = false;
+        finally
+        {
+            CarpetSettings.skipGenerationChecks = false;
+        }
         return true;
     }
 
