@@ -504,10 +504,10 @@ public class CarpetExpression
      * Available POI types are:</p>
      * <ul>
      *     <li><code>'unemployed', 'armorer', 'butcher', 'cartographer', 'cleric', 'farmer', 'fisherman', 'fletcher', 'leatherworker',
-     *     'librarian', 'mason', 'nitwit', 'shepherd', 'toolsmith', 'weaponsmith', 'home', 'meeting'</code></li>
+     *     'librarian', 'mason', 'nitwit', 'shepherd', 'toolsmith', 'weaponsmith', 'home', 'meeting', 'beehive', 'bee_nest', 'nether_portal'</code></li>
      * </ul>
      * <p>Interestingly, <code>unemployed</code>, and <code>nitwit</code> are not used in the game, meaning, they could be used
-     * as permanent spatial markers for scarpet apps. <code>meeting</code> is the only one with increased max occupancy of 6.</p>
+     * as permanent spatial markers for scarpet apps. <code>meeting</code> is the only one with increased max occupancy of 32.</p>
      * <h3><code>set_biome(pos, biome_name)</code></h3>
      * <p>changes biome at that block position.</p>
      * <h3><code>update(pos)</code></h3>
