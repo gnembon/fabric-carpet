@@ -2992,19 +2992,19 @@ public class CarpetExpression
      * </ul>
      * <p>For the options of <code>entry</code>, consult your statistics page, or give it a guess.</p>
      * <p>The call will return <code>null</code> if the statistics options are incorrect, or player didn't get these
-     * in their history. If the player encountered the statisitic, or game created for him empty one, it will
+     * in their history. If the player encountered the statistic, or game created for him empty one, it will
      * return a number. Scarpet will not affect the entries of the statistics, even if it is just creating empty ones.
-     * With <code>null</code> response it could either mean your input is wrone, or statistic has effectively
+     * With <code>null</code> response it could either mean your input is wrong, or statistic has effectively
      * a value of <code>0</code>.</p>
      * <h3><code>plop(pos, what)</code></h3>
      * <p>Plops a structure or a feature at a given <code>pos</code>, so block, triple position coordinates
      * or a list of coordinates. To <code>what</code> gets plopped and exactly where it often depends on the
      * feature or structure itself. For example, all structures are chunk aligned, and often span multiple chunks.
-     * Repeated calls to plop a structure in the same chunk would result either in the same strucuture generated on
+     * Repeated calls to plop a structure in the same chunk would result either in the same structure generated on
      * top of each other, or with different state, but same position. Most
      * structures generate at specific altitudes, which are hardcoded, or with certain blocks around them. API will cancel
      * all extra position / biome / random requirements for structure / feature placement, but some hardcoded limitations
-     * may still cause some of strucutures/features not to place. Some features require special blocks to be present, like
+     * may still cause some of structures/features not to place. Some features require special blocks to be present, like
      * coral -&gt; water or ice spikes -&gt; snow block, and for some features, like fossils, placement is all sorts of
      * messed up. This can be partially avoided for structures by setting their structure information via <code>structure_set</code>
      * which sets it without looking into world blocks, and then use <code>plop</code> to fill it with blocks. This may, or may not work</p>
