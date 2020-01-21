@@ -658,10 +658,10 @@ public class CarpetExpression
      * a structure name. In the first case it returns a list of structure names that give chunk belongs to. When
      * called with an extra structure name, returns list of positions pointing to the lowest block position in chunks that
      * hold structure starts for these structures. You can query that chunk structures then to get its bounding boxes.</p>
-     * <h3><code>structure_set(pos, structure_name), structure_set(pos, structure_name, null)</code></h3>
+     * <h3><code>set_structure(pos, structure_name), set_structure(pos, structure_name, null)</code></h3>
      * <p>Creates or removes structure information of a structure associated with a chunk of <code>pos</code>.
-     * Unlike <code>plop, blocks are not placed in the world, only structure information is set. For the game this is a fully
-     * functional structure even if blocks are not set.</code>. To remove structure a given point is in,
+     * Unlike <code>plop</code>, blocks are not placed in the world, only structure information is set. For the game this is a fully
+     * functional structure even if blocks are not set. To remove structure a given point is in,
      * use <code>structure_references</code> to find where current structure starts.</p>
 
      * <h3><code>suffocates(pos)</code></h3>
@@ -826,11 +826,8 @@ public class CarpetExpression
         this.expr.addLazyFunction("poi", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
-            if (lv.size() == 0)
-            {
-                throw new InternalExpressionException("'poi' requires at least one parameter");
-            }
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, true);
+            if (lv.size() == 0) throw new InternalExpressionException("'poi' requires at least one parameter");
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, false);
             BlockPos pos = locator.block.getPos();
             PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
             if (lv.size() == locator.offset)
@@ -864,6 +861,7 @@ public class CarpetExpression
                 if (!"any".equals(poiType))
                 {
                     PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.get(new Identifier(poiType));
+                    if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiType)) return LazyValue.NULL;
                     condition = (tt) -> tt == type;
                 }
             }
@@ -875,6 +873,8 @@ public class CarpetExpression
                     status = PointOfInterestStorage.OccupationStatus.IS_OCCUPIED;
                 else if ("available".equals(statusString))
                     status = PointOfInterestStorage.OccupationStatus.HAS_SPACE;
+                else
+                    return LazyValue.NULL;
             }
 
             Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).map( p ->
@@ -892,14 +892,10 @@ public class CarpetExpression
         this.expr.addLazyFunction("set_poi", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
-            if (lv.size() == 0)
-            {
-                throw new InternalExpressionException("'set_poi' requires at least one parameter");
-            }
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, true);
+            if (lv.size() == 0) throw new InternalExpressionException("'set_poi' requires at least one parameter");
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, false);
             BlockPos pos = locator.block.getPos();
-            if (lv.size() < locator.offset)
-                throw new InternalExpressionException("'set_poi' requires the new poi type or null, after position argument");
+            if (lv.size() < locator.offset) throw new InternalExpressionException("'set_poi' requires the new poi type or null, after position argument");
             Value poi = lv.get(locator.offset+0).evalValue(c);
             PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
             if (poi == Value.NULL)
@@ -909,19 +905,17 @@ public class CarpetExpression
                     store.remove(pos);
                     return LazyValue.TRUE;
                 }
-                return LazyValue.NULL;
+                return LazyValue.FALSE;
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
             PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.get(new Identifier(poiTypeString));
             // solving lack of null with defaulted registries
-            if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiTypeString))
-                throw new InternalExpressionException("Unknown POI type: "+poiTypeString);
+            if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiTypeString)) throw new InternalExpressionException("Unknown POI type: "+poiTypeString);
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
                 occupancy = (int)NumericValue.asNumber(lv.get(locator.offset + 1).evalValue(c)).getLong();
-                if (occupancy < 0)
-                    throw new InternalExpressionException("Occupancy cannot be negative");
+                if (occupancy < 0) throw new InternalExpressionException("Occupancy cannot be negative");
             }
             if (store.getType(pos).isPresent()) store.remove(pos);
             store.add(pos, type);
@@ -1405,17 +1399,14 @@ public class CarpetExpression
             {
                 List<Value> referenceList = references.entrySet().stream().
                         filter(e -> e.getValue()!= null && !e.getValue().isEmpty()).
-                        map(e -> new StringValue(FeatureGenerator.structureToBuilding.get(e.getKey()).get(0))).collect(Collectors.toList());
+                        map(e -> new StringValue(FeatureGenerator.structureToFeature.get(e.getKey()).get(0))).collect(Collectors.toList());
                 return (_c, _t ) -> ListValue.wrap(referenceList);
             }
             String simpleStructureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            String structureName = FeatureGenerator.buildingToStructure.get(simpleStructureName);
+            String structureName = FeatureGenerator.featureToStructure.get(simpleStructureName);
+            if (structureName == null) return LazyValue.NULL;
             LongSet structureReferences = references.get(structureName);
-            if (structureReferences == null || structureReferences.isEmpty())
-            {
-                Value ret = ListValue.of();
-                return (_c, _t) -> ret;
-            }
+            if (structureReferences == null || structureReferences.isEmpty()) return ListValue.lazyEmpty();
             Value ret = ListValue.wrap(structureReferences.stream().map(l -> ListValue.of(
                     new NumericValue(16*ChunkPos.getPackedX(l)),
                     Value.ZERO,
@@ -1441,15 +1432,14 @@ public class CarpetExpression
                     MutableIntBoundingBox box = start.getBoundingBox();
                     ListValue coord1 = ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ));
                     ListValue coord2 = ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ));
-                    structureList.put(new StringValue(FeatureGenerator.structureToBuilding.get(entry.getKey()).get(0)), ListValue.of(coord1, coord2));
+                    structureList.put(new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)), ListValue.of(coord1, coord2));
                 }
                 Value ret = MapValue.wrap(structureList);
                 return (_c, _t) -> ret;
             }
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            StructureStart start = structures.get(FeatureGenerator.buildingToStructure.get(structureName));
-            if (start == null || start == StructureStart.DEFAULT)
-                return (_c, _t) -> Value.NULL;
+            StructureStart start = structures.get(FeatureGenerator.featureToStructure.get(structureName));
+            if (start == null || start == StructureStart.DEFAULT) return LazyValue.NULL;
             List<Value> pieces = new ArrayList<>();
             for (StructurePiece piece : start.getChildren())
             {
@@ -1465,7 +1455,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("structure_set", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("set_structure", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
@@ -1474,19 +1464,19 @@ public class CarpetExpression
             BlockPos pos = locator.block.getPos();
 
             if (lv.size() == locator.offset)
-                throw new InternalExpressionException("'structure_set requires at least position and a structure name");
-            String simpleStructureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            String structureName = FeatureGenerator.buildingToStructure.get(simpleStructureName);
-
+                throw new InternalExpressionException("'set_structure requires at least position and a structure name");
+            String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            String structureId = FeatureGenerator.featureToStructure.get(structureName);
+            if (structureId == null) throw new InternalExpressionException("Unknown structure: "+structureName);
+            // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
+            // technically a world modification. Even if we could let it slide, we will still park it
             ((CarpetContext) c).s.getMinecraftServer().executeSync(() ->
             {
                 Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
                 if (lv.size() == locator.offset + 1)
                 {
-                    //if (newValue.getString().equalsIgnoreCase("default"))
-                    // spawn default structure for location
-                    Boolean res = FeatureGenerator.gridStructure(simpleStructureName, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
+                    Boolean res = FeatureGenerator.gridStructure(structureName, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
                     if (res == null) return;
                     result[0] = res?Value.TRUE:Value.FALSE;
                     return;
@@ -1494,11 +1484,11 @@ public class CarpetExpression
                 Value newValue = lv.get(locator.offset+1).evalValue(c);
                 if (newValue instanceof NullValue) // remove structure
                 {
-                    if (!structures.containsKey(structureName))
+                    if (!structures.containsKey(structureId))
                     {
                         return;
                     }
-                    StructureStart start = structures.get(structureName);
+                    StructureStart start = structures.get(structureId);
                     ChunkPos structureChunkPos = new ChunkPos(start.getChunkX(), start.getChunkZ());
                     MutableIntBoundingBox box = start.getBoundingBox();
                     for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
@@ -1508,11 +1498,11 @@ public class CarpetExpression
                             ChunkPos chpos = new ChunkPos(chx, chz);
                             // getting a chunk will convert it to full, allowing to modify references
                             Map<String, LongSet> references = world.getChunk(chpos.getCenterBlockPos()).getStructureReferences();
-                            if (references.containsKey(structureName) && references.get(structureName) != null)
-                                references.get(structureName).remove(structureChunkPos.toLong());
+                            if (references.containsKey(structureId) && references.get(structureId) != null)
+                                references.get(structureId).remove(structureChunkPos.toLong());
                         }
                     }
-                    structures.remove(structureName);
+                    structures.remove(structureId);
                     result[0] = Value.TRUE;
                 }
             });
@@ -3004,7 +2994,7 @@ public class CarpetExpression
      * all extra position / biome / random requirements for structure / feature placement, but some hardcoded limitations
      * may still cause some of structures/features not to place. Some features require special blocks to be present, like
      * coral -&gt; water or ice spikes -&gt; snow block, and for some features, like fossils, placement is all sorts of
-     * messed up. This can be partially avoided for structures by setting their structure information via <code>structure_set</code>
+     * messed up. This can be partially avoided for structures by setting their structure information via <code>set_structure</code>
      * which sets it without looking into world blocks, and then use <code>plop</code> to fill it with blocks. This may, or may not work</p>
      * <p>
      * All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension

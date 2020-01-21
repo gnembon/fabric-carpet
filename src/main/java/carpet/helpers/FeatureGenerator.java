@@ -114,26 +114,26 @@ public class FeatureGenerator
     }
 
 
-    public static final Map<String, List<String>> structureToBuilding = new HashMap<>();
-    public static final Map<String, String> buildingToStructure = new HashMap<>();
+    public static final Map<String, List<String>> structureToFeature = new HashMap<>();
+    public static final Map<String, String> featureToStructure = new HashMap<>();
     static
     {
-        structureToBuilding.put("Monument", Collections.singletonList("monument"));
-        structureToBuilding.put("EndCity", Collections.singletonList("end_city"));
-        structureToBuilding.put("Ocean_Ruin", Arrays.asList("oceanruin", "oceanruin_warm", "oceanruin_small", "oceanruin_warm_small", "oceanruin_tall", "oceanruin_warm_tall"));
-        structureToBuilding.put("Village", Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
-        structureToBuilding.put("Mansion", Collections.singletonList("mansion"));
-        structureToBuilding.put("Buried_Treasure", Collections.singletonList("treasure"));
-        structureToBuilding.put("Swamp_Hut", Collections.singletonList("witchhut"));
-        structureToBuilding.put("Stronghold", Collections.singletonList("stronghold"));
-        structureToBuilding.put("Desert_Pyramid", Collections.singletonList("desert_temple"));
-        structureToBuilding.put("Jungle_Pyramid", Collections.singletonList("jungle_temple"));
-        structureToBuilding.put("Shipwreck", Arrays.asList("shipwreck", "shipwreck2"));
-        structureToBuilding.put("Pillager_Outpost", Collections.singletonList("pillager_outpost"));
-        structureToBuilding.put("Mineshaft", Arrays.asList("mineshaft", "mineshaft_mesa"));
-        structureToBuilding.put("Igloo", Collections.singletonList("igloo"));
+        structureToFeature.put("Monument", Collections.singletonList("monument"));
+        structureToFeature.put("EndCity", Collections.singletonList("end_city"));
+        structureToFeature.put("Ocean_Ruin", Arrays.asList("oceanruin", "oceanruin_warm", "oceanruin_small", "oceanruin_warm_small", "oceanruin_tall", "oceanruin_warm_tall"));
+        structureToFeature.put("Village", Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
+        structureToFeature.put("Mansion", Collections.singletonList("mansion"));
+        structureToFeature.put("Buried_Treasure", Collections.singletonList("treasure"));
+        structureToFeature.put("Swamp_Hut", Collections.singletonList("witchhut"));
+        structureToFeature.put("Stronghold", Collections.singletonList("stronghold"));
+        structureToFeature.put("Desert_Pyramid", Collections.singletonList("desert_temple"));
+        structureToFeature.put("Jungle_Pyramid", Collections.singletonList("jungle_temple"));
+        structureToFeature.put("Shipwreck", Arrays.asList("shipwreck", "shipwreck2"));
+        structureToFeature.put("Pillager_Outpost", Collections.singletonList("pillager_outpost"));
+        structureToFeature.put("Mineshaft", Arrays.asList("mineshaft", "mineshaft_mesa"));
+        structureToFeature.put("Igloo", Collections.singletonList("igloo"));
 
-        structureToBuilding.forEach((key, value) -> value.forEach(el -> buildingToStructure.put(el, key)));
+        structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
 
 
