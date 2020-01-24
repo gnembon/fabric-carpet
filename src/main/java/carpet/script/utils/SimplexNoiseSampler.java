@@ -39,6 +39,8 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler {
     }
 
     public double sample2d(double x, double y) {
+        x = x/2;
+        y = y/2;
         double d = (x + y) * SKEW_FACTOR_2D;
         int i = PerlinNoiseSampler.floor(x + d);
         int j = PerlinNoiseSampler.floor(y + d);
@@ -74,6 +76,9 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler {
     }
 
     public double sample3d(double d, double e, double f) {
+        d = d/2;
+        e = e/2;
+        f = f/2;
         double g = 0.3333333333333333D;
         double h = (d + e + f) * 0.3333333333333333D;
         int i = floor(d + h);
