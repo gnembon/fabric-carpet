@@ -1,7 +1,11 @@
 package carpet.script.utils;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
+import java.util.Map;
 import java.util.Random;
 
+// extracted from import net.minecraft.util.math.noise.PerlinNoiseSampler
 public class PerlinNoiseSampler {
     protected static final int[][] gradients3d = new int[][]{
             {1, 1, 0}, {-1, 1, 0}, {1, -1, 0}, {-1, -1, 0},
@@ -17,6 +21,14 @@ public class PerlinNoiseSampler {
     public final double originY;
     public final double originZ;
     public static PerlinNoiseSampler instance = new PerlinNoiseSampler(new Random(0));
+    public static Map<Long, PerlinNoiseSampler> samplers = new Long2ObjectOpenHashMap<>();
+
+    public static PerlinNoiseSampler getPerlin(long aLong)
+    {
+        if (samplers.size() > 256)
+            samplers.clear();
+        return samplers.computeIfAbsent(aLong, seed -> new PerlinNoiseSampler(new Random(seed)));
+    }
 
     public PerlinNoiseSampler(Random random) {
         this.originX = random.nextDouble() * 256.0D;
@@ -37,6 +49,8 @@ public class PerlinNoiseSampler {
         }
 
     }
+
+
 
     //3D
     public double sample3d(double x, double y, double z) {//, double d, double e) {
@@ -61,7 +75,7 @@ public class PerlinNoiseSampler {
             t = 0.0D;
         }*/
         //return this.sample(i, j, k, l, m - t, n, o, p, q);
-        return this.sample3d(i, j, k, l, m, n, o, p, q);
+        return this.sample3d(i, j, k, l, m, n, o, p, q)/2+0.5;
     }
 
     private double sample3d(int sectionX, int sectionY, int sectionZ, double localX, double localY, double localZ, double fadeLocalX, double fadeLocalY, double fadeLocalZ) {
@@ -105,7 +119,7 @@ public class PerlinNoiseSampler {
         double m = g - (double)j;
         double o = perlinFade(l);
         double p = perlinFade(m);
-        return this.sample2d(i, j, l, m, o, p);
+        return this.sample2d(i, j, l, m, o, p)/2+0.5;
     }
 
     private double sample2d(int sectionX, int sectionY, double localX, double localY, double fadeLocalX, double fadeLocalY) {
@@ -138,7 +152,7 @@ public class PerlinNoiseSampler {
         int i = floor(f);
         double l = f - (double)i;
         double o = perlinFade(l);
-        return this.sample1d(i, l, o);
+        return this.sample1d(i, l, o)+0.5;
     }
     private double sample1d(int sectionX, double localX, double fadeLocalX) {
         double d = grad1d(this.getGradient(sectionX), localX);

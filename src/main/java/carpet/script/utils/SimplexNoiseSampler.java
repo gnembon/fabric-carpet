@@ -1,13 +1,25 @@
 package carpet.script.utils;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
+import java.util.Map;
 import java.util.Random;
 
+// extracted from import net.minecraft.util.math.noise.SimplexNoiseSampler
 public class SimplexNoiseSampler extends PerlinNoiseSampler {
     private static final double sqrt3 = Math.sqrt(3.0D);
     private static final double SKEW_FACTOR_2D;
     private static final double UNSKEW_FACTOR_2D;
 
     public static SimplexNoiseSampler instance = new SimplexNoiseSampler(new Random(0));
+    public static Map<Long, SimplexNoiseSampler> samplers = new Long2ObjectOpenHashMap<>();
+
+    public static SimplexNoiseSampler getSimplex(long aLong)
+    {
+        if (samplers.size() > 256)
+            samplers.clear();
+        return samplers.computeIfAbsent(aLong, seed -> new SimplexNoiseSampler(new Random(seed)));
+    }
 
     public SimplexNoiseSampler(Random random) {
         super(random);
@@ -57,7 +69,8 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler {
         double aa = this.grad(v, h, k, 0.0D, 0.5D);
         double ab = this.grad(w, p, q, 0.0D, 0.5D);
         double ac = this.grad(z, r, s, 0.0D, 0.5D);
-        return 70.0D * (aa + ab + ac);
+        //return 70.0D * (aa + ab + ac);
+        return 35.0D * (aa + ab + ac)+0.5;
     }
 
     static {
