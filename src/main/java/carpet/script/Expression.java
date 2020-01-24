@@ -20,6 +20,8 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ResolvedException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.exception.ThrowStatement;
+import carpet.script.utils.PerlinNoiseSampler;
+import carpet.script.utils.SimplexNoiseSampler;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
@@ -29,6 +31,7 @@ import carpet.script.value.LContainerValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
+import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
@@ -2970,6 +2973,49 @@ public class Expression
             }
             Value retval = new NumericValue(NumericValue.asNumber(argument).getDouble()*randomizer.nextDouble());
             return (cc, tt) -> retval;
+        });
+
+        addLazyFunction("perlin", 3, (c, t, lv) -> {
+            // add seed cache
+            Value ret;
+            Value x = lv.get(0).evalValue(c);
+            Value y = lv.get(1).evalValue(c);
+            Value z = lv.get(2).evalValue(c);
+
+            if (z instanceof NullValue)
+            {
+                if (y instanceof NullValue)
+                {
+                    ret = new NumericValue(PerlinNoiseSampler.instance.sample1d(
+                            NumericValue.asNumber(x).getDouble()
+                    ));
+                }
+                else
+                {
+                    ret = new NumericValue(PerlinNoiseSampler.instance.sample2d(
+                            NumericValue.asNumber(x).getDouble(),
+                            NumericValue.asNumber(y).getDouble()
+                    ));
+                }
+            }
+            else
+            {
+                ret = new NumericValue(PerlinNoiseSampler.instance.sample3d(
+                        NumericValue.asNumber(x).getDouble(),
+                        NumericValue.asNumber(y).getDouble(),
+                        NumericValue.asNumber(z).getDouble()
+                ));
+            }
+            return (cc, tt) -> ret;
+        });
+
+        addLazyFunction("simplex", 2, (c, t, lv) -> {
+            // add seed cache
+            double x = NumericValue.asNumber(lv.get(0).evalValue(c)).getDouble();
+            double y = NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble();
+            //double z = NumericValue.asNumber(lv.get(2).evalValue(c)).getDouble();
+            Value value = new NumericValue(SimplexNoiseSampler.instance.sample(x,y));
+            return (cc, tt) -> value;
         });
 
         addUnaryFunction("print", (v) ->
