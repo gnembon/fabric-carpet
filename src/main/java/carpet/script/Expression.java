@@ -20,6 +20,8 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ResolvedException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.exception.ThrowStatement;
+import carpet.script.utils.PerlinNoiseSampler;
+import carpet.script.utils.SimplexNoiseSampler;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.FunctionSignatureValue;
@@ -29,6 +31,7 @@ import carpet.script.value.LContainerValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
+import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
@@ -2729,6 +2732,30 @@ public class Expression
      * map(range(10), str('%.1f',rand(_))) =&gt; [0.0, 0.4, 0.6, 1.9, 2.8, 3.8, 5.3, 2.2, 1.6, 5.6]
      * </pre>
      *
+     * <h3><code>perlin(x), perlin(x,y), perlin(x,y,z), perlin(x,y,z,seed)</code></h3>
+     * <p>returns a noise value from <code>0.0</code> to <code>1.0</code> (roughly) for 1, 2 or 3 dimensional coordinate. The default seed it samples from is <code>0</code>, but seed can be
+     * specified as a 4th argument as well. In case you need 1D or 2D noise values with custom seed, use <code>null</code>
+     * for <code>z</code>, or <code>y</code> and <code>z</code> arguments respectively.</p>
+     * <p> Perlin noise is based on a square grid and generates rougher maps comparing to Simplex, which is creamier,
+     * but the in-game implementation allows to sample up to 3D noise. Querying for lower-dimensional result, rather than
+     * affixing unused dimensions to constants has a speed benefit,
+     * </p>
+     * <p>Thou shall not sample from noise changing seed frequently. Scarpet will keep track of the last 256 perlin seeds used for sampling
+     * providing similar speed comparing to the default seed of <code>0</code>. In case the app engine uses more than 256 seeds at the same time,
+     * switching between them can get much more expensive.</p>
+     *
+     * <h3><code>simplex(x,y), simplex(x,y,seed)</code></h3>
+     * <p>returns a noise value from <code>0.0</code> to <code>1.0</code> (roughly) for 2 dimensional coordinate.
+     * The default seed it samples from is <code>0</code>, but seed can be
+     * specified as a 3rd argument as well</p>
+     * <p> Simplex noise is based on a triangular grid and generates smoother maps comparing to Perlin,
+     * but the in-game implementation only allows to sample 2D noise. To sample 1D simplex noise, affix other coordinate
+     * to a constant.
+     * </p>
+     * <p>Thou shall not sample from noise changing seed frequently. Scarpet will keep track of the last 256 simplex seeds used for sampling
+     * providing similar speed comparing to the default seed of <code>0</code>. In case the app engine uses more than 256 seeds at the same time,
+     * switching between them can get much more expensive.</p>
+     *
      * <h3><code>print(expr)</code></h3>
      * <p>prints the value of the expression to chat.
      * Passes the result of the argument to the output unchanged, so <code>print</code>-statements can
@@ -2970,6 +2997,63 @@ public class Expression
             }
             Value retval = new NumericValue(NumericValue.asNumber(argument).getDouble()*randomizer.nextDouble());
             return (cc, tt) -> retval;
+        });
+
+        addLazyFunction("perlin", -1, (c, t, lv) -> {
+            PerlinNoiseSampler sampler;
+            Value x, y, z;
+
+            if (lv.size() >= 4)
+            {
+                x = lv.get(0).evalValue(c);
+                y = lv.get(1).evalValue(c);
+                z = lv.get(2).evalValue(c);
+                sampler = PerlinNoiseSampler.getPerlin(NumericValue.asNumber(lv.get(3).evalValue(c)).getLong());
+            }
+            else
+            {
+                sampler = PerlinNoiseSampler.instance;
+                y = Value.NULL;
+                z = Value.NULL;
+                if (lv.size() == 0 )
+                    throw new InternalExpressionException("'perlin' requires at least one dimension to sample from");
+                x = NumericValue.asNumber(lv.get(0).evalValue(c));
+                if (lv.size() > 1)
+                {
+                    y = NumericValue.asNumber(lv.get(1).evalValue(c));
+                    if (lv.size() > 2)
+                        z = NumericValue.asNumber(lv.get(2).evalValue(c));
+                }
+            }
+
+            double result;
+
+            if (z instanceof NullValue)
+                if (y instanceof NullValue)
+                    result = sampler.sample1d(NumericValue.asNumber(x).getDouble());
+                else
+                    result = sampler.sample2d(NumericValue.asNumber(x).getDouble(), NumericValue.asNumber(y).getDouble());
+            else
+                result = sampler.sample3d(
+                        NumericValue.asNumber(x).getDouble(),
+                        NumericValue.asNumber(y).getDouble(),
+                        NumericValue.asNumber(z).getDouble());
+            Value ret = new NumericValue(result);
+            return (cc, tt) -> ret;
+        });
+
+        addLazyFunction("simplex", -1, (c, t, lv) -> {
+            SimplexNoiseSampler sampler;
+            if (lv.size() == 2)
+                sampler = SimplexNoiseSampler.instance;
+            else if (lv.size() == 3)
+                sampler = SimplexNoiseSampler.getSimplex(NumericValue.asNumber(lv.get(2).evalValue(c)).getLong());
+            else
+                throw new InternalExpressionException("'simplex' requires two or three arguments");
+            double x = NumericValue.asNumber(lv.get(0).evalValue(c)).getDouble();
+            double y = NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble();
+            Value value = new NumericValue(sampler.sample(x,y));
+            return (cc, tt) -> value;
         });
 
         addUnaryFunction("print", (v) ->
