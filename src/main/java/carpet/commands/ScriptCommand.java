@@ -7,6 +7,7 @@ import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.Expression;
 import carpet.script.ExpressionInspector;
+import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
@@ -317,6 +318,13 @@ public class ScriptCommand
         Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
         host.globaFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
             FunctionValue fun = host.getFunction(s);
+            if (fun == null)
+            {
+                Messenger.m(source, "gb "+s, "g  - unused import");
+                Messenger.m(source, "gi ----------------");
+                return;
+            }
+            CarpetSettings.LOG.error("printing function "+fun.getPrettyString());
             Expression expr = fun.getExpression();
             Tokenizer.Token tok = fun.getToken();
             List<String> snippet = ExpressionInspector.Expression_getExpressionSnippet(tok, expr);
@@ -331,7 +339,15 @@ public class ScriptCommand
         Messenger.m(source, "w  ");
         Messenger.m(source, "lb Global variables"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
         host.globaVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
-            Messenger.m(source, "wb "+s+": ", "w "+ host.getGlobalVariable(s).evalValue(null).getPrettyString());
+            LazyValue variable = host.getGlobalVariable(s);
+            if (variable == null)
+            {
+                Messenger.m(source, "gb "+s, "g  - unused import");
+            }
+            else
+            {
+                Messenger.m(source, "wb "+s+": ", "w "+ variable.evalValue(null).getPrettyString());
+            }
         });
         return 1;
     }
