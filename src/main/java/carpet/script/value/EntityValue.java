@@ -385,6 +385,7 @@ public class EntityValue extends Value
             float reach = 4.5f;
             boolean entities = true;
             boolean liquids = false;
+            boolean blocks = true;
 
             if (a!=null)
             {
@@ -401,12 +402,14 @@ public class EntityValue extends Value
                     if (args.size() > 1)
                     {
                         entities = false;
+                        blocks = false;
                         for (int i = 1; i < args.size(); i++)
                         {
                             String what = args.get(i).getString();
                             if (what.equalsIgnoreCase("entities"))
                                 entities = true;
-                            else if (what.equalsIgnoreCase("blocks")) {}
+                            else if (what.equalsIgnoreCase("blocks"))
+                                blocks = true;
                             else if (what.equalsIgnoreCase("liquids"))
                                 liquids = true;
                             else throw new InternalExpressionException("Incorrect tracing: "+what);
@@ -420,11 +423,14 @@ public class EntityValue extends Value
             }
 
             HitResult hitres;
-            if (entities)
+            if (entities && !blocks)
+                hitres = Tracer.rayTraceEntities(e, 1, reach, reach*reach);
+            else if (entities)
                 hitres = Tracer.rayTrace(e, 1, reach, liquids);
             else
                 hitres = Tracer.rayTraceBlocks(e, 1, reach, liquids);
 
+            if (hitres == null) return Value.NULL;
             switch (hitres.getType())
             {
                 case MISS: return Value.NULL;
@@ -783,13 +789,23 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                if (lv.size() >= 2 && lv.size() <= 5)
+                if (lv.size() >= 1 && lv.size() <= 5)
                 {
                     String effectName = lv.get(0).getString();
                     StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
                     if (effect == null)
                         throw new InternalExpressionException("Wrong effect name: "+effectName);
+                    if (lv.size() == 1)
+                    {
+                        le.removeStatusEffect(effect);
+                        return;
+                    }
                     int duration = (int)NumericValue.asNumber(lv.get(1)).getLong();
+                    if (duration <= 0)
+                    {
+                        le.removeStatusEffect(effect);
+                        return;
+                    } 
                     int amplifier = 0;
                     if (lv.size() > 2)
                         amplifier = (int)NumericValue.asNumber(lv.get(2)).getLong();
