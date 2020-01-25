@@ -2070,11 +2070,12 @@ public class CarpetExpression
      * <h3><code>query(e,'trace', reach?, options?...)</code></h3>
      * <p>Returns the result of ray tracing from entity perspective, indicating what it is looking at. Default reach is 4.5
      * blocks (5 for creative players), and by default it traces for blocks and entities, identical to player attack tracing action.
-     * This can be customized with <code>options</code>, use 'blocks' to trace for blocks only, 'liquids' to include liquid blocks
-     * as possible results, and 'entities' to trace entities as well.</p>
+     * This can be customized with <code>options</code>, use 'blocks' to trace for blocks, 'liquids' to include liquid blocks
+     * as possible results, and 'entities' to trace entities. Any combination of the above is possible. When tracing
+     * entities and blocks, blocks will take over the priority even if transparent or non-colliding (aka fighting chickens
+     * in tall grass).</p>
      * <p>Regardless of the options selected, the result could be <code>null</code> if nothing is in reach, entity, if look
-     * targets an antity, and block value if block is in reach. Tracing always hits blocks. Even if an entity tracing is requested
-     * and there is a block in the way - the block will be returned.</p>
+     * targets an entity, and block value if block is in reach.</p>
      * <h3><code>query(e,'nbt',path?)</code></h3>
      * <p>Returns full NBT of the entity. If path is specified, it fetches only that portion of the NBT,
      * that corresponds to the path. For specification of <code>path</code> attribute, consult
@@ -2131,9 +2132,9 @@ public class CarpetExpression
      * <h3><code>modify(e, 'no_clip', boolean)</code></h3>
      * <p>Sets if the entity obeys any collisions, including collisions with the terrain and basic physics.
      * Not affecting players, since they are controlled client side</p>
-     * <h3><code>modify(e, 'effect', name, duration, amplifier?, show_particles?, show_icon?)</code></h3>
+     * <h3><code>modify(e, 'effect', name, duration?, amplifier?, show_particles?, show_icon?)</code></h3>
      * <p>Applies status effect to the living entity. Takes several optional parameters, which default to <code>0</code>,
-     * <code>true</code> and <code>true</code>.</p>
+     * <code>true</code> and <code>true</code>. If no duration is specified, or it is null or 0, the effect is removed.</p>
      * <h3><code>modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)</code></h3>
      * <p>Sets AI to stay around the home position, within <code>distance</code> blocks from it. <code>distance</code>
      * defaults to 16 blocks. <code>null</code> removes it. <i>May</i> not work fully with mobs that have this AI built in, like
