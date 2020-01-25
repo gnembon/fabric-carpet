@@ -1626,7 +1626,7 @@ public class Expression
      * With <code>break</code> and <code>continue</code> statements, the supplied value can be used as a boolean check instead.</p>
      * <pre>
      *     filter(range(100), !(_%5), _*_&gt;1000)  =&gt; [0, 5, 10, 15, 20, 25, 30]
-     *     map(filter(entities_list('all'),_=='Witch'), query(_,'pos') )  =&gt; [[1082.5, 57, 1243.5]]
+     *     map(filter(entity_list('*'),_=='Witch'), query(_,'pos') )  =&gt; [[1082.5, 57, 1243.5]]
      * </pre>
      *
      * <h3><code>first(list,expr(_,_i))</code></h3>
