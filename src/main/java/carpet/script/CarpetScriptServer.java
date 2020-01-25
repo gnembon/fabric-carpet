@@ -45,6 +45,7 @@ public class CarpetScriptServer
         add(new BundledModule("camera", false));
         add(new BundledModule("event_test", false));
         add(new BundledModule("stats_test", false));
+        add(new BundledModule("math", true));
     }};
 
     public CarpetScriptServer()
