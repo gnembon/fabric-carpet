@@ -102,6 +102,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.loot.context.LootContext;
 import net.minecraft.world.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
@@ -607,6 +608,8 @@ public class CarpetExpression
      * <p>Numeric function, indicating hardness of a block.</p>
      * <h3><code>blast_resistance(pos)</code></h3>
      * <p>Numeric function, indicating blast_resistance of a block.</p>
+     * <h3><code>in_slime_chunk(pos)</code></h3>
+     * <p>Boolean indicating if the given block position is in a slime chunk.</p>
 
      * <h3><code>top(type, pos)</code></h3>
      * <p>Returns the Y value of the topmost block at given x, z coords (y value of a block is not important), according to the
@@ -623,7 +626,7 @@ public class CarpetExpression
      * top('ocean_floor', x, y, z)  =&gt; 41
      * </pre>
      * <h3><code>loaded(pos)</code></h3>
-     * <p>Boolean function, true if the block is accessible forthe game mechanics.
+     * <p>Boolean function, true if the block is accessible for the game mechanics.
      * Normally <code>scarpet</code> doesn't check if operates on
      * loaded area - the game will automatically load missing blocks. We see this as advantage.
      * Vanilla <code>fill/clone</code> commands only check the specified corners for loadness.</p>
@@ -1017,6 +1020,19 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("blast_resistance", -1, (c, t, lv) ->
                 genericStateTest(c, "blast_resistance", lv, (s, p, w) -> new NumericValue(s.getBlock().getBlastResistance())));
+
+        this.expr.addLazyFunction("in_slime_chunk", -1, (c, t, lv) ->
+        {
+            BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
+            ChunkPos chunkPos = new ChunkPos(pos);
+            Value ret = new NumericValue(ChunkRandom.create(
+                    chunkPos.x, chunkPos.z,
+                    ((CarpetContext)c).s.getWorld().getSeed(),
+                    987234911L
+            ).nextInt(10) == 0);
+            return (_c, _t) -> ret;
+        });
+
 
         this.expr.addLazyFunction("top", -1, (c, t, lv) ->
         {
@@ -2957,6 +2973,8 @@ public class CarpetExpression
      * loop(1000,game_tick())  // runs the game as fast as it can for 1000 ticks
      * loop(1000,game_tick(100)) // runs the game twice as slow for 1000 ticks
      * </pre>
+     * <h3><code>seed()</code></h3>
+     * <p>Returns current world seed.</p>
      * <h3><code>current_dimension()</code></h3>
      * <p>Returns current dimension that the script runs in.</p>
      * <h3><code>in_dimension(smth, expr)</code></h3>
@@ -3397,6 +3415,12 @@ public class CarpetExpression
             if(CarpetServer.scriptServer.stopAll)
                 throw new ExitStatement(Value.NULL);
             return (cc, tt) -> Value.TRUE;
+        });
+
+        this.expr.addLazyFunction("seed", -1, (c, t, lv) -> {
+            ServerCommandSource s = ((CarpetContext)c).s;
+            Value ret = new NumericValue(s.getWorld().getSeed());
+            return (cc, tt) -> ret;
         });
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
