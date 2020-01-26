@@ -3034,9 +3034,9 @@ public class CarpetExpression
      *     <li><code>igloo</code>: Igloo</li>
      *     <li><code>shipwreck</code>: Shipwreck, version1?</li>
      *     <li><code>shipwreck2</code>: Shipwreck, version2?</li>
-     *     <li><code>witchhut</code></li>
-     *     <li><code>oceanruin, oceanruin_small, oceanruin_tall</code>: Stone variants of ocean ruins.</li>
-     *     <li><code>oceanruin_warm, oceanruin_warm_small, oceanruin_warm_tall</code>: Sandstone variants of ocean ruins.</li>
+     *     <li><code>witch_hut</code></li>
+     *     <li><code>ocean_ruin, ocean_ruin_small, ocean_ruin_tall</code>: Stone variants of ocean ruins.</li>
+     *     <li><code>ocean_ruin_warm, ocean_ruin_warm_small, ocean_ruin_warm_tall</code>: Sandstone variants of ocean ruins.</li>
      *     <li><code>treasure</code>: A treasure chest. Yes, its a whole structure.</li>
      *     <li><code>pillager_outpost</code>: A pillager outpost.</li>
      *     <li><code>mineshaft</code>: A mineshaft.</li>
