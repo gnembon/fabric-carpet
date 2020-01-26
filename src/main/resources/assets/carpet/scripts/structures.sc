@@ -25,7 +25,7 @@ village() -> __toggle('village');
 
 __toggle(structure) ->
 (
-    p = player()
+    p = player();
     if( has(global_current_structures:structure),
         delete(global_current_structures:structure);
         'disabled '+structure+' overlays';
