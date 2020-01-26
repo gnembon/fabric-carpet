@@ -4,11 +4,13 @@ import carpet.script.bundled.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -16,6 +18,14 @@ import java.util.stream.Stream;
 public abstract class ScriptHost
 {
     public static Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
+    private static Map<Long, Random> randomizers = new Long2ObjectOpenHashMap<>();
+
+    public Random getRandom(long aLong)
+    {
+        if (randomizers.size() > 1024)
+            randomizers.clear();
+        return randomizers.computeIfAbsent(aLong, Random::new);
+    }
 
 
     public static class ModuleData

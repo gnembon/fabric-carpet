@@ -1312,7 +1312,7 @@ public class Expression
             LazyValue boundedLHS;
             if (v1 instanceof ListValue || v1 instanceof MapValue)
             {
-                ((ListValue) v1).append(v2);
+                ((AbstractListValue) v1).append(v2);
                 boundedLHS = (cc, tt)-> v1;
             }
             else
@@ -1626,7 +1626,7 @@ public class Expression
      * With <code>break</code> and <code>continue</code> statements, the supplied value can be used as a boolean check instead.</p>
      * <pre>
      *     filter(range(100), !(_%5), _*_&gt;1000)  =&gt; [0, 5, 10, 15, 20, 25, 30]
-     *     map(filter(entities_list('all'),_=='Witch'), query(_,'pos') )  =&gt; [[1082.5, 57, 1243.5]]
+     *     map(filter(entity_list('*'),_=='Witch'), query(_,'pos') )  =&gt; [[1082.5, 57, 1243.5]]
      * </pre>
      *
      * <h3><code>first(list,expr(_,_i))</code></h3>
@@ -2720,12 +2720,15 @@ public class Expression
      * length('foo') =&gt; 3
      * </pre>
      *
-     * <h3><code>rand(expr)</code></h3>
+     * <h3><code>rand(expr), rand(expr, seed)</code></h3>
      * <p>returns a random number from <code>0.0</code>
      * (inclusive) to <code>expr</code> (exclusive).
      * In boolean context (in conditions, boolean functions, or <code>bool</code>), returns
      * false if the randomly selected value is less than 1. This means that <code>rand(2)</code> returns true half
-     * of the time and <code>rand(5)</code> returns true for 80% (4/5) of the time</p>
+     * of the time and <code>rand(5)</code> returns true for 80% (4/5) of the time. If seed is not provided, uses a random seed.
+     * If seed is provided, each consecutive call to rand() will act like 'next' call to the same random object.
+     * Scarpet keeps track of up to 1024 custom random number generators, so if you exceed this number (per app), then your
+     * random sequence will revert to the beginning.</p>
      * <pre>
      * map(range(10), floor(rand(10))) =&gt; [5, 8, 0, 6, 9, 3, 9, 9, 1, 8]
      * map(range(10), bool(rand(2))) =&gt; [1, 1, 1, 0, 0, 1, 1, 0, 0, 0]
@@ -2982,7 +2985,12 @@ public class Expression
         addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
 
         addUnaryFunction("length", v -> new NumericValue(v.length()));
-        addLazyFunction("rand", 1, (c, t, lv) -> {
+        addLazyFunction("rand", -1, (c, t, lv) -> {
+            int argsize = lv.size();
+            Random randomizer = Expression.randomizer;
+            if (argsize != 1 && argsize != 2)
+                throw new InternalExpressionException("'rand' takes one (range) or two arguments (range and seed)");
+            if (argsize == 2) randomizer = c.host.getRandom(NumericValue.asNumber(lv.get(1).evalValue(c)).getLong());
             Value argument = lv.get(0).evalValue(c);
             if (argument instanceof ListValue)
             {

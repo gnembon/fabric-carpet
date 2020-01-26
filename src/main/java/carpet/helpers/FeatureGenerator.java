@@ -148,11 +148,11 @@ public class FeatureGenerator
     {
         structureToFeature.put("Monument", Collections.singletonList("monument"));
         structureToFeature.put("EndCity", Collections.singletonList("end_city"));
-        structureToFeature.put("Ocean_Ruin", Arrays.asList("oceanruin", "oceanruin_warm", "oceanruin_small", "oceanruin_warm_small", "oceanruin_tall", "oceanruin_warm_tall"));
+        structureToFeature.put("Ocean_Ruin", Arrays.asList("ocean_ruin", "ocean_ruin_warm", "ocean_ruin_small", "ocean_ruin_warm_small", "ocean_ruin_tall", "ocean_ruin_warm_tall"));
         structureToFeature.put("Village", Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
         structureToFeature.put("Mansion", Collections.singletonList("mansion"));
         structureToFeature.put("Buried_Treasure", Collections.singletonList("treasure"));
-        structureToFeature.put("Swamp_Hut", Collections.singletonList("witchhut"));
+        structureToFeature.put("Swamp_Hut", Collections.singletonList("witch_hut"));
         structureToFeature.put("Stronghold", Collections.singletonList("stronghold"));
         structureToFeature.put("Desert_Pyramid", Collections.singletonList("desert_temple"));
         structureToFeature.put("Jungle_Pyramid", Collections.singletonList("jungle_temple"));
@@ -175,20 +175,20 @@ public class FeatureGenerator
         put("igloo", ((StructureFeatureInterface)Feature.IGLOO)::gridAnywhere);
         put("shipwreck", gridCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
         put("shipwreck2", gridCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
-        put("witchhut", ((StructureFeatureInterface)Feature.SWAMP_HUT)::gridAnywhere);
+        put("witch_hut", ((StructureFeatureInterface)Feature.SWAMP_HUT)::gridAnywhere);
         put("stronghold", ((StructureFeatureInterface)Feature.STRONGHOLD)::gridAnywhere);
 
-        put("oceanruin_small", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_small", gridCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 0.0F, 0.5F), Biomes.PLAINS));
-        put("oceanruin_warm_small", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_small", gridCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 0.0F, 0.5F), Biomes.PLAINS));
-        put("oceanruin_tall", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_tall", gridCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 0.0F), Biomes.PLAINS));
-        put("oceanruin_warm_tall", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_tall", gridCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 0.0F), Biomes.PLAINS));
-        put("oceanruin", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin", gridCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 1.0F), Biomes.PLAINS));
-        put("oceanruin_warm", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm", gridCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 1.0F), Biomes.PLAINS));
         put("treasure", ((StructureFeatureInterface)Feature.BURIED_TREASURE)::gridAnywhere);
 
@@ -291,20 +291,20 @@ public class FeatureGenerator
         put("igloo", ((StructureFeatureInterface)Feature.IGLOO)::plopAnywhere);
         put("shipwreck", spawnCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
         put("shipwreck2", spawnCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
-        put("witchhut", ((StructureFeatureInterface)Feature.SWAMP_HUT)::plopAnywhere);
+        put("witch_hut", ((StructureFeatureInterface)Feature.SWAMP_HUT)::plopAnywhere);
         put("stronghold", ((StructureFeatureInterface)Feature.STRONGHOLD)::plopAnywhere);
 
-        put("oceanruin_small", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_small", spawnCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 0.0F, 0.5F), Biomes.PLAINS));
-        put("oceanruin_warm_small", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_small", spawnCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 0.0F, 0.5F), Biomes.PLAINS));
-        put("oceanruin_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 0.0F), Biomes.PLAINS));
-        put("oceanruin_warm_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 0.0F), Biomes.PLAINS));
-        put("oceanruin", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin", spawnCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 1.0F), Biomes.PLAINS));
-        put("oceanruin_warm", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm", spawnCustomStructure(Feature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 1.0F), Biomes.PLAINS));
         put("treasure", ((StructureFeatureInterface)Feature.BURIED_TREASURE)::plopAnywhere);
 
