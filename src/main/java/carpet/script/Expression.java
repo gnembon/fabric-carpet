@@ -1312,7 +1312,7 @@ public class Expression
             LazyValue boundedLHS;
             if (v1 instanceof ListValue || v1 instanceof MapValue)
             {
-                ((ListValue) v1).append(v2);
+                ((AbstractListValue) v1).append(v2);
                 boundedLHS = (cc, tt)-> v1;
             }
             else
