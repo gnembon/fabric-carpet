@@ -124,7 +124,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public void append(Value v)
     {
-        put(v);
+        map.put(v, Value.NULL);
     }
 
     @Override
