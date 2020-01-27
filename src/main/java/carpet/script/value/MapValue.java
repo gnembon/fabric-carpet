@@ -85,7 +85,8 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public Value add(Value o)
     {
-        throw new InternalExpressionException("Cannot add to a map value");
+        append(o);
+        return this;
     }
 
     @Override

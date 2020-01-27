@@ -43,7 +43,7 @@ public class CarpetScriptServer
 
     private static final List<Module> bundledModuleData = new ArrayList<Module>(){{
         add(new BundledModule("camera", false));
-        add(new BundledModule("structures", false));
+        add(new BundledModule("overlay", false));
         add(new BundledModule("event_test", false));
         add(new BundledModule("stats_test", false));
         add(new BundledModule("math", true));
