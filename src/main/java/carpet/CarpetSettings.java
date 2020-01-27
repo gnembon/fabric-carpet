@@ -131,7 +131,7 @@ public class CarpetSettings
 
     @Rule( desc = "Sets the horizontal random angle on TNT for debugging of TNT contraptions", category = TNT, options = "-1", strict = false,
             validate = TNTAngleValidator.class, extra = "Set to -1 for default behavior")
-    public static double hardcodeTNTangle;
+    public static double hardcodeTNTangle = -1.0D;
 
     private static class TNTAngleValidator extends Validator<Double> {
         @Override
