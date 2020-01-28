@@ -43,7 +43,7 @@ import net.minecraft.block.CommandBlock;
 import net.minecraft.block.JigsawBlock;
 import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.network.packet.GuiSlotUpdateS2CPacket;
+import net.minecraft.client.network.packet.ContainerSlotUpdateS2CPacket;
 import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ParticleArgumentType;
@@ -1890,7 +1890,7 @@ public class CarpetExpression
         if (inventory.owner instanceof ServerPlayerEntity && !inventory.isEnder)
         {
             ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
-            player.networkHandler.sendPacket(new GuiSlotUpdateS2CPacket(
+            player.networkHandler.sendPacket(new ContainerSlotUpdateS2CPacket(
                     -2,
                     int_1,
                     inventory.inventory.getInvStack(int_1)
