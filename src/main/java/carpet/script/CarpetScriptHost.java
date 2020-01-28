@@ -32,6 +32,7 @@ import static java.lang.Math.max;
 public class CarpetScriptHost extends ScriptHost
 {
     private final CarpetScriptServer scriptServer;
+    ServerCommandSource responsibleSource;
 
     private Tag globalState;
     private int saveTimeout;
@@ -66,8 +67,7 @@ public class CarpetScriptHost extends ScriptHost
             }
             catch (CarpetExpressionException e)
             {
-                e.printStack(source);
-                Messenger.m(source, "r Exception while evaluating expression at " + new BlockPos(source.getPosition()) + ": " + e.getMessage());
+                host.handleErrorWithStack("Error while evaluating expression", e);
                 host.resetErrorSnooper();
                 return null;
             }
@@ -129,16 +129,33 @@ public class CarpetScriptHost extends ScriptHost
 
     public CarpetScriptHost retrieveForExecution(ServerCommandSource source)
     {
-        if (!perUser)
-            return this;
+        CarpetScriptHost host = this;
+        if (perUser)
+        {
+            try
+            {
+                ServerPlayerEntity player = source.getPlayer();
+                host = (CarpetScriptHost) retrieveForExecution(player.getName().getString());
+            }
+            catch (CommandSyntaxException e)
+            {
+                host = (CarpetScriptHost)  retrieveForExecution((String) null);
+            }
+        }
+        if (host.errorSnooper == null) host.setChatErrorSnooper(source);
+        return host;
+    }
+
+    public String handleCommand(ServerCommandSource source, String call, List<Integer> coords, String arg)
+    {
         try
         {
-            ServerPlayerEntity player = source.getPlayer();
-            return (CarpetScriptHost) retrieveForExecution(player.getName().getString());
+            return call(source, call, coords, arg);
         }
-        catch (CommandSyntaxException e)
+        catch (CarpetExpressionException exc)
         {
-            return (CarpetScriptHost) retrieveForExecution((String)null);
+            handleErrorWithStack("Error while running custom command", exc);
+            return "";
         }
     }
 
@@ -236,7 +253,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (ExpressionException e)
         {
-            return e.getMessage();
+            throw new CarpetExpressionException(e.getMessage(), e.stack);
         }
     }
 
@@ -259,7 +276,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (ExpressionException e)
         {
-            CarpetSettings.LOG.error("Callback failed: "+e.getMessage());
+            handleExpressionException("Callback failed", e);
         }
         return Value.NULL;
     }
@@ -361,6 +378,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public void setChatErrorSnooper(ServerCommandSource source)
     {
+        responsibleSource = source;
         errorSnooper = (expr, /*Nullable*/ token, message) ->
         {
             try
@@ -411,5 +429,32 @@ public class CarpetScriptHost extends ScriptHost
             }
             return new ArrayList<>();
         };
+    }
+
+    @Override
+    public void resetErrorSnooper()
+    {
+        responsibleSource = null;
+        super.resetErrorSnooper();
+    }
+
+    public void handleErrorWithStack(String intro, CarpetExpressionException exception)
+    {
+        if (responsibleSource != null)
+        {
+            exception.printStack(responsibleSource);
+            String message = exception.getMessage();
+            Messenger.m(responsibleSource, "r "+intro+(message.isEmpty()?"":": "+message));
+        }
+        else
+        {
+            CarpetSettings.LOG.error(intro+": "+exception.getMessage());
+        }
+    }
+
+    @Override
+    public void handleExpressionException(String message, ExpressionException exc)
+    {
+        handleErrorWithStack(message, new CarpetExpressionException(exc.getMessage(), exc.stack));
     }
 }

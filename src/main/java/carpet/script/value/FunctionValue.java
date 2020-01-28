@@ -68,7 +68,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return (name.equals("_")?"<lambda>":name) +"("+String.join(", ",stringArgs)+")";
     }
 
-    public String fullName() {return expression.module == null?name:name+"["+expression.module.getName()+"]";}
+    public String fullName() {return (name.equals("_")?"<lambda>":name)+(expression.module == null?"":"["+expression.module.getName()+"]");}
 
     @Override
     public boolean getBoolean()

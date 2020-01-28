@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.script.bundled.Module;
+import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
@@ -312,6 +313,12 @@ public abstract class ScriptHost
         userHosts.put(user, userHost);
         return userHost;
     }
+
+    public void handleExpressionException(String msg, ExpressionException exc)
+    {
+        System.out.println(msg+": "+exc);
+    }
+
 
     protected abstract ScriptHost duplicate();
 
