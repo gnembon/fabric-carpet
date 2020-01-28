@@ -4,6 +4,7 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
+import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 
 import java.util.HashMap;
@@ -29,7 +30,18 @@ public class ThreadValue extends Value
     {
         id = sequence++;
         taskFuture = CompletableFuture.supplyAsync(
-            () -> function.lazyEval(ctx, Context.NONE, expr, token, args).evalValue(ctx),
+            () ->
+            {
+                try
+                {
+                    return function.lazyEval(ctx, Context.NONE, expr, token, args).evalValue(ctx);
+                }
+                catch (ExpressionException exc)
+                {
+                    ctx.host.handleExpressionException("Thread failed", exc);
+                    return Value.NULL;
+                }
+            },
             executorServices.computeIfAbsent(pool, (v) -> (ThreadPoolExecutor)Executors.newCachedThreadPool())
         );
         Thread.yield();

@@ -276,16 +276,19 @@ public class ScriptCommand
     }
     private static CarpetScriptHost getHost(CommandContext<ServerCommandSource> context)
     {
+        CarpetScriptHost host;
         try
         {
             String name = StringArgumentType.getString(context, "app").toLowerCase(Locale.ROOT);
             CarpetScriptHost parentHost = CarpetServer.scriptServer.modules.getOrDefault(name, CarpetServer.scriptServer.globalHost);
-            return parentHost.retrieveForExecution(context.getSource());
+            host =  parentHost.retrieveForExecution(context.getSource());
         }
         catch (IllegalArgumentException ignored)
         {
-            return CarpetServer.scriptServer.globalHost;
+            host =  CarpetServer.scriptServer.globalHost;
         }
+        host.setChatErrorSnooper(context.getSource());
+        return host;
     }
     private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c)
     {
@@ -324,7 +327,6 @@ public class ScriptCommand
                 Messenger.m(source, "gi ----------------");
                 return;
             }
-            CarpetSettings.LOG.error("printing function "+fun.getPrettyString());
             Expression expr = fun.getExpression();
             Tokenizer.Token tok = fun.getToken();
             List<String> snippet = ExpressionInspector.Expression_getExpressionSnippet(tok, expr);
@@ -375,10 +377,9 @@ public class ScriptCommand
         }
         catch (CarpetExpressionException e)
         {
-            e.printStack(source);
-            Messenger.m(source, "r Exception while evaluating expression at "+new BlockPos(source.getPosition())+": "+e.getMessage());
+            host.handleErrorWithStack("Error while evaluating expression", e);
         }
-        host.resetErrorSnooper();
+        //host.resetErrorSnooper();  // lets say no need to reset the snooper in case something happens on the way
     }
 
     private static int invoke(CommandContext<ServerCommandSource> context, String call, BlockPos pos1, BlockPos pos2,  String args)
@@ -457,8 +458,7 @@ public class ScriptCommand
         }
         catch (CarpetExpressionException exc)
         {
-            exc.printStack(source);
-            Messenger.m(source, "r Error while processing command: "+exc);
+            host.handleErrorWithStack("Error while processing command", exc);
             return 0;
         }
         finally
@@ -505,8 +505,7 @@ public class ScriptCommand
                     }
                     catch (CarpetExpressionException e)
                     {
-                        e.printStack(source);
-                        Messenger.m(source, "r Exception while filling the area:\n","l "+e.getMessage());
+                        host.handleErrorWithStack("Exception while filling the area", e);
                         return 0;
                     }
                     catch (ArithmeticException e)

@@ -220,7 +220,7 @@ public class CarpetScriptServer
                 executes( (c) ->
                 {
                     String response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                            call(c.getSource(),"__command", null, "");
+                            handleCommand(c.getSource(),"__command", null, "");
                     if (!response.isEmpty()) Messenger.m(c.getSource(), "gi "+response);
                     return 1;
                 });
@@ -232,14 +232,14 @@ public class CarpetScriptServer
                             requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
                             executes( (c) -> {
                                 String response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                        call(c.getSource(), function,null,"");
+                                        handleCommand(c.getSource(), function,null,"");
                                 if (!response.isEmpty()) Messenger.m(c.getSource(),"gi "+response);
                                 return 1;
                             }).
                             then(argument("args...", StringArgumentType.greedyString()).
                                     executes( (c) -> {
                                         String response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                                call(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                                handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
                                         if (!response.isEmpty()) Messenger.m(c.getSource(), "gi "+response);
                                         return 1;
                                     })));
