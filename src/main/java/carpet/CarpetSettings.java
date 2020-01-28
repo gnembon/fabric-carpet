@@ -302,6 +302,9 @@ public class CarpetSettings
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
 
+    @Rule(desc = "placing blocks cause block updates", category = CREATIVE)
+    public static boolean interactionUpdates = true;
+
     @Rule(desc = "smooth client animations with low tps settings", extra = "works only in SP, and will slow down players", category = CREATIVE)
     public static boolean smoothClientAnimations;
 
