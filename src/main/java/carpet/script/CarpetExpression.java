@@ -2290,7 +2290,9 @@ public class CarpetExpression
             boolean hasTag = false;
             if (lv.size() > position.offset)
             {
-                NBTSerializableValue v = NBTSerializableValue.parseString(lv.get(position.offset).evalValue(c).getString());
+                Value nbt = lv.get(position.offset).evalValue(c);
+                NBTSerializableValue v = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
+                        : NBTSerializableValue.parseString(nbt.getString());
                 if (v != null)
                 {
                     hasTag = true;
