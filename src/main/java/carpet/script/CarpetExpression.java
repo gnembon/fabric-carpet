@@ -59,6 +59,7 @@ import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
@@ -1240,16 +1241,40 @@ public class CarpetExpression
             long how = 0;
             if (lv.size() > locator.offset)
                 how = NumericValue.asNumber(lv.get(locator.offset).evalValue(cc)).getLong();
+            Item item = Items.DIAMOND_PICKAXE;
+            if (lv.size() > locator.offset+1)
+            {
+                String itemString = lv.get(locator.offset+1).evalValue(c).getString();
+                item = Registry.ITEM.get(new Identifier(itemString));
+                if (item == Items.AIR && !itemString.equals("air")) throw new InternalExpressionException("Incorrect item: "+itemString);
+            }
+            CompoundTag tag = null;
+            if (lv.size() > locator.offset+2)
+            {
+                Value tagValue = lv.get(locator.offset+2).evalValue(c);
+                if (tagValue instanceof NBTSerializableValue)
+                    tag = ((NBTSerializableValue) tagValue).getCompoundTag();
+                else
+                    tag = NBTSerializableValue.parseString(tagValue.getString()).getCompoundTag();
+            }
             world.clearBlockState(where, false);
             world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
-            if (how < 0)
-            {
-                Block.dropStack(world, where, new ItemStack(state.getBlock()));
-            }
-            else
-            {
-                ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE, 1);
-                tool.addEnchantment(Enchantments.FORTUNE,(int)how);
+            // WIP tool still mines everything, and only enchantments count.
+            // need to verify the durability changes
+
+            //if (how < 0)
+            //{
+            //    Block.dropStack(world, where, new ItemStack(state.getBlock()));
+            //}
+            //else
+            //{
+                ItemStack tool = new ItemStack(item, 1);
+                if (tag != null)
+                    tool.setTag(tag);
+                if (how > 0)
+                    tool.addEnchantment(Enchantments.FORTUNE,(int)how);
+                else if (how < 0)
+                    tool.addEnchantment(Enchantments.SILK_TOUCH, 1);
 
                 LootContext.Builder lootContext$Builder_1 = (new LootContext.Builder(world)).
                         setRandom(world.random).
@@ -1261,7 +1286,7 @@ public class CarpetExpression
                 state.getDroppedStacks(lootContext$Builder_1).forEach((stack) -> Block.dropStack(world, where, stack));
 
                 //Block.dropStacks(state, world, where, be, cc.s.getEntity(), tool );
-            }
+            //}
             return (c_, t_) -> Value.TRUE;
         });
 
