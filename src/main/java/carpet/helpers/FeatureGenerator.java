@@ -132,6 +132,7 @@ public class FeatureGenerator
         structureToFeature.put("Pillager_Outpost", Collections.singletonList("pillager_outpost"));
         structureToFeature.put("Mineshaft", Arrays.asList("mineshaft", "mineshaft_mesa"));
         structureToFeature.put("Igloo", Collections.singletonList("igloo"));
+        structureToFeature.put("Fortress", Collections.singletonList("fortress"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
