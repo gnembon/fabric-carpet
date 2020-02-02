@@ -3,7 +3,6 @@ package carpet.settings;
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.lang.reflect.Constructor;

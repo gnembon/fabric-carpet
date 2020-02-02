@@ -5,19 +5,17 @@ import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.PacketCounter;
 import carpet.mixins.PlayerListHeaderS2CPacketMixin;
-import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.client.network.packet.PlayerListHeaderS2CPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Pair;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.text.BaseText;
 import net.minecraft.text.LiteralText;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -102,9 +100,12 @@ public class HUDController
 
     private static BaseText [] send_counter_info(MinecraftServer server, String color)
     {
-        HopperCounter counter = HopperCounter.getCounter(color);
-        List <BaseText> res = counter == null ? Collections.emptyList() : counter.format(server, false, true);
-        return new BaseText[]{ Messenger.c(res.toArray(new Object[0]))};
+        List <BaseText> res = new ArrayList<>();
+        Arrays.asList(color.split(",")).forEach(c ->{
+            HopperCounter counter = HopperCounter.getCounter(c);
+            if (counter != null) res.addAll(counter.format(server, false, true));
+        });
+        return res.toArray(new BaseText[0]);
     }
     private static BaseText [] packetCounter()
     {
