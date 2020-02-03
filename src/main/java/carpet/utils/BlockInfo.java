@@ -82,8 +82,8 @@ public class BlockInfo
         put(MaterialColor.DIAMOND   , "diamond"   );
         put(MaterialColor.LAPIS     , "lapis"     );
         put(MaterialColor.EMERALD   , "emerald"   );
-        put(MaterialColor.SPRUCE  , "obsidian"  );
-        put(MaterialColor.NETHER,   "netherrack"); //TODO fix these
+        put(MaterialColor.SPRUCE    , "obsidian"  );
+        put(MaterialColor.NETHER    , "netherrack"); //TODO fix these
         put(MaterialColor.WHITE_TERRACOTTA     , "white_terracotta"      );
         put(MaterialColor.ORANGE_TERRACOTTA    , "orange_terracotta"     );
         put(MaterialColor.MAGENTA_TERRACOTTA   , "magenta_terracotta"    );
@@ -108,8 +108,8 @@ public class BlockInfo
         put(Material.PORTAL         , "portal"       );
         put(Material.CARPET         , "carpet"       );
         put(Material.PLANT          , "plant"        );
-        put(Material.UNDERWATER_PLANT    , "water_plant"  );
-        put(Material.REPLACEABLE_PLANT           , "vine"         );
+        put(Material.UNDERWATER_PLANT, "water_plant" );
+        put(Material.REPLACEABLE_PLANT, "vine"       );
         put(Material.SEAGRASS       , "sea_grass"    );
         put(Material.WATER          , "water"        );
         put(Material.BUBBLE_COLUMN  , "bubble_column");
@@ -117,7 +117,7 @@ public class BlockInfo
         put(Material.SNOW           , "snow_layer"   );
         put(Material.FIRE           , "fire"         );
         put(Material.PART           , "redstone_bits");
-        put(Material.COBWEB            , "cobweb"       );
+        put(Material.COBWEB         , "cobweb"       );
         put(Material.REDSTONE_LAMP  , "redstone_lamp");
         put(Material.CLAY           , "clay"         );
         put(Material.EARTH          , "dirt"         );
@@ -125,9 +125,9 @@ public class BlockInfo
         put(Material.PACKED_ICE     , "packed_ice"   );
         put(Material.SAND           , "sand"         );
         put(Material.SPONGE         , "sponge"       );
-        put(Material.SHULKER_BOX           , "wood"         );
-        put(Material.WOOD           , "wool"         ); // fix these
-        put(Material.BAMBOO_SAPLING     , "shoots"          );
+        put(Material.SHULKER_BOX    , "shulker"      );
+        put(Material.WOOD           , "wood"         );
+        put(Material.BAMBOO_SAPLING , "shoots"       );
         put(Material.BAMBOO         , "bamboo"       );
         put(Material.WOOL           , "wool"         );
         put(Material.TNT            , "tnt"          );
@@ -136,7 +136,7 @@ public class BlockInfo
         put(Material.ICE            , "ice"          );
         put(Material.CACTUS         , "cactus"       );
         put(Material.STONE          , "stone"        );
-        put(Material.METAL          , "iron"         );
+        put(Material.METAL          , "metal"        );
         put(Material.SNOW_BLOCK     , "snow"         );
         put(Material.ANVIL          , "anvil"        );
         put(Material.BARRIER        , "barrier"      );
