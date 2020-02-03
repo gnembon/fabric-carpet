@@ -1,7 +1,7 @@
 package carpet.helpers;
 
 import carpet.fakes.ExperienceOrbInterface;
-import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.player.PlayerEntity;
