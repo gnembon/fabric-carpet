@@ -1262,12 +1262,12 @@ public class CarpetExpression
             // WIP tool still mines everything, and only enchantments count.
             // need to verify the durability changes
 
-            //if (how < 0)
-            //{
-            //    Block.dropStack(world, where, new ItemStack(state.getBlock()));
-            //}
-            //else
-            //{
+            if (how < 0)
+            {
+                Block.dropStack(world, where, new ItemStack(state.getBlock()));
+            }
+            else
+            {
                 ItemStack tool = new ItemStack(item, 1);
                 if (tag != null)
                     tool.setTag(tag);
@@ -1286,7 +1286,7 @@ public class CarpetExpression
                 state.getDroppedStacks(lootContext$Builder_1).forEach((stack) -> Block.dropStack(world, where, stack));
 
                 //Block.dropStacks(state, world, where, be, cc.s.getEntity(), tool );
-            //}
+            }
             return (c_, t_) -> Value.TRUE;
         });
 
