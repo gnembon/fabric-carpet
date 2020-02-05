@@ -39,7 +39,10 @@ treasure() -> __toggle('treasure', 'structures');
 pillager_outpost() -> __toggle('pillager_outpost', 'structures');
 mineshaft() -> __toggle('mineshaft', 'structures');
 village() -> __toggle('village', 'structures');
+nether_fossil() -> __toggle('nether_fossil', 'structures');
+
 slime_chunks() -> __toggle('slime_chunks', 'chunks');
+
 
 clear() -> for(global_renderers, global_renderers:_:'tasks' = m() );
 

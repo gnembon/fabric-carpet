@@ -5,6 +5,7 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
+import net.minecraft.class_4780;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class FeatureGenerator
 {
@@ -161,6 +163,7 @@ public class FeatureGenerator
         structureToFeature.put("Mineshaft", Arrays.asList("mineshaft", "mineshaft_mesa"));
         structureToFeature.put("Igloo", Collections.singletonList("igloo"));
         structureToFeature.put("Fortress", Collections.singletonList("fortress"));
+        structureToFeature.put("Nether_Fossil", Collections.singletonList("nether_fossil"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
@@ -204,6 +207,7 @@ public class FeatureGenerator
         put("village_savanna", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/savanna/town_centers", 6), Biomes.PLAINS));
         put("village_taiga", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
         put("village_snowy", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
+        put("nether_fossil", ((StructureFeatureInterface)Feature.field_22190)::gridAnywhere);
 
     }};
 
@@ -282,6 +286,17 @@ public class FeatureGenerator
                         :simplePlop(Feature.CORAL_CLAW).plop(w, p));
         put("sea_pickle", simplePlop(Feature.SEA_PICKLE.configure( new SeaPickleFeatureConfig(20))));
         put("boulder", simplePlop(Feature.FOREST_ROCK.configure( new BoulderFeatureConfig(Blocks.MOSSY_COBBLESTONE.getDefaultState(), 0))));
+        put("crimson_fungi", simplePlop(Feature.HUGE_FUNGI.configure(DefaultBiomeFeatures.field_22052))); // crimson
+        put("warped_fungi", simplePlop(Feature.HUGE_FUNGI.configure(DefaultBiomeFeatures.field_22053))); // warped
+        put("nether_forest_vegatation", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.field_22054)));
+        put("weeping_vines", simplePlop(Feature.WEEPING_VINES));
+        put("basalt_pillar", simplePlop(Feature.BASALT_PILLAR));
+
+
+
+
+
+
         //structures
         put("monument",  ((StructureFeatureInterface)Feature.OCEAN_MONUMENT)::plopAnywhere);
         put("fortress", ((StructureFeatureInterface)Feature.NETHER_BRIDGE)::plopAnywhere);
@@ -320,6 +335,7 @@ public class FeatureGenerator
         put("village_savanna", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/savanna/town_centers", 6), Biomes.PLAINS));
         put("village_taiga", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
         put("village_snowy", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
+        put("nether_fossil", ((StructureFeatureInterface)Feature.field_22190)::plopAnywhere);
     }};
 
 }

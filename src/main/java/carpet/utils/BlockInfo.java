@@ -45,6 +45,23 @@ public class BlockInfo
         put(BlockSoundGroup.STEM , "stem" );
         put(BlockSoundGroup.NETHER_WART , "wart" );
         put(BlockSoundGroup.LANTERN , "lantern" );
+        put(BlockSoundGroup.field_22152, "fungi_stem");
+        put(BlockSoundGroup.field_22153, "nylium");
+        put(BlockSoundGroup.field_22154, "fungi");
+        put(BlockSoundGroup.field_22138, "roots");
+        put(BlockSoundGroup.field_22139, "shroomlight");
+        put(BlockSoundGroup.field_22140, "weeping_vines");
+        put(BlockSoundGroup.field_22141, "soul_sand");
+        put(BlockSoundGroup.field_22142, "soul_soil");
+        put(BlockSoundGroup.field_22143, "basalt");
+        put(BlockSoundGroup.field_22144, "wart");
+        put(BlockSoundGroup.field_22145, "netherrack");
+        put(BlockSoundGroup.field_22146, "nether_bricks");
+        put(BlockSoundGroup.field_22147, "nether_sprouts");
+        put(BlockSoundGroup.field_22148, "nether_ore");
+        put(BlockSoundGroup.field_22149, "bone");
+        put(BlockSoundGroup.field_22150, "netherite");
+        put(BlockSoundGroup.field_22151, "ancient_debris");
     }};
 
     public static final Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
@@ -127,6 +144,7 @@ public class BlockInfo
         put(Material.SPONGE         , "sponge"       );
         put(Material.SHULKER_BOX    , "shulker"      );
         put(Material.WOOD           , "wood"         );
+        put(Material.field_22223    , "nether_wood"  );
         put(Material.BAMBOO_SAPLING , "shoots"       );
         put(Material.BAMBOO         , "bamboo"       );
         put(Material.WOOL           , "wool"         );
