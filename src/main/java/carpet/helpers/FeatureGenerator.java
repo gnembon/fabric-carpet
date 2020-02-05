@@ -292,11 +292,6 @@ public class FeatureGenerator
         put("weeping_vines", simplePlop(Feature.WEEPING_VINES));
         put("basalt_pillar", simplePlop(Feature.BASALT_PILLAR));
 
-
-
-
-
-
         //structures
         put("monument",  ((StructureFeatureInterface)Feature.OCEAN_MONUMENT)::plopAnywhere);
         put("fortress", ((StructureFeatureInterface)Feature.NETHER_BRIDGE)::plopAnywhere);
