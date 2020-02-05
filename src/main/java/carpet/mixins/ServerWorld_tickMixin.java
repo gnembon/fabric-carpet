@@ -23,18 +23,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 @Mixin(ServerWorld.class)
 public abstract class ServerWorld_tickMixin extends World
 {
+    protected ServerWorld_tickMixin(LevelProperties levelProperties, DimensionType dimensionType, BiFunction<World, Dimension, ChunkManager> chunkManagerProvider, Supplier<Profiler> supplier, boolean isClient)
+    {
+        super(levelProperties, dimensionType, chunkManagerProvider, supplier, isClient);
+    }
+
     @Shadow protected abstract void sendBlockActions();
 
     CarpetProfiler.ProfilerToken currentSection;
 
-    protected ServerWorld_tickMixin(LevelProperties levelProperties_1, DimensionType dimensionType_1, BiFunction<World, Dimension, ChunkManager> biFunction_1, Profiler profiler_1, boolean boolean_1)
-    {
-        super(levelProperties_1, dimensionType_1, biFunction_1, profiler_1, boolean_1);
-    }
+
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",

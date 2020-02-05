@@ -29,9 +29,6 @@ public abstract class World_movableTEMixin implements WorldInterface
     @Shadow
     @Final
     protected LevelProperties properties;
-    @Shadow
-    @Final
-    private Profiler profiler;
 
     @Shadow
     public abstract WorldChunk getWorldChunk(BlockPos blockPos_1);
@@ -49,14 +46,16 @@ public abstract class World_movableTEMixin implements WorldInterface
     public abstract void updateListeners(BlockPos var1, BlockState var2, BlockState var3, int var4);
     
     @Shadow
-    public abstract void updateNeighbors(BlockPos blockPos_1, Block block_1);
+    public abstract void updateNeighborsAlways(BlockPos blockPos_1, Block block_1);
     
     @Shadow
     public abstract void updateHorizontalAdjacent(BlockPos blockPos_1, Block block_1);
     
     @Shadow
     public abstract void onBlockChanged(BlockPos blockPos_1, BlockState blockState_1, BlockState blockState_2);
-    
+
+    @Shadow public abstract Profiler getProfiler();
+
     /**
      * @author 2No2Name
      */
@@ -94,9 +93,10 @@ public abstract class World_movableTEMixin implements WorldInterface
                 
                 if (blockState_3 != blockState_2 && (blockState_3.getOpacity((BlockView) this, blockPos_1) != blockState_2.getOpacity((BlockView) this, blockPos_1) || blockState_3.getLuminance() != blockState_2.getLuminance() || blockState_3.hasSidedTransparency() || blockState_2.hasSidedTransparency()))
                 {
-                    this.profiler.push("queueCheckLight");
+                    Profiler profiler = getProfiler();
+                    profiler.push("queueCheckLight");
                     this.getChunkManager().getLightingProvider().checkBlock(blockPos_1);
-                    this.profiler.pop();
+                    profiler.pop();
                 }
                 
                 if (blockState_3 == blockState_1)
@@ -113,7 +113,7 @@ public abstract class World_movableTEMixin implements WorldInterface
                     
                     if (!this.isClient && (int_1 & 1) != 0)
                     {
-                        this.updateNeighbors(blockPos_1, blockState_2.getBlock());
+                        this.updateNeighborsAlways(blockPos_1, blockState_2.getBlock());
                         if (blockState_1.hasComparatorOutput())
                         {
                             this.updateHorizontalAdjacent(blockPos_1, block_1);

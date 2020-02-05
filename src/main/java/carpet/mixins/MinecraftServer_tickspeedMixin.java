@@ -2,9 +2,10 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.class_4758;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Util;
-import net.minecraft.util.profiler.DisableableProfiler;
+import net.minecraft.util.profiler.Profiler;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,9 +28,9 @@ public abstract class MinecraftServer_tickspeedMixin
 
     @Shadow @Final private static Logger LOGGER;
 
-    @Shadow private boolean profilerStartQueued;
+    //@Shadow private boolean profilerStartQueued;
 
-    @Shadow @Final private DisableableProfiler profiler;
+    @Shadow @Final private Profiler profiler;
 
     @Shadow protected abstract void tick(BooleanSupplier booleanSupplier_1);
 
@@ -42,6 +43,8 @@ public abstract class MinecraftServer_tickspeedMixin
     @Shadow protected abstract void method_16208();
 
     @Shadow private volatile boolean loading;
+
+    @Shadow protected abstract void method_24487(class_4758 arg);
 
     CarpetProfiler.ProfilerToken currentSection;
 
@@ -105,12 +108,8 @@ public abstract class MinecraftServer_tickspeedMixin
             }
 
             this.timeReference += msThisTick;//50L;
-            if (this.profilerStartQueued)
-            {
-                this.profilerStartQueued = false;
-                this.profiler.getController().enable();
-            }
-
+            class_4758 lv = class_4758.method_24341("Server");
+            this.method_24487(lv);
             this.profiler.startTick();
             this.profiler.push("tick");
             this.tick(TickSpeed.time_warp_start_time != 0 ? ()->true : this::shouldKeepTicking);
