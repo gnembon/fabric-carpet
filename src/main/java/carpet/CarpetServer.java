@@ -5,18 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import carpet.commands.CameraModeCommand;
-import carpet.commands.CounterCommand;
-import carpet.commands.DistanceCommand;
-import carpet.commands.DrawCommand;
-import carpet.commands.InfoCommand;
-import carpet.commands.LogCommand;
-import carpet.commands.MobAICommand;
-import carpet.commands.PerimeterInfoCommand;
-import carpet.commands.PlayerCommand;
-import carpet.commands.ScriptCommand;
-import carpet.commands.SpawnCommand;
-import carpet.commands.TickCommand;
+import carpet.commands.*;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -89,6 +78,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         TickCommand.register(dispatcher);
+        ProfileCommand.register(dispatcher);
         CounterCommand.register(dispatcher);
         LogCommand.register(dispatcher);
         SpawnCommand.register(dispatcher);
