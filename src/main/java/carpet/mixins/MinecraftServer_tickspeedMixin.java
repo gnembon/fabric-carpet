@@ -2,8 +2,8 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.class_4758;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.TickDurationMonitor;
 import net.minecraft.util.Util;
 import net.minecraft.util.profiler.Profiler;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +44,7 @@ public abstract class MinecraftServer_tickspeedMixin
 
     @Shadow private volatile boolean loading;
 
-    @Shadow protected abstract void method_24487(class_4758 arg);
+    @Shadow protected abstract void startMonitor(TickDurationMonitor monitor);
 
     CarpetProfiler.ProfilerToken currentSection;
 
@@ -108,8 +108,8 @@ public abstract class MinecraftServer_tickspeedMixin
             }
 
             this.timeReference += msThisTick;//50L;
-            class_4758 lv = class_4758.method_24341("Server");
-            this.method_24487(lv);
+            TickDurationMonitor tickDurationMonitor = TickDurationMonitor.create("Server");
+            this.startMonitor(tickDurationMonitor);
             this.profiler.startTick();
             this.profiler.push("tick");
             this.tick(TickSpeed.time_warp_start_time != 0 ? ()->true : this::shouldKeepTicking);
