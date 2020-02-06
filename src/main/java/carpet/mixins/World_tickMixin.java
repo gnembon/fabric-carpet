@@ -62,7 +62,7 @@ public abstract class World_tickMixin implements WorldInterface
     ))
     private boolean checkProcessTEs(BlockEntity blockEntity)
     {
-        return blockEntity.isRemoved() || !TickSpeed.process_entities;
+        return blockEntity.isRemoved() || !TickSpeed.process_entities; // blockEntity can be NULL? happened once with fake player
     }
 
     @Inject(method = "tickBlockEntities", at = @At(
