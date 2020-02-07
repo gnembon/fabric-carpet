@@ -43,6 +43,16 @@ import net.minecraft.block.CommandBlock;
 import net.minecraft.block.JigsawBlock;
 import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.FallingBlockEntity;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.item.MiningToolItem;
+import net.minecraft.item.ShearsItem;
+import net.minecraft.item.SwordItem;
+import net.minecraft.item.TridentItem;
 import net.minecraft.network.packet.s2c.play.ContainerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
@@ -58,10 +68,6 @@ import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -105,8 +111,6 @@ import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.ChunkRandom;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.loot.context.LootContextParameters;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -151,6 +155,7 @@ public class CarpetExpression
     private final Expression expr;
     Expression getExpr() {return expr;}
     private static long tickStart = 0L;
+    private static FallingBlockEntity DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
 
     private static boolean stopAll = false;
 
@@ -518,9 +523,45 @@ public class CarpetExpression
      * <p>Causes a block to tick at position.</p>
      * <h3><code>random_tick(pos)</code></h3>
      * <p>Causes a random tick at position.</p>
-     * <h3><code>destroy(pos), destroy(pos, -1), destroy(pos, &lt;N&gt;)</code></h3>
+     * <h3><code>destroy(pos), destroy(pos, -1), destroy(pos, &lt;N&gt;), destroy(pos, tool, nbt?)</code></h3>
      * <p>Destroys the block like it was mined by a player. Add -1 for silk touch, and positive number for fortune level.
-     * This function, unlike harvest, will affect all kinds of blocks</p>
+     * If tool is specified, and optionally its nbt, it will use that tool and will attempt to mine the block with this tool.
+     * If called without item context, this function, unlike harvest, will affect all kinds of blocks. If called with item in context,
+     * it will fail to break blocks that cannot be broken by a survival player.</p>
+     * <p>Without item context it returns <code>false</code> if failed to destroy the block and <code>true</code> if block breaking was
+     * successful. In item context, <code>true</code> means that breaking item has no nbt to use, <code>null</code> indicating that
+     * the tool should be considered broken in process, and <code>nbt</code> type value, for a resulting NBT tag on a hypothetical tool.
+     * Its up to the programmer to use that nbt to apply it where it belong
+     * </p>
+     * <p>Here is a sample code that can be used to mine blocks using items in player inventory, without using player context for mining.
+     * Obviously, in this case the use of <code>harvest</code> would be much more applicable:</p>
+     * <pre>
+     * mine(x,y,z) -&gt;
+     * (
+     *    p = player();
+     *    slot = p~'selected_slot';
+     *    item_tuple = inventory_get(p, slot);
+     *    if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
+     *    l(item, count, tag) = item_tuple;
+     *    tag_back = destroy(x,y,z, item, tag);
+     *    if (tag_back == false, // failed to break the item
+     * 	     return(tag_back)
+     *    );
+     *    if (tag_back == true, // block broke, tool has no tag
+     * 	     return(tag_back)
+     *    );
+     *    if (tag_back == null, //item broke
+     * 	     delete(tag:'Damage');
+     * 	     inventory_set(p, slot, count-1, item, tag);
+     * 	     return(tag_back)
+     *    );
+     *    if (type(tag_back) == 'nbt', // item didn't break, here is the effective nbt
+     * 	     inventory_set(p, slot, count, item, tag_back);
+     * 	     return(tag_back)
+     *    );
+     *    print('How did we get here?');
+     * )
+     * </pre>
      * <h3><code>harvest(player, pos)</code></h3>
      * <p>Causes a block to be harvested by a specified player entity. Honors player item enchantments, as well as damages the
      * tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to
@@ -1240,55 +1281,94 @@ public class CarpetExpression
             BlockPos where = locator.block.getPos();
             BlockEntity be = world.getBlockEntity(where);
             long how = 0;
-            if (lv.size() > locator.offset)
-                how = NumericValue.asNumber(lv.get(locator.offset).evalValue(cc)).getLong();
             Item item = Items.DIAMOND_PICKAXE;
-            if (lv.size() > locator.offset+1)
+            boolean playerBreak = false;
+            if (lv.size() > locator.offset)
             {
-                String itemString = lv.get(locator.offset+1).evalValue(c).getString();
-                item = Registry.ITEM.get(new Identifier(itemString));
-                if (item == Items.AIR && !itemString.equals("air")) throw new InternalExpressionException("Incorrect item: "+itemString);
+                Value val = lv.get(locator.offset).evalValue(c);
+                if (val instanceof NumericValue)
+                {
+                    how = ((NumericValue) val).getLong();
+                }
+                else
+                {
+                    playerBreak = true;
+                    String itemString = val.getString();
+                    item = Registry.ITEM.get(new Identifier(itemString));
+                    if (item == Items.AIR && !itemString.equals("air"))
+                        throw new InternalExpressionException("Incorrect item: " + itemString);
+                }
             }
             CompoundTag tag = null;
-            if (lv.size() > locator.offset+2)
+            if (lv.size() > locator.offset+1)
             {
-                Value tagValue = lv.get(locator.offset+2).evalValue(c);
-                if (tagValue instanceof NBTSerializableValue)
+                if (!playerBreak) throw new InternalExpressionException("tag is not necessary with 'destroy' with no item");
+                Value tagValue = lv.get(locator.offset+1).evalValue(c);
+                if (tagValue instanceof NullValue)
+                    tag = null;
+                else if (tagValue instanceof NBTSerializableValue)
                     tag = ((NBTSerializableValue) tagValue).getCompoundTag();
                 else
-                    tag = NBTSerializableValue.parseString(tagValue.getString()).getCompoundTag();
+                {
+                    NBTSerializableValue readTag = NBTSerializableValue.parseString(tagValue.getString());
+                    if (readTag == null)
+                        throw new InternalExpressionException("Incorrect tag: "+tagValue.getString());
+                    tag = readTag.getCompoundTag();
+                }
             }
-            world.removeBlock(where, false);
+
+            ItemStack tool = new ItemStack(item, 1);
+            if (tag != null)
+                tool.setTag(tag);
+            if (playerBreak && state.getHardness(world, where) < 0.0) return LazyValue.FALSE;
+            boolean removed = world.removeBlock(where, false);
+            if (!removed) return LazyValue.FALSE;
             world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
-            // WIP tool still mines everything, and only enchantments count.
-            // need to verify the durability changes
 
-            if (how < 0)
+            boolean toolBroke = false;
+            boolean dropLoot = true;
+            if (playerBreak)
             {
-                Block.dropStack(world, where, new ItemStack(state.getBlock()));
+                boolean isUsingEffectiveTool = state.getMaterial().canBreakByHand() || tool.isEffectiveOn(state);
+                //postMine() durability from item classes
+                float hardness = state.getHardness(world, where);
+                int damageAmount = 0;
+                if ((item instanceof MiningToolItem && hardness > 0.0) || item instanceof ShearsItem)
+                {
+                    damageAmount = 1;
+                }
+                else if (item instanceof TridentItem || item instanceof SwordItem)
+                {
+                    damageAmount = 2;
+                }
+                toolBroke = damageAmount>0 && tool.damage(damageAmount, world.getRandom(), null);
+                if (!isUsingEffectiveTool)
+                    dropLoot = false;
             }
-            else
+
+            if (dropLoot)
             {
-                ItemStack tool = new ItemStack(item, 1);
-                if (tag != null)
-                    tool.setTag(tag);
-                if (how > 0)
-                    tool.addEnchantment(Enchantments.FORTUNE,(int)how);
-                else if (how < 0)
-                    tool.addEnchantment(Enchantments.SILK_TOUCH, 1);
-
-                LootContext.Builder lootContext$Builder_1 = (new LootContext.Builder(world)).
-                        setRandom(world.random).
-                        put(LootContextParameters.POSITION, where).
-                        put(LootContextParameters.BLOCK_STATE, state).
-                        putNullable(LootContextParameters.BLOCK_ENTITY, be).
-                        putNullable(LootContextParameters.THIS_ENTITY, cc.s.getEntity()).
-                        put(LootContextParameters.TOOL, tool);
-                state.getDroppedStacks(lootContext$Builder_1).forEach((stack) -> Block.dropStack(world, where, stack));
-
-                //Block.dropStacks(state, world, where, be, cc.s.getEntity(), tool );
+                if (how < 0 || (tag != null && EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, tool) > 0))
+                {
+                    Block.dropStack(world, where, new ItemStack(state.getBlock()));
+                }
+                else
+                {
+                    if (how > 0)
+                        tool.addEnchantment(Enchantments.FORTUNE, (int) how);
+                    Block.dropStacks(state, world, where, be, DUMMY_ENTITY, tool);
+                }
             }
-            return (c_, t_) -> Value.TRUE;
+            if (!playerBreak) // no tool info - block brokwn
+                return (c_, t_) -> Value.TRUE;
+            if (toolBroke)
+                return LazyValue.NULL;
+            Tag outtag = tool.getTag();
+            if (outtag == null)
+                return LazyValue.TRUE;
+            Value ret = new NBTSerializableValue(outtag);
+            return (_c, _t) -> ret;
+
         });
 
         this.expr.addLazyFunction("harvest", -1, (c, t, lv) ->

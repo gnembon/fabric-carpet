@@ -32,7 +32,7 @@ import static carpet.settings.RuleCategory.DISPENSER;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.9+v200206";
+    public static final String carpetVersion = "1.3.9+v200206b";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -230,6 +230,13 @@ public class CarpetSettings
 
     @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND)
     public static String commandTick = "true";
+
+    @Rule(
+            desc = "Enables /profile command to monitor game performance",
+            extra = "subset of /tick command capabilities",
+            category = COMMAND
+    )
+    public static String commandProfile = "true";
 
     @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
     public static String commandLog = "true";
