@@ -5,7 +5,6 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
-import net.minecraft.class_4780;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
@@ -286,9 +285,11 @@ public class FeatureGenerator
                         :simplePlop(Feature.CORAL_CLAW).plop(w, p));
         put("sea_pickle", simplePlop(Feature.SEA_PICKLE.configure( new SeaPickleFeatureConfig(20))));
         put("boulder", simplePlop(Feature.FOREST_ROCK.configure( new BoulderFeatureConfig(Blocks.MOSSY_COBBLESTONE.getDefaultState(), 0))));
-        put("crimson_fungi", simplePlop(Feature.HUGE_FUNGI.configure(DefaultBiomeFeatures.field_22052))); // crimson
-        put("warped_fungi", simplePlop(Feature.HUGE_FUNGI.configure(DefaultBiomeFeatures.field_22053))); // warped
-        put("nether_forest_vegatation", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.field_22054)));
+        put("crimson_fungi", simplePlop(Feature.HUGE_FUNGI.configure(DefaultBiomeFeatures.CRIMSON_FUNGI_CONFIG))); // crimson
+        put("warped_fungi", simplePlop(Feature.HUGE_FUNGI.configure(DefaultBiomeFeatures.WARPED_FUNGI_CONFIG))); // warped
+        put("nether_sprouts", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.NETHER_SPROUTS_CONFIG)));
+        put("crimson_roots", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.CRIMSON_ROOTS_CONFIG)));
+        put("warped_roots", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.WARPED_ROOTS_CONFIG)));
         put("weeping_vines", simplePlop(Feature.WEEPING_VINES));
         put("basalt_pillar", simplePlop(Feature.BASALT_PILLAR));
 
