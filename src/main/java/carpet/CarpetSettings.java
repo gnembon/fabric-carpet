@@ -50,24 +50,24 @@ public class CarpetSettings
     public static boolean superSecretSetting = false;
 
     @Rule(
-            desc = "Modify the amount of ticks for entering a Nether portal in creative",
+            desc = "Amount of delay ticks to use a nether portal in creative",
             options = {"1", "40", "80", "72000"},
             category = CREATIVE,
             strict = false,
-            validate = NetherPortalDelayLimit.class
+            validate = OneHourMaxDelayLimit.class
     )
     public static int portalCreativeDelay = 1;
 
     @Rule(
-            desc = "Modify the amount of ticks for entering a Nether portal in survival",
+            desc = "Amount of delay ticks to use a nether portal in survival",
             options = {"1", "40", "80", "72000"},
             category = SURVIVAL,
             strict = false,
-            validate = NetherPortalDelayLimit.class
+            validate = OneHourMaxDelayLimit.class
     )
     public static int portalSurvivalDelay = 80;
 
-    private static class NetherPortalDelayLimit extends Validator<Integer> {
+    private static class OneHourMaxDelayLimit extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue > 0 && newValue <= 72000) ? newValue : null;
         }
