@@ -21,6 +21,6 @@ public abstract class PlayerEntityMixin {
     )
     public void onMaxNetherPortalTime(CallbackInfoReturnable<Integer> cir) {
         if(CarpetSettings.portalCreativeDelay != 1 && this.abilities.invulnerable) cir.setReturnValue(CarpetSettings.portalCreativeDelay);
-        else if(CarpetSettings.portalSurvivalDelay != 80) cir.setReturnValue(CarpetSettings.portalSurvivalDelay);
+        else if(CarpetSettings.portalSurvivalDelay != 80 && !this.abilities.invulnerable) cir.setReturnValue(CarpetSettings.portalSurvivalDelay);
     }
 }
