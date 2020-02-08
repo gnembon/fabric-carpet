@@ -12,12 +12,19 @@ public abstract class PlayerEntityMixin
 {
     @ModifyConstant(method = "getMaxNetherPortalTime",
             constant = @Constant(intValue = 1))
-    private int addFillUpdatesInt(int original) {
+    private int addFillUpdatesIntForCreative(int original) {
         if (CarpetSettings.portalCreativeDelay)
             if (PortalHelper.player_holds_obsidian((PlayerEntity) (Object)this))
                 return 72000;
             else
                 return 80;
         return original;
+    }
+    @ModifyConstant(
+        method = "getMaxNetherPortalTime",
+        constant = @Constant(intValue = 80)
+    )
+    private int addFillUpdatesIntForSurvival(int original) {
+        return CarpetSettings.portalSurvivalDelay;
     }
 }

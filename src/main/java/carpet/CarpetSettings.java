@@ -545,4 +545,21 @@ public class CarpetSettings
             category = CREATIVE
     )
     public static boolean extremeBehaviours = false;
+
+    @Rule(
+            desc = "Modify the ticks for Nether portal in survival",
+            options = {"1", "40", "80"},
+            category = SURVIVAL,
+            strict = false,
+            validate = PortlaSurvivalDelayLimit.class
+    )
+    public static int portalSurvivalDelay = 80;
+
+    private static class PortlaSurvivalDelayLimit extends Validator<Integer> {
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            return (newValue > 0 && newValue <= 72000) ? newValue : null;
+        }
+        @Override
+        public String description() { return "You must choose a value from 1 to 72000";}
+    }
 }
