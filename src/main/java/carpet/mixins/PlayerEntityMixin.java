@@ -5,13 +5,22 @@ import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntityMixin {
     @Shadow
     public PlayerAbilities abilities;
 
-    public int getMaxNetherPortalTime() {
-        return this.abilities.invulnerable ? CarpetSettings.portalCreativeDelay : CarpetSettings.portalSurvivalDelay;
+    @Inject(
+        method = "getMaxNetherPortalTime()I",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    public void onMaxNetherPortalTime(CallbackInfoReturnable<Integer> cir) {
+        if(CarpetSettings.portalCreativeDelay != 1) cir.setReturnValue(CarpetSettings.portalCreativeDelay);
+        else if(CarpetSettings.portalSurvivalDelay != 80) cir.setReturnValue(CarpetSettings.portalSurvivalDelay);
     }
 }
