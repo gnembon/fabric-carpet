@@ -23,6 +23,7 @@ import carpet.utils.Messenger;
 public class EntityPlayerMPFake extends ServerPlayerEntity
 {
     public Runnable fixStartingPosition = () -> {};
+    public boolean isAShadow;
 
     public static EntityPlayerMPFake createFake(String username, MinecraftServer server, double d0, double d1, double d2, double yaw, double pitch, DimensionType dimension, GameMode gamemode)
     {
@@ -38,7 +39,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         {
             gameprofile = SkullBlockEntity.loadProperties(gameprofile);
         }
-        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn);
+        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn, false);
         instance.fixStartingPosition = () -> instance.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
         if (instance.dimension != dimension) //player was logged in in a different dimension
@@ -73,7 +74,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         ServerWorld worldIn = server.getWorld(player.dimension);
         ServerPlayerInteractionManager interactionManagerIn = new ServerPlayerInteractionManager(worldIn);
         GameProfile gameprofile = player.getGameProfile();
-        EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn);
+        EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn, true);
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), playerShadow);
 
         playerShadow.setHealth(player.getHealth());
@@ -90,9 +91,10 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         return playerShadow;
     }
 
-    private EntityPlayerMPFake(MinecraftServer server, ServerWorld worldIn, GameProfile profile, ServerPlayerInteractionManager interactionManagerIn)
+    private EntityPlayerMPFake(MinecraftServer server, ServerWorld worldIn, GameProfile profile, ServerPlayerInteractionManager interactionManagerIn, boolean shadow)
     {
         super(server, worldIn, profile, interactionManagerIn);
+        isAShadow = shadow;
     }
 
 

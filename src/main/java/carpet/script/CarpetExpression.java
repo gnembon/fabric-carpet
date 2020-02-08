@@ -155,6 +155,7 @@ public class CarpetExpression
     private final Expression expr;
     Expression getExpr() {return expr;}
     private static long tickStart = 0L;
+    // dummy entity for dummy requirements in the loot tables (see snowball)
     private static FallingBlockEntity DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
 
     private static boolean stopAll = false;
@@ -2157,6 +2158,17 @@ public class CarpetExpression
      * <p>String with gamemode, or <code>null</code> if not a player.</p>
      * <h3><code>query(e,'gamemode_id')</code></h3>
      * <p>Good'ol gamemode id, or null if not a player.</p>
+     * <h3><code>query(e,'player_type')</code></h3>
+     * <p>Returns <code>null</code> if the argument is not a player, otherwise:</p>
+     * <ul>
+     *     <li><code>singleplayer</code>: for singleplayer game</li>
+     *     <li><code>multiplayer</code>: for players on a dedicated server</li>
+     *     <li><code>lan_host</code>: for singleplayer owner that opened the game to LAN</li>
+     *     <li><code>lan_player</code>: for all other players that connected to a LAN host</li>
+     *     <li><code>fake</code>: any carpet-spanwed fake player</li>
+     *     <li><code>shadow</code>: any carpet-shadowed real player</li>
+     *     <li><code>realms</code>: ?</li>
+     * </ul>
      * <h3><code>query(e,'permission_level')</code></h3>
      * <p>Player's permission level, or <code>null</code> if not applicable for this entity.</p>
      *

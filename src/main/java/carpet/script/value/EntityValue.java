@@ -4,6 +4,7 @@ import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
+import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
 import carpet.script.exception.InternalExpressionException;
@@ -32,6 +33,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
@@ -307,6 +309,23 @@ public class EntityValue extends Value
 
                 }
                 return new NumericValue(0);
+            }
+            return Value.NULL;
+        });
+
+        put("player_type", (e, a) -> {
+            if (e instanceof PlayerEntity)
+            {
+                if (e instanceof EntityPlayerMPFake) return new StringValue(((EntityPlayerMPFake) e).isAShadow?"shadow":"fake");
+                PlayerEntity p = (PlayerEntity)e;
+                MinecraftServer server = p.getEntityWorld().getServer();
+                if (server.isDedicated()) return new StringValue("multiplayer");
+                boolean runningLan = server.isRemote();
+                if (!runningLan) return new StringValue("singleplayer");
+                boolean isowner = server.isOwner(p.getGameProfile());
+                if (isowner) return new StringValue("lan_host");
+                return new StringValue("lan player");
+                // realms?
             }
             return Value.NULL;
         });
