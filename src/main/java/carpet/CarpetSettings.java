@@ -551,11 +551,11 @@ public class CarpetSettings
             options = {"1", "40", "80"},
             category = SURVIVAL,
             strict = false,
-            validate = PortlaSurvivalDelayLimit.class
+            validate = PortalSurvivalDelayLimit.class
     )
     public static int portalSurvivalDelay = 80;
 
-    private static class PortlaSurvivalDelayLimit extends Validator<Integer> {
+    private static class PortalSurvivalDelayLimit extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue > 0 && newValue <= 72000) ? newValue : null;
         }
