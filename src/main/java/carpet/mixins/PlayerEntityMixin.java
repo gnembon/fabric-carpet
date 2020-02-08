@@ -1,23 +1,26 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.helpers.PortalHelper;
+import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(PlayerEntity.class)
-public abstract class PlayerEntityMixin
-{
-    @ModifyConstant(method = "getMaxNetherPortalTime",
-            constant = @Constant(intValue = 1))
-    private int addFillUpdatesInt(int original) {
-        if (CarpetSettings.portalCreativeDelay)
-            if (PortalHelper.player_holds_obsidian((PlayerEntity) (Object)this))
-                return 72000;
-            else
-                return 80;
-        return original;
+public abstract class PlayerEntityMixin {
+    @Shadow
+    public PlayerAbilities abilities;
+
+    @Inject(
+        method = "getMaxNetherPortalTime()I",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    public void onMaxNetherPortalTime(CallbackInfoReturnable<Integer> cir) {
+        if(CarpetSettings.portalCreativeDelay != 1 && this.abilities.invulnerable) cir.setReturnValue(CarpetSettings.portalCreativeDelay);
+        else if(CarpetSettings.portalSurvivalDelay != 80 && !this.abilities.invulnerable) cir.setReturnValue(CarpetSettings.portalSurvivalDelay);
     }
 }
