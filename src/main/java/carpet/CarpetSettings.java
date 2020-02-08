@@ -547,7 +547,7 @@ public class CarpetSettings
     public static boolean extremeBehaviours = false;
 
     @Rule(
-            desc = "Modify the ticks for Nether portal in survival",
+            desc = "Modify the amount of ticks for entering a Nether portal in survival",
             options = {"1", "40", "80"},
             category = SURVIVAL,
             strict = false,
