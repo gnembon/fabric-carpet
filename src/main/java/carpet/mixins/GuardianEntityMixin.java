@@ -24,7 +24,7 @@ public abstract class GuardianEntityMixin extends HostileEntity
     @Override
     public void onStruckByLightning(LightningEntity lightning)
     {
-        if (!this.world.isClient && !this.removed && CarpetSettings.renewableSponges)
+        if (!this.world.isClient && !this.removed && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardianEntity))
         {
             ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
             elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.yaw, this.pitch);
