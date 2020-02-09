@@ -4,6 +4,7 @@ import carpet.fakes.ServerPlayerEntityInterface;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.HorseBaseEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.ItemStack;
@@ -220,6 +221,31 @@ public class EntityPlayerActionPack
     {
         double reach = player.interactionManager.isCreative() ? 5 : 4.5f;
         return Tracer.rayTrace(player, 1, reach, false);
+    }
+
+    private void dropItemFromSlot(int slot, boolean dropAll)
+    {
+        PlayerInventory inv = player.inventory;
+        if (!inv.getInvStack(slot).isEmpty())
+            player.dropItem(inv.takeInvStack(slot,
+                    dropAll ? inv.getInvStack(slot).getCount() : 1
+            ), false, true); // scatter, keep owner
+    }
+
+    public void drop(int selectedSlot, boolean dropAll)
+    {
+        PlayerInventory inv = player.inventory;
+        if (selectedSlot == -2) // all
+        {
+            for (int i = inv.getInvSize(); i >= 0; i--)
+                dropItemFromSlot(i, dropAll);
+        }
+        else // one slot
+        {
+            if (selectedSlot == -1)
+                selectedSlot = inv.selectedSlot;
+            dropItemFromSlot(selectedSlot, dropAll);
+        }
     }
 
     public enum ActionType

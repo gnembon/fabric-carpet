@@ -53,7 +53,9 @@ public class PlayerCommand
                         .then(makeActionCommand("jump", EntityPlayerActionPack.ActionType.JUMP))
                         .then(makeActionCommand("attack", EntityPlayerActionPack.ActionType.ATTACK))
                         .then(makeActionCommand("drop", EntityPlayerActionPack.ActionType.DROP_ITEM))
+                        .then(makeDropCommand("drop", false))
                         .then(makeActionCommand("dropStack", EntityPlayerActionPack.ActionType.DROP_STACK))
+                        .then(makeDropCommand("dropStack", true))
                         .then(makeActionCommand("swapHands", EntityPlayerActionPack.ActionType.SWAP_HANDS))
                         .then(literal("kill").executes(PlayerCommand::kill))
                         .then(literal("shadow"). executes(PlayerCommand::shadow))
@@ -103,6 +105,19 @@ public class PlayerCommand
                 .then(literal("continuous").executes(c -> action(c, type, EntityPlayerActionPack.Action.continuous())))
                 .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(2))
                         .executes(c -> action(c, type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks"))))));
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> makeDropCommand(String actionName, boolean dropAll)
+    {
+        return literal(actionName)
+                .then(literal("all").executes(c ->manipulate(c, ap -> ap.drop(-2,dropAll))))
+                .then(literal("mainhand").executes(c ->manipulate(c, ap -> ap.drop(-1,dropAll))))
+                .then(literal("offhand").executes(c ->manipulate(c, ap -> ap.drop(40,dropAll))))
+                .then(argument("slot", IntegerArgumentType.integer(0, 40)).
+                        executes(c ->manipulate(c, ap -> ap.drop(
+                                IntegerArgumentType.getInteger(c,"slot"),
+                                dropAll
+                        ))));
     }
 
     private static Collection<String> getPlayers(ServerCommandSource source)
