@@ -109,7 +109,7 @@
     "EndCityFeatureMixin",
 
     "InfestedBlockMixin",
-    "PlayerEntityMixin",
+    "PlayerEntityMixin_portalDelayMixin",
 
     "PistonBlock_qcMixin",
     "DispenserBlock_qcMixin",
