@@ -22,10 +22,6 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
 
     @Shadow protected abstract boolean isServerOwner();
 
-    @Shadow @Final public ClientConnection client;
-
-    @Shadow public ServerPlayerEntity player;
-
     @Inject(method = "tick", at = @At("HEAD"))
     private void restrictFloatingBits(CallbackInfo ci)
     {
