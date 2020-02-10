@@ -2244,9 +2244,12 @@ public class CarpetExpression
      * <h3><code>modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', l(x, y, z) )</code></h3>
      * <p>Adds a vector to the motion vector. Most realistic way to apply a force to an entity.</p>
      * <h3><code>modify(e, 'custom_name'), modify(e, 'custom_name', name )</code></h3>
-     * <h3><code>modify(e, 'pickup_delay')</code></h3>
-     * <h3><code>modify(e, 'breeding_age')</code></h3>
-     * <h3><code>modify(e, 'despawn_timer')</code></h3>
+     * <h3><code>modify(e, 'age', number)</code></h3>
+     * <p>Modifies entity's internal age counter. Fiddling with this will affect directly
+     * behaviours of complex entities, so use it with caution.</p>
+     * <h3><code>modify(e, 'pickup_delay', number)</code></h3>
+     * <h3><code>modify(e, 'breeding_age', number)</code></h3>
+     * <h3><code>modify(e, 'despawn_timer', number)</code></h3>
      * <p>Sets a custom despawn timer value.</p>
      * <h3><code>modify(e, 'dismount')</code></h3>
      * <p>Dismounts riding entity.</p>
