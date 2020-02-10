@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.fakes.EntityInterface;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -52,5 +53,15 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     private void grabStat(Stat<?> stat, int amount, CallbackInfo ci)
     {
         STATISTICS.onPlayerStatistic((ServerPlayerEntity) (Object)this, stat, amount);
+    }
+
+    @Redirect(method = "method_14218", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;setSneaking(Z)V"
+    ))
+    private void setSneakingConditionally(ServerPlayerEntity serverPlayerEntity, boolean sneaking)
+    {
+        if (!((EntityInterface)serverPlayerEntity.getVehicle()).isPermanentVehicle()) // won't since that method makes sure its not null
+            serverPlayerEntity.setSneaking(sneaking);
     }
 }

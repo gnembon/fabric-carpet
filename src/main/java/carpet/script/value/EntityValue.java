@@ -228,6 +228,7 @@ public class EntityValue extends Value
         put("is_ridden", (e, a) -> new NumericValue(e.hasPassengers()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengerList().stream().map(EntityValue::new).collect(Collectors.toList())));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
+        put("unmountable", (e, a) -> new NumericValue(((EntityInterface)e).isPermanentVehicle()));
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
         put("yaw", (e, a)-> new NumericValue(e.yaw));
@@ -660,6 +661,11 @@ public class EntityValue extends Value
                 ((ServerPlayerEntity)e).networkHandler.sendPacket(new EntityPassengersSetS2CPacket(e));
                 //...
             }
+        });
+        put("unmountable", (e, v) ->{
+            if (v == null)
+                v = Value.TRUE;
+            ((EntityInterface)e).setPermanentVehicle(v.getBoolean());
         });
         put("drop_passengers", (e, v) -> e.removeAllPassengers());
         put("mount_passengers", (e, v) -> {
