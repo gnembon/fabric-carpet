@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.fakes.BiomeArrayInterface;
-import carpet.CarpetSettings;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -26,9 +25,8 @@ public class BiomeArray_getBiomeArrayMixin implements BiomeArrayInterface
     @Override
     public void setBiomeAtIndex(BlockPos pos, World world, Biome what)
     {
-        int seaLevel = 0;// seems to be a fixed value for now. world.getSeaLevel();
         int int_4 = (pos.getX() >> 2) & HORIZONTAL_BIT_MASK;
-        int int_5 = MathHelper.clamp(seaLevel, 0, VERTICAL_BIT_MASK);
+        int int_5 = MathHelper.clamp((pos.getY() >> 2), 0, VERTICAL_BIT_MASK);
         int int_6 = (pos.getZ() >> 2) & HORIZONTAL_BIT_MASK;
         data[(int_5 << (HORIZONTAL_SECTION_COUNT + HORIZONTAL_SECTION_COUNT)) | (int_6 << HORIZONTAL_SECTION_COUNT) | int_4] = what;
     }
