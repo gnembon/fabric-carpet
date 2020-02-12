@@ -18,7 +18,7 @@ public class PickaxeItem_missingToolsMixin
     private Material getCustomMaterial(BlockState blockState)
     {
         Material material = blockState.getMaterial();
-        if (CarpetSettings.missingTools && (material == Material.PISTON || material == Material.GLASS))
+        if (CarpetSettings.missingTools && material == Material.GLASS)
             material = Material.STONE;
         return material;
     }
