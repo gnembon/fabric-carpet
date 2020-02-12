@@ -35,7 +35,7 @@ import net.minecraft.world.gen.feature.ShipwreckFeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.VillageFeatureConfig;
 import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
-import net.minecraft.world.gen.stateprovider.SimpleStateProvider;
+import net.minecraft.world.gen.stateprovider.SimpleBlockStateProvider;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -213,8 +213,8 @@ public class FeatureGenerator
         put("oak", simpleTree(DefaultBiomeFeatures.OAK_TREE_CONFIG));
         put("oak_beehive", simpleTree(
                 (new BranchedTreeFeatureConfig.Builder(
-                        new SimpleStateProvider(Blocks.OAK_LOG.getDefaultState()),
-                        new SimpleStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
+                        new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
+                        new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
                         new BlobFoliagePlacer(2, 0))
                 ).baseHeight(4).heightRandA(2).foliageHeight(3).noVines()
                 .treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
@@ -222,8 +222,8 @@ public class FeatureGenerator
         put("oak_large", simplePlop(Feature.FANCY_TREE.configure(DefaultBiomeFeatures.FANCY_TREE_CONFIG)));
         put("oak_large_beehive", simplePlop(Feature.FANCY_TREE.configure(
                 (new BranchedTreeFeatureConfig.Builder(
-                        new SimpleStateProvider(Blocks.OAK_LOG.getDefaultState()),
-                        new SimpleStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
+                        new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
+                        new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
                         new BlobFoliagePlacer(0, 0))
                 ).treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
         )));
