@@ -21,14 +21,13 @@ public abstract class InfestedBlockMixin extends Block
         super(block$Settings_1);
     }
 
-    @Inject(method = "onStacksDropped", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
+    @Inject(method = "method_24797", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
             target = "Lnet/minecraft/entity/mob/SilverfishEntity;playSpawnEffects()V"))
-    private void onOnStacksDropped(BlockState blockState_1, World world_1, BlockPos blockPos_1,
-                                   ItemStack itemStack_1, CallbackInfo ci)
+    private void onOnStacksDropped(World world, BlockPos blockPos, CallbackInfo ci)
     {
         if (CarpetSettings.silverFishDropGravel)
         {
-            dropStack(world_1, blockPos_1, new ItemStack(Blocks.GRAVEL));
+            dropStack(world, blockPos, new ItemStack(Blocks.GRAVEL));
         }
     }
 }
