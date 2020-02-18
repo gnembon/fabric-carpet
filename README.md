@@ -1,6 +1,8 @@
 # Fabric Carpet
 
-Cause all carpets are made of fabric?
+Cause all carpets are made of fabric?  
+This is the [Fabric](https://fabricmc.net/) version of Carpet Mod, for Minecraft 1.14 and above.  
+For 1.13 check [gnembon/carpetmod](https://github.com/gnembon/carpetmod) and for 1.12 check [gnembon/carpetmod112](https://github.com/gnembon/carpetmod112).
 
 Carpet Mod is a mod for vanilla Minecraft that allows you to take full control of what matters from a technical perspective of the game.
 
