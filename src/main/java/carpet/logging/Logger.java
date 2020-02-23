@@ -6,6 +6,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,13 +29,30 @@ public class Logger
 
     private String[] options;
 
-    public Logger(String logName, String def, String [] options)
+    private Field acceleratorField;
+
+    static Logger stardardLogger(String logName, String def, String [] options)
+    {
+        try
+        {
+            return new Logger(LoggerRegistry.class.getField("__"+logName), logName, def, options);
+        }
+        catch (NoSuchFieldException e)
+        {
+            throw new RuntimeException("Failed to create logger "+logName);
+        }
+    }
+
+    public Logger(Field acceleratorField, String logName, String def, String [] options)
     {
         subscribedOnlinePlayers = new HashMap<>();
         subscribedOfflinePlayers = new HashMap<>();
+        this.acceleratorField = acceleratorField;
         this.logName = logName;
         this.default_option = def;
         this.options = options;
+        if (acceleratorField == null)
+            CarpetSettings.LOG.error("[CM] Logger "+getLogName()+" is missing a specified accelerator");
     }
 
     public String getDefault()
@@ -92,6 +110,11 @@ public class Logger
     {
         subscribedOnlinePlayers.clear();
         subscribedOfflinePlayers.clear();
+    }
+
+    public Field getField()
+    {
+        return acceleratorField;
     }
 
     /**
@@ -185,7 +208,7 @@ public class Logger
             Set<String> loggingOptions = new HashSet<>(Arrays.asList(CarpetSettings.defaultLoggers.split(",")));
             if (loggingOptions.contains(getLogName()))
             {
-                subscribedOnlinePlayers.put(playerName, getDefault());
+                LoggerRegistry.subscribePlayer(playerName, getLogName(), getDefault());
             }
         }
         LoggerRegistry.setAccess(this);

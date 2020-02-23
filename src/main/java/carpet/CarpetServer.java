@@ -41,7 +41,6 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void onGameStarted()
     {
-        LoggerRegistry.initLoggers();
         settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
@@ -59,6 +58,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer = new CarpetScriptServer();
         scriptServer.loadAllWorldScripts();
         MobAI.resetTrackers();
+        LoggerRegistry.initLoggers();
     }
 
     public static void tick(MinecraftServer server)
@@ -116,6 +116,11 @@ public class CarpetServer // static for now - easier to handle all around the co
         settingsManager.detachServer();
         LoggerRegistry.stopLoggers();
         extensions.forEach(e -> e.onServerClosed(server));
+    }
+
+    public static void registerExtensionLoggers()
+    {
+        extensions.forEach(CarpetExtension::registerLoggers);
     }
 }
 

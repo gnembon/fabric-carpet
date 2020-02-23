@@ -18,11 +18,6 @@ public class ServerPlayNetworkHandler_coreMixin {
     @Shadow
     public ServerPlayerEntity player;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void onPlayerConnect(MinecraftServer server, ClientConnection client, ServerPlayerEntity player, CallbackInfo ci) {
-        CarpetServer.onPlayerLoggedIn(player);
-    }
-
     @Inject(method = "onDisconnected", at = @At("HEAD"))
     private void onPlayerDisconnect(Text reason, CallbackInfo ci) {
         CarpetServer.onPlayerLoggedOut(this.player);

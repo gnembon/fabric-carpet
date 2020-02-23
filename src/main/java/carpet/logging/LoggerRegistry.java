@@ -1,5 +1,6 @@
 package carpet.logging;
 
+import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.DyeColor;
@@ -32,18 +33,26 @@ public class LoggerRegistry
 
     public static void initLoggers()
     {
-        registerLogger("tnt", new Logger("tnt", "brief", new String[]{"brief", "full"}));
-        registerLogger("projectiles", new Logger("projectiles", "brief",  new String[]{"brief", "full"}));
-        registerLogger("fallingBlocks",new Logger("fallingBlocks", "brief", new String[]{"brief", "full"}));
+        stopLoggers();
+        registerLoggers();
+        CarpetServer.registerExtensionLoggers();
+    }
+
+    public static void registerLoggers()
+    {
+        registerLogger("tnt", Logger.stardardLogger( "tnt", "brief", new String[]{"brief", "full"}));
+        registerLogger("projectiles", Logger.stardardLogger("projectiles", "brief",  new String[]{"brief", "full"}));
+        registerLogger("fallingBlocks",Logger.stardardLogger("fallingBlocks", "brief", new String[]{"brief", "full"}));
         //registerLogger("kills", new Logger("kills", null, null));
         //registerLogger("damage", new Logger("damage", "all", new String[]{"all","players","me"}));
         //registerLogger("weather", new Logger("weather", null, null));
-        registerLogger( "pathfinding", new Logger("pathfinding", "20", new String[]{"2", "5", "10"}));
+        registerLogger( "pathfinding", Logger.stardardLogger("pathfinding", "20", new String[]{"2", "5", "10"}));
 
-        registerLogger("tps", new HUDLogger("tps", null, null));
-        registerLogger("packets", new HUDLogger("packets", null, null));
-        registerLogger("counter",new HUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
-        registerLogger("mobcaps", new HUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
+        registerLogger("tps", HUDLogger.stardardHUDLogger("tps", null, null));
+        registerLogger("packets", HUDLogger.stardardHUDLogger("packets", null, null));
+        registerLogger("counter",HUDLogger.stardardHUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
+        registerLogger("mobcaps", HUDLogger.stardardHUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
+
     }
 
     /**
@@ -117,22 +126,18 @@ public class LoggerRegistry
         boolean value = logger.hasOnlineSubscribers();
         try
         {
-            Field f = LoggerRegistry.class.getDeclaredField("__"+name);
+            Field f = logger.getField();
             f.setBoolean(null, value);
         }
         catch (IllegalAccessException e)
         {
             CarpetSettings.LOG.error("Cannot change logger quick access field");
         }
-        catch (NoSuchFieldException e)
-        {
-            CarpetSettings.LOG.error("Wrong logger name");
-        }
     }
     /**
      * Called when the server starts. Creates the logs used by Carpet mod.
      */
-    private static void registerLogger(String name, Logger logger)
+    public static void registerLogger(String name, Logger logger)
     {
         loggerRegistry.put(name, logger);
         setAccess(logger);
@@ -142,11 +147,13 @@ public class LoggerRegistry
 
     public static void stopLoggers()
     {
-        seenPlayers.clear();
         for(Logger log: loggerRegistry.values() )
         {
             log.serverStopped();
         }
+        seenPlayers.clear();
+        loggerRegistry.clear();
+        playerSubscriptions.clear();
     }
     public static void playerConnected(PlayerEntity player)
     {
