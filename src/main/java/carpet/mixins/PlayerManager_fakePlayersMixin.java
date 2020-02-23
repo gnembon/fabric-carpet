@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Mixin(PlayerManager.class)
-public abstract class PlayerManagerMixin
+public abstract class PlayerManager_fakePlayersMixin
 {
     @Shadow
     @Final
