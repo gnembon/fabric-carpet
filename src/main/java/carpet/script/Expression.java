@@ -2944,7 +2944,7 @@ public class Expression
             }
             try
             {
-                return new StringValue(String.format(format, args.toArray()));
+                return new StringValue(String.format(Locale.ROOT, format, args.toArray()));
             }
             catch (IllegalFormatException ife)
             {

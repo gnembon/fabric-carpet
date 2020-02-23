@@ -2860,7 +2860,7 @@ public class CarpetExpression
                 @Override
                 public String getString()
                 {
-                    return String.format("rect[(%d,%d,%d),..,(%d,%d,%d)]",minx, miny, minz, maxx, maxy, maxz);
+                    return String.format(Locale.ROOT, "rect[(%d,%d,%d),..,(%d,%d,%d)]",minx, miny, minz, maxx, maxy, maxz);
                 }
             };
         });
@@ -2957,7 +2957,7 @@ public class CarpetExpression
                     @Override
                     public String getString()
                     {
-                        return String.format("diamond[(%d,%d,%d),%d,0]",cx, cy, cz, width);
+                        return String.format(Locale.ROOT, "diamond[(%d,%d,%d),%d,0]",cx, cy, cz, width);
                     }
                 };
             }
@@ -3019,7 +3019,7 @@ public class CarpetExpression
                     @Override
                     public String getString()
                     {
-                        return String.format("diamond[(%d,%d,%d),%d,%d]",cx, cy, cz, width, height);
+                        return String.format(Locale.ROOT, "diamond[(%d,%d,%d),%d,%d]",cx, cy, cz, width, height);
                     }
                 };
             }
