@@ -26,6 +26,8 @@
     "ServerChunkManager_tickMixin",
     "ThreadedAnvilChunkStorage_tickMixin",
 
+    "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
+
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
     "EntityTrackerEntry_leashFixMixin",

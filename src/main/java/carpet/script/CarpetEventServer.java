@@ -14,15 +14,18 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.stat.Stat;
 import net.minecraft.stat.Stats;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -36,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -122,12 +126,17 @@ public class CarpetEventServer
                 callList.removeIf(call -> !CarpetServer.scriptServer.runas(source, call.host, call.function, argv)); // this actually does the calls
             }
         }
-        public boolean addEventCall(String hostName, String funName)
+        public boolean addEventCall(String hostName, String funName, Function<ScriptHost, Boolean> verifier)
         {
             ScriptHost host = CarpetServer.scriptServer.getHostByName(hostName);
             if (host == null)
             {
                 // impossible call to add
+                return false;
+            }
+            if (!verifier.apply(host))
+            {
+                // host cannot use that event, its global event on player based app
                 return false;
             }
             FunctionValue udf = host.getFunction(funName);
@@ -168,7 +177,7 @@ public class CarpetEventServer
 
     public enum Event
     {
-        TICK("tick", new CallbackList(0))
+        TICK("tick", 0, true)
         {
             @Override
             public void onTick()
@@ -179,7 +188,7 @@ public class CarpetEventServer
                 );
             }
         },
-        NETHER_TICK("tick_nether",new CallbackList(0))
+        NETHER_TICK("tick_nether", 0, true)
         {
             @Override
             public void onTick()
@@ -190,7 +199,7 @@ public class CarpetEventServer
                 );
             }
         },
-        ENDER_TICK("tick_ender",new CallbackList(0))
+        ENDER_TICK("tick_ender", 0, true)
         {
             @Override
             public void onTick()
@@ -201,7 +210,24 @@ public class CarpetEventServer
                 );
             }
         },
-        PLAYER_JUMPS("player_jumps", new CallbackList(1))
+        CHUNK_GENERATED("chunk_generated", 2, true)
+        {
+            @Override
+            public void onChunkGenerated(ServerWorld world, Chunk chunk)
+            {
+                handler.call( () ->
+                        {
+                            ChunkPos pos = chunk.getPos();
+                            return Arrays.asList(
+                                    ((c, t) -> new NumericValue(pos.x << 4)),
+                                    ((c, t) -> new NumericValue(pos.z << 4))
+                            );
+                        }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                );
+            }
+        },
+
+        PLAYER_JUMPS("player_jumps", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -209,7 +235,7 @@ public class CarpetEventServer
                 handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        PLAYER_DEPLOYS_ELYTRA("player_deploys_elytra",new CallbackList(1))
+        PLAYER_DEPLOYS_ELYTRA("player_deploys_elytra", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -217,7 +243,7 @@ public class CarpetEventServer
                 handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        PLAYER_WAKES_UP("player_wakes_up",new CallbackList(1))
+        PLAYER_WAKES_UP("player_wakes_up", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -225,7 +251,7 @@ public class CarpetEventServer
                 handler.call( () -> Arrays.asList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        PLAYER_RIDES("player_rides",new CallbackList(5))
+        PLAYER_RIDES("player_rides", 5, false)
         {
             @Override
             public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
@@ -239,7 +265,7 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
-        PLAYER_USES_ITEM("player_uses_item",new CallbackList(3))
+        PLAYER_USES_ITEM("player_uses_item", 3, false)
         {
             @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
@@ -255,7 +281,7 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
-        PLAYER_CLICKS_BLOCK("player_clicks_block",new CallbackList(3))
+        PLAYER_CLICKS_BLOCK("player_clicks_block", 3, false)
         {
             @Override
             public void onBlockAction(ServerPlayerEntity player, BlockPos blockpos, Direction facing)
@@ -270,7 +296,7 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
-        PLAYER_RIGHT_CLICKS_BLOCK("player_right_clicks_block",new CallbackList(6))
+        PLAYER_RIGHT_CLICKS_BLOCK("player_right_clicks_block", 6, false)
         {
             @Override
             public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes)//ItemStack itemstack, Hand enumhand, BlockPos blockpos, Direction enumfacing, Vec3d vec3d)
@@ -296,7 +322,7 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
-        PLAYER_INTERACTS_WITH_BLOCK("player_interacts_with_block", new CallbackList(5))
+        PLAYER_INTERACTS_WITH_BLOCK("player_interacts_with_block", 5, false)
         {
             @Override
             public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes)
@@ -320,7 +346,7 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
-        PLAYER_PLACES_BLOCK("player_places_block", new CallbackList(4))
+        PLAYER_PLACES_BLOCK("player_places_block", 4, false)
         {
             @Override
             public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack)
@@ -333,7 +359,7 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
-        PLAYER_BREAK_BLOCK("player_breaks_block",new CallbackList(2))
+        PLAYER_BREAK_BLOCK("player_breaks_block", 2, false)
         {
             @Override
             public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS)
@@ -344,7 +370,7 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
-        PLAYER_INTERACTS_WITH_ENTITY("player_interacts_with_entity",new CallbackList(3))
+        PLAYER_INTERACTS_WITH_ENTITY("player_interacts_with_entity", 3, false)
         {
             @Override
             public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
@@ -356,7 +382,7 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
-        PLAYER_ATTACKS_ENTITY("player_attacks_entity",new CallbackList(2))
+        PLAYER_ATTACKS_ENTITY("player_attacks_entity", 2, false)
         {
             @Override
             public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
@@ -367,7 +393,7 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
-        PLAYER_STARTS_SNEAKING("player_starts_sneaking",new CallbackList(1))
+        PLAYER_STARTS_SNEAKING("player_starts_sneaking", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -375,7 +401,7 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        PLAYER_STOPS_SNEAKING("player_stops_sneaking",new CallbackList(1))
+        PLAYER_STOPS_SNEAKING("player_stops_sneaking", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -383,7 +409,7 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        PLAYER_STARTS_SPRINTING("player_starts_sprinting",new CallbackList(1))
+        PLAYER_STARTS_SPRINTING("player_starts_sprinting", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -391,7 +417,7 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        PLAYER_STOPS_SPRINTING("player_stops_sprinting",new CallbackList(1))
+        PLAYER_STOPS_SPRINTING("player_stops_sprinting", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -400,7 +426,7 @@ public class CarpetEventServer
             }
         },
 
-        PLAYER_RELEASED_ITEM("player_releases_item",new CallbackList(3))
+        PLAYER_RELEASED_ITEM("player_releases_item", 3, false)
         {
             @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
@@ -416,7 +442,7 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
-        PLAYER_FINISHED_USING_ITEM("player_finishes_using_item",new CallbackList(3))
+        PLAYER_FINISHED_USING_ITEM("player_finishes_using_item", 3, false)
         {
             @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack)
@@ -432,7 +458,7 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
-        PLAYER_DROPS_ITEM("player_drops_item", new CallbackList(1))
+        PLAYER_DROPS_ITEM("player_drops_item", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -440,7 +466,7 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        PLAYER_DROPS_STACK("player_drops_stack", new CallbackList(1))
+        PLAYER_DROPS_STACK("player_drops_stack", 1, false)
         {
             @Override
             public void onPlayerEvent(ServerPlayerEntity player)
@@ -448,7 +474,7 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
-        STATISTICS("statistic", new CallbackList(4))
+        STATISTICS("statistic", 4, false)
         {
             private <T> Identifier getStatId(Stat<T> stat)
             {
@@ -484,10 +510,12 @@ public class CarpetEventServer
             }
         }};
         public final CallbackList handler;
-        Event(String name, CallbackList eventHandler)
+        public final boolean globalOnly;
+        Event(String name, int reqArgs, boolean isGlobalOnly)
         {
             this.name = name;
-            this.handler = eventHandler;
+            this.handler = new CallbackList(reqArgs);
+            this.globalOnly = isGlobalOnly;
         }
         public boolean isNeeded()
         {
@@ -495,6 +523,7 @@ public class CarpetEventServer
         }
         //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
         public void onTick() { }
+        public void onChunkGenerated(ServerWorld world, Chunk chunk) { }
         public void onPlayerEvent(ServerPlayerEntity player) { }
         public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount) { }
         public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
@@ -544,12 +573,22 @@ public class CarpetEventServer
         {
             return false;
         }
-        return Event.byName.get(event).handler.addEventCall(host, funName);
+        Event ev = Event.byName.get(event);
+        return ev.handler.addEventCall(host, funName, h -> canAddEvent(ev, h));
     }
 
     public boolean addEventDirectly(String event, ScriptHost host, FunctionValue function)
     {
-        return Event.byName.get(event).handler.addEventCallDirect(host, function);
+        Event ev = Event.byName.get(event);
+        // config can be analyzed after code is read, so this will always be player scope
+        //if (!canAddEvent(ev, host))
+        //    throw new InternalExpressionException("Global event "+event+" can only be added to apps with global scope");
+        return ev.handler.addEventCallDirect(host, function);
+    }
+
+    private boolean canAddEvent(Event event, ScriptHost host)
+    {
+        return !(event.globalOnly && host.perUser);
     }
 
 
