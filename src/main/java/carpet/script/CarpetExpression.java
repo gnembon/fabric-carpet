@@ -492,6 +492,34 @@ public class CarpetExpression
      * set(x,y,z,block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
      * set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
      * </pre>
+     * <h3><code>without_updates(expr)</code></h3>
+     * <p>Evaluates subexpression without causing updates when blocks change in the world</p>
+     * <p>Consider following scenario: We would like to generate a bunch of terrain in a flat world
+     * following a perling noise generator. The following code causes cascading effect as blocks placed on chunk borders will
+     * cause other chunks to get loaded to full, thus generated:</p>
+     * <pre>
+     * __config() -> m(l('scope', 'global'));
+     * __on_chunk_generated(x, z) -&gt; (
+     *   scan(x,0,z,0,0,0,15,15,15,
+     *     if (perlin(_x/16, _y/8, _z/16) &gt; _y/16,
+     *       set(_, 'black_stained_glass');
+     *     )
+     *   )
+     * )
+     * </pre>
+     * <p>The following addition resolves this issue, by not allowing block updates pass chunk borders:</p>
+     * <pre>
+     * __config() -> m(l('scope', 'global'));
+     * __on_chunk_generated(x, z) -&gt; (
+     *   without_updates(
+     *     scan(x,0,z,0,0,0,15,15,15,
+     *       if (perlin(_x/16, _y/8, _z/16) &gt; _y/16,
+     *         set(_, 'black_stained_glass');
+     *       )
+     *     )
+     *   )
+     * )
+     * </pre>
      * <h3><code>place_item(item, pos, facing?, sneak?)</code></h3>
      * <p>Places a given item in the world like it was placed by a player. Item names are default minecraft item name,
      * less the minecraft prefix. Default facing is 'up', but there are other options: 'down', 'north', 'east',
@@ -1217,6 +1245,21 @@ public class CarpetExpression
                     return true;
                 }));
 
+        this.expr.addLazyFunction("without_updates", 1, (c, t, lv) ->
+        {
+            boolean previous = CarpetSettings.impendingFillSkipUpdates;
+            try
+            {
+                CarpetSettings.impendingFillSkipUpdates = true;
+                Value ret = lv.get(0).evalValue(c, t);
+                return (cc, tt) -> ret;
+            }
+            finally
+            {
+                CarpetSettings.impendingFillSkipUpdates = previous;
+            }
+        });
+
         this.expr.addLazyFunction("set", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
@@ -1249,7 +1292,6 @@ public class CarpetExpression
             BlockPos targetPos = targetLocator.block.getPos();
             cc.s.getMinecraftServer().submitAndJoin( () ->
             {
-                CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
                 Clearable.clear(world.getBlockEntity(targetPos));
                 world.setBlockState(targetPos, finalSourceBlockState, 2);
                 if (data != null)
@@ -1265,7 +1307,6 @@ public class CarpetExpression
                         be.markDirty();
                     }
                 }
-                CarpetSettings.impendingFillSkipUpdates = false;
             });
             Value retval = new BlockValue(finalSourceBlockState, world, targetLocator.block.getPos());
             return (c_, t_) -> retval;
@@ -1431,9 +1472,7 @@ public class CarpetExpression
                 {
                     if (placementState.canPlaceAt(cc.s.getWorld(), where))
                     {
-                        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
                         cc.s.getWorld().setBlockState(where, placementState, 2);
-                        CarpetSettings.impendingFillSkipUpdates = false;
                         BlockSoundGroup blockSoundGroup = placementState.getSoundGroup();
                         cc.s.getWorld().playSound(null, where, blockSoundGroup.getPlaceSound(), SoundCategory.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
                         return (_c, _t) -> Value.TRUE;
@@ -3981,7 +4020,8 @@ public class CarpetExpression
      * starts with <code>__on_...</code> and has the required arguments, will be bound automatically.
      * In case of player specific modules, all player action events will be directed to the appropriate player space, and
      * all tick events will be executed in the global context, so its not a good idea to mix these two, so use either of these,
-     * or use commands to call tick events directly, or handle player specific data inside a module.</p>
+     * or use commands to call tick events directly, or handle player specific data inside a module. In near future using
+     * global events (on_tick, on_chunk_generated) will be not allowed in player scoped apps.</p>
      * <h2></h2>
      * <h3>Event list</h3>
      * <p>Here is a list of events that can be handled by scarpet. This list includes prefixes required by modules to
@@ -3990,6 +4030,7 @@ public class CarpetExpression
      * __on_tick()         // can access blocks and entities in the overworld
      * __on_tick_nether()  // can access blocks and entities in the nether
      * __on_tick_ender()   // can access blocks and entities in the end
+     * __on_chunk_generated(x,z) // called after a chunk is promoted to the full chunk, prodiving lowest x and z coords in the chunk
      *
      * // player specific callbacks
      * __on_player_uses_item(player, item_tuple, hand)  // right click action
