@@ -21,6 +21,7 @@ public class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin
     @Shadow @Final private ServerWorld world;
 
     //in method_20617
+    //method_19534(Lnet/minecraft/server/world/ChunkHolder;Lnet/minecraft/world/chunk/Chunk;)Ljava/util/concurrent/CompletableFuture;
     @Inject(method = "method_19534", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ThreadedAnvilChunkStorage;convertToFullChunk(Lnet/minecraft/server/world/ChunkHolder;)Ljava/util/concurrent/CompletableFuture;",
