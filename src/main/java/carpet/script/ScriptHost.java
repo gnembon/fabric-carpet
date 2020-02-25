@@ -268,7 +268,7 @@ public abstract class ScriptHost
         data.functionImports.remove(varName);
     }
 
-    public void addUserDefinedFunction(Module module, String name, FunctionValue fun)
+    public void addUserDefinedFunction(Context ctx, Module module, String name, FunctionValue fun)
     {
         moduleData.get(module).globalFunctions.put(name, fun);
     }
