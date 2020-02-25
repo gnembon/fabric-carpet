@@ -164,7 +164,7 @@ public class CarpetScriptServer
 
         modules.put(name, newHost);
 
-        if (!addConfig(source, name) && autoload)
+        if (autoload && !newHost.persistenceRequired)
         {
             removeScriptHost(source, name);
             return false;
@@ -172,28 +172,6 @@ public class CarpetScriptServer
         //addEvents(source, name);
         addCommand(source, name);
         return true;
-    }
-
-
-    private boolean addConfig(ServerCommandSource source, String hostName)
-    {
-        CarpetScriptHost host = modules.get(hostName);
-        if (host == null || host.getFunction("__config") == null)
-        {
-            return false;
-        }
-        try
-        {
-            Value ret = host.callUDF(BlockPos.ORIGIN, source, host.getFunction("__config"), Collections.emptyList());
-            if (!(ret instanceof MapValue)) return false;
-            Map<Value, Value> config = ((MapValue) ret).getMap();
-            host.setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
-            return config.getOrDefault(new StringValue("stay_loaded"), Value.FALSE).getBoolean();
-        }
-        catch (NullPointerException | InvalidCallbackException ignored)
-        {
-        }
-        return false;
     }
 
     private void addCommand(ServerCommandSource source, String hostName)

@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -9,6 +10,7 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
@@ -126,27 +128,30 @@ public class CarpetEventServer
                 callList.removeIf(call -> !CarpetServer.scriptServer.runas(source, call.host, call.function, argv)); // this actually does the calls
             }
         }
-        public boolean addEventCall(String hostName, String funName, Function<ScriptHost, Boolean> verifier)
+        public boolean addEventCall(ServerCommandSource source,  String hostName, String funName, Function<ScriptHost, Boolean> verifier)
         {
             ScriptHost host = CarpetServer.scriptServer.getHostByName(hostName);
             if (host == null)
             {
                 // impossible call to add
+                Messenger.m(source, "r Unknown app "+hostName);
                 return false;
             }
             if (!verifier.apply(host))
             {
-                // host cannot use that event, its global event on player based app
+                Messenger.m(source, "r Global event can only be added to apps with global scope");
                 return false;
             }
             FunctionValue udf = host.getFunction(funName);
             if (udf == null || udf.getArguments().size() != reqArgs)
             {
                 // call won't match arguments
+                Messenger.m(source, "r Callback doesn't expect required number of arguments: "+reqArgs);
                 return false;
             }
             //all clear
             //remove duplicates
+
             removeEventCall(hostName, udf.getString());
             callList.add(new Callback(hostName, udf));
             return true;
@@ -567,38 +572,44 @@ public class CarpetEventServer
         scheduledCalls.add(new ScheduledCall(context, function, args, due));
     }
 
-    public boolean addEvent(String event, String host, String funName)
+    public boolean addEvent(ServerCommandSource source, String event, String host, String funName)
     {
         if (!Event.byName.containsKey(event))
         {
             return false;
         }
         Event ev = Event.byName.get(event);
-        return ev.handler.addEventCall(host, funName, h -> canAddEvent(ev, h));
+        boolean added = ev.handler.addEventCall(source, host, funName, h -> canAddEvent(ev, h));
+        if (added) Messenger.m(source, "gi Added " + funName + " to " + event);
+        return added;
     }
 
     public boolean addEventDirectly(String event, ScriptHost host, FunctionValue function)
     {
         Event ev = Event.byName.get(event);
-        // config can be analyzed after code is read, so this will always be player scope
-        //if (!canAddEvent(ev, host))
-        //    throw new InternalExpressionException("Global event "+event+" can only be added to apps with global scope");
+        if (!canAddEvent(ev, host))
+            throw new InternalExpressionException("Global event "+event+" can only be added to apps with global scope");
         return ev.handler.addEventCallDirect(host, function);
     }
 
     private boolean canAddEvent(Event event, ScriptHost host)
     {
-        return !(event.globalOnly && host.perUser);
+        return !(event.globalOnly && (host.perUser || host.parent != null));
     }
 
 
-    public boolean removeEvent(String event, String funName)
+    public boolean removeEvent(ServerCommandSource source, String event, String funName)
     {
 
         if (!Event.byName.containsKey(event))
+        {
+            Messenger.m(source, "r Unknown event: " + event);
             return false;
+        }
         Pair<String,String> call = decodeCallback(funName);
         Event.byName.get(event).handler.removeEventCall(call.getLeft(), call.getRight());
+        // could verified if actually removed
+        Messenger.m(source, "gi Removed event: " + funName + " from "+event);
         return true;
     }
 

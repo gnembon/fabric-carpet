@@ -78,6 +78,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.stat.Stat;
@@ -1672,6 +1673,18 @@ public class CarpetExpression
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
             return (_c, _t) -> ret;
         });
+
+        /*this.expr.addLazyFunction("reset_chunk", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            ThreadedAnvilChunkStorage
+
+        });*/
+
     }
 
     /**

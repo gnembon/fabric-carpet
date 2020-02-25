@@ -680,7 +680,7 @@ public class Expression
 
         FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, contextValues);
         // do not store lambda definitions
-        if (!name.equals("_")) context.host.addUserDefinedFunction(module, name, result);
+        if (!name.equals("_")) context.host.addUserDefinedFunction(context, module, name, result);
         return result;
     }
 

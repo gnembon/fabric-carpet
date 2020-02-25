@@ -22,6 +22,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -197,15 +198,30 @@ public class EntityPlayerActionPack
 
     public void onUpdate()
     {
-        boolean used = false;
+        Map<ActionType, Boolean> actionAttempts = new HashMap<>();
         actions.entrySet().removeIf((e) -> e.getValue().done);
         for (Map.Entry<ActionType, Action> e : actions.entrySet())
         {
             Action action = e.getValue();
-            if (used && e.getKey() == ActionType.ATTACK)
-                continue;
-            if (action.tick(this, e.getKey()))
-                used = true;
+            // skipping attack if use was successful
+            if (!(actionAttempts.getOrDefault(ActionType.USE, false) && e.getKey() == ActionType.ATTACK))
+            {
+                Boolean actionStatus = action.tick(this, e.getKey());
+                if (actionStatus != null)
+                    actionAttempts.put(e.getKey(), actionStatus);
+            }
+            // optionally retrying use after successful attack and unsuccessful use
+            if ( e.getKey() == ActionType.ATTACK
+                    && actionAttempts.getOrDefault(ActionType.ATTACK, false)
+                    && !actionAttempts.getOrDefault(ActionType.USE, true) )
+            {
+                // according to MinecraftClient.handleInputEvents
+                Action using = actions.get(ActionType.USE);
+                if (using != null) // this is always true - we know use worked, but just in case
+                {
+                    using.retry(this, ActionType.USE);
+                }
+            }
         }
         if (forward != 0.0F)
         {
@@ -316,7 +332,7 @@ public class EntityPlayerActionPack
                         player.resetLastAttackedTicks();
                         player.updateLastActionTime();
                         player.swingHand(Hand.MAIN_HAND);
-                        break;
+                        return true;
                     }
                     case BLOCK: {
                         EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
@@ -328,6 +344,7 @@ public class EntityPlayerActionPack
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos pos = blockHit.getBlockPos();
                         Direction side = blockHit.getSide();
+                        // rather should be canNotMine
                         if (player.canMine(player.world, pos, player.interactionManager.getGameMode())) return false;
                         if (ap.currentBlock != null && player.world.getBlockState(ap.currentBlock).isAir())
                         {
@@ -335,10 +352,12 @@ public class EntityPlayerActionPack
                             return false;
                         }
                         BlockState state = player.world.getBlockState(pos);
+                        boolean blockBroken = false;
                         if (player.interactionManager.getGameMode().isCreative())
                         {
                             player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.server.getWorldHeight());
                             ap.blockHitDelay = 5;
+                            blockBroken = true;
                         }
                         else  if (ap.currentBlock == null || !ap.currentBlock.equals(pos))
                         {
@@ -355,6 +374,8 @@ public class EntityPlayerActionPack
                             if (notAir && state.calcBlockBreakingDelta(player, player.world, pos) >= 1)
                             {
                                 ap.currentBlock = null;
+                                //instamine??
+                                blockBroken = true;
                             }
                             else
                             {
@@ -369,13 +390,14 @@ public class EntityPlayerActionPack
                             {
                                 player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.server.getWorldHeight());
                                 ap.currentBlock = null;
+                                blockBroken = true;
                             }
                             player.world.setBlockBreakingInfo(-1, pos, (int) (ap.curBlockDamageMP * 10));
 
                         }
                         player.updateLastActionTime();
                         player.swingHand(Hand.MAIN_HAND);
-                        break;
+                        return blockBroken;
                     }
                 }
                 return false;
@@ -499,10 +521,10 @@ public class EntityPlayerActionPack
             return new Action(-1, interval, offset);
         }
 
-        boolean tick(EntityPlayerActionPack actionPack, ActionType type)
+        Boolean tick(EntityPlayerActionPack actionPack, ActionType type)
         {
             next--;
-            boolean cancel = false;
+            Boolean cancel = null;
             if (next <= 0) {
 
                 if (!type.preventSpectator || !actionPack.player.isSpectator())
@@ -526,6 +548,21 @@ public class EntityPlayerActionPack
                 }
             }
             return cancel;
+        }
+
+        void retry(EntityPlayerActionPack actionPack, ActionType type)
+        {
+            //assuming action run but was unsuccesful that tick, but opportunity emerged to retry it, lets retry it.
+            if (!type.preventSpectator || !actionPack.player.isSpectator())
+            {
+                type.execute(actionPack.player, this);
+            }
+            count++;
+            if (count == limit)
+            {
+                type.stop(actionPack.player, null);
+                done = true;
+            }
         }
     }
 }
