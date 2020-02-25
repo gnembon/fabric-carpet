@@ -239,6 +239,7 @@ public class ScriptCommand
                                 then(argument("call", StringArgumentType.word()).
                                         suggests( (cc, bb) -> suggestMatching(suggestFunctionCalls(cc), bb)).
                                         executes( (cc) -> CarpetServer.scriptServer.events.addEvent(
+                                                cc.getSource(),
                                                 StringArgumentType.getString(cc, "event"),
                                                 null,
                                                 StringArgumentType.getString(cc, "call")
@@ -249,6 +250,7 @@ public class ScriptCommand
                                                 then(argument("call", StringArgumentType.word()).
                                                         suggests( (cc, bb) -> suggestMatching(suggestFunctionCalls(cc), bb)).
                                                         executes( (cc) -> CarpetServer.scriptServer.events.addEvent(
+                                                                cc.getSource(),
                                                                 StringArgumentType.getString(cc, "event"),
                                                                 StringArgumentType.getString(cc, "app"),
                                                                 StringArgumentType.getString(cc, "call")
@@ -259,6 +261,7 @@ public class ScriptCommand
                                 then(argument("call", StringArgumentType.greedyString()).
                                         suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.byName.get(StringArgumentType.getString(cc, "event")).handler.callList.stream().map(CarpetEventServer.Callback::toString), bb)).
                                         executes( (cc) -> CarpetServer.scriptServer.events.removeEvent(
+                                                cc.getSource(),
                                                 StringArgumentType.getString(cc, "event"),
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
@@ -308,7 +311,7 @@ public class ScriptCommand
                     Messenger.m(source, "w Handlers for "+event.name+": ");
                     shownEvent = true;
                 }
-                Messenger.m(source, "w  - "+c.function +(c.host==null?"":" (from "+c.host+")"));
+                Messenger.m(source, "w  - "+c.function.getString() +(c.host==null?"":" (from "+c.host+")"));
             }
         }
         return 1;

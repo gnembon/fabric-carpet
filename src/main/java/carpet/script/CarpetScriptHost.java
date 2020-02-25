@@ -7,6 +7,7 @@ import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static java.lang.Math.max;
 
@@ -36,14 +38,23 @@ public class CarpetScriptHost extends ScriptHost
 
     private Tag globalState;
     private int saveTimeout;
+    public boolean persistenceRequired;
 
     private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
         this.scriptServer = server;
-        if (parent == null && code != null)
+        persistenceRequired = true;
+        if (parent == null && code != null) // app, not a global host
+        {
+            persistenceRequired = false;
             globalState = loadState();
+        }
+        else if (parent != null)
+        {
+            persistenceRequired = ((CarpetScriptHost)parent).persistenceRequired;
+        }
     }
 
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source)
@@ -82,16 +93,39 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    public void addUserDefinedFunction(Module module, String funName, FunctionValue function)
+    public void addUserDefinedFunction(Context ctx, Module module, String funName, FunctionValue function)
     {
-        super.addUserDefinedFunction(module, funName, function);
+        super.addUserDefinedFunction(ctx, module, funName, function);
         // mcarpet
-        if (funName.startsWith("__on_")) // here we can make a determination if we want to only accept events from main module.
+        if (funName.startsWith("__")) // potential fishy activity
         {
-            // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
-            String event = funName.replaceFirst("__on_","");
-            if (CarpetEventServer.Event.byName.containsKey(event))
-                scriptServer.events.addEventDirectly(event, this, function);
+            if (funName.startsWith("__on_")) // here we can make a determination if we want to only accept events from main module.
+            {
+                // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
+                String event = funName.replaceFirst("__on_", "");
+                if (CarpetEventServer.Event.byName.containsKey(event))
+                    scriptServer.events.addEventDirectly(event, this, function);
+            }
+            else if (funName.equals("__config"))
+            {
+                addAppConfig(ctx, function);
+            }
+        }
+    }
+
+    private void addAppConfig(Context ctx, FunctionValue function)
+    {
+        try
+        {
+            CarpetContext cctx = (CarpetContext)ctx;
+            Value ret = callUDF(BlockPos.ORIGIN, cctx.s, function, Collections.emptyList());
+            if (!(ret instanceof MapValue)) return;
+            Map<Value, Value> config = ((MapValue) ret).getMap();
+            setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
+            persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.FALSE).getBoolean();
+        }
+        catch (NullPointerException | InvalidCallbackException ignored)
+        {
         }
     }
 
