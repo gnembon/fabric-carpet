@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.StatTypeInterface;
+import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.mixins.ChunkTicketManager_scarpetMixin;
 import carpet.mixins.PointOfInterest_scarpetMixin;
@@ -1674,16 +1675,21 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        /*this.expr.addLazyFunction("reset_chunk", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("reset_chunk", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
 
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            ThreadedAnvilChunkStorage
-
-        });*/
+            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
+            {
+                ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunk(new ChunkPos(pos));
+                world.getChunk(pos);
+                this.forceChunkUpdate(pos, world);
+            });
+            return LazyValue.NULL;
+        });
 
     }
 
