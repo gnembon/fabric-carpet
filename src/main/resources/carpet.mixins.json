@@ -27,6 +27,7 @@
     "ThreadedAnvilChunkStorage_tickMixin",
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
+    "ChunkHolder_scarpetChunkCreationMixin",
 
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
