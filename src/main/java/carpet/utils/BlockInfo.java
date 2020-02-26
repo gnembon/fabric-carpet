@@ -218,7 +218,7 @@ public class BlockInfo
 
     private static BaseText wander_chances(BlockPos pos, World worldIn)
     {
-        MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIE_PIGMAN, worldIn);
+        MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);
         creature.refreshPositionAndAngles(pos, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);

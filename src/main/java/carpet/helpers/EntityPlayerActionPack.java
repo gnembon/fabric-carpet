@@ -420,7 +420,7 @@ public class EntityPlayerActionPack
             {
                 if (action.limit == 1)
                 {
-                    if (player.onGround) player.jump();
+                    if (player.method_24828()) player.jump(); // onGround
                 }
                 else
                 {
