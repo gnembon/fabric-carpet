@@ -91,7 +91,6 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         {
             chunksToConvert.add(new ChunkPos(x,z));
         }
-        CarpetSettings.LOG.error("Converting "+chunksToConvert.size()+" chunks");
 
         //flushning all tasks on the thread executor so all futures are ready - we don't want any deadlocks
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
@@ -144,19 +143,37 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             field_18807.remove(id);
             ChunkHolder newHolder = new ChunkHolder(chpos, 0,serverLightingProvider, chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
             this.currentChunkHolders.put(id, newHolder);
-            loadedChunks.add(id);
+            //removed holders
+            field_18807.put(id, newHolder);
+            //loadedChunks.add(id);
             ((ChunkHolderInterface)newHolder).setDefaultProtoChunk(chpos, mainThreadExecutor);
             createdChunks.add(newHolder);
         }
         //getting rid of all signs
         this.chunkHolderListDirty = true;
         // not needed right now
-        //for (ChunkHolder newHolder: createdChunks) convertToFullChunk(newHolder);
-        // running all pending tasks
+        for (ChunkHolder newHolder: createdChunks)
+        {
+            //convert requires a chunk to be unloaded to load entities
+            //loadedChunks.remove(newHolder.getPos().toLong());
+            //convertToFullChunk(newHolder);
+            // running all pending tasks
+            mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
+            //worldgenExecutor.
+            // save all pending chunks / potentially only one max - ours
+            // hopefully that would flush all chunk writes, including current chink
+            while ((runnable = field_19343.poll()) != null)
+            {
+                runnable.run();
+            }
+            convertToFullChunk(newHolder);
+        }
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
+        //worldgenExecutor.
         // save all pending chunks / potentially only one max - ours
         // hopefully that would flush all chunk writes, including current chink
-        while((runnable = field_19343.poll()) != null) {
+        while ((runnable = field_19343.poll()) != null)
+        {
             runnable.run();
         }
     }
