@@ -79,7 +79,6 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.stat.Stat;
@@ -1680,11 +1679,19 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
 
+
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
+            BlockPos temp = pos;
+            if (lv.size() > locator.offset )
+            {
+                BlockValue.LocatorResult locator2 = BlockValue.fromParams(cc, lv, locator.offset);
+                temp = locator2.block.getPos();
+            }
+            BlockPos toPos = temp;
             ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
-                ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunk(new ChunkPos(pos));
+                ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(new ChunkPos(pos), new ChunkPos(toPos));
                 world.getChunk(pos);
                 this.forceChunkUpdate(pos, world);
             });

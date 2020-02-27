@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.CarpetSettings;
 import carpet.fakes.ChunkHolderInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import com.mojang.datafixers.util.Either;
@@ -24,6 +25,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -79,9 +82,17 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     }
 
     @Override
-    public void regenerateChunk(ChunkPos chpos)
+    public void regenerateChunkRegion(ChunkPos from, ChunkPos to)
     {
-        Long id = chpos.toLong();
+        List<ChunkPos> chunksToConvert = new ArrayList<>();
+        int xmax = Math.max(from.x, to.x);
+        int zmax = Math.max(from.z, to.z);
+        for (int x = Math.min(from.x, to.x); x <= xmax; x++) for (int z = Math.min(from.z, to.z); z <= zmax; z++)
+        {
+            chunksToConvert.add(new ChunkPos(x,z));
+        }
+        CarpetSettings.LOG.error("Converting "+chunksToConvert.size()+" chunks");
+
         //flushning all tasks on the thread executor so all futures are ready - we don't want any deadlocks
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
         // save all pending chunks
@@ -91,47 +102,56 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             runnable.run();
         }
 
-        //chunk is currently in memory in some shape or form / loaded / unloaded / queued / cached
-        ChunkHolder chunkHolder = currentChunkHolders.remove(id);
-        if (chunkHolder != null) {
-            //method_20458(id, chunkHolder); // saving chunk // skipping entities etc
-            Chunk chunk = null;
-            try
+        List<ChunkHolder> createdChunks = new ArrayList<>();
+        for (ChunkPos chpos : chunksToConvert)
+        {
+            Long id = chpos.toLong();
+            //chunk is currently in memory in some shape or form / loaded / unloaded / queued / cached
+            ChunkHolder chunkHolder = currentChunkHolders.remove(id);
+            if (chunkHolder != null)
             {
-                // fingers crossed
-                chunk = chunkHolder.getFuture().get();
-            }
-            catch (InterruptedException | ExecutionException e)
-            { }
-            // if (field_18807.remove(id, chunkHolder) && chunk != null) {
-            if (chunk != null) {
-                if (chunk instanceof WorldChunk) {
-                    ((WorldChunk)chunk).setLoadedToWorld(false);
+                //method_20458(id, chunkHolder); // saving chunk // skipping entities etc
+                Chunk chunk = null;
+                try
+                {
+                    // fingers crossed
+                    chunk = chunkHolder.getFuture().get();
                 }
-                save(chunk);
-                if (this.loadedChunks.remove(id) && chunk instanceof WorldChunk) {
-                    WorldChunk worldChunk = (WorldChunk)chunk;
-                    //apparently that doesn't remove them for the client
-                    this.world.unloadEntities(worldChunk);
+                catch (InterruptedException | ExecutionException e)
+                {
                 }
-                //this.serverLightingProvider.updateChunkStatus(chunk.getPos());
-                serverLightingProvider.tick();
-                worldGenerationProgressListener.setChunkStatus(chunk.getPos(), (ChunkStatus)null);
+                // if (field_18807.remove(id, chunkHolder) && chunk != null) {
+                if (chunk != null)
+                {
+                    if (chunk instanceof WorldChunk)
+                    {
+                        ((WorldChunk) chunk).setLoadedToWorld(false);
+                    }
+                    save(chunk);
+                    if (this.loadedChunks.remove(id) && chunk instanceof WorldChunk)
+                    {
+                        WorldChunk worldChunk = (WorldChunk) chunk;
+                        //apparently that doesn't remove them for the client
+                        this.world.unloadEntities(worldChunk);
+                    }
+                    //this.serverLightingProvider.updateChunkStatus(chunk.getPos()); // we might need that as some point
+                    serverLightingProvider.tick();
+                    worldGenerationProgressListener.setChunkStatus(chunk.getPos(), (ChunkStatus) null);
+                }
             }
+            unloadedChunks.remove(id);
+            loadedChunks.remove(id);
+            field_18807.remove(id);
+            ChunkHolder newHolder = new ChunkHolder(chpos, 0,serverLightingProvider, chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
+            this.currentChunkHolders.put(id, newHolder);
+            loadedChunks.add(id);
+            ((ChunkHolderInterface)newHolder).setDefaultProtoChunk(chpos, mainThreadExecutor);
+            createdChunks.add(newHolder);
         }
         //getting rid of all signs
         this.chunkHolderListDirty = true;
-        currentChunkHolders.remove(id);
-        unloadedChunks.remove(id);
-        loadedChunks.remove(id);
-        field_18807.remove(id);
-
-        ChunkHolder newHolder = new ChunkHolder(chpos, 0,serverLightingProvider, chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
-        this.currentChunkHolders.put(id, newHolder);
-        loadedChunks.add(id);
-
-        ((ChunkHolderInterface)newHolder).setDefaultProtoChunk(chpos, mainThreadExecutor);
-        convertToFullChunk(newHolder);
+        // not needed right now
+        //for (ChunkHolder newHolder: createdChunks) convertToFullChunk(newHolder);
         // running all pending tasks
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
         // save all pending chunks / potentially only one max - ours
