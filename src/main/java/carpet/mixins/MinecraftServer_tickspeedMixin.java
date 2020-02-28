@@ -3,9 +3,11 @@ package carpet.mixins;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.ServerTask;
 import net.minecraft.util.TickDurationMonitor;
 import net.minecraft.util.Util;
 import net.minecraft.util.profiler.Profiler;
+import net.minecraft.util.thread.ReentrantThreadExecutor;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
-public abstract class MinecraftServer_tickspeedMixin
+public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExecutor<ServerTask>
 {
     @Shadow private volatile boolean running;
 
@@ -31,6 +33,11 @@ public abstract class MinecraftServer_tickspeedMixin
     //@Shadow private boolean profilerStartQueued;
 
     @Shadow @Final private Profiler profiler;
+
+    public MinecraftServer_tickspeedMixin(String name)
+    {
+        super(name);
+    }
 
     @Shadow protected abstract void tick(BooleanSupplier booleanSupplier_1);
 
@@ -116,7 +123,12 @@ public abstract class MinecraftServer_tickspeedMixin
             this.profiler.swap("nextTickWait");
             this.field_19249 = true;
             this.field_19248 = Math.max(Util.getMeasuringTimeMs() + /*50L*/ msThisTick, this.timeReference);
-            this.method_16208();
+            if (TickSpeed.time_warp_start_time != 0)
+            {
+                runTasks();
+                runTasks(() -> !hasRunningTasks() );
+            }
+            else { this.method_16208(); }
             this.profiler.pop();
             this.profiler.endTick();
             this.loading = true;
