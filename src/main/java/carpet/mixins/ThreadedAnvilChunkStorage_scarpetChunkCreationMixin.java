@@ -152,22 +152,42 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         //getting rid of all signs
         this.chunkHolderListDirty = true;
         // not needed right now
-        for (ChunkHolder newHolder: createdChunks)
+        mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
+        //worldgenExecutor.
+        // save all pending chunks / potentially only one max - ours
+        // hopefully that would flush all chunk writes, including current chink
+        while ((runnable = field_19343.poll()) != null)
         {
-            //convert requires a chunk to be unloaded to load entities
-            //loadedChunks.remove(newHolder.getPos().toLong());
-            //convertToFullChunk(newHolder);
-            // running all pending tasks
-            mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
-            //worldgenExecutor.
-            // save all pending chunks / potentially only one max - ours
-            // hopefully that would flush all chunk writes, including current chink
-            while ((runnable = field_19343.poll()) != null)
-            {
-                runnable.run();
-            }
-            convertToFullChunk(newHolder);
+            runnable.run();
         }
+
+            for (ChunkStatus status : ChunkStatus.createOrderedList())
+            {
+                CarpetSettings.LOG.error("Creating layer: " + status.getId());
+                if (status == ChunkStatus.LIGHT)
+                {
+                    serverLightingProvider.setTaskBatchSize(chunksToConvert.size() + 20);
+                }
+                for (ChunkPos chpos : chunksToConvert)
+                {
+                    //if (status==ChunkStatus.LIGHT)
+                    //{
+                    //    serverLightingProvider.tick();
+                    //}
+                    //CarpetSettings.LOG.error("Creating layer: " + status.getId());
+                    world.getChunk(chpos.x, chpos.z, status);
+                    //CarpetSettings.LOG.error("    .. done");
+                    //if (status==ChunkStatus.LIGHT)
+                    //{
+                    //    serverLightingProvider.tick();
+                    //}
+                }
+                if (status == ChunkStatus.LIGHT)
+                {
+                    serverLightingProvider.setTaskBatchSize(5);
+                }
+            }
+
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
         //worldgenExecutor.
         // save all pending chunks / potentially only one max - ours
