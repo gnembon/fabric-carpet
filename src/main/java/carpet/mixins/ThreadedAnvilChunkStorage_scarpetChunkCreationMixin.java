@@ -26,8 +26,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -82,15 +86,8 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     }
 
     @Override
-    public void regenerateChunkRegion(ChunkPos from, ChunkPos to)
+    public void regenerateChunkRegion(List<ChunkPos> requestedChunks)
     {
-        List<ChunkPos> chunksToConvert = new ArrayList<>();
-        int xmax = Math.max(from.x, to.x);
-        int zmax = Math.max(from.z, to.z);
-        for (int x = Math.min(from.x, to.x); x <= xmax; x++) for (int z = Math.min(from.z, to.z); z <= zmax; z++)
-        {
-            chunksToConvert.add(new ChunkPos(x,z));
-        }
 
         //flushning all tasks on the thread executor so all futures are ready - we don't want any deadlocks
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
@@ -101,8 +98,30 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             runnable.run();
         }
 
-        List<ChunkHolder> createdChunks = new ArrayList<>();
-        for (ChunkPos chpos : chunksToConvert)
+        Set<ChunkPos> loadedChunks = new HashSet<>();
+        for (ChunkPos pos: requestedChunks)
+        {
+            Chunk chunk = world.getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
+            if (chunk != null && chunk.getStatus() != ChunkStatus.EMPTY)
+                loadedChunks.add(pos);
+        }
+        CarpetSettings.LOG.error("Area has "+requestedChunks.size()+" chunks");
+        CarpetSettings.LOG.error("Area has "+loadedChunks.size()+" loaded chunks");
+
+        Map<ChunkPos,ChunkStatus> targetStatus = new HashMap<>();
+        for (ChunkPos pos: requestedChunks)
+        {
+
+            Chunk chunk = world.getChunk(pos.x, pos.z, ChunkStatus.EMPTY, true);
+            if (chunk == null || chunk.getStatus() == ChunkStatus.EMPTY)
+                continue;
+            //unloaded areas can have unknown skirt chunk area
+            targetStatus.put(pos, loadedChunks.contains(pos)?chunk.getStatus():ChunkStatus.STRUCTURE_STARTS);
+        }
+        CarpetSettings.LOG.error("Area has "+targetStatus.size()+" chunks for removal");
+
+
+        for (ChunkPos chpos : targetStatus.keySet())
         {
             Long id = chpos.toLong();
             //chunk is currently in memory in some shape or form / loaded / unloaded / queued / cached
@@ -147,7 +166,6 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             field_18807.put(id, newHolder);
             //loadedChunks.add(id);
             ((ChunkHolderInterface)newHolder).setDefaultProtoChunk(chpos, mainThreadExecutor);
-            createdChunks.add(newHolder);
         }
         //getting rid of all signs
         this.chunkHolderListDirty = true;
@@ -161,32 +179,35 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             runnable.run();
         }
 
-            for (ChunkStatus status : ChunkStatus.createOrderedList())
+        for (ChunkStatus status : ChunkStatus.createOrderedList())
+        {
+            CarpetSettings.LOG.error("Creating layer: " + status.getId() + " for "+targetStatus.size()+" chunks");
+            if (status == ChunkStatus.LIGHT)
             {
-                CarpetSettings.LOG.error("Creating layer: " + status.getId());
-                if (status == ChunkStatus.LIGHT)
-                {
-                    serverLightingProvider.setTaskBatchSize(chunksToConvert.size() + 20);
-                }
-                for (ChunkPos chpos : chunksToConvert)
-                {
-                    //if (status==ChunkStatus.LIGHT)
-                    //{
-                    //    serverLightingProvider.tick();
-                    //}
-                    //CarpetSettings.LOG.error("Creating layer: " + status.getId());
-                    world.getChunk(chpos.x, chpos.z, status);
-                    //CarpetSettings.LOG.error("    .. done");
-                    //if (status==ChunkStatus.LIGHT)
-                    //{
-                    //    serverLightingProvider.tick();
-                    //}
-                }
-                if (status == ChunkStatus.LIGHT)
-                {
-                    serverLightingProvider.setTaskBatchSize(5);
-                }
+                //break;
+                serverLightingProvider.setTaskBatchSize(targetStatus.size() + 20);
             }
+            for (ChunkPos chpos : new ArrayList<>(targetStatus.keySet()))
+            {
+                if (targetStatus.get(chpos) == status)
+                    targetStatus.remove(chpos);
+                //if (status==ChunkStatus.LIGHT)
+                //{
+                //    serverLightingProvider.tick();
+                //}
+                //CarpetSettings.LOG.error("Creating layer: " + status.getId());
+                world.getChunk(chpos.x, chpos.z, status);
+                //CarpetSettings.LOG.error("    .. done");
+                //if (status==ChunkStatus.LIGHT)
+                //{
+                //    serverLightingProvider.tick();
+                //}
+            }
+            if (status == ChunkStatus.LIGHT)
+            {
+                serverLightingProvider.setTaskBatchSize(5);
+            }
+        }
 
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
         //worldgenExecutor.

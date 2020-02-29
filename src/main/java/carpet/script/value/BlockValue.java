@@ -188,6 +188,56 @@ public class BlockValue extends Value
         }
     }
 
+    public static LocatorResult fromParamValues(CarpetContext c, List<Value> params, int offset, boolean acceptString, boolean optional)
+    {
+        try
+        {
+            Value v1 = params.get(0 + offset);
+            //add conditional from string name
+            if (optional && v1 instanceof NullValue)
+            {
+                return new LocatorResult(null, 1+offset);
+            }
+            if (acceptString && v1 instanceof StringValue)
+            {
+                return new LocatorResult(fromString(v1.getString()), 1+offset);
+            }
+            if (v1 instanceof BlockValue)
+            {
+                return new LocatorResult(((BlockValue) v1), 1+offset);
+            }
+            if (v1 instanceof ListValue)
+            {
+                List<Value> args = ((ListValue) v1).getItems();
+                int xpos = (int) NumericValue.asNumber(args.get(0)).getLong();
+                int ypos = (int) NumericValue.asNumber(args.get(1)).getLong();
+                int zpos = (int) NumericValue.asNumber(args.get(2)).getLong();
+                return new LocatorResult(
+                        new BlockValue(
+                                null,
+                                c.s.getWorld(),
+                                new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
+                        ),
+                        1+offset);
+            }
+            int xpos = (int) NumericValue.asNumber(v1).getLong();
+            int ypos = (int) NumericValue.asNumber( params.get(1 + offset)).getLong();
+            int zpos = (int) NumericValue.asNumber( params.get(2 + offset)).getLong();
+            return new LocatorResult(
+                    new BlockValue(
+                            null,
+                            c.s.getWorld(),
+                            new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
+                    ),
+                    3+offset
+            );
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            throw new InternalExpressionException("Block should be defined either by three coordinates, a block value, or a proper string");
+        }
+    }
+
     public BlockState getBlockState()
     {
         if (blockState != null)
