@@ -269,8 +269,8 @@ public class FeatureGenerator
                         :simplePlop(Feature.CORAL_CLAW).plop(w, p));
         put("sea_pickle", simplePlop(Feature.SEA_PICKLE.configure( new SeaPickleFeatureConfig(20))));
         put("boulder", simplePlop(Feature.FOREST_ROCK.configure( new BoulderFeatureConfig(Blocks.MOSSY_COBBLESTONE.getDefaultState(), 0))));
-        put("crimson_fungus", simplePlop(Feature.HUGE_FUNGUS.configure(HugeFungiFeatureConfig.field_22432)));
-        put("warped_fungus", simplePlop(Feature.HUGE_FUNGUS.configure(HugeFungiFeatureConfig.field_22434)));
+        put("crimson_fungus", simplePlop(Feature.HUGE_FUNGUS.configure(HugeFungusFeatureConfig.field_22432)));
+        put("warped_fungus", simplePlop(Feature.HUGE_FUNGUS.configure(HugeFungusFeatureConfig.field_22434)));
         put("nether_sprouts", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.NETHER_SPROUTS_CONFIG)));
         put("crimson_roots", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.CRIMSON_ROOTS_CONFIG)));
         put("warped_roots", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.WARPED_ROOTS_CONFIG)));

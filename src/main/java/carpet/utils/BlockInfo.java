@@ -47,7 +47,7 @@ public class BlockInfo
         put(BlockSoundGroup.LANTERN , "lantern" );
         put(BlockSoundGroup.NETHER_STEM, "fungi_stem");
         put(BlockSoundGroup.NYLIUM, "nylium");
-        put(BlockSoundGroup.FUNGI, "fungi");
+        put(BlockSoundGroup.FUNGUS, "fungus");
         put(BlockSoundGroup.ROOTS, "roots");
         put(BlockSoundGroup.SHROOMLIGHT, "shroomlight");
         put(BlockSoundGroup.WEEPING_VINES, "weeping_vines");

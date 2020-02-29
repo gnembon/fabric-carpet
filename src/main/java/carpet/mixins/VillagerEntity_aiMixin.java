@@ -138,7 +138,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             }
             else if (itemStack_1.getItem() instanceof BedItem)
             {
-                List<PointOfInterest> list_1 = ((ServerWorld) getEntityWorld()).getPointOfInterestStorage().get(
+                List<PointOfInterest> list_1 = ((ServerWorld) getEntityWorld()).getPointOfInterestStorage().getInCircle(
                         type -> type == PointOfInterestType.HOME,
                         getBlockPos(),
                         48, PointOfInterestStorage.OccupationStatus.ANY).collect(Collectors.toList());

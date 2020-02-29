@@ -25,10 +25,10 @@ public class Structure_fillUpdatesMixin
 
     @Redirect(method = "method_15172", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/structure/StructurePlacementData;method_16444()Z"
+            target = "Lnet/minecraft/structure/StructurePlacementData;shouldUpdateNeighbors()Z"
     ))
     private boolean skipPostprocess(StructurePlacementData structurePlacementData)
     {
-        return structurePlacementData.method_16444() || CarpetSettings.impendingFillSkipUpdates;
+        return structurePlacementData.shouldUpdateNeighbors() || CarpetSettings.impendingFillSkipUpdates;
     }
 }

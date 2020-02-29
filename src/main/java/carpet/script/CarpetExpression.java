@@ -914,7 +914,7 @@ public class CarpetExpression
                 // this feels wrong, but I don't want to mix-in more than I really need to.
                 // also distance adds 0.5 to each point which screws up accurate distance calculations
                 // you shoudn't be using POI with that in mind anyways, so I am not worried about it.
-                PointOfInterest poi = store.get(
+                PointOfInterest poi = store.getInCircle(
                         poiType.getCompletionCondition(),
                         pos,
                         1,
@@ -953,7 +953,7 @@ public class CarpetExpression
                     return LazyValue.NULL;
             }
 
-            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).map( p ->
+            Value ret = ListValue.wrap(store.getInCircle(condition, pos, (int)radius, status).map( p ->
                     ListValue.of(
                             new StringValue(p.getType().toString()),
                             new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
@@ -1000,7 +1000,7 @@ public class CarpetExpression
             if (occupancy > 0)
             {
                 int finalO = occupancy;
-                store.get((tt) -> tt==type, pos, 1, PointOfInterestStorage.OccupationStatus.ANY
+                store.getInSquare((tt) -> tt==type, pos, 1, PointOfInterestStorage.OccupationStatus.ANY
                 ).filter(p -> p.getPos().equals(pos)).findFirst().ifPresent(p -> {
                     for (int i=0; i < finalO; i++) ((PointOfInterest_scarpetMixin)p).callReserveTicket();
                 });
