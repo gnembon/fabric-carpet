@@ -1677,23 +1677,60 @@ public class CarpetExpression
         this.expr.addLazyFunction("reset_chunk", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            List<ChunkPos> requestedChunks = new ArrayList<>();
+            if (lv.size() == 1)
+            {
+                //either one block or list of chunks
+                Value first = lv.get(0).evalValue(c);
+                if (first instanceof ListValue)
+                {
+                    List<Value> listVal = ((ListValue) first).getItems();
+                    int offset = 0;
+                    BlockValue.LocatorResult locator = BlockValue.fromParamValues(cc, listVal, 0, false, false);
+                    requestedChunks.add(new ChunkPos(locator.block.getPos()));
+                    while (listVal.size() > locator.offset)
+                    {
+                        locator = BlockValue.fromParamValues(cc, listVal, locator.offset, false, false);
+                        requestedChunks.add(new ChunkPos(locator.block.getPos()));
+                    }
+                }
+                else
+                {
+                    BlockValue.LocatorResult locator = BlockValue.fromParamValues(cc, Collections.singletonList(first), 0, false, false);
+                    requestedChunks.add(new ChunkPos(locator.block.getPos()));
+                }
+            }
+            else
+            {
+                BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+                ChunkPos from = new ChunkPos(locator.block.getPos());
+                if (lv.size() > locator.offset)
+                {
+                    locator = BlockValue.fromParams(cc, lv, locator.offset);
+                    ChunkPos to = new ChunkPos(locator.block.getPos());
+                    int xmax = Math.max(from.x, to.x);
+                    int zmax = Math.max(from.z, to.z);
+                    for (int x = Math.min(from.x, to.x); x <= xmax; x++) for (int z = Math.min(from.z, to.z); z <= zmax; z++)
+                    {
+                        requestedChunks.add(new ChunkPos(x,z));
+                    }
+                    CarpetSettings.LOG.error("Regenerating from "+Math.min(from.x, to.x)+", "+Math.min(from.z, to.z)+" to "+Math.max(from.x, to.x)+", "+Math.max(from.z, to.z));
+                }
+                else
+                {
+                    requestedChunks.add(from);
+                }
+            }
 
 
             ServerWorld world = cc.s.getWorld();
-            BlockPos pos = locator.block.getPos();
-            BlockPos temp = pos;
-            if (lv.size() > locator.offset )
-            {
-                BlockValue.LocatorResult locator2 = BlockValue.fromParams(cc, lv, locator.offset);
-                temp = locator2.block.getPos();
-            }
-            BlockPos toPos = temp;
+
             ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
-                ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(new ChunkPos(pos), new ChunkPos(toPos));
-                world.getChunk(pos);
-                this.forceChunkUpdate(pos, world);
+                ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(requestedChunks);
+                for (ChunkPos chpos: requestedChunks)
+                    if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
+                        this.forceChunkUpdate(chpos.getCenterBlockPos(), world);
             });
             return LazyValue.NULL;
         });
