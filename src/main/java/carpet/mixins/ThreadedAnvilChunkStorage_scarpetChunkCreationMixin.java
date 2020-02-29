@@ -160,7 +160,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             unloadedChunks.remove(id);
             loadedChunks.remove(id);
             field_18807.remove(id);
-            ChunkHolder newHolder = new ChunkHolder(chpos, 0,serverLightingProvider, chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
+            ChunkHolder newHolder = new ChunkHolder(chpos, 33,serverLightingProvider, chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
             this.currentChunkHolders.put(id, newHolder);
             //removed holders
             field_18807.put(id, newHolder);
