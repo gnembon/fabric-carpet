@@ -70,8 +70,6 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
 
     @Shadow @Final private WorldGenerationProgressListener worldGenerationProgressListener;
 
-    @Shadow @Final private MessageListener<ChunkTaskPrioritySystem.Task<Runnable>> worldgenExecutor;
-
     //in method_20617
     //method_19534(Lnet/minecraft/server/world/ChunkHolder;Lnet/minecraft/world/chunk/Chunk;)Ljava/util/concurrent/CompletableFuture;
     @Inject(method = "method_19534", at = @At(
@@ -126,8 +124,11 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             Long id = chpos.toLong();
             //chunk is currently in memory in some shape or form / loaded / unloaded / queued / cached
             ChunkHolder chunkHolder = currentChunkHolders.remove(id);
+            int currentLevel = ThreadedAnvilChunkStorage.MAX_LEVEL;
             if (chunkHolder != null)
             {
+                //CarpetSettings.LOG.error("current_level: "+chunkHolder.getLevel());
+                currentLevel = chunkHolder.getLevel();
                 //method_20458(id, chunkHolder); // saving chunk // skipping entities etc
                 Chunk chunk = null;
                 try
@@ -160,12 +161,13 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             unloadedChunks.remove(id);
             loadedChunks.remove(id);
             field_18807.remove(id);
-            ChunkHolder newHolder = new ChunkHolder(chpos, 0,serverLightingProvider, chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
+            ChunkHolder newHolder = new ChunkHolder(chpos, currentLevel,serverLightingProvider, chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
+            ((ChunkHolderInterface)newHolder).setDefaultProtoChunk(chpos, mainThreadExecutor);
             this.currentChunkHolders.put(id, newHolder);
             //removed holders
             field_18807.put(id, newHolder);
             //loadedChunks.add(id);
-            ((ChunkHolderInterface)newHolder).setDefaultProtoChunk(chpos, mainThreadExecutor);
+
         }
         //getting rid of all signs
         this.chunkHolderListDirty = true;
@@ -197,6 +199,8 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
                 //}
                 //CarpetSettings.LOG.error("Creating layer: " + status.getId());
                 world.getChunk(chpos.x, chpos.z, status);
+                if (status == ChunkStatus.FULL)
+                    convertToFullChunk(currentChunkHolders.get(chpos.toLong()));
                 //CarpetSettings.LOG.error("    .. done");
                 //if (status==ChunkStatus.LIGHT)
                 //{
