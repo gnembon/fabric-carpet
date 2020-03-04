@@ -4093,8 +4093,9 @@ public class CarpetExpression
      * __on_tick()         // can access blocks and entities in the overworld
      * __on_tick_nether()  // can access blocks and entities in the nether
      * __on_tick_ender()   // can access blocks and entities in the end
-     * __on_chunk_generated(x,z) // called after a chunk is promoted to the full chunk, prodiving lowest x and z coords in the chunk
-     *
+     * __on_chunk_generated(x,z) // called after a chunk is promoted to the full chunk,
+     *                           // prodiving lowest x and z coords in the chunk
+     *                           // event will not work with optifine installed in the game
      * // player specific callbacks
      * __on_player_uses_item(player, item_tuple, hand)  // right click action
      * __on_player_releases_item(player, item_tuple, hand)  // client action (e.g. bow)
