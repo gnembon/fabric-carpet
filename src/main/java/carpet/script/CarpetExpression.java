@@ -2540,7 +2540,7 @@ public class CarpetExpression
                     return LazyValue.NULL;
                 } else {
                     if (!hasTag && entity_1 instanceof MobEntity) {
-                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(new BlockPos(entity_1)), SpawnType.COMMAND, null, null);
+                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnType.COMMAND, null, null);
                     }
                     Value res = new EntityValue(entity_1);
                     return (_c, _t) -> res;
