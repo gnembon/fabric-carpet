@@ -128,7 +128,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                 else
                 {
 
-                    ParticleDisplay.drawParticleLine((ServerPlayerEntity) playerEntity_1, getPos(), new Vec3d(bedPos.getPos()).add(0.5, 0.5, 0.5), "dust 0 0 0 1", "happy_villager", 100, 0.2);
+                    ParticleDisplay.drawParticleLine((ServerPlayerEntity) playerEntity_1, getPos(), Vec3d.method_24953(bedPos.getPos()), "dust 0 0 0 1", "happy_villager", 100, 0.2); // pos+0.5v
                 }
             }
             else if (itemStack_1.getItem() == Items.ROTTEN_FLESH)
@@ -140,11 +140,11 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             {
                 List<PointOfInterest> list_1 = ((ServerWorld) getEntityWorld()).getPointOfInterestStorage().getInCircle(
                         type -> type == PointOfInterestType.HOME,
-                        getBlockPos(),
+                        getSenseCenterPos(),
                         48, PointOfInterestStorage.OccupationStatus.ANY).collect(Collectors.toList());
                 for (PointOfInterest poi : list_1)
                 {
-                    Vec3d pv = new Vec3d(poi.getPos()).add(0.5, 0.5, 0.5);
+                    Vec3d pv = Vec3d.method_24953(poi.getPos());
                     if (!poi.hasSpace())
                     {
                         ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.HAPPY_VILLAGER,

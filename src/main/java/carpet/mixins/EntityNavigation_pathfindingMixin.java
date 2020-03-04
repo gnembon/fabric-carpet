@@ -36,7 +36,7 @@ public abstract class EntityNavigation_pathfindingMixin
         Path path = findPathToAny(set_1, int_1, boolean_1, int_2);
         long finish = System.nanoTime();
         float duration = (1.0F*((finish - start)/1000))/1000;
-        set_1.forEach(b -> PathfindingVisualizer.slowPath(entity, new Vec3d(b), duration, path != null));
+        set_1.forEach(b -> PathfindingVisualizer.slowPath(entity, Vec3d.method_24955(b), duration, path != null)); // ground centered position
         return path;
     }
 
@@ -52,7 +52,7 @@ public abstract class EntityNavigation_pathfindingMixin
         Path path = findPathToAny(set_1, int_1, boolean_1, int_2);
         long finish = System.nanoTime();
         float duration = (1.0F*((finish - start)/1000))/1000;
-        set_1.forEach(b -> PathfindingVisualizer.slowPath(entity, new Vec3d(b), duration, path != null));
+        set_1.forEach(b -> PathfindingVisualizer.slowPath(entity, Vec3d.method_24955(b), duration, path != null));
         return path;
     }
 }

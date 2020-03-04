@@ -48,7 +48,6 @@ public abstract class ServerChunkManagerMixin
                              boolean boolean_1,
                              boolean boolean_2,
                              int int_1,
-                             BlockPos blockPos_1,
                              boolean boolean_3,
                              int int_2,
                              EntityCategory[] entityCategorys_1,
@@ -77,14 +76,14 @@ public abstract class ServerChunkManagerMixin
     @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "method_20801", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;)V"
+            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/WorldChunk;)V"
     ))
     // inject our repeat of spawns if more spawn ticks per tick are chosen.
-    private void spawnMultipleTimes(EntityCategory entityCategory_1, ServerWorld world_1, WorldChunk worldChunk_1, BlockPos blockPos_1)
+    private void spawnMultipleTimes(EntityCategory entityCategory_1, ServerWorld world_1, WorldChunk worldChunk_1)
     {
         for (int i = 0; i < SpawnReporter.spawn_tries.get(entityCategory_1); i++)
         {
-            SpawnHelper.spawnEntitiesInChunk(entityCategory_1, world_1, worldChunk_1, blockPos_1);
+            SpawnHelper.spawnEntitiesInChunk(entityCategory_1, world_1, worldChunk_1);
         }
     }
 

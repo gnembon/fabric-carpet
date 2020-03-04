@@ -51,10 +51,10 @@ public class WoolTool
                 {
                     ServerCommandSource source = placer.getCommandSource();
                     if (!DistanceCalculator.hasStartingPoint(source) || placer.isSneaking()) {
-                        DistanceCalculator.setStart(source, new Vec3d(pos));
+                        DistanceCalculator.setStart(source, Vec3d.method_24954(pos) ); // zero padded pos
                     }
                     else {
-                        DistanceCalculator.setEnd(source, new Vec3d(pos));
+                        DistanceCalculator.setEnd(source, Vec3d.method_24954(pos));
                     }
                 }
                 break;

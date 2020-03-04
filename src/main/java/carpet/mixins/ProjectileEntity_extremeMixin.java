@@ -11,15 +11,6 @@ import java.util.Random;
 @Mixin(ProjectileEntity.class)
 public class ProjectileEntity_extremeMixin
 {
-    @Redirect(method = "setVelocity", expect = 3, at = @At(
-            value = "INVOKE",
-            target = "Ljava/util/Random;nextGaussian()D"
-    ))
-    private double nextGauBian(Random random)
-    {
-        return RandomTools.nextGauBian(random);
-    }
-
     // calculates damage
     @Redirect(method = "applyEnchantmentEffects", expect = 1, at = @At(
             value = "INVOKE",

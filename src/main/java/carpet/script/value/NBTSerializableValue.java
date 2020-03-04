@@ -177,7 +177,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 if (inv == null)
                     return null;
 
-                return new InventoryLocator(e, e.getBlockPos(), inv, offset + 1);
+                return new InventoryLocator(e, e.getSenseCenterPos(), inv, offset + 1);
             }
             else if (v1 instanceof BlockValue)
             {
@@ -210,7 +210,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 }
                 PlayerEntity e = (PlayerEntity)((EntityValue) v2).getEntity();
                 inv = e.getEnderChestInventory();
-                return new InventoryLocator(e, e.getBlockPos(), inv, offset + 2, true);
+                return new InventoryLocator(e, e.getSenseCenterPos(), inv, offset + 2, true);
             }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),

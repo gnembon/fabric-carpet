@@ -83,7 +83,8 @@ public class BlockValue extends Value
             Value v1 = params.get(0 + offset).evalValue(c);
             if (v1 instanceof BlockValue)
             {
-                return (new VectorLocator(new Vec3d(((BlockValue) v1).getPos()).add(0.5,0.5,0.5), 1+offset)).fromBlock();
+                // pos + 0.5v
+                return (new VectorLocator(Vec3d.method_24953(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
             }
             if (v1 instanceof ListValue)
             {
@@ -436,7 +437,7 @@ public class BlockValue extends Value
             SpecificDirection dir = SpecificDirection.DIRECTION_MAP.get(direction);
             if (dir == null)
                 throw new InternalExpressionException("unknown block placement direction: "+direction);
-            BlockHitResult hitres =  new BlockHitResult(new Vec3d(pos).add(dir.hitOffset), dir.facing, pos, false);
+            BlockHitResult hitres =  new BlockHitResult(Vec3d.method_24954(pos).add(dir.hitOffset), dir.facing, pos, false);
             return new PlacementContext(world, dir.facing, sneakPlace, itemStack, hitres);
         }
         private PlacementContext(World world_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {

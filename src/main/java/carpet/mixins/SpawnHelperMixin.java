@@ -22,6 +22,7 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,7 +36,7 @@ public class SpawnHelperMixin
     
     // in World: private static Map<EntityType, Entity> precookedMobs= new HashMap<>();
 
-    @Redirect(method = "spawnEntitiesInChunk", at = @At(
+    @Redirect(method = "method_24934", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerWorld;doesNotCollide(Lnet/minecraft/util/math/Box;)Z"
     ))
@@ -71,7 +72,7 @@ public class SpawnHelperMixin
         return world.doesNotCollide(bb);
     }
 
-    @Redirect(method = "spawnEntitiesInChunk", at = @At(
+    @Redirect(method = "method_24931", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/EntityType;create(Lnet/minecraft/world/World;)Lnet/minecraft/entity/Entity;"
     ))
@@ -90,7 +91,7 @@ public class SpawnHelperMixin
         return entityType.create(world_1);
     }
 
-    @Redirect(method = "spawnEntitiesInChunk", at = @At(
+    @Redirect(method = "method_24930", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
     ))
@@ -106,14 +107,14 @@ public class SpawnHelperMixin
                     world.dimension.getType(),
                     (MobEntity) entity_1,
                     entity_1.getType().getCategory(),
-                    entity_1.getBlockPos());
+                    entity_1.getSenseCenterPos());
         }
         if (!SpawnReporter.mock_spawns)
             return world.spawnEntity(entity_1);
         return false;
     }
 
-    @Redirect(method = "spawnEntitiesInChunk", at = @At(
+    @Redirect(method = "method_24930", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnType;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
     ))
@@ -124,15 +125,15 @@ public class SpawnHelperMixin
         return null;
     }
 
-    @Redirect(method = "spawnEntitiesInChunk", at = @At(
+    @Redirect(method = "method_24930", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(DDD)D"
     ))
     private static double getSqDistanceTo(PlayerEntity playerEntity, double double_1, double double_2, double double_3,
-                                          EntityCategory entityCategory_1, ServerWorld world_1, WorldChunk worldChunk_1, BlockPos blockPos_1)
+                                          EntityCategory entityCategory, ServerWorld serverWorld, Chunk chunk, BlockPos blockPos)
     {
         double distanceTo = playerEntity.squaredDistanceTo(double_1, double_2, double_3);
-        if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory_1 != EntityCategory.CREATURE)
+        if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory != EntityCategory.CREATURE)
             return 0.0;
         return distanceTo;
     }

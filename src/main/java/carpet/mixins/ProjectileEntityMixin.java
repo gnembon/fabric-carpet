@@ -5,6 +5,8 @@ import carpet.logging.logHelpers.TrajectoryLogHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,12 +34,21 @@ public abstract class ProjectileEntityMixin extends Entity
             logHelper.onTick(getX(), getY(), getZ(), getVelocity());
     }
 
-    @Inject(method = "onHit(Lnet/minecraft/util/hit/HitResult;)V", at = @At("RETURN"))
-    private void remove(HitResult hitResult_1, CallbackInfo ci)
+    // todo should be moved on one place this is acceessed from
+    @Inject(method = "onEntityHit", at = @At("RETURN"))
+    private void removeOnEntity(EntityHitResult entityHitResult, CallbackInfo ci)
     {
-        if (LoggerRegistry.__projectiles &&
-                (hitResult_1.getType() == HitResult.Type.ENTITY || hitResult_1.getType() == HitResult.Type.BLOCK)
-                && logHelper != null)
+        if (LoggerRegistry.__projectiles && logHelper != null)
+        {
+            logHelper.onFinish();
+            logHelper = null;
+        }
+    }
+
+    @Inject(method = "method_24920", at = @At("RETURN")) // on block hit
+    private void removeOnBlock(BlockHitResult blockHitResult, CallbackInfo ci)
+    {
+        if (LoggerRegistry.__projectiles && logHelper != null)
         {
             logHelper.onFinish();
             logHelper = null;

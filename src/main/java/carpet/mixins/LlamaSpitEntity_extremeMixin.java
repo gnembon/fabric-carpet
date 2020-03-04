@@ -11,12 +11,5 @@ import java.util.Random;
 @Mixin(LlamaSpitEntity.class)
 public class LlamaSpitEntity_extremeMixin
 {
-    @Redirect(method = "setVelocity", expect = 3, at = @At(
-            value = "INVOKE",
-            target = "Ljava/util/Random;nextGaussian()D"
-    ))
-    private double nextGauBian(Random random)
-    {
-        return RandomTools.nextGauBian(random);
-    }
+ // left intentinally blank for 1.15.2 class compat to be cleaned when promoting branch to master
 }
