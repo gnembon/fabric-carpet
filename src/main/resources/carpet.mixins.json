@@ -132,6 +132,7 @@
     "ExplosiveProjectileEntity_extremeMixin",
     "LlamaSpitEntity_extremeMixin",
     "ProjectileEntity_extremeMixin",
+    "Projectile_extremeMixin",
 
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
