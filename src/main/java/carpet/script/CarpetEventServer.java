@@ -176,7 +176,7 @@ public class CarpetEventServer
 
         public void removeAllCalls(String hostName)
         {
-            callList.removeIf((c)-> c.host.equals(hostName));
+            callList.removeIf((c)-> c.host != null && c.host.equals(hostName));
         }
     }
 
