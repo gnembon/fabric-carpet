@@ -24,6 +24,6 @@ public abstract class ThrownEnderpearlEntity_fakePlayersMixin extends ThrownItem
     ))
     private boolean isConnectionGood(ClientConnection clientConnection)
     {
-        return clientConnection.isOpen() || method_24921() instanceof EntityPlayerMPFake; // getOwner()
+        return clientConnection.isOpen() || getOwner() instanceof EntityPlayerMPFake;
     }
 }

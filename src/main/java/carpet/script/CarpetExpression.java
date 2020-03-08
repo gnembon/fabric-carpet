@@ -1098,7 +1098,7 @@ public class CarpetExpression
         {
             BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
             ChunkPos chunkPos = new ChunkPos(pos);
-            Value ret = new NumericValue(ChunkRandom.create(
+            Value ret = new NumericValue(ChunkRandom.getSlimeRandom(
                     chunkPos.x, chunkPos.z,
                     ((CarpetContext)c).s.getWorld().getSeed(),
                     987234911L

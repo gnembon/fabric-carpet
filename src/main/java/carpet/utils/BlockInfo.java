@@ -6,7 +6,7 @@ import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.mob.MobEntityWithAi;
-import net.minecraft.entity.mob.ZombiePigmanEntity;
+import net.minecraft.entity.mob.ZombifiedPiglinEntity;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.text.BaseText;
 import net.minecraft.util.math.BlockPos;
@@ -218,7 +218,7 @@ public class BlockInfo
 
     private static BaseText wander_chances(BlockPos pos, World worldIn)
     {
-        MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIFIED_PIGLIN, worldIn);
+        MobEntityWithAi creature = new ZombifiedPiglinEntity(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);
         creature.refreshPositionAndAngles(pos, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);
