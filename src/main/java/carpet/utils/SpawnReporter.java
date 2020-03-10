@@ -436,10 +436,15 @@ public class SpawnReporter
                             float f1 = (float)z + 0.5F;
                             mob.refreshPositionAndAngles((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.doesNotCollide(mob);
+                            EntityType etype = mob.getType();
                             
                             for (int i = 0; i < 20; ++i)
                             {
-                                if (SpawnRestriction.canSpawn(mob.getType(),mob.getEntityWorld(), SpawnType.NATURAL, mob.getBlockPos(), mob.getEntityWorld().random))
+                                if (
+                                        SpawnRestriction.canSpawn(etype,worldIn, SpawnType.NATURAL, pos, worldIn.random) &&
+                                        SpawnHelper.canSpawn(SpawnRestriction.getLocation(etype), worldIn, pos, etype) &&
+                                        mob.canSpawn(worldIn, SpawnType.NATURAL) // && mob.canSpawn(worldIn) // entity collisions
+                                )
                                 {
                                     will_spawn += 1;
                                 }

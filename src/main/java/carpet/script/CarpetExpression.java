@@ -1088,6 +1088,9 @@ public class CarpetExpression
         this.expr.addLazyFunction("see_sky", -1, (c, t, lv) ->
                 genericStateTest(c, "see_sky", lv, (s, p, w) -> new NumericValue(w.isSkyVisible(p))));
 
+        this.expr.addLazyFunction("brightness", -1, (c, t, lv) ->
+                genericStateTest(c, "brightness", lv, (s, p, w) -> new NumericValue(w.getBrightness(p))));
+
         this.expr.addLazyFunction("hardness", -1, (c, t, lv) ->
                 genericStateTest(c, "hardness", lv, (s, p, w) -> new NumericValue(s.getHardness(w, p))));
 
