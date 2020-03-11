@@ -28,6 +28,7 @@ import static carpet.settings.RuleCategory.OPTIMIZATION;
 import static carpet.settings.RuleCategory.SURVIVAL;
 import static carpet.settings.RuleCategory.TNT;
 import static carpet.settings.RuleCategory.DISPENSER;
+import static carpet.settings.RuleCategory.SCARPET;
 
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
@@ -303,13 +304,27 @@ public class CarpetSettings
     @Rule(desc = "Enables /draw commands", extra = "... allows for drawing simple shapes", category = COMMAND)
     public static String commandDraw = "true";
 
-    @Rule(desc = "Enables /script command", extra = "An in-game scripting API for Scarpet programming language", category = COMMAND)
-    public static boolean commandScript = true;
+    @Rule(
+            desc = "Enables /script command",
+            extra = "An in-game scripting API for Scarpet programming language",
+            category = {COMMAND, SCARPET}
+    )
+    public static String commandScript = "true";
+
+    @Rule(
+            desc = "Enables restrictions for arbitrary code execution with scarpet",
+            extra = {
+                    "Users that don't have this permission level",
+                    "won't be able to load apps or /script run"
+            },
+            category = {COMMAND, SCARPET}
+    )
+    public static String commandScriptACE = "ops";
 
     @Rule(
             desc = "Scarpet script from world files will autoload on server/world start ",
             extra = "if /script is enabled",
-            category = CREATIVE
+            category = SCARPET
     )
     public static boolean scriptsAutoload = false;
 

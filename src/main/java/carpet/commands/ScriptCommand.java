@@ -11,6 +11,7 @@ import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
+import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -79,7 +80,7 @@ public class ScriptCommand
         LiteralArgumentBuilder<ServerCommandSource> u = literal("resume").
                 executes( (cc) -> { CarpetServer.scriptServer.stopAll = false; return 1;});
         LiteralArgumentBuilder<ServerCommandSource> l = literal("run").
-                requires((player) -> player.hasPermissionLevel(2)).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
                 then(argument("expr", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestCode).
                         executes((cc) -> compute(
                                 cc,
@@ -205,7 +206,7 @@ public class ScriptCommand
                                                                                 BlockPredicateArgumentType.getBlockPredicate(cc, "filter"),
                                                                                 "outline"
                                                                         )))))))));
-        LiteralArgumentBuilder<ServerCommandSource> a = literal("load").requires( (player) -> player.hasPermissionLevel(2) ).
+        LiteralArgumentBuilder<ServerCommandSource> a = literal("load").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 then(argument("app", StringArgumentType.word()).
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(true),bb)).
                         executes((cc) ->
@@ -222,7 +223,7 @@ public class ScriptCommand
                                 )
                         )
                 );
-        LiteralArgumentBuilder<ServerCommandSource> f = literal("unload").requires( (player) -> player.hasPermissionLevel(2) ).
+        LiteralArgumentBuilder<ServerCommandSource> f = literal("unload").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 then(argument("app", StringArgumentType.word()).
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(),bb)).
                         executes((cc) ->
@@ -231,7 +232,7 @@ public class ScriptCommand
                             return success?1:0;
                         }));
 
-        LiteralArgumentBuilder<ServerCommandSource> q = literal("event").requires( (player) -> player.hasPermissionLevel(2) ).
+        LiteralArgumentBuilder<ServerCommandSource> q = literal("event").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 executes( (cc) -> listEvents(cc.getSource())).
                 then(literal("add_to").
                         then(argument("event", StringArgumentType.word()).
@@ -268,10 +269,10 @@ public class ScriptCommand
 
 
         dispatcher.register(literal("script").
-                requires((player) -> CarpetSettings.commandScript).
+                requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
                 then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q));
         dispatcher.register(literal("script").
-                requires((player) -> CarpetSettings.commandScript).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
                 then(literal("in").
                         then(argument("app", StringArgumentType.word()).
                                 suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
