@@ -192,13 +192,16 @@ public class OptimizedExplosion
             world.playSound(null, posX, posY, posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 4.0F,
                     (1.0F + (world.random.nextFloat() - world.random.nextFloat()) * 0.2F) * 0.7F);
 
-            if (eAccess.getPower() >= 2.0F && damagesTerrain)
+            if (spawnParticles)
             {
-                world.addParticle(ParticleTypes.EXPLOSION_EMITTER, posX, posY, posZ, 1.0D, 0.0D, 0.0D);
-            }
-            else
-            {
-                world.addParticle(ParticleTypes.EXPLOSION, posX, posY, posZ, 1.0D, 0.0D, 0.0D);
+                if (eAccess.getPower() >= 2.0F && damagesTerrain)
+                {
+                    world.addParticle(ParticleTypes.EXPLOSION_EMITTER, posX, posY, posZ, 1.0D, 0.0D, 0.0D);
+                }
+                else
+                {
+                    world.addParticle(ParticleTypes.EXPLOSION, posX, posY, posZ, 1.0D, 0.0D, 0.0D);
+                }
             }
         }
 
@@ -212,7 +215,7 @@ public class OptimizedExplosion
                 BlockState state = world.getBlockState(blockpos);
                 Block block = state.getBlock();
 
-                if (spawnParticles)
+                /*if (spawnParticles)
                 {
                     double d0 = (double)((float)blockpos.getX() + world.random.nextFloat());
                     double d1 = (double)((float)blockpos.getY() + world.random.nextFloat());
@@ -232,7 +235,7 @@ public class OptimizedExplosion
                     world.addParticle(ParticleTypes.POOF,
                             (d0 + posX) / 2.0D, (d1 + posY) / 2.0D, (d2 + posZ) / 2.0D, d3, d4, d5);
                     world.addParticle(ParticleTypes.SMOKE, d0, d1, d2, d3, d4, d5);
-                }
+                }*/
 
                 if (state.getMaterial() != Material.AIR)
                 {

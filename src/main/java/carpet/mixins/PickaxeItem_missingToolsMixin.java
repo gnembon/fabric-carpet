@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(PickaxeItem.class)
 public class PickaxeItem_missingToolsMixin
 {
-    @Redirect(method = "getMiningSpeed", at = @At(
+    @Redirect(method = "getMiningSpeedMultiplier", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/BlockState;getMaterial()Lnet/minecraft/block/Material;"
     ))

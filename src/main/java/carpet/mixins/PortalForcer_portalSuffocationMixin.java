@@ -51,7 +51,7 @@ public class PortalForcer_portalSuffocationMixin
         CarpetSettings.fixedPosition = null;
     }
 
-
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "method_22391",at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/pattern/BlockPattern$Result;getTeleportTarget(Lnet/minecraft/util/math/Direction;Lnet/minecraft/util/math/BlockPos;DLnet/minecraft/util/math/Vec3d;D)Lnet/minecraft/block/pattern/BlockPattern$TeleportTarget;"

@@ -193,7 +193,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onClientCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;method_23668()Z",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;checkFallFlying()Z",
             shift = At.Shift.BEFORE
     ))
     private void onElytraEngage(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)

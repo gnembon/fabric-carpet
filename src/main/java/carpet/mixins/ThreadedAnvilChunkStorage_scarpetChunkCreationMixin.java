@@ -52,8 +52,6 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
 
     @Shadow private boolean chunkHolderListDirty;
 
-    @Shadow protected abstract void method_20458(long l, ChunkHolder chunkHolder);
-
     @Shadow @Final private Queue<Runnable> field_19343;
 
     @Shadow @Final private ServerLightingProvider serverLightingProvider;
@@ -73,6 +71,8 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     //in method_20617
     //method_19534(Lnet/minecraft/server/world/ChunkHolder;Lnet/minecraft/world/chunk/Chunk;)Ljava/util/concurrent/CompletableFuture;
     // incmopatibility with optifine makes this mixin fail.
+    // lambda for convertToFullChunk
+    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(method = "method_19534", require = 0, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ThreadedAnvilChunkStorage;convertToFullChunk(Lnet/minecraft/server/world/ChunkHolder;)Ljava/util/concurrent/CompletableFuture;",

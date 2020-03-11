@@ -28,11 +28,12 @@ import static carpet.settings.RuleCategory.OPTIMIZATION;
 import static carpet.settings.RuleCategory.SURVIVAL;
 import static carpet.settings.RuleCategory.TNT;
 import static carpet.settings.RuleCategory.DISPENSER;
+import static carpet.settings.RuleCategory.SCARPET;
 
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.13+v200304";
+    public static final String carpetVersion = "1.3.14+v200311";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -303,13 +304,27 @@ public class CarpetSettings
     @Rule(desc = "Enables /draw commands", extra = "... allows for drawing simple shapes", category = COMMAND)
     public static String commandDraw = "true";
 
-    @Rule(desc = "Enables /script command", extra = "An in-game scripting API for Scarpet programming language", category = COMMAND)
-    public static boolean commandScript = true;
+    @Rule(
+            desc = "Enables /script command",
+            extra = "An in-game scripting API for Scarpet programming language",
+            category = {COMMAND, SCARPET}
+    )
+    public static String commandScript = "true";
+
+    @Rule(
+            desc = "Enables restrictions for arbitrary code execution with scarpet",
+            extra = {
+                    "Users that don't have this permission level",
+                    "won't be able to load apps or /script run"
+            },
+            category = {COMMAND, SCARPET}
+    )
+    public static String commandScriptACE = "ops";
 
     @Rule(
             desc = "Scarpet script from world files will autoload on server/world start ",
             extra = "if /script is enabled",
-            category = CREATIVE
+            category = SCARPET
     )
     public static boolean scriptsAutoload = false;
 
@@ -322,7 +337,11 @@ public class CarpetSettings
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
     public static boolean carpets = false;
 
-    @Rule(desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools", category = SURVIVAL)
+    @Rule(
+            desc = "Glass and Sponge can be broken faster with their appropriate tools",
+            extra = "Glass is pickaxes, sponge is shears",
+            category = SURVIVAL
+    )
     public static boolean missingTools = false;
 
     //@Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
