@@ -11,13 +11,5 @@ import java.util.Random;
 @Mixin(ExplosiveProjectileEntity.class)
 public class ExplosiveProjectileEntity_extremeMixin
 {
-    @Redirect(method = "<init>(Lnet/minecraft/entity/EntityType;Lnet/minecraft/entity/LivingEntity;DDDLnet/minecraft/world/World;)V",
-            expect = 3, at = @At(
-                value = "INVOKE",
-                target = "Ljava/util/Random;nextGaussian()D"
-    ))
-    private double nextGauBian(Random random)
-    {
-        return RandomTools.nextGauBian(random);
-    }
+    //intentonally left blank until becomes master
 }

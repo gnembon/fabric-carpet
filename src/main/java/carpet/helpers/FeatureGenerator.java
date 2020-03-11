@@ -89,7 +89,7 @@ public class FeatureGenerator
                 @Override
                 public BiomeSource getBiomeSource()
                 {
-                    return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties()))
+                    return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties().getSeed()))
                     {
                         @Override
                         public Biome getBiomeForNoiseGen(int i, int j, int k)

@@ -22,7 +22,7 @@ public class ServerWorld_onePlayerSleepingMixin
 
     @Shadow private boolean allPlayersSleeping;
 
-    @Inject(method = "updatePlayersSleeping", cancellable = true, at = @At("HEAD"))
+    @Inject(method = "updateSleepingPlayers", cancellable = true, at = @At("HEAD"))
     private void updateOnePlayerSleeping(CallbackInfo ci)
     {
         if(CarpetSettings.onePlayerSleeping)
