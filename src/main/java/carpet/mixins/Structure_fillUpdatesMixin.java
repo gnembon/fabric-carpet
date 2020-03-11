@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(Structure.class)
 public class Structure_fillUpdatesMixin
 {
-    @Redirect( method = "method_15172", at = @At(
+    @Redirect( method = "place(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/structure/StructurePlacementData;I)Z", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/IWorld;updateNeighbors(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;)V"
     ))
@@ -23,7 +23,7 @@ public class Structure_fillUpdatesMixin
             iWorld.updateNeighbors(var1, var2);
     }
 
-    @Redirect(method = "method_15172", at = @At(
+    @Redirect(method = "place(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/structure/StructurePlacementData;I)Z", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/structure/StructurePlacementData;shouldUpdateNeighbors()Z"
     ))

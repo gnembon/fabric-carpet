@@ -54,7 +54,7 @@ import net.minecraft.item.MiningToolItem;
 import net.minecraft.item.ShearsItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
-import net.minecraft.network.packet.s2c.play.ContainerSlotUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ParticleArgumentType;
@@ -2101,7 +2101,7 @@ public class CarpetExpression
         if (inventory.owner instanceof ServerPlayerEntity && !inventory.isEnder)
         {
             ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
-            player.networkHandler.sendPacket(new ContainerSlotUpdateS2CPacket(
+            player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
                     -2,
                     int_1,
                     inventory.inventory.getInvStack(int_1)

@@ -489,7 +489,7 @@ public class ScriptCommand
 
         boolean[][][] volume = new boolean[area.getBlockCountX()][area.getBlockCountY()][area.getBlockCountZ()];
 
-        BlockPos.Mutable mbpos = origin.method_25503();
+        BlockPos.Mutable mbpos = origin.mutableCopy();
         ServerWorld world = source.getWorld();
 
         for (int x = area.minX; x <= area.maxX; x++)

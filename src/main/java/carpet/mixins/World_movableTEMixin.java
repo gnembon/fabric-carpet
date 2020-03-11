@@ -49,12 +49,11 @@ public abstract class World_movableTEMixin implements WorldInterface
     public abstract void updateNeighborsAlways(BlockPos blockPos_1, Block block_1);
     
     @Shadow
-    public abstract void updateHorizontalAdjacent(BlockPos blockPos_1, Block block_1);
-    
-    @Shadow
     public abstract void onBlockChanged(BlockPos blockPos_1, BlockState blockState_1, BlockState blockState_2);
 
     @Shadow public abstract Profiler getProfiler();
+
+    @Shadow public abstract void updateComparators(BlockPos pos, Block block);
 
     /**
      * @author 2No2Name
@@ -116,7 +115,7 @@ public abstract class World_movableTEMixin implements WorldInterface
                         this.updateNeighborsAlways(blockPos_1, blockState_2.getBlock());
                         if (blockState_1.hasComparatorOutput())
                         {
-                            this.updateHorizontalAdjacent(blockPos_1, block_1);
+                            updateComparators(blockPos_1, block_1);
                         }
                     }
                     

@@ -24,8 +24,6 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     
     @Shadow protected abstract void dropShoulderEntities();
     
-    @Shadow protected abstract void method_7296(CompoundTag compoundTag_1);
-    
     @Shadow public abstract CompoundTag getShoulderEntityLeft();
     
     @Shadow protected abstract void setShoulderEntityLeft(CompoundTag compoundTag_1);
@@ -33,7 +31,9 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     @Shadow protected abstract void setShoulderEntityRight(CompoundTag compoundTag_1);
     
     @Shadow public abstract CompoundTag getShoulderEntityRight();
-    
+
+    @Shadow protected abstract void dropShoulderEntity(CompoundTag entityNbt);
+
     protected PlayerEntity_parrotMixin(EntityType<? extends LivingEntity> entityType_1, World world_1)
     {
         super(entityType_1, world_1);
@@ -66,13 +66,13 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     
     protected void dismount_left()
     {
-        this.method_7296(this.getShoulderEntityLeft());
+        dropShoulderEntity(this.getShoulderEntityLeft());
         this.setShoulderEntityLeft(new CompoundTag());
     }
     
     protected void dismount_right()
     {
-        this.method_7296(this.getShoulderEntityRight());
+        dropShoulderEntity(this.getShoulderEntityRight());
         this.setShoulderEntityRight(new CompoundTag());
     }
     

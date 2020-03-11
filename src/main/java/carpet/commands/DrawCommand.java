@@ -80,7 +80,7 @@ public class DrawCommand
         final int ceilRadiusY = (int) Math.ceil(radiusY);
         final int ceilRadiusZ = (int) Math.ceil(radiusZ);
 
-        BlockPos.Mutable mbpos = pos.method_25503();
+        BlockPos.Mutable mbpos = pos.mutableCopy();
         List<BlockPos> list = Lists.newArrayList();
 
         double nextXn = 0;

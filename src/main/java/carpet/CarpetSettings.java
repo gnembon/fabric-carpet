@@ -322,7 +322,11 @@ public class CarpetSettings
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
     public static boolean carpets = false;
 
-    @Rule(desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools", category = SURVIVAL)
+    @Rule(
+            desc = "Glass and Sponge can be broken faster with their appropriate tools",
+            extra = "Glass is pickaxes, sponge is shears",
+            category = SURVIVAL
+    )
     public static boolean missingTools = false;
 
     //@Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
