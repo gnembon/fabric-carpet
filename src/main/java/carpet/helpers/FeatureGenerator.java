@@ -275,6 +275,7 @@ public class FeatureGenerator
         put("crimson_roots", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.CRIMSON_ROOTS_CONFIG)));
         put("warped_roots", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.WARPED_ROOTS_CONFIG)));
         put("weeping_vines", simplePlop(Feature.WEEPING_VINES));
+        put("twisting_vines", simplePlop(Feature.TWISTING_VINES));
         put("basalt_pillar", simplePlop(Feature.BASALT_PILLAR));
 
         //structures
