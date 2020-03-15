@@ -1,10 +1,8 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import com.google.gson.JsonElement;
-import net.minecraft.class_4952;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.LevelGeneratorType;
+import net.minecraft.world.level.LevelGeneratorOptions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,7 +30,7 @@ public abstract class MinecraftServer_coreMixin
 
     // Dedicated server only
     @Inject(method = "loadWorld", at = @At("HEAD"))
-    private void serverLoaded(String name, String serverName, long seed, class_4952 arg, CallbackInfo ci)
+    private void serverLoaded(String name, String serverName, long seed, LevelGeneratorOptions arg, CallbackInfo ci)
     {
         CarpetServer.onServerLoaded((MinecraftServer) (Object) this);
     }
