@@ -2,6 +2,7 @@ package carpet;
 
 import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
+import carpet.settings.SettingsManager;
 import carpet.settings.Validator;
 import carpet.utils.Messenger;
 import net.minecraft.server.MinecraftServer;
@@ -39,6 +40,7 @@ public class CarpetSettings
     public static boolean impendingFillSkipUpdates = false;
     public static Box currentTelepotingEntityBox = null;
     public static Vec3d fixedPosition = null;
+    public static int runPermissionLevel = 2;
 
     @Rule(
             desc = "Nether portals correctly place entities going through",
@@ -311,13 +313,22 @@ public class CarpetSettings
     )
     public static String commandScript = "true";
 
+    private static class ModulePermissionLevel extends Validator<String> {
+        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            CarpetSettings.runPermissionLevel = SettingsManager.getCommandLevel(newValue);
+            return newValue;
+        }
+        @Override
+        public String description() { return "Also controls permission level of commands executed via `run()`";}
+    }
     @Rule(
             desc = "Enables restrictions for arbitrary code execution with scarpet",
             extra = {
                     "Users that don't have this permission level",
                     "won't be able to load apps or /script run"
             },
-            category = {COMMAND, SCARPET}
+            category = {COMMAND, SCARPET},
+            validate = ModulePermissionLevel.class
     )
     public static String commandScriptACE = "ops";
 
