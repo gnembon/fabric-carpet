@@ -3600,7 +3600,7 @@ public class CarpetExpression
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                    s.withPosition(posf).withSilent(), lv.get(0).evalValue(c).getString()));
+                    s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
             return (c_, t_) -> retval;
         });
 

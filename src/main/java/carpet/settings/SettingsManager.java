@@ -206,6 +206,24 @@ public class SettingsManager
         return false;
     }
 
+    public static int getCommandLevel(String commandLevel)
+    {
+        switch (commandLevel)
+        {
+            case "true": return 2;
+            case "false": return 0;
+            case "ops": return 2; // typical for other cheaty commands
+            case "0":
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+                return Integer.parseInt(commandLevel);
+        }
+        return 0;
+    }
+
+
     private void loadConfigurationFromConf()
     {
         for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(server.getCommandSource());

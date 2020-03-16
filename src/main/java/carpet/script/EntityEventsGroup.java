@@ -80,7 +80,7 @@ public class EntityEventsGroup
         },
         ON_REMOVED("on_removed", 0),
         ON_TICK("on_tick", 0),
-        ON_DAMAGE("on_damaged", 2)
+        ON_DAMAGE("on_damaged", 3)
         {
             @Override
             public List<Value> makeArgs(Entity entity, Object... providedArgs)

@@ -1,7 +1,9 @@
 package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
+import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -53,6 +55,12 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     private void grabStat(Stat<?> stat, int amount, CallbackInfo ci)
     {
         STATISTICS.onPlayerStatistic((ServerPlayerEntity) (Object)this, stat, amount);
+    }
+
+    @Inject(method = "onDeath", at = @At("HEAD"))
+    private void onDeathEvent(DamageSource source, CallbackInfo ci)
+    {
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DEATH, this, source.name);
     }
 
     @Redirect(method = "method_14218", at = @At(
