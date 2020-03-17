@@ -32,8 +32,13 @@
                 sqrt
                 max min abs round floor ceil
                 mandelbrot relu
+                perlin simplex
 
                 print return exit throw try
+
+                task task_count task_value task_join task_completed synchronize
+
+                system_variable_get system_variable_set
 
                 l join split slice sort sort_key range m keys values pairs copy
 
@@ -41,15 +46,16 @@
 
                 var undef vars if loop map filter first all for while reduce continue break
 
-                call outer type bool number str length rand sleep time profile_expr lower upper title replace replace_first
+                import call outer type hash_code bool number str length rand sleep time profile_expr lower upper title replace replace_first
             </Keywords>
             <Keywords name="Keywords2">
                 block pos pos_offset solid air liquid flammable
-                transparent opacity blocks_daylight emitted_light light block_light sky_light see_sky
-                hardness blast_resistance top loaded suffocates power ticks_randomly update block_tick random_tick
-                set
-                blocks_movement block_sound material map_colour property block_properties block_data
+                transparent opacity blocks_daylight emitted_light light block_light sky_light see_sky brightness
+                hardness blast_resistance top loaded suffocates power ticks_randomly update block_tick random_tick in_slime_chunk
+                set without_updates
+                blocks_movement block_sound material map_colour property block_properties block_data poi set_poi
                 place_item set_biome biome loaded_status generation_status chunk_tickets
+                structures structure_references set_structure reset_chunk
 
                 player spawn entity_id entity_list entity_area entity_selector query modify entity_event
 
@@ -59,9 +65,9 @@
 
                 logger sound particle particle_line particle_rect
 
-                run save tick_time game_tick current_dimension in_dimension
+                run save tick_time game_tick seed current_dimension in_dimension
 
-                plop harvest destroy schedule nbt create_marker remove_all_markers load_app_data store_app_data escape_nbt
+                plop harvest destroy schedule nbt create_marker remove_all_markers load_app_data store_app_data escape_nbt statistic
             </Keywords>
             <Keywords name="Keywords3">euler pi null true false</Keywords>
             <Keywords name="Keywords4">x y z p</Keywords>
