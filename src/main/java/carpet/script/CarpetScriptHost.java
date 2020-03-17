@@ -346,7 +346,7 @@ public class CarpetScriptHost extends ScriptHost
             }
         });
 
-        String markerName = ExpressionInspector.MARKER_STRING+"_"+((getName()==null)?"":getName());
+        String markerName = CarpetExpression.MARKER_STRING+"_"+((getName()==null)?"":getName());
         for (ServerWorld world : CarpetServer.minecraft_server.getWorlds())
         {
             for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))

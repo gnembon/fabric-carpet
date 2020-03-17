@@ -1,14 +1,8 @@
 package carpet.commands;
 
 import carpet.CarpetServer;
-import carpet.script.CarpetScriptHost;
+import carpet.script.*;
 import carpet.CarpetSettings;
-import carpet.script.CarpetEventServer;
-import carpet.script.CarpetExpression;
-import carpet.script.Expression;
-import carpet.script.ExpressionInspector;
-import carpet.script.LazyValue;
-import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.settings.SettingsManager;
@@ -31,11 +25,9 @@ import net.minecraft.util.Clearable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -47,6 +39,33 @@ import static net.minecraft.server.command.CommandSource.suggestMatching;
 
 public class ScriptCommand
 {
+    private static TreeSet<String> scarpetFunctions;
+    private static TreeSet<String> APIFunctions;
+    static
+    {
+        Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
+        scarpetFunctions = new TreeSet<>(Expression.none.getFunctionNames());
+        APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    public static List<String> suggestFunctions(ScriptHost host, String previous, String prefix)
+    {
+        previous = previous.replace("\\'", "");
+        int quoteCount = StringUtils.countMatches(previous,'\'');
+        if (quoteCount % 2 == 1)
+            return Collections.emptyList();
+        int maxLen = prefix.length()<3 ? (prefix.length()*2+1) : 1234;
+        List<String> scarpetMatches = scarpetFunctions.stream().
+                filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList());
+        scarpetMatches.addAll(APIFunctions.stream().
+                filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList()));
+        // not that useful in commandline, more so in external scripts, so skipping here
+        //scarpetMatches.addAll(CarpetServer.scriptServer.events.eventHandlers.keySet().stream().
+        //        filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> "__"+s+"(").collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globaFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globaVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
+        return scarpetMatches;
+    }
 
     private static CompletableFuture<Suggestions> suggestCode(
             CommandContext<ServerCommandSource> context,
@@ -66,7 +85,7 @@ public class ScriptCommand
             return suggestionsBuilder.buildFuture();
         String prefix = lastToken.reverse().toString();
         String previousString =  previous.substring(0,previous.length()-prefix.length()) ;
-        ExpressionInspector.suggestFunctions(currentHost, previousString, prefix).forEach(text -> suggestionsBuilder.suggest(previousString+text));
+        suggestFunctions(currentHost, previousString, prefix).forEach(text -> suggestionsBuilder.suggest(previousString+text));
         return suggestionsBuilder.buildFuture();
     }
 
@@ -333,7 +352,7 @@ public class ScriptCommand
             }
             Expression expr = fun.getExpression();
             Tokenizer.Token tok = fun.getToken();
-            List<String> snippet = ExpressionInspector.Expression_getExpressionSnippet(tok, expr);
+            List<String> snippet = expr.getExpressionSnippet(tok);
             Messenger.m(source, "wb "+fun.fullName(),"t  defined at: line "+(tok.lineno+1)+" pos "+(tok.linepos+1));
             for (String snippetLine: snippet)
             {

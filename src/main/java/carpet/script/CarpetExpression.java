@@ -139,10 +139,11 @@ public class CarpetExpression
     private final ServerCommandSource source;
     private final BlockPos origin;
     private final Expression expr;
-    Expression getExpr() {return expr;}
+    public Expression getExpr() {return expr;}
     private static long tickStart = 0L;
     // dummy entity for dummy requirements in the loot tables (see snowball)
     private static FallingBlockEntity DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
+    public static final String MARKER_STRING = "__scarpet_marker";
 
     private static boolean stopAll = false;
 
@@ -2377,8 +2378,8 @@ public class CarpetExpression
                     (float)pointLocator.yaw,
                     (float) pointLocator.pitch
             );
-            armorstand.addScoreboardTag(ExpressionInspector.MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName()));
-            armorstand.addScoreboardTag(ExpressionInspector.MARKER_STRING);
+            armorstand.addScoreboardTag(MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName()));
+            armorstand.addScoreboardTag(MARKER_STRING);
             if (targetBlock != null)
                 armorstand.equipStack(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
             if (!name.isEmpty())
@@ -2399,7 +2400,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("remove_all_markers", 0, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             int total = 0;
-            String markerName = ExpressionInspector.MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName());
+            String markerName = MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName());
             for (Entity e : cc.s.getWorld().getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {
                 total ++;

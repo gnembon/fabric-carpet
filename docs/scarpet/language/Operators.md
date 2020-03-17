@@ -7,7 +7,7 @@ as `(2+4)-3`, which in case of numbers doesn't matter, but since `scarpet` allow
 the associativity would matter, and may lead to unintended effects:
 
 Important operator is function definition `->` operator. It will be covered 
-in {@link carpet.script.Expression#UserDefinedFunctionsAndControlFlow}
+in [User Defined Functions and Program Control Flow](docs/scarpet/language/FunctionsAndControlFlow.md)
 
 <pre>
 '123'+4-2 => ('123'+4)-2 => '1234'-2 => '134'
