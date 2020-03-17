@@ -30,7 +30,9 @@ floor
 for
 get
 has
+hash_code
 if
+import
 join
 keys
 l
@@ -49,6 +51,7 @@ not
 number
 outer
 pairs
+perlin
 print
 profile_expr
 put
@@ -63,12 +66,16 @@ return
 round
 sec
 sech
+simplex
 sin
 sinh
 sleep
 slice
 sort
 sort_key
+synchronize
+system_variable_get
+system_variable_set
 split
 sqrt
 str

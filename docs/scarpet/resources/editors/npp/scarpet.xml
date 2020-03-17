@@ -76,13 +76,32 @@
             <Keywords name="Keywords7">
                 __command
                 __config
-                __on_player_jumps __on_player_deploys_elytra __on_player_wakes_up __on_player_rides __on_player_uses_item
-                __on_player_clicks_block __on_player_right_clicks_block __on_player_breaks_block
-                __on_player_interacts_with_entity __on_player_attacks_entity
-                __on_player_starts_sneaking __on_player_stops_sneaking __on_player_starts_sprinting __on_player_stops_sprinting
-                __on_player_releases_item __on_player_finishes_using_item
-                __on_player_drops_item __on_player_drops_stack
-                __on_tick __on_tick_ender __on_tick_nether
+                __on_chunk_generated
+                __on_close
+                __on_player_attacks_entity
+                __on_player_breaks_block
+                __on_player_clicks_block
+                __on_player_deploys_elytra
+                __on_player_drops_item
+                __on_player_drops_stack
+                __on_player_finishes_using_item
+                __on_player_interacts_with_block
+                __on_player_interacts_with_entity
+                __on_player_jumps
+                __on_player_places_block
+                __on_player_releases_item
+                __on_player_rides
+                __on_player_right_clicks_block
+                __on_player_starts_sneaking
+                __on_player_starts_sprinting
+                __on_player_stops_sneaking
+                __on_player_stops_sprinting
+                __on_player_uses_item
+                __on_player_wakes_up
+                __on_statistic
+                __on_tick
+                __on_tick_ender
+                __on_tick_nether
             </Keywords>
             <Keywords name="Keywords8">$</Keywords>
             <Keywords name="Delimiters">00&apos; 01\ 02&apos; 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>
