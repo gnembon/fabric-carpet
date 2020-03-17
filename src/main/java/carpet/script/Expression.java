@@ -99,6 +99,12 @@ public class Expression
 
     public Module module = null;
 
+    public String getModuleName()
+    {
+        return module == null?null:module.getName();
+    }
+
+
     void asATextSource()
     {
         allowNewlineSubstitutions = false;
@@ -119,11 +125,11 @@ public class Expression
     boolean isAnOperator(String opname) { return operators.containsKey(opname) || operators.containsKey(opname+"u");}
 
     private final Map<String, ILazyFunction> functions = new  Object2ObjectOpenHashMap<>();
-    Set<String> getFunctionNames() {return functions.keySet();}
+    public Set<String> getFunctionNames() {return functions.keySet();}
 
-    static List<String> getExpressionSnippet(Tokenizer.Token token, Expression expr)
+    public List<String> getExpressionSnippet(Tokenizer.Token token)
     {
-        String code = expr.getCodeString();
+        String code = this.getCodeString();
         List<String> output = new ArrayList<>();
         for (String line: getExpressionSnippetLeftContext(token, code, 1))
         {
@@ -1949,7 +1955,7 @@ public class Expression
         return var;
     }
 
-    static final Expression none = new Expression("null");
+    public static final Expression none = new Expression("null");
     /**
      * @param expression .
      */
