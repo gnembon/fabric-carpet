@@ -5,6 +5,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
+import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.mob.ZombifiedPiglinEntity;
 import net.minecraft.sound.BlockSoundGroup;
@@ -198,9 +199,9 @@ public class BlockInfo
         //lst.add(Messenger.s(String.format(" - Picks neighbour light value: %s", state.useNeighborBrightness(world, pos))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Causes suffocation: %s", state.canSuffocate(world, pos))));
-        lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.canPlaceAtSide(world,pos, BlockPlacementEnvironment.LAND))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.canPlaceAtSide(world,pos, BlockPlacementEnvironment.AIR))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.canPlaceAtSide(world,pos, BlockPlacementEnvironment.WATER))));
+        lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.canPathfindThrough(world,pos, NavigationType.LAND))));
+        lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.canPathfindThrough(world,pos, NavigationType.AIR))));
+        lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.canPathfindThrough(world,pos, NavigationType.WATER))));
         lst.add(Messenger.s(String.format(" - Can burn: %s", material.isBurnable())));
         lst.add(Messenger.s(String.format(" - Requires a tool: %s", !material.isReplaceable()))); //?maybe
         lst.add(Messenger.s(String.format(" - Hardness: %.2f", state.getHardness(world, pos))));

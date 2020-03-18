@@ -30,14 +30,14 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
 
     @Shadow private long timeReference;
 
-    @Shadow private long field_4557;
+    @Shadow private long lastTimeReference;
 
     @Shadow public abstract boolean runTask();
 
     @Override
     public void forceTick(BooleanSupplier isAhead)
     {
-        timeReference = field_4557 = Util.getMeasuringTimeMs();
+        timeReference = lastTimeReference = Util.getMeasuringTimeMs();
         tick(isAhead);
         runTask();
     }

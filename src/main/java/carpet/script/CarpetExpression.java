@@ -38,7 +38,6 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.block.BarrierBlock;
 import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockPlacementEnvironment;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.CommandBlock;
 import net.minecraft.block.JigsawBlock;
@@ -46,6 +45,7 @@ import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.FallingBlockEntity;
+import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -91,7 +91,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
-import net.minecraft.util.SortedArraySet;
+import net.minecraft.util.collection.SortedArraySet;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
@@ -1003,7 +1003,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
-                        !s.canPlaceAtSide(((CarpetContext) c).s.getWorld(), p, BlockPlacementEnvironment.LAND)));
+                        !s.canPathfindThrough (((CarpetContext) c).s.getWorld(), p, NavigationType.LAND)));
 
         this.expr.addLazyFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->

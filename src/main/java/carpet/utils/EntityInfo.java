@@ -47,7 +47,7 @@ public class EntityInfo
         if (item.hasEnchantments())
         {
             stackname += " ( ";
-            Map<Enchantment, Integer> enchants = EnchantmentHelper.getEnchantments(item);
+            Map<Enchantment, Integer> enchants = EnchantmentHelper.get(item);
             for (Enchantment e: enchants.keySet())
             {
                 int level = enchants.get(e);
