@@ -13,13 +13,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ShearsItem.class)
 public class ShearsItem_missingToolsMixin
 {
-    @Inject(method = "getMiningSpeedMultiplier", at = @At("HEAD"), cancellable = true)
-    private void getCustomMaterial(ItemStack itemStack_1, BlockState blockState_1, CallbackInfoReturnable<Float> cir)
-    {
-        if (CarpetSettings.missingTools && (blockState_1.getMaterial() == Material.SPONGE))
-        {
-            cir.setReturnValue(15.0F);
-            cir.cancel();
-        }
-    }
+    // left intentionally blank until this becomes in master branch
 }

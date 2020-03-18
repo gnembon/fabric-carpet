@@ -349,8 +349,7 @@ public class CarpetSettings
     public static boolean carpets = false;
 
     @Rule(
-            desc = "Glass and Sponge can be broken faster with their appropriate tools",
-            extra = "Glass is pickaxes, sponge is shears",
+            desc = "Glass can be broken faster with pickaxes",
             category = SURVIVAL
     )
     public static boolean missingTools = false;
