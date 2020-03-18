@@ -62,7 +62,7 @@ or an OVERLY complex example:
 or simply
 
 <pre>
-/script run print('There is'+for(rect(x,9,z,8,8,8), _ == 'diamond_ore')+' diamond ore around you')
+/script run print('There is '+for(rect(x,9,z,8,8,8), _ == 'diamond_ore')+' diamond ore around you')
 </pre>
 
 It definitely pays to check what higher level `scarpet` functions have to offer.
@@ -112,16 +112,17 @@ Or rather:
 
 <pre>
 if
-(
-    x&lt;y+6,
+(   x&lt;y+6,
     (
         set(x,8+y,z,'air');
         plop(x,top('surface',x,z),z,'birch')
     ),
+    // else if
     sin(query(player(),'yaw'))>0.5,
     (
         plop(0,0,0,'boulder')
     ),
+    // else
     particle('fire',x,y,z)
 )
 </pre>
@@ -134,8 +135,10 @@ have problems with them
 ## Functions and scoping
 
 Users can define functions in the form `fun(args....) -> expression` and they are compiled and saved for further 
-execution in this but also subsequent calls of /script command. Functions can also be assigned to variables, 
-passed as arguments, called with `call` function, but in most cases you would want to call them directly by 
+execution in this, but also subsequent calls of /script command, added to events, etc. Functions can also be
+ assigned to variables, 
+passed as arguments, called with `call('fun', args...)` function, but in most cases you would want to 
+call them directly by 
 name, in the form of `fun(args...)`. This means that once defined functions are saved with the world for 
 further use. For variables, there are two types of them, global - which are shared anywhere in the code, 
 and those are all which name starts with 'global_', and local variables which is everything else and those 

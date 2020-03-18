@@ -9,9 +9,6 @@ import carpet.script.value.FunctionValue;
 import java.util.ArrayList;
 import java.util.List;
 
-import static carpet.script.ExpressionInspector.Expression_getExpressionSnippet;
-import static carpet.script.ExpressionInspector.Expression_getModuleName;
-
 /* The expression evaluators exception class. */
 public class ExpressionException extends RuntimeException implements ResolvedException
 {
@@ -40,10 +37,10 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     {
 
         List<String> errMsg = new ArrayList<>();
-        errmessage += Expression_getModuleName(expr) == null?"":(" in "+Expression_getModuleName(expr));
+        errmessage += expr.getModuleName() == null?"":(" in "+expr.getModuleName());
         if (token != null)
         {
-            List<String> snippet = Expression_getExpressionSnippet(token, expr);
+            List<String> snippet = expr.getExpressionSnippet(token);
             errMsg.addAll(snippet);
 
             if (snippet.size() != 1)

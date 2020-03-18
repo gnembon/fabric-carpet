@@ -51,10 +51,10 @@ number('2')+number('2') => 4
 Returns a formatted string representing expression. Accepts formatting style accepted by `String.format`. 
 Supported types (with `"%?"` syntax):
 
-*   d, o, x: integers
-*   a, e, f, g: floats
-*   b: booleans
-*   s: strings
+*   `d`, `o`, `x`: integers, octal, hex
+*   `a`, `e`, `f`, `g`: floats
+*   `b`: booleans
+*   `s`: strings
 
 <pre>
 str(null) => null
@@ -81,7 +81,8 @@ the off-tick time in between ticks that didn't take 50ms. There are however bene
 like fine time control not relying on the tick clock, or running things independent on each other. You can still run 
 your actions on tick-by-tick basis, either taking control of the execution using `game_tick()` API function 
 (nasty solution), or scheduling tick using `schedule()` function (much nicer solution), but threading often gives 
-the neatest solution to solve problems in parallel (see scarpet camera).
+the neatest solution to solve problems in parallel 
+(see [scarpet camera](/src/main/resources/assets/carpet/scripts/camera.sc)).
 
 Due to limitations with the game, there are some limits to the threading as well. You cannot for 
 instance `join_task()` at all from the main script and server thread, because any use of Minecraft specific 
