@@ -113,7 +113,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             else
             {
-                throw new InternalExpressionException("Cannot subtract two lists of uneven sizes");
+                throw new InternalExpressionException("Cannot add two lists of uneven sizes");
             }
         }
         else
@@ -178,7 +178,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             else
             {
-                throw new InternalExpressionException("Cannot subtract two lists of uneven sizes");
+                throw new InternalExpressionException("Cannot multiply two lists of uneven sizes");
             }
         }
         else
@@ -205,7 +205,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             else
             {
-                throw new InternalExpressionException("Cannot subtract two lists of uneven sizes");
+                throw new InternalExpressionException("Cannot divide two lists of uneven sizes");
             }
         }
         else

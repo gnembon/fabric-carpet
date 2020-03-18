@@ -1,4 +1,4 @@
-# API Reference
+# Scarpet Language Documentation
 
 ## Language Specification
 
