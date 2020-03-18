@@ -241,7 +241,7 @@ public class OptimizedExplosion
                 {
                     if (block.shouldDropItemsOnExplosion(e) && world instanceof ServerWorld)
                     {
-                        BlockEntity blockEntity = block.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;
+                        BlockEntity blockEntity = block.method_26161() ? world.getBlockEntity(blockpos) : null; //hasBLockENtity
 
                         LootContext.Builder lootBuilder = new LootContext.Builder((ServerWorld) eAccess.getWorld())
                                 .setRandom(eAccess.getWorld().random)
@@ -273,9 +273,10 @@ public class OptimizedExplosion
                 Chunk chunk = world.getChunk(blockpos1.getX() >> 4, blockpos1.getZ() >> 4);
 
                 BlockPos down = blockpos1.down(1);
-                if (chunk.getBlockState(blockpos1).getMaterial() == Material.AIR &&
-                        chunk.getBlockState(down).isFullOpaque(world, down) &&
-                        eAccess.getRandom().nextInt(3) == 0)
+                if (eAccess.getRandom().nextInt(3) == 0 &&
+                        chunk.getBlockState(blockpos1).getMaterial() == Material.AIR &&
+                        chunk.getBlockState(down).method_26216(world, down) //isFullOPaque
+                        )
                 {
                     world.setBlockState(blockpos1, Blocks.FIRE.getDefaultState());
                 }

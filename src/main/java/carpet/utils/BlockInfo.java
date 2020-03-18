@@ -185,7 +185,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Sound type: %s", soundName.get(block.getSoundGroup(state)))));
         lst.add(Messenger.s(""));
         //lst.add(Messenger.s(String.format(" - Full block: %s", block.isShapeFullCube()))); //  isFullCube() )));
-        lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isSimpleFullBlock(world, pos)))); //isNormalCube())));
+        lst.add(Messenger.s(String.format(" - Normal cube: %s", state.method_26212(world, pos)))); //isNormalCube()))); isSimpleFullBlock
         lst.add(Messenger.s(String.format(" - Is liquid: %s", material.isLiquid())));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
@@ -198,10 +198,10 @@ public class BlockInfo
         //lst.add(Messenger.s(String.format(" - Emitted light: %d", state.getLightValue())));
         //lst.add(Messenger.s(String.format(" - Picks neighbour light value: %s", state.useNeighborBrightness(world, pos))));
         lst.add(Messenger.s(""));
-        lst.add(Messenger.s(String.format(" - Causes suffocation: %s", state.canSuffocate(world, pos))));
-        lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.canPathfindThrough(world,pos, NavigationType.LAND))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.canPathfindThrough(world,pos, NavigationType.AIR))));
-        lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.canPathfindThrough(world,pos, NavigationType.WATER))));
+        lst.add(Messenger.s(String.format(" - Causes suffocation: %s", state.method_26228(world, pos)))); //canSuffocate
+        lst.add(Messenger.s(String.format(" - Blocks movement on land: %s", !state.method_26171(world,pos, NavigationType.LAND)))); // canPathfindThrough
+        lst.add(Messenger.s(String.format(" - Blocks movement in air: %s", !state.method_26171(world,pos, NavigationType.AIR)))); // canPathfindThrough
+        lst.add(Messenger.s(String.format(" - Blocks movement in liquids: %s", !state.method_26171(world,pos, NavigationType.WATER)))); // canPathfindThrough
         lst.add(Messenger.s(String.format(" - Can burn: %s", material.isBurnable())));
         lst.add(Messenger.s(String.format(" - Requires a tool: %s", !material.isReplaceable()))); //?maybe
         lst.add(Messenger.s(String.format(" - Hardness: %.2f", state.getHardness(world, pos))));

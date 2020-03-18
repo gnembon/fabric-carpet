@@ -103,9 +103,9 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
                     BlockState blockState_3 = world_1.getBlockState(blockPos_2);
                     int_3 = this.increasePower(int_3, blockState_3);
                     BlockPos blockPos_3 = blockPos_1.up();
-                    if (blockState_3.isSimpleFullBlock(world_1, blockPos_2) && !world_1.getBlockState(blockPos_3).isSimpleFullBlock(world_1, blockPos_3)) {
+                    if (blockState_3.method_26212(world_1, blockPos_2) && !world_1.getBlockState(blockPos_3).method_26212(world_1, blockPos_3)) {
                         int_3 = this.increasePower(int_3, world_1.getBlockState(blockPos_2.up()));
-                    } else if (!blockState_3.isSimpleFullBlock(world_1, blockPos_2)) {
+                    } else if (!blockState_3.method_26212(world_1, blockPos_2)) { //isSimpleFUllBLock
                         int_3 = this.increasePower(int_3, world_1.getBlockState(blockPos_2.down()));
                     }
                 }

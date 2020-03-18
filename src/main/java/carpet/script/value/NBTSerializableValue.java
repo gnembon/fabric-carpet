@@ -134,7 +134,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Block block = blockState.getBlock();
         if (block instanceof InventoryProvider) {
             inventory = ((InventoryProvider)block).getInventory(blockState, world, blockPos);
-        } else if (block.hasBlockEntity()) {
+        } else if (block.method_26161()) { // hasBLockENtity
             BlockEntity blockEntity = BlockValue.getBlockEntity(world, blockPos);
             if (blockEntity instanceof Inventory) {
                 inventory = (Inventory)blockEntity;

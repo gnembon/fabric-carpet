@@ -35,10 +35,9 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import net.minecraft.block.BarrierBlock;
-import net.minecraft.block.BedrockBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.CommandBlock;
 import net.minecraft.block.JigsawBlock;
 import net.minecraft.block.StructureBlock;
@@ -568,7 +567,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("solid", -1, (c, t, lv) ->
-                genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.isSimpleFullBlock(w, p))));
+                genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.method_26212(w, p)))); // isSimpleFullBlock
 
         this.expr.addLazyFunction("air", -1, (c, t, lv) ->
                 booleanStateTest(c, "air", lv, (s, p) -> s.isAir()));
@@ -732,7 +731,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("suffocates", -1, (c, t, lv) ->
-                genericStateTest(c, "suffocates", lv, (s, p, w) -> new NumericValue(s.canSuffocate(w, p))));
+                genericStateTest(c, "suffocates", lv, (s, p, w) -> new NumericValue(s.method_26228(w, p)))); // canSuffocate
 
         this.expr.addLazyFunction("power", -1, (c, t, lv) ->
                 genericStateTest(c, "power", lv, (s, p, w) -> new NumericValue(w.getReceivedRedstonePower(p))));
@@ -950,7 +949,7 @@ public class CarpetExpression
             BlockState state = locator.block.getBlockState();
             Block block = state.getBlock();
             boolean success = false;
-            if (!((block instanceof BedrockBlock || block instanceof BarrierBlock) && player.interactionManager.isSurvivalLike()))
+            if (!((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.interactionManager.isSurvivalLike()))
                 success = tryBreakBlock_copy_from_ServerPlayerInteractionManager(player, where);
             if (success)
                 world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
@@ -1003,7 +1002,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
-                        !s.canPathfindThrough (((CarpetContext) c).s.getWorld(), p, NavigationType.LAND)));
+                        !s.method_26171 (((CarpetContext) c).s.getWorld(), p, NavigationType.LAND))); // canPathfindThrough
 
         this.expr.addLazyFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->

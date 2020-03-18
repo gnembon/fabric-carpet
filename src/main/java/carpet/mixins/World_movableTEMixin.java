@@ -122,9 +122,9 @@ public abstract class World_movableTEMixin implements WorldInterface
                     if ((int_1 & 16) == 0)
                     {
                         int int_2 = int_1 & -2;
-                        blockState_2.method_11637((net.minecraft.world.IWorld) this, blockPos_1, int_2);
-                        blockState_1.updateNeighborStates((net.minecraft.world.IWorld) this, blockPos_1, int_2);
-                        blockState_1.method_11637((net.minecraft.world.IWorld) this, blockPos_1, int_2);
+                        blockState_2.method_26198((net.minecraft.world.IWorld) this, blockPos_1, int_2); // method_11637
+                        blockState_1.method_26183((net.minecraft.world.IWorld) this, blockPos_1, int_2); //updateNEtihbourStates
+                        blockState_1.method_26198((net.minecraft.world.IWorld) this, blockPos_1, int_2);
                     }
                     
                     this.onBlockChanged(blockPos_1, blockState_2, blockState_3);

@@ -110,7 +110,7 @@ public class PerimeterDiagnostics
                     BlockState iblockstate_down = worldserver.getBlockState(pos.down());
                     BlockState iblockstate_up = worldserver.getBlockState(pos.up());
 
-                    if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isSimpleFullBlock(worldserver, pos))
+                    if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.method_26212(worldserver, pos)) // isSimpleFUllBLock
                     {
                         result.liquid++;
                         if (add_water && diagnostic.check_entity_spawn(pos))
@@ -124,7 +124,7 @@ public class PerimeterDiagnostics
                     }
                     else
                     {
-                        if (iblockstate_down.isSimpleFullBlock(worldserver, pos))
+                        if (iblockstate_down.method_26212(worldserver, pos)) // isSimpleFUllBLock
                         {
                             Block block = iblockstate_down.getBlock();
                             boolean flag = block != Blocks.BEDROCK && block != Blocks.BARRIER;

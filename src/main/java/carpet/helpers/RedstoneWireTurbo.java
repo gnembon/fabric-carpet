@@ -865,7 +865,7 @@ public class RedstoneWireTurbo
             // position directly above the node being calculated is always
             // at index 1.
             UpdateNode center_up = upd.neighbor_nodes[1];
-            boolean center_up_is_cube = center_up.currentState.isSimpleFullBlock(worldIn, center_up.self);
+            boolean center_up_is_cube = center_up.currentState.method_26212(worldIn, center_up.self);  //isSimpleFUllBLock
  
             for (int m=0; m<4; m++) {
                 // Get the neighbor array index of each of the four cardinal
@@ -879,7 +879,7 @@ public class RedstoneWireTurbo
  
                 // Also check the positions above and below the cardinal
                 // neighbors
-                boolean neighbor_is_cube = neighbor.currentState.isSimpleFullBlock(worldIn, neighbor.self);
+                boolean neighbor_is_cube = neighbor.currentState.method_26212(worldIn, neighbor.self);  //isSimpleFUllBLock
                 if (!neighbor_is_cube) {
                     UpdateNode neighbor_down = upd.neighbor_nodes[rs_neighbors_dn[m]];
                     l = getMaxCurrentStrength(neighbor_down, l);
