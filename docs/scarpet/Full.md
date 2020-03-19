@@ -2963,6 +2963,33 @@ Feature list:
 *   `coral`: random coral structure. Require water to spawn.
 *   `sea_pickle`
 *   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
+
+## Scoreboards
+
+### Reading scoreboard values
+
+(WIP)
+
+### Writing to scoreboard values
+
+`run('scoreboard players set '+e+' '+score+' '+value)`
+Where `e` only works for player names, not for entity names, so you would have to for example give it a tag or something:
+```
+modify(e,'tag','scoreset')
+run('scoreboard players set @e[tag=scoreset] '+score+' '+value)
+modify(e,'clear_tag','scoreset')
+```
+BUT this is a convoluted method of doing it, so hopefully (hopefully) gnembon will add a way 
+
+### Iterating over entities with the same scoreboard value
+
+This is somehow possible, even though you cant read (WHY?!)
+```
+for(entity_selector('@e[score={'+score+'='+value+'}]'),
+do whatever
+);
+```
+
 # `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 
