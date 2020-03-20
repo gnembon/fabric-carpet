@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.utils.RandomTools;
-import net.minecraft.entity.thrown.ThrownEntity;
+import net.minecraft.entity.projectile.thrown.ThrownEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;

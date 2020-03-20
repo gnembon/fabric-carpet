@@ -107,7 +107,7 @@ public class SpawnHelperMixin
                     world.dimension.getType(),
                     (MobEntity) entity_1,
                     entity_1.getType().getCategory(),
-                    entity_1.getSenseCenterPos());
+                    entity_1.getBlockPos());
         }
         if (!SpawnReporter.mock_spawns)
             return world.spawnEntity(entity_1);

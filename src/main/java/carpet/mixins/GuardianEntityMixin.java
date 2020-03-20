@@ -28,7 +28,7 @@ public abstract class GuardianEntityMixin extends HostileEntity
         {
             ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
             elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.yaw, this.pitch);
-            elderGuardian.initialize(this.world ,this.world.getLocalDifficulty(elderGuardian.getSenseCenterPos()), SpawnType.CONVERSION, (EntityData)null, (CompoundTag)null);
+            elderGuardian.initialize(this.world ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnType.CONVERSION, (EntityData)null, (CompoundTag)null);
             elderGuardian.setAiDisabled(this.isAiDisabled());
             
             if (this.hasCustomName())

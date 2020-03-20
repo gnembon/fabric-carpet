@@ -110,7 +110,7 @@ public class PerimeterDiagnostics
                     BlockState iblockstate_down = worldserver.getBlockState(pos.down());
                     BlockState iblockstate_up = worldserver.getBlockState(pos.up());
 
-                    if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.method_26212(worldserver, pos)) // isSimpleFUllBLock
+                    if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isSolidBlock(worldserver, pos)) // isSimpleFUllBLock
                     {
                         result.liquid++;
                         if (add_water && diagnostic.check_entity_spawn(pos))
@@ -124,7 +124,7 @@ public class PerimeterDiagnostics
                     }
                     else
                     {
-                        if (iblockstate_down.method_26212(worldserver, pos)) // isSimpleFUllBLock
+                        if (iblockstate_down.isSolidBlock(worldserver, pos)) // isSimpleFUllBLock
                         {
                             Block block = iblockstate_down.getBlock();
                             boolean flag = block != Blocks.BEDROCK && block != Blocks.BARRIER;
@@ -178,7 +178,7 @@ public class PerimeterDiagnostics
         {
             el.refreshPositionAndAngles((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
             return el.canSpawn(worldServer) && el.canSpawn(worldServer, SpawnType.NATURAL) &&
-                    SpawnRestriction.canSpawn(el.getType(),el.getEntityWorld(), SpawnType.NATURAL, el.getSenseCenterPos(), el.getEntityWorld().random) &&
+                    SpawnRestriction.canSpawn(el.getType(),el.getEntityWorld(), SpawnType.NATURAL, el.getBlockPos(), el.getEntityWorld().random) &&
                     worldServer.doesNotCollide(el); // check collision rules once they stop fiddling with them after 1.14.1
         }
         return false;

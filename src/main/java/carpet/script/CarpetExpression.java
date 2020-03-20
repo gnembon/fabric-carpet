@@ -567,7 +567,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("solid", -1, (c, t, lv) ->
-                genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.method_26212(w, p)))); // isSimpleFullBlock
+                genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.isSolidBlock(w, p)))); // isSimpleFullBlock
 
         this.expr.addLazyFunction("air", -1, (c, t, lv) ->
                 booleanStateTest(c, "air", lv, (s, p) -> s.isAir()));
@@ -731,7 +731,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("suffocates", -1, (c, t, lv) ->
-                genericStateTest(c, "suffocates", lv, (s, p, w) -> new NumericValue(s.method_26228(w, p)))); // canSuffocate
+                genericStateTest(c, "suffocates", lv, (s, p, w) -> new NumericValue(s.shouldSuffocate(w, p)))); // canSuffocate
 
         this.expr.addLazyFunction("power", -1, (c, t, lv) ->
                 genericStateTest(c, "power", lv, (s, p, w) -> new NumericValue(w.getReceivedRedstonePower(p))));
@@ -1002,7 +1002,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
-                        !s.method_26171 (((CarpetContext) c).s.getWorld(), p, NavigationType.LAND))); // canPathfindThrough
+                        !s.canPathfindThrough(((CarpetContext) c).s.getWorld(), p, NavigationType.LAND)));
 
         this.expr.addLazyFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
@@ -1646,7 +1646,7 @@ public class CarpetExpression
                     return LazyValue.NULL;
                 } else {
                     if (!hasTag && entity_1 instanceof MobEntity) {
-                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getSenseCenterPos()), SpawnType.COMMAND, null, null);
+                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnType.COMMAND, null, null);
                     }
                     Value res = new EntityValue(entity_1);
                     return (_c, _t) -> res;

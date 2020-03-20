@@ -140,7 +140,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             {
                 List<PointOfInterest> list_1 = ((ServerWorld) getEntityWorld()).getPointOfInterestStorage().getInCircle(
                         type -> type == PointOfInterestType.HOME,
-                        getSenseCenterPos(),
+                        getBlockPos(),
                         48, PointOfInterestStorage.OccupationStatus.ANY).collect(Collectors.toList());
                 for (PointOfInterest poi : list_1)
                 {

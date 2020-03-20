@@ -4,6 +4,7 @@ import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.TrajectoryLogHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -14,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ProjectileEntity.class)
+@Mixin(PersistentProjectileEntity.class)
 public abstract class ProjectileEntityMixin extends Entity
 {
     private TrajectoryLogHelper logHelper;
