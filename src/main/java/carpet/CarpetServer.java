@@ -5,22 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import carpet.commands.CameraModeCommand;
-import carpet.commands.CounterCommand;
-import carpet.commands.DistanceCommand;
-import carpet.commands.DrawCommand;
-import carpet.commands.InfoCommand;
-import carpet.commands.LogCommand;
-import carpet.commands.MobAICommand;
-import carpet.commands.PerimeterInfoCommand;
-import carpet.commands.PlayerCommand;
-import carpet.commands.ScriptCommand;
-import carpet.commands.SpawnCommand;
-import carpet.commands.TickCommand;
+import carpet.commands.*;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
-import carpet.settings.CarpetSettings;
 import carpet.settings.SettingsManager;
 import carpet.utils.HUDController;
 import carpet.utils.MobAI;
@@ -31,21 +19,28 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
-    public static final Random rand = new Random((int)((2>>16)*Math.random()));
+    public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
+    private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
-    public static List<CarpetExtension> extensions = new ArrayList<>();
+    public static final List<CarpetExtension> extensions = new ArrayList<>();
 
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     public static void manageExtension(CarpetExtension extension)
     {
         extensions.add(extension);
+        // for extensions that come late to the party, after server is created / loaded
+        // we will handle them now.
+        // that would handle all extensions, even these that add themselves really late to the party
+        if (currentCommandDispatcher != null)
+        {
+            extension.registerCommands(currentCommandDispatcher);
+        }
     }
 
     public static void onGameStarted()
     {
-        LoggerRegistry.initLoggers();
         settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
@@ -63,6 +58,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer = new CarpetScriptServer();
         scriptServer.loadAllWorldScripts();
         MobAI.resetTrackers();
+        LoggerRegistry.initLoggers();
     }
 
     public static void tick(MinecraftServer server)
@@ -82,6 +78,7 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         TickCommand.register(dispatcher);
+        ProfileCommand.register(dispatcher);
         CounterCommand.register(dispatcher);
         LogCommand.register(dispatcher);
         SpawnCommand.register(dispatcher);
@@ -93,7 +90,10 @@ public class CarpetServer // static for now - easier to handle all around the co
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
         MobAICommand.register(dispatcher);
+        // registering command of extensions that has registered before either server is created
+        // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> e.registerCommands(dispatcher));
+        currentCommandDispatcher = dispatcher;
         //TestCommand.register(dispatcher);
     }
 
@@ -111,10 +111,16 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void onServerClosed(MinecraftServer server)
     {
-        scriptServer.onClose();
+        currentCommandDispatcher = null;
+        if (scriptServer != null) scriptServer.onClose();
         settingsManager.detachServer();
         LoggerRegistry.stopLoggers();
         extensions.forEach(e -> e.onServerClosed(server));
+    }
+
+    public static void registerExtensionLoggers()
+    {
+        extensions.forEach(CarpetExtension::registerLoggers);
     }
 }
 

@@ -1,7 +1,7 @@
 package carpet.helpers;
 
 import carpet.fakes.PistonBlockInterface;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.AbstractRedstoneGateBlock;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;
@@ -255,7 +255,7 @@ public class BlockRotator
             if (block instanceof BedBlock)
                 return stack;
             Direction face = iblockstate.get(HorizontalFacingBlock.FACING);
-            face = face.rotateClockwise(Direction.Axis.Y);
+            face = rotateClockwise(face, Direction.Axis.Y);
 
             if(sourceFace == Direction.DOWN)
             { // same as above.
@@ -358,7 +358,7 @@ public class BlockRotator
         if (newState != null)
         {
             world.setBlockState(pos, newState, 2 | 1024);
-            world.scheduleBlockRender(pos, state, newState);
+            world.checkBlockRerender(pos, state, newState);
             return true;
         }
         return false;

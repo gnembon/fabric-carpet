@@ -63,15 +63,30 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     {
         return new MapValue(map);
     }
-    public MapValue(Map<Value,Value> other)
+
+    @Override
+    public Value deepcopy()
     {
-        map = new HashMap<>(other);
+        Map<Value, Value> copyMap = new HashMap<>();
+        map.forEach((key, value) -> copyMap.put(key.deepcopy(), value.deepcopy()));
+        return new MapValue(copyMap);
+    }
+
+    private MapValue(Map<Value,Value> other)
+    {
+        map = other;
+    }
+
+    public static MapValue wrap(Map<Value,Value> other)
+    {
+        return new MapValue(other);
     }
 
     @Override
     public Value add(Value o)
     {
-        throw new InternalExpressionException("Cannot add to a map value");
+        append(o);
+        return this;
     }
 
     @Override
@@ -110,7 +125,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public void append(Value v)
     {
-        put(v);
+        map.put(v, Value.NULL);
     }
 
     @Override

@@ -323,7 +323,7 @@ public class SpawnReporter
                     "w ' to enable"));
             return report;
         }
-        Long duration = (long) worldIn.getServer().getTicks() - track_spawns;
+        long duration = (long) worldIn.getServer().getTicks() - track_spawns;
         report.add(Messenger.c("bw --------------------"));
         String simulated = mock_spawns?"[SIMULATED] ":"";
         String location = (lower_spawning_limit != null)?String.format("[in (%d, %d, %d)x(%d, %d, %d)]",
@@ -380,7 +380,7 @@ public class SpawnReporter
         }
         if (entity instanceof OcelotEntity)
         {
-            for (Entity e: entity.getEntityWorld().getEntities(OcelotEntity.class, entity.getBoundingBox()))
+            for (Entity e: entity.getEntityWorld().getEntities(entity, entity.getBoundingBox()))
             {
                 e.remove();
             }
@@ -388,7 +388,7 @@ public class SpawnReporter
         entity.remove();
     }
 
-    public static List<BaseText> report(BlockPos pos, World worldIn)
+    public static List<BaseText> report(BlockPos pos, ServerWorld worldIn)
     {
         List<BaseText> rep = new ArrayList<>();
         int x = pos.getX(); int y = pos.getY(); int z = pos.getZ();
@@ -410,8 +410,8 @@ public class SpawnReporter
                         continue; // vanilla bug
                     boolean canspawn = SpawnHelper.canSpawn(SpawnRestriction.getLocation(spawnEntry.type), worldIn, pos, spawnEntry.type);
                     int will_spawn = -1;
-                    boolean fits = false;
-                    boolean fits1 = false;
+                    boolean fits;
+                    boolean fits1;
                     
                     MobEntity mob;
                     try
@@ -434,17 +434,22 @@ public class SpawnReporter
                         {
                             float f = (float)x + 0.5F;
                             float f1 = (float)z + 0.5F;
-                            mob.setPositionAndAngles((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            mob.refreshPositionAndAngles((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.doesNotCollide(mob);
+                            EntityType etype = mob.getType();
                             
                             for (int i = 0; i < 20; ++i)
                             {
-                                if (SpawnRestriction.method_20638(mob.getType(),mob.getEntityWorld(), SpawnType.NATURAL, mob.getBlockPos(), mob.getEntityWorld().random))
+                                if (
+                                        SpawnRestriction.canSpawn(etype,worldIn, SpawnType.NATURAL, pos, worldIn.random) &&
+                                        SpawnHelper.canSpawn(SpawnRestriction.getLocation(etype), worldIn, pos, etype) &&
+                                        mob.canSpawn(worldIn, SpawnType.NATURAL) // && mob.canSpawn(worldIn) // entity collisions
+                                )
                                 {
                                     will_spawn += 1;
                                 }
                             }
-                            mob.initialize(worldIn, worldIn.getLocalDifficulty(new BlockPos(mob)), SpawnType.NATURAL, null, null);
+                            mob.initialize(worldIn, worldIn.getLocalDifficulty(mob.getBlockPos()), SpawnType.NATURAL, null, null);
                             // the code invokes onInitialSpawn after getCanSpawHere
                             fits = fits1 && worldIn.doesNotCollide(mob);
                             if (fits)

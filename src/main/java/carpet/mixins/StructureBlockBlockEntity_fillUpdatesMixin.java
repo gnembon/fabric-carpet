@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.entity.StructureBlockBlockEntity;
 import net.minecraft.structure.Structure;
 import net.minecraft.structure.StructurePlacementData;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(StructureBlockBlockEntity.class)
 public abstract class StructureBlockBlockEntity_fillUpdatesMixin
 {
-    @Redirect(method = "loadStructure(Z)Z", at = @At(
+    @Redirect(method = "place", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/structure/Structure;place(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/structure/StructurePlacementData;)V"
     ))

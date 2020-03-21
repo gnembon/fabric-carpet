@@ -4,14 +4,15 @@ import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
+import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
-import carpet.script.Fluff;
+import carpet.script.EntityEventsGroup;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.client.network.packet.EntityPassengersSetS2CPacket;
-import net.minecraft.client.network.packet.EntityPositionS2CPacket;
-import net.minecraft.client.network.packet.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
 import net.minecraft.entity.Entity;
@@ -26,10 +27,13 @@ import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.MobEntityWithAi;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
@@ -58,16 +62,17 @@ import java.util.stream.Collectors;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 
+// TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
 {
-    private Entity entity;
+    private final Entity entity;
 
     public EntityValue(Entity e)
     {
         entity = e;
     }
 
-    private static Map<String, EntitySelector> selectorCache = new HashMap<>();
+    private static final Map<String, EntitySelector> selectorCache = new HashMap<>();
     public static Collection<? extends Entity > getEntitiesFromSelector(ServerCommandSource source, String selector)
     {
         try
@@ -90,6 +95,25 @@ public class EntityValue extends Value
     public Entity getEntity()
     {
         return entity;
+    }
+
+    public static ServerPlayerEntity getPlayerByValue(MinecraftServer server, Value value)
+    {
+        ServerPlayerEntity player = null;
+        if (value instanceof EntityValue)
+        {
+            Entity e = ((EntityValue) value).getEntity();
+            if (e instanceof ServerPlayerEntity)
+            {
+                player = (ServerPlayerEntity) e;
+            }
+        }
+        else
+        {
+            String playerName = value.getString();
+            player = server.getPlayerManager().getPlayer(playerName);
+        }
+        return player;
     }
 
     @Override
@@ -156,7 +180,7 @@ public class EntityValue extends Value
         return res; //TODO add more here like search by tags, or type
         //if (who.startsWith('tag:'))
     }
-    private static Map<String, Pair<EntityType<?>, Predicate<? super Entity>>> entityPredicates =
+    private static final Map<String, Pair<EntityType<?>, Predicate<? super Entity>>> entityPredicates =
             new HashMap<String, Pair<EntityType<?>, Predicate<? super Entity>>>()
     {{
         put("*", Pair.of(null, EntityPredicates.VALID_ENTITY));
@@ -171,7 +195,7 @@ public class EntityValue extends Value
             throw new InternalExpressionException("Unknown entity feature: "+what);
         return featureAccessors.get(what).apply(entity, arg);
     }
-    private static Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
+    private static final Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
         put("mainhand", EquipmentSlot.MAINHAND);
         put("offhand", EquipmentSlot.OFFHAND);
         put("head", EquipmentSlot.HEAD);
@@ -179,16 +203,16 @@ public class EntityValue extends Value
         put("legs", EquipmentSlot.LEGS);
         put("feet", EquipmentSlot.FEET);
     }};
-    private static Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
+    private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
         put("removed", (entity, arg) -> new NumericValue(entity.removed));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getEntityId()));
-        put("pos", (e, a) -> ListValue.of(new NumericValue(e.x), new NumericValue(e.y), new NumericValue(e.z)));
-        put("location", (e, a) -> ListValue.of(new NumericValue(e.x), new NumericValue(e.y), new NumericValue(e.z), new NumericValue(e.yaw), new NumericValue(e.pitch)));
-        put("x", (e, a) -> new NumericValue(e.x));
-        put("y", (e, a) -> new NumericValue(e.y));
-        put("z", (e, a) -> new NumericValue(e.z));
+        put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
+        put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.yaw), new NumericValue(e.pitch)));
+        put("x", (e, a) -> new NumericValue(e.getX()));
+        put("y", (e, a) -> new NumericValue(e.getY()));
+        put("z", (e, a) -> new NumericValue(e.getZ()));
         put("motion", (e, a) ->
         {
             Vec3d velocity = e.getVelocity();
@@ -204,6 +228,7 @@ public class EntityValue extends Value
         put("is_ridden", (e, a) -> new NumericValue(e.hasPassengers()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengerList().stream().map(EntityValue::new).collect(Collectors.toList())));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
+        put("unmountable", (e, a) -> new NumericValue(((EntityInterface)e).isPermanentVehicle()));
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
         put("yaw", (e, a)-> new NumericValue(e.yaw));
@@ -219,11 +244,13 @@ public class EntityValue extends Value
         put("immune_to_fire", (e, a) -> new NumericValue(e.isFireImmune()));
 
         put("invulnerable", (e, a) -> new NumericValue(e.isInvulnerable()));
-        put("dimension", (e, a) -> new StringValue(nameFromRegistryId(Registry.DIMENSION.getId(e.dimension))));
+        put("dimension", (e, a) -> new StringValue(nameFromRegistryId(Registry.DIMENSION_TYPE.getId(e.dimension))));
         put("height", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).height));
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
-        put("eye_height", (e, a) -> new NumericValue(e.getEyeHeight(EntityPose.STANDING)));
+        put("eye_height", (e, a) -> new NumericValue(e.getStandingEyeHeight()));
         put("age", (e, a) -> new NumericValue(e.age));
+        put("breeding_age", (e, a) -> e instanceof PassiveEntity?new NumericValue(((PassiveEntity) e).getBreedingAge()):Value.NULL);
+        put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
         put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelay()):Value.NULL);
@@ -243,7 +270,7 @@ public class EntityValue extends Value
         put("home", (e, a) -> {
             if (e instanceof MobEntity)
             {
-                return (((MobEntity) e).getWalkTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((MobEntityWithAi) e).getWalkTarget()):Value.FALSE;
+                return (((MobEntity) e).getPositionTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((MobEntityWithAi) e).getPositionTarget()):Value.FALSE;
             }
             return Value.NULL;
         });
@@ -271,6 +298,39 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
+
+        put("permission_level", (e, a) -> {
+            if (e instanceof  ServerPlayerEntity)
+            {
+                ServerPlayerEntity spe = (ServerPlayerEntity) e;
+                for (int i=4; i>=0; i--)
+                {
+                    if (spe.allowsPermissionLevel(i))
+                        return new NumericValue(i);
+
+                }
+                return new NumericValue(0);
+            }
+            return Value.NULL;
+        });
+
+        put("player_type", (e, a) -> {
+            if (e instanceof PlayerEntity)
+            {
+                if (e instanceof EntityPlayerMPFake) return new StringValue(((EntityPlayerMPFake) e).isAShadow?"shadow":"fake");
+                PlayerEntity p = (PlayerEntity)e;
+                MinecraftServer server = p.getEntityWorld().getServer();
+                if (server.isDedicated()) return new StringValue("multiplayer");
+                boolean runningLan = server.isRemote();
+                if (!runningLan) return new StringValue("singleplayer");
+                boolean isowner = server.isOwner(p.getGameProfile());
+                if (isowner) return new StringValue("lan_host");
+                return new StringValue("lan player");
+                // realms?
+            }
+            return Value.NULL;
+        });
+
         //spectating_entity
         // isGlowing
         put("effect", (e, a) ->
@@ -345,6 +405,7 @@ public class EntityValue extends Value
             float reach = 4.5f;
             boolean entities = true;
             boolean liquids = false;
+            boolean blocks = true;
 
             if (a!=null)
             {
@@ -361,12 +422,14 @@ public class EntityValue extends Value
                     if (args.size() > 1)
                     {
                         entities = false;
+                        blocks = false;
                         for (int i = 1; i < args.size(); i++)
                         {
                             String what = args.get(i).getString();
                             if (what.equalsIgnoreCase("entities"))
                                 entities = true;
-                            else if (what.equalsIgnoreCase("blocks")) {}
+                            else if (what.equalsIgnoreCase("blocks"))
+                                blocks = true;
                             else if (what.equalsIgnoreCase("liquids"))
                                 liquids = true;
                             else throw new InternalExpressionException("Incorrect tracing: "+what);
@@ -380,11 +443,14 @@ public class EntityValue extends Value
             }
 
             HitResult hitres;
-            if (entities)
+            if (entities && !blocks)
+                hitres = Tracer.rayTraceEntities(e, 1, reach, reach*reach);
+            else if (entities)
                 hitres = Tracer.rayTrace(e, 1, reach, liquids);
             else
                 hitres = Tracer.rayTraceBlocks(e, 1, reach, liquids);
 
+            if (hitres == null) return Value.NULL;
             switch (hitres.getType())
             {
                 case MISS: return Value.NULL;
@@ -401,20 +467,6 @@ public class EntityValue extends Value
             return new NBTSerializableValue(nbttagcompound).get(a);
         });
     }};
-
-    private static <Req extends Entity> Req assertEntityArgType(Class<Req> klass, Value arg)
-    {
-        if (!(arg instanceof EntityValue))
-        {
-            return null;
-        }
-        Entity e = ((EntityValue) arg).getEntity();
-        if (!(klass.isAssignableFrom(e.getClass())))
-        {
-            return null;
-        }
-        return (Req)e;
-    }
 
     public void set(String what, Value toWhat)
     {
@@ -442,29 +494,16 @@ public class EntityValue extends Value
             return;
         if (e instanceof ServerPlayerEntity)
         {
-            // TODO next - figure out proper way of informting client about pos changes
-            //((ServerPlayerEntity) e).networkHandler.requestTeleport(e.x, e.y, e.z, e.yaw, e.pitch);
-            Set<PlayerPositionLookS2CPacket.Flag> set_1 = EnumSet.allOf(PlayerPositionLookS2CPacket.Flag.class);
-            double prevX = e.x;
-            double prevY = e.y;
-            double prevZ = e.z;
-            float prevYaw = e.yaw;
-            float prevPitch = e.pitch;
-
-            e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
-            ((ServerPlayerEntity) e).networkHandler.sendPacket(new PlayerPositionLookS2CPacket(
-                    x - prevX,
-                    y - prevY,
-                    z - prevZ,
-                    yaw - prevYaw,
-                    pitch - prevPitch,
-                    set_1, -1)
-            );
+            // this forces position but doesn't angles for some reason. Need both in the API in the future.
+            EnumSet<PlayerPositionLookS2CPacket.Flag> set  = EnumSet.noneOf(PlayerPositionLookS2CPacket.Flag.class);
+            set.add(PlayerPositionLookS2CPacket.Flag.X_ROT);
+            set.add(PlayerPositionLookS2CPacket.Flag.Y_ROT);
+            ((ServerPlayerEntity)e).networkHandler.teleportRequest(x, y, z, yaw, pitch, set );
         }
         else
         {
-            e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
-            ((ServerWorld) e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
+            e.refreshPositionAndAngles(x, y, z, yaw, pitch);
+            ((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
         }
 
     }
@@ -477,8 +516,9 @@ public class EntityValue extends Value
 
 
 
-    private static Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
+    private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.remove());
+        put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
         put("health", (e, v) -> { if (e instanceof LivingEntity) ((LivingEntity) e).setHealth((float) NumericValue.asNumber(v).getDouble()); });
         put("kill", (e, v) -> e.kill());
         put("location", (e, v) ->
@@ -513,23 +553,23 @@ public class EntityValue extends Value
         });
         put("x", (e, v) ->
         {
-            updatePosition(e, NumericValue.asNumber(v).getDouble(), e.y, e.z, e.yaw, e.pitch);
+            updatePosition(e, NumericValue.asNumber(v).getDouble(), e.getY(), e.getZ(), e.yaw, e.pitch);
         });
         put("y", (e, v) ->
         {
-            updatePosition(e, e.x, NumericValue.asNumber(v).getDouble(), e.z, e.yaw, e.pitch);
+            updatePosition(e, e.getX(), NumericValue.asNumber(v).getDouble(), e.getZ(), e.yaw, e.pitch);
         });
         put("z", (e, v) ->
         {
-            updatePosition(e, e.x, e.y, NumericValue.asNumber(v).getDouble(), e.yaw, e.pitch);
+            updatePosition(e, e.getX(), e.getY(), NumericValue.asNumber(v).getDouble(), e.yaw, e.pitch);
         });
         put("yaw", (e, v) ->
         {
-            updatePosition(e, e.x, e.y, e.z, ((float)NumericValue.asNumber(v).getDouble()) % 360, e.pitch);
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), ((float)NumericValue.asNumber(v).getDouble()) % 360, e.pitch);
         });
         put("pitch", (e, v) ->
         {
-            updatePosition(e, e.x, e.y, e.z, e.yaw, MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), e.yaw, MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
         });
 
         //"look"
@@ -544,9 +584,9 @@ public class EntityValue extends Value
             }
             List<Value> coords = ((ListValue) v).getItems();
             updatePosition(e,
-                    e.x + NumericValue.asNumber(coords.get(0)).getDouble(),
-                    e.y + NumericValue.asNumber(coords.get(1)).getDouble(),
-                    e.z + NumericValue.asNumber(coords.get(2)).getDouble(),
+                    e.getX() + NumericValue.asNumber(coords.get(0)).getDouble(),
+                    e.getY() + NumericValue.asNumber(coords.get(1)).getDouble(),
+                    e.getZ() + NumericValue.asNumber(coords.get(2)).getDouble(),
                     e.yaw,
                     e.pitch
             );
@@ -622,6 +662,11 @@ public class EntityValue extends Value
                 //...
             }
         });
+        put("unmountable", (e, v) ->{
+            if (v == null)
+                v = Value.TRUE;
+            ((EntityInterface)e).setPermanentVehicle(v.getBoolean());
+        });
         put("drop_passengers", (e, v) -> e.removeAllPassengers());
         put("mount_passengers", (e, v) -> {
             if (v==null)
@@ -657,6 +702,13 @@ public class EntityValue extends Value
         //        ((MobEntity) e).setTarget(elb);
         //    }
         //});
+        put("breeding_age", (e, v) ->
+        {
+            if (e instanceof PassiveEntity)
+            {
+                ((PassiveEntity) e).setBreedingAge((int)NumericValue.asNumber(v).getLong());
+            }
+        });
         put("talk", (e, v) -> {
             // attacks indefinitely
             if (e instanceof MobEntity)
@@ -672,7 +724,7 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("'home' requires at least one position argument, and optional distance, or null to cancel");
             if (v instanceof NullValue)
             {
-                ec.setWalkTarget(BlockPos.ORIGIN, -1);
+                ec.setPositionTarget(BlockPos.ORIGIN, -1);
                 Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
                 ((MobEntityInterface)ec).getAI(false).remove(tasks.get("home"));
                 tasks.remove("home");
@@ -713,7 +765,7 @@ public class EntityValue extends Value
             }
             else throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
 
-            ec.setWalkTarget(pos, distance);
+            ec.setPositionTarget(pos, distance);
             Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
             if (!tasks.containsKey("home"))
             {
@@ -731,6 +783,14 @@ public class EntityValue extends Value
             }
         });
 
+        put("despawn_timer", (e, v) ->
+        {
+            if (e instanceof LivingEntity)
+            {
+                ((LivingEntity) e).setDespawnCounter((int)NumericValue.asNumber(v).getLong());
+            }
+        });
+
         put("ai", (e, v) ->
         {
             if (e instanceof MobEntity)
@@ -745,6 +805,47 @@ public class EntityValue extends Value
                 e.noClip = true;
             else
                 e.noClip = v.getBoolean();
+        });
+        put("effect", (e, v) ->
+        {
+            if (!(e instanceof LivingEntity)) return;
+            LivingEntity le = (LivingEntity)e;
+            if (v == null)
+                le.clearStatusEffects();
+            else if (v instanceof ListValue)
+            {
+                List<Value> lv = ((ListValue) v).getItems();
+                if (lv.size() >= 1 && lv.size() <= 5)
+                {
+                    String effectName = lv.get(0).getString();
+                    StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
+                    if (effect == null)
+                        throw new InternalExpressionException("Wrong effect name: "+effectName);
+                    if (lv.size() == 1)
+                    {
+                        le.removeStatusEffect(effect);
+                        return;
+                    }
+                    int duration = (int)NumericValue.asNumber(lv.get(1)).getLong();
+                    if (duration <= 0)
+                    {
+                        le.removeStatusEffect(effect);
+                        return;
+                    } 
+                    int amplifier = 0;
+                    if (lv.size() > 2)
+                        amplifier = (int)NumericValue.asNumber(lv.get(2)).getLong();
+                    boolean showParticles = true;
+                    if (lv.size() > 3)
+                        showParticles = lv.get(3).getBoolean();
+                    boolean showIcon = true;
+                    if (lv.size() > 4)
+                        showIcon = lv.get(4).getBoolean();
+                    le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
+                    return;
+                }
+            }
+            throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
 
         // gamemode
@@ -765,17 +866,11 @@ public class EntityValue extends Value
         // "nbt" <-big one, for now use run('data merge entity ...
     }};
 
-    public void setEvent(CarpetContext cc, String event, String fun, List<Value> args)
+    public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
     {
-        if (!(events.containsKey(event)))
-            throw new InternalExpressionException("Unknown entity event: " + event);
-        events.get(event).accept(cc, entity, fun, args);
+        EntityEventsGroup.EntityEventType event = EntityEventsGroup.EntityEventType.byName.get(eventName);
+        if (event == null)
+            throw new InternalExpressionException("Unknown entity event: " + eventName);
+        ((EntityInterface)entity).getEventContainer().addEvent(event, cc, fun, args);
     }
-
-    private static Map<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>> events = new HashMap<String, Fluff.QuadConsumer<CarpetContext, Entity, String, List<Value>>>() {{
-        put("on_death", (c, e, f, l) -> ((EntityInterface)e).setDeathCallback(c, f, l));
-        put("on_removed", (c, e, f, l) -> ((EntityInterface)e).setRemovedCallback(c, f, l));
-        put("on_tick", (c, e, f, l) -> ((EntityInterface)e).setTickCallback(c, f, l));
-        put("on_damaged", (c, e, f, l) -> ((EntityInterface)e).setDamageCallback(c, f, l));
-    }};
 }

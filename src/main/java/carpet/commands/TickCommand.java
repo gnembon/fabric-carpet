@@ -1,7 +1,8 @@
 package carpet.commands;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
+import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
@@ -26,7 +27,7 @@ public class TickCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal("tick").
-                requires((player) -> CarpetSettings.commandTick).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandTick)).
                 then(literal("rate").
                         executes((c) -> queryTps(c.getSource())).
                         then(argument("rate", floatArg(0.1F, 500.0F)).
@@ -128,13 +129,13 @@ public class TickCommand
         return 1;
     }
 
-    private static int healthReport(ServerCommandSource source, int ticks)
+    public static int healthReport(ServerCommandSource source, int ticks)
     {
         CarpetProfiler.prepare_tick_report(source, ticks);
         return 1;
     }
 
-    private static int healthEntities(ServerCommandSource source, int ticks)
+    public static int healthEntities(ServerCommandSource source, int ticks)
     {
         CarpetProfiler.prepare_entity_report(source, ticks);
         return 1;

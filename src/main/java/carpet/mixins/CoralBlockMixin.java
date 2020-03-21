@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.CoralFeatureInterface;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -9,6 +9,7 @@ import net.minecraft.block.CoralBlock;
 import net.minecraft.block.CoralParentBlock;
 import net.minecraft.block.Fertilizable;
 import net.minecraft.block.MaterialColor;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.tag.FluidTags;
 import net.minecraft.util.math.BlockPos;
@@ -19,13 +20,12 @@ import net.minecraft.world.gen.feature.CoralFeature;
 import net.minecraft.world.gen.feature.CoralMushroomFeature;
 import net.minecraft.world.gen.feature.CoralTreeFeature;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
-import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Random;
 
 @Mixin(CoralBlock.class)
-@Interface(iface = Fertilizable.class, prefix = "fert$")
+//@Interface(iface = Fertilizable.class, prefix = "fert$")
 public abstract class CoralBlockMixin implements Fertilizable
 {
     public boolean isFertilizable(BlockView var1, BlockPos var2, BlockState var3, boolean var4)
@@ -38,7 +38,7 @@ public abstract class CoralBlockMixin implements Fertilizable
         return (double)var1.random.nextFloat() < 0.15D;
     }
 
-    public void grow(World worldIn, Random random, BlockPos pos, BlockState blockUnder)
+    public void grow(ServerWorld worldIn, Random random, BlockPos pos, BlockState blockUnder)
     {
 
         CoralFeature coral;

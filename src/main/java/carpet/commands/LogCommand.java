@@ -1,8 +1,9 @@
 package carpet.commands;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
+import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -26,7 +27,7 @@ public class LogCommand
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = CommandManager.literal("log").
-                requires((player) -> CarpetSettings.commandLog).
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandLog)).
                 executes((context) -> listLogs(context.getSource())).
                 then(CommandManager.literal("clear").
                         executes( (c) -> unsubFromAll(c.getSource(), c.getSource().getName())).
@@ -42,7 +43,7 @@ public class LogCommand
                                 c.getSource(),
                                 c.getSource().getName(),
                                 getString(c, "log name")))).
-                then(CommandManager.argument("option", StringArgumentType.word()).
+                then(CommandManager.argument("option", StringArgumentType.greedyString()).
                         suggests( (c, b) -> suggestMatching(
                                 (LoggerRegistry.getLogger(getString(c, "log name"))==null
                                         ?new String[]{}

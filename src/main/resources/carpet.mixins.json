@@ -9,10 +9,12 @@
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",
+    "ForceLoadCommand_forceLoadLimitMixin",
     "World_fillUpdatesMixin",
     "WorldChunk_fillUpdatesMixin",
     "StructureBlockBlockEntity_fillUpdatesMixin",
     "Structure_fillUpdatesMixin",
+    "ServerPlayNetworkHandler_interactionUpdatesMixin",
 
     "ServerMetadata_motdMixin",
 
@@ -24,9 +26,11 @@
     "ServerChunkManager_tickMixin",
     "ThreadedAnvilChunkStorage_tickMixin",
 
+    "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
+    "ChunkHolder_scarpetChunkCreationMixin",
+
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
-    "MobEntity_leashMixin",
     "EntityTrackerEntry_leashFixMixin",
 
     "VillagerEntity_aiMixin",
@@ -43,7 +47,8 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
-    "PlayerManagerMixin",
+    "PlayerManager_coreMixin",
+    "PlayerManager_fakePlayersMixin",
     "RedstoneWireBlockMixin",
     "CarpetBlockMixin",
     "SummonCommandMixin",
@@ -51,23 +56,19 @@
     "PoweredRailBlock_powerLimitMixin",
     "LivingEntity_maxCollisionsMixin",
     "ServerWorld_onePlayerSleepingMixin",
-    "KelpFeatureMixin",
     "CoralBlockMixin",
     "CoralFeatureMixin",
-    "StructurePieceMixin",
     "StructureFeatureMixin",
-    "ShipwreckGeneratorPieceMixin",
-    "OceanRuinGeneratorPieceMixin",
-    "IglooGeneratorPieceMixin",
-    "FossilFeatureMixin",
-    "BuriedTreasureGeneratorPieceMixin",
-    "GravityStructureProcessorMixin",
+    "World_scarpetPlopMixin",
+
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",
     "PlayerEntity_parrotMixin",
     "SaplingBlockMixin",
     "EntityMixin",
     "FlatChunkGeneratorMixin",
+
+    "BiomeArray_getBiomeArrayMixin",
 
     "GuardianEntityMixin",
     "DesertPyramidFeatureMixin",
@@ -86,20 +87,17 @@
     "PistonBlock_rotatorBlockMixin",
 
     "ServerPlayNetworkHandler_antiCheatDisabledMixin",
-
-    "PortalForcer_portalCachingMixin",
-    "PortalBlock_portalCachingMixin",
+    "PlayerEntity_antiCheatDisabled",
 
     "Entity_portalSuffocationMixin",
     "PortalForcer_portalSuffocationMixin",
 
-    "PlayerEntity_horseFixMixin",
-
-    "ServerPlayerInteractionManager_ghostBlocksMixin",
+    "ServerPlayerInteractionManager_antiCheatMixin",
 
     "HopperBlockEntityMixin",
     "ContainerMixin",
     "ClientConnectionMixin",
+    "CauldronBlock_stackableSBoxesMixin",
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",
@@ -115,7 +113,7 @@
     "EndCityFeatureMixin",
 
     "InfestedBlockMixin",
-    "PlayerEntityMixin",
+    "PlayerEntityMixin_portalDelayMixin",
 
     "PistonBlock_qcMixin",
     "DispenserBlock_qcMixin",
@@ -123,12 +121,30 @@
     "PickaxeItem_missingToolsMixin",
     "ShearsItem_missingToolsMixin",
 
+    "ItemDispenserBehaviour_extremeBehavioursMixin",
+    "ItemScatterer_extremeMixin",
+    "FishingBobberEntity_extremeMixin",
+    "SkeletonHorseTrapTriggerGoal_extremeMixin",
+    "FireworkEntity_extremeMixin",
+    "BlazeEntity_extremeMixin",
+    "BlazeEntityShootFireballGoal_extremeMixin",
+    "MobEntity_extremeMixin",
+    "ExplosiveProjectileEntity_extremeMixin",
+    "LlamaSpitEntity_extremeMixin",
+    "ProjectileEntity_extremeMixin",
+
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
     "DamageTracker_scarpetEventMixin",
     "ServerPlayerEntity_scarpetEventMixin",
     "FallingBlockEntity_scarpetEventsMixin",
+    "BlockItem_scarpetEventMixin",
+
+    "ChunkTicketManager_scarpetMixin",
+    "ServerChunkManager_scarpetMixin",
+    "StatType_scarpetMixin",
+    "PointOfInterest_scarpetMixin",
 
 
     "PistonBlock_movableTEMixin",
@@ -140,18 +156,13 @@
   "client": [
     "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
-
     "MinecraftClient_pausedShakeMixin",
-    "GameRenderer_pausedShakeMixin",
-
+    "WorldRenderer_pausedShakeMixin",
     "IntegratedServerMixin",
     "InGameHudMixin",
     "PlayerListHudMixin",
-
-    "ClientPlayerInteractionManager_ghostBlocksMixin",
-
-    "BlockEntityRenderDispatcher_movableTEMixin",
-    "PistonBlockEntityRenderer_movableTEMixin"
+    "PistonBlockEntityRenderer_movableTEMixin",
+    "ClientPlayNetworkHandler_smoothClientAnimationsMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"

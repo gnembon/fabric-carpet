@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.pattern.BlockPattern;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -20,40 +20,27 @@ public class PortalForcer_portalSuffocationMixin
 {
     @Inject(method = "usePortal", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;getLastPortalDirectionVector()Lnet/minecraft/util/math/Vec3d;"
+            target = "Lnet/minecraft/entity/Entity;getLastNetherPortalDirectionVector()Lnet/minecraft/util/math/Vec3d;"
     ))
-    private void registerEntityDimensionChange(Entity entity_1, float float_1, CallbackInfoReturnable<Boolean> cir)
+    private void registerEntityDimensionChange(Entity entity, float f, CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.portalSuffocationFix)
         {
-            CarpetSettings.currentTelepotingEntityBox = entity_1.getBoundingBox();
+            CarpetSettings.currentTelepotingEntityBox = entity.getBoundingBox();
             CarpetSettings.fixedPosition = null;
         }
     }
 
     @Redirect(method = "usePortal", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;setPositionAndAngles(DDDFF)V"
+            target = "Lnet/minecraft/entity/Entity;positAfterTeleport(DDD)V"
     ))
-    private void alternativeSetPositionAndAngles(Entity entity, double double_1, double double_2, double double_3, float float_1, float float_2)
+    private void alternativeSetPositionAndAngles(Entity entity, double d, double e, double f)
     {
         if (CarpetSettings.portalSuffocationFix && CarpetSettings.fixedPosition != null)
-            entity.setPositionAndAngles(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z, float_1, float_2);
+            entity.positAfterTeleport(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z);
         else
-            entity.setPositionAndAngles(double_1, double_2, double_3, float_1, float_2);
-
-    }
-
-    @Redirect(method = "usePortal", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;requestTeleport(DDDFF)V"
-    ))
-    private void alternativeSetPositionAndAngles(ServerPlayNetworkHandler serverPlayNetworkHandler, double double_1, double double_2, double double_3, float float_1, float float_2)
-    {
-        if (CarpetSettings.portalSuffocationFix && CarpetSettings.fixedPosition != null)
-            serverPlayNetworkHandler.requestTeleport(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z, float_1, float_2);
-        else
-            serverPlayNetworkHandler.requestTeleport(double_1, double_2, double_3, float_1, float_2);
+            entity.positAfterTeleport(d, e, f);
 
     }
 
@@ -65,16 +52,16 @@ public class PortalForcer_portalSuffocationMixin
     }
 
 
-    @Redirect(method = "getPortal",at = @At(
+    @Redirect(method = "method_22391",at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/pattern/BlockPattern$Result;method_18478(Lnet/minecraft/util/math/Direction;Lnet/minecraft/util/math/BlockPos;DLnet/minecraft/util/math/Vec3d;D)Lnet/minecraft/block/pattern/BlockPattern$TeleportTarget;"
+            target = "Lnet/minecraft/block/pattern/BlockPattern$Result;getTeleportTarget(Lnet/minecraft/util/math/Direction;Lnet/minecraft/util/math/BlockPos;DLnet/minecraft/util/math/Vec3d;D)Lnet/minecraft/block/pattern/BlockPattern$TeleportTarget;"
     ))
     private BlockPattern.TeleportTarget newResult(BlockPattern.Result portal, Direction direction_1, BlockPos blockPos_1, double height_position_from_top, Vec3d vec3d_1, double width_position)
     {
         if (CarpetSettings.portalSuffocationFix && CarpetSettings.currentTelepotingEntityBox != null)
         {
-            double entityWidth = CarpetSettings.currentTelepotingEntityBox.getXSize();
-            double entityHeight = CarpetSettings.currentTelepotingEntityBox.getYSize();
+            double entityWidth = CarpetSettings.currentTelepotingEntityBox.getXLength();
+            double entityHeight = CarpetSettings.currentTelepotingEntityBox.getYLength();
             if (entityWidth >= portal.getWidth())
             {
                 width_position = 0.5; // will suffocate anyways, placing in the middle
@@ -93,7 +80,7 @@ public class PortalForcer_portalSuffocationMixin
             }
 
         }
-        BlockPattern.TeleportTarget target = portal.method_18478(direction_1, blockPos_1, height_position_from_top, vec3d_1, width_position);
+        BlockPattern.TeleportTarget target = portal.getTeleportTarget(direction_1, blockPos_1, height_position_from_top, vec3d_1, width_position);
         CarpetSettings.fixedPosition = target.pos;
         return target;
     }

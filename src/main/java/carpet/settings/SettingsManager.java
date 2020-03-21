@@ -1,8 +1,10 @@
 package carpet.settings;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -137,13 +139,16 @@ public class SettingsManager
         return server.getLevelStorage().resolveFile(server.getLevelName(), identifier+".conf");
     }
 
-    public void disableBooleanFromCategory(String category)
+    public void disableBooleanCommands()
     {
         for (ParsedRule<?> rule : rules.values())
         {
-            if (rule.type != boolean.class || !rule.categories.contains(category))
+            if (!rule.categories.contains(RuleCategory.COMMAND))
                 continue;
-            ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
+            if (rule.type == boolean.class)
+                ((ParsedRule<Boolean>) rule).set(server.getCommandSource(), false, "false");
+            if (rule.type == String.class && rule.options.contains("false"))
+                ((ParsedRule<String>) rule).set(server.getCommandSource(), "false", "false");
         }
     }
 
@@ -175,7 +180,7 @@ public class SettingsManager
         {
             return;
         }
-        server.method_18858(new ServerTask(this.server.getTicks(), () ->
+        server.send(new ServerTask(this.server.getTicks(), () ->
         {
             for (ServerPlayerEntity entityplayermp : server.getPlayerManager().getPlayerList())
             {
@@ -183,6 +188,41 @@ public class SettingsManager
             }
         }));
     }
+
+    public static boolean canUseCommand(ServerCommandSource source, String commandLevel)
+    {
+        switch (commandLevel)
+        {
+            case "true": return true;
+            case "false": return false;
+            case "ops": return source.hasPermissionLevel(2); // typical for other cheaty commands
+            case "0":
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+                return source.hasPermissionLevel(Integer.parseInt(commandLevel));
+        }
+        return false;
+    }
+
+    public static int getCommandLevel(String commandLevel)
+    {
+        switch (commandLevel)
+        {
+            case "true": return 2;
+            case "false": return 0;
+            case "ops": return 2; // typical for other cheaty commands
+            case "0":
+            case "1":
+            case "2":
+            case "3":
+            case "4":
+                return Integer.parseInt(commandLevel);
+        }
+        return 0;
+    }
+
 
     private void loadConfigurationFromConf()
     {
@@ -192,7 +232,7 @@ public class SettingsManager
         if (conf.getRight())
         {
             CarpetSettings.LOG.info("[CM]: "+fancyName+" features are locked by the administrator");
-            disableBooleanFromCategory(RuleCategory.COMMAND);
+            disableBooleanCommands();
         }
         for (String key: conf.getLeft().keySet())
         {
@@ -220,7 +260,7 @@ public class SettingsManager
             Map<String,String> result = new HashMap<String, String>();
             while ((line = reader.readLine()) != null)
             {
-                line = line.replaceAll("\\r|\\n", "");
+                line = line.replaceAll("[\\r\\n]", "");
                 if ("locked".equalsIgnoreCase(line))
                 {
                     confLocked = true;
@@ -258,16 +298,14 @@ public class SettingsManager
         }
     }
 
-
-
-    public Collection<ParsedRule<?>> getRulesMatching(String search) {
+    private Collection<ParsedRule<?>> getRulesMatching(String search) {
         String lcSearch = search.toLowerCase(Locale.ROOT);
         return rules.values().stream().filter(rule ->
         {
-            if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true;
-            for (String c : rule.categories) if (c.toLowerCase(Locale.ROOT).equals(search)) return true;
-            return false;
-        }).collect(ImmutableList.toImmutableList());
+            if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
+            for (String c : rule.categories) if (c.equals(search)) return true; // category exactly, case sensitive
+            return Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
+        }).sorted().collect(ImmutableList.toImmutableList());
     }
 
     public int printAllRulesToLog(String category)
@@ -412,8 +450,8 @@ public class SettingsManager
     {
         if (rule.set(source, newValue) != null)
             Messenger.m(source, "w "+rule.toString()+", ", "c [change permanently?]",
-                    "^w Click to keep the settings in carpet.conf to save across restarts",
-                    "?/carpet setDefault "+rule.name+" "+rule.getAsString());
+                    "^w Click to keep the settings in "+identifier+".conf to save across restarts",
+                    "?/"+identifier+" setDefault "+rule.name+" "+rule.getAsString());
         return 1;
     }
 

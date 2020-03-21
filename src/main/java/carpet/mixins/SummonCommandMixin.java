@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.mob.SkeletonHorseEntity;
@@ -41,11 +41,11 @@ public class SummonCommandMixin
                 SkeletonHorseEntity skeletonHorseEntity_1 = (SkeletonHorseEntity) EntityType.SKELETON_HORSE.create(world);
                 skeletonHorseEntity_1.setTrapped(true);
                 skeletonHorseEntity_1.setBreedingAge(0);
-                skeletonHorseEntity_1.setPosition(vec3d_1.x, vec3d_1.y, vec3d_1.z);
+                skeletonHorseEntity_1.resetPosition(vec3d_1.x, vec3d_1.y, vec3d_1.z);
                 world.spawnEntity(skeletonHorseEntity_1);
             }
             world.addLightning(lightningEntity_1);
-            source.sendFeedback(new TranslatableText("commands.summon.success", new Object[]{lightningEntity_1.getDisplayName()}), true);
+            source.sendFeedback(new TranslatableText("commands.summon.success", lightningEntity_1.getDisplayName()), true);
             cir.setReturnValue(1);
             cir.cancel();
 

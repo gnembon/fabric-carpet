@@ -5,6 +5,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.CarpetBlock;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.server.world.ServerWorld;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(CarpetBlock.class)
@@ -21,7 +22,7 @@ public abstract class CarpetBlockMixin extends Block
         BlockState state = super.getPlacementState(context);
         if (context.getPlayer() != null && !context.getWorld().isClient)
         {
-            WoolTool.carpetPlacedAction(((CarpetBlock)(Object)this).getColor(), context.getPlayer(), context.getBlockPos(), context.getWorld());
+            WoolTool.carpetPlacedAction(((CarpetBlock)(Object)this).getColor(), context.getPlayer(), context.getBlockPos(), (ServerWorld) context.getWorld());
         }
         return state;
     }

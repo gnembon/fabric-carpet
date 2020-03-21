@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -21,10 +21,6 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
     @Shadow private int vehicleFloatingTicks;
 
     @Shadow protected abstract boolean isServerOwner();
-
-    @Shadow @Final public ClientConnection client;
-
-    @Shadow public ServerPlayerEntity player;
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void restrictFloatingBits(CallbackInfo ci)
@@ -52,27 +48,5 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
     private boolean relaxMoveRestrictions(ServerPlayerEntity serverPlayerEntity)
     {
         return CarpetSettings.antiCheatDisabled || serverPlayerEntity.isInTeleportationState();
-    }
-
-    @Redirect(method = "onClientCommand", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;getVelocity()Lnet/minecraft/util/math/Vec3d;"
-    ))
-    private Vec3d getFallingVelocity(ServerPlayerEntity serverPlayerEntity)
-    {
-        if (CarpetSettings.antiCheatDisabled)
-            return new Vec3d(0,-1,0);
-        return serverPlayerEntity.getVelocity();
-    }
-
-    @Redirect(method = "onClientCommand", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;onGround:Z"
-    ))
-    private boolean getNotOnGround(ServerPlayerEntity serverPlayerEntity)
-    {
-        if (CarpetSettings.antiCheatDisabled)
-            return false;
-        return serverPlayerEntity.onGround;
     }
 }

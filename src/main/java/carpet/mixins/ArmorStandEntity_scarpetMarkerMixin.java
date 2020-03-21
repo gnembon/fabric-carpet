@@ -1,8 +1,8 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.script.ExpressionInspector;
-import carpet.settings.CarpetSettings;
+import carpet.script.CarpetExpression;
+import carpet.CarpetSettings;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -30,11 +30,11 @@ public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
     @Inject(method = "readCustomDataFromTag", at = @At("HEAD"))
     private void checkScarpetMarkerUnloaded(CallbackInfo ci)
     {
-        if ((CarpetSettings.scriptsAutoload || CarpetSettings.commandScript) && !world.isClient)
+        if ((CarpetSettings.scriptsAutoload || !CarpetSettings.commandScript.equals("false")) && !world.isClient)
         {
-            if (getScoreboardTags().contains(ExpressionInspector.MARKER_STRING))
+            if (getScoreboardTags().contains(CarpetExpression.MARKER_STRING))
             {
-                String prefix = ExpressionInspector.MARKER_STRING+"_";
+                String prefix = CarpetExpression.MARKER_STRING+"_";
                 Optional<String> owner = getScoreboardTags().stream().filter(s -> s.startsWith(prefix)).findFirst();
                 if (owner.isPresent())
                 {

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Material;
 import net.minecraft.item.PickaxeItem;

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import com.google.common.collect.Lists;
 import com.mojang.datafixers.Dynamic;
 import net.minecraft.entity.EntityType;
@@ -21,7 +21,7 @@ public abstract class DesertPyramidFeatureMixin extends AbstractTempleFeature<De
     
     static
     {
-        MONSTER_SPAWNS = Lists.newArrayList(new Biome.SpawnEntry[]{new Biome.SpawnEntry(EntityType.HUSK, 1, 1, 1)});
+        MONSTER_SPAWNS = Lists.newArrayList(new Biome.SpawnEntry(EntityType.HUSK, 1, 1, 1));
     }
     
     public DesertPyramidFeatureMixin(Function<Dynamic<?>, ? extends DefaultFeatureConfig> function_1)

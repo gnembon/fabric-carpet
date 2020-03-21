@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.RedstoneWireBlockInterface;
 import carpet.helpers.RedstoneWireTurbo;
 import net.minecraft.block.Block;
@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -36,17 +37,10 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
     private Set<BlockPos> affectedNeighbors;
 
     @Shadow
-    private int increasePower(int int_1, BlockState blockState_1) { return 0; };
+    private int increasePower(int int_1, BlockState blockState_1) { return 0; }
 
     @Shadow
-    private BlockState update(World world_1, BlockPos blockPos_1, BlockState blockState_1) { return null; };
-
-    // =
-
-    @Override
-    public BlockState updateLogicPublic(World world_1, BlockPos blockPos_1, BlockState blockState_1) {
-        return updateLogic(world_1, blockPos_1, blockState_1);
-    }
+    private BlockState update(World world_1, BlockPos blockPos_1, BlockState blockState_1) { return null; }
 
     @Override
     @Accessor("wiresGivePower")
@@ -79,8 +73,15 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
     /**
      * @author theosib, soykaf, gnembon
      */
-    @Overwrite
-    private BlockState updateLogic(World world_1, BlockPos blockPos_1, BlockState blockState_1) {
+    @Inject(method = "updateLogic", at = @At("HEAD"), cancellable = true)
+    private void updateLogicAlternative(World world, BlockPos pos, BlockState state, CallbackInfoReturnable<BlockState> cir)
+    {
+        if (CarpetSettings.fastRedstoneDust)
+            cir.setReturnValue(updateLogicPublic(world, pos, state));
+    }
+
+    @Override
+    public BlockState updateLogicPublic(World world_1, BlockPos blockPos_1, BlockState blockState_1) {
         BlockState blockState_2 = blockState_1;
         int int_1 = (Integer)blockState_1.get(POWER); // i
         this.wiresGivePower = false;

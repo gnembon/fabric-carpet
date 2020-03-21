@@ -7,7 +7,6 @@ import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.SpawnHelper;
-import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.level.LevelProperties;
@@ -75,12 +74,13 @@ public abstract class ServerChunkManagerMixin
         }
     }
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "method_20801", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;)V"
+            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;)V"
     ))
     // inject our repeat of spawns if more spawn ticks per tick are chosen.
-    private void spawnMultipleTimes(EntityCategory entityCategory_1, World world_1, WorldChunk worldChunk_1, BlockPos blockPos_1)
+    private void spawnMultipleTimes(EntityCategory entityCategory_1, ServerWorld world_1, WorldChunk worldChunk_1, BlockPos blockPos_1)
     {
         for (int i = 0; i < SpawnReporter.spawn_tries.get(entityCategory_1); i++)
         {
@@ -88,6 +88,7 @@ public abstract class ServerChunkManagerMixin
         }
     }
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "method_20801", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/EntityCategory;getSpawnCap()I"

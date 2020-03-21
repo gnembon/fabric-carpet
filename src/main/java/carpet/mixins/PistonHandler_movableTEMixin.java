@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -41,10 +41,6 @@ public abstract class PistonHandler_movableTEMixin
      * @author 2No2Name
      */
     private void stickToStickySide(BlockPos blockPos_1, Direction direction_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, Block block_1, int int_1, int int_2, int int_4, BlockPos blockPos_3, int int_5, int int_6){
-        if (CarpetSettings.honeySlime && this.world.getBlockState(blockPos_1).getBlock() == Blocks.ORANGE_STAINED_GLASS && !method_11538(blockPos_1)) {
-            cir.setReturnValue(false);
-            return;
-        }
         if(!stickToStickySide(blockPos_3)){
             cir.setReturnValue(false);
             cir.cancel();
@@ -58,11 +54,6 @@ public abstract class PistonHandler_movableTEMixin
      */
     private void stickToStickySide(CallbackInfoReturnable<Boolean> cir, int int_1){
         BlockPos pos = this.movedBlocks.get(int_1);
-        if (CarpetSettings.honeySlime && world.getBlockState(pos).getBlock() == Blocks.ORANGE_STAINED_GLASS && !method_11538(pos))
-        {
-            cir.setReturnValue(false);
-            return;
-        }
         if(!stickToStickySide(pos)){
             cir.setReturnValue(false);
             cir.cancel();
@@ -97,10 +88,13 @@ public abstract class PistonHandler_movableTEMixin
 
 
     //Get access to the blockstate to check if it is a chest
-    @Shadow @Final private Direction direction;
 
-    @Shadow protected abstract boolean method_11538(BlockPos blockPos_1);
+    @Shadow protected static boolean isBlockSticky(Block block_1)
+    {
+        return isBlockSticky(block_1);
+    }
 
+    @Shadow @Final private Direction motionDirection;
     private BlockState blockState_1;
     @Redirect(method = "tryMove",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;", ordinal = 0))
@@ -112,19 +106,18 @@ public abstract class PistonHandler_movableTEMixin
     private BlockState redirectGetBlockState_1_B(World world, BlockPos pos) {
         return blockState_1 = world.getBlockState(pos);
     }
-    @Redirect(method = "tryMove",
-            at = @At(value = "FIELD", target = "Lnet/minecraft/block/Blocks;SLIME_BLOCK:Lnet/minecraft/block/Block;"))
-    //Thanks to Earthcomputer for showing how to redirect FIELD access like this
+    @Redirect(method = "tryMove", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/block/piston/PistonHandler;isBlockSticky(Lnet/minecraft/block/Block;)Z")
+    )
     /**
      * Makes backwards stickyness work with sticky non-slimeblocks as well.
-     * @author 2No2Nameb
+     * @author 2No2Name
      */
-    private Block redirectSlimeBlock() {
-        if (CarpetSettings.honeySlime && blockState_1.getBlock() == Blocks.ORANGE_STAINED_GLASS)
-            return Blocks.ORANGE_STAINED_GLASS;
-        if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
-            return blockState_1.getBlock(); //this makes the comparison in the while condition "while(blockState_1.getBlock() == redirectSlimeBlock())" evaluate to true, so the block is treated as sticky
-        return Blocks.SLIME_BLOCK; //vanilla behavior
+    private boolean redirectIsStickyBlock(Block block_1) {
+        if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.motionDirection.getOpposite()))
+            return true;
+        return isBlockSticky(block_1);
     }
 
 

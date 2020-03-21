@@ -1,7 +1,7 @@
 package carpet.helpers;
 
 import carpet.fakes.ExperienceOrbInterface;
-import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,7 +15,7 @@ public class XPcombine
 {
     public static void searchForOtherXPNearby(ExperienceOrbEntity first)
     {
-        for (ExperienceOrbEntity entityxp : first.world.getEntities(ExperienceOrbEntity.class, first.getBoundingBox().expand(0.5D, 0.0D, 0.5D)))
+        for (ExperienceOrbEntity entityxp : first.world.getNonSpectatingEntities(ExperienceOrbEntity.class, first.getBoundingBox().expand(0.5D, 0.0D, 0.5D)))
         {
             combineItems(first, entityxp);
         }
@@ -47,7 +47,7 @@ public class XPcombine
         if (getTextureByXP(first.getExperienceAmount()) != size)
         {
             newOrb =  new ExperienceOrbEntity(EntityType.EXPERIENCE_ORB, first.world);
-            newOrb.setPositionAndAngles(first.x, first.y, first.z, first.yaw, first.pitch);
+            newOrb.refreshPositionAndAngles(first.getX(), first.getY(), first.getZ(), first.yaw, first.pitch);
             ((ExperienceOrbInterface)newOrb).setAmount(first.getExperienceAmount());
 
             first.world.spawnEntity(newOrb);

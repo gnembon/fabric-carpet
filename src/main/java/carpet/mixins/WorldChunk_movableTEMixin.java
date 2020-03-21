@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.WorldChunkInterface;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
@@ -138,7 +138,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
                     }
                     if (newBlockEntity != oldBlockEntity && newBlockEntity != null)
                     {
-                        newBlockEntity.validate();
+                        newBlockEntity.cancelRemoval();
                         this.world.setBlockEntity(blockPos_1, newBlockEntity);
                         newBlockEntity.resetBlock();
                     }

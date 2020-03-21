@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.WorldInterface;
 import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
@@ -12,6 +12,7 @@ import net.minecraft.entity.SpawnType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -24,9 +25,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 
@@ -38,9 +37,9 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawnEntitiesInChunk", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;doesNotCollide(Lnet/minecraft/util/math/Box;)Z"
+            target = "Lnet/minecraft/server/world/ServerWorld;doesNotCollide(Lnet/minecraft/util/math/Box;)Z"
     ))
-    private static boolean doesNotCollide(World world, Box bb)
+    private static boolean doesNotCollide(ServerWorld world, Box bb)
     {
         //.doesNotCollide is VERY expensive. On the other side - most worlds are not made of trapdoors in
         // various configurations, but solid and 'passable' blocks, like air, water grass, etc.
@@ -49,12 +48,12 @@ public class SpawnHelperMixin
         if (CarpetSettings.lagFreeSpawning)
         {
             BlockPos.Mutable blockpos = new BlockPos.Mutable();
-            int minX = MathHelper.floor(bb.minX);
-            int maxX = MathHelper.ceil(bb.maxX);
-            int minY = MathHelper.floor(bb.minY);
-            int maxY = MathHelper.ceil(bb.maxY);
-            int minZ = MathHelper.floor(bb.minZ);
-            int maxZ = MathHelper.ceil(bb.maxZ);
+            int minX = MathHelper.floor(bb.x1);
+            int maxX = MathHelper.ceil(bb.x2);
+            int minY = MathHelper.floor(bb.y1);
+            int maxY = MathHelper.ceil(bb.y2);
+            int minZ = MathHelper.floor(bb.z1);
+            int maxZ = MathHelper.ceil(bb.z2);
             for (int y = minY; y < maxY; y++)
                 for (int x = minX; x < maxX; x++)
                     for (int z = minZ; z < maxZ; z++)
@@ -93,9 +92,9 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawnEntitiesInChunk", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
+            target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
     ))
-    private static boolean spawnEntity(World world, Entity entity_1)
+    private static boolean spawnEntity(ServerWorld world, Entity entity_1)
     {
         if (CarpetSettings.lagFreeSpawning)
             // we used the mob - next time we will create a new one when needed
@@ -130,7 +129,7 @@ public class SpawnHelperMixin
             target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(DDD)D"
     ))
     private static double getSqDistanceTo(PlayerEntity playerEntity, double double_1, double double_2, double double_3,
-                                          EntityCategory entityCategory_1, World world_1, WorldChunk worldChunk_1, BlockPos blockPos_1)
+                                          EntityCategory entityCategory_1, ServerWorld world_1, WorldChunk worldChunk_1, BlockPos blockPos_1)
     {
         double distanceTo = playerEntity.squaredDistanceTo(double_1, double_2, double_3);
         if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory_1 != EntityCategory.CREATURE)

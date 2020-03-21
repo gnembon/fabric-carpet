@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.registry.Registry;
@@ -43,10 +44,24 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         return new ListValue(items);
     }
+
+    @Override
+    public Value deepcopy()
+    {
+        List<Value> copyItems = new ArrayList<>(items.size());
+        for (Value entry: items) copyItems.add(entry.deepcopy());
+        return new ListValue(copyItems);
+    }
+
     public ListValue(Collection<? extends Value> list)
     {
         items = new ArrayList<>();
         items.addAll(list);
+    }
+
+    private ListValue(List<Value> list)
+    {
+        items = list;
     }
 
     public static Value fromItemStack(ItemStack itemstack)
@@ -72,6 +87,12 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return ListValue.wrap(Arrays.asList(list));
     }
 
+    public static LazyValue lazyEmpty()
+    {
+        Value ret = new ListValue();
+        return (c, t) -> ret;
+    }
+
     private ListValue()
     {
         items = new ArrayList<>();
@@ -92,7 +113,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             else
             {
-                throw new InternalExpressionException("Cannot subtract two lists of uneven sizes");
+                throw new InternalExpressionException("Cannot add two lists of uneven sizes");
             }
         }
         else
@@ -157,7 +178,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             else
             {
-                throw new InternalExpressionException("Cannot subtract two lists of uneven sizes");
+                throw new InternalExpressionException("Cannot multiply two lists of uneven sizes");
             }
         }
         else
@@ -184,7 +205,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             }
             else
             {
-                throw new InternalExpressionException("Cannot subtract two lists of uneven sizes");
+                throw new InternalExpressionException("Cannot divide two lists of uneven sizes");
             }
         }
         else
@@ -232,7 +253,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         return items;
     }
 
-    public Iterator<Value> iterator() { return new ArrayList<>(items).iterator(); }
+    public Iterator<Value> iterator() { return new ArrayList<>(items).iterator(); } // should be thread safe
 
     public void extend(List<Value> subList)
     {
@@ -298,7 +319,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         if (from < 0 || from > size) from = size;
         if (from > to)
             return ListValue.of();
-        return new ListValue(getItems().subList((int)from, (int) to));
+        return new ListValue((Collection<? extends Value>) getItems().subList((int)from, (int) to));
     }
 
     @Override

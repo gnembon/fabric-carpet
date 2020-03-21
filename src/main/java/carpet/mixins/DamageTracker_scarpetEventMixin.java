@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
+import carpet.script.EntityEventsGroup;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.damage.DamageTracker;
@@ -19,6 +20,6 @@ public class DamageTracker_scarpetEventMixin
     @Inject(method = "onDamage", at = @At("HEAD"))
     private void onDamageTaken(DamageSource damageSource_1, float float_1, float float_2, CallbackInfo ci)
     {
-        ((EntityInterface)entity).onDamageCallback(float_2, damageSource_1);
+        ((EntityInterface)entity).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DAMAGE, entity, float_2, damageSource_1);
     }
 }

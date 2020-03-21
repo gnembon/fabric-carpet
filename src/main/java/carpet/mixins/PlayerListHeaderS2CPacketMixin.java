@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import net.minecraft.client.network.packet.PlayerListHeaderS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;

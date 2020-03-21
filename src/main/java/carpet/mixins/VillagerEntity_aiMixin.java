@@ -23,9 +23,9 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.Timestamp;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.village.PointOfInterest;
-import net.minecraft.village.PointOfInterestStorage;
-import net.minecraft.village.PointOfInterestType;
+import net.minecraft.world.poi.PointOfInterest;
+import net.minecraft.world.poi.PointOfInterestStorage;
+import net.minecraft.world.poi.PointOfInterestType;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -123,7 +123,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                 if (bedPos == null || bedPos.getDimension() != dimension)
                 {
                     sayNo();
-                    ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, x, y + getStandingEyeHeight() + 1, z, 1, 0.1, 0.1, 0.1, 0.0);
+                    ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, getX(), getY() + getStandingEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
                 }
                 else
                 {
@@ -151,7 +151,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                                 pv.x, pv.y+1.5, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
                     }
-                    else if (method_20642((VillagerEntity)(Object)this, poi.getPos()))
+                    else if (canReachHome((VillagerEntity)(Object)this, poi.getPos()))
                         ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.END_ROD,
                                 pv.x, pv.y+1, pv.z,
                                 50, 0.1, 0.3, 0.1, 0.0);
@@ -166,9 +166,10 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
         }
     }
 
-    private boolean method_20642(VillagerEntity villagerEntity_1, BlockPos blockPos_1) {
-        Path path_1 = villagerEntity_1.getNavigation().findPathTo(blockPos_1, PointOfInterestType.HOME.method_21648());
-        return path_1 != null && path_1.method_21655();
+    // stolen from VillagerBreedTask
+    private boolean canReachHome(VillagerEntity villager, BlockPos pos) {
+        Path path = villager.getNavigation().findPathTo(pos, PointOfInterestType.HOME.getSearchDistance());
+        return path != null && path.reachesTarget();
     }
 
 
@@ -181,7 +182,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
-            ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, x, y+3, z, 1, 0.1, 0.1, 0.1, 0.0);
+            ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, getX(), getY()+3, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
         }
     }
 

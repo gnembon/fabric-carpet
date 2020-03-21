@@ -1,12 +1,13 @@
 package carpet.utils;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import net.minecraft.block.Material;
 import net.minecraft.block.MaterialColor;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -28,7 +29,7 @@ public class WoolTool
         }
     }
 
-    public static void carpetPlacedAction(DyeColor color, PlayerEntity placer, BlockPos pos, World worldIn)
+    public static void carpetPlacedAction(DyeColor color, PlayerEntity placer, BlockPos pos, ServerWorld worldIn)
     {
 		if (!CarpetSettings.carpets)
 		{
@@ -37,16 +38,16 @@ public class WoolTool
         switch (color)
         {
             case PINK:
-                if (CarpetSettings.commandSpawn)
+                if (!"false".equals(CarpetSettings.commandSpawn))
                     Messenger.send(placer, SpawnReporter.report(pos, worldIn));
 
                 break;
             case BLACK:
-                if (CarpetSettings.commandSpawn)
+                if (!"false".equals(CarpetSettings.commandSpawn))
                     Messenger.send(placer, SpawnReporter.show_mobcaps(pos, worldIn));
                 break;
             case BROWN:
-                if (CarpetSettings.commandDistance)
+                if (!"false".equals(CarpetSettings.commandDistance))
                 {
                     ServerCommandSource source = placer.getCommandSource();
                     if (!DistanceCalculator.hasStartingPoint(source) || placer.isSneaking()) {
@@ -58,11 +59,11 @@ public class WoolTool
                 }
                 break;
             case GRAY:
-                if (CarpetSettings.commandInfo)
+                if (!"false".equals(CarpetSettings.commandInfo))
                     Messenger.send(placer, BlockInfo.blockInfo(pos.down(), worldIn));
                 break;
             case YELLOW:
-                if (CarpetSettings.commandInfo)
+                if (!"false".equals(CarpetSettings.commandInfo))
                     Messenger.m(placer, "r This used to show entity info around the player. Use data get entity command, sorry");
                     //EntityInfo.issue_entity_info(placer);
                 break;

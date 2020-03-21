@@ -29,7 +29,7 @@ public abstract class FallingBlockEntityMixin extends Entity
     private void tickCheck(CallbackInfo ci)
     {
         if (LoggerRegistry.__fallingBlocks && logHelper != null)
-            logHelper.onTick(x, y, z, getVelocity());
+            logHelper.onTick(getX(), getY(), getZ(), getVelocity());
     }
 
     @Override

@@ -29,7 +29,7 @@ public abstract class ThrownEntityMixin extends Entity
     private void tickCheck(CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && logHelper != null)
-            logHelper.onTick(x, y, z, getVelocity());
+            logHelper.onTick(getX(), getY(), getZ(), getVelocity());
     }
 
     @Override

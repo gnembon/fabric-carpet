@@ -1,76 +1,51 @@
 package carpet.script;
 
+import carpet.script.value.Value;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public class Context
 {
-    static final int NONE = 0;
-    static final int VOID = 1;
-    static final int BOOLEAN = 2;
-    static final int NUMBER = 3;
-    static final int STRING = 4;
-    static final int LIST = 5;
-    static final int ITERATOR = 6;
-    static final int SIGNATURE = 7;
-    static final int LOCALIZATION = 8;
-    static final int LVALUE = 9;
+    public static final int NONE = 0;
+    public static final int VOID = 1;
+    public static final int BOOLEAN = 2;
+    public static final int NUMBER = 3;
+    public static final int STRING = 4;
+    public static final int LIST = 5;
+    public static final int ITERATOR = 6;
+    public static final int SIGNATURE = 7;
+    public static final int LOCALIZATION = 8;
+    public static final int LVALUE = 9;
 
-    private Map<String, LazyValue> variables = new HashMap<>();
+    public final Map<String, LazyValue> variables = new HashMap<>();
 
-    protected ScriptHost host;
+    public final ScriptHost host;
 
     Context(ScriptHost host)
     {
         this.host = host;
     }
 
-
     LazyValue getVariable(String name)
     {
-        if (variables.containsKey(name))
-        {
-            return variables.get(name);
-        }
-        return host.globalVariables.get(name);
+        return variables.get(name);
     }
 
-    void setVariable(String name, LazyValue lv)
+    public void setVariable(String name, LazyValue lv)
     {
-        if (name.startsWith("global_"))
-        {
-            host.globalVariables.put(name, lv);
-            return;
-        }
         variables.put(name, lv);
     }
 
-
-    boolean isAVariable(String name)
-    {
-        return variables.containsKey(name) || host.globalVariables.containsKey(name);
-    }
-
-
     void delVariable(String variable)
     {
-        if (variable.startsWith("global_"))
-        {
-            host.globalVariables.remove(variable);
-            return;
-        }
         variables.remove(variable);
     }
-    void clearAll(String variable)
+
+    public void removeVariablesMatching(String varname)
     {
-        if (variable.startsWith("global_"))
-        {
-            host.globalVariables.remove(variable);
-            return;
-        }
-        variables.remove(variable);
+        variables.entrySet().removeIf(e -> e.getKey().startsWith(varname));
     }
 
     public Context with(String variable, LazyValue lv)
@@ -85,6 +60,21 @@ public class Context
     }
 
     public Context recreate()
+    {
+        Context ctx = duplicate();
+        ctx.initialize();
+        return ctx;
+    }
+
+    protected void initialize()
+    {
+        //special variables for second order functions so we don't need to check them all the time
+        variables.put("_", (c, t) -> Value.ZERO);
+        variables.put("_i", (c, t) -> Value.ZERO);
+        variables.put("_a", (c, t) -> Value.ZERO);
+    }
+
+    public Context duplicate()
     {
         return new Context(this.host);
     }

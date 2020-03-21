@@ -1,16 +1,29 @@
 package carpet.logging;
 
 import carpet.utils.HUDController;
-import net.minecraft.client.network.packet.TitleS2CPacket;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 
+import java.lang.reflect.Field;
+
 public class HUDLogger extends Logger
 {
-    public HUDLogger(String logName, String def, String[] options)
+    static Logger stardardHUDLogger(String logName, String def, String [] options)
     {
-        super(logName, def, options);
+        // should convert to factory method if more than 2 classes are here
+        try
+        {
+            return new HUDLogger(LoggerRegistry.class.getField("__"+logName), logName, def, options);
+        }
+        catch (NoSuchFieldException e)
+        {
+            throw new RuntimeException("Failed to create logger "+logName);
+        }
+    }
+
+    public HUDLogger(Field field, String logName, String def, String[] options)
+    {
+        super(field, logName, def, options);
     }
 
     @Override

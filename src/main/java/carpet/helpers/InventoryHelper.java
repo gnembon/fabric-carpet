@@ -25,11 +25,11 @@ public class InventoryHelper
         boolean changed = false;
         CompoundTag tag = stack.getTag();
 
-        if (tag == null || !tag.containsKey("BlockEntityTag", TAG_COMPOUND))
+        if (tag == null || !tag.contains("BlockEntityTag", TAG_COMPOUND))
             return false;
 
         CompoundTag bet = tag.getCompound("BlockEntityTag");
-        if (bet.containsKey("Items", TAG_LIST) && bet.getList("Items", TAG_COMPOUND).isEmpty())
+        if (bet.contains("Items", TAG_LIST) && bet.getList("Items", TAG_COMPOUND).isEmpty())
         {
             bet.remove("Items");
             changed = true;
@@ -52,10 +52,10 @@ public class InventoryHelper
     {
         CompoundTag tag = stack.getTag();
 
-        if (tag == null || !tag.containsKey("BlockEntityTag", TAG_COMPOUND))
+        if (tag == null || !tag.contains("BlockEntityTag", TAG_COMPOUND))
             return false;
 
         CompoundTag bet = tag.getCompound("BlockEntityTag");
-        return bet.containsKey("Items", TAG_LIST) && !bet.getList("Items", TAG_COMPOUND).isEmpty();
+        return bet.contains("Items", TAG_LIST) && !bet.getList("Items", TAG_COMPOUND).isEmpty();
     }
 }

@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;

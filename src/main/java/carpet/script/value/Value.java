@@ -39,7 +39,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     }
     public Value reboundedTo(String var)
     {
-        Value copy = null;
+        Value copy;
         try
         {
             copy = (Value)clone();
@@ -48,6 +48,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         {
             // should not happen
             e.printStackTrace();
+            throw new InternalExpressionException("Variable of type "+getTypeString()+" is not cloneable. Tell gnembon about it, this shoudn't happen");
         }
         copy.boundVariable = var;
         return copy;
@@ -109,7 +110,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
     @Override
     public int compareTo(final Value o)
     {
-        if (o instanceof NumericValue || o instanceof ListValue)
+        if (o instanceof NumericValue || o instanceof ListValue || o instanceof ThreadValue)
         {
             return -o.compareTo(this);
         }
@@ -188,5 +189,18 @@ public abstract class Value implements Comparable<Value>, Cloneable
         String stringVal = getString();
         if (stringVal.isEmpty()) return 0;
         return ("s"+stringVal).hashCode();
+    }
+
+    public Value deepcopy()
+    {
+        try
+        {
+            return (Value)this.clone();
+        }
+        catch (CloneNotSupportedException e)
+        {
+            // should never happen
+            throw new InternalExpressionException("Cannot make a copy of value: "+this);
+        }
     }
 }

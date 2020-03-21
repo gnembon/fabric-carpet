@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockEntityInterface;
 import carpet.fakes.WorldInterface;
 import net.minecraft.block.Block;
@@ -111,14 +111,14 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
             else
                 blockState_2 = Block.getRenderingState(this.pushedBlock, this.world, this.pos);
             ((WorldInterface) (this.world)).setBlockStateWithBlockEntity(this.pos, blockState_2, this.carriedBlockEntity, 3);
-            this.world.breakBlock(this.pos, true);
+            this.world.breakBlock(this.pos, true, null);
         }
     }
     
     @Inject(method = "fromTag", at = @At(value = "TAIL"))
     private void onFromTag(CompoundTag compoundTag_1, CallbackInfo ci)
     {
-        if (CarpetSettings.movableBlockEntities && compoundTag_1.containsKey("carriedTileEntityCM", 10))
+        if (CarpetSettings.movableBlockEntities && compoundTag_1.contains("carriedTileEntityCM", 10))
         {
             if (this.pushedBlock.getBlock() instanceof BlockEntityProvider)
                 this.carriedBlockEntity = ((BlockEntityProvider) (this.pushedBlock.getBlock())).createBlockEntity(this.world);

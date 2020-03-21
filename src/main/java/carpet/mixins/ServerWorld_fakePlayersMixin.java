@@ -14,7 +14,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(ServerWorld.class)
 public abstract class ServerWorld_fakePlayersMixin
 {
-    @Shadow private boolean ticking;
+    @Shadow
+    boolean ticking;
 
     @Shadow /*@Nonnull*/ public abstract MinecraftServer getServer();
 
@@ -27,7 +28,7 @@ public abstract class ServerWorld_fakePlayersMixin
         if ( !(ticking && serverPlayerEntity_1 instanceof EntityPlayerMPFake) )
             serverWorld.removeEntity(entity_1);
         else
-            getServer().method_18858(new ServerTask(getServer().getTicks(), () ->
+            getServer().send(new ServerTask(getServer().getTicks(), () ->
             {
                 serverWorld.removeEntity(serverPlayerEntity_1);
                 serverPlayerEntity_1.onTeleportationDone();

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.server.ServerMetadata;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;

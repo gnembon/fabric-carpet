@@ -4,6 +4,7 @@ import carpet.script.exception.InternalExpressionException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.Locale;
 
 import static java.lang.Math.abs;
 
@@ -42,7 +43,7 @@ public class NumericValue extends Value
         }
         else
         {
-            return String.format("%.3f..", getDouble());
+            return String.format(Locale.ROOT, "%.1f..", getDouble());
         }
     }
 

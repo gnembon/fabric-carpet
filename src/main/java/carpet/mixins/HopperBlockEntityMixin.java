@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.HopperBlock;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.HopperBlockEntity;

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.block.TntBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;

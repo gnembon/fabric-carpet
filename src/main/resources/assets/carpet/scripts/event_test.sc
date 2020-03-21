@@ -159,3 +159,29 @@ __on_player_drops_stack(player) -> (
     print('__on_player_drops_stack(player)');
     print('Player '+player+' drops current stack.')
 );
+
+__on_player_interacts_with_block(player, hand, block, face, hitvec) ->
+(
+	print('');
+	print('__on_player_interacts_with_block(player, hand, block, face, hitvec) ');
+	print('block right clicked by player:');
+	print('  - player: '+player);
+	print('  - hand: '+hand);
+	print('  - block: '+block+' at '+map(pos(block), str('%.2f',_)));
+	print('  - face: '+face);
+	print('  - hitvec: '+map(hitvec, str('%.2f',_)))
+);
+__on_player_places_block(player, item_tuple, hand, block) ->
+(
+    l(item, count, nbt) = item_tuple || l('None', 0, null);
+	print('');
+	print('__on_player_places_block(player, item_tuple, hand, block)');
+	print('player places a block:');
+	print('  - player: '+player);
+	print('  - block: '+block+' at '+map(pos(block), str('%.2f',_)));
+	print('  - hand: '+hand);
+	print('  - item:');
+    print('    > name: '+item);
+    print('    > count: '+count);
+    print('    > nbt: '+nbt);
+);

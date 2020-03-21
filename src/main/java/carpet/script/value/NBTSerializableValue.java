@@ -5,7 +5,12 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.block.entity.HopperBlockEntity;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.InventoryProvider;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ItemStringReader;
 import net.minecraft.command.arguments.NbtPathArgumentType;
@@ -21,8 +26,11 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -74,6 +82,8 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     public static String nameFromRegistryId(Identifier id)
     {
+        if (id == null) // should be Value.NULL
+            return "";
         if (id.getNamespace().equals("minecraft"))
             return id.getPath();
         return id.toString();
@@ -95,9 +105,59 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return value;
     }
 
+
+    @Override
     public Value clone()
     {
-        return new NBTSerializableValue(getTag().copy());
+        // sets only nbttag, even if emtpy;
+        NBTSerializableValue copy = new NBTSerializableValue(nbtTag);
+        copy.nbtSupplier = this.nbtSupplier;
+        copy.nbtString = this.nbtString;
+        return copy;
+    }
+
+    @Override
+    public Value deepcopy()
+    {
+        NBTSerializableValue copy = (NBTSerializableValue) clone();
+        // same fields except when tag is set - need to copy it.
+        if (copy.nbtTag != null)
+            copy.nbtTag = copy.getTag().copy();
+        return copy;
+    }
+
+    // stolen from HopperBlockEntity, adjusted for threaded operation
+    public static Inventory getInventoryAt(ServerWorld world, BlockPos blockPos)
+    {
+        Inventory inventory = null;
+        BlockState blockState = world.getBlockState(blockPos);
+        Block block = blockState.getBlock();
+        if (block instanceof InventoryProvider) {
+            inventory = ((InventoryProvider)block).getInventory(blockState, world, blockPos);
+        } else if (block.hasBlockEntity()) {
+            BlockEntity blockEntity = BlockValue.getBlockEntity(world, blockPos);
+            if (blockEntity instanceof Inventory) {
+                inventory = (Inventory)blockEntity;
+                if (inventory instanceof ChestBlockEntity && block instanceof ChestBlock) {
+                    inventory = ChestBlock.getInventory((ChestBlock)block, blockState, world, blockPos, true);
+                }
+            }
+        }
+
+        if (inventory == null) {
+            List<Entity> list = world.getEntities(
+                    (Entity)null,
+                    new Box(
+                            blockPos.getX() - 0.5D, blockPos.getY() - 0.5D, blockPos.getZ() - 0.5D,
+                            blockPos.getX() + 0.5D, blockPos.getY() + 0.5D, blockPos.getZ() + 0.5D),
+                    EntityPredicates.VALID_INVENTORIES
+            );
+            if (!list.isEmpty()) {
+                inventory = (Inventory)list.get(world.random.nextInt(list.size()));
+            }
+        }
+
+        return inventory;
     }
 
 
@@ -124,7 +184,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 BlockPos pos = ((BlockValue) v1).getPos();
                 if (pos == null)
                     throw new InternalExpressionException("Block to access inventory needs to be positioned in the world");
-                inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
+                inv = getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
@@ -136,16 +196,27 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                         NumericValue.asNumber(args.get(0)).getDouble(),
                         NumericValue.asNumber(args.get(1)).getDouble(),
                         NumericValue.asNumber(args.get(2)).getDouble());
-                inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
+                inv = getInventoryAt(c.s.getWorld(), pos);
                 if (inv == null)
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
+            }
+            else if (v1.getString().equalsIgnoreCase("enderchest"))
+            {
+                Value v2 = params.get(1 + offset).evalValue(c);
+                if (!(v2 instanceof EntityValue) || !(((EntityValue) v2).getEntity() instanceof PlayerEntity))
+                {
+                    throw new InternalExpressionException("enderchest inventory requires player argument");
+                }
+                PlayerEntity e = (PlayerEntity)((EntityValue) v2).getEntity();
+                inv = e.getEnderChestInventory();
+                return new InventoryLocator(e, e.getBlockPos(), inv, offset + 2, true);
             }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset).evalValue(c)).getDouble(),
                     NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble());
-            inv = HopperBlockEntity.getInventoryAt(c.s.getWorld(), pos);
+            inv = getInventoryAt(c.s.getWorld(), pos);
             if (inv == null)
                 return null;
             return new InventoryLocator(pos, pos, inv, offset + 3);
@@ -323,7 +394,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Collection<Tag> targets;
         try
         {
-            targets = nbtPath.putIfAbsent(currentTag, ListTag::new);
+            targets = nbtPath.getOrInit(currentTag, ListTag::new);
         }
         catch (CommandSyntaxException e)
         {
@@ -361,7 +432,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Tag originalTag = getTag().copy();
         try
         {
-            for (Tag target : nbtPath.putIfAbsent(originalTag, CompoundTag::new))
+            for (Tag target : nbtPath.getOrInit(originalTag, CompoundTag::new))
             {
                 if (!(target instanceof CompoundTag))
                 {
@@ -456,12 +527,19 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         public BlockPos position;
         public Inventory inventory;
         public int offset;
+        public boolean isEnder;
         InventoryLocator(Object owner, BlockPos pos, Inventory i, int o)
+        {
+            this(owner, pos, i, o, false);
+        }
+
+        InventoryLocator(Object owner, BlockPos pos, Inventory i, int o, boolean isEnder)
         {
             this.owner = owner;
             position = pos;
             inventory = i;
             offset = o;
+            this.isEnder = isEnder;
         }
     }
 
@@ -473,7 +551,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             return res;
         try
         {
-            res = NbtPathArgumentType.nbtPath().method_9362(new StringReader(arg));
+            res = NbtPathArgumentType.nbtPath().parse(new StringReader(arg));
         }
         catch (CommandSyntaxException exc)
         {

@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
@@ -24,11 +24,11 @@ public abstract class GuardianEntityMixin extends HostileEntity
     @Override
     public void onStruckByLightning(LightningEntity lightning)
     {
-        if (!this.world.isClient && !this.removed && CarpetSettings.renewableSponges)
+        if (!this.world.isClient && !this.removed && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardianEntity))
         {
             ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
-            elderGuardian.setPositionAndAngles(this.x, this.y, this.z, this.yaw, this.pitch);
-            elderGuardian.initialize(this.world ,this.world.getLocalDifficulty(new BlockPos(elderGuardian)), SpawnType.CONVERSION, (EntityData)null, (CompoundTag)null);
+            elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.yaw, this.pitch);
+            elderGuardian.initialize(this.world ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnType.CONVERSION, (EntityData)null, (CompoundTag)null);
             elderGuardian.setAiDisabled(this.isAiDisabled());
             
             if (this.hasCustomName())

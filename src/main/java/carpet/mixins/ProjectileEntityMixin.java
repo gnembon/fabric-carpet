@@ -29,7 +29,7 @@ public abstract class ProjectileEntityMixin extends Entity
     private void tickCheck(CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && logHelper != null)
-            logHelper.onTick(x, y, z, getVelocity());
+            logHelper.onTick(getX(), getY(), getZ(), getVelocity());
     }
 
     @Inject(method = "onHit(Lnet/minecraft/util/hit/HitResult;)V", at = @At("RETURN"))

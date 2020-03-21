@@ -1,14 +1,15 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MutableIntBoundingBox;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -32,11 +33,19 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
     @Shadow public abstract StructureFeature.StructureStartFactory getStructureStartFactory();
 
     @Override
-    public boolean plopAnywhere(IWorld world, BlockPos pos)
+    public boolean plopAnywhere(ServerWorld world, BlockPos pos)
     {
-        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator());
+        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), false);
     }
-    public boolean plopAnywhere(IWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator)
+
+    @Override
+    public boolean gridAnywhere(ServerWorld world, BlockPos pos)
+    {
+        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), true);
+    }
+
+    @Override
+    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator, boolean wireOnly)
     {
         if (world.isClient())
             return false;
@@ -48,26 +57,26 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             int k = pos.getZ() >> 4;
             long chId = ChunkPos.toLong(j, k);
             StructureStart structurestart = forceStructureStart(world, generator, rand, chId);
-            if (structurestart == null || structurestart == StructureStart.DEFAULT)
+            if (structurestart == StructureStart.DEFAULT)
             {
-                CarpetSettings.skipGenerationChecks = false;
                 return false;
             }
             //generator.ge   getStructurePositionToReferenceMap(this).computeIfAbsent(chId,
             //    (x) -> new LongOpenHashSet()).add(chId);
             world.getChunk(j, k).addStructureReference(this.getName(), chId);  //, ChunkStatus.STRUCTURE_STARTS
 
-            MutableIntBoundingBox box = structurestart.getBoundingBox();
-            structurestart.generateStructure(
-                    world,
-                    rand,
-                    new MutableIntBoundingBox(
-                            pos.getX() - this.getRadius()*16,
-                            pos.getZ() - this.getRadius()*16,
-                            pos.getX() + (this.getRadius()+1)*16,
-                            pos.getZ() + (1+this.getRadius())*16),
-                    new ChunkPos(j, k)
-            );
+            BlockBox box = structurestart.getBoundingBox();
+            if (!wireOnly)
+            {
+                structurestart.generateStructure(world, generator, rand,
+                    new BlockBox(
+                                pos.getX() - this.getRadius() * 16,
+                                pos.getZ() - this.getRadius() * 16,
+                                pos.getX() + (this.getRadius() + 1) * 16,
+                                pos.getZ() + (1 + this.getRadius()) * 16),
+                        new ChunkPos(j, k)
+                );
+            }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
 
             int i = getRadius();
@@ -86,14 +95,16 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
                 }
             }
         }
-        catch (Exception ignored)
+        catch (Exception booboo)
         {
-            CarpetSettings.LOG.error("Unknown Exception while plopping structure: "+ignored);
-            ignored.printStackTrace();
-            CarpetSettings.skipGenerationChecks = false;
+            CarpetSettings.LOG.error("Unknown Exception while plopping structure: "+booboo);
+            booboo.printStackTrace();
             return false;
         }
-        CarpetSettings.skipGenerationChecks = false;
+        finally
+        {
+            CarpetSettings.skipGenerationChecks = false;
+        }
         return true;
     }
 
@@ -102,7 +113,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
         ChunkPos chunkpos = new ChunkPos(packedChunkPos);
         StructureStart structurestart;
 
-        Chunk ichunk = worldIn.getChunk(chunkpos.x, chunkpos.z, ChunkStatus.STRUCTURE_STARTS);
+        Chunk ichunk = worldIn.getChunk(chunkpos.x, chunkpos.z, ChunkStatus.STRUCTURE_STARTS, false);
 
         if (ichunk != null)
         {
@@ -113,8 +124,8 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
                 return structurestart;
             }
         }
-        Biome biome_1 = generator.getBiomeSource().getBiome(new BlockPos(chunkpos.getStartX() + 9, 0, chunkpos.getStartZ() + 9));
-        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, biome_1, MutableIntBoundingBox.empty(),0,generator.getSeed());
+        Biome biome_1 = generator.getBiomeSource().getBiomeForNoiseGen((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
+        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,generator.getSeed());
         structurestart1.initialize(generator, ((ServerWorld)worldIn).getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;
 

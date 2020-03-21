@@ -46,7 +46,7 @@ public abstract class World_tickMixin implements WorldInterface
 
     @Inject(method = "tickBlockEntities", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntity;isInvalid()Z",
+            target = "Lnet/minecraft/block/entity/BlockEntity;isRemoved()Z",
             shift = At.Shift.BEFORE,
             ordinal = 0
     ))
@@ -57,17 +57,17 @@ public abstract class World_tickMixin implements WorldInterface
 
     @Redirect(method = "tickBlockEntities", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntity;isInvalid()Z",
+            target = "Lnet/minecraft/block/entity/BlockEntity;isRemoved()Z",
             ordinal = 0
     ))
     private boolean checkProcessTEs(BlockEntity blockEntity)
     {
-        return blockEntity.isInvalid() || !TickSpeed.process_entities;
+        return blockEntity.isRemoved() || !TickSpeed.process_entities; // blockEntity can be NULL? happened once with fake player
     }
 
     @Inject(method = "tickBlockEntities", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/entity/BlockEntity;isInvalid()Z",
+            target = "Lnet/minecraft/block/entity/BlockEntity;isRemoved()Z",
             shift = At.Shift.BEFORE,
             ordinal = 1
     ))

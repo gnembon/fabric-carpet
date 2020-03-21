@@ -1,21 +1,18 @@
 package carpet.utils;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.*;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnType;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.block.Material;
-import net.minecraft.block.MaterialColor;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.mob.MobEntityWithAi;
+import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
-import net.minecraft.entity.ai.PathfindingUtil;
+import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.mob.ZombiePigmanEntity;
-import net.minecraft.block.BlockPlacementEnvironment;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.text.BaseText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.text.BaseText;
+import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -25,7 +22,7 @@ import java.util.Map;
 
 public class BlockInfo
 {
-    public static Map<BlockSoundGroup, String> soundName = new HashMap<BlockSoundGroup, String>() {{
+    public static final Map<BlockSoundGroup, String> soundName = new HashMap<BlockSoundGroup, String>() {{
         put(BlockSoundGroup.WOOD,   "wood"  );
         put(BlockSoundGroup.GRAVEL, "gravel");
         put(BlockSoundGroup.GRASS,  "grass" );
@@ -50,7 +47,7 @@ public class BlockInfo
         put(BlockSoundGroup.LANTERN , "lantern" );
     }};
 
-    public static Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
+    public static final Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
         put(MaterialColor.AIR       , "air"       );
         put(MaterialColor.GRASS     , "grass"     );
         put(MaterialColor.SAND      , "sand"      );
@@ -85,8 +82,8 @@ public class BlockInfo
         put(MaterialColor.DIAMOND   , "diamond"   );
         put(MaterialColor.LAPIS     , "lapis"     );
         put(MaterialColor.EMERALD   , "emerald"   );
-        put(MaterialColor.SPRUCE  , "obsidian"  );
-        put(MaterialColor.NETHER,   "netherrack"); //TODO fix these
+        put(MaterialColor.SPRUCE    , "obsidian"  );
+        put(MaterialColor.NETHER    , "netherrack"); //TODO fix these
         put(MaterialColor.WHITE_TERRACOTTA     , "white_terracotta"      );
         put(MaterialColor.ORANGE_TERRACOTTA    , "orange_terracotta"     );
         put(MaterialColor.MAGENTA_TERRACOTTA   , "magenta_terracotta"    );
@@ -105,14 +102,14 @@ public class BlockInfo
         put(MaterialColor.BLACK_TERRACOTTA     , "black_terracotta"      );
     }};
 
-    public static Map<Material, String> materialName = new HashMap<Material, String>() {{
+    public static final Map<Material, String> materialName = new HashMap<Material, String>() {{
         put(Material.AIR            , "air"          );
         put(Material.STRUCTURE_VOID , "void"         );
         put(Material.PORTAL         , "portal"       );
         put(Material.CARPET         , "carpet"       );
         put(Material.PLANT          , "plant"        );
-        put(Material.UNDERWATER_PLANT    , "water_plant"  );
-        put(Material.REPLACEABLE_PLANT           , "vine"         );
+        put(Material.UNDERWATER_PLANT, "water_plant" );
+        put(Material.REPLACEABLE_PLANT, "vine"       );
         put(Material.SEAGRASS       , "sea_grass"    );
         put(Material.WATER          , "water"        );
         put(Material.BUBBLE_COLUMN  , "bubble_column");
@@ -120,7 +117,7 @@ public class BlockInfo
         put(Material.SNOW           , "snow_layer"   );
         put(Material.FIRE           , "fire"         );
         put(Material.PART           , "redstone_bits");
-        put(Material.COBWEB            , "cobweb"       );
+        put(Material.COBWEB         , "cobweb"       );
         put(Material.REDSTONE_LAMP  , "redstone_lamp");
         put(Material.CLAY           , "clay"         );
         put(Material.EARTH          , "dirt"         );
@@ -128,17 +125,18 @@ public class BlockInfo
         put(Material.PACKED_ICE     , "packed_ice"   );
         put(Material.SAND           , "sand"         );
         put(Material.SPONGE         , "sponge"       );
-        put(Material.SHULKER_BOX           , "wood"         );
-        put(Material.WOOD           , "wool"         ); // fix these
-        put(Material.BAMBOO_SAPLING     , "shoots"          );
+        put(Material.SHULKER_BOX    , "shulker"      );
+        put(Material.WOOD           , "wood"         );
+        put(Material.BAMBOO_SAPLING , "shoots"       );
         put(Material.BAMBOO         , "bamboo"       );
+        put(Material.WOOL           , "wool"         );
         put(Material.TNT            , "tnt"          );
         put(Material.LEAVES         , "leaves"       );
         put(Material.GLASS          , "glass"        );
         put(Material.ICE            , "ice"          );
         put(Material.CACTUS         , "cactus"       );
         put(Material.STONE          , "stone"        );
-        put(Material.METAL          , "iron"         );
+        put(Material.METAL          , "metal"        );
         put(Material.SNOW_BLOCK     , "snow"         );
         put(Material.ANVIL          , "anvil"        );
         put(Material.BARRIER        , "barrier"      );
@@ -171,7 +169,9 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Normal cube: %s", state.isSimpleFullBlock(world, pos)))); //isNormalCube())));
         lst.add(Messenger.s(String.format(" - Is liquid: %s", material.isLiquid())));
         lst.add(Messenger.s(""));
-        lst.add(Messenger.s(String.format(" - Light in: %d, above: %d", world.getLightLevel(pos), world.getLightLevel(pos.up()))));
+        lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
+                Math.max(world.getLightLevel(LightType.BLOCK, pos),world.getLightLevel(LightType.SKY, pos)) ,
+                Math.max(world.getLightLevel(LightType.BLOCK, pos.up()),world.getLightLevel(LightType.SKY, pos.up())))));
         lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.up()))));
         lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
@@ -202,13 +202,13 @@ public class BlockInfo
     {
         MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIE_PIGMAN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);
-        creature.setPositionAndAngles(pos.getX()+0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
+        creature.refreshPositionAndAngles(pos, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);
         int success = 0;
         for (int i=0; i<1000; i++)
         {
 
-            Vec3d vec = PathfindingUtil.findTarget(creature, 10, 7);
+            Vec3d vec = TargetFinder.findTarget(creature, 10, 7);
             if (vec == null)
             {
                 continue;
@@ -232,7 +232,7 @@ public class BlockInfo
         long total_time = (total_ticks)/1000/20;
         return Messenger.s(String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
                 (100.0F*success)/1000,
-                ((total_time>5000)?"INFINITY":(Long.toString(total_time)+" s"))
+                ((total_time>5000)?"INFINITY":(total_time +" s"))
         ));
     }
 }

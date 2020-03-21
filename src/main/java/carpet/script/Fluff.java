@@ -112,7 +112,7 @@ public abstract class Fluff
             }
             catch (RuntimeException exc)
             {
-                throw Expression.handleCodeException(exc, e, t);
+                throw Expression.handleCodeException(cc, exc, e, t);
             }
         }
     }
@@ -146,7 +146,7 @@ public abstract class Fluff
         }
 
         @Override
-        public LazyValue lazyEval(Context c_ignored, Integer type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
+        public LazyValue lazyEval(Context cc, Integer type, Expression e, Tokenizer.Token t, final LazyValue v1, final LazyValue v2)
         {
             try
             {
@@ -154,7 +154,7 @@ public abstract class Fluff
             }
             catch (RuntimeException exc)
             {
-                throw Expression.handleCodeException(exc, e, t);
+                throw Expression.handleCodeException(cc, exc, e, t);
             }
         }
     }
@@ -172,20 +172,20 @@ public abstract class Fluff
             {
                 if (v2 != null)
                 {
-                    throw new ExpressionException(e, t, "Did not expect a second parameter for unary operator");
+                    throw new ExpressionException(cc, e, t, "Did not expect a second parameter for unary operator");
                 }
                 return (c, ignored_type) -> AbstractUnaryOperator.this.evalUnary(v1.evalValue(c));
             }
             catch (RuntimeException exc)
             {
-                throw Expression.handleCodeException(exc, e, t);
+                throw Expression.handleCodeException(cc, exc, e, t);
             }
         }
 
         @Override
         public Value eval(Value v1, Value v2)
         {
-            throw new ExpressionException("Shouldn't end up here");
+            throw new RuntimeException("Shouldn't end up here");
         }
 
         public abstract Value evalUnary(Value v1);

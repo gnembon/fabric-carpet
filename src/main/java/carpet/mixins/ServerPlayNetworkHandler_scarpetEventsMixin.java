@@ -3,13 +3,13 @@ package carpet.mixins;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.packet.ClientCommandC2SPacket;
-import net.minecraft.server.network.packet.PlayerActionC2SPacket;
-import net.minecraft.server.network.packet.PlayerInputC2SPacket;
-import net.minecraft.server.network.packet.PlayerInteractBlockC2SPacket;
-import net.minecraft.server.network.packet.PlayerInteractEntityC2SPacket;
-import net.minecraft.server.network.packet.PlayerInteractItemC2SPacket;
-import net.minecraft.server.network.packet.PlayerMoveC2SPacket;
+import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerInputC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,7 +24,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_CLICKS_BLOCK;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DEPLOYS_ELYTRA;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DROPS_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DROPS_STACK;
-import static carpet.script.CarpetEventServer.Event.PLAYER_INERACTSW_WITH_ENTITY;
+import static carpet.script.CarpetEventServer.Event.PLAYER_INTERACTS_WITH_ENTITY;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RELEASED_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RIDES;
 import static carpet.script.CarpetEventServer.Event.PLAYER_JUMPS;
@@ -53,7 +53,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Lnet/minecraft/entity/ItemEntity;",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z",
             ordinal = 0,
             shift = At.Shift.BEFORE
     ))
@@ -64,7 +64,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Lnet/minecraft/entity/ItemEntity;",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z",
             ordinal = 1,
             shift = At.Shift.BEFORE
     ))
@@ -72,7 +72,6 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     {
         PLAYER_DROPS_STACK.onPlayerEvent(player);
     }
-
 
 
     @Inject(method = "onPlayerMove", at = @At(
@@ -86,8 +85,8 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;method_14263(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/server/network/packet/PlayerActionC2SPacket$Action;Lnet/minecraft/util/math/Direction;I)V",
-            shift = At.Shift.AFTER
+            target = "Lnet/minecraft/server/network/ServerPlayerInteractionManager;processBlockBreakingAction(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/network/packet/c2s/play/PlayerActionC2SPacket$Action;Lnet/minecraft/util/math/Direction;I)V",
+            shift = At.Shift.BEFORE
     ))
     private void onClicked(PlayerActionC2SPacket packet, CallbackInfo ci)
     {
@@ -194,7 +193,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onClientCommand", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;isFallFlying()Z",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;method_23668()Z",
             shift = At.Shift.BEFORE
     ))
     private void onElytraEngage(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
@@ -208,7 +207,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     ))
     private void onEntityInteract(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
     {
-        PLAYER_INERACTSW_WITH_ENTITY.onEntityAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), playerInteractEntityC2SPacket_1.getHand());
+        PLAYER_INTERACTS_WITH_ENTITY.onEntityAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), playerInteractEntityC2SPacket_1.getHand());
     }
 
     @Inject(method = "onPlayerInteractEntity", at = @At(

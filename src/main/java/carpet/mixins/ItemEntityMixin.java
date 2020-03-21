@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import carpet.helpers.InventoryHelper;
 import carpet.fakes.ItemEntityInterface;
 import net.minecraft.block.ShulkerBoxBlock;
@@ -82,6 +82,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
         ItemStack otherStack = other.getStack();
         if (selfStack.getItem() == otherStack.getItem()
                 && !InventoryHelper.shulkerBoxHasItems(selfStack)
+                && !InventoryHelper.shulkerBoxHasItems(otherStack)
                 && selfStack.hasTag() == otherStack.hasTag()
                 && selfStack.getCount() + otherStack.getCount() <= SHULKERBOX_MAX_STACK_AMOUNT)
         {

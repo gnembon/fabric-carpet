@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import carpet.settings.CarpetSettings;
+import carpet.CarpetSettings;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -51,7 +51,7 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     private void onTickMovement(CallbackInfo ci)
     {
         boolean parrots_will_drop = !CarpetSettings.persistentParrots || this.abilities.invulnerable;
-        if (!this.world.isClient && ((parrots_will_drop && this.fallDistance > 0.5F) || this.isInWater() || (parrots_will_drop && this.hasVehicle())) || this.abilities.flying)
+        if (!this.world.isClient && ((parrots_will_drop && this.fallDistance > 0.5F) || this.isTouchingWater() || this.abilities.flying || isSleeping()))
         {
             this.dropShoulderEntities();
         }

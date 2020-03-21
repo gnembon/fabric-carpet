@@ -47,4 +47,8 @@ public interface CarpetExtension
     default void onPlayerLoggedOut(ServerPlayerEntity player) {}
 
     default void onServerClosed(MinecraftServer server) {}
+
+    default String version() {return null;}
+
+    default void registerLoggers() {}
 }
