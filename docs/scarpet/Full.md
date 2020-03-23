@@ -990,6 +990,7 @@ iteration expression.
 `c_for` Mimics c-style tri-arg (plus body) for loops. Return value of `c_for` is number of iterations performed in the
  loop. Unlike other loops, the `body` is not provided with pre-initialized `_` style variables - all initialization
  and increments has to be handled by the programmers themselves.
+ `break` and `continue` statements are handled within `body` expression only, and not in `condition` or `increment`.
  
  <pre>
  c_for(x=0, x<10, x+=1,
