@@ -11,11 +11,13 @@ import carpet.mixins.PointOfInterest_scarpetMixin;
 import carpet.mixins.ServerChunkManager_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.bundled.Module;
+import carpet.CarpetSettings;
+import carpet.script.exception.BreakStatement;
 import carpet.script.exception.CarpetExpressionException;
+import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
-import carpet.CarpetSettings;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -1824,7 +1826,7 @@ public class CarpetExpression
             LazyValue _z = c.getVariable("_z");
             LazyValue __ = c.getVariable("_");
             int sCount = 0;
-            for (int y=cy-yrange; y <= cy+yprange; y++)
+            outer:for (int y=cy-yrange; y <= cy+yprange; y++)
             {
                 int yFinal = y;
                 c.setVariable("_y", (c_, t_) -> new NumericValue(yFinal).bindTo("_y"));
@@ -1839,7 +1841,19 @@ public class CarpetExpression
                         c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
                         Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
                         c.setVariable( "_", (cc_, t_c) -> blockValue);
-                        Value result = expr.evalValue(c, t);
+                        Value result;
+                        try
+                        {
+                            result = expr.evalValue(c, t);
+                        }
+                        catch (ContinueStatement notIgnored)
+                        {
+                            result = notIgnored.retval;
+                        }
+                        catch (BreakStatement notIgnored)
+                        {
+                            break outer;
+                        }
                         if (t != Context.VOID && result.getBoolean())
                         {
                             sCount += 1;
@@ -1878,7 +1892,7 @@ public class CarpetExpression
             LazyValue _z = c.getVariable("_z");
             LazyValue __ = c.getVariable("_");
             int sCount = 0;
-            for (int y=miny; y <= maxy; y++)
+            outer:for (int y=miny; y <= maxy; y++)
             {
                 int yFinal = y;
                 c.setVariable("_y", (c_, t_) -> new NumericValue(yFinal).bindTo("_y"));
@@ -1892,7 +1906,19 @@ public class CarpetExpression
                         c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
                         Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
                         c.setVariable( "_", (cc_, t_c) -> blockValue);
-                        Value result = expr.evalValue(c, t);
+                        Value result;
+                        try
+                        {
+                            result = expr.evalValue(c, t);
+                        }
+                        catch (ContinueStatement notIgnored)
+                        {
+                            result = notIgnored.retval;
+                        }
+                        catch (BreakStatement notIgnored)
+                        {
+                            break outer;
+                        }
                         if (t != Context.VOID && result.getBoolean())
                         {
                             sCount += 1;

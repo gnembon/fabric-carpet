@@ -8,10 +8,18 @@ Evaluates expression over area of blocks defined by its center (`cx, cy, cz`), e
 by `dx, dy, dz` blocks, or optionally in negative with `d` coords, and `p` coords in positive values. `expr` 
 receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
 
+Returns number of successful evaluations of `expr` (with `true` boolean result) unless called in void context, 
+which would cause the expression not be evaluated for their boolean value.
+
+`scan` also handles `continue` and `break` statements, using `continue`'s return value to use in place of expression
+return value. `break` return value has no effect.
+
 ### `volume(x1, y1, z1, x2, y2, z2, expr)`
 
 Evaluates expression for each block in the area, the same as the `scan`function, but using two opposite corners of 
 the rectangular cuboid. Any corners can be specified, its like you would do with `/fill` command.
+
+For return value and handling `break` and `continue` statements, see `scan` function above.
 
 ### `neighbours(x, y, z), neighbours(block), neighbours(l(x,y,z))`
 
