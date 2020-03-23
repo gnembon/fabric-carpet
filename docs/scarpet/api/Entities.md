@@ -218,6 +218,17 @@ Returns mob's attack target or null if none or not applicable.
 
 Returns creature's home position or null if none or not applicable.
 
+### `query(e, 'pose')`
+
+Returns a pose of an entity, one of the following options
+ * `'standing'`
+ * `'fall_flying'`
+ * `'sleeping'`
+ * `'swimming'`
+ * `'spin_attack'`
+ * `'crouching'`
+ * `'dying'`
+
 ### `query(e,'sneaking')`
 
 Boolean, true if entity is sneaking.
