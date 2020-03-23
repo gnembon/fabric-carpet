@@ -1081,6 +1081,32 @@ public class Expression
             return result;
         });
 
+        // runs traditional for(init, condition, increment, body) tri-argument for loop with body in between
+        addLazyFunction("c_for", 4, (c, t, lv) -> {
+            LazyValue initial = lv.get(0);
+            LazyValue condition = lv.get(1);
+            LazyValue increment = lv.get(2);
+            LazyValue body = lv.get(3);
+            int iterations = 0;
+            for (initial.evalValue(c, Context.VOID); condition.evalValue(c, Context.BOOLEAN).getBoolean(); increment.evalValue(c, Context.VOID))
+            {
+                try
+                {
+                    body.evalValue(c, Context.VOID);
+                }
+                catch (BreakStatement stmt)
+                {
+                    break;
+                }
+                catch (ContinueStatement ignored)
+                {
+                }
+                iterations++;
+            }
+            int finalIterations = iterations;
+            return (cc, tt) -> new NumericValue(finalIterations);
+        });
+
         // similar to map, but returns total number of successes
         // for(list, expr) => success_count
         // can be substituted for first and all, but first is more efficient and all doesn't require knowing list size

@@ -985,6 +985,20 @@ Please check corresponding loop function description what `continue` and `break`
 general case, passed values to `break` and `continue` will be used in place of the return value of the internal 
 iteration expression.
 
+### `cfor(init, condition, increment, body)`
+
+`c_for` Mimics c-style tri-arg (plus body) for loops. Return value of `c_for` is number of iterations performed in the
+ loop. Unlike other loops, the `body` is not provided with pre-initialized `_` style variables - all initialization
+ and increments has to be handled by the programmers themselves.
+ 
+ <pre>
+ c_for(x=0, x<10, x+=1,
+    c_for(y=0, y<10, y+=1,
+        print(str('%d * %d = %d', x, y, x*y))
+    )
+ )
+ </pre> 
+
 ### `for(list,expr(_,_i))`
 
 Evaluates expression over list of items from the `list`. Supplies `_`(value) and `_i`(iteration number) to the `expr`.
