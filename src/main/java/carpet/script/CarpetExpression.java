@@ -76,6 +76,9 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.scoreboard.ScoreboardPlayerScore;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -1254,6 +1257,52 @@ public class CarpetExpression
             });
             return LazyValue.NULL;
         });
+
+    }
+
+    public void Scoreboard()
+    {
+        // scoreboard(player,'objective')
+        // scoreboard(player, objective, newValue)
+        this.expr.addLazyFunction("scoreboard", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            String key;
+            String target = lv.get(0).evalValue(c).getString();
+            Value keyValue = lv.get(1).evalValue(c);
+            if (keyValue instanceof EntityValue)
+            {
+                Entity e = ((EntityValue) keyValue).getEntity();
+                if (e instanceof PlayerEntity)
+                {
+                    key = e.getDisplayName().getString();
+                }
+                else
+                {
+                    key = e.getUuidAsString();
+                }
+            }
+            else
+            {
+                key = keyValue.getString();
+            }
+            ScoreboardObjective objective = scoreboard.getObjective(target);
+            if (objective == null)
+                return LazyValue.NULL;
+            if (!scoreboard.playerHasObjective(key, objective) && lv.size()==2)
+                return LazyValue.NULL;
+            ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
+            Value retval = new NumericValue(scoreboardPlayerScore.getScore());
+            if (lv.size() > 2)
+            {
+                scoreboardPlayerScore.setScore(NumericValue.asNumber(lv.get(2).evalValue(c)).getInt());
+            }
+            return (_c, _t) -> retval;
+        });
+
+         //"objective_remove", "objective_add", "objective_keys", "set_display"
+
 
     }
 
@@ -2741,6 +2790,7 @@ public class CarpetExpression
         API_InventoryManipulation();
         API_IteratingOverAreasOfBlocks();
         API_AuxiliaryAspects();
+        Scoreboard();
     }
 
     public boolean fillAndScanCommand(ScriptHost host, int x, int y, int z)
