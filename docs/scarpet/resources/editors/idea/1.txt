@@ -12,6 +12,7 @@ bool
 break
 call
 ceil
+c_for
 continue
 copy
 cos

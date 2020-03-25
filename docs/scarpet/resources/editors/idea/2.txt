@@ -68,6 +68,10 @@ run
 save
 scan
 schedule
+scoreboard
+scoreboard_add
+scoreboard_remove
+scoreboard_display
 see_sky
 seed
 set
