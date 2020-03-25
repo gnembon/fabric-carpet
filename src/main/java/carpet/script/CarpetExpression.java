@@ -77,6 +77,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.ScoreboardCriterion;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
 import net.minecraft.server.MinecraftServer;
@@ -1260,7 +1261,7 @@ public class CarpetExpression
 
     }
 
-    public void Scoreboard()
+    public void API_Scoreboard()
     {
         // scoreboard(player,'objective')
         // scoreboard(player, objective, newValue)
@@ -1268,8 +1269,20 @@ public class CarpetExpression
         {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            if (lv.size()==0)
+            {
+                Value ret = ListValue.wrap(scoreboard.getObjectiveNames().stream().map(StringValue::new).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            String objectiveName = lv.get(0).evalValue(c).getString();
+            ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
+            if (objective == null) throw new InternalExpressionException("Unknown objective: "+objectiveName);
+            if (lv.size()==1)
+            {
+                Value ret = ListValue.wrap(scoreboard.getAllPlayerScores(objective).stream().map(s -> new StringValue(s.getPlayerName())).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
             String key;
-            String target = lv.get(0).evalValue(c).getString();
             Value keyValue = lv.get(1).evalValue(c);
             if (keyValue instanceof EntityValue)
             {
@@ -1287,9 +1300,6 @@ public class CarpetExpression
             {
                 key = keyValue.getString();
             }
-            ScoreboardObjective objective = scoreboard.getObjective(target);
-            if (objective == null)
-                return LazyValue.NULL;
             if (!scoreboard.playerHasObjective(key, objective) && lv.size()==2)
                 return LazyValue.NULL;
             ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
@@ -1301,9 +1311,67 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
-         //"objective_remove", "objective_add", "objective_keys", "set_display"
+        this.expr.addLazyFunction("scoreboard_remove", 1, (c, t, lv)-> {
+            CarpetContext cc = (CarpetContext)c;
+            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            String objectiveName = lv.get(0).evalValue(c).getString();
+            ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
+            if (objective == null)
+                return LazyValue.FALSE;
+            scoreboard.removeObjective(objective);
+            return LazyValue.TRUE;
+        });
 
+        // objective_add('lvl','level')
+        // objective_add('counter')
 
+        this.expr.addLazyFunction("scoreboard_add", -1, (c, t, lv)-> {
+            CarpetContext cc = (CarpetContext)c;
+            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
+            String objectiveName = lv.get(0).evalValue(c).getString();
+            ScoreboardCriterion criterion;
+            if (lv.size() == 1 )
+            {
+                criterion = ScoreboardCriterion.DUMMY;
+            }
+            else
+            {
+                String critetionName = lv.get(1).evalValue(c).getString();
+                criterion = ScoreboardCriterion.createStatCriterion(critetionName).orElse(null);
+                if (criterion==null)
+                {
+                    throw new InternalExpressionException("Unknown scoreboard criterion: "+critetionName);
+                }
+            }
+
+            ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
+            if (objective != null)
+                return LazyValue.FALSE;
+
+            scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getCriterionType());
+            return LazyValue.TRUE;
+        });
+
+        this.expr.addLazyFunction("scoreboard_display", 2, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            String location = lv.get(0).evalValue(c).getString();
+            int slot = Scoreboard.getDisplaySlotId(location);
+            if (slot < 0) throw new InternalExpressionException("Invalid objective slot: "+location);
+            Value target = lv.get(1).evalValue(c);
+            if (target instanceof NullValue)
+            {
+                scoreboard.setObjectiveSlot(slot, null);
+                return (_c, _t) -> new NumericValue(slot);
+            }
+            String objectiveString = target.getString();
+            ScoreboardObjective objective = scoreboard.getObjective(objectiveString);
+            if (objective == null) throw new InternalExpressionException("Objective doesn't exist: "+objectiveString);
+            scoreboard.setObjectiveSlot(slot, objective);
+            return (_c, _t) -> new NumericValue(slot);
+        });
     }
 
     public void API_InventoryManipulation()
@@ -2790,7 +2858,7 @@ public class CarpetExpression
         API_InventoryManipulation();
         API_IteratingOverAreasOfBlocks();
         API_AuxiliaryAspects();
-        Scoreboard();
+        API_Scoreboard();
     }
 
     public boolean fillAndScanCommand(ScriptHost host, int x, int y, int z)

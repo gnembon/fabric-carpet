@@ -976,16 +976,17 @@ and maps, where the iterator returns all the map keys
 ### `break(), break(expr), continue(), continue(expr)`
 
 These allow to control execution of a loop either skipping current iteration code, using `continue`, or finishing the 
-current loop, using `break`. `break` and `continue` can only be used inside `for, while, loop, map, filter and reduce` 
+current loop, using `break`. `break` and `continue` can only be used inside `for`, `c_for`, `while`, `loop`, `map`,
+`filter`, `reduce` as well as Minecraft API block loops, `scan` and `volume` 
 functions, while `break` can be used in `first` as well. Outside of the internal expressions of these functions, 
-calling `break` or `continue` will cause an error. In case of the nexted loops, and more complex setups, use 
+calling `break` or `continue` will cause an error. In case of the nested loops, and more complex setups, use 
 custom `try` and `throw` setup.
 
 Please check corresponding loop function description what `continue` and `break` do in their contexts, but in 
 general case, passed values to `break` and `continue` will be used in place of the return value of the internal 
 iteration expression.
 
-### `cfor(init, condition, increment, body)`
+### `c_for(init, condition, increment, body)`
 
 `c_for` Mimics c-style tri-arg (plus body) for loops. Return value of `c_for` is number of iterations performed in the
  loop. Unlike other loops, the `body` is not provided with pre-initialized `_` style variables - all initialization
@@ -2073,10 +2074,18 @@ Evaluates expression over area of blocks defined by its center (`cx, cy, cz`), e
 by `dx, dy, dz` blocks, or optionally in negative with `d` coords, and `p` coords in positive values. `expr` 
 receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
 
+Returns number of successful evaluations of `expr` (with `true` boolean result) unless called in void context, 
+which would cause the expression not be evaluated for their boolean value.
+
+`scan` also handles `continue` and `break` statements, using `continue`'s return value to use in place of expression
+return value. `break` return value has no effect.
+
 ### `volume(x1, y1, z1, x2, y2, z2, expr)`
 
 Evaluates expression for each block in the area, the same as the `scan`function, but using two opposite corners of 
 the rectangular cuboid. Any corners can be specified, its like you would do with `/fill` command.
+
+For return value and handling `break` and `continue` statements, see `scan` function above.
 
 ### `neighbours(x, y, z), neighbours(block), neighbours(l(x,y,z))`
 
@@ -2747,6 +2756,32 @@ used to display current events and bounded functions. use `add_to` ro register n
 unbind a specific function from an event. Function to be bounded to an event needs to have the same number of 
 parameters as the action is attempting to bind to (see list above). All calls in modules loaded via `/script load` 
 that have functions listed above will be automatically bounded and unbounded when script is unloaded.
+# Scoreboard
+
+### `scoreboard()`, `scoreboard(objective)`, `scoreboard(objective, key)`, `scoreboard(objective, key, value)`
+
+Displays or modifies individual scoreboard values. With no arguments, returns the list of current objectives.
+With specified `objective`, lists all keys (players) associated with current objective. With specified `objective`,
+`key`, returns current value of the objective for a given player (key). With additional `value` sets a new scoreboard
+ value, returning previous value associated with the `key`.
+ 
+### `scoreboard_add(objective, criterion?)`
+
+Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`. Returns `false` if objective 
+already existed, `true` otherwise.
+
+<pre>
+scoreboard_add('counter')
+scoreboard_add('lvl','level')
+</pre>
+
+### `scoreboard_remove(objective)`
+
+Removes an objective. Returns `true` if objective has existed and has been removed.
+
+### `scoreboard_display(objective, place)`
+
+sets display location for a specified `objective`. If `place` is `null`, then display is cleared.
 # Auxiliary aspects
 
 Collection of other methods that control smaller, yet still important aspects of the game
