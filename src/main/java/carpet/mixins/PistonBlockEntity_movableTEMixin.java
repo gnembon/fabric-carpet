@@ -116,14 +116,14 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     }
     
     @Inject(method = "fromTag", at = @At(value = "TAIL"))
-    private void onFromTag(CompoundTag compoundTag_1, CallbackInfo ci)
+    private void onFromTag(BlockState state, CompoundTag compoundTag_1, CallbackInfo ci)
     {
         if (CarpetSettings.movableBlockEntities && compoundTag_1.contains("carriedTileEntityCM", 10))
         {
             if (this.pushedBlock.getBlock() instanceof BlockEntityProvider)
                 this.carriedBlockEntity = ((BlockEntityProvider) (this.pushedBlock.getBlock())).createBlockEntity(this.world);
             if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
-                this.carriedBlockEntity.fromTag(compoundTag_1.getCompound("carriedTileEntityCM"));
+                this.carriedBlockEntity.fromTag(state, compoundTag_1.getCompound("carriedTileEntityCM"));
         }
     }
     

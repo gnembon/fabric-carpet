@@ -827,7 +827,7 @@ public class CarpetExpression
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
-                        be.fromTag(destTag);
+                        be.fromTag(finalSourceBlockState, destTag);
                         be.markDirty();
                     }
                 }

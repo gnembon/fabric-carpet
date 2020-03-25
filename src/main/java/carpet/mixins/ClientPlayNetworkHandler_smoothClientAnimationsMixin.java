@@ -41,7 +41,7 @@ public class ClientPlayNetworkHandler_smoothClientAnimationsMixin
                 if (blockState.getBlock() == Blocks.MOVING_PISTON) {
                     tag.putFloat("progress", Math.min(tag.getFloat("progress") + 0.5F, 1.0F));
                     blockEntity = new PistonBlockEntity();
-                    blockEntity.fromTag(tag);
+                    blockEntity.fromTag(blockState, tag);
                     world.setBlockEntity(blockPos, blockEntity);
                     blockEntity.resetBlock();
                 }
