@@ -79,12 +79,12 @@ public class Expression
         put("def->", 2);
         put("nextop;", 1);
     }};
-    protected static final Random randomizer = new Random();
+    public static final Random randomizer = new Random();
 
-    static final Value PI = new NumericValue(
+    public static final Value PI = new NumericValue(
             "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679");
 
-    static final Value euler = new NumericValue(
+    public static final Value euler = new NumericValue(
             "2.71828182845904523536028747135266249775724709369995957496696762772407663");
 
     // %[argument_index$][flags][width][.precision][t]conversion
@@ -105,13 +105,13 @@ public class Expression
     }
 
 
-    void asATextSource()
+    public void asATextSource()
     {
         allowNewlineSubstitutions = false;
         allowComments = true;
     }
 
-    void asAModule(Module mi)
+    public void asAModule(Module mi)
     {
 
         module = mi;
@@ -122,7 +122,7 @@ public class Expression
 
     /** script specific operatos and built-in functions */
     private final Map<String, ILazyOperator> operators = new Object2ObjectOpenHashMap<>();
-    boolean isAnOperator(String opname) { return operators.containsKey(opname) || operators.containsKey(opname+"u");}
+    public boolean isAnOperator(String opname) { return operators.containsKey(opname) || operators.containsKey(opname+"u");}
 
     private final Map<String, ILazyFunction> functions = new  Object2ObjectOpenHashMap<>();
     public Set<String> getFunctionNames() {return functions.keySet();}
@@ -187,7 +187,7 @@ public class Expression
     }
 
 
-    private void addLazyUnaryOperator(String surface, int precedence, boolean leftAssoc,
+    public void addLazyUnaryOperator(String surface, int precedence, boolean leftAssoc,
                                        TriFunction<Context, Integer, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface+"u", new AbstractLazyOperator(precedence, leftAssoc)
@@ -213,7 +213,7 @@ public class Expression
     }
 
 
-    private void addLazyBinaryOperatorWithDelegation(String surface, int precedence, boolean leftAssoc,
+    public void addLazyBinaryOperatorWithDelegation(String surface, int precedence, boolean leftAssoc,
                                        SexFunction<Context, Integer, Expression, Tokenizer.Token, LazyValue, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
@@ -234,7 +234,7 @@ public class Expression
         });
     }
 
-    private void addLazyFunctionWithDelegation(String name, int numpar,
+    public void addLazyFunctionWithDelegation(String name, int numpar,
                                                      QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
     {
         functions.put(name, new AbstractLazyFunction(numpar)
@@ -254,7 +254,7 @@ public class Expression
         });
     }
 
-    private void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc,
+    public void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc,
                                        QuadFunction<Context, Integer, LazyValue, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
@@ -275,7 +275,7 @@ public class Expression
         });
     }
 
-    static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Tokenizer.Token token)
+    public static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Tokenizer.Token token)
     {
         if (exc instanceof ExitStatement)
             return exc;
@@ -290,7 +290,7 @@ public class Expression
         return new ExpressionException(c, e, token, "Error while evaluating expression: "+exc);
     }
 
-    private void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
+    public void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
     {
         operators.put(surface+"u", new AbstractUnaryOperator(precedence.get("unary+-!"), leftAssoc)
         {
@@ -302,7 +302,7 @@ public class Expression
         });
     }
 
-    private void addBinaryOperator(String surface, int precedence, boolean leftAssoc, BiFunction<Value, Value, Value> fun)
+    public void addBinaryOperator(String surface, int precedence, boolean leftAssoc, BiFunction<Value, Value, Value> fun)
     {
         operators.put(surface, new AbstractOperator(precedence, leftAssoc)
         {
@@ -316,7 +316,7 @@ public class Expression
     }
 
 
-    private void addUnaryFunction(String name, Function<Value, Value> fun)
+    public void addUnaryFunction(String name, Function<Value, Value> fun)
     {
         name = name.toLowerCase(Locale.ROOT);
         functions.put(name,  new AbstractFunction(1)
@@ -329,7 +329,7 @@ public class Expression
         });
     }
 
-    void addBinaryFunction(String name, BiFunction<Value, Value, Value> fun)
+    public void addBinaryFunction(String name, BiFunction<Value, Value, Value> fun)
     {
         name = name.toLowerCase(Locale.ROOT);
         functions.put(name, new AbstractFunction(2)
@@ -345,7 +345,7 @@ public class Expression
         });
     }
 
-    private void addFunction(String name, Function<List<Value>, Value> fun)
+    public void addFunction(String name, Function<List<Value>, Value> fun)
     {
         name = name.toLowerCase(Locale.ROOT);
         functions.put(name, new AbstractFunction(-1)
@@ -360,19 +360,19 @@ public class Expression
         });
     }
 
-    private void addMathematicalUnaryFunction(String name, Function<Double, Double> fun)
+    public void addMathematicalUnaryFunction(String name, Function<Double, Double> fun)
     {
         addUnaryFunction(name, (v) -> new NumericValue(fun.apply(NumericValue.asNumber(v).getDouble())));
     }
 
-    private void addMathematicalBinaryFunction(String name, BiFunction<Double, Double, Double> fun)
+    public void addMathematicalBinaryFunction(String name, BiFunction<Double, Double, Double> fun)
     {
         addBinaryFunction(name, (w, v) ->
                 new NumericValue(fun.apply(NumericValue.asNumber(w).getDouble(), NumericValue.asNumber(v).getDouble())));
     }
 
 
-    void addLazyFunction(String name, int num_params, TriFunction<Context, Integer, List<LazyValue>, LazyValue> fun)
+    public void addLazyFunction(String name, int num_params, TriFunction<Context, Integer, List<LazyValue>, LazyValue> fun)
     {
         name = name.toLowerCase(Locale.ROOT);
         functions.put(name, new AbstractLazyFunction(num_params)
@@ -391,7 +391,7 @@ public class Expression
             }
         });
     }
-    private FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> outers, LazyValue code)
+    public FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> outers, LazyValue code)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (functions.containsKey(name))
@@ -417,7 +417,7 @@ public class Expression
         return result;
     }
 
-    public void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
+    private void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
         addLazyFunction("import", -1, (c, t, lv) ->
@@ -549,7 +549,7 @@ public class Expression
         });
     }
 
-    public void Operators()
+    private void Operators()
     {
         addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
         addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
@@ -724,7 +724,7 @@ public class Expression
 
     }
 
-    public void ArithmeticOperations()
+    private void ArithmeticOperations()
     {
         addLazyFunction("not", 1, (c, t, lv) -> lv.get(0).evalValue(c, Context.BOOLEAN).getBoolean() ? ((cc, tt) -> Value.FALSE) : ((cc, tt) -> Value.TRUE));
 
@@ -825,7 +825,7 @@ public class Expression
         addUnaryFunction("relu", (v) -> v.compareTo(Value.ZERO) < 0 ? Value.ZERO : v);
     }
 
-    public void LoopsAndHigherOrderFunctions()
+    private void LoopsAndHigherOrderFunctions()
     {
         // condition and expression will get a bound '_i'
         // returns last successful expression or false
@@ -1217,7 +1217,7 @@ public class Expression
         });
     }
 
-    public void BasicDataStructures()
+    private void BasicDataStructures()
     {
         addFunction("l", lv ->
         {
@@ -1523,7 +1523,7 @@ public class Expression
         });
     }
 
-    public void SystemFunctions()
+    private void SystemFunctions()
     {
         addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
 
@@ -1966,7 +1966,7 @@ public class Expression
         }
     }
 
-    private LazyValue getOrSetAnyVariable(Context c, String name)
+    public LazyValue getOrSetAnyVariable(Context c, String name)
     {
         LazyValue var = null;
         if (!name.startsWith("global_"))
@@ -2166,11 +2166,11 @@ public class Expression
         }
     }
 
-    Value eval(Context c)
+    public Value eval(Context c)
     {
         return eval(c, Context.NONE);
     }
-    private Value eval(Context c, Integer expectedType)
+    public Value eval(Context c, Integer expectedType)
     {
         if (ast == null)
         {
@@ -2179,7 +2179,7 @@ public class Expression
         return evalValue(() -> ast, c, expectedType);
     }
 
-    Value evalValue(Supplier<LazyValue> exprProvider, Context c, Integer expectedType)
+    public Value evalValue(Supplier<LazyValue> exprProvider, Context c, Integer expectedType)
     {
         try
         {
