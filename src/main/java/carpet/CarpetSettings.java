@@ -34,7 +34,7 @@ import static carpet.settings.RuleCategory.SCARPET;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.15+v200318";
+    public static final String carpetVersion = "1.3.16+v200325";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
