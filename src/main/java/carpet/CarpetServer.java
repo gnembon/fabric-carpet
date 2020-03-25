@@ -13,6 +13,7 @@ import carpet.settings.SettingsManager;
 import carpet.utils.HUDController;
 import carpet.utils.MobAI;
 import com.mojang.brigadier.CommandDispatcher;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -94,7 +95,9 @@ public class CarpetServer // static for now - easier to handle all around the co
         // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> e.registerCommands(dispatcher));
         currentCommandDispatcher = dispatcher;
-        //TestCommand.register(dispatcher);
+        
+        if (FabricLoader.getInstance().isDevelopmentEnvironment())
+            TestCommand.register(dispatcher);
     }
 
     public static void onPlayerLoggedIn(ServerPlayerEntity player)
