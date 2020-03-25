@@ -389,7 +389,7 @@ public class CarpetExpression
         }
     }
 
-    public void API_BlockManipulation()
+    private void API_BlockManipulation()
     {
         this.expr.addLazyFunction("block", -1, (c, t, lv) ->
         {
@@ -1261,7 +1261,7 @@ public class CarpetExpression
 
     }
 
-    public void API_Scoreboard()
+    private void API_Scoreboard()
     {
         // scoreboard(player,'objective')
         // scoreboard(player, objective, newValue)
@@ -1374,7 +1374,7 @@ public class CarpetExpression
         });
     }
 
-    public void API_InventoryManipulation()
+    private void API_InventoryManipulation()
     {
         this.expr.addLazyFunction("stack_limit", 1, (c, t, lv) ->
         {
@@ -1646,7 +1646,7 @@ public class CarpetExpression
         }
     }
 
-    public void API_EntityManipulation()
+    private void API_EntityManipulation()
     {
         this.expr.addLazyFunction("player", -1, (c, t, lv) -> {
             if (lv.size() ==0)
@@ -1908,7 +1908,7 @@ public class CarpetExpression
         });
     }
 
-    public void API_IteratingOverAreasOfBlocks()
+    private void API_IteratingOverAreasOfBlocks()
     {
         this.expr.addLazyFunction("scan", -1, (c, t, lv) ->
         {
@@ -2347,7 +2347,7 @@ public class CarpetExpression
         });
     }
 
-    public void API_AuxiliaryAspects()
+    private void API_AuxiliaryAspects()
     {
         this.expr.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
