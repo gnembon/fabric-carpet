@@ -10,16 +10,17 @@ and maps, where the iterator returns all the map keys
 ### `break(), break(expr), continue(), continue(expr)`
 
 These allow to control execution of a loop either skipping current iteration code, using `continue`, or finishing the 
-current loop, using `break`. `break` and `continue` can only be used inside `for, while, loop, map, filter and reduce` 
+current loop, using `break`. `break` and `continue` can only be used inside `for`, `c_for`, `while`, `loop`, `map`,
+`filter`, `reduce` as well as Minecraft API block loops, `scan` and `volume` 
 functions, while `break` can be used in `first` as well. Outside of the internal expressions of these functions, 
-calling `break` or `continue` will cause an error. In case of the nexted loops, and more complex setups, use 
+calling `break` or `continue` will cause an error. In case of the nested loops, and more complex setups, use 
 custom `try` and `throw` setup.
 
 Please check corresponding loop function description what `continue` and `break` do in their contexts, but in 
 general case, passed values to `break` and `continue` will be used in place of the return value of the internal 
 iteration expression.
 
-### `cfor(init, condition, increment, body)`
+### `c_for(init, condition, increment, body)`
 
 `c_for` Mimics c-style tri-arg (plus body) for loops. Return value of `c_for` is number of iterations performed in the
  loop. Unlike other loops, the `body` is not provided with pre-initialized `_` style variables - all initialization

@@ -189,4 +189,8 @@ public class NumericValue extends Value
     }
 
 
+    public int getInt()
+    {
+        return (int)getLong();
+    }
 }
