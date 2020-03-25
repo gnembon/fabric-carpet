@@ -111,7 +111,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
             else
                 blockState_2 = Block.getRenderingState(this.pushedBlock, this.world, this.pos);
             ((WorldInterface) (this.world)).setBlockStateWithBlockEntity(this.pos, blockState_2, this.carriedBlockEntity, 3);
-            this.world.breakBlock(this.pos, true, null);
+            this.world.breakBlock(this.pos, false, null);
         }
     }
     
