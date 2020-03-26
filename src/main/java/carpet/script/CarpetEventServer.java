@@ -502,7 +502,20 @@ public class CarpetEventServer
                         ((c, t) -> new NumericValue(amount))
                 ), player::getCommandSource);
             }
-        }
+        },
+        LIGHTNING("lightning", 2, true)
+        {
+            @Override
+            public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag)
+            {
+                handler.call(
+                        () -> Arrays.asList(
+                                ((c, t) -> new BlockValue(null, world, pos)),
+                                ((c, t) -> flag>0?Value.TRUE:Value.FALSE)
+                        ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                );
+            }
+        },
         ;
 
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
@@ -538,6 +551,8 @@ public class CarpetEventServer
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+        public void onWorldEvent(ServerWorld world, BlockPos pos) { }
+        public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
     }
 
 

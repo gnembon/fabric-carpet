@@ -2720,12 +2720,14 @@ Here is a list of events that can be handled by scarpet. This list includes pref
 them, but you can add any function to any event if it accepts required number of parameters:
 
 <pre>
+// world callbacks
 __on_tick()         // can access blocks and entities in the overworld
 __on_tick_nether()  // can access blocks and entities in the nether
 __on_tick_ender()   // can access blocks and entities in the end
 __on_chunk_generated(x,z) // called after a chunk is promoted to the full chunk,
                           // prodiving lowest x and z coords in the chunk
                           // event will not work with optifine installed in the game
+__on_lightning(pos, mode) // mode is `true` if lightning caused horse trap to spawn
 // player specific callbacks
 __on_player_uses_item(player, item_tuple, hand)  // right click action
 __on_player_releases_item(player, item_tuple, hand)  // client action (e.g. bow)
