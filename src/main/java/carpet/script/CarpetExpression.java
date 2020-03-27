@@ -1249,14 +1249,24 @@ public class CarpetExpression
 
             ServerWorld world = cc.s.getWorld();
 
+            Value [] result = new Value[]{Value.NULL};
+
             ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
-                ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(requestedChunks);
+                Map<String, Integer> report = ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(requestedChunks);
                 for (ChunkPos chpos: requestedChunks)
+                {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
+                    {
                         this.forceChunkUpdate(chpos.getCenterBlockPos(), world);
+                    }
+                }
+                result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
+                        e -> new StringValue((String)((Map.Entry) e).getKey()),
+                        e ->  new NumericValue((Integer)((Map.Entry) e).getValue())
+                )));
             });
-            return LazyValue.NULL;
+            return (_c, _t) -> result[0];
         });
 
     }
