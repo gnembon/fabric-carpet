@@ -1,8 +1,8 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import carpet.fakes.ChunkHolderInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
+import carpet.script.utils.WorldTools;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -13,7 +13,6 @@ import net.minecraft.server.world.ServerLightingProvider;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.thread.MessageListener;
 import net.minecraft.util.thread.ThreadExecutor;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
@@ -26,9 +25,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,35 +84,6 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             world.getServer().execute( () -> CHUNK_GENERATED.onChunkGenerated(world, chunk) );
     }
 
-    private boolean chunkExists(ChunkPos chpos, Map<String, RegionFile> regionCache)
-    {
-        String currentRegionName = "r." + chpos.getRegionX() + "." + chpos.getRegionZ() + ".mca";
-        if (regionCache != null && regionCache.containsKey(currentRegionName))
-        {
-            RegionFile region = regionCache.get(currentRegionName);
-            if (region == null) return false;
-            return region.hasChunk(chpos);
-        }
-        Path regionPath = world.getDimension().getType().getSaveDirectory(
-                world.getSaveHandler().getWorldDir()
-        ).toPath().resolve("region");
-        Path regionFilePath = regionPath.resolve(currentRegionName);
-        File regionFile = regionFilePath.toFile();
-        if (!regionFile.exists())
-        {
-            if (regionCache != null) regionCache.put(currentRegionName, null);
-            return false;
-        }
-        try
-        {
-            RegionFile region = new RegionFile(regionFile, regionPath.toFile());
-            if (regionCache != null) regionCache.put(currentRegionName, region);
-            return region.hasChunk(chpos);
-        }
-        catch (IOException ignored) { }
-        return true;
-    }
-
     @Override
     public Map<String, Integer> regenerateChunkRegion(List<ChunkPos> requestedChunks)
     {
@@ -144,7 +111,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         Map<String, RegionFile> regionCache = new HashMap<>();
         for (ChunkPos pos: requestedChunks)
         {
-            if (!chunkExists(pos, regionCache)) continue;
+            if (!WorldTools.canHasChunk(world, pos, regionCache, true)) continue;
             Chunk chunk = world.getChunk(pos.x, pos.z, ChunkStatus.EMPTY, true);
             if (chunk == null || chunk.getStatus() == ChunkStatus.EMPTY)
                 continue;

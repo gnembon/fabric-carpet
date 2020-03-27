@@ -134,6 +134,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static carpet.script.utils.WorldTools.canHasChunk;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -675,6 +676,17 @@ public class CarpetExpression
             if (chunk == null)
                 return LazyValue.ZERO;
             Value retval = new NumericValue(chunk.getLevelType().ordinal());
+            return (c_, t_) -> retval;
+        });
+
+        this.expr.addLazyFunction("is_chunk_generated", -1, (c, t, lv) ->
+        {
+            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            boolean force = false;
+            if (lv.size() > locator.offset)
+                force = lv.get(locator.offset).evalValue(c, Context.BOOLEAN).getBoolean();
+            Value retval = new NumericValue(canHasChunk(((CarpetContext)c).s.getWorld(), new ChunkPos(pos), null, force));
             return (c_, t_) -> retval;
         });
 

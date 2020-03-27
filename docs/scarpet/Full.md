@@ -1874,61 +1874,6 @@ top('motion', x, y, z)  => 63
 top('ocean_floor', x, y, z)  => 41
 </pre>
 
-### `loaded(pos)`
-
-Boolean function, true if the block is accessible for the game mechanics. Normally `scarpet` doesn't check if operates 
-on loaded area - the game will automatically load missing blocks. We see this as advantage. Vanilla `fill/clone` 
-commands only check the specified corners for loadness.
-
-To check if block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
-outside of the playable area, just are not used any of the game mechanics processes.
-
-<pre>
-loaded(pos(players()))  => 1
-loaded(100000,100,1000000)  => 0
-</pre>
-
-### `(Deprecated) loaded_ep(pos)`
-
-Boolean function, true if the block is loaded and entity processing, as per 1.13.2
-
-Deprecated as of scarpet 1.6, use `loaded_status(x) > 0`, or just `loaded(x)` with the same effect
-
-### `loaded_status(pos)`
-
-Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for ticking, 
-3 for entity ticking
-
-### `generation_status(pos), generation_status(pos, true)`
-
-Returns generation status as per new 1.14 chunk ticket system. Can return any value from several available but chunks 
-can only be valid in a few states: `full`, `features`, `liquid_carvers`, and `structure_starts`. Returns `null` 
-if the chunk is not in memory unless called with optional `true`.
-
-### `structures(pos), structures(pos, structure_name)`
-
-Returns structure information for a given block position. Note that structure information is the same for all the 
-blocks from the same chunk. `structures` function can be called with a block, or a block and a structure name. In 
-the first case it returns a map of structures at a given position, keyed by structure name, with values indicating 
-the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
-name, returns list of components for that structure, with their name, direction and two sets of coordinates 
-indicating the bounding box of the structure piece.
-
-### `structure_references(pos), structure_references(pos, structure_name)`
-
-Returns structure information that a chunk with a given block position is part of. `structure_references` function 
-can be called with a block, or a block and a structure name. In the first case it returns a list of structure names 
-that give chunk belongs to. When called with an extra structure name, returns list of positions pointing to the 
-lowest block position in chunks that hold structure starts for these structures. You can query that chunk structures 
-then to get its bounding boxes.
-
-### `set_structure(pos, structure_name), set_structure(pos, structure_name, null)`
-
-Creates or removes structure information of a structure associated with a chunk of `pos`. Unlike `plop`, blocks are 
-not placed in the world, only structure information is set. For the game this is a fully functional structure even 
-if blocks are not set. To remove structure a given point is in, use `structure_references` to find where current 
-structure starts.
-
 ### `suffocates(pos)`
 
 Boolean function, true if the block causes suffocation.
@@ -2064,6 +2009,190 @@ Returns the map colour of a block at position. One of:
 *   `green_terracotta`
 *   `red_terracotta`
 *   `black_terracotta`
+
+
+### `loaded(pos)`
+
+Boolean function, true if the block is accessible for the game mechanics. Normally `scarpet` doesn't check if operates 
+on loaded area - the game will automatically load missing blocks. We see this as advantage. Vanilla `fill/clone` 
+commands only check the specified corners for loadness.
+
+To check if block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
+outside of the playable area, just are not used any of the game mechanics processes.
+
+<pre>
+loaded(pos(players()))  => 1
+loaded(100000,100,1000000)  => 0
+</pre>
+
+### `(Deprecated) loaded_ep(pos)`
+
+Boolean function, true if the block is loaded and entity processing, as per 1.13.2
+
+Deprecated as of scarpet 1.6, use `loaded_status(x) > 0`, or just `loaded(x)` with the same effect
+
+### `loaded_status(pos)`
+
+Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for ticking, 
+3 for entity ticking
+
+### `is_chunk_generated(pos)`, `is_chunk_generated(pos, force)`
+
+Returns `true` if the region file for the chunk exists, 
+`false` otherwise. If optional force is `true` it will also check if the chunk has a non-empty entry in its region file
+Can be used to assess if the chunk has been touched by the game or not.
+
+`generation_status(pos, false)` only works on currently loaded chunks, and `generation_status(pos, true)` will create
+an empty loaded chunk, even if it is not needed, so `is_chunk_generated` can be used as a efficient proxy to determine
+if the chunk physically exists.
+
+Running `is_chunk_generated` is has no effects on the world, but since it is an external file operation, it is
+considerably more expensive (unless area is loaded) than other generation and loaded checks.
+
+### `generation_status(pos), generation_status(pos, true)`
+
+Returns generation status as per the ticket system. Can return any value from several available but chunks 
+can only be stable in a few states: `full`, `features`, `liquid_carvers`, and `structure_starts`. Returns `null` 
+if the chunk is not in memory unless called with optional `true`.
+
+### `structures(pos), structures(pos, structure_name)`
+
+Returns structure information for a given block position. Note that structure information is the same for all the 
+blocks from the same chunk. `structures` function can be called with a block, or a block and a structure name. In 
+the first case it returns a map of structures at a given position, keyed by structure name, with values indicating 
+the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
+name, returns list of components for that structure, with their name, direction and two sets of coordinates 
+indicating the bounding box of the structure piece.
+
+### `structure_references(pos), structure_references(pos, structure_name)`
+
+Returns structure information that a chunk with a given block position is part of. `structure_references` function 
+can be called with a block, or a block and a structure name. In the first case it returns a list of structure names 
+that give chunk belongs to. When called with an extra structure name, returns list of positions pointing to the 
+lowest block position in chunks that hold structure starts for these structures. You can query that chunk structures 
+then to get its bounding boxes.
+
+### `set_structure(pos, structure_name), set_structure(pos, structure_name, null)`
+
+Creates or removes structure information of a structure associated with a chunk of `pos`. Unlike `plop`, blocks are 
+not placed in the world, only structure information is set. For the game this is a fully functional structure even 
+if blocks are not set. To remove structure a given point is in, use `structure_references` to find where current 
+structure starts.
+
+### `plop(pos, what)`
+
+Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
+To `what` gets plopped and exactly where it often depends on the feature or structure itself. For example, all 
+structures are chunk aligned, and often span multiple chunks. Repeated calls to plop a structure in the same chunk 
+would result either in the same structure generated on top of each other, or with different state, but same position. 
+Most structures generate at specific altitudes, which are hardcoded, or with certain blocks around them. API will 
+cancel all extra position / biome / random requirements for structure / feature placement, but some hardcoded 
+limitations may still cause some of structures/features not to place. Some features require special blocks to be
+present, like coral -> water or ice spikes -> snow block, and for some features, like fossils, placement is all sorts 
+of messed up. This can be partially avoided for structures by setting their structure information via `set_structure`, 
+which sets it without looking into world blocks, and then use `plop` to fill it with blocks. This may, or may not work.
+
+All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
+itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
+because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
+
+`plop` will not use world random number generator to generate structures and features, but its own. This has a benefit 
+that they will generate properly randomly, not the same time every time.
+
+Structure list:
+
+*   `monument`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
+*   `fortress`: Nether Fortress. Altitude varies, but its bounded by the code.
+*   `mansion`: Woodland Mansion
+*   `jungle_temple`: Jungle Temple
+*   `desert_temple`: Desert Temple. Generates at fixed Y altitude.
+*   `end_city`: End City with Shulkers
+*   `igloo`: Igloo
+*   `shipwreck`: Shipwreck, version1?
+*   `shipwreck2`: Shipwreck, version2?
+*   `witch_hut`
+*   `ocean_ruin`, `ocean_ruin_small`, `ocean_ruin_tall`: Stone variants of ocean ruins.
+*   `ocean_ruin_warm`, `ocean_ruin_warm_small`, `ocean_ruin_warm_tall`: Sandstone variants of ocean ruins.
+*   `treasure`: A treasure chest. Yes, its a whole structure.
+*   `pillager_outpost`: A pillager outpost.
+*   `mineshaft`: A mineshaft.
+*   `mineshaft_mesa`: A Mesa (Badlands) version of a mineshaft.
+*   `village`: Plains, oak village.
+*   `village_desert`: Desert, sandstone village.
+*   `village_savanna`: Savanna, acacia village.
+*   `village_taiga`: Taiga, spruce village.
+*   `village_snowy`: Resolute, Canada.
+
+Feature list:
+
+*   `oak`
+*   `oak_beehive`: oak with a hive (1.15+).
+*   `oak_large`: oak with branches.
+*   `oak_large_beehive`: oak with branches and a beehive (1.15+).
+*   `birch`
+*   `birch_large`: tall variant of birch tree.
+*   `shrub`: low bushes that grow in jungles.
+*   `shrub_acacia`: low bush but configured with acacia (1.14 only)
+*   `shrub_snowy`: low bush with white blocks (1.14 only)
+*   `jungle`: a tree
+*   `jungle_large`: 2x2 jungle tree
+*   `spruce`
+*   `spruce_large`: 2x2 spruce tree
+*   `pine`: spruce with minimal leafage (1.15+)
+*   `pine_large`: 2x2 spruce with minimal leafage (1.15+)
+*   `spruce_matchstick`: see 1.15 pine (1.14 only).
+*   `spruce_matchstick_large`: see 1.15 pine_large (1.14 only).
+*   `dark_oak`
+*   `acacia`
+*   `oak_swamp`: oak with more leaves and vines.
+*   `well`: desert well
+*   `grass`: a few spots of tall grass
+*   `grass_jungle`: little bushier grass feature (1.14 only)
+*   `lush_grass`: grass with patchy ferns (1.15+)
+*   `tall_grass`: 2-high grass patch (1.15+)
+*   `fern`: a few random 2-high ferns
+*   `cactus`: random cacti
+*   `dead_bush`: a few random dead bushi
+*   `fossils`: underground fossils, placement little wonky
+*   `mushroom_brown`: large brown mushroom.
+*   `mushroom_red`: large red mushroom.
+*   `ice_spike`: ice spike. Require snow block below to place.
+*   `glowstone`: glowstone cluster. Required netherrack above it.
+*   `melon`: a patch of melons
+*   `melon_pile`: a pile of melons (1.15+)
+*   `pumpkin`: a patch of pumpkins
+*   `pumpkin_pile`: a pile of pumpkins (1.15+)
+*   `sugarcane`
+*   `lilypad`
+*   `dungeon`: Dungeon. These are hard to place, and fail often.
+*   `iceberg`: Iceberg. Generate at sea level.
+*   `iceberg_blue`: Blue ice iceberg.
+*   `lake`
+*   `lava_lake`
+*   `end_island`
+*   `chorus`: Chorus plant. Require endstone to place.
+*   `sea_grass`: a patch of sea grass. Require water.
+*   `sea_grass_river`: a variant.
+*   `kelp`
+*   `coral_tree, coral_mushroom, coral_claw`: various coral types, random color.
+*   `coral`: random coral structure. Require water to spawn.
+*   `sea_pickle`
+*   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
+
+### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
+Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous
+blocks and entities, and replacing it with a new generation. For all currently loaded chunks, they will be brought
+to their current generation status, and updated to the player. All chunks that are not in the loaded area, will only
+be generated to the `'structure_starts'` status, allowing to generate them fully as players are visiting them.
+Chunks in the area that has not been touched yet by the game will not be generated / regenerated.
+
+It returns a `map` with a report indicating how many chunks were affected, and how long each step took:
+ * `requested_chunks`: total number of chunks in the requested area or list
+ * `affected_chunks`: number of chunks that will be removed / regenerated
+ * `loaded_chunks`: number of currently loaded chunks in the requested area / list
+ * `layer_count_<status>`: number of chunks for which a `<status>` generation step has been performed
+ * `layer_time_<status>`: cumulative time for all chunks spent on generating `<status>` step
+ 
 # Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
@@ -2929,108 +3058,7 @@ For the options of `entry`, consult your statistics page, or give it a guess.
 The call will return `null` if the statistics options are incorrect, or player didn't get these in their history. 
 If the player encountered the statistic, or game created for him empty one, it will return a number. 
 Scarpet will not affect the entries of the statistics, even if it is just creating empty ones. With `null` response 
-it could either mean your input is wrong, or statistic has effectively a value of `0`.
-
-### `plop(pos, what)`
-
-Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
-To `what` gets plopped and exactly where it often depends on the feature or structure itself. For example, all 
-structures are chunk aligned, and often span multiple chunks. Repeated calls to plop a structure in the same chunk 
-would result either in the same structure generated on top of each other, or with different state, but same position. 
-Most structures generate at specific altitudes, which are hardcoded, or with certain blocks around them. API will 
-cancel all extra position / biome / random requirements for structure / feature placement, but some hardcoded 
-limitations may still cause some of structures/features not to place. Some features require special blocks to be
-present, like coral -> water or ice spikes -> snow block, and for some features, like fossils, placement is all sorts 
-of messed up. This can be partially avoided for structures by setting their structure information via `set_structure`, 
-which sets it without looking into world blocks, and then use `plop` to fill it with blocks. This may, or may not work.
-
-All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
-itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
-because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
-
-`plop` will not use world random number generator to generate structures and features, but its own. This has a benefit 
-that they will generate properly randomly, not the same time every time.
-
-Structure list:
-
-*   `monument`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
-*   `fortress`: Nether Fortress. Altitude varies, but its bounded by the code.
-*   `mansion`: Woodland Mansion
-*   `jungle_temple`: Jungle Temple
-*   `desert_temple`: Desert Temple. Generates at fixed Y altitude.
-*   `end_city`: End City with Shulkers
-*   `igloo`: Igloo
-*   `shipwreck`: Shipwreck, version1?
-*   `shipwreck2`: Shipwreck, version2?
-*   `witch_hut`
-*   `ocean_ruin`, `ocean_ruin_small`, `ocean_ruin_tall`: Stone variants of ocean ruins.
-*   `ocean_ruin_warm`, `ocean_ruin_warm_small`, `ocean_ruin_warm_tall`: Sandstone variants of ocean ruins.
-*   `treasure`: A treasure chest. Yes, its a whole structure.
-*   `pillager_outpost`: A pillager outpost.
-*   `mineshaft`: A mineshaft.
-*   `mineshaft_mesa`: A Mesa (Badlands) version of a mineshaft.
-*   `village`: Plains, oak village.
-*   `village_desert`: Desert, sandstone village.
-*   `village_savanna`: Savanna, acacia village.
-*   `village_taiga`: Taiga, spruce village.
-*   `village_snowy`: Resolute, Canada.
-
-Feature list:
-
-*   `oak`
-*   `oak_beehive`: oak with a hive (1.15+).
-*   `oak_large`: oak with branches.
-*   `oak_large_beehive`: oak with branches and a beehive (1.15+).
-*   `birch`
-*   `birch_large`: tall variant of birch tree.
-*   `shrub`: low bushes that grow in jungles.
-*   `shrub_acacia`: low bush but configured with acacia (1.14 only)
-*   `shrub_snowy`: low bush with white blocks (1.14 only)
-*   `jungle`: a tree
-*   `jungle_large`: 2x2 jungle tree
-*   `spruce`
-*   `spruce_large`: 2x2 spruce tree
-*   `pine`: spruce with minimal leafage (1.15+)
-*   `pine_large`: 2x2 spruce with minimal leafage (1.15+)
-*   `spruce_matchstick`: see 1.15 pine (1.14 only).
-*   `spruce_matchstick_large`: see 1.15 pine_large (1.14 only).
-*   `dark_oak`
-*   `acacia`
-*   `oak_swamp`: oak with more leaves and vines.
-*   `well`: desert well
-*   `grass`: a few spots of tall grass
-*   `grass_jungle`: little bushier grass feature (1.14 only)
-*   `lush_grass`: grass with patchy ferns (1.15+)
-*   `tall_grass`: 2-high grass patch (1.15+)
-*   `fern`: a few random 2-high ferns
-*   `cactus`: random cacti
-*   `dead_bush`: a few random dead bushi
-*   `fossils`: underground fossils, placement little wonky
-*   `mushroom_brown`: large brown mushroom.
-*   `mushroom_red`: large red mushroom.
-*   `ice_spike`: ice spike. Require snow block below to place.
-*   `glowstone`: glowstone cluster. Required netherrack above it.
-*   `melon`: a patch of melons
-*   `melon_pile`: a pile of melons (1.15+)
-*   `pumpkin`: a patch of pumpkins
-*   `pumpkin_pile`: a pile of pumpkins (1.15+)
-*   `sugarcane`
-*   `lilypad`
-*   `dungeon`: Dungeon. These are hard to place, and fail often.
-*   `iceberg`: Iceberg. Generate at sea level.
-*   `iceberg_blue`: Blue ice iceberg.
-*   `lake`
-*   `lava_lake`
-*   `end_island`
-*   `chorus`: Chorus plant. Require endstone to place.
-*   `sea_grass`: a patch of sea grass. Require water.
-*   `sea_grass_river`: a variant.
-*   `kelp`
-*   `coral_tree, coral_mushroom, coral_claw`: various coral types, random color.
-*   `coral`: random coral structure. Require water to spawn.
-*   `sea_pickle`
-*   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
-# `/script run` command
+it could either mean your input is wrong, or statistic has effectively a value of `0`.# `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 
 commandblock, etc... The command receives 4 variables, `x`, `y`, `z` and `p` indicating position and 
