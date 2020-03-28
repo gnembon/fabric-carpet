@@ -23,4 +23,4 @@ Removes an objective. Returns `true` if objective has existed and has been remov
 
 ### `scoreboard_display(place, objective)`
 
-sets display location for a specified `objective`. If `place` is `null`, then display is cleared.
+sets display location for a specified `objective`. If `objective` is `null`, then display is cleared.
