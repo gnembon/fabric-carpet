@@ -36,5 +36,7 @@
 
 [`/script` Command](/docs/scarpet/api/ScriptCommand.md)
 
+[Scoreboard manipulation](docs/scarpet/api/Scoreboard.md)
+
 ## [One Page](/docs/scarpet/Full.md)
 
