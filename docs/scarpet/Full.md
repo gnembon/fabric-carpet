@@ -2910,9 +2910,9 @@ scoreboard_add('lvl','level')
 
 Removes an objective. Returns `true` if objective has existed and has been removed.
 
-### `scoreboard_display(objective, place)`
+### `scoreboard_display(place, objective)`
 
-sets display location for a specified `objective`. If `place` is `null`, then display is cleared.
+sets display location for a specified `objective`. If `objective` is `null`, then display is cleared.
 # Auxiliary aspects
 
 Collection of other methods that control smaller, yet still important aspects of the game
