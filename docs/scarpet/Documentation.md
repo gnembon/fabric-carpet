@@ -32,6 +32,8 @@
 
 [Events](/docs/scarpet/api/Events.md)
 
+[Scoreboard manipulation](docs/scarpet/api/Scoreboard.md)
+
 [Auxiliary Functions](/docs/scarpet/api/Auxiliary.md)
 
 [`/script` Command](/docs/scarpet/api/ScriptCommand.md)

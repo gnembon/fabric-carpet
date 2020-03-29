@@ -1,8 +1,8 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import carpet.fakes.ChunkHolderInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
+import carpet.script.utils.WorldTools;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -13,11 +13,11 @@ import net.minecraft.server.world.ServerLightingProvider;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.thread.MessageListener;
 import net.minecraft.util.thread.ThreadExecutor;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.storage.RegionFile;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -85,9 +85,10 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     }
 
     @Override
-    public void regenerateChunkRegion(List<ChunkPos> requestedChunks)
+    public Map<String, Integer> regenerateChunkRegion(List<ChunkPos> requestedChunks)
     {
-
+        Map<String, Integer> report = new HashMap<>();
+        report.put("requested_chunks",requestedChunks.size());
         //flushning all tasks on the thread executor so all futures are ready - we don't want any deadlocks
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
         // save all pending chunks
@@ -104,20 +105,21 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             if (chunk != null && chunk.getStatus() != ChunkStatus.EMPTY)
                 loadedChunks.add(pos);
         }
-        CarpetSettings.LOG.error("Area has "+requestedChunks.size()+" chunks");
-        CarpetSettings.LOG.error("Area has "+loadedChunks.size()+" loaded chunks");
+        report.put("loaded_chunks", loadedChunks.size());
 
         Map<ChunkPos,ChunkStatus> targetStatus = new HashMap<>();
+        Map<String, RegionFile> regionCache = new HashMap<>();
         for (ChunkPos pos: requestedChunks)
         {
-
+            if (!WorldTools.canHasChunk(world, pos, regionCache, true)) continue;
             Chunk chunk = world.getChunk(pos.x, pos.z, ChunkStatus.EMPTY, true);
             if (chunk == null || chunk.getStatus() == ChunkStatus.EMPTY)
                 continue;
             //unloaded areas can have unknown skirt chunk area
             targetStatus.put(pos, loadedChunks.contains(pos)?chunk.getStatus():ChunkStatus.STRUCTURE_STARTS);
         }
-        CarpetSettings.LOG.error("Area has "+targetStatus.size()+" chunks for removal");
+        regionCache.clear();
+        report.put("affected_chunks", targetStatus.size());
 
 
         for (ChunkPos chpos : targetStatus.keySet())
@@ -128,8 +130,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             int currentLevel = ThreadedAnvilChunkStorage.MAX_LEVEL;
             if (chunkHolder != null)
             {
-                //CarpetSettings.LOG.error("current_level: "+chunkHolder.getLevel());
-                currentLevel = chunkHolder.getLevel();
+                currentLevel = chunkHolder.getLevel()-1;
                 //method_20458(id, chunkHolder); // saving chunk // skipping entities etc
                 Chunk chunk = null;
                 try
@@ -184,34 +185,25 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
 
         for (ChunkStatus status : ChunkStatus.createOrderedList())
         {
-            CarpetSettings.LOG.error("Creating layer: " + status.getId() + " for "+targetStatus.size()+" chunks");
+            report.put("layer_count_"+status.getId(),targetStatus.size());
+            long start = System.currentTimeMillis();
             if (status == ChunkStatus.LIGHT)
             {
-                //break;
                 serverLightingProvider.setTaskBatchSize(targetStatus.size() + 20);
             }
             for (ChunkPos chpos : new ArrayList<>(targetStatus.keySet()))
             {
                 if (targetStatus.get(chpos) == status)
                     targetStatus.remove(chpos);
-                //if (status==ChunkStatus.LIGHT)
-                //{
-                //    serverLightingProvider.tick();
-                //}
-                //CarpetSettings.LOG.error("Creating layer: " + status.getId());
                 world.getChunk(chpos.x, chpos.z, status);
                 if (status == ChunkStatus.FULL)
                     convertToFullChunk(currentChunkHolders.get(chpos.toLong()));
-                //CarpetSettings.LOG.error("    .. done");
-                //if (status==ChunkStatus.LIGHT)
-                //{
-                //    serverLightingProvider.tick();
-                //}
             }
             if (status == ChunkStatus.LIGHT)
-            {
+            { // default task batch size after initial generation is done
                 serverLightingProvider.setTaskBatchSize(5);
             }
+            report.put("layer_time_"+status.getId(), (int) (System.currentTimeMillis()-start));
         }
 
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
@@ -222,5 +214,6 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         {
             runnable.run();
         }
+        return report;
     }
 }
