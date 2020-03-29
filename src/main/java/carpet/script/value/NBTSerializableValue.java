@@ -263,11 +263,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     public static int validateSlot(int slot, Inventory inv)
     {
-        int invSize = inv.getInvSize();
+        int invSize = inv.size();
         if (slot < 0)
             slot = invSize + slot;
         if (slot < 0 || slot >= invSize)
-            return inv.getInvSize(); // outside of inventory
+            return inv.size(); // outside of inventory
         return slot;
     }
 

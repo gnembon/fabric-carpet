@@ -1417,7 +1417,7 @@ public class CarpetExpression
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
-            Value res = new NumericValue(inventoryLocator.inventory.getInvSize());
+            Value res = new NumericValue(inventoryLocator.inventory.size());
             return (_c, _t) -> res;
         });
 
@@ -1427,7 +1427,7 @@ public class CarpetExpression
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
                 return (_c, _t) -> Value.NULL;
-            Value res = new NumericValue(!inventoryLocator.inventory.isInvEmpty());
+            Value res = new NumericValue(!inventoryLocator.inventory.isEmpty());
             return (_c, _t) -> res;
         });
 
@@ -1441,18 +1441,18 @@ public class CarpetExpression
             if (lv.size() == inventoryLocator.offset)
             {
                 List<Value> fullInventory = new ArrayList<>();
-                for (int i = 0, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+                for (int i = 0, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
                 {
-                    fullInventory.add(ListValue.fromItemStack(inventoryLocator.inventory.getInvStack(i)));
+                    fullInventory.add(ListValue.fromItemStack(inventoryLocator.inventory.getStack(i)));
                 }
                 Value res = ListValue.wrap(fullInventory);
                 return (_c, _t) -> res;
             }
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.getInvSize())
+            if (slot == inventoryLocator.inventory.size())
                 return (_c, _t) -> Value.NULL;
-            Value res = ListValue.fromItemStack(inventoryLocator.inventory.getInvStack(slot));
+            Value res = ListValue.fromItemStack(inventoryLocator.inventory.getStack(slot));
             return (_c, _t) -> res;
         });
 
@@ -1467,23 +1467,23 @@ public class CarpetExpression
                 throw new InternalExpressionException("'inventory_set' requires at least slot number and new stack size, and optional new item");
             int slot = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+0).evalValue(c)).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.getInvSize())
+            if (slot == inventoryLocator.inventory.size())
                 return (_c, _t) -> Value.NULL;
             int count = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
             if (count == 0)
             {
                 // clear slot
-                ItemStack removedStack = inventoryLocator.inventory.removeInvStack(slot);
+                ItemStack removedStack = inventoryLocator.inventory.removeStack(slot);
                 syncPlayerInventory(inventoryLocator, slot);
                 //Value res = ListValue.fromItemStack(removedStack); // that tuple will be read only but cheaper if noone cares
                 return (_c, _t) -> ListValue.fromItemStack(removedStack);
             }
             if (lv.size() < inventoryLocator.offset+3)
             {
-                ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
+                ItemStack previousStack = inventoryLocator.inventory.getStack(slot);
                 ItemStack newStack = previousStack.copy();
                 newStack.setCount(count);
-                inventoryLocator.inventory.setInvStack(slot, newStack);
+                inventoryLocator.inventory.setStack(slot, newStack);
                 syncPlayerInventory(inventoryLocator, slot);
                 return (_c, _t) -> ListValue.fromItemStack(previousStack);
             }
@@ -1503,10 +1503,10 @@ public class CarpetExpression
                     nbt
             );
 
-            ItemStack previousStack = inventoryLocator.inventory.getInvStack(slot);
+            ItemStack previousStack = inventoryLocator.inventory.getStack(slot);
             try
             {
-                inventoryLocator.inventory.setInvStack(slot, newitem.createStack(count, false));
+                inventoryLocator.inventory.setStack(slot, newitem.createStack(count, false));
                 syncPlayerInventory(inventoryLocator, slot);
             }
             catch (CommandSyntaxException e)
@@ -1536,9 +1536,9 @@ public class CarpetExpression
                 startIndex = (int) NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
             }
             startIndex = NBTSerializableValue.validateSlot(startIndex, inventoryLocator.inventory);
-            for (int i = startIndex, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+            for (int i = startIndex, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
             {
-                ItemStack stack = inventoryLocator.inventory.getInvStack(i);
+                ItemStack stack = inventoryLocator.inventory.getStack(i);
                 if ( (itemArg == null && stack.isEmpty()) || (itemArg != null && itemArg.getItem().equals(stack.getItem())) )
                 {
                     Value res = new NumericValue(i);
@@ -1566,14 +1566,14 @@ public class CarpetExpression
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
             }
             // not enough
-            if (((amount == 1) && (!inventoryLocator.inventory.containsAnyInInv(Sets.newHashSet(searchItem.getItem()))))
-                    || (inventoryLocator.inventory.countInInv(searchItem.getItem()) < amount))
+            if (((amount == 1) && (!inventoryLocator.inventory.containsAny(Sets.newHashSet(searchItem.getItem()))))
+                    || (inventoryLocator.inventory.count(searchItem.getItem()) < amount))
             {
                 return (_c, _t) -> Value.FALSE;
             }
-            for (int i = 0, maxi = inventoryLocator.inventory.getInvSize(); i < maxi; i++)
+            for (int i = 0, maxi = inventoryLocator.inventory.size(); i < maxi; i++)
             {
-                ItemStack stack = inventoryLocator.inventory.getInvStack(i);
+                ItemStack stack = inventoryLocator.inventory.getStack(i);
                 if (stack.isEmpty())
                     continue;
                 if (!stack.getItem().equals(searchItem.getItem()))
@@ -1582,13 +1582,13 @@ public class CarpetExpression
                 if (left > 0)
                 {
                     stack.setCount(left);
-                    inventoryLocator.inventory.setInvStack(i, stack);
+                    inventoryLocator.inventory.setStack(i, stack);
                     syncPlayerInventory(inventoryLocator, i);
                     return (_c, _t) -> Value.TRUE;
                 }
                 else
                 {
-                    inventoryLocator.inventory.removeInvStack(i);
+                    inventoryLocator.inventory.removeStack(i);
                     syncPlayerInventory(inventoryLocator, i);
                     amount -= stack.getCount();
                 }
@@ -1609,19 +1609,19 @@ public class CarpetExpression
                 throw new InternalExpressionException("Slot number is required for inventory_drop");
             int slot = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset).evalValue(c)).getLong();
             slot = NBTSerializableValue.validateSlot(slot, inventoryLocator.inventory);
-            if (slot == inventoryLocator.inventory.getInvSize())
+            if (slot == inventoryLocator.inventory.size())
                 return (_c, _t) -> Value.NULL;
             int amount = 0;
             if (lv.size() > inventoryLocator.offset+1)
                 amount = (int)NumericValue.asNumber(lv.get(inventoryLocator.offset+1).evalValue(c)).getLong();
             if (amount < 0)
                 throw new InternalExpressionException("Cannot throw negative number of items");
-            ItemStack stack = inventoryLocator.inventory.getInvStack(slot);
+            ItemStack stack = inventoryLocator.inventory.getStack(slot);
             if (stack == null || stack.isEmpty())
                 return (_c, _t) -> Value.ZERO;
             if (amount == 0)
                 amount = stack.getCount();
-            ItemStack droppedStack = inventoryLocator.inventory.takeInvStack(slot, amount);
+            ItemStack droppedStack = inventoryLocator.inventory.removeStack(slot, amount);
             if (droppedStack.isEmpty())
             {
                 return (_c, _t) -> Value.ZERO;
@@ -1662,7 +1662,7 @@ public class CarpetExpression
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
                     -2,
                     int_1,
-                    inventory.inventory.getInvStack(int_1)
+                    inventory.inventory.getStack(int_1)
             ));
         }
     }

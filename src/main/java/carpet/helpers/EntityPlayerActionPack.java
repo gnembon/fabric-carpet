@@ -242,9 +242,9 @@ public class EntityPlayerActionPack
     private void dropItemFromSlot(int slot, boolean dropAll)
     {
         PlayerInventory inv = player.inventory;
-        if (!inv.getInvStack(slot).isEmpty())
-            player.dropItem(inv.takeInvStack(slot,
-                    dropAll ? inv.getInvStack(slot).getCount() : 1
+        if (!inv.getStack(slot).isEmpty())
+            player.dropItem(inv.removeStack(slot,
+                    dropAll ? inv.getStack(slot).getCount() : 1
             ), false, true); // scatter, keep owner
     }
 
@@ -253,7 +253,7 @@ public class EntityPlayerActionPack
         PlayerInventory inv = player.inventory;
         if (selectedSlot == -2) // all
         {
-            for (int i = inv.getInvSize(); i >= 0; i--)
+            for (int i = inv.size(); i >= 0; i--)
                 dropItemFromSlot(i, dropAll);
         }
         else // one slot
