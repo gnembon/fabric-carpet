@@ -172,7 +172,11 @@ public class CarpetSettings
 
     @Rule(
             desc = "Lag optimizations for redstone dust",
-            extra = "by Theosib",
+            extra = {
+                    "by Theosib",
+                    ".. also fixes some locational behaviours or vanilla redstone MC-11193",
+                    "so behaviour of locational vanilla contraptions is not guaranteed"
+            },
             category = {EXPERIMENTAL, OPTIMIZATION}
     )
     public static boolean fastRedstoneDust = false;
