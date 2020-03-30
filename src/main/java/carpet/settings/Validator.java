@@ -41,6 +41,19 @@ public abstract class Validator<T>
         public String description() { return "It has an accompanying command";}
     }
 
+    public static class _CLIENT<T> extends Validator<T>
+    {
+        @Override
+        public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string)
+        {
+            return newValue;
+        }
+        @Override
+        public String description() { return "Its a client command so can be issued when connecting to non-carpet servers. " +
+                "In client-server setting it will only affect the executing player, so each player needs to type it" +
+                " separately for the desired effect";}
+    }
+
     public static class _COMMAND_LEVEL_VALIDATOR extends Validator<String> {
         private static ImmutableList<String> OPTIONS = ImmutableList.of("true", "false", "ops", "0", "1", "2", "3", "4");
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String userString) {

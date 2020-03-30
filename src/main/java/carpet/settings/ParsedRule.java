@@ -20,6 +20,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final ImmutableList<String> categories;
     public final ImmutableList<String> options;
     public boolean isStrict;
+    public boolean isClient;
     public final Class<T> type;
     public final List<Validator<T>> validators;
     public final T defaultValue;
@@ -45,6 +46,11 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                 this.isStrict = false;
                 this.validators.add((Validator<T>) callConstructor(Validator._COMMAND_LEVEL_VALIDATOR.class));
             }
+        }
+        this.isClient = categories.contains(RuleCategory.CLIENT);
+        if (this.isClient)
+        {
+            this.validators.add(callConstructor(Validator._CLIENT.class));
         }
         this.defaultValue = get();
         this.defaultAsString = convertToString(this.defaultValue);
@@ -132,16 +138,19 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                 value = validator.validate(source, this, value, stringValue);
                 if (value == null)
                 {
-                    Messenger.m(source, "r Wrong value for " + name + ": " + stringValue);
-                    if (validator.description()!= null)
-                        Messenger.m(source, "r " + validator.description());
+                    if (source != null)
+                    {
+                        Messenger.m(source, "r Wrong value for " + name + ": " + stringValue);
+                        if (validator.description() != null)
+                            Messenger.m(source, "r " + validator.description());
+                    }
                     return null;
                 }
             }
-            if (!value.equals(get()))
+            if (!value.equals(get()) || source == null)
             {
                 this.field.set(null, value);
-                CarpetServer.settingsManager.notifyRuleChanged(source, this, stringValue);
+                if (source != null) CarpetServer.settingsManager.notifyRuleChanged(source, this, stringValue);
             }
         }
         catch (IllegalAccessException e)

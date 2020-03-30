@@ -30,6 +30,7 @@ import static carpet.settings.RuleCategory.SURVIVAL;
 import static carpet.settings.RuleCategory.TNT;
 import static carpet.settings.RuleCategory.DISPENSER;
 import static carpet.settings.RuleCategory.SCARPET;
+import static carpet.settings.RuleCategory.CLIENT;
 
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
@@ -364,7 +365,11 @@ public class CarpetSettings
     @Rule(desc = "placing blocks cause block updates", category = CREATIVE)
     public static boolean interactionUpdates = true;
 
-    @Rule(desc = "smooth client animations with low tps settings", extra = "works only in SP, and will slow down players", category = CREATIVE)
+    @Rule(
+            desc = "smooth client animations with low tps settings",
+            extra = "works only in SP, and will slow down players",
+            category = {CREATIVE, SURVIVAL, CLIENT}
+    )
     public static boolean smoothClientAnimations;
 
     //@Rule(
