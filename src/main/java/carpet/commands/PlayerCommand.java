@@ -246,12 +246,18 @@ public class PlayerCommand
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
+        if (playerName.length()>40)
+        {
+            Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
+            return 0;
+        }
         MinecraftServer server = source.getMinecraftServer();
         PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dim, mode);
         if (player == null)
         {
             Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +
                     "and cannot spawn in online mode. Turn the server offline to spawn non-existing players");
+            return 0;
         }
         return 1;
     }
