@@ -558,4 +558,22 @@ public class SettingsManager
         return 1;
     }
 
+    public void inspectClientsideCommand(String string)
+    {
+        if (string.startsWith("/carpet "))
+        {
+            String[] res = string.split("\\s+", 3);
+            if (res.length == 3)
+            {
+                String setting = res[1];
+                String strOption = res[2];
+                if (rules.containsKey(setting) && rules.get(setting).isClient)
+                {
+                    rules.get(setting).set(null, strOption);
+                }
+            }
+
+
+        }
+    }
 }

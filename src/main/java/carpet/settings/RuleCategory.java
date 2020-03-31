@@ -12,5 +12,6 @@ public class RuleCategory
     public static final String TNT = "tnt";
     public static final String DISPENSER = "dispenser";
     public static final String SCARPET = "scarpet";
+    public static final String CLIENT = "client";
 
 }
