@@ -46,7 +46,7 @@ public abstract class ProjectileEntityMixin extends Entity
         }
     }
 
-    @Inject(method = "method_24920", at = @At("RETURN")) // on block hit
+    @Inject(method = "onBlockHit", at = @At("RETURN"))
     private void removeOnBlock(BlockHitResult blockHitResult, CallbackInfo ci)
     {
         if (LoggerRegistry.__projectiles && logHelper != null)

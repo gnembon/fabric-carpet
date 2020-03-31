@@ -184,7 +184,7 @@ public class OptimizedExplosion
         double posY = eAccess.getY();
         double posZ = eAccess.getZ();
 
-        boolean damagesTerrain = eAccess.getBlockDestructionType() != Explosion.DestructionType.NONE;
+        boolean damagesTerrain = eAccess.getDestructionType() != Explosion.DestructionType.NONE;
 
         // explosionSound incremented till disabling the explosion particles and sound
         if (explosionSound < 100 || explosionSound % 100 == 0)
@@ -249,7 +249,7 @@ public class OptimizedExplosion
                                 .put(LootContextParameters.TOOL, ItemStack.EMPTY)
                                 .putNullable(LootContextParameters.BLOCK_ENTITY, blockEntity);
 
-                        if (eAccess.getBlockDestructionType() == Explosion.DestructionType.DESTROY)
+                        if (eAccess.getDestructionType() == Explosion.DestructionType.DESTROY)
                             lootBuilder.put(LootContextParameters.EXPLOSION_RADIUS, eAccess.getPower());
 
                         state.getDroppedStacks(lootBuilder).forEach((itemStackx) -> {

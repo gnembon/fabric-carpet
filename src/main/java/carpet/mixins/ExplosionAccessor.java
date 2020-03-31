@@ -15,7 +15,7 @@ public interface ExplosionAccessor {
     boolean isCreateFire();
 
     @Accessor
-    Explosion.DestructionType getBlockDestructionType();
+    Explosion.DestructionType getDestructionType();
 
     @Accessor
     World getWorld();

@@ -142,7 +142,7 @@ public class SpawnHelperMixin
         return entityType.create(world_1);
     }
 
-    @Redirect(method = "method_24930", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
     ))
@@ -165,7 +165,7 @@ public class SpawnHelperMixin
         return false;
     }
 
-    @Redirect(method = "method_24930", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnType;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
     ))
@@ -176,7 +176,7 @@ public class SpawnHelperMixin
         return null;
     }
 
-    @Redirect(method = "method_24930", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(DDD)D"
     ))
