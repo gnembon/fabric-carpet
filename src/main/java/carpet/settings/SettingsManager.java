@@ -226,7 +226,7 @@ public class SettingsManager
 
     private void loadConfigurationFromConf()
     {
-        for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(server.getCommandSource());
+        for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(null);//server.getCommandSource());
         Pair<Map<String, String>,Boolean> conf = readSettingsFromConf();
         locked = false;
         if (conf.getRight())
@@ -238,7 +238,7 @@ public class SettingsManager
         {
             try
             {
-                if (rules.get(key).set(server.getCommandSource(), conf.getLeft().get(key)) != null)
+                if (rules.get(key).set(null, conf.getLeft().get(key)) != null)
                     CarpetSettings.LOG.info("[CM]: loaded setting " + key + " as " + conf.getLeft().get(key) + " from " + identifier + ".conf");
             }
             catch (Exception exc)

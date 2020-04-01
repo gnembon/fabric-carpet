@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 
 @Mixin(DesertPyramidFeature.class)
@@ -23,12 +24,13 @@ public abstract class DesertPyramidFeatureMixin extends AbstractTempleFeature<De
     {
         MONSTER_SPAWNS = Lists.newArrayList(new Biome.SpawnEntry(EntityType.HUSK, 1, 1, 1));
     }
-    
-    public DesertPyramidFeatureMixin(Function<Dynamic<?>, ? extends DefaultFeatureConfig> function_1)
+
+    public DesertPyramidFeatureMixin(Function<Dynamic<?>, ? extends DefaultFeatureConfig> function, Function<Random, ? extends DefaultFeatureConfig> function2)
     {
-        super(function_1);
+        super(function, function2);
     }
-    
+
+
     @Override
     public List<Biome.SpawnEntry> getMonsterSpawns()
     {

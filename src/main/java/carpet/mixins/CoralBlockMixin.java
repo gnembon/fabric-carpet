@@ -44,11 +44,11 @@ public abstract class CoralBlockMixin implements Fertilizable
         CoralFeature coral;
         int variant = random.nextInt(3);
         if (variant == 0)
-            coral = new CoralClawFeature(DefaultFeatureConfig::deserialize);
+            coral = new CoralClawFeature(DefaultFeatureConfig::deserialize, DefaultFeatureConfig::method_26619);
         else if (variant == 1)
-            coral = new CoralTreeFeature(DefaultFeatureConfig::deserialize);
+            coral = new CoralTreeFeature(DefaultFeatureConfig::deserialize, DefaultFeatureConfig::method_26619);
         else
-            coral = new CoralMushroomFeature(DefaultFeatureConfig::deserialize);
+            coral = new CoralMushroomFeature(DefaultFeatureConfig::deserialize, DefaultFeatureConfig::method_26619);
 
         MaterialColor color = blockUnder.getTopMaterialColor(worldIn, pos);
         BlockState proper_block = blockUnder;

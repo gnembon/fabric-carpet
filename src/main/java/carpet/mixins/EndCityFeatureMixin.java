@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 
 @Mixin(EndCityFeature.class)
@@ -19,10 +20,11 @@ public abstract class EndCityFeatureMixin extends StructureFeature<DefaultFeatur
 {
     private static final List<Biome.SpawnEntry> spawnList = Lists.newArrayList(new Biome.SpawnEntry(EntityType.SHULKER, 10, 4, 4));
 
-    public EndCityFeatureMixin(Function<Dynamic<?>, ? extends DefaultFeatureConfig> function_1)
+    public EndCityFeatureMixin(Function<Dynamic<?>, ? extends DefaultFeatureConfig> function, Function<Random, ? extends DefaultFeatureConfig> function2)
     {
-        super(function_1);
+        super(function, function2);
     }
+
 
     @Override
     public List<Biome.SpawnEntry> getMonsterSpawns()

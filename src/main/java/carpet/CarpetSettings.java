@@ -471,6 +471,7 @@ public class CarpetSettings
     )
     public static boolean rotatorBlock = false;
 
+    /*
     private static class ViewDistanceValidator extends Validator<Integer>
     {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
@@ -512,8 +513,9 @@ public class CarpetSettings
     )
     public static int viewDistance = 0;
 
-    private static class DisableSpawnChunksValidator extends Validator<Boolean> {
+    /*private static class DisableSpawnChunksValidator extends Validator<Boolean> {
         @Override public Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string) {
+
             if (currentRule.get().booleanValue() == newValue.booleanValue())
             {
                 //must been some startup thing
@@ -543,6 +545,8 @@ public class CarpetSettings
             validate = DisableSpawnChunksValidator.class
     )
     public static boolean disableSpawnChunks = false;
+    */
+
 
     /*private static class KelpLimit extends Validator<Integer>
     {

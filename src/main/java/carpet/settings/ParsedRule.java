@@ -1,6 +1,7 @@
 package carpet.settings;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.server.command.ServerCommandSource;

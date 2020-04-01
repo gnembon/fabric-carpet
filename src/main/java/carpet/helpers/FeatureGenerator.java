@@ -253,7 +253,7 @@ public class FeatureGenerator
         put("lake", simplePlop(Feature.LAKE.configure(new SingleStateFeatureConfig(Blocks.WATER.getDefaultState()))));
         put("lake_lava", simplePlop(Feature.LAKE.configure(new SingleStateFeatureConfig(Blocks.LAVA.getDefaultState()))));
         //put("end tower", simplePlop(Feature.END_SPIKE.configure(new EndSpikeFeatureConfig(false, ))));
-        put("end_island", simplePlop(Feature.END_ISLAND));
+        // removed due to april 1st changes that may be removed put("end_island", simplePlop(Feature.END_ISLAND));
         put("chorus", simplePlop(Feature.CHORUS_PLANT));
         put("sea_grass", simplePlop(Feature.SEAGRASS.configure( new SeagrassFeatureConfig(80, 0.8D))));
         put("sea_grass_river", simplePlop(Feature.SEAGRASS.configure( new SeagrassFeatureConfig(48, 0.4D))));
