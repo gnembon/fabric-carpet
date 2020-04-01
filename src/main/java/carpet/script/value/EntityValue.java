@@ -331,6 +331,15 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
+        put("ping", (e, a) -> {
+            if (e instanceof  ServerPlayerEntity)
+            {
+                ServerPlayerEntity spe = (ServerPlayerEntity) e;
+                return new NumericValue(spe.pingMilliseconds);
+            }
+            return Value.NULL;
+        });
+
         //spectating_entity
         // isGlowing
         put("effect", (e, a) ->

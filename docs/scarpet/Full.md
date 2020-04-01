@@ -2502,6 +2502,10 @@ Returns `null` if the argument is not a player, otherwise:
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
 
+### `query(e,'ping')`
+    
+Player's ping in milliseconds, or `null` if its not a player.
+
 ### `query(e,'permission_level')`
 
 Player's permission level, or `null` if not applicable for this entity.
