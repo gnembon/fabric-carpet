@@ -7,6 +7,7 @@ import carpet.utils.PerimeterDiagnostics;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.command.suggestion.SuggestionProviders;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.command.ServerCommandSource;
@@ -51,15 +52,17 @@ public class PerimeterInfoCommand
         if (mobId != null)
         {
             nbttagcompound.putString("id", mobId);
-            entityliving = (MobEntity) EntityType.loadEntityWithPassengers(nbttagcompound, source.getWorld(), (entity_1x) -> {
+            Entity baseEntity = EntityType.loadEntityWithPassengers(nbttagcompound, source.getWorld(), (entity_1x) -> {
                 entity_1x.refreshPositionAndAngles(pos.offset(Direction.UP,2), entity_1x.yaw, entity_1x.pitch);
                 return !source.getWorld().tryLoadEntity(entity_1x) ? null : entity_1x;
             });
-            if (entityliving == null)
+            if (!(baseEntity instanceof  MobEntity))
             {
                 Messenger.m(source, "r Failed to spawn test entity");
+                if (baseEntity != null) baseEntity.remove();
                 return 0;
             }
+            entityliving = (MobEntity) baseEntity;
         }
         PerimeterDiagnostics.Result res = PerimeterDiagnostics.countSpots(source.getWorld(), pos, entityliving);
 
