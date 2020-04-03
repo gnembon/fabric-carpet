@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class IntegratedServerMixin
 {
     @Inject(method = "loadWorld", at = @At("HEAD"))
-    private void onSetupServerIntegrated(String name, String serverName, long seed, LevelGeneratorOptions arg, CallbackInfo ci) {
+    private void onSetupServerIntegrated(String string, long l, LevelGeneratorOptions levelGeneratorOptions, CallbackInfo ci) {
         CarpetServer.onServerLoaded((IntegratedServer) (Object) this);
     }
 }

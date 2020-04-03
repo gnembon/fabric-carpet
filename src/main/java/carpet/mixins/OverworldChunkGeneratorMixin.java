@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.class_5138;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
@@ -26,14 +27,13 @@ public abstract class OverworldChunkGeneratorMixin extends SurfaceChunkGenerator
     }
     
     @Inject(method = "getEntitySpawnList", at = @At(value = "INVOKE", ordinal = 1, shift = At.Shift.BEFORE,
-            target = "Lnet/minecraft/world/gen/feature/StructureFeature;isApproximatelyInsideStructure(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;)Z"),
+            target = "Lnet/minecraft/world/gen/feature/StructureFeature;isApproximatelyInsideStructure(Lnet/minecraft/world/IWorld;Lnet/minecraft/class_5138;Lnet/minecraft/util/math/BlockPos;)Z"),
             cancellable = true)
-    private void onGetEntitySpawnList(EntityCategory entityCategory_1, BlockPos blockPos_1,
-            CallbackInfoReturnable<List<Biome.SpawnEntry>> cir)
+    private void onGetEntitySpawnList(class_5138 arg, EntityCategory entityCategory, BlockPos blockPos, CallbackInfoReturnable<List<Biome.SpawnEntry>> cir)
     {
         if (CarpetSettings.huskSpawningInTemples)
         {
-            if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(this.world, blockPos_1))
+            if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(this.world, arg, blockPos))
             {
                 cir.setReturnValue(Feature.DESERT_PYRAMID.getMonsterSpawns());
             }

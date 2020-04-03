@@ -5,6 +5,7 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
+import net.minecraft.class_5140;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
@@ -42,7 +43,7 @@ public class FeatureGenerator
             CarpetSettings.skipGenerationChecks=true;
             try
             {
-                return feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p);
+                return feature.generate(w, w.method_27056(), w.getChunkManager().getChunkGenerator(), w.random, p);
             }
             finally
             {
@@ -202,16 +203,17 @@ public class FeatureGenerator
                 (new BranchedTreeFeatureConfig.Builder(
                         new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
                         new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
-                        new BlobFoliagePlacer(2, 0))
-                ).baseHeight(4).heightRandA(2).foliageHeight(3).noVines()
-                .treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
+                        new BlobFoliagePlacer(2, 0, 0, 0, 3),
+                        new class_5140(4, 2, 0))
+                ).noVines().treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
         ));
         put("oak_large", simplePlop(Feature.FANCY_TREE.configure(DefaultBiomeFeatures.FANCY_TREE_CONFIG)));
         put("oak_large_beehive", simplePlop(Feature.FANCY_TREE.configure(
                 (new BranchedTreeFeatureConfig.Builder(
                         new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
                         new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
-                        new BlobFoliagePlacer(0, 0))
+                        new BlobFoliagePlacer(0, 0, 0, 0, 0),
+                        new class_5140(0, 0, 0))
                 ).treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
         )));
         put("birch", simpleTree(DefaultBiomeFeatures.BIRCH_TREE_CONFIG));
@@ -224,7 +226,7 @@ public class FeatureGenerator
         put("pine", simpleTree(DefaultBiomeFeatures.PINE_TREE_CONFIG));
         put("pine_large", simplePlop(Feature.MEGA_SPRUCE_TREE.configure(DefaultBiomeFeatures.MEGA_PINE_TREE_CONFIG)));
         put("dark_oak", simplePlop(Feature.DARK_OAK_TREE.configure(DefaultBiomeFeatures.DARK_OAK_TREE_CONFIG)));
-        put("acacia", simplePlop(Feature.ACACIA_TREE.configure(DefaultBiomeFeatures.ACACIA_TREE_CONFIG)));
+        put("acacia", simplePlop(Feature.NORMAL_TREE.configure(DefaultBiomeFeatures.ACACIA_TREE_CONFIG)));
         put("oak_swamp", simpleTree(DefaultBiomeFeatures.SWAMP_TREE_CONFIG));
         put("well", simplePlop(Feature.DESERT_WELL));
         put("grass", simplePatch(DefaultBiomeFeatures.GRASS_CONFIG));

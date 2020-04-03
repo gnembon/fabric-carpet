@@ -136,7 +136,7 @@ public class SettingsManager
 
     private File getFile()
     {
-        return server.getLevelStorage().resolveFile(server.getLevelName(), identifier+".conf");
+        return server.method_27050().resolve(identifier+".conf").toFile();
     }
 
     public void disableBooleanCommands()

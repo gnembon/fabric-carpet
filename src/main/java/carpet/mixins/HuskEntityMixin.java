@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.entity.mob.HuskEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.gen.feature.Feature;
@@ -16,6 +17,6 @@ public class HuskEntityMixin
     private static boolean isSkylightOrTempleVisible(IWorld iWorld, BlockPos blockPos_1)
     {
         return iWorld.isSkyVisible(blockPos_1) ||
-                (CarpetSettings.huskSpawningInTemples && Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(iWorld, blockPos_1));
+                (CarpetSettings.huskSpawningInTemples && Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(iWorld, ((ServerWorld)iWorld).method_27056(),  blockPos_1));
     }
 }

@@ -37,7 +37,7 @@ public class WorldTools
         if (!deepcheck) return true; // not using cache in this case.
         try
         {
-            RegionFile region = new RegionFile(regionFile, regionPath.toFile());
+            RegionFile region = new RegionFile(regionFile, regionPath.toFile(), true);
             if (regionCache != null) regionCache.put(currentRegionName, region);
             return region.hasChunk(chpos);
         }

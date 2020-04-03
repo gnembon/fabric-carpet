@@ -18,16 +18,14 @@ public abstract class Module
 
     public Tag getData(String file)
     {
-        File dataFile = CarpetServer.minecraft_server.getLevelStorage().resolveFile(
-                CarpetServer.minecraft_server.getLevelName(), "scripts/"+getName()+".data"+(file==null?"":"."+file)+".nbt");
+        File dataFile = CarpetServer.minecraft_server.method_27050().resolve("scripts/"+getName()+".data"+(file==null?"":"."+file)+".nbt").toFile();
         if (!Files.exists(dataFile.toPath()) || !(dataFile.isFile())) return null;
         return read(dataFile);
     }
 
     public void saveData(String file, Tag globalState)
     {
-        File dataFile =CarpetServer.minecraft_server.getLevelStorage().resolveFile(
-                CarpetServer.minecraft_server.getLevelName(), "scripts/"+getName()+".data"+(file==null?"":"."+file)+".nbt");
+        File dataFile =CarpetServer.minecraft_server.method_27050().resolve("scripts/"+getName()+".data"+(file==null?"":"."+file)+".nbt").toFile();
         if (!Files.exists(dataFile.toPath().getParent()))
         {
             try

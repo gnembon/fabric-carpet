@@ -14,7 +14,7 @@ public class MinecraftDedicatedServerMixin
     // this.tickWorlds(booleanSupplier_1);
     @Inject(method = "setupServer", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/dedicated/MinecraftDedicatedServer;loadWorld(Ljava/lang/String;Ljava/lang/String;JLnet/minecraft/world/level/LevelGeneratorOptions;)V",
+            target = "Lnet/minecraft/server/dedicated/MinecraftDedicatedServer;loadWorld(Ljava/lang/String;JLnet/minecraft/world/level/LevelGeneratorOptions;)V",
             shift = At.Shift.BEFORE
     ))
     private void onSetupServer(CallbackInfoReturnable<Boolean> cir) {

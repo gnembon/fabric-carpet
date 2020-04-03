@@ -10,7 +10,7 @@ public abstract class DummyEnchantments
     {
         protected Dummies()
         {
-            super(Rarity.COMMON, EnchantmentTarget.ALL, new EquipmentSlot[]{EquipmentSlot.MAINHAND});
+            super(Rarity.COMMON, EnchantmentTarget.BREAKABLE, new EquipmentSlot[]{EquipmentSlot.MAINHAND});
         }
 
     }

@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.block.Blocks;
+import net.minecraft.class_5138;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
@@ -24,11 +25,11 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator<FlatChunkGe
     }
     
     @Override
-    public List<Biome.SpawnEntry> getEntitySpawnList(EntityCategory category, BlockPos pos)
+    public List<Biome.SpawnEntry> getEntitySpawnList(class_5138 arg, EntityCategory category, BlockPos pos)
     {
         if (CarpetSettings.flatWorldStructureSpawning)
         {
-            if (Feature.SWAMP_HUT.method_14029(this.world, pos))
+            if (Feature.SWAMP_HUT.method_14029(this.world, arg, pos))
             {
                 if (category == EntityCategory.MONSTER)
                 {
@@ -42,37 +43,37 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator<FlatChunkGe
             }
             else if (category == EntityCategory.MONSTER)
             {
-                if (Feature.PILLAGER_OUTPOST.isApproximatelyInsideStructure(this.world, pos))
+                if (Feature.PILLAGER_OUTPOST.isApproximatelyInsideStructure(this.world, arg, pos))
                 {
                     return Feature.PILLAGER_OUTPOST.getMonsterSpawns();
                 }
     
                 if (CarpetSettings.huskSpawningInTemples)
                 {
-                    if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(this.world, pos))
+                    if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(this.world, arg, pos))
                     {
                         return Feature.DESERT_PYRAMID.getMonsterSpawns();
                     }
                 }
         
-                if (Feature.OCEAN_MONUMENT.isApproximatelyInsideStructure(this.world, pos))
+                if (Feature.OCEAN_MONUMENT.isApproximatelyInsideStructure(this.world, arg, pos))
                 {
                     return Feature.OCEAN_MONUMENT.getMonsterSpawns();
                 }
     
-                if (Feature.NETHER_BRIDGE.isInsideStructure(this.world, pos))
+                if (Feature.NETHER_BRIDGE.isInsideStructure(this.world, arg, pos))
                 {
                     return Feature.NETHER_BRIDGE.getMonsterSpawns();
                 }
     
-                if (Feature.NETHER_BRIDGE.isApproximatelyInsideStructure(this.world, pos) && this.world.getBlockState(pos.down(1)).getBlock() == Blocks.NETHER_BRICKS)
+                if (Feature.NETHER_BRIDGE.isApproximatelyInsideStructure(this.world, arg, pos) && this.world.getBlockState(pos.down(1)).getBlock() == Blocks.NETHER_BRICKS)
                 {
                     return Feature.NETHER_BRIDGE.getMonsterSpawns();
                 }
     
                 if (CarpetSettings.shulkerSpawningInEndCities)
                 {
-                    if (Feature.END_CITY.isInsideStructure(this.world, pos))
+                    if (Feature.END_CITY.isInsideStructure(this.world, arg, pos))
                     {
                         return Feature.END_CITY.getMonsterSpawns();
                     }
@@ -80,6 +81,6 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator<FlatChunkGe
             }
         }
         
-        return super.getEntitySpawnList(category, pos);
+        return super.getEntitySpawnList(arg, category, pos);
     }
 }
