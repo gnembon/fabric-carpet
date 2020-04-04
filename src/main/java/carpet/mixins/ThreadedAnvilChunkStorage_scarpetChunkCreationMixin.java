@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.ChunkHolderInterface;
+import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.script.utils.WorldTools;
 import com.mojang.datafixers.util.Either;
@@ -155,7 +156,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
                         //apparently that doesn't remove them for the client
                         this.world.unloadEntities(worldChunk);
                     }
-                    //this.serverLightingProvider.updateChunkStatus(chunk.getPos()); // we might need that as some point
+                    ((ServerLightingProviderInterface)this.serverLightingProvider).publicUpdateChunkStatus(chunk.getPos()); // we might need that as some point
                     serverLightingProvider.tick();
                     worldGenerationProgressListener.setChunkStatus(chunk.getPos(), (ChunkStatus) null);
                 }
@@ -175,6 +176,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         this.chunkHolderListDirty = true;
         // not needed right now
         mainThreadExecutor.runTasks(() -> mainThreadExecutor.getTaskCount() == 0);
+        ((ServerLightingProviderInterface)this.serverLightingProvider).flush();
         //worldgenExecutor.
         // save all pending chunks / potentially only one max - ours
         // hopefully that would flush all chunk writes, including current chink
@@ -187,10 +189,10 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         {
             report.put("layer_count_"+status.getId(),targetStatus.size());
             long start = System.currentTimeMillis();
-            if (status == ChunkStatus.LIGHT)
-            {
-                serverLightingProvider.setTaskBatchSize(targetStatus.size() + 20);
-            }
+            //if (status == ChunkStatus.LIGHT)
+            //{
+            //    serverLightingProvider.setTaskBatchSize(targetStatus.size() + 20);
+            //}
             for (ChunkPos chpos : new ArrayList<>(targetStatus.keySet()))
             {
                 if (targetStatus.get(chpos) == status)
@@ -201,7 +203,8 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             }
             if (status == ChunkStatus.LIGHT)
             { // default task batch size after initial generation is done
-                serverLightingProvider.setTaskBatchSize(5);
+                //serverLightingProvider.setTaskBatchSize(5);
+                ((ServerLightingProviderInterface)this.serverLightingProvider).flush();
             }
             report.put("layer_time_"+status.getId(), (int) (System.currentTimeMillis()-start));
         }

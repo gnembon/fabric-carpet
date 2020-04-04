@@ -28,6 +28,7 @@
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
+    "ServerLightingProvider_scarpetChunkCreationMixin",
 
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
