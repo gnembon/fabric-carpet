@@ -276,7 +276,8 @@ global_foo = floor(rand(10));
 check_foo_not_zero();
 ...
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
-</pre># Variables and Constants
+</pre>
+# Variables and Constants
 
 `scarpet` provides a number of constants that can be used literally in scripts
 
