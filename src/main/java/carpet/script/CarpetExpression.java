@@ -1280,6 +1280,15 @@ public class CarpetExpression
             return (_c, _t) -> result[0];
         });
 
+        this.expr.addLazyFunction("inhabited_time", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            Value ret = new NumericValue(cc.s.getWorld().getChunk(pos).getInhabitedTime());
+            return (_c, _t) -> ret;
+        });
+
     }
 
     private void API_Scoreboard()

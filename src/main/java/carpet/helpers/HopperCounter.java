@@ -126,7 +126,7 @@ public class HopperCounter
                 color, ticks*1.0/(20*60), (realTime?" - real time":""), total, total*1.0*(20*60*60)/ticks),
                 "nb [X]", "^g reset", "!/counter "+color+" reset"
         ));
-        items.addAll(counter.object2LongEntrySet().stream().map(e ->
+        items.addAll(counter.object2LongEntrySet().stream().sorted((e, f) -> Long.compare(f.getLongValue(), e.getLongValue())).map(e ->
         {
             BaseText itemName = new TranslatableText(e.getKey().getTranslationKey());
             long count = e.getLongValue();
