@@ -68,7 +68,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             BlockBox box = structurestart.getBoundingBox();
             if (!wireOnly)
             {
-                structurestart.generateStructure(world, world.method_27056(), generator, rand,
+                structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand,
                     new BlockBox(
                                 pos.getX() - this.getRadius() * 16,
                                 pos.getZ() - this.getRadius() * 16,

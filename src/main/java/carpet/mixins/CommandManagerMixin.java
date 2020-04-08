@@ -42,7 +42,7 @@ public abstract class CommandManagerMixin
         CarpetSettings.impendingFillSkipUpdates = false;
     }
 
-    // warning expected
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "execute", at = @At(
             value = "INVOKE",
             target = "Lorg/apache/logging/log4j/Logger;isDebugEnabled()Z"

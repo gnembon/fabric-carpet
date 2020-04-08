@@ -155,10 +155,10 @@ public class PerimeterDiagnostics
 
     private boolean check_entity_spawn(BlockPos pos)
     {
-        if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.method_27056(), ctype, pos).contains(sle))
+        if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getStructureAccessor(), ctype, pos).contains(sle))
         {
             sle = null;
-            for (Biome.SpawnEntry sle: worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.method_27056(), ctype, pos))
+            for (Biome.SpawnEntry sle: worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getStructureAccessor(), ctype, pos))
             {
                 if (el.getType() == sle.type)
                 {
@@ -166,7 +166,7 @@ public class PerimeterDiagnostics
                     break;
                 }
             }
-            if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.method_27056(), ctype, pos).contains(sle))
+            if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getStructureAccessor(), ctype, pos).contains(sle))
             {
                 return false;
             }

@@ -5,7 +5,6 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
-import net.minecraft.class_5140;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
@@ -21,6 +20,7 @@ import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.*;
 import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
 import net.minecraft.world.gen.stateprovider.SimpleBlockStateProvider;
+import net.minecraft.world.gen.trunk.StraightTrunkPlacer;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +43,7 @@ public class FeatureGenerator
             CarpetSettings.skipGenerationChecks=true;
             try
             {
-                return feature.generate(w, w.method_27056(), w.getChunkManager().getChunkGenerator(), w.random, p);
+                return feature.generate(w, w.getStructureAccessor(), w.getChunkManager().getChunkGenerator(), w.random, p);
             }
             finally
             {
@@ -204,7 +204,7 @@ public class FeatureGenerator
                         new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
                         new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
                         new BlobFoliagePlacer(2, 0, 0, 0, 3),
-                        new class_5140(4, 2, 0))
+                        new StraightTrunkPlacer(4, 2, 0))
                 ).noVines().treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
         ));
         put("oak_large", simplePlop(Feature.FANCY_TREE.configure(DefaultBiomeFeatures.FANCY_TREE_CONFIG)));
@@ -213,7 +213,7 @@ public class FeatureGenerator
                         new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
                         new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
                         new BlobFoliagePlacer(0, 0, 0, 0, 0),
-                        new class_5140(0, 0, 0))
+                        new StraightTrunkPlacer(0, 0, 0))
                 ).treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
         )));
         put("birch", simpleTree(DefaultBiomeFeatures.BIRCH_TREE_CONFIG));

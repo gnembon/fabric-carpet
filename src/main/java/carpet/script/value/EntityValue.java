@@ -305,7 +305,7 @@ public class EntityValue extends Value
                 ServerPlayerEntity spe = (ServerPlayerEntity) e;
                 for (int i=4; i>=0; i--)
                 {
-                    if (spe.allowsPermissionLevel(i))
+                    if (spe.hasPermissionLevel(i))
                         return new NumericValue(i);
 
                 }
@@ -323,7 +323,7 @@ public class EntityValue extends Value
                 if (server.isDedicated()) return new StringValue("multiplayer");
                 boolean runningLan = server.isRemote();
                 if (!runningLan) return new StringValue("singleplayer");
-                boolean isowner = server.isOwner(p.getGameProfile());
+                boolean isowner = server.isHost(p.getGameProfile());
                 if (isowner) return new StringValue("lan_host");
                 return new StringValue("lan player");
                 // realms?

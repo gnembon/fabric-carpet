@@ -20,7 +20,7 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
 
     @Shadow private int vehicleFloatingTicks;
 
-    @Shadow protected abstract boolean isServerOwner();
+    @Shadow protected abstract boolean isHost();
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void restrictFloatingBits(CallbackInfo ci)
@@ -35,11 +35,11 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
 
     @Redirect(method = "onVehicleMove", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;isServerOwner()Z"
+            target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;isHost()Z"
     ))
     private boolean isServerTrusting(ServerPlayNetworkHandler serverPlayNetworkHandler)
     {
-        return isServerOwner() || CarpetSettings.antiCheatDisabled;
+        return isHost() || CarpetSettings.antiCheatDisabled;
     }
 
     @Redirect(method = "onPlayerMove", at = @At(
