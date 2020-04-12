@@ -140,6 +140,7 @@
     "ServerPlayerEntity_scarpetEventMixin",
     "FallingBlockEntity_scarpetEventsMixin",
     "BlockItem_scarpetEventMixin",
+    "PlayerManager_scarpetEventsMixin",
 
     "ChunkTicketManager_scarpetMixin",
     "ServerChunkManager_scarpetMixin",

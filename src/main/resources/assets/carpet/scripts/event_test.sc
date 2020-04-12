@@ -185,3 +185,38 @@ __on_player_places_block(player, item_tuple, hand, block) ->
     print('    > count: '+count);
     print('    > nbt: '+nbt);
 );
+
+__on_player_takes_damage(player, amount, source, entity) ->
+(
+    print('');
+    print('__on_player_takes_damage(player, amount, source, source_entity)');
+    print('player takes damage:');
+    print('  - player: '+player);
+    print('  - amount: '+str('%.2f',amount));
+    print('  - source: '+source);
+    print('  - source_entity: '+entity);
+);
+
+__on_player_deals_damage(player, amount, entity) ->
+(
+    print('');
+    print('__on_player_deals_damage(player, amount, target)');
+    print('player deals damage:');
+    print('  - player: '+player);
+    print('  - amount: '+str('%.2f',amount));
+    print('  - target: '+entity);
+);
+
+__on_player_dies(player) ->
+(
+    print('');
+    print('__on_player_dies(player)');
+    print('Player '+player+' dies.')
+);
+
+__on_player_respawns(player) ->
+(
+    print('');
+    print('__on_player_respawns(player)');
+    print('Player '+player+' respawns.')
+);

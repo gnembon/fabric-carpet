@@ -276,7 +276,8 @@ global_foo = floor(rand(10));
 check_foo_not_zero();
 ...
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
-</pre># Variables and Constants
+</pre>
+# Variables and Constants
 
 `scarpet` provides a number of constants that can be used literally in scripts
 
@@ -2055,6 +2056,10 @@ Returns generation status as per the ticket system. Can return any value from se
 can only be stable in a few states: `full`, `features`, `liquid_carvers`, and `structure_starts`. Returns `null` 
 if the chunk is not in memory unless called with optional `true`.
 
+### `inhabited_time(pos)`
+
+Returns inhabited time for a chunk.
+
 ### `structures(pos), structures(pos, structure_name)`
 
 Returns structure information for a given block position. Note that structure information is the same for all the 
@@ -2872,6 +2877,10 @@ __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right cli
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
 __on_player_attacks_entity(player, entity)
+__on_player_takes_damage(player, amount, source, source_entity)
+__on_player_deals_damage(player, amount, entity)
+__on_player_dies(player)
+__on_player_respawns(player)
 __on_player_rides(player, forward, strafe, jumping, sneaking)
 __on_player_jumps(player)
 __on_player_deploys_elytra(player)

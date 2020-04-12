@@ -30,6 +30,7 @@ hardness
 harvest
 in_dimension
 in_slime_chunk
+inhabited_time
 inventory_find
 inventory_get
 inventory_remove
