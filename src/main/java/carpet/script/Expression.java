@@ -657,9 +657,18 @@ public class Expression
                     throw new InternalExpressionException("Failed to resolve left hand side of the += operation");
                 }
                 Value key = ((LContainerValue) v1).getAddress();
-                Value res = cvi.get(key).add(v2);
-                cvi.put(key, res);
-                return (cc, tt) -> res;
+                Value value = cvi.get(key);
+                if (value instanceof ListValue || value instanceof MapValue)
+                {
+                    ((AbstractListValue) value).append(v2);
+                    return (cc, tt) -> value;
+                }
+                else
+                {
+                    Value res = value.add(v2);
+                    cvi.put(key, res);
+                    return (cc, tt) -> res;
+                }
             }
             v1.assertAssignable();
             String varname = v1.getVariable();
