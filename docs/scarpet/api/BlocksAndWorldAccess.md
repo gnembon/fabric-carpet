@@ -519,6 +519,10 @@ Returns generation status as per the ticket system. Can return any value from se
 can only be stable in a few states: `full`, `features`, `liquid_carvers`, and `structure_starts`. Returns `null` 
 if the chunk is not in memory unless called with optional `true`.
 
+### `inhabited_time(pos)`
+
+Returns inhabited time for a chunk.
+
 ### `structures(pos), structures(pos, structure_name)`
 
 Returns structure information for a given block position. Note that structure information is the same for all the 

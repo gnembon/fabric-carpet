@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static carpet.script.CarpetEventServer.Event.PLAYER_DIES;
 import static carpet.script.CarpetEventServer.Event.PLAYER_FINISHED_USING_ITEM;
 import static carpet.script.CarpetEventServer.Event.STATISTICS;
 
@@ -61,6 +62,10 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     private void onDeathEvent(DamageSource source, CallbackInfo ci)
     {
         ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DEATH, this, source.name);
+        if (PLAYER_DIES.isNeeded())
+        {
+            PLAYER_DIES.onPlayerEvent((ServerPlayerEntity) (Object)this);
+        }
     }
 
     @Redirect(method = "method_14218", at = @At(

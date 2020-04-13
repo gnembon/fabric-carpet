@@ -29,6 +29,9 @@
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
 
+    "ChunkTicketManager_spawnChunksMixin",
+    "ServerWorld_spawnChunksMixin",
+
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
     "EntityTrackerEntry_leashFixMixin",
@@ -141,9 +144,9 @@
     "ServerPlayerEntity_scarpetEventMixin",
     "FallingBlockEntity_scarpetEventsMixin",
     "BlockItem_scarpetEventMixin",
+    "PlayerManager_scarpetEventsMixin",
 
     "ChunkTicketManager_scarpetMixin",
-    "ServerChunkManager_scarpetMixin",
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetEventMixin",

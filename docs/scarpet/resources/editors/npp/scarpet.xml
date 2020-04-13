@@ -54,7 +54,7 @@
                 hardness blast_resistance top loaded suffocates power ticks_randomly update block_tick random_tick in_slime_chunk
                 set without_updates
                 blocks_movement block_sound material map_colour property block_properties block_data poi set_poi
-                place_item set_biome biome loaded_status generation_status chunk_tickets
+                place_item set_biome biome loaded_status generation_status inhabited_time chunk_tickets
                 structures structure_references set_structure reset_chunk
 
                 scoreboard scoreboard_add scoreboard_remove scoreboard_display
@@ -104,6 +104,10 @@
                 __on_tick
                 __on_tick_ender
                 __on_tick_nether
+                __on_player_takes_damage
+                __on_player_deals_damage
+                __on_player_dies
+                __on_player_respawns
             </Keywords>
             <Keywords name="Keywords8">$</Keywords>
             <Keywords name="Delimiters">00&apos; 01\ 02&apos; 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>

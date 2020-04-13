@@ -33,6 +33,10 @@ __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right cli
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
 __on_player_attacks_entity(player, entity)
+__on_player_takes_damage(player, amount, source, source_entity)
+__on_player_deals_damage(player, amount, entity)
+__on_player_dies(player)
+__on_player_respawns(player)
 __on_player_rides(player, forward, strafe, jumping, sneaking)
 __on_player_jumps(player)
 __on_player_deploys_elytra(player)

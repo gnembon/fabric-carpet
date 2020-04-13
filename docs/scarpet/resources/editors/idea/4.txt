@@ -26,3 +26,7 @@ __on_statistic
 __on_tick
 __on_tick_ender
 __on_tick_nether
+__on_player_takes_damage
+__on_player_deals_damage
+__on_player_dies
+__on_player_respawns

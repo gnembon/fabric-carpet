@@ -296,6 +296,14 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Cannot shadow fake players");
             return 0;
         }
+        ServerPlayerEntity sendingPlayer = null;
+        try
+        {
+            sendingPlayer = context.getSource().getPlayer();
+        }
+        catch (CommandSyntaxException ignored) { }
+
+        if (sendingPlayer!=player && cantManipulate(context)) return 0;
         EntityPlayerMPFake.createShadow(player.server, player);
         return 1;
     }

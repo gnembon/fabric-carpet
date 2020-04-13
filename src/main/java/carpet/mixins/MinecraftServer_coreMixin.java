@@ -1,7 +1,10 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
+import com.google.gson.JsonElement;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.WorldGenerationProgressListener;
 import net.minecraft.world.level.LevelGeneratorOptions;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,5 +42,12 @@ public abstract class MinecraftServer_coreMixin
     private void serverClosed(CallbackInfo ci)
     {
         CarpetServer.onServerClosed((MinecraftServer) (Object) this);
+    }
+
+    @Inject(method = "prepareStartRegion", at = @At("RETURN"))
+    private void afterSpawnCreated(WorldGenerationProgressListener worldGenerationProgressListener, CallbackInfo ci)
+    {
+        if (CarpetSettings.spawnChunksSize != 11)
+            CarpetSettings.ChangeSpawnChunksValidator.changeSpawnSize(CarpetSettings.spawnChunksSize);
     }
 }
