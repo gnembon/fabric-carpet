@@ -132,6 +132,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static carpet.script.utils.WorldTools.canHasChunk;
@@ -2378,6 +2379,8 @@ public class CarpetExpression
         });
     }
 
+    private static Map<String,SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
+
     private void API_AuxiliaryAspects()
     {
         this.expr.addLazyFunction("sound", -1, (c, t, lv) -> {
@@ -2388,12 +2391,19 @@ public class CarpetExpression
                 throw new InternalExpressionException("No such sound: "+soundName.getPath());
             float volume = 1.0F;
             float pitch = 1.0F;
+            SoundCategory mixer = SoundCategory.MASTER;
             if (lv.size() > 0+locator.offset)
             {
                 volume = (float) NumericValue.asNumber(lv.get(0+locator.offset).evalValue(c)).getDouble();
                 if (lv.size() > 1+locator.offset)
                 {
                     pitch = (float) NumericValue.asNumber(lv.get(1+locator.offset).evalValue(c)).getDouble();
+                    if (lv.size() > 2+locator.offset)
+                    {
+                        String mixerName = lv.get(2+locator.offset).evalValue(c).getString();
+                        mixer = mixerMap.get(mixerName.toLowerCase(Locale.ROOT));
+                        if (mixer == null) throw  new InternalExpressionException(mixerName +" is not a valid mixer name");
+                    }
                 }
             }
             Vec3d vec = locator.vec;
@@ -2402,7 +2412,7 @@ public class CarpetExpression
             for (ServerPlayerEntity player : cc.s.getWorld().getPlayers( (p) -> p.squaredDistanceTo(vec) < d0))
             {
                 count++;
-                player.networkHandler.sendPacket(new PlaySoundIdS2CPacket(soundName, SoundCategory.PLAYERS, vec, volume, pitch));
+                player.networkHandler.sendPacket(new PlaySoundIdS2CPacket(soundName, mixer, vec, volume, pitch));
             }
             int totalPlayed = count;
             return (_c, _t) -> new NumericValue(totalPlayed);

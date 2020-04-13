@@ -2932,10 +2932,13 @@ Collection of other methods that control smaller, yet still important aspects of
 
 ## Sounds
 
-### `sound(name, pos, volume?, pitch?)`
+### `sound(name, pos, volume?, pitch?, mixer?)`
 
-Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`. `pos` can be 
-either a block, triple of coords, or a list of thee numbers. Uses the same options as a corresponding `playsound` command.
+Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
+optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
+Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
+and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
+ corresponding `playsound` command.
 
 ## Particles
 
