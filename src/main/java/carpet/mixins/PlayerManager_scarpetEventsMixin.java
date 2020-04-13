@@ -14,7 +14,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_RESPAWNS;
 public class PlayerManager_scarpetEventsMixin
 {
     @Inject(method = "respawnPlayer", at = @At("HEAD"))
-    private void onRespawn(ServerPlayerEntity player, DimensionType dimension, boolean alive, CallbackInfoReturnable<ServerPlayerEntity> cir)
+    private void onRespawn(ServerPlayerEntity player, boolean olive, CallbackInfoReturnable<ServerPlayerEntity> cir)
     {
         PLAYER_RESPAWNS.onPlayerEvent(player);
     }
