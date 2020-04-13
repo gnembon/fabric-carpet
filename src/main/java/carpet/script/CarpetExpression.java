@@ -1,14 +1,14 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
+import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.mixins.ChunkTicketManager_scarpetMixin;
 import carpet.mixins.PointOfInterest_scarpetMixin;
-import carpet.mixins.ServerChunkManager_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.bundled.Module;
 import carpet.CarpetSettings;
@@ -708,7 +708,7 @@ public class CarpetExpression
         {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
             Long2ObjectOpenHashMap<SortedArraySet<ChunkTicket<?>>> levelTickets = (
-                    (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.getChunkManager())
+                    (ChunkTicketManagerInterface) ((ServerChunkManagerInterface) world.getChunkManager())
                             .getTicketManager()
             ).getTicketsByPosition();
             List<Value> res = new ArrayList<>();
