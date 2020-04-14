@@ -72,7 +72,7 @@ public abstract class TntEntityMixin extends Entity implements TntEntityInterfac
     private void onExplode(CallbackInfo ci)
     {
         if (LoggerRegistry.__tnt && logHelper != null)
-            logHelper.onExploded(getX(), getY(), getZ());
+            logHelper.onExploded(getX(), getY(), getZ(), this.world.getTime());
 
         if (mergedTNT > 1)
             for (int i = 0; i < mergedTNT - 1; i++)
