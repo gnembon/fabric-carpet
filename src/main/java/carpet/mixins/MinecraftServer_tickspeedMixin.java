@@ -120,7 +120,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
 
             this.profiler.startTick();
             this.profiler.push("tick");
-            this.tick(TickSpeed.time_warp_start_time != 0 ? ()->true : this::shouldKeepTicking);
+            this.tick(TickSpeed.time_warp_start_time != 0 ? ()->!hasRunningTasks() : this::shouldKeepTicking);
             this.profiler.swap("nextTickWait");
             this.field_19249 = true;
             this.field_19248 = Math.max(Util.getMeasuringTimeMs() + /*50L*/ msThisTick, this.timeReference);

@@ -25,6 +25,7 @@ public class TickSpeed
     public static ServerCommandSource tick_warp_sender = null;
     public static int player_active_timeout = 0;
     public static boolean process_entities = true;
+    public static boolean deepFreeze = false;
     public static boolean is_paused = false;
     public static boolean is_superHot = false;
 
