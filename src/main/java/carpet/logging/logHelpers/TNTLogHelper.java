@@ -38,9 +38,6 @@ public class TNTLogHelper
             {
                 case "brief":
                     return new BaseText[]{Messenger.c(
-                            "g  #" + String.valueOf(tntCount),
-                            "m  @" + String.valueOf(gametime),
-                            "g  : ",
                             "l P ",Messenger.dblt("l",primedX,primedY,primedZ),
                             "w  ",Messenger.dblt("l", primedAngle.x, primedAngle.y, primedAngle.z),
                             "r  E ",Messenger.dblt("r",x, y, z))};
