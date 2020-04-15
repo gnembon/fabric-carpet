@@ -150,7 +150,7 @@ public class FeatureGenerator
         structureToFeature.put("Igloo", Collections.singletonList("igloo"));
         structureToFeature.put("Fortress", Collections.singletonList("fortress"));
         structureToFeature.put("Nether_Fossil", Collections.singletonList("nether_fossil"));
-        structureToFeature.put("Bastion_Remnant", Collections.singletonList("bastion_remnant"));
+        structureToFeature.put("Bastion_Remnant", Arrays.asList("bastion_remnant", "bastion_remnant_1", "bastion_remnant_2", "bastion_remnant_3", "bastion_remnant_4"));
         structureToFeature.put("Ruined_Portal", Collections.singletonList("ruined_portal"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
@@ -197,6 +197,15 @@ public class FeatureGenerator
         put("village_snowy", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::gridAnywhere);
         put("bastion_remnant", gridCustomStructure(Feature.field_23997, new class_5186(class_5179.field_23994), Biomes.NETHER_WASTES));
+        List<String> bastionStarts = class_5179.field_23994.keySet().asList();
+        int i = 0;
+        for (String start: bastionStarts)
+        {
+            i++;
+            Map<String, Integer> config = new HashMap<>();
+            config.put(start, 60);
+            put("bastion_remnant_"+i, gridCustomStructure(Feature.field_23997, new class_5186(config), Biomes.NETHER_WASTES));
+        }
         put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::gridAnywhere);
 
     }};
@@ -326,6 +335,15 @@ public class FeatureGenerator
         put("village_snowy", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::plopAnywhere);
         put("bastion_remnant", spawnCustomStructure(Feature.field_23997, new class_5186(class_5179.field_23994), Biomes.NETHER_WASTES));
+        List<String> bastionStarts = class_5179.field_23994.keySet().asList();
+        int i = 0;
+        for (String start: bastionStarts)
+        {
+            i++;
+            Map<String, Integer> config = new HashMap<>();
+            config.put(start, 60);
+            put("bastion_remnant_"+i, spawnCustomStructure(Feature.field_23997, new class_5186(config), Biomes.NETHER_WASTES));
+        }
         put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::plopAnywhere);
 
     }};
