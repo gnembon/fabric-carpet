@@ -25,6 +25,7 @@
     "ServerWorld_tickMixin",
     "ServerChunkManager_tickMixin",
     "ThreadedAnvilChunkStorage_tickMixin",
+    "ChunkTicketManager_tickMixin",
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
     "ChunkHolder_scarpetChunkCreationMixin",

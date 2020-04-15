@@ -131,6 +131,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static carpet.script.utils.WorldTools.canHasChunk;
@@ -2377,6 +2378,8 @@ public class CarpetExpression
         });
     }
 
+    private static Map<String,SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
+
     private void API_AuxiliaryAspects()
     {
         this.expr.addLazyFunction("sound", -1, (c, t, lv) -> {
@@ -2387,12 +2390,19 @@ public class CarpetExpression
                 throw new InternalExpressionException("No such sound: "+soundName.getPath());
             float volume = 1.0F;
             float pitch = 1.0F;
+            SoundCategory mixer = SoundCategory.MASTER;
             if (lv.size() > 0+locator.offset)
             {
                 volume = (float) NumericValue.asNumber(lv.get(0+locator.offset).evalValue(c)).getDouble();
                 if (lv.size() > 1+locator.offset)
                 {
                     pitch = (float) NumericValue.asNumber(lv.get(1+locator.offset).evalValue(c)).getDouble();
+                    if (lv.size() > 2+locator.offset)
+                    {
+                        String mixerName = lv.get(2+locator.offset).evalValue(c).getString();
+                        mixer = mixerMap.get(mixerName.toLowerCase(Locale.ROOT));
+                        if (mixer == null) throw  new InternalExpressionException(mixerName +" is not a valid mixer name");
+                    }
                 }
             }
             Vec3d vec = locator.vec;
@@ -2401,7 +2411,7 @@ public class CarpetExpression
             for (ServerPlayerEntity player : cc.s.getWorld().getPlayers( (p) -> p.squaredDistanceTo(vec) < d0))
             {
                 count++;
-                player.networkHandler.sendPacket(new PlaySoundIdS2CPacket(soundName, SoundCategory.PLAYERS, vec, volume, pitch));
+                player.networkHandler.sendPacket(new PlaySoundIdS2CPacket(soundName, mixer, vec, volume, pitch));
             }
             int totalPlayed = count;
             return (_c, _t) -> new NumericValue(totalPlayed);
@@ -2658,6 +2668,24 @@ public class CarpetExpression
             return (cc, tt) -> time;
         });
 
+        this.expr.addLazyFunction("world_time", 0, (c, t, lv) ->
+        {
+            Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTime());
+            return (cc, tt) -> time;
+        });
+
+        this.expr.addLazyFunction("day_time", -1, (c, t, lv) ->
+        {
+            Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTimeOfDay());
+            if (lv.size() > 0)
+            {
+                long newTime = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+                if (newTime < 0) newTime = 0;
+                ((CarpetContext) c).s.getWorld().setTimeOfDay(newTime);
+            }
+            return (cc, tt) -> time;
+        });
+
         this.expr.addLazyFunction("game_tick", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
@@ -2794,16 +2822,22 @@ public class CarpetExpression
         this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
             String file = null;
+            boolean shared = false;
             if (lv.size()>0)
             {
                 String origfile = lv.get(0).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
+                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+                file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
                 if (file.isEmpty())
                 {
-                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                    throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have at least some letters and numbers");
+                }
+                if (lv.size() > 1)
+                {
+                    shared = lv.get(1).evalValue(c).getBoolean();
                 }
             }
-            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).getGlobalState(file);
+            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).getGlobalState(file, shared);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -2816,21 +2850,27 @@ public class CarpetExpression
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             Value val = lv.get(0).evalValue(c);
             String file = null;
+            boolean shared = false;
             if (lv.size()>1)
             {
                 String origfile = lv.get(1).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
+                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+                file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
                 if (file.isEmpty())
                 {
-                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                    throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
+                }
+                if (lv.size() > 2)
+                {
+                    shared = lv.get(2).evalValue(c).getBoolean();
                 }
             }
             NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
             Tag tag = tagValue.getTag();
-            ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file);
-            return (cc, tt) -> Value.NULL;
+            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file, shared);
+            return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
         this.expr.addLazyFunction("statistic", 3, (c, t, lv) ->

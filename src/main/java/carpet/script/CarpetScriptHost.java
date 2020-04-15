@@ -361,32 +361,31 @@ public class CarpetScriptHost extends ScriptHost
 
     private void dumpState()
     {
-        main.saveData(null, globalState);
+        Module.saveData(main, null, globalState, false);
     }
 
     private Tag loadState()
     {
-        return main.getData(null);
+        return Module.getData(main, null, false);
     }
 
-    public Tag getGlobalState(String file)
+    public Tag getGlobalState(String file, boolean isShared)
     {
-        if (getName() == null ) return null;
+        if (getName() == null && !isShared) return null;
         if (file != null)
-            return main.getData(file);
+            return Module.getData(main, file, isShared);
         if (parent == null)
             return globalState;
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public void setGlobalState(Tag tag, String file)
+    public boolean setGlobalState(Tag tag, String file, boolean isShared)
     {
-        if (getName() == null ) return;
+        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
 
         if (file!= null)
         {
-            main.saveData(file, tag);
-            return;
+            return Module.saveData(main, file, tag, isShared);
         }
 
         CarpetScriptHost responsibleHost = (parent != null)?(CarpetScriptHost) parent:this;
@@ -396,6 +395,7 @@ public class CarpetScriptHost extends ScriptHost
             responsibleHost.dumpState();
             responsibleHost.saveTimeout = 200;
         }
+        return true;
     }
 
     public void tick()
