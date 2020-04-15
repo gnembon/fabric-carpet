@@ -67,7 +67,7 @@
 
                 logger sound particle particle_line particle_rect
 
-                run save tick_time game_tick seed current_dimension in_dimension
+                run save tick_time world_time day_time game_tick seed current_dimension in_dimension
 
                 plop harvest destroy schedule nbt create_marker remove_all_markers load_app_data store_app_data escape_nbt statistic
             </Keywords>

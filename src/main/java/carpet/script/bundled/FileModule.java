@@ -74,7 +74,7 @@ public class FileModule extends Module
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static void write(Tag tag_1, File file)
+    public static boolean write(Tag tag_1, File file)
     {
         File file_2 = new File(file.getAbsolutePath() + "_tmp");
         if (file_2.exists()) file_2.delete();
@@ -90,9 +90,10 @@ public class FileModule extends Module
         }
         catch (IOException e)
         {
-            return;
+            return false;
         }
         if (file.exists()) file.delete();
         if (!file.exists()) file_2.renameTo(file);
+        return true;
     }
 }

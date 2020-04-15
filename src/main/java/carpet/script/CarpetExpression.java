@@ -2669,6 +2669,24 @@ public class CarpetExpression
             return (cc, tt) -> time;
         });
 
+        this.expr.addLazyFunction("world_time", 0, (c, t, lv) ->
+        {
+            Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTime());
+            return (cc, tt) -> time;
+        });
+
+        this.expr.addLazyFunction("day_time", -1, (c, t, lv) ->
+        {
+            Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTimeOfDay());
+            if (lv.size() > 0)
+            {
+                long newTime = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+                if (newTime < 0) newTime = 0;
+                ((CarpetContext) c).s.getWorld().setTimeOfDay(newTime);
+            }
+            return (cc, tt) -> time;
+        });
+
         this.expr.addLazyFunction("game_tick", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
@@ -2805,16 +2823,22 @@ public class CarpetExpression
         this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
             String file = null;
+            boolean shared = false;
             if (lv.size()>0)
             {
                 String origfile = lv.get(0).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
+                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+                file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
                 if (file.isEmpty())
                 {
-                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                    throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have at least some letters and numbers");
+                }
+                if (lv.size() > 1)
+                {
+                    shared = lv.get(1).evalValue(c).getBoolean();
                 }
             }
-            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).getGlobalState(file);
+            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).getGlobalState(file, shared);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -2827,21 +2851,27 @@ public class CarpetExpression
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             Value val = lv.get(0).evalValue(c);
             String file = null;
+            boolean shared = false;
             if (lv.size()>1)
             {
                 String origfile = lv.get(1).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
+                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+                file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
                 if (file.isEmpty())
                 {
-                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                    throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
+                }
+                if (lv.size() > 2)
+                {
+                    shared = lv.get(2).evalValue(c).getBoolean();
                 }
             }
             NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
             Tag tag = tagValue.getTag();
-            ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file);
-            return (cc, tt) -> Value.NULL;
+            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file, shared);
+            return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
         this.expr.addLazyFunction("statistic", 3, (c, t, lv) ->

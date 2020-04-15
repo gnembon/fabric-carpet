@@ -13,6 +13,7 @@ brightness
 chunk_tickets
 create_marker
 current_dimension
+day_time
 destroy
 diamond
 drop_item
@@ -96,3 +97,4 @@ transparent
 update
 volume
 without_updates
+world_time

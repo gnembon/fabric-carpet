@@ -79,23 +79,52 @@ run('give @s stone 4') -> 1 // this operation was successful once
 Performs autosave, saves all chunks, player data, etc. Useful for programs where autosave is disabled due to 
 performance reasons and saves the world only on demand.
 
-### `load_app_data(), load_app_data(file)`
+### `load_app_data(), load_app_data(file), load_app_data(file, shared?)`
 
 Loads the app data associated with the app from the world /scripts folder. Without argument returns the memory 
 managed and buffered / throttled NBT tag. With a file name - reads explicitly a file with that name from the 
-scripts folder.
+scripts folder that belongs exclusively to the app. if `shared` is true, the file location is not exclusive
+to the app anymore, but located in a shared app space. 
+
+File descriptor can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+from the name before saving/loading. Empty descriptors are invalid.
+
+Function returns nbt value with the file content, or `null` if the file is missing or there were problems
+with retrieving the data.
+
+The default no-name app, via `/script run` command can only save/load file from the shared data location.
+
+If the app's name is `'foo'`, the script location would
+be `world/scripts/foo.sc`, system-managed default app data storage is in `world/scripts/foo.data.nbt`, app
+specific data directory is under `world/scripts/foo.data/bar/../baz.nbt`, and shared data space is under
+`world/scripts/shared/bar/../baz.nbt`.
 
 You can use app data to save non-vanilla information separately from the world and other scripts.
 
-### `store_app_data(tag), store_app_data(tag, file)`
+### `store_app_data(tag), store_app_data(tag, file), store_app_data(tag, file, shared?)`
 
-Stores the app data associated with the app from the world /scripts folder. With the `file` parameter saves 
-immediately and with every call, without `file` parameter, it may take up to 10 seconds for the output file 
+Stores the app data associated with the app from the world `/scripts` folder. With the `file` parameter saves 
+immediately and with every call to a specific file defined by the `file`, either in app space, or in the scripts
+shared space if `shared` is true. Without `file` parameter, it may take up to 10
+ seconds for the output file 
 to sync preventing flickering in case this tag changes frequently. It will be synced when server closes.
+
+Returns `true` if the file was saved successfully, `false` otherwise.
+
+Uses the same file structure for exclusive app data, and shared data folder as `load_app_data`.
 
 ### `tick_time()`
 
-Returns game tick counter. Can be used to run certain operations every n-th ticks, or to count in-game time
+Returns server tick counter. Can be used to run certain operations every n-th ticks, or to count in-game time.
+
+### `world_time()`
+
+Returns dimension-specific tick counter.
+
+### `day_time(new_time?)`
+
+Returns current daytime clock value. If `new_time` is specified, sets a new clock
+to that value. Daytime clocks are shared between all dimensions.
 
 ### `game_tick(mstime?)`
 
