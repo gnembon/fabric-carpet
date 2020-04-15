@@ -148,6 +148,8 @@ public class FeatureGenerator
         structureToFeature.put("Igloo", Collections.singletonList("igloo"));
         structureToFeature.put("Fortress", Collections.singletonList("fortress"));
         structureToFeature.put("Nether_Fossil", Collections.singletonList("nether_fossil"));
+        structureToFeature.put("Bastion_Remnant", Collections.singletonList("bastion_remnant"));
+        structureToFeature.put("Ruined_Portal", Collections.singletonList("ruined_portal"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
@@ -192,6 +194,8 @@ public class FeatureGenerator
         put("village_taiga", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
         put("village_snowy", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::gridAnywhere);
+        put("bastion_remnant", ((StructureFeatureInterface)Feature.field_23997)::gridAnywhere);
+        put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::gridAnywhere);
 
     }};
 
@@ -319,6 +323,9 @@ public class FeatureGenerator
         put("village_taiga", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
         put("village_snowy", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::plopAnywhere);
+        put("bastion_remnant", ((StructureFeatureInterface)Feature.field_23997)::plopAnywhere);
+        put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::plopAnywhere);
+
     }};
 
 }
