@@ -5,6 +5,8 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
+import net.minecraft.class_5179;
+import net.minecraft.class_5186;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
@@ -194,7 +196,7 @@ public class FeatureGenerator
         put("village_taiga", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
         put("village_snowy", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::gridAnywhere);
-        put("bastion_remnant", ((StructureFeatureInterface)Feature.field_23997)::gridAnywhere);
+        put("bastion_remnant", gridCustomStructure(Feature.field_23997, new class_5186(class_5179.field_23994), Biomes.NETHER_WASTES));
         put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::gridAnywhere);
 
     }};
@@ -323,7 +325,7 @@ public class FeatureGenerator
         put("village_taiga", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
         put("village_snowy", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::plopAnywhere);
-        put("bastion_remnant", ((StructureFeatureInterface)Feature.field_23997)::plopAnywhere);
+        put("bastion_remnant", spawnCustomStructure(Feature.field_23997, new class_5186(class_5179.field_23994), Biomes.NETHER_WASTES));
         put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::plopAnywhere);
 
     }};
