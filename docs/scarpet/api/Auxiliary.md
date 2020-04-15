@@ -126,6 +126,15 @@ Returns dimension-specific tick counter.
 Returns current daytime clock value. If `new_time` is specified, sets a new clock
 to that value. Daytime clocks are shared between all dimensions.
 
+### `last_tick_times()`
+
+Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
+If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
+tick. For all intent and purpose, `last_tick_times():0` should be used as last tick execution time, but
+individual tick times may vary greatly, and these need to be taken with the little grain of 
+averaging.
+
 ### `game_tick(mstime?)`
 
 Causes game to run for one tick. By default runs it and returns control to the program, but can optionally 

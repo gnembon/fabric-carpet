@@ -2686,6 +2686,22 @@ public class CarpetExpression
             return (cc, tt) -> time;
         });
 
+        this.expr.addLazyFunction("last_tick_times", -1, (c, t, lv) ->
+        {
+            //assuming we are in the tick world section
+            // might be off one tick when run in the off tasks or asynchronously.
+            int currentReportedTick = ((CarpetContext) c).s.getMinecraftServer().getTicks()-1;
+            List<Value> ticks = new ArrayList<>(100);
+            final long[] tickArray = ((CarpetContext) c).s.getMinecraftServer().lastTickLengths;
+            for (int i=currentReportedTick+100; i > currentReportedTick; i--)
+            {
+                ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
+            }
+            Value ret = ListValue.wrap(ticks);
+            return (cc, tt) -> ret;
+        });
+
+
         this.expr.addLazyFunction("game_tick", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
