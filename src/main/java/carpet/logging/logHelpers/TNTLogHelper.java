@@ -43,10 +43,9 @@ public class TNTLogHelper
                             "r  E ",Messenger.dblt("r",x, y, z))};
                 case "full":
                     return new BaseText[]{Messenger.c(
-                            "g  #" + String.valueOf(tntCount),
-                            "m  @" + String.valueOf(gametime),
-                            "g  : ",
-                            "g  #" + String.valueOf(tntCount) + ": ",
+                            "r #" + String.valueOf(tntCount),
+                            "m @" + String.valueOf(gametime),
+                            "g : ",
                             "l P ",Messenger.dblf("l",primedX,primedY,primedZ),
                             "w  ",Messenger.dblf("l", primedAngle.x, primedAngle.y, primedAngle.z),
                             "r  E ",Messenger.dblf("r",x, y, z))};
