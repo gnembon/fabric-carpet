@@ -38,6 +38,7 @@ inventory_remove
 inventory_set
 inventory_size
 item_category
+last_tick_times
 light
 liquid
 load_app_data
