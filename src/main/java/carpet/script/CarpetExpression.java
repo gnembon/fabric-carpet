@@ -2019,6 +2019,72 @@ public class CarpetExpression
             return (c_, t_) -> new NumericValue(finalSCount);
         });
 
+        this.expr.addLazyFunction("sphere", -1, (c, t, lv) ->
+        {
+            int lvsise = lv.size();
+            if (lvsise != 5)
+                throw new InternalExpressionException("'sphere' takes a triple of coords, a radius, and the expression");
+            int cx = (int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+            int cy = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
+            int cz = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
+            int radius = (int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong();
+            LazyValue expr= lv.get(4);
+
+            //should I implement sphere check here or at line 2060? cos I dunno which of the two to put it at, or even both?
+            LazyValue _x = c.getVariable("_x");
+            LazyValue _y = c.getVariable("_y");
+            LazyValue _z = c.getVariable("_z");
+            LazyValue __ = c.getVariable("_");
+            int sCount = 0;
+            outer:for (int y=cy-radius; y <= cy+radius; y++)
+            {
+                int yFinal = y;
+                c.setVariable("_y", (c_, t_) -> new NumericValue(yFinal).bindTo("_y"));
+                for (int x=cx-radius; x <= cx+radius; x++)
+                {
+                    int xFinal = x;
+                    c.setVariable("_x", (c_, t_) -> new NumericValue(xFinal).bindTo("_x"));
+                    for (int z=cz-radius; z <= cz+radius; z++)
+                    {
+                        int zFinal = z;
+
+                        c.setVariable("_z", (c_, t_) -> new NumericValue(zFinal).bindTo("_z"));
+                        Value blockValue = BlockValue.fromCoords(((CarpetContext)c), xFinal,yFinal,zFinal).bindTo("_");
+                        c.setVariable( "_", (cc_, t_c) -> blockValue);
+                        int xpos=xFinal-cx;
+                        int ypos=yFinal-cy;
+                        int zpos=yFinal-cz;
+                        Value result;
+                        try
+                        {
+                            if(xpos*xpos+ypos*ypos+zpos*zpos<=radius*radius){
+                                result = expr.evalValue(c, t);
+                            };
+                        }
+                        catch (ContinueStatement notIgnored)
+                        {
+                            result = notIgnored.retval;
+                        }
+                        catch (BreakStatement notIgnored)
+                        {
+                            break outer;
+                        }
+                        if (t != Context.VOID && result.getBoolean())
+                        {
+                            sCount += 1;
+                        }
+                    }
+                }
+            }
+            //restoring outer scope
+            c.setVariable("_x", _x);
+            c.setVariable("_y", _y);
+            c.setVariable("_z", _z);
+            c.setVariable("_", __);
+            int finalSCount = sCount;
+            return (c_, t_) -> new NumericValue(finalSCount);
+        });
+
         this.expr.addLazyFunction("volume", 7, (c, t, lv) ->
         {
             int xi = (int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
