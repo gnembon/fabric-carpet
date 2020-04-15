@@ -228,7 +228,7 @@ public class Messenger
     }
     public static void m(PlayerEntity player, Object ... fields)
     {
-        player.sendMessage(Messenger.c(fields));
+        player.sendSystemMessage(Messenger.c(fields));
     }
 
     /*
@@ -272,7 +272,7 @@ public class Messenger
 
     public static void send(PlayerEntity player, Collection<BaseText> lines)
     {
-        lines.forEach(player::sendMessage);
+        lines.forEach(player::sendSystemMessage);
     }
     public static void send(ServerCommandSource source, Collection<BaseText> lines)
     {
@@ -284,21 +284,21 @@ public class Messenger
     {
         if (server == null)
             LOG.error("Message not delivered: "+message);
-        server.sendMessage(new LiteralText(message));
+        server.sendSystemMessage(new LiteralText(message));
         BaseText txt = c("gi "+message);
         for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
         {
-            entityplayer.sendMessage(txt);
+            entityplayer.sendSystemMessage(txt);
         }
     }
     public static void print_server_message(MinecraftServer server, BaseText message)
     {
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
-        server.sendMessage(message);
+        server.sendSystemMessage(message);
         for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
         {
-            entityplayer.sendMessage(message);
+            entityplayer.sendSystemMessage(message);
         }
     }
 }

@@ -344,8 +344,7 @@ public class EntityPlayerActionPack
                         BlockHitResult blockHit = (BlockHitResult) hit;
                         BlockPos pos = blockHit.getBlockPos();
                         Direction side = blockHit.getSide();
-                        // rather should be canNotMine
-                        if (player.canMine(player.world, pos, player.interactionManager.getGameMode())) return false;
+                        if (player.isBlockBreakingRestricted(player.world, pos, player.interactionManager.getGameMode())) return false;
                         if (ap.currentBlock != null && player.world.getBlockState(ap.currentBlock).isAir())
                         {
                             ap.currentBlock = null;

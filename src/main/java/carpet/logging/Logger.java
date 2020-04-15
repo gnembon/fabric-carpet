@@ -181,7 +181,7 @@ public class Logger
 
     public void sendPlayerMessage(ServerPlayerEntity player, BaseText ... messages)
     {
-        Arrays.stream(messages).forEach(player::sendMessage);
+        Arrays.stream(messages).forEach(player::sendSystemMessage);
     }
 
     /**

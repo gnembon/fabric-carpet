@@ -364,7 +364,7 @@ public class CarpetExpression
             if ((block_1 instanceof CommandBlock || block_1 instanceof StructureBlock || block_1 instanceof JigsawBlock) && !player.isCreativeLevelTwoOp()) {
                 player.world.updateListeners(blockPos_1, blockState_1, blockState_1, 3);
                 return false;
-            } else if (player.canMine(player.world, blockPos_1, player.interactionManager.getGameMode())) {
+            } else if (player.isBlockBreakingRestricted(player.world, blockPos_1, player.interactionManager.getGameMode())) {
                 return false;
             } else {
                 block_1.onBreak(player.world, blockPos_1, blockState_1, player);
