@@ -590,6 +590,9 @@ Structure list:
 *   `village_savanna`: Savanna, acacia village.
 *   `village_taiga`: Taiga, spruce village.
 *   `village_snowy`: Resolute, Canada.
+*   `nether_fossil`: A pile of bones.
+*   `bastion_remnant`: Piglin bastion.
+*   `ruined_portal`: Unfinished portal.
 
 Feature list:
 
