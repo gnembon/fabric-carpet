@@ -2127,6 +2127,13 @@ Structure list:
 *   `village_savanna`: Savanna, acacia village.
 *   `village_taiga`: Taiga, spruce village.
 *   `village_snowy`: Resolute, Canada.
+*   `nether_fossil`: Pile of bones (1.16)
+*   `ruined_portal`: Ruined portal, random variant.
+*   `bastion_remnant`: Piglin bastion, random variant for the chunk (1.16)
+*   `bastion_remnant_housing`: Housing units version of a piglin bastion (1.16)
+*   `bastion_remnant_stable`: Hoglin stables version of q piglin bastion (1.16)
+*   `bastion_remnant_treasure`: Treasure room version of a piglin bastion (1.16)
+*   `bastion_remnant_bridge` : Bridge version of a piglin bastion (1.16)
 
 Feature list:
 
@@ -2183,6 +2190,14 @@ Feature list:
 *   `coral`: random coral structure. Require water to spawn.
 *   `sea_pickle`
 *   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
+*   `crimson_fungus` (1.16)
+*   `warped_fungus` (1.16)
+*   `nether_sprouts` (1.16)
+*   `crimson_roots` (1.16)
+*   `warped_roots`  (1.16)
+*   `weeping_vines` (1.16)
+*   `twisting_vines` (1.16)
+*   `basalt_pillar` (1.16)
 
 ### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
 Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous
