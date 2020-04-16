@@ -220,7 +220,9 @@ public class EntityValue extends Value
         put("motion_x", (e, a) -> new NumericValue(e.getVelocity().x));
         put("motion_y", (e, a) -> new NumericValue(e.getVelocity().y));
         put("motion_z", (e, a) -> new NumericValue(e.getVelocity().z));
-        put("name", (e, a) -> new StringValue(e.getDisplayName().getString()));
+        put("name", (e, a) -> new StringValue(e.getName().getString()));
+        put("display_name", (e, a) -> new StringValue(e.getDisplayName().getString()));
+        put("command_name", (e, a) -> new StringValue(e.getEntityName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
         put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getId(e.getType()))));
         put("is_riding", (e, a) -> new NumericValue(e.hasVehicle()));
@@ -330,6 +332,8 @@ public class EntityValue extends Value
             }
             return Value.NULL;
         });
+
+        put("team", (e, a) -> e.getScoreboardTeam()==null?Value.NULL:new StringValue(e.getScoreboardTeam().getName()));
 
         put("ping", (e, a) -> {
             if (e instanceof  ServerPlayerEntity)
