@@ -118,7 +118,7 @@ public class EntityValue extends Value
     @Override
     public String getString()
     {
-        return entity.getDisplayName().getString();
+        return entity.getName().asString();
     }
 
     @Override
