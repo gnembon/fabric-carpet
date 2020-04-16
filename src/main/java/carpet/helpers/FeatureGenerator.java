@@ -3,6 +3,7 @@ package carpet.helpers;
 import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
 import net.minecraft.class_5179;
@@ -150,7 +151,7 @@ public class FeatureGenerator
         structureToFeature.put("Igloo", Collections.singletonList("igloo"));
         structureToFeature.put("Fortress", Collections.singletonList("fortress"));
         structureToFeature.put("Nether_Fossil", Collections.singletonList("nether_fossil"));
-        structureToFeature.put("Bastion_Remnant", Arrays.asList("bastion_remnant", "bastion_remnant_1", "bastion_remnant_2", "bastion_remnant_3", "bastion_remnant_4"));
+        structureToFeature.put("Bastion_Remnant", Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
         structureToFeature.put("Ruined_Portal", Collections.singletonList("ruined_portal"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
@@ -197,17 +198,10 @@ public class FeatureGenerator
         put("village_snowy", gridCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::gridAnywhere);
         put("bastion_remnant", gridCustomStructure(Feature.field_23997, new class_5186(class_5179.field_23994), Biomes.NETHER_WASTES));
-        List<String> bastionStarts = class_5179.field_23994.keySet().asList();
-        int i = 0;
-        for (String start: bastionStarts)
-        {
-            i++;
-            Map<String, Integer> config = new HashMap<>();
-            config.put(start, 60);
-            put("bastion_remnant_"+i, gridCustomStructure(Feature.field_23997, new class_5186(config), Biomes.NETHER_WASTES));
-        }
-        put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::gridAnywhere);
-
+        put("bastion_remnant_housing", gridCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/units/base", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_stable", gridCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/hoglin_stable/origin", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_treasure", gridCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/treasure/starters", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_bridge", gridCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/bridge/start", 60).build()), Biomes.NETHER_WASTES));
     }};
 
     private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
@@ -335,15 +329,10 @@ public class FeatureGenerator
         put("village_snowy", spawnCustomStructure(Feature.VILLAGE, new VillageFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
         put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::plopAnywhere);
         put("bastion_remnant", spawnCustomStructure(Feature.field_23997, new class_5186(class_5179.field_23994), Biomes.NETHER_WASTES));
-        List<String> bastionStarts = class_5179.field_23994.keySet().asList();
-        int i = 0;
-        for (String start: bastionStarts)
-        {
-            i++;
-            Map<String, Integer> config = new HashMap<>();
-            config.put(start, 60);
-            put("bastion_remnant_"+i, spawnCustomStructure(Feature.field_23997, new class_5186(config), Biomes.NETHER_WASTES));
-        }
+        put("bastion_remnant_housing", spawnCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/units/base", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_stable", spawnCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/hoglin_stable/origin", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_treasure", spawnCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/treasure/starters", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_bridge", spawnCustomStructure(Feature.field_23997, new class_5186(new ImmutableMap.Builder<String,Integer>().put("bastion/bridge/start", 60).build()), Biomes.NETHER_WASTES));
         put("ruined_portal", ((StructureFeatureInterface)Feature.field_23996)::plopAnywhere);
 
     }};
