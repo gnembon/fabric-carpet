@@ -2127,9 +2127,13 @@ Structure list:
 *   `village_savanna`: Savanna, acacia village.
 *   `village_taiga`: Taiga, spruce village.
 *   `village_snowy`: Resolute, Canada.
-*   `nether_fossil`: A pile of bones.
-*   `bastion_remnant`: Piglin bastion.
-*   `ruined_portal`: Unfinished portal.
+*   `nether_fossil`: Pile of bones (1.16)
+*   `ruined_portal`: Ruined portal, random variant.
+*   `bastion_remnant`: Piglin bastion, random variant for the chunk (1.16)
+*   `bastion_remnant_housing`: Housing units version of a piglin bastion (1.16)
+*   `bastion_remnant_stable`: Hoglin stables version of q piglin bastion (1.16)
+*   `bastion_remnant_treasure`: Treasure room version of a piglin bastion (1.16)
+*   `bastion_remnant_bridge` : Bridge version of a piglin bastion (1.16)
 
 Feature list:
 
@@ -2186,6 +2190,14 @@ Feature list:
 *   `coral`: random coral structure. Require water to spawn.
 *   `sea_pickle`
 *   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
+*   `crimson_fungus` (1.16)
+*   `warped_fungus` (1.16)
+*   `nether_sprouts` (1.16)
+*   `crimson_roots` (1.16)
+*   `warped_roots`  (1.16)
+*   `weeping_vines` (1.16)
+*   `twisting_vines` (1.16)
+*   `basalt_pillar` (1.16)
 
 ### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
 Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous
@@ -2358,13 +2370,23 @@ Triple of entity motion vector, `l(motion_x, motion_y, motion_z)`
 
 Respective component of the motion vector
 
-### `query(e,'name'), query(e,'custom_name'), query(e,'type')`
+### `query(e,'name'), query(e,'display_name'), query(e,'custom_name'), query(e,'type')`
 
 String of entity name
 
-<pre>query(e,'name')  => Leatherworker
+<pre>
+query(e,'name')  => Leatherworker
 query(e,'custom_name')  => null
 query(e,'type')  => villager
+</pre>
+
+## `query(e, 'command_name')`
+
+Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
+player, where its their name.
+
+<pre>
+run('/kill ' + e~'command_name');
 </pre>
 
 ### `query(e,'is_riding')`
@@ -2509,6 +2531,10 @@ Returns `null` if the argument is not a player, otherwise:
 *   `fake`: any carpet-spanwed fake player
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
+
+### `query(e, 'team')`
+
+Team name for entity, or `null` if no team is assigned.
 
 ### `query(e,'ping')`
     

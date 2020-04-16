@@ -113,13 +113,23 @@ Triple of entity motion vector, `l(motion_x, motion_y, motion_z)`
 
 Respective component of the motion vector
 
-### `query(e,'name'), query(e,'custom_name'), query(e,'type')`
+### `query(e,'name'), query(e,'display_name'), query(e,'custom_name'), query(e,'type')`
 
 String of entity name
 
-<pre>query(e,'name')  => Leatherworker
+<pre>
+query(e,'name')  => Leatherworker
 query(e,'custom_name')  => null
 query(e,'type')  => villager
+</pre>
+
+## `query(e, 'command_name')`
+
+Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
+player, where its their name.
+
+<pre>
+run('/kill ' + e~'command_name');
 </pre>
 
 ### `query(e,'is_riding')`
@@ -264,6 +274,10 @@ Returns `null` if the argument is not a player, otherwise:
 *   `fake`: any carpet-spanwed fake player
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
+
+### `query(e, 'team')`
+
+Team name for entity, or `null` if no team is assigned.
 
 ### `query(e,'ping')`
     
