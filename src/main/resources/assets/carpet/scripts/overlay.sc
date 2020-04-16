@@ -40,6 +40,7 @@ pillager_outpost() -> __toggle('pillager_outpost', 'structures');
 mineshaft() -> __toggle('mineshaft', 'structures');
 village() -> __toggle('village', 'structures');
 nether_fossil() -> __toggle('nether_fossil', 'structures');
+bastion_remnant() -> __toggle('bastion_remnant', 'structures');
 
 slime_chunks() -> __toggle('slime_chunks', 'chunks');
 
