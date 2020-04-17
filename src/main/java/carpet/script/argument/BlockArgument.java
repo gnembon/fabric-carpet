@@ -77,7 +77,7 @@ public class BlockArgument extends Argument
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Block should be defined either by three coordinates, a block value, or a proper string");
+            throw handleError(optional, acceptString);
         }
     }
 
@@ -127,7 +127,18 @@ public class BlockArgument extends Argument
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Block should be defined either by three coordinates, a block value, or a proper string");
+            throw handleError(optional, acceptString);
         }
     }
+
+    private static InternalExpressionException handleError(boolean optional, boolean acceptString)
+    {
+        String message = "Block-type argument should be defined either by three coordinates (a triple or by three arguments), or a block value";
+        if (acceptString)
+            message+=", or a string with block description";
+        if (optional)
+            message+=", or null";
+        return new InternalExpressionException(message);
+    }
+
 }

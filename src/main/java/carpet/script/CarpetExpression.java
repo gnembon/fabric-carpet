@@ -21,7 +21,6 @@ import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.utils.CarpetArgParser;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
@@ -108,6 +107,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
@@ -1946,30 +1946,58 @@ public class CarpetExpression
     {
         this.expr.addLazyFunction("scan", -1, (c, t, lv) ->
         {
-            int lvsise = lv.size();
-            if (lvsise != 7 && lvsise != 10)
-                throw new InternalExpressionException("'scan' takes 2, or 3 triples of coords, and the expression");
-            int cx = (int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-            int cy = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-            int cz = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
-            int xrange = (int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong();
-            int yrange = (int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong();
-            int zrange = (int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong();
-            int xprange = xrange;
-            int yprange = yrange;
-            int zprange = zrange;
-            LazyValue expr;
-            if (lvsise == 7)
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 0);
+            Vector3Argument rangeLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
+            BlockPos center = centerLocator.block.getPos();
+            Vec3i range;
+
+            if (rangeLocator.fromBlock)
             {
-                expr = lv.get(6);
+                range = new Vec3i(
+                        abs(rangeLocator.vec.x - center.getX()),
+                        abs(rangeLocator.vec.y - center.getY()),
+                        abs(rangeLocator.vec.z - center.getZ())
+                );
+                //if (lv.size() > rangeLocator.offset+1) throw new InternalExpressionException("'scan' takes two block positions, and the expression")
             }
             else
             {
-                xprange = (int) NumericValue.asNumber(lv.get(6).evalValue(c)).getLong();
-                yprange = (int) NumericValue.asNumber(lv.get(7).evalValue(c)).getLong();
-                zprange = (int) NumericValue.asNumber(lv.get(8).evalValue(c)).getLong();
-                expr = lv.get(9);
+                range = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
             }
+            Vec3i upperRange = range;
+            if (lv.size() > rangeLocator.offset+1) // +1 cause we still need the expression
+            {
+                rangeLocator = Vector3Argument.findIn(cc, lv, rangeLocator.offset);
+                if (rangeLocator.fromBlock)
+                {
+                    upperRange = new Vec3i(
+                            abs(rangeLocator.vec.x - center.getX()),
+                            abs(rangeLocator.vec.y - center.getY()),
+                            abs(rangeLocator.vec.z - center.getZ())
+                    );
+                    //if (lv.size() > rangeLocator.offset+1) throw new InternalExpressionException("'scan' takes two block positions, and the expression")
+                }
+                else
+                {
+                    upperRange = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
+                }
+            }
+            if (lv.size() != rangeLocator.offset+1)
+            {
+                throw new InternalExpressionException("'scan' takes two, or three block positions, and an expression: "+lv.size()+" "+rangeLocator.offset);
+            }
+            LazyValue expr = lv.get(rangeLocator.offset);
+
+            int cx = center.getX();
+            int cy = center.getY();
+            int cz = center.getZ();
+            int xrange = range.getX();
+            int yrange = range.getY();
+            int zrange = range.getZ();
+            int xprange = upperRange.getX();
+            int yprange = upperRange.getY();
+            int zprange = upperRange.getZ();
 
             //saving outer scope
             LazyValue _x = c.getVariable("_x");

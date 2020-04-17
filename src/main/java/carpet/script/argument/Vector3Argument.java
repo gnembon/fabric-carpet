@@ -88,7 +88,7 @@ public class Vector3Argument extends Argument
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Position should be defined either by three coordinates, or a block value");
+            throw new InternalExpressionException("Position argument should be defined either by three coordinates (a triple or by three arguments), or a positioned block value");
         }
     }
 }
