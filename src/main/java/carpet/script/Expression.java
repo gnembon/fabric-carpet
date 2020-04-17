@@ -11,6 +11,7 @@ import carpet.script.Fluff.QuadFunction;
 import carpet.script.Fluff.QuinnFunction;
 import carpet.script.Fluff.SexFunction;
 import carpet.script.Fluff.TriFunction;
+import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.Module;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
@@ -439,6 +440,12 @@ public class Expression
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
+                FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, true);
+                FunctionValue fun = functionArgument.function;
+                Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
+                return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
+
+                /*
                 Value functionValue = lv.get(0).evalValue(c);
                 if (!(functionValue instanceof FunctionValue))
                 {
@@ -453,6 +460,7 @@ public class Expression
                 FunctionValue fun = (FunctionValue)functionValue;
                 Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), lvargs).evalValue(c);
                 return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
+                */
             }
             // gimme signature
             String name = lv.get(0).evalValue(c).getString();
@@ -1870,6 +1878,13 @@ public class Expression
         addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0);
+            Value queue = Value.NULL;
+            if (lv.size() > functionArgument.offset) queue = lv.get(functionArgument.offset).evalValue(c);
+            ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.args);
+            Thread.yield();
+            return (cc, tt) -> thread;
+            /*
             Value funcDesc = lv.get(0).evalValue(c);
             if (!(funcDesc instanceof FunctionValue))
             {
@@ -1891,7 +1906,7 @@ public class Expression
             if (extraargs == 2) queue = lv.get(lv.size()-1).evalValue(c);
             ThreadValue thread = new ThreadValue(queue, fun, expr, tok, c, lvargs);
             Thread.yield();
-            return (cc, tt) -> thread;
+            return (cc, tt) -> thread;*/
         });
 
         addFunction("task_count", (lv) ->
