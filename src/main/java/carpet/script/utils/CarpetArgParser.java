@@ -23,7 +23,8 @@ public class CarpetArgParser
             Value v1 = params.get(0 + offset).evalValue(c);
             if (v1 instanceof BlockValue)
             {
-                return (new Vector3Argument(new Vec3d(((BlockValue) v1).getPos()).add(0.5,0.5,0.5), 1+offset)).fromBlock();
+                // pos + 0.5v
+                return (new Vector3Argument(Vec3d.method_24953(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
             }
             if (v1 instanceof ListValue)
             {
