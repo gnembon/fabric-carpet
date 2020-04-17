@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MapValue extends AbstractListValue implements ContainerValueInterface
@@ -24,6 +25,15 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
         for (Value v : kvPairs)
         {
             put(v);
+        }
+    }
+
+    public MapValue(Set<Value> keySet)
+    {
+        this();
+        for (Value v : keySet)
+        {
+            map.put(v, Value.NULL);
         }
     }
 

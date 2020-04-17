@@ -491,4 +491,9 @@ public class CarpetScriptHost extends ScriptHost
     {
         handleErrorWithStack(message, new CarpetExpressionException(exc.getMessage(), exc.stack));
     }
+
+    public CarpetScriptServer getScriptServer()
+    {
+        return scriptServer;
+    }
 }
