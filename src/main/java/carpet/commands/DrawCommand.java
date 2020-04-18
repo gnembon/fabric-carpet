@@ -6,6 +6,7 @@ import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.block.Block;
 import net.minecraft.block.pattern.CachedBlockPosition;
@@ -66,6 +67,38 @@ public class DrawCommand {
                                     )
                                 )
                             )
+                    )
+                    .then(literal("cone")
+                        .then(argument("center", BlockPosArgumentType.blockPos())
+                            .then(argument("radius", IntegerArgumentType.integer(1))
+                                .then(argument("height",IntegerArgumentType.integer(1))
+                                    .then(argument("pointing up?",BoolArgumentType.bool())
+                                        .then(argument("block", BlockStateArgumentType.blockState())
+                                            .executes((c) -> drawCone(c.getSource(),
+                                                BlockPosArgumentType.getBlockPos(c, "center"),
+                                                IntegerArgumentType.getInteger(c, "radius"),
+                                                IntegerArgumentType.getInteger(c, "height"),
+                                                BoolArgumentType.getBool(c, "pointing up?"),
+                                                BlockStateArgumentType.getBlockState(c, "block"), null)
+                                            )
+                                            .then(literal("replace")
+                                                .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                    .executes((c) -> drawCone(c.getSource(),
+                                                       BlockPosArgumentType.getBlockPos(c, "center"),
+                                                       IntegerArgumentType.getInteger(c, "radius"),
+                                                       IntegerArgumentType.getInteger(c, "height"),
+                                                       BoolArgumentType.getBool(c, "pointing up?"),
+                                                       BlockStateArgumentType.getBlockState(c, "block"),
+                                                       BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
                     );
         dispatcher.register(command);
     }
@@ -199,6 +232,69 @@ public class DrawCommand {
                     }
 
                     mbpos.set(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
+
+                    if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
+                        BlockEntity tileentity = world.getBlockEntity(mbpos);
+
+                        if (tileentity instanceof Inventory) {
+                            ((Inventory) tileentity).clear();
+                        }
+
+                        if (block.setBlockState(world, mbpos, 2)) {
+                            list.add(mbpos.toImmutable());
+                            ++affected;
+                        }
+                    }
+                }
+            }
+        }
+
+        CarpetSettings.impendingFillSkipUpdates = false;
+
+        if (CarpetSettings.fillUpdates) {
+
+            for (BlockPos blockpos1 : list) {
+                Block blokc = world.getBlockState(blockpos1).getBlock();
+                world.updateNeighbors(blockpos1, blokc);
+            }
+        }
+
+        Messenger.m(source, "gi Filled " + affected + " blocks");
+
+        return 1;
+    }
+
+    private static int drawCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
+    Predicate<CachedBlockPosition> replacement) {
+        return (int) drawCone(source, pos, radius, height, block, replacement, pointup, false);
+    }
+
+    private static int drawCone(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
+            Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
+        int affected = 0;
+        int offset = 0;
+        if(pointup){
+            offset=height;
+        }
+        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
+
+        List<BlockPos> list = Lists.newArrayList();
+
+        ServerWorld world = source.getWorld();
+
+        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+
+        for (int x = -radius; x <= radius; ++x) {
+
+            for (int y = -offset; y <= height+1-offset; ++y) {
+
+                for (int z = -radius; z <= radius; ++z) {
+
+                    if (x*x+z*z>(radius/height*y)*(radius/height*y)) {
+                        continue;
+                    }
+
+                    mbpos.set(pos.getX() + x, pos.getY() + y + offset, pos.getZ() + z);
 
                     if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
                         BlockEntity tileentity = world.getBlockEntity(mbpos);
