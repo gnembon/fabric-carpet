@@ -21,6 +21,7 @@ import net.minecraft.server.world.ServerWorld;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.lang.Math.abs;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -52,7 +53,35 @@ public class DrawCommand
                                                                         BlockStateArgumentType.getBlockState(c,"block"),
                                                                         BlockPredicateArgumentType.getBlockPredicate(c,
                                                                                 "filter")
-                                                                        ))))))));
+                                                                        )))))))).
+                    then(literal("diamond").
+                        then(argument("centre",BlockPosArgumentType.blockPos()).
+                            then(argument("radius",IntegerArgumentType.integer(1)).
+                                then(argument("block",BlockStateArgumentType.blockState()).
+                                    executes((c)->drawDiamond(
+                                            c.getSource(),
+                                            BlockPosArgumentType.getBlockPos(c,"centre"),
+                                            IntegerArgumentType.getInteger(c,"radius"),
+                                            BlockStateArgumentType.getBlockState(c,"block"),
+                                            null
+                                        ).
+                                        then(literal("replace").
+                                            then(argument("filter",BlockPredicateArgumentType.blockPredicate()).
+                                                executes((c)->drawDiamond(
+                                                    c.getSource(),
+                                                    BlockPosArgumentType.getBlockPos(c, "centre"),
+                                                    IntegerArgumentType.getInteger(c, "radius"),
+                                                    BlockStateArgumentType.getBlockState(c,"block"),
+                                                    BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                        )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    );
         dispatcher.register(command);
     }
 
@@ -160,5 +189,64 @@ public class DrawCommand
     private static double lengthSq(double x, double y, double z)
         {
         return (x * x) + (y * y) + (z * z);
+    }
+
+    private static int manhattan(int x1, int y1, int z1, int x2, int y2, int z2){
+        return abs(x1-x2)+abs(y1-y2)+abs(z1-z2)
+    }
+
+    private static int drawDiamond(ServerCommandSource source, BlockPos pos, int radius, BlockStateArgument block, 
+        Predicate<CachedBlockPosition> replacement){
+        int affected =0;
+
+        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
+
+        List<BlockPos> list = Lists.newArrayList();
+
+        ServerWorld world=source.getWorld();
+
+        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+
+        for(int x=-radius; x<=radius;++x){
+
+            for(int y=-radius; y<=radius; ++y){
+
+                for(int z=-radius; z<=radius; ++z){
+
+                    if(manhattan(0,0,0,x,y,z)!=radius){continue};
+
+                    mbpos.set(pos.getX()+x, pos.getY()+y, pos.getZ()+z);
+
+                    if (replacement == null || replacement.test(new CachedBlockPosition( world, mbpos, true))){
+                        BlockEntity tileentity = world.getBlockEntity(mbpos);
+
+                        if (tileentity instanceof Inventory){
+                            ((Inventory)tileentity).clear();
+                        }
+                        
+                        if (block.setBlockState(world, mbpos,2)){
+                            list.add(mbpos.toImmutable());
+                            ++affected;
+                        }
+                    }
+                }
+            }
+        }
+
+        CarpetSettings.impendingFillSkipUpdates = false;
+
+        if (CarpetSettings.fillUpdates)
+        {
+
+            for (BlockPos blockpos1 : list)
+            {
+                Block blokc = world.getBlockState(blockpos1).getBlock();
+                world.updateNeighbors(blockpos1, blokc);
+            }
+        }
+
+        Messenger.m(source, "gi Filled "+affected+" blocks");
+
+        return 1;
     }
 }
