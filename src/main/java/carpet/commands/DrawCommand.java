@@ -45,21 +45,28 @@ public class DrawCommand {
                                                                 BlockStateArgumentType.getBlockState(c, "block"),
                                                                 BlockPredicateArgumentType.getBlockPredicate(c,
                                                                         "filter")))))))))
-                .then(literal("diamond").then(argument("centre", BlockPosArgumentType.blockPos())
-                        .then(argument("radius", IntegerArgumentType.integer(1)).then(
-                                argument("block", BlockStateArgumentType.blockState()).executes((c) -> drawDiamond(
-                                        c.getSource(), BlockPosArgumentType.getBlockPos(c, "centre"),
-                                        IntegerArgumentType.getInteger(c, "radius"),
-                                        BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                .then(literal("replace").then(
-                                                        argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                                .executes((c) -> drawDiamond(c.getSource(),
-                                                                        BlockPosArgumentType.getBlockPos(c, "centre"),
-                                                                        IntegerArgumentType.getInteger(c, "radius"),
-                                                                        BlockStateArgumentType.getBlockState(c,
-                                                                                "block"),
-                                                                        BlockPredicateArgumentType.getBlockPredicate(c,
-                                                                                "filter"))))))))));
+                    .then(literal("diamond").then(argument("center", BlockPosArgumentType.blockPos())
+                        .then(argument("radius", IntegerArgumentType.integer(1))
+                            .then(argument("block", BlockStateArgumentType.blockState())
+                                .executes((c) -> drawDiamond(c.getSource(),
+                                    BlockPosArgumentType.getBlockPos(c, "center"),
+                                    IntegerArgumentType.getInteger(c, "radius"),
+                                    BlockStateArgumentType.getBlockState(c, "block"), null))
+                                        .then(literal("replace")
+                                            .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                .executes((c) -> drawDiamond(c.getSource(),
+                                                   BlockPosArgumentType.getBlockPos(c, "center"),
+                                                   IntegerArgumentType.getInteger(c, "radius"),
+                                                   BlockStateArgumentType.getBlockState(c, "block"),
+                                                   BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                    );
         dispatcher.register(command);
     }
 
@@ -169,8 +176,7 @@ public class DrawCommand {
         return (int) drawDiamond(source, pos, radius, block, replacement, false);
     }
 
-    private static double drawDiamond(ServerCommandSource source, BlockPos pos, int radius,
-            BlockStateArgument block,
+    private static int drawDiamond(ServerCommandSource source, BlockPos pos, int radius,BlockStateArgument block,
             Predicate<CachedBlockPosition> replacement, boolean solid) {
         int affected = 0;
 
