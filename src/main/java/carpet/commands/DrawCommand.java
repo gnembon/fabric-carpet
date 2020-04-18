@@ -165,7 +165,13 @@ public class DrawCommand {
     }
 
     private static int drawDiamond(ServerCommandSource source, BlockPos pos, int radius, BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement) {
+    Predicate<CachedBlockPosition> replacement) {
+        return (int) drawDiamond(source, pos, radius, block, replacement, false);
+    }
+
+    private static double drawDiamond(ServerCommandSource source, BlockPos pos, int radius,
+            BlockStateArgument block,
+            Predicate<CachedBlockPosition> replacement, boolean solid) {
         int affected = 0;
 
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
