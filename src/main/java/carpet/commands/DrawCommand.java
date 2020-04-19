@@ -274,7 +274,7 @@ public class DrawCommand {
         int affected = 0;
         int offset = 0;
         if(pointup){
-            offset=height;
+            offset=height-1;
         }
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
 
