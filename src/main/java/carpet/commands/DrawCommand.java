@@ -74,7 +74,7 @@ public class DrawCommand {
                                 .then(argument("height",IntegerArgumentType.integer(1))
                                     .then(argument("pointing up?",BoolArgumentType.bool())
                                         .then(argument("block", BlockStateArgumentType.blockState())
-                                            .executes((c) -> drawCone(c.getSource(),
+                                            .executes((c) -> drawConey(c.getSource(),
                                                 BlockPosArgumentType.getBlockPos(c, "center"),
                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                 IntegerArgumentType.getInteger(c, "height"),
@@ -83,7 +83,7 @@ public class DrawCommand {
                                             )
                                             .then(literal("replace")
                                                 .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                    .executes((c) -> drawCone(c.getSource(),
+                                                    .executes((c) -> drawConey(c.getSource(),
                                                        BlockPosArgumentType.getBlockPos(c, "center"),
                                                        IntegerArgumentType.getInteger(c, "radius"),
                                                        IntegerArgumentType.getInteger(c, "height"),
@@ -264,12 +264,12 @@ public class DrawCommand {
         return 1;
     }
 
-    private static int drawCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
+    private static int drawConey(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
     Predicate<CachedBlockPosition> replacement) {
-        return (int) drawCone(source, pos, radius, height, block, replacement, pointup, false);
+        return (int) drawConey(source, pos, radius, height, block, replacement, pointup, false);
     }
 
-    private static int drawCone(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
+    private static int drawConey(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
             Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
         int affected = 0;
         int offset = 0;
