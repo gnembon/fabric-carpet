@@ -8,6 +8,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.server.command.ServerCommandSource;
@@ -73,23 +75,27 @@ public class DrawCommand {
                             .then(argument("radius", IntegerArgumentType.integer(1))
                                 .then(argument("height",IntegerArgumentType.integer(1))
                                     .then(argument("pointing up?",BoolArgumentType.bool())
-                                        .then(argument("block", BlockStateArgumentType.blockState())
-                                            .executes((c) -> drawConey(c.getSource(),
-                                                BlockPosArgumentType.getBlockPos(c, "center"),
-                                                IntegerArgumentType.getInteger(c, "radius"),
-                                                IntegerArgumentType.getInteger(c, "height"),
-                                                BoolArgumentType.getBool(c, "pointing up?"),
-                                                BlockStateArgumentType.getBlockState(c, "block"), null)
-                                            )
-                                            .then(literal("replace")
-                                                .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                    .executes((c) -> drawConey(c.getSource(),
-                                                       BlockPosArgumentType.getBlockPos(c, "center"),
-                                                       IntegerArgumentType.getInteger(c, "radius"),
-                                                       IntegerArgumentType.getInteger(c, "height"),
-                                                       BoolArgumentType.getBool(c, "pointing up?"),
-                                                       BlockStateArgumentType.getBlockState(c, "block"),
-                                                       BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                        .then(argument("which direction?", StringArgumentType.string())
+                                            .then(argument("block", BlockStateArgumentType.blockState())
+                                                .executes((c) -> selectCone(c.getSource(),
+                                                    BlockPosArgumentType.getBlockPos(c, "center"),
+                                                    IntegerArgumentType.getInteger(c, "radius"),
+                                                    IntegerArgumentType.getInteger(c, "height"),
+                                                    BoolArgumentType.getBool(c,"pointing up?"),
+                                                    StringArgumentType.getString(c,"which direction?"),
+                                                    BlockStateArgumentType.getBlockState(c, "block"), null)
+                                                )
+                                                .then(literal("replace")
+                                                    .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                        .executes((c) -> selectCone(c.getSource(),
+                                                            BlockPosArgumentType.getBlockPos(c, "center"),
+                                                            IntegerArgumentType.getInteger(c, "radius"),
+                                                            IntegerArgumentType.getInteger(c, "height"),
+                                                            BoolArgumentType.getBool(c,"pointing up?"),
+                                                            StringArgumentType.getString(c,"which direction?"),
+                                                           BlockStateArgumentType.getBlockState(c, "block"),
+                                                           BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                            )
                                                         )
                                                     )
                                                 )
@@ -264,12 +270,32 @@ public class DrawCommand {
         return 1;
     }
 
+    private static int selectCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, String direction, BlockStateArgument block,
+    Predicate<CachedBlockPosition> replacement){
+        if(direction=="x"){
+            drawConex(source, pos, radius, height, pointup, block, replacement);
+        }
+
+        if(direction=="y"){
+            drawConey(source, pos, radius, height, pointup, block, replacement);
+        }
+
+        if(direction=="z"){
+            drawConez(source, pos, radius, height, pointup, block, replacement);
+        }
+
+        if(direction!="x" && direction!="y" && direction!="z"){
+            Messenger.m(source,"Invalid direction, must be \"x\",\"y\" or \"z\"");
+        }
+        return(1);
+    }
+
     private static int drawConey(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
     Predicate<CachedBlockPosition> replacement) {
         return (int) drawConey(source, pos, radius, height, block, replacement, pointup, false);
     }
 
-    private static int drawConey(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
+    private static double drawConey(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
             Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
         int affected = 0;
         int offset = 0;
