@@ -325,4 +325,128 @@ public class DrawCommand {
 
         return 1;
     }
+
+    private static int drawConex(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
+    Predicate<CachedBlockPosition> replacement) {
+        return (int) drawConex(source, pos, radius, height, block, replacement, pointup, false);
+    }
+
+    private static int drawConex(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
+            Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
+        int affected = 0;
+        int offset = 0;
+        if(pointup){
+            offset=height-1;
+        }
+        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
+
+        List<BlockPos> list = Lists.newArrayList();
+
+        ServerWorld world = source.getWorld();
+
+        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+
+        for (int x = -offset; x <= height-offset-1; ++x) {
+
+            for (int y = -radius; y <= radius; ++y) {
+
+                for (int z = -radius; z <= radius; ++z) {
+
+                    if (!(y*y+z*z<=(radius/height*x)*(radius/height*x))) {
+                        continue;
+                    }
+
+                    mbpos.set(pos.getX() + x+ offset, pos.getY() + y, pos.getZ() + z);
+                    if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
+                        BlockEntity tileentity = world.getBlockEntity(mbpos);
+
+                        if (tileentity instanceof Inventory) {
+                            ((Inventory) tileentity).clear();
+                        }
+
+                        if (block.setBlockState(world, mbpos, 2)) {
+                            list.add(mbpos.toImmutable());
+                            ++affected;
+                        }
+                    }
+                }
+            }
+        }
+
+        CarpetSettings.impendingFillSkipUpdates = false;
+
+        if (CarpetSettings.fillUpdates) {
+
+            for (BlockPos blockpos1 : list) {
+                Block blokc = world.getBlockState(blockpos1).getBlock();
+                world.updateNeighbors(blockpos1, blokc);
+            }
+        }
+
+        Messenger.m(source, "gi Filled " + affected + " blocks");
+
+        return 1;
+    }
+
+    private static int drawConez(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
+    Predicate<CachedBlockPosition> replacement) {
+        return (int) drawConez(source, pos, radius, height, block, replacement, pointup, false);
+    }
+
+    private static int drawConez(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
+            Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
+        int affected = 0;
+        int offset = 0;
+        if(pointup){
+            offset=height-1;
+        }
+        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
+
+        List<BlockPos> list = Lists.newArrayList();
+
+        ServerWorld world = source.getWorld();
+
+        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+
+        for (int z = -offset; z <= height-offset-1; ++z) {
+
+            for (int y = -radius; y <= radius; ++y) {
+
+                for (int x = -radius; x <= radius; ++x) {
+
+                    if (!(x*x+y*y<=(radius/height*z)*(radius/height*z))) {
+                        continue;
+                    }
+
+                    mbpos.set(pos.getX() + x, pos.getY() + y, pos.getZ() + z + offset);
+                    if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
+                        BlockEntity tileentity = world.getBlockEntity(mbpos);
+
+                        if (tileentity instanceof Inventory) {
+                            ((Inventory) tileentity).clear();
+                        }
+
+                        if (block.setBlockState(world, mbpos, 2)) {
+                            list.add(mbpos.toImmutable());
+                            ++affected;
+                        }
+                    }
+                }
+            }
+        }
+
+        CarpetSettings.impendingFillSkipUpdates = false;
+
+        if (CarpetSettings.fillUpdates) {
+
+            for (BlockPos blockpos1 : list) {
+                Block blokc = world.getBlockState(blockpos1).getBlock();
+                world.updateNeighbors(blockpos1, blokc);
+            }
+        }
+
+        Messenger.m(source, "gi Filled " + affected + " blocks");
+
+        return 1;
+    }
 }
