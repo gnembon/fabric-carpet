@@ -157,9 +157,18 @@
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
     "WorldChunk_movableTEMixin",
-    "PistonHandler_movableTEMixin"
+    "PistonHandler_movableTEMixin",
+    "blaze.BlazeEnityMixin",
+    "blaze.SoulSandValleyBiomeMixin",
+    "blaze.EntityTypeMixin",
+    "blaze.ItemsMixin",
+    "blaze.RevengeGoalMixin",
+    "blaze.BasaltDeltasBiomeMixin"
   ],
   "client": [
+    "blaze.BlazeEntityModelMixin",
+    "blaze.EntityRenderDispatcherMixin",
+
     "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
     "MinecraftClient_pausedShakeMixin",

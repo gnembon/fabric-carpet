@@ -33,7 +33,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.19b+v200415";
+    public static final String carpetVersion = "1.3.19g+v200415";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -50,6 +50,19 @@ public class CarpetSettings
 
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!", category = EXPERIMENTAL)
     public static boolean superSecretSetting = false;
+
+    @Rule(desc = "param a", strict = false, category = CREATIVE)
+    public static double paramA = 0.3f;
+
+    @Rule(desc = "param b", strict = false, category = CREATIVE)
+    public static double paramB = 0.12f;
+
+    @Rule(desc = "param c", strict = false, category = CREATIVE)
+    public static double paramC = 0.15f;
+
+    @Rule(desc = "predicate a", category = CREATIVE)
+    public static boolean predicateA = true;
+
 
     @Rule(
             desc = "Amount of delay ticks to use a nether portal in creative",
