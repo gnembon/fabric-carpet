@@ -274,7 +274,7 @@ public class DrawCommand {
         int affected = 0;
         int offset = 0;
         if(pointup){
-            offset=height;
+            offset=height+1;
         }
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
 
@@ -286,16 +286,15 @@ public class DrawCommand {
 
         for (int x = -radius; x <= radius; ++x) {
 
-            for (int y = -offset; y <= height+1-offset; ++y) {
+            for (int y = 2-offset; y <= height-offset+1; ++y) {
 
                 for (int z = -radius; z <= radius; ++z) {
 
-                    if (x*x+z*z>(radius/height*y)*(radius/height*y)) {
+                    if (!(x*x+z*z<=(radius/height*y)*(radius/height*y))) {
                         continue;
                     }
 
                     mbpos.set(pos.getX() + x, pos.getY() + y + offset, pos.getZ() + z);
-
                     if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
                         BlockEntity tileentity = world.getBlockEntity(mbpos);
 
