@@ -8,7 +8,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.pattern.CachedBlockPosition;
@@ -75,24 +74,70 @@ public class DrawCommand {
                             .then(argument("radius", IntegerArgumentType.integer(1))
                                 .then(argument("height",IntegerArgumentType.integer(1))
                                     .then(argument("pointing up?",BoolArgumentType.bool())
-                                        .then(argument("which direction?", StringArgumentType.string())
+                                        .then(literal("x")
                                             .then(argument("block", BlockStateArgumentType.blockState())
-                                                .executes((c) -> selectCone(c.getSource(),
+                                                .executes((c) -> drawConex(c.getSource(),
                                                     BlockPosArgumentType.getBlockPos(c, "center"),
                                                     IntegerArgumentType.getInteger(c, "radius"),
                                                     IntegerArgumentType.getInteger(c, "height"),
                                                     BoolArgumentType.getBool(c,"pointing up?"),
-                                                    StringArgumentType.getString(c,"which direction?"),
                                                     BlockStateArgumentType.getBlockState(c, "block"), null)
                                                 )
                                                 .then(literal("replace")
                                                     .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> selectCone(c.getSource(),
+                                                        .executes((c) -> drawConex(c.getSource(),
                                                             BlockPosArgumentType.getBlockPos(c, "center"),
                                                             IntegerArgumentType.getInteger(c, "radius"),
                                                             IntegerArgumentType.getInteger(c, "height"),
                                                             BoolArgumentType.getBool(c,"pointing up?"),
-                                                            StringArgumentType.getString(c,"which direction?"),
+                                                            BlockStateArgumentType.getBlockState(c, "block"),
+                                                            BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        .then(literal("y")
+                                            .then(argument("block", BlockStateArgumentType.blockState())
+                                                .executes((c) -> drawConey(c.getSource(),
+                                                    BlockPosArgumentType.getBlockPos(c, "center"),
+                                                    IntegerArgumentType.getInteger(c, "radius"),
+                                                    IntegerArgumentType.getInteger(c, "height"),
+                                                    BoolArgumentType.getBool(c,"pointing up?"),
+                                                    BlockStateArgumentType.getBlockState(c, "block"), null)
+                                                )
+                                                .then(literal("replace")
+                                                    .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                        .executes((c) -> drawConey(c.getSource(),
+                                                            BlockPosArgumentType.getBlockPos(c, "center"),
+                                                            IntegerArgumentType.getInteger(c, "radius"),
+                                                            IntegerArgumentType.getInteger(c, "height"),
+                                                            BoolArgumentType.getBool(c,"pointing up?"),
+                                                            BlockStateArgumentType.getBlockState(c, "block"),
+                                                            BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                        .then(literal("z")
+                                            .then(argument("block", BlockStateArgumentType.blockState())
+                                                .executes((c) -> drawConez(c.getSource(),
+                                                    BlockPosArgumentType.getBlockPos(c, "center"),
+                                                    IntegerArgumentType.getInteger(c, "radius"),
+                                                    IntegerArgumentType.getInteger(c, "height"),
+                                                    BoolArgumentType.getBool(c,"pointing up?"),
+                                                    BlockStateArgumentType.getBlockState(c, "block"), null)
+                                                )
+                                                .then(literal("replace")
+                                                    .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                        .executes((c) -> drawConez(c.getSource(),
+                                                            BlockPosArgumentType.getBlockPos(c, "center"),
+                                                            IntegerArgumentType.getInteger(c, "radius"),
+                                                            IntegerArgumentType.getInteger(c, "height"),
+                                                            BoolArgumentType.getBool(c,"pointing up?"),
                                                             BlockStateArgumentType.getBlockState(c, "block"),
                                                             BlockPredicateArgumentType.getBlockPredicate(c,"filter")
                                                             )
@@ -268,34 +313,6 @@ public class DrawCommand {
         Messenger.m(source, "gi Filled " + affected + " blocks");
 
         return 1;
-    }
-
-    private static int selectCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, String direction, BlockStateArgument block,
-    Predicate<CachedBlockPosition> replacement){
-        int succeeded=0;
-
-        direction=direction.toLowerCase().replaceAll("\\s","");
-
-        if(direction=="x"){
-            drawConex(source, pos, radius, height, pointup, block, replacement);
-            succeeded=1;
-        }
-
-        if(direction=="y"){
-            drawConey(source, pos, radius, height, pointup, block, replacement);
-            succeeded=1;
-        }
-
-        if(direction=="z"){
-            drawConez(source, pos, radius, height, pointup, block, replacement);
-            succeeded=1;
-        }
-
-        if(direction!="x" && direction!="y" && direction!="z"){
-            Messenger.m(source,"gi "+direction+" is an invalid direction, must be x, y or z");
-            System.out.println(direction);
-        }
-        return succeeded;
     }
 
     private static int drawConey(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
