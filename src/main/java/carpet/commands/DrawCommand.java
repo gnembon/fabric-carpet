@@ -93,8 +93,8 @@ public class DrawCommand {
                                                             IntegerArgumentType.getInteger(c, "height"),
                                                             BoolArgumentType.getBool(c,"pointing up?"),
                                                             StringArgumentType.getString(c,"which direction?"),
-                                                           BlockStateArgumentType.getBlockState(c, "block"),
-                                                           BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                            BlockStateArgumentType.getBlockState(c, "block"),
+                                                            BlockPredicateArgumentType.getBlockPredicate(c,"filter")
                                                             )
                                                         )
                                                     )
@@ -274,6 +274,8 @@ public class DrawCommand {
     Predicate<CachedBlockPosition> replacement){
         int succeeded=0;
 
+        direction=direction.toLowerCase().replaceAll("\\s","");
+
         if(direction=="x"){
             drawConex(source, pos, radius, height, pointup, block, replacement);
             succeeded=1;
@@ -290,7 +292,8 @@ public class DrawCommand {
         }
 
         if(direction!="x" && direction!="y" && direction!="z"){
-            Messenger.m(source,"Invalid direction, must be \"x\",\"y\" or \"z\"");
+            Messenger.m(source,"gi "+direction+" is an invalid direction, must be x, y or z");
+            System.out.println(direction);
         }
         return succeeded;
     }
