@@ -272,22 +272,27 @@ public class DrawCommand {
 
     private static int selectCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, String direction, BlockStateArgument block,
     Predicate<CachedBlockPosition> replacement){
+        int succeeded=0;
+
         if(direction=="x"){
             drawConex(source, pos, radius, height, pointup, block, replacement);
+            succeeded=1;
         }
 
         if(direction=="y"){
             drawConey(source, pos, radius, height, pointup, block, replacement);
+            succeeded=1;
         }
 
         if(direction=="z"){
             drawConez(source, pos, radius, height, pointup, block, replacement);
+            succeeded=1;
         }
 
         if(direction!="x" && direction!="y" && direction!="z"){
             Messenger.m(source,"Invalid direction, must be \"x\",\"y\" or \"z\"");
         }
-        return(1);
+        return succeeded;
     }
 
     private static int drawConey(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
