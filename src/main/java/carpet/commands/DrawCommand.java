@@ -159,12 +159,14 @@ public class DrawCommand {
     }
 
     private static int drawSphere(ServerCommandSource source, BlockPos pos, int radius, BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement) {
+            Predicate<CachedBlockPosition> replacement)
+    {
         return drawSphere(source, pos, (double) radius, (double) radius, (double) radius, block, replacement, false);
     }
 
     private static int drawSphere(ServerCommandSource source, BlockPos pos, double radiusX, double radiusY,
-            double radiusZ, BlockStateArgument block, Predicate<CachedBlockPosition> replacement, boolean solid) {
+            double radiusZ, BlockStateArgument block, Predicate<CachedBlockPosition> replacement, boolean solid)
+    {
         int affected = 0;
         ServerWorld world = source.getWorld();
 
@@ -209,25 +211,30 @@ public class DrawCommand {
                     }
 
                     if (!solid) {
-                        if (lengthSq(nextXn, yn, zn) <= 1 && lengthSq(xn, nextYn, zn) <= 1
-                                && lengthSq(xn, yn, nextZn) <= 1) {
+                        if (lengthSq(nextXn, yn, zn) <= 1 && lengthSq(xn, nextYn, zn) <= 1 && lengthSq(xn, yn, nextZn) <= 1)
+                        {
                             continue;
                         }
                     }
 
                     CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
-                    for (int xmod = -1; xmod < 2; xmod += 2) {
-                        for (int ymod = -1; ymod < 2; ymod += 2) {
-                            for (int zmod = -1; zmod < 2; zmod += 2) {
+                    for (int xmod = -1; xmod < 2; xmod += 2)
+                    {
+                        for (int ymod = -1; ymod < 2; ymod += 2)
+                        {
+                            for (int zmod = -1; zmod < 2; zmod += 2)
+                            {
                                 mbpos.set(pos.getX() + xmod * x, pos.getY() + ymod * y, pos.getZ() + zmod * z);
                                 if (replacement == null
                                         || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
                                     BlockEntity tileentity = world.getBlockEntity(mbpos);
-                                    if (tileentity instanceof Inventory) {
+                                    if (tileentity instanceof Inventory)
+                                    {
                                         ((Inventory) tileentity).clear();
                                     }
 
-                                    if (block.setBlockState(world, mbpos, 2)) {
+                                    if (block.setBlockState(world, mbpos, 2))
+                                    {
                                         list.add(mbpos.toImmutable());
                                         ++affected;
                                     }
