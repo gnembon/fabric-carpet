@@ -70,77 +70,79 @@ public class DrawCommand {
                                 )
                             )
                     )
-                    .then(literal("cone")
-                        .then(argument("center", BlockPosArgumentType.blockPos())
-                            .then(argument("radius", IntegerArgumentType.integer(1))
-                                .then(argument("height",IntegerArgumentType.integer(1))
-                                    .then(argument("pointing up?",BoolArgumentType.bool())
-                                        .then(literal("x")
-                                            .then(argument("block", BlockStateArgumentType.blockState())
-                                                .executes((c) -> drawCone(c.getSource(),
-                                                    BlockPosArgumentType.getBlockPos(c, "center"),
-                                                    IntegerArgumentType.getInteger(c, "radius"),
-                                                    IntegerArgumentType.getInteger(c, "height"),
-                                                    BoolArgumentType.getBool(c,"pointing up?"),"x",
-                                                    BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                )
-                                                .then(literal("replace")
-                                                    .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> drawCone(c.getSource(),
-                                                            BlockPosArgumentType.getBlockPos(c, "center"),
-                                                            IntegerArgumentType.getInteger(c, "radius"),
-                                                            IntegerArgumentType.getInteger(c, "height"),
-                                                            BoolArgumentType.getBool(c,"pointing up?"),"x",
-                                                            BlockStateArgumentType.getBlockState(c, "block"),
-                                                            BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                    .then(literal("pyramid")
+                        .then(literal("cone")
+                            .then(argument("center", BlockPosArgumentType.blockPos())
+                                .then(argument("radius", IntegerArgumentType.integer(1))
+                                    .then(argument("height",IntegerArgumentType.integer(1))
+                                        .then(argument("pointing up?",BoolArgumentType.bool())
+                                            .then(literal("x")
+                                                .then(argument("block", BlockStateArgumentType.blockState())
+                                                    .executes((c) -> drawCone(c.getSource(),
+                                                        BlockPosArgumentType.getBlockPos(c, "center"),
+                                                        IntegerArgumentType.getInteger(c, "radius"),
+                                                        IntegerArgumentType.getInteger(c, "height"),
+                                                        BoolArgumentType.getBool(c,"pointing up?"),"x",
+                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
+                                                    )
+                                                    .then(literal("replace")
+                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                            .executes((c) -> drawCone(c.getSource(),
+                                                                BlockPosArgumentType.getBlockPos(c, "center"),
+                                                                IntegerArgumentType.getInteger(c, "radius"),
+                                                                IntegerArgumentType.getInteger(c, "height"),
+                                                                BoolArgumentType.getBool(c,"pointing up?"),"x",
+                                                                BlockStateArgumentType.getBlockState(c, "block"),
+                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                                )
                                                             )
                                                         )
                                                     )
                                                 )
                                             )
-                                        )
-                                        .then(literal("y")
-                                            .then(argument("block", BlockStateArgumentType.blockState())
-                                                .executes((c) -> drawCone(c.getSource(),
-                                                    BlockPosArgumentType.getBlockPos(c, "center"),
-                                                    IntegerArgumentType.getInteger(c, "radius"),
-                                                    IntegerArgumentType.getInteger(c, "height"),
-                                                    BoolArgumentType.getBool(c,"pointing up?"),"y",
-                                                    BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                )
-                                                .then(literal("replace")
-                                                    .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> drawCone(c.getSource(),
-                                                            BlockPosArgumentType.getBlockPos(c, "center"),
-                                                            IntegerArgumentType.getInteger(c, "radius"),
-                                                            IntegerArgumentType.getInteger(c, "height"),
-                                                            BoolArgumentType.getBool(c,"pointing up?"),"y",
-                                                            BlockStateArgumentType.getBlockState(c, "block"),
-                                                            BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                            .then(literal("y")
+                                                .then(argument("block", BlockStateArgumentType.blockState())
+                                                    .executes((c) -> drawCone(c.getSource(),
+                                                        BlockPosArgumentType.getBlockPos(c, "center"),
+                                                        IntegerArgumentType.getInteger(c, "radius"),
+                                                        IntegerArgumentType.getInteger(c, "height"),
+                                                        BoolArgumentType.getBool(c,"pointing up?"),"y",
+                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
+                                                    )
+                                                    .then(literal("replace")
+                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                            .executes((c) -> drawCone(c.getSource(),
+                                                                BlockPosArgumentType.getBlockPos(c, "center"),
+                                                                IntegerArgumentType.getInteger(c, "radius"),
+                                                                IntegerArgumentType.getInteger(c, "height"),
+                                                                BoolArgumentType.getBool(c,"pointing up?"),"y",
+                                                                BlockStateArgumentType.getBlockState(c, "block"),
+                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                                )
                                                             )
                                                         )
                                                     )
                                                 )
                                             )
-                                        )
-                                        .then(literal("z")
-                                            .then(argument("block", BlockStateArgumentType.blockState())
-                                                .executes((c) -> drawCone(c.getSource(),
-                                                    BlockPosArgumentType.getBlockPos(c, "center"),
-                                                    IntegerArgumentType.getInteger(c, "radius"),
-                                                    IntegerArgumentType.getInteger(c, "height"),
-                                                    BoolArgumentType.getBool(c,"pointing up?"),"z",
-                                                    BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                )
-                                                .then(literal("replace")
-                                                    .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> drawCone(c.getSource(),
-                                                            BlockPosArgumentType.getBlockPos(c, "center"),
-                                                            IntegerArgumentType.getInteger(c, "radius"),
-                                                            IntegerArgumentType.getInteger(c, "height"),
-                                                            BoolArgumentType.getBool(c,"pointing up?"),"z",
-                                                            BlockStateArgumentType.getBlockState(c, "block"),
-                                                            BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                            .then(literal("z")
+                                                .then(argument("block", BlockStateArgumentType.blockState())
+                                                    .executes((c) -> drawCone(c.getSource(),
+                                                        BlockPosArgumentType.getBlockPos(c, "center"),
+                                                        IntegerArgumentType.getInteger(c, "radius"),
+                                                        IntegerArgumentType.getInteger(c, "height"),
+                                                        BoolArgumentType.getBool(c,"pointing up?"),"z",
+                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
+                                                    )
+                                                    .then(literal("replace")
+                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
+                                                            .executes((c) -> drawCone(c.getSource(),
+                                                                BlockPosArgumentType.getBlockPos(c, "center"),
+                                                                IntegerArgumentType.getInteger(c, "radius"),
+                                                                IntegerArgumentType.getInteger(c, "height"),
+                                                                BoolArgumentType.getBool(c,"pointing up?"),"z",
+                                                                BlockStateArgumentType.getBlockState(c, "block"),
+                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
+                                                                )
                                                             )
                                                         )
                                                     )
@@ -151,6 +153,7 @@ public class DrawCommand {
                                 )
                             )
                         )
+                    
                     );
         dispatcher.register(command);
     }
