@@ -1,7 +1,9 @@
 package carpet.mixins.blaze;
 
 import carpet.CarpetSettings;
+import carpet.fakes.BlazeInterface;
 import carpet.patches.BlazeAttack;
+import carpet.patches.BlazeWonderAroundFarGoal;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -33,7 +35,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BlazeEntity.class)
-public class BlazeEnityMixin extends HostileEntity
+public class BlazeEnityMixin extends HostileEntity implements BlazeInterface
 {
     @Shadow private int field_7215;
 
@@ -55,6 +57,7 @@ public class BlazeEnityMixin extends HostileEntity
     }*/
 
 
+    private BlazeWonderAroundFarGoal goal;
     /**
      * @author me
      * @reason cause
@@ -63,11 +66,20 @@ public class BlazeEnityMixin extends HostileEntity
     public void initGoals() {
         this.goalSelector.add(4, new BlazeAttack((BlazeEntity) (Object)this));
         this.goalSelector.add(5, new GoToWalkTargetGoal(this, 1.0D));
-        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0D, 0.0F));
+        goal = new BlazeWonderAroundFarGoal(this, 1.0D, 0.0F);
+        this.goalSelector.add(7, goal);
         this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 8.0F));
         this.goalSelector.add(8, new LookAroundGoal(this));
         this.targetSelector.add(1, (new RevengeGoal(this, new Class[0])).setGroupRevenge());
         //this.targetSelector.add(2, new FollowTargetGoal(this, PlayerEntity.class, true));
+    }
+
+    @Override
+    public Vec3d getCurrentWanderingTarget()
+    {
+        if (goal == null) return null;
+        if (goal.currentTarget != null) return goal.currentTarget;
+        return null;
     }
 
     /**
@@ -225,5 +237,6 @@ public class BlazeEnityMixin extends HostileEntity
     public boolean isAngryAt(PlayerEntity player) {
         return this.getAttacker() == player;
     }
+
 
 }
