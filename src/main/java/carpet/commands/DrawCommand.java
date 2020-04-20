@@ -78,8 +78,9 @@ public class DrawCommand {
                                         .then(argument("pointing up?",BoolArgumentType.bool())
                                             .then(literal("x")
                                                 .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawCone(c.getSource(),
+                                                    .executes((c) -> drawPyramid(c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "center"),
+                                                        "circle",
                                                         IntegerArgumentType.getInteger(c, "radius"),
                                                         IntegerArgumentType.getInteger(c, "height"),
                                                         BoolArgumentType.getBool(c,"pointing up?"),"x",
@@ -87,8 +88,9 @@ public class DrawCommand {
                                                     )
                                                     .then(literal("replace")
                                                         .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawCone(c.getSource(),
+                                                            .executes((c) -> drawPyramid(c.getSource(),
                                                                 BlockPosArgumentType.getBlockPos(c, "center"),
+                                                                "circle",
                                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                                 IntegerArgumentType.getInteger(c, "height"),
                                                                 BoolArgumentType.getBool(c,"pointing up?"),"x",
@@ -102,8 +104,9 @@ public class DrawCommand {
                                             )
                                             .then(literal("y")
                                                 .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawCone(c.getSource(),
+                                                    .executes((c) -> drawPyramid(c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "center"),
+                                                        "circle",
                                                         IntegerArgumentType.getInteger(c, "radius"),
                                                         IntegerArgumentType.getInteger(c, "height"),
                                                         BoolArgumentType.getBool(c,"pointing up?"),"y",
@@ -111,8 +114,9 @@ public class DrawCommand {
                                                     )
                                                     .then(literal("replace")
                                                         .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawCone(c.getSource(),
+                                                            .executes((c) -> drawPyramid(c.getSource(),
                                                                 BlockPosArgumentType.getBlockPos(c, "center"),
+                                                                "circle",
                                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                                 IntegerArgumentType.getInteger(c, "height"),
                                                                 BoolArgumentType.getBool(c,"pointing up?"),"y",
@@ -126,8 +130,9 @@ public class DrawCommand {
                                             )
                                             .then(literal("z")
                                                 .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawCone(c.getSource(),
+                                                    .executes((c) -> drawPyramid(c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "center"),
+                                                        "circle",
                                                         IntegerArgumentType.getInteger(c, "radius"),
                                                         IntegerArgumentType.getInteger(c, "height"),
                                                         BoolArgumentType.getBool(c,"pointing up?"),"z",
@@ -135,8 +140,9 @@ public class DrawCommand {
                                                     )
                                                     .then(literal("replace")
                                                         .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawCone(c.getSource(),
+                                                            .executes((c) -> drawPyramid(c.getSource(),
                                                                 BlockPosArgumentType.getBlockPos(c, "center"),
+                                                                "circle",
                                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                                 IntegerArgumentType.getInteger(c, "height"),
                                                                 BoolArgumentType.getBool(c,"pointing up?"),"z",
@@ -366,13 +372,13 @@ public class DrawCommand {
         return successes;
     }
     
-    private static int drawCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, String orientation,  BlockStateArgument block,
+    private static int drawPyramid(ServerCommandSource source, BlockPos pos, String shape, int radius, int height, boolean pointup, String orientation,  BlockStateArgument block,
     Predicate<CachedBlockPosition> replacement) {
-        return (int) drawCone(source, pos, radius, height, block, replacement, pointup, orientation, false);
+        return (int) drawPyramid(source, pos, radius, height, block, replacement, pointup, orientation, false, shape);
     }
 
-    private static double drawCone(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement, boolean pointup, String orientation, boolean solid) {
+    private static double drawPyramid(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
+            Predicate<CachedBlockPosition> replacement, boolean pointup, String orientation, boolean solid, String shape) {
         int affected = 0;
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
 
