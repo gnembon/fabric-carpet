@@ -36,13 +36,13 @@ public class DrawCommand {
                 .then(literal("sphere").then(argument("center", BlockPosArgumentType.blockPos())
                         .then(argument("radius", IntegerArgumentType.integer(1))
                                 .then(argument("block", BlockStateArgumentType.blockState())
-                                        .executes((c) -> drawCircle(c.getSource(),
+                                        .executes((c) -> drawSphere(c.getSource(),
                                                 BlockPosArgumentType.getBlockPos(c, "center"),
                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                 BlockStateArgumentType.getBlockState(c, "block"), null))
                                         .then(literal("replace")
                                                 .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> drawCircle(c.getSource(),
+                                                        .executes((c) -> drawSphere(c.getSource(),
                                                                 BlockPosArgumentType.getBlockPos(c, "center"),
                                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                                 BlockStateArgumentType.getBlockState(c, "block"),
@@ -77,20 +77,20 @@ public class DrawCommand {
                                     .then(argument("pointing up?",BoolArgumentType.bool())
                                         .then(literal("x")
                                             .then(argument("block", BlockStateArgumentType.blockState())
-                                                .executes((c) -> drawConex(c.getSource(),
+                                                .executes((c) -> drawCone(c.getSource(),
                                                     BlockPosArgumentType.getBlockPos(c, "center"),
                                                     IntegerArgumentType.getInteger(c, "radius"),
                                                     IntegerArgumentType.getInteger(c, "height"),
-                                                    BoolArgumentType.getBool(c,"pointing up?"),
+                                                    BoolArgumentType.getBool(c,"pointing up?"),"x",
                                                     BlockStateArgumentType.getBlockState(c, "block"), null)
                                                 )
                                                 .then(literal("replace")
                                                     .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> drawConex(c.getSource(),
+                                                        .executes((c) -> drawCone(c.getSource(),
                                                             BlockPosArgumentType.getBlockPos(c, "center"),
                                                             IntegerArgumentType.getInteger(c, "radius"),
                                                             IntegerArgumentType.getInteger(c, "height"),
-                                                            BoolArgumentType.getBool(c,"pointing up?"),
+                                                            BoolArgumentType.getBool(c,"pointing up?"),"x",
                                                             BlockStateArgumentType.getBlockState(c, "block"),
                                                             BlockPredicateArgumentType.getBlockPredicate(c,"filter")
                                                             )
@@ -101,20 +101,20 @@ public class DrawCommand {
                                         )
                                         .then(literal("y")
                                             .then(argument("block", BlockStateArgumentType.blockState())
-                                                .executes((c) -> drawConey(c.getSource(),
+                                                .executes((c) -> drawCone(c.getSource(),
                                                     BlockPosArgumentType.getBlockPos(c, "center"),
                                                     IntegerArgumentType.getInteger(c, "radius"),
                                                     IntegerArgumentType.getInteger(c, "height"),
-                                                    BoolArgumentType.getBool(c,"pointing up?"),
+                                                    BoolArgumentType.getBool(c,"pointing up?"),"y",
                                                     BlockStateArgumentType.getBlockState(c, "block"), null)
                                                 )
                                                 .then(literal("replace")
                                                     .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> drawConey(c.getSource(),
+                                                        .executes((c) -> drawCone(c.getSource(),
                                                             BlockPosArgumentType.getBlockPos(c, "center"),
                                                             IntegerArgumentType.getInteger(c, "radius"),
                                                             IntegerArgumentType.getInteger(c, "height"),
-                                                            BoolArgumentType.getBool(c,"pointing up?"),
+                                                            BoolArgumentType.getBool(c,"pointing up?"),"y",
                                                             BlockStateArgumentType.getBlockState(c, "block"),
                                                             BlockPredicateArgumentType.getBlockPredicate(c,"filter")
                                                             )
@@ -125,20 +125,20 @@ public class DrawCommand {
                                         )
                                         .then(literal("z")
                                             .then(argument("block", BlockStateArgumentType.blockState())
-                                                .executes((c) -> drawConez(c.getSource(),
+                                                .executes((c) -> drawCone(c.getSource(),
                                                     BlockPosArgumentType.getBlockPos(c, "center"),
                                                     IntegerArgumentType.getInteger(c, "radius"),
                                                     IntegerArgumentType.getInteger(c, "height"),
-                                                    BoolArgumentType.getBool(c,"pointing up?"),
+                                                    BoolArgumentType.getBool(c,"pointing up?"),"z",
                                                     BlockStateArgumentType.getBlockState(c, "block"), null)
                                                 )
                                                 .then(literal("replace")
                                                     .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                        .executes((c) -> drawConez(c.getSource(),
+                                                        .executes((c) -> drawCone(c.getSource(),
                                                             BlockPosArgumentType.getBlockPos(c, "center"),
                                                             IntegerArgumentType.getInteger(c, "radius"),
                                                             IntegerArgumentType.getInteger(c, "height"),
-                                                            BoolArgumentType.getBool(c,"pointing up?"),
+                                                            BoolArgumentType.getBool(c,"pointing up?"),"z",
                                                             BlockStateArgumentType.getBlockState(c, "block"),
                                                             BlockPredicateArgumentType.getBlockPredicate(c,"filter")
                                                             )
@@ -155,12 +155,12 @@ public class DrawCommand {
         dispatcher.register(command);
     }
 
-    private static int drawCircle(ServerCommandSource source, BlockPos pos, int radius, BlockStateArgument block,
+    private static int drawSphere(ServerCommandSource source, BlockPos pos, int radius, BlockStateArgument block,
             Predicate<CachedBlockPosition> replacement) {
-        return drawCircle(source, pos, (double) radius, (double) radius, (double) radius, block, replacement, false);
+        return drawSphere(source, pos, (double) radius, (double) radius, (double) radius, block, replacement, false);
     }
 
-    private static int drawCircle(ServerCommandSource source, BlockPos pos, double radiusX, double radiusY,
+    private static int drawSphere(ServerCommandSource source, BlockPos pos, double radiusX, double radiusY,
             double radiusZ, BlockStateArgument block, Predicate<CachedBlockPosition> replacement, boolean solid) {
         int affected = 0;
         ServerWorld world = source.getWorld();
@@ -314,80 +314,56 @@ public class DrawCommand {
         return 1;
     }
 
-    private static int drawConey(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
-    Predicate<CachedBlockPosition> replacement) {
-        return (int) drawConey(source, pos, radius, height, block, replacement, pointup, false);
-    }
+    private static int drawCircle(ServerCommandSource source, BlockPos pos, int offset, int radius, int height, boolean pointup, BlockStateArgument block, String orientation,
+    Predicate<CachedBlockPosition> replacement, List<BlockPos> list, BlockPos.Mutable mbpos){
+        
+        if(orientation=="x"){
+            for(int y=-radius;y<=radius;++y){
 
-    private static double drawConey(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
-        int affected = 0;
-        int offset = 0;
-        if(pointup){
-            offset=height-1;
-        }
-        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
+                for(int z=-radius;z<=radius;++z){
 
-        List<BlockPos> list = Lists.newArrayList();
-
-        ServerWorld world = source.getWorld();
-
-        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
-
-        for (int x = -radius; x <= radius; ++x) {
-
-            for (int y = -offset; y <= height-offset-1; ++y) {
-
-                for (int z = -radius; z <= radius; ++z) {
-
-                    if (!(x*x+z*z<=(radius/height*y)*(radius/height*y))) {
-                        continue;
-                    }
-
-                    mbpos.set(pos.getX() + x, pos.getY() + y + offset, pos.getZ() + z);
-                    if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
-                        BlockEntity tileentity = world.getBlockEntity(mbpos);
-
-                        if (tileentity instanceof Inventory) {
-                            ((Inventory) tileentity).clear();
-                        }
-
-                        if (block.setBlockState(world, mbpos, 2)) {
-                            list.add(mbpos.toImmutable());
-                            ++affected;
-                        }
+                    if(y*y+z*z<=radius*radius){
+                        blockset(source, pos.getX()+offset, pos.getY()+y, pos.getZ()+z, replacement, list, mbpos, block);
                     }
                 }
             }
         }
 
-        CarpetSettings.impendingFillSkipUpdates = false;
+        if(orientation=="y"){
+            for(int x=-radius;x<=radius;++x){
 
-        if (CarpetSettings.fillUpdates) {
+                for(int z=-radius;z<=radius;++z){
 
-            for (BlockPos blockpos1 : list) {
-                Block blokc = world.getBlockState(blockpos1).getBlock();
-                world.updateNeighbors(blockpos1, blokc);
+                    if(x*x+z*z<=radius*radius){
+                        blockset(source, pos.getX()+x, pos.getY()+offset, pos.getZ()+z, replacement, list, mbpos, block);
+                    }
+                }
             }
         }
 
-        Messenger.m(source, "gi Filled " + affected + " blocks");
+        if(orientation=="z"){
+            for(int y=-radius;y<=radius;++y){
+
+                for(int x=-radius;x<=radius;++x){
+
+                    if(y*y+x*x<=radius*radius){
+                        blockset(source, pos.getX()+x, pos.getY()+y, pos.getZ()+offset, replacement, list, mbpos, block);
+                    }
+                }
+            }
+        }
 
         return 1;
     }
-
-    private static int drawConex(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
+    
+    private static int drawCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, String orientation,  BlockStateArgument block,
     Predicate<CachedBlockPosition> replacement) {
-        return (int) drawConex(source, pos, radius, height, block, replacement, pointup, false);
+        return (int) drawCone(source, pos, radius, height, block, replacement, pointup, orientation, false);
     }
 
-    private static int drawConex(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
+    private static double drawCone(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
+            Predicate<CachedBlockPosition> replacement, boolean pointup, String orientation, boolean solid) {
         int affected = 0;
-        int offset = 0;
-        if(pointup){
-            offset=height-1;
-        }
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
 
         List<BlockPos> list = Lists.newArrayList();
@@ -396,95 +372,19 @@ public class DrawCommand {
 
         CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
 
-        for (int x = -offset; x <= height-offset-1; ++x) {
+        int r = radius;
 
-            for (int y = -radius; y <= radius; ++y) {
-
-                for (int z = -radius; z <= radius; ++z) {
-
-                    if (!(y*y+z*z<=(radius/height*x)*(radius/height*x))) {
-                        continue;
-                    }
-
-                    mbpos.set(pos.getX() + x+ offset, pos.getY() + y, pos.getZ() + z);
-                    if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
-                        BlockEntity tileentity = world.getBlockEntity(mbpos);
-
-                        if (tileentity instanceof Inventory) {
-                            ((Inventory) tileentity).clear();
-                        }
-
-                        if (block.setBlockState(world, mbpos, 2)) {
-                            list.add(mbpos.toImmutable());
-                            ++affected;
-                        }
-                    }
-                }
+        for(int i =0; i<height;++i){
+            if(pointup==true){
+                r=radius-radius*i/height-1;
             }
-        }
-
-        CarpetSettings.impendingFillSkipUpdates = false;
-
-        if (CarpetSettings.fillUpdates) {
-
-            for (BlockPos blockpos1 : list) {
-                Block blokc = world.getBlockState(blockpos1).getBlock();
-                world.updateNeighbors(blockpos1, blokc);
+            if(pointup==false){
+                r=radius*i/height;
             }
+            drawCircle(source, pos, i, (int) Math.round(r), height, pointup, block, orientation, replacement, list, mbpos);
+            //circle(cx+_,cy,cz,'x',ceil(r),block) in scarpet implementation, _ is i here, and is added in offset parameter
         }
-
-        Messenger.m(source, "gi Filled " + affected + " blocks");
-
-        return 1;
-    }
-
-    private static int drawConez(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, BlockStateArgument block,
-    Predicate<CachedBlockPosition> replacement) {
-        return (int) drawConez(source, pos, radius, height, block, replacement, pointup, false);
-    }
-
-    private static int drawConez(ServerCommandSource source, BlockPos pos, int radius, int height,BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement, boolean pointup, boolean solid) {
-        int affected = 0;
-        int offset = 0;
-        if(pointup){
-            offset=height-1;
-        }
-        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
-
-        List<BlockPos> list = Lists.newArrayList();
-
-        ServerWorld world = source.getWorld();
-
-        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
-
-        for (int z = -offset; z <= height-offset-1; ++z) {
-
-            for (int y = -radius; y <= radius; ++y) {
-
-                for (int x = -radius; x <= radius; ++x) {
-
-                    if (!(x*x+y*y<=(radius/height*z)*(radius/height*z))) {
-                        continue;
-                    }
-
-                    mbpos.set(pos.getX() + x, pos.getY() + y, pos.getZ() + z + offset);
-                    if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
-                        BlockEntity tileentity = world.getBlockEntity(mbpos);
-
-                        if (tileentity instanceof Inventory) {
-                            ((Inventory) tileentity).clear();
-                        }
-
-                        if (block.setBlockState(world, mbpos, 2)) {
-                            list.add(mbpos.toImmutable());
-                            ++affected;
-                        }
-                    }
-                }
-            }
-        }
-
+        
         CarpetSettings.impendingFillSkipUpdates = false;
 
         if (CarpetSettings.fillUpdates) {
