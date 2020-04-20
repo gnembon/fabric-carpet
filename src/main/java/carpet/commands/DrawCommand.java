@@ -286,7 +286,7 @@ public class DrawCommand {
         ServerWorld world = source.getWorld();
 
         CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
-        int skipped=0;//testing-delete afterwards
+
         for (int r = 0; r < radius; ++r) {
             int y=r-radius+1;
             for (int x = -r; x <= r; ++x) {
@@ -298,9 +298,6 @@ public class DrawCommand {
                 affected+=blockset(source, pos.getX()+x, pos.getY()+y, pos.getZ()-z, replacement, list, mbpos, block);
             }
         }
-
-
-        System.out.println("Skipped: "+skipped);//testing-delete afterwards
 
         CarpetSettings.impendingFillSkipUpdates = false;
 
