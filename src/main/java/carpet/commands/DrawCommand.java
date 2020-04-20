@@ -397,7 +397,7 @@ public class DrawCommand {
             if(pointup==false){
                 r=radius*i/height;
             }
-            affected=drawCircle(source, pos, i, (int) Math.round(r), height, pointup, block, orientation, replacement, list, mbpos);
+            affected+=drawCircle(source, pos, i, (int) Math.round(r), height, pointup, block, orientation, replacement, list, mbpos);
             //circle(cx+_,cy,cz,'x',ceil(r),block) in scarpet implementation, _ is i here, and is added in offset parameter
         }
         
