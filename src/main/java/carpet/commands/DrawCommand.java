@@ -326,14 +326,14 @@ public class DrawCommand {
 
     private static int drawCircle(ServerCommandSource source, BlockPos pos, int offset, int radius, int height, boolean pointup, BlockStateArgument block, String orientation,
     Predicate<CachedBlockPosition> replacement, List<BlockPos> list, BlockPos.Mutable mbpos){
-        
+        int successes=0;
         if(orientation=="x"){
             for(int y=-radius;y<=radius;++y){
 
                 for(int z=-radius;z<=radius;++z){
 
                     if(y*y+z*z<=radius*radius){
-                        blockset(source, pos.getX()+offset, pos.getY()+y, pos.getZ()+z, replacement, list, mbpos, block);
+                        successes+=blockset(source, pos.getX()+offset, pos.getY()+y, pos.getZ()+z, replacement, list, mbpos, block);
                     }
                 }
             }
@@ -345,7 +345,7 @@ public class DrawCommand {
                 for(int z=-radius;z<=radius;++z){
 
                     if(x*x+z*z<=radius*radius){
-                        blockset(source, pos.getX()+x, pos.getY()+offset, pos.getZ()+z, replacement, list, mbpos, block);
+                        successes+=blockset(source, pos.getX()+x, pos.getY()+offset, pos.getZ()+z, replacement, list, mbpos, block);
                     }
                 }
             }
@@ -357,13 +357,13 @@ public class DrawCommand {
                 for(int x=-radius;x<=radius;++x){
 
                     if(y*y+x*x<=radius*radius){
-                        blockset(source, pos.getX()+x, pos.getY()+y, pos.getZ()+offset, replacement, list, mbpos, block);
+                        successes+=blockset(source, pos.getX()+x, pos.getY()+y, pos.getZ()+offset, replacement, list, mbpos, block);
                     }
                 }
             }
         }
 
-        return 1;
+        return successes;
     }
     
     private static int drawCone(ServerCommandSource source, BlockPos pos, int radius, int height, boolean pointup, String orientation,  BlockStateArgument block,
@@ -391,7 +391,7 @@ public class DrawCommand {
             if(pointup==false){
                 r=radius*i/height;
             }
-            drawCircle(source, pos, i, (int) Math.round(r), height, pointup, block, orientation, replacement, list, mbpos);
+            affected=drawCircle(source, pos, i, (int) Math.round(r), height, pointup, block, orientation, replacement, list, mbpos);
             //circle(cx+_,cy,cz,'x',ceil(r),block) in scarpet implementation, _ is i here, and is added in offset parameter
         }
         
