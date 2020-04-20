@@ -6,6 +6,7 @@ import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 
@@ -251,8 +252,23 @@ public class DrawCommand {
         return (x * x) + (y * y) + (z * z);
     }
 
-    private static int manhattan(int x1, int y1, int z1, int x2, int y2, int z2) {
-        return Math.abs(x1 - x2) + Math.abs(y1 - y2) + Math.abs(z1 - z2);
+    private static int blockset(ServerCommandSource source, int x, int y, int z, Predicate<CachedBlockPosition> replacement, List<BlockPos> list, 
+        BlockPos.Mutable mbpos, BlockStateArgument block){
+        ServerWorld world = source.getWorld();
+        mbpos.set(x, y, z);
+        int success=0;
+        if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
+            BlockEntity tileentity = world.getBlockEntity(mbpos);
+            if (tileentity instanceof Inventory) {
+                ((Inventory) tileentity).clear();
+            }
+            if (block.setBlockState(world, mbpos, 2)) {
+                list.add(mbpos.toImmutable());
+                ++success;
+            }
+        }
+
+        return success;
     }
 
     private static int drawDiamond(ServerCommandSource source, BlockPos pos, int radius, BlockStateArgument block,
@@ -262,43 +278,29 @@ public class DrawCommand {
 
     private static int drawDiamond(ServerCommandSource source, BlockPos pos, int radius,BlockStateArgument block,
             Predicate<CachedBlockPosition> replacement, boolean solid) {
-        int affected = 0;
+        int affected=0;
 
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
-
         List<BlockPos> list = Lists.newArrayList();
 
         ServerWorld world = source.getWorld();
 
         CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+        int skipped=0;//testing-delete afterwards
+        for (int r = 0; r < radius; ++r) {
+            int y=r-radius+1;
+            for (int x = -r; x <= r; ++x) {
+                int z=r-Math.abs(x);
 
-        for (int x = -radius; x <= radius; ++x) {
-
-            for (int y = -radius; y <= radius; ++y) {
-
-                for (int z = -radius; z <= radius; ++z) {
-
-                    if (manhattan(0, 0, 0, x, y, z) != radius) {
-                        continue;
-                    }
-
-                    mbpos.set(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
-
-                    if (replacement == null || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
-                        BlockEntity tileentity = world.getBlockEntity(mbpos);
-
-                        if (tileentity instanceof Inventory) {
-                            ((Inventory) tileentity).clear();
-                        }
-
-                        if (block.setBlockState(world, mbpos, 2)) {
-                            list.add(mbpos.toImmutable());
-                            ++affected;
-                        }
-                    }
-                }
+                affected+=blockset(source, pos.getX()+x, pos.getY()-y, pos.getZ()+z, replacement, list, mbpos, block);
+                affected+=blockset(source, pos.getX()+x, pos.getY()-y, pos.getZ()-z, replacement, list, mbpos, block);
+                affected+=blockset(source, pos.getX()+x, pos.getY()+y, pos.getZ()+z, replacement, list, mbpos, block);
+                affected+=blockset(source, pos.getX()+x, pos.getY()+y, pos.getZ()-z, replacement, list, mbpos, block);
             }
         }
+
+
+        System.out.println("Skipped: "+skipped);//testing-delete afterwards
 
         CarpetSettings.impendingFillSkipUpdates = false;
 
