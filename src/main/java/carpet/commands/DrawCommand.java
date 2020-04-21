@@ -29,14 +29,17 @@ import java.lang.Math;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
-public class DrawCommand {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        LiteralArgumentBuilder<ServerCommandSource> command = literal("draw")
-                .requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandDraw))
-                .then(literal("sphere").then(argument("center", BlockPosArgumentType.blockPos())
-                        .then(argument("radius", IntegerArgumentType.integer(1))
-                                .then(argument("block", BlockStateArgumentType.blockState())
-                                        .executes((c) -> drawSphere(c.getSource(),
+public class DrawCommand
+{
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+    {
+        LiteralArgumentBuilder<ServerCommandSource> command = literal("draw").
+                requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandDraw)).
+                then(literal("sphere").
+                     then(argument("center", BlockPosArgumentType.blockPos()).
+                        then(argument("radius", IntegerArgumentType.integer(1)).
+                                then(argument("block", BlockStateArgumentType.blockState()).
+                                        executes((c) -> drawSphere(c.getSource(),
                                                 BlockPosArgumentType.getBlockPos(c, "center"),
                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                 BlockStateArgumentType.getBlockState(c, "block"), null))
