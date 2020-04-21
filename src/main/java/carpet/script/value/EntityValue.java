@@ -901,15 +901,15 @@ public class EntityValue extends Value
                 ((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);
                 return;
             }
-            if(v.readInteger()==0){
+            if(v.readInteger()==1){
                 ((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);
                 return;
             }
-            if(v.readInteger()==0){
+            if(v.readInteger()==3){
                 ((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);
                 return;
             }
-            if(v.readInteger()==0){
+            if(v.readInteger()==2){
                 ((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);
                 return;
             }
