@@ -4,6 +4,7 @@ import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
+import carpet.helpers.EntityPlayerActionPack;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
@@ -45,6 +46,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameMode;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -891,21 +893,51 @@ public class EntityValue extends Value
             throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
 
-        // gamemode
-        // spectate
-        // "fire"
-        // "extinguish"
-        // "silent"
-        // "gravity"
-        // "invulnerable"
-        // "dimension"
-        // "item"
-        // "count",
-        // "age",
-        // "effect_"name
-        // "hold"
-        // "hold_offhand"
-        // "jump"
+        put("gamemode", (e,v)->{
+            if(!(e instanceof ServerPlayerEntity)){
+                throw new InternalExpressionException("Cannot change the gamemode of non-player entities");
+            }
+            if(v.readInteger()==0){
+                ((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);
+                return;
+            }
+            if(v.getString()=="creative"){
+                ((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);
+                return;
+            }
+            if(v.getString()=="spectator"){
+                ((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);
+                return;
+            }
+            if(v.getString()=="adventure"){
+                ((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);
+                return;
+            }
+            throw new InternalExpressionException("s"+v.getString()+"s is an invalid gamemode type");
+        });
+
+        put("jump",(e,v)->{
+            if(!(e instanceof ServerPlayerEntity)){
+                throw new InternalExpressionException("Non-player entities can't jump");
+            }
+            ((PlayerEntity) e).jump();
+        });
+
+        // gamemode_id      [check](gamemode just wont read string)
+        // spectate         [check]
+        // "fire"           []
+        // "extinguish"     []
+        // "silent"         []
+        // "gravity"        []
+        // "invulnerable"   []
+        // "dimension"      []
+        // "item"           []
+        // "count",         []
+        // "age",           []
+        // "effect_"name    []
+        // "hold"           [inventory_set?]
+        // "hold_offhand"   [inventory_set?] 
+        // "jump"           [check]
         // "nbt" <-big one, for now use run('data merge entity ...
     }};
 
