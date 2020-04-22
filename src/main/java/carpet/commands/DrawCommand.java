@@ -79,9 +79,9 @@ public class DrawCommand
                                 .then(argument("height",IntegerArgumentType.integer(1))
                                     .then(argument("pointing up?",BoolArgumentType.bool())
                                         .then(argument("type",IntegerArgumentType.integer(1))
-                                            .suggests( (c, b) -> suggestMatching(new String[]{"square=0","circle=1"},b))
+                                            .suggests( (c, b) -> suggestMatching(new String[]{"square=2","circle=1"},b))
                                             .then(argument("orientation",IntegerArgumentType.integer(1))
-                                            .suggests( (c, b) -> suggestMatching(new String[]{"x=0","y=1","z=2"},b))
+                                            .suggests( (c, b) -> suggestMatching(new String[]{"x=1","y=2","z=3"},b))
                                                 .then(argument("block", BlockStateArgumentType.blockState())
                                                     .executes((c) -> drawPyramid(c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "center"),
@@ -288,7 +288,7 @@ public class DrawCommand
     private static int drawCircle(ServerCommandSource source, BlockPos pos, int offset, int radius,BlockStateArgument block, int orientation,
     Predicate<CachedBlockPosition> replacement, List<BlockPos> list, BlockPos.Mutable mbpos){
         int successes=0;
-        if(orientation==0){
+        if(orientation==1){
             for(int y=-radius;y<=radius;++y){
 
                 for(int z=-radius;z<=radius;++z){
@@ -300,7 +300,7 @@ public class DrawCommand
             }
         }
 
-        if(orientation==1){
+        if(orientation==2){
             for(int x=-radius;x<=radius;++x){
 
                 for(int z=-radius;z<=radius;++z){
@@ -312,7 +312,7 @@ public class DrawCommand
             }
         }
 
-        if(orientation==2){
+        if(orientation==3){
             for(int y=-radius;y<=radius;++y){
 
                 for(int x=-radius;x<=radius;++x){
@@ -334,13 +334,13 @@ public class DrawCommand
         for(int axis1=-radius;axis1<=radius;++axis1){
 
             for(int axis2=-radius;axis2<=radius;++axis2){
-                if(orientation==0){
+                if(orientation==1){
                     success+=blockset(source, pos.getX()+offset, pos.getY()+axis1, pos.getZ()+axis2,replacement, list, mbpos, block);
                 }
-                if(orientation==1){
+                if(orientation==2){
                     success+=blockset(source, pos.getX()+axis1, pos.getY()+offset, pos.getZ()+axis2,replacement, list, mbpos, block);
                 }
-                if(orientation==2){
+                if(orientation==3){
                     success+=blockset(source, pos.getX()+axis2, pos.getY()+axis1, pos.getZ()+offset,replacement, list, mbpos, block);
                 }
             }
@@ -375,7 +375,7 @@ public class DrawCommand
             }
             if(shape==1){
                 affected+=drawCircle(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
-            }else if(shape==0){
+            }else if(shape==2){
                 affected+=drawSquare(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
             }
         }
