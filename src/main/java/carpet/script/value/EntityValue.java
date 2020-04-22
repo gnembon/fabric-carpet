@@ -4,7 +4,6 @@ import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
-import carpet.helpers.EntityPlayerActionPack;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
