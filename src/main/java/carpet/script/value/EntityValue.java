@@ -537,12 +537,12 @@ public class EntityValue extends Value
             if (health <= 0f && e instanceof ServerPlayerEntity)
             {
                 ServerPlayerEntity player = (ServerPlayerEntity) e;
-                if (player.container != null)
+                if (player.currentScreenHandler != null)
                 {
                     // if player dies with open container, then that causes NPE on the client side
                     // its a client side bug that may never surface unless vanilla gets into scripting at some point
                     // bug: #228
-                    player.closeContainer();
+                    player.closeHandledScreen();
                 }
                 ((LivingEntity) e).setHealth(health);
             }
