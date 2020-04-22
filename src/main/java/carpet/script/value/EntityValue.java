@@ -897,19 +897,17 @@ public class EntityValue extends Value
             if(!(e instanceof ServerPlayerEntity)){
                 throw new InternalExpressionException("Cannot change the gamemode of non-player entities");
             }
-            if(v.readInteger()==0){
+            
+            if(NumericValue.asNumber(v).getLong()==0){
                 ((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);
                 return;
-            }
-            if(v.readInteger()==1){
+            }else if(NumericValue.asNumber(v).getLong()==1){
                 ((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);
                 return;
-            }
-            if(v.readInteger()==3){
+            }else if(NumericValue.asNumber(v).getLong()==3){
                 ((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);
                 return;
-            }
-            if(v.readInteger()==2){
+            }else if(NumericValue.asNumber(v).getLong()==2){
                 ((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);
                 return;
             }
