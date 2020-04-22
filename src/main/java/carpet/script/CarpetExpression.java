@@ -712,7 +712,7 @@ public class CarpetExpression
             ServerWorld world = ((CarpetContext) c).s.getWorld();
             Long2ObjectOpenHashMap<SortedArraySet<ChunkTicket<?>>> levelTickets = (
                     (ChunkTicketManagerInterface) ((ServerChunkManagerInterface) world.getChunkManager())
-                            .getTicketManager()
+                            .getCMTicketManager()
             ).getTicketsByPosition();
             List<Value> res = new ArrayList<>();
             if (lv.size() == 0)
