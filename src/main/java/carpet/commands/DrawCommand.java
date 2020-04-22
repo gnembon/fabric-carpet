@@ -366,6 +366,11 @@ public class DrawCommand
         CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
 
         int r = radius;
+        
+        if(orientation<1||orientation>3){
+            Messenger.m(source,"gi Incorrect orientation, 1 for x, 2 for y and 3 for z");
+            return 0;
+        }
 
         for(int i =0; i<height;++i){
             if(pointup==true){
@@ -377,6 +382,9 @@ public class DrawCommand
                 affected+=drawCircle(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
             }else if(shape==2){
                 affected+=drawSquare(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
+            }else{
+                Messenger.m(source,"gi Incorrect shape, read options for which ints to input for which shapes");
+                return 0;
             }
         }
         
