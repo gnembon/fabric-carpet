@@ -6,7 +6,6 @@ import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 
@@ -17,6 +16,7 @@ import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.BlockPredicateArgumentType;
 import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.command.arguments.BlockStateArgumentType;
+import static net.minecraft.server.command.CommandSource.suggestMatching;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
@@ -74,81 +74,33 @@ public class DrawCommand
                             )
                     )
                     .then(literal("pyramid")
-                        .then(literal("circular")
-                            .then(argument("center", BlockPosArgumentType.blockPos())
-                                .then(argument("radius", IntegerArgumentType.integer(1))
-                                    .then(argument("height",IntegerArgumentType.integer(1))
-                                        .then(argument("pointing up?",BoolArgumentType.bool())
-                                            .then(literal("x")
+                        .then(argument("center", BlockPosArgumentType.blockPos())
+                            .then(argument("radius", IntegerArgumentType.integer(1))
+                                .then(argument("height",IntegerArgumentType.integer(1))
+                                    .then(argument("pointing up?",BoolArgumentType.bool())
+                                        .then(argument("type",IntegerArgumentType.integer(1))
+                                            .suggests( (c, b) -> suggestMatching(new String[]{"square=0","circle=1"},b))
+                                            .then(argument("orientation",IntegerArgumentType.integer(1))
+                                            .suggests( (c, b) -> suggestMatching(new String[]{"x=0","y=1","z=2"},b))
                                                 .then(argument("block", BlockStateArgumentType.blockState())
                                                     .executes((c) -> drawPyramid(c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "center"),
-                                                        "circle",
+                                                        IntegerArgumentType.getInteger(c, "type"),
                                                         IntegerArgumentType.getInteger(c, "radius"),
                                                         IntegerArgumentType.getInteger(c, "height"),
-                                                        BoolArgumentType.getBool(c,"pointing up?"),"x",
+                                                        BoolArgumentType.getBool(c,"pointing up?"),
+                                                        IntegerArgumentType.getInteger(c,"orientation"),
                                                         BlockStateArgumentType.getBlockState(c, "block"), null)
                                                     )
                                                     .then(literal("replace")
                                                         .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
                                                             .executes((c) -> drawPyramid(c.getSource(),
                                                                 BlockPosArgumentType.getBlockPos(c, "center"),
-                                                                "circle",
+                                                                IntegerArgumentType.getInteger(c, "type"),
                                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                                 IntegerArgumentType.getInteger(c, "height"),
-                                                                BoolArgumentType.getBool(c,"pointing up?"),"x",
-                                                                BlockStateArgumentType.getBlockState(c, "block"),
-                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                            .then(literal("y")
-                                                .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawPyramid(c.getSource(),
-                                                        BlockPosArgumentType.getBlockPos(c, "center"),
-                                                        "circle",
-                                                        IntegerArgumentType.getInteger(c, "radius"),
-                                                        IntegerArgumentType.getInteger(c, "height"),
-                                                        BoolArgumentType.getBool(c,"pointing up?"),"y",
-                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                    )
-                                                    .then(literal("replace")
-                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawPyramid(c.getSource(),
-                                                                BlockPosArgumentType.getBlockPos(c, "center"),
-                                                                "circle",
-                                                                IntegerArgumentType.getInteger(c, "radius"),
-                                                                IntegerArgumentType.getInteger(c, "height"),
-                                                                BoolArgumentType.getBool(c,"pointing up?"),"y",
-                                                                BlockStateArgumentType.getBlockState(c, "block"),
-                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                            .then(literal("z")
-                                                .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawPyramid(c.getSource(),
-                                                        BlockPosArgumentType.getBlockPos(c, "center"),
-                                                        "circle",
-                                                        IntegerArgumentType.getInteger(c, "radius"),
-                                                        IntegerArgumentType.getInteger(c, "height"),
-                                                        BoolArgumentType.getBool(c,"pointing up?"),"z",
-                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                    )
-                                                    .then(literal("replace")
-                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawPyramid(c.getSource(),
-                                                                BlockPosArgumentType.getBlockPos(c, "center"),
-                                                                "circle",
-                                                                IntegerArgumentType.getInteger(c, "radius"),
-                                                                IntegerArgumentType.getInteger(c, "height"),
-                                                                BoolArgumentType.getBool(c,"pointing up?"),"z",
+                                                                BoolArgumentType.getBool(c,"pointing up?"),
+                                                                IntegerArgumentType.getInteger(c,"orientation"),
                                                                 BlockStateArgumentType.getBlockState(c, "block"),
                                                                 BlockPredicateArgumentType.getBlockPredicate(c,"filter")
                                                                 )
@@ -162,95 +114,6 @@ public class DrawCommand
                                 )
                             )
                         )
-                        .then(literal("square")
-                            .then(argument("center", BlockPosArgumentType.blockPos())
-                                .then(argument("radius", IntegerArgumentType.integer(1))
-                                    .then(argument("height",IntegerArgumentType.integer(1))
-                                        .then(argument("pointing up?",BoolArgumentType.bool())
-                                            .then(literal("x")
-                                                .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawPyramid(c.getSource(),
-                                                        BlockPosArgumentType.getBlockPos(c, "center"),
-                                                        "square",
-                                                        IntegerArgumentType.getInteger(c, "radius"),
-                                                        IntegerArgumentType.getInteger(c, "height"),
-                                                        BoolArgumentType.getBool(c,"pointing up?"),"x",
-                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                    )
-                                                    .then(literal("replace")
-                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawPyramid(c.getSource(),
-                                                                BlockPosArgumentType.getBlockPos(c, "center"),
-                                                                "square",
-                                                                IntegerArgumentType.getInteger(c, "radius"),
-                                                                IntegerArgumentType.getInteger(c, "height"),
-                                                                BoolArgumentType.getBool(c,"pointing up?"),"x",
-                                                                BlockStateArgumentType.getBlockState(c, "block"),
-                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                            .then(literal("y")
-                                                .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawPyramid(c.getSource(),
-                                                        BlockPosArgumentType.getBlockPos(c, "center"),
-                                                        "square",
-                                                        IntegerArgumentType.getInteger(c, "radius"),
-                                                        IntegerArgumentType.getInteger(c, "height"),
-                                                        BoolArgumentType.getBool(c,"pointing up?"),"y",
-                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                    )
-                                                    .then(literal("replace")
-                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawPyramid(c.getSource(),
-                                                                BlockPosArgumentType.getBlockPos(c, "center"),
-                                                                "square",
-                                                                IntegerArgumentType.getInteger(c, "radius"),
-                                                                IntegerArgumentType.getInteger(c, "height"),
-                                                                BoolArgumentType.getBool(c,"pointing up?"),"y",
-                                                                BlockStateArgumentType.getBlockState(c, "block"),
-                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                            .then(literal("z")
-                                                .then(argument("block", BlockStateArgumentType.blockState())
-                                                    .executes((c) -> drawPyramid(c.getSource(),
-                                                        BlockPosArgumentType.getBlockPos(c, "center"),
-                                                        "square",
-                                                        IntegerArgumentType.getInteger(c, "radius"),
-                                                        IntegerArgumentType.getInteger(c, "height"),
-                                                        BoolArgumentType.getBool(c,"pointing up?"),"z",
-                                                        BlockStateArgumentType.getBlockState(c, "block"), null)
-                                                    )
-                                                    .then(literal("replace")
-                                                        .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
-                                                            .executes((c) -> drawPyramid(c.getSource(),
-                                                                BlockPosArgumentType.getBlockPos(c, "center"),
-                                                                "square",
-                                                                IntegerArgumentType.getInteger(c, "radius"),
-                                                                IntegerArgumentType.getInteger(c, "height"),
-                                                                BoolArgumentType.getBool(c,"pointing up?"),"z",
-                                                                BlockStateArgumentType.getBlockState(c, "block"),
-                                                                BlockPredicateArgumentType.getBlockPredicate(c,"filter")
-                                                                )
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    
                     );
         dispatcher.register(command);
     }
@@ -421,10 +284,10 @@ public class DrawCommand
         return 1;
     }
 
-    private static int drawCircle(ServerCommandSource source, BlockPos pos, int offset, int radius,BlockStateArgument block, String orientation,
+    private static int drawCircle(ServerCommandSource source, BlockPos pos, int offset, int radius,BlockStateArgument block, int orientation,
     Predicate<CachedBlockPosition> replacement, List<BlockPos> list, BlockPos.Mutable mbpos){
         int successes=0;
-        if(orientation=="x"){
+        if(orientation==0){
             for(int y=-radius;y<=radius;++y){
 
                 for(int z=-radius;z<=radius;++z){
@@ -436,7 +299,7 @@ public class DrawCommand
             }
         }
 
-        if(orientation=="y"){
+        if(orientation==1){
             for(int x=-radius;x<=radius;++x){
 
                 for(int z=-radius;z<=radius;++z){
@@ -448,7 +311,7 @@ public class DrawCommand
             }
         }
 
-        if(orientation=="z"){
+        if(orientation==2){
             for(int y=-radius;y<=radius;++y){
 
                 for(int x=-radius;x<=radius;++x){
@@ -463,20 +326,20 @@ public class DrawCommand
         return successes;
     }
 
-    private static int drawSquare(ServerCommandSource source, BlockPos pos, int offset, int radius, BlockStateArgument block, String orientation,
+    private static int drawSquare(ServerCommandSource source, BlockPos pos, int offset, int radius, BlockStateArgument block, int orientation,
     Predicate<CachedBlockPosition> replacement, List<BlockPos> list, BlockPos.Mutable mbpos){
         int success=0;
 
         for(int axis1=-radius;axis1<=radius;++axis1){
 
             for(int axis2=-radius;axis2<=radius;++axis2){
-                if(orientation=="x"){
+                if(orientation==0){
                     success+=blockset(source, pos.getX()+offset, pos.getY()+axis1, pos.getZ()+axis2,replacement, list, mbpos, block);
                 }
-                if(orientation=="y"){
+                if(orientation==1){
                     success+=blockset(source, pos.getX()+axis1, pos.getY()+offset, pos.getZ()+axis2,replacement, list, mbpos, block);
                 }
-                if(orientation=="z"){
+                if(orientation==2){
                     success+=blockset(source, pos.getX()+axis2, pos.getY()+axis1, pos.getZ()+offset,replacement, list, mbpos, block);
                 }
             }
@@ -485,13 +348,13 @@ public class DrawCommand
         return success;
     }
     
-    private static int drawPyramid(ServerCommandSource source, BlockPos pos, String shape, int radius, int height, boolean pointup, String orientation,  BlockStateArgument block,
+    private static int drawPyramid(ServerCommandSource source, BlockPos pos, int shape, int radius, int height, boolean pointup, int orientation,  BlockStateArgument block,
     Predicate<CachedBlockPosition> replacement) {
         return (int) drawPyramid(source, pos, radius, height, block, replacement, pointup, orientation, false, shape);
     }
 
     private static double drawPyramid(ServerCommandSource source, BlockPos pos, int radius, int height, BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement, boolean pointup, String orientation, boolean solid, String shape) {
+            Predicate<CachedBlockPosition> replacement, boolean pointup, int orientation, boolean solid, int shape) {
         int affected = 0;
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
 
@@ -506,15 +369,12 @@ public class DrawCommand
         for(int i =0; i<height;++i){
             if(pointup==true){
                 r=radius-radius*i/height-1;
-            }
-            if(pointup==false){
+            }else if(pointup==false){
                 r=radius*i/height;
             }
-            if(shape=="circle"){
+            if(shape==1){
                 affected+=drawCircle(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
-                //circle(cx+_,cy,cz,'x',ceil(r),block) in scarpet implementation, _ is i here, and is added in offset parameter
-            }
-            if(shape=="square"){
+            }else if(shape==0){
                 affected+=drawSquare(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
             }
         }
