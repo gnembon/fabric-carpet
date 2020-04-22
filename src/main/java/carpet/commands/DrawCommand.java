@@ -186,7 +186,8 @@ public class DrawCommand
                             {
                                 mbpos.set(pos.getX() + xmod * x, pos.getY() + ymod * y, pos.getZ() + zmod * z);
                                 if (replacement == null
-                                        || replacement.test(new CachedBlockPosition(world, mbpos, true))) {
+                                        || replacement.test(new CachedBlockPosition(world, mbpos, true))) 
+                                {
                                     BlockEntity tileentity = world.getBlockEntity(mbpos);
                                     if (tileentity instanceof Inventory)
                                     {
