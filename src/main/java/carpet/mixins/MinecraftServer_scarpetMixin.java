@@ -6,6 +6,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.util.Util;
 import net.minecraft.util.thread.ReentrantThreadExecutor;
+import net.minecraft.world.level.storage.LevelStorage;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,12 +36,20 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
 
     @Shadow public abstract boolean runTask();
 
+    @Shadow @Final protected LevelStorage.Session session;
+
     @Override
     public void forceTick(BooleanSupplier isAhead)
     {
         timeReference = lastTimeReference = Util.getMeasuringTimeMs();
         tick(isAhead);
         runTask();
+    }
+
+    @Override
+    public LevelStorage.Session getCMSession()
+    {
+        return session;
     }
 
     @Inject(method = "tick", at = @At(
@@ -52,4 +62,6 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
         NETHER_TICK.onTick();
         ENDER_TICK.onTick();
     }
+
+
 }

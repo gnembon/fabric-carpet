@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.class_5217;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.level.LevelGeneratorType;
@@ -93,9 +94,10 @@ public abstract class ServerChunkManager_tickMixin
     //// Tick freeze
     @Redirect(method = "tickChunks", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
+            //target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
+            target = "Lnet/minecraft/class_5217;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
     ))
-    private LevelGeneratorType skipChunkTicking(LevelProperties levelProperties)
+    private LevelGeneratorType skipChunkTicking(class_5217 levelProperties)
     {
         if (!TickSpeed.process_entities) return LevelGeneratorType.DEBUG_ALL_BLOCK_STATES;
         return levelProperties.getGeneratorType();

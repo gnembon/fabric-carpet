@@ -11,6 +11,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import net.minecraft.class_5218;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -136,7 +137,7 @@ public class SettingsManager
 
     private File getFile()
     {
-        return server.method_27050().resolve(identifier+".conf").toFile();
+        return server.method_27050(class_5218.field_24188).resolve(identifier+".conf").toFile();
     }
 
     public void disableBooleanCommands()

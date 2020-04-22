@@ -15,6 +15,7 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import net.minecraft.class_5218;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.math.BlockPos;
 
@@ -75,7 +76,7 @@ public class CarpetScriptServer
 
     public Module getModule(String name, boolean allowLibraries)
     {
-        File folder = CarpetServer.minecraft_server.method_27050().resolve("scripts").toFile();
+        File folder = CarpetServer.minecraft_server.method_27050(class_5218.field_24188).resolve("scripts").toFile();
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles != null)
             for (File script : listOfFiles)
@@ -109,7 +110,7 @@ public class CarpetScriptServer
                 if (!mi.isLibrary()) moduleNames.add(mi.getName());
             }
         }
-        File folder = CarpetServer.minecraft_server.method_27050().resolve("scripts").toFile();
+        File folder = CarpetServer.minecraft_server.method_27050(class_5218.field_24188).resolve("scripts").toFile();
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles == null)
             return moduleNames;

@@ -1,5 +1,6 @@
 package carpet.script.utils;
 
+import carpet.fakes.MinecraftServerInterface;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.ChunkStatus;
@@ -24,9 +25,7 @@ public class WorldTools
             if (region == null) return false;
             return region.hasChunk(chpos);
         }
-        Path regionPath = world.getDimension().getType().getSaveDirectory(
-                world.getSaveHandler().getWorldDir()
-        ).toPath().resolve("region");
+        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().method_27424(world.getDimension().getType()), "region").toPath();
         Path regionFilePath = regionPath.resolve(currentRegionName);
         File regionFile = regionFilePath.toFile();
         if (!regionFile.exists())
