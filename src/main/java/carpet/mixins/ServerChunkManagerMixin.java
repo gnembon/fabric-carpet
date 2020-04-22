@@ -35,7 +35,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     @Shadow @Final private ChunkTicketManager ticketManager;
 
     @Override // shared between scarpet and spawnChunks setting
-    public ChunkTicketManager getTicketManager()
+    public ChunkTicketManager getCMTicketManager()
     {
         return ticketManager;
     }

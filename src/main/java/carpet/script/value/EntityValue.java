@@ -254,7 +254,7 @@ public class EntityValue extends Value
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
         put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
-        put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelay()):Value.NULL);
+        put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
@@ -532,7 +532,37 @@ public class EntityValue extends Value
     private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.remove());
         put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
-        put("health", (e, v) -> { if (e instanceof LivingEntity) ((LivingEntity) e).setHealth((float) NumericValue.asNumber(v).getDouble()); });
+        put("health", (e, v) -> {
+            float health = (float) NumericValue.asNumber(v).getDouble();
+            if (health <= 0f && e instanceof ServerPlayerEntity)
+            {
+                ServerPlayerEntity player = (ServerPlayerEntity) e;
+                if (player.currentScreenHandler != null)
+                {
+                    // if player dies with open container, then that causes NPE on the client side
+                    // its a client side bug that may never surface unless vanilla gets into scripting at some point
+                    // bug: #228
+                    player.closeHandledScreen();
+                }
+                ((LivingEntity) e).setHealth(health);
+            }
+            if (e instanceof LivingEntity) ((LivingEntity) e).setHealth(health);
+        });
+        // todo add handling of the source for extra effects
+        /*put("damage", (e, v) -> {
+            float dmgPoints;
+            DamageSource source;
+            if (v instanceof ListValue && ((ListValue) v).getItems().size() > 1)
+            {
+                   List<Value> vals = ((ListValue) v).getItems();
+                   dmgPoints = (float) NumericValue.asNumber(v).getDouble();
+                   source = DamageSource ... yeah...
+            }
+            else
+            {
+
+            }
+        });*/
         put("kill", (e, v) -> e.kill());
         put("location", (e, v) ->
         {

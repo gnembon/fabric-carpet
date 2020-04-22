@@ -4,5 +4,5 @@ import net.minecraft.server.world.ChunkTicketManager;
 
 public interface ServerChunkManagerInterface
 {
-    ChunkTicketManager getTicketManager();
+    ChunkTicketManager getCMTicketManager();
 }
