@@ -78,6 +78,7 @@ public class FeatureGenerator
 
     private static Thing simpleTree(TreeFeatureConfig config)
     {
+        config.ignoreFluidCheck();
         return simplePlop(Feature.TREE.configure(config));
     }
 
@@ -228,20 +229,20 @@ public class FeatureGenerator
         put("oak_beehive", simpleTree(
                 (OAK_TREE_CONFIG.method_27373((ImmutableList.of(new BeehiveTreeDecorator(1.0F))))
         )));
-        put("oak_large", simplePlop(Feature.TREE.configure(DefaultBiomeFeatures.FANCY_TREE_CONFIG)));
-        put("oak_large_beehive", simplePlop(
-                Feature.TREE.configure(FANCY_TREE_CONFIG.method_27373(ImmutableList.of(new BeehiveTreeDecorator(1.0F))))));
+        put("oak_large", simpleTree(DefaultBiomeFeatures.FANCY_TREE_CONFIG));
+        put("oak_large_beehive", simpleTree(
+                FANCY_TREE_CONFIG.method_27373(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
         put("birch", simpleTree(DefaultBiomeFeatures.BIRCH_TREE_CONFIG));
         put("birch_large", simpleTree(DefaultBiomeFeatures.LARGE_BIRCH_TREE_CONFIG));
-        put("shrub", simplePlop(Feature.TREE.configure(DefaultBiomeFeatures.JUNGLE_GROUND_BUSH_CONFIG)));
+        put("shrub", simpleTree(DefaultBiomeFeatures.JUNGLE_GROUND_BUSH_CONFIG));
         put("jungle", simpleTree(DefaultBiomeFeatures.JUNGLE_TREE_CONFIG));
-        put("jungle_large", simplePlop(Feature.TREE.configure(DefaultBiomeFeatures.MEGA_JUNGLE_TREE_CONFIG)));
+        put("jungle_large", simpleTree(DefaultBiomeFeatures.MEGA_JUNGLE_TREE_CONFIG));
         put("spruce", simpleTree(DefaultBiomeFeatures.SPRUCE_TREE_CONFIG));
-        put("spruce_large", simplePlop(Feature.TREE.configure(DefaultBiomeFeatures.MEGA_SPRUCE_TREE_CONFIG)));
+        put("spruce_large", simpleTree(DefaultBiomeFeatures.MEGA_SPRUCE_TREE_CONFIG));
         put("pine", simpleTree(DefaultBiomeFeatures.PINE_TREE_CONFIG));
-        put("pine_large", simplePlop(Feature.TREE.configure(DefaultBiomeFeatures.MEGA_PINE_TREE_CONFIG)));
-        put("dark_oak", simplePlop(Feature.TREE.configure(DefaultBiomeFeatures.DARK_OAK_TREE_CONFIG)));
-        put("acacia", simplePlop(Feature.TREE.configure(DefaultBiomeFeatures.ACACIA_TREE_CONFIG)));
+        put("pine_large", simpleTree(DefaultBiomeFeatures.MEGA_PINE_TREE_CONFIG));
+        put("dark_oak", simpleTree(DefaultBiomeFeatures.DARK_OAK_TREE_CONFIG));
+        put("acacia", simpleTree(DefaultBiomeFeatures.ACACIA_TREE_CONFIG));
         put("oak_swamp", simpleTree(DefaultBiomeFeatures.SWAMP_TREE_CONFIG));
         put("well", simplePlop(Feature.DESERT_WELL));
         put("grass", simplePatch(DefaultBiomeFeatures.GRASS_CONFIG));
