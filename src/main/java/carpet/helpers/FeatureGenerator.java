@@ -21,7 +21,6 @@ import net.minecraft.world.gen.chunk.OverworldChunkGeneratorConfig;
 import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.BastionRemnantFeatureConfig;
 import net.minecraft.world.gen.feature.BoulderFeatureConfig;
-import net.minecraft.world.gen.feature.BranchedTreeFeatureConfig;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import net.minecraft.world.gen.feature.Feature;
@@ -38,9 +37,7 @@ import net.minecraft.world.gen.feature.ShipwreckFeatureConfig;
 import net.minecraft.world.gen.feature.SingleStateFeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.StructurePoolFeatureConfig;
-import net.minecraft.world.gen.foliage.BlobFoliagePlacer;
-import net.minecraft.world.gen.stateprovider.SimpleBlockStateProvider;
-import net.minecraft.world.gen.trunk.StraightTrunkPlacer;
+import net.minecraft.world.gen.feature.TreeFeatureConfig;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,6 +46,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static net.minecraft.world.biome.DefaultBiomeFeatures.FANCY_TREE_CONFIG;
+import static net.minecraft.world.biome.DefaultBiomeFeatures.OAK_TREE_CONFIG;
 
 public class FeatureGenerator
 {
@@ -76,9 +76,10 @@ public class FeatureGenerator
         return simplePlop(feature.configure(FeatureConfig.DEFAULT));
     }
 
-    private static Thing simpleTree(BranchedTreeFeatureConfig config)
+    private static Thing simpleTree(TreeFeatureConfig config)
     {
-        return simplePlop(Feature.NORMAL_TREE.configure(config));
+        config.ignoreFluidCheck();
+        return simplePlop(Feature.TREE.configure(config));
     }
 
     private static Thing simplePatch(RandomPatchFeatureConfig config)
@@ -224,35 +225,24 @@ public class FeatureGenerator
     private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
 
 
-        put("oak", simpleTree(DefaultBiomeFeatures.OAK_TREE_CONFIG));
+        put("oak", simpleTree(OAK_TREE_CONFIG));
         put("oak_beehive", simpleTree(
-                (new BranchedTreeFeatureConfig.Builder(
-                        new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
-                        new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
-                        new BlobFoliagePlacer(2, 0, 0, 0, 3),
-                        new StraightTrunkPlacer(4, 2, 0))
-                ).noVines().treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
-        ));
-        put("oak_large", simplePlop(Feature.FANCY_TREE.configure(DefaultBiomeFeatures.FANCY_TREE_CONFIG)));
-        put("oak_large_beehive", simplePlop(Feature.FANCY_TREE.configure(
-                (new BranchedTreeFeatureConfig.Builder(
-                        new SimpleBlockStateProvider(Blocks.OAK_LOG.getDefaultState()),
-                        new SimpleBlockStateProvider(Blocks.OAK_LEAVES.getDefaultState()),
-                        new BlobFoliagePlacer(0, 0, 0, 0, 0),
-                        new StraightTrunkPlacer(0, 0, 0))
-                ).treeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F))).build()
+                (OAK_TREE_CONFIG.method_27373((ImmutableList.of(new BeehiveTreeDecorator(1.0F))))
         )));
+        put("oak_large", simpleTree(DefaultBiomeFeatures.FANCY_TREE_CONFIG));
+        put("oak_large_beehive", simpleTree(
+                FANCY_TREE_CONFIG.method_27373(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
         put("birch", simpleTree(DefaultBiomeFeatures.BIRCH_TREE_CONFIG));
         put("birch_large", simpleTree(DefaultBiomeFeatures.LARGE_BIRCH_TREE_CONFIG));
-        put("shrub", simplePlop(Feature.JUNGLE_GROUND_BUSH.configure(DefaultBiomeFeatures.JUNGLE_GROUND_BUSH_CONFIG)));
+        put("shrub", simpleTree(DefaultBiomeFeatures.JUNGLE_GROUND_BUSH_CONFIG));
         put("jungle", simpleTree(DefaultBiomeFeatures.JUNGLE_TREE_CONFIG));
-        put("jungle_large", simplePlop(Feature.MEGA_JUNGLE_TREE.configure(DefaultBiomeFeatures.MEGA_JUNGLE_TREE_CONFIG)));
+        put("jungle_large", simpleTree(DefaultBiomeFeatures.MEGA_JUNGLE_TREE_CONFIG));
         put("spruce", simpleTree(DefaultBiomeFeatures.SPRUCE_TREE_CONFIG));
-        put("spruce_large", simplePlop(Feature.MEGA_SPRUCE_TREE.configure(DefaultBiomeFeatures.MEGA_SPRUCE_TREE_CONFIG)));
+        put("spruce_large", simpleTree(DefaultBiomeFeatures.MEGA_SPRUCE_TREE_CONFIG));
         put("pine", simpleTree(DefaultBiomeFeatures.PINE_TREE_CONFIG));
-        put("pine_large", simplePlop(Feature.MEGA_SPRUCE_TREE.configure(DefaultBiomeFeatures.MEGA_PINE_TREE_CONFIG)));
-        put("dark_oak", simplePlop(Feature.DARK_OAK_TREE.configure(DefaultBiomeFeatures.DARK_OAK_TREE_CONFIG)));
-        put("acacia", simplePlop(Feature.NORMAL_TREE.configure(DefaultBiomeFeatures.ACACIA_TREE_CONFIG)));
+        put("pine_large", simpleTree(DefaultBiomeFeatures.MEGA_PINE_TREE_CONFIG));
+        put("dark_oak", simpleTree(DefaultBiomeFeatures.DARK_OAK_TREE_CONFIG));
+        put("acacia", simpleTree(DefaultBiomeFeatures.ACACIA_TREE_CONFIG));
         put("oak_swamp", simpleTree(DefaultBiomeFeatures.SWAMP_TREE_CONFIG));
         put("well", simplePlop(Feature.DESERT_WELL));
         put("grass", simplePatch(DefaultBiomeFeatures.GRASS_CONFIG));

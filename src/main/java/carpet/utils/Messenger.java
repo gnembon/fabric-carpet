@@ -3,14 +3,14 @@ package carpet.utils;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.text.BaseText;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.Formatting;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -56,10 +56,10 @@ public class Messenger
     {
         //could be rewritten to be more efficient
         comp.getStyle().setItalic(style.indexOf('i')>=0);
-        comp.getStyle().setStrikethrough(style.indexOf('s')>=0);
-        comp.getStyle().setUnderline(style.indexOf('u')>=0);
+        if (style.indexOf('s')>=0) comp.setStyle(comp.getStyle().method_27705(Formatting.STRIKETHROUGH));
+        if (style.indexOf('u')>=0) comp.setStyle(comp.getStyle().method_27705(Formatting.UNDERLINE));
         comp.getStyle().setBold(style.indexOf('b')>=0);
-        comp.getStyle().setObfuscated(style.indexOf('o')>=0);
+        if (style.indexOf('o')>=0) comp.setStyle(comp.getStyle().method_27705(Formatting.OBFUSCATED));
         comp.getStyle().setColor(Formatting.WHITE);
         if (style.indexOf('w')>=0) comp.getStyle().setColor(Formatting.WHITE); // not needed
         if (style.indexOf('y')>=0) comp.getStyle().setColor(Formatting.YELLOW);
@@ -139,7 +139,7 @@ public class Messenger
         if (desc.charAt(0) == '^')
         {
             if (previous_message != null)
-                previous_message.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
+                previous_message.getStyle().setHoverEvent(new HoverEvent(HoverEvent.class_5247.field_24342, c(message.substring(1))));
             return previous_message;
         }
         BaseText txt = new LiteralText(str);

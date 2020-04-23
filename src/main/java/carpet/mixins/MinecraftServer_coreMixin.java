@@ -33,7 +33,7 @@ public abstract class MinecraftServer_coreMixin
 
     // Dedicated server only
     @Inject(method = "loadWorld", at = @At("HEAD"))
-    private void serverLoaded(String string, long l, LevelGeneratorOptions levelGeneratorOptions, CallbackInfo ci)
+    private void serverLoaded(CallbackInfo ci)
     {
         CarpetServer.onServerLoaded((MinecraftServer) (Object) this);
     }

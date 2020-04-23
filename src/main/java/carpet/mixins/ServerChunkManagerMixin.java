@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.class_5217;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.server.world.ChunkTicketManager;
 import net.minecraft.server.world.ServerChunkManager;
@@ -54,7 +55,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     private void grabMobcaps(CallbackInfo ci,
                              long long_1,
                              long long_2,
-                             LevelProperties levelProperties_1,
+                             class_5217 levelProperties_1,
                              boolean boolean_1,
                              boolean boolean_2,
                              int int_1,
@@ -146,7 +147,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     @Inject(method = "tickChunks", at = @At("RETURN"))
     private void onFinishSpawnWorldCycle(CallbackInfo ci)
     {
-        LevelProperties levelProperties_1 = this.world.getLevelProperties();
+        class_5217 levelProperties_1 = this.world.getLevelProperties(); // levelProperies class
         boolean boolean_3 = levelProperties_1.getTime() % 400L == 0L;
         if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
         {

@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.class_5217;
 import net.minecraft.entity.raid.RaidManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
@@ -152,9 +153,10 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
+            target = "Lnet/minecraft/class_5217;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
+            //target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
     ))
-    private LevelGeneratorType tickPendingBlocks(LevelProperties levelProperties)
+    private LevelGeneratorType tickPendingBlocks(class_5217 levelProperties)
     {
         if (TickSpeed.process_entities) return levelProperties.getGeneratorType();
         return LevelGeneratorType.DEBUG_ALL_BLOCK_STATES;
