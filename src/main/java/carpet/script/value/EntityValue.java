@@ -897,18 +897,11 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Cannot change the gamemode of non-player entities");
             }
             
-            if(NumericValue.asNumber(v).getLong()==0){
-                ((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);
-                return;
-            }else if(NumericValue.asNumber(v).getLong()==1){
-                ((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);
-                return;
-            }else if(NumericValue.asNumber(v).getLong()==3){
-                ((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);
-                return;
-            }else if(NumericValue.asNumber(v).getLong()==2){
-                ((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);
-                return;
+            switch((int)NumericValue.asNumber(v).getLong()){
+                case 0:((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);return;
+                case 1:((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);return;
+                case 2:((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);return;
+                case 3:((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);return;
             }
             throw new InternalExpressionException(NumericValue.asNumber(v).getLong()+" is an invalid gamemode id");
         });
