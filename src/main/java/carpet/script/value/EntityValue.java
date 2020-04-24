@@ -479,6 +479,8 @@ public class EntityValue extends Value
                 return new NBTSerializableValue(nbttagcompound);
             return new NBTSerializableValue(nbttagcompound).get(a);
         });
+
+        put("category",(e,a)->{return new StringValue(e.getType().getCategory().toString());});
     }};
 
     public void set(String what, Value toWhat)
