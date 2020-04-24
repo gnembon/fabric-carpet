@@ -907,10 +907,10 @@ public class EntityValue extends Value
         });
 
         put("jump",(e,v)->{
-            if(!(e instanceof ServerPlayerEntity)){
-                throw new InternalExpressionException("Non-player entities can't jump");
+            if(!(e instanceof LivingEntity)){
+                throw new InternalExpressionException("Non-living entities can't jump");
             }
-            ((PlayerEntity) e).jump();
+            ((LivingEntity) e).setJumping(v.getBoolean());
         });
 
         // gamemode_id      [check](gamemode just wont read string)
