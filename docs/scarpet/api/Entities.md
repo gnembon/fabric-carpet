@@ -275,6 +275,9 @@ Returns `null` if the argument is not a player, otherwise:
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
 
+### `query(e, 'category')`
+Returns a lowercase string containing the category of the entity (hostile, passive, water, ambient, misc)
+
 ### `query(e, 'team')`
 
 Team name for entity, or `null` if no team is assigned.
