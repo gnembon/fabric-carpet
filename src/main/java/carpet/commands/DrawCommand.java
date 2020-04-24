@@ -8,6 +8,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.pattern.CachedBlockPosition;
@@ -78,29 +79,29 @@ public class DrawCommand
                             .then(argument("radius", IntegerArgumentType.integer(1))
                                 .then(argument("height",IntegerArgumentType.integer(1))
                                     .then(argument("pointing up?",BoolArgumentType.bool())
-                                        .then(argument("type",IntegerArgumentType.integer(1))
-                                            .suggests( (c, b) -> suggestMatching(new String[]{"square=2","circle=1"},b))
-                                            .then(argument("orientation",IntegerArgumentType.integer(1))
-                                            .suggests( (c, b) -> suggestMatching(new String[]{"x=1","y=2","z=3"},b))
+                                        .then(argument("type",StringArgumentType.string())
+                                            .suggests( (c, b) -> suggestMatching(new String[]{"square","circle"},b))
+                                            .then(argument("orientation",StringArgumentType.string())
+                                            .suggests( (c, b) -> suggestMatching(new String[]{"x","y","z"},b))
                                                 .then(argument("block", BlockStateArgumentType.blockState())
                                                     .executes((c) -> drawPyramid(c.getSource(),
                                                         BlockPosArgumentType.getBlockPos(c, "center"),
-                                                        IntegerArgumentType.getInteger(c, "type"),
+                                                        StringArgumentType.getString(c,"type"),
                                                         IntegerArgumentType.getInteger(c, "radius"),
                                                         IntegerArgumentType.getInteger(c, "height"),
                                                         BoolArgumentType.getBool(c,"pointing up?"),
-                                                        IntegerArgumentType.getInteger(c,"orientation"),
+                                                        StringArgumentType.getString(c,"orientation"),
                                                         BlockStateArgumentType.getBlockState(c, "block"), null)
                                                     )
                                                     .then(literal("replace")
                                                         .then(argument("filter", BlockPredicateArgumentType.blockPredicate())
                                                             .executes((c) -> drawPyramid(c.getSource(),
                                                                 BlockPosArgumentType.getBlockPos(c, "center"),
-                                                                IntegerArgumentType.getInteger(c, "type"),
+                                                                StringArgumentType.getString(c,"type"),
                                                                 IntegerArgumentType.getInteger(c, "radius"),
                                                                 IntegerArgumentType.getInteger(c, "height"),
                                                                 BoolArgumentType.getBool(c,"pointing up?"),
-                                                                IntegerArgumentType.getInteger(c,"orientation"),
+                                                                StringArgumentType.getString(c,"orientation"),
                                                                 BlockStateArgumentType.getBlockState(c, "block"),
                                                                 BlockPredicateArgumentType.getBlockPredicate(c,"filter")
                                                                 )
@@ -285,10 +286,10 @@ public class DrawCommand
         return 1;
     }
 
-    private static int drawCircle(ServerCommandSource source, BlockPos pos, int offset, int radius,BlockStateArgument block, int orientation,
+    private static int drawCircle(ServerCommandSource source, BlockPos pos, int offset, int radius,BlockStateArgument block, String orientation,
     Predicate<CachedBlockPosition> replacement, List<BlockPos> list, BlockPos.Mutable mbpos){
         int successes=0;
-        if(orientation==1){
+        if(orientation=="x"){
             for(int y=-radius;y<=radius;++y){
 
                 for(int z=-radius;z<=radius;++z){
@@ -300,7 +301,7 @@ public class DrawCommand
             }
         }
 
-        if(orientation==2){
+        if(orientation=="y"){
             for(int x=-radius;x<=radius;++x){
 
                 for(int z=-radius;z<=radius;++z){
@@ -312,7 +313,7 @@ public class DrawCommand
             }
         }
 
-        if(orientation==3){
+        if(orientation=="z"){
             for(int y=-radius;y<=radius;++y){
 
                 for(int x=-radius;x<=radius;++x){
@@ -327,20 +328,20 @@ public class DrawCommand
         return successes;
     }
 
-    private static int drawSquare(ServerCommandSource source, BlockPos pos, int offset, int radius, BlockStateArgument block, int orientation,
+    private static int drawSquare(ServerCommandSource source, BlockPos pos, int offset, int radius, BlockStateArgument block, String orientation,
     Predicate<CachedBlockPosition> replacement, List<BlockPos> list, BlockPos.Mutable mbpos){
         int success=0;
 
         for(int axis1=-radius;axis1<=radius;++axis1){
 
             for(int axis2=-radius;axis2<=radius;++axis2){
-                if(orientation==1){
+                if(orientation=="x"){
                     success+=blockset(source, pos.getX()+offset, pos.getY()+axis1, pos.getZ()+axis2,replacement, list, mbpos, block);
                 }
-                if(orientation==2){
+                if(orientation=="y"){
                     success+=blockset(source, pos.getX()+axis1, pos.getY()+offset, pos.getZ()+axis2,replacement, list, mbpos, block);
                 }
-                if(orientation==3){
+                if(orientation=="z"){
                     success+=blockset(source, pos.getX()+axis2, pos.getY()+axis1, pos.getZ()+offset,replacement, list, mbpos, block);
                 }
             }
@@ -349,13 +350,13 @@ public class DrawCommand
         return success;
     }
     
-    private static int drawPyramid(ServerCommandSource source, BlockPos pos, int shape, int radius, int height, boolean pointup, int orientation,  BlockStateArgument block,
+    private static int drawPyramid(ServerCommandSource source, BlockPos pos, String shape, int radius, int height, boolean pointup, String orientation,  BlockStateArgument block,
     Predicate<CachedBlockPosition> replacement) {
         return (int) drawPyramid(source, pos, radius, height, block, replacement, pointup, orientation, false, shape);
     }
 
     private static double drawPyramid(ServerCommandSource source, BlockPos pos, int radius, int height, BlockStateArgument block,
-            Predicate<CachedBlockPosition> replacement, boolean pointup, int orientation, boolean solid, int shape) {
+            Predicate<CachedBlockPosition> replacement, boolean pointup, String orientation, boolean solid, String shape) {
         int affected = 0;
         BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
 
@@ -367,24 +368,30 @@ public class DrawCommand
 
         int r = radius;
         
-        if(orientation<1||orientation>3){
-            Messenger.m(source,"gi Incorrect orientation, must be 1 for x,2 for y or 3 for z");
-            return 0;
+        switch (orientation){
+            case "x":break;
+            case "y":break;
+            case "z":break;
+            default:{
+                Messenger.m(source,"gi Invalid orientation, must be x,y or z");
+                return 0;
+            }
         }
 
-        for(int i =0; i<height;++i){
+
+        for(int i =0; i<height;) {
             if(pointup==true){
                 r=radius-radius*i/height-1;
             }else if(pointup==false){
                 r=radius*i/height;
             }
-            if(shape==1){
-                affected+=drawCircle(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
-            }else if(shape==2){
-                affected+=drawSquare(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
-            }else{
-                Messenger.m(source,"gi Incorrect shape, read options for which ints to input for which shapes");
-                return 0;
+            switch(shape){
+                case "circle":affected+=drawCircle(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);break;
+                case "square":affected+=drawSquare(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);break;
+                default:{
+                    Messenger.m(source,"gi !"+shape+"| is an incorrect shape, read options for which shapes are available");
+                    return 0;
+                }
             }
         }
         
