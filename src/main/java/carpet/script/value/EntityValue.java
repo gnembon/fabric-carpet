@@ -892,7 +892,7 @@ public class EntityValue extends Value
             throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
 
-        put("gamemode_id", (e,v)->{
+        put("gamemode", (e,v)->{
             if(!(e instanceof ServerPlayerEntity)){
                 throw new InternalExpressionException("Cannot change the gamemode of non-player entities");
             }
@@ -910,7 +910,7 @@ public class EntityValue extends Value
                 ((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);
                 return;
             }
-            throw new InternalExpressionException("s"+v.getString()+"s is an invalid gamemode type");
+            throw new InternalExpressionException(NumericValue.asNumber(v).getLong()+" is an invalid gamemode id");
         });
 
         put("jump",(e,v)->{
