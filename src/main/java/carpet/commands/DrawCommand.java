@@ -324,7 +324,6 @@ public class DrawCommand
                 }
             }
         }
-
         return successes;
     }
 
@@ -379,19 +378,25 @@ public class DrawCommand
         }
 
 
-        for(int i =0; i<height;) {
-            if(pointup==true){
+        for(int i =0; i<height;++i) {
+            if(pointup){
                 r=radius-radius*i/height-1;
-            }else if(pointup==false){
+            }else if(!pointup){
                 r=radius*i/height;
             }
             switch(shape){
-                case "circle":affected+=drawCircle(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);break;
-                case "square":affected+=drawSquare(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);break;
-                default:{
+                case "circle":{
+                    affected+=drawCircle(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
+                    Messenger.m(source,"gi Test circle "+shape+" I hope this works");
+                }
+                case "square":{
+                    affected+=drawSquare(source, pos, i, (int) Math.round(r), block, orientation, replacement, list, mbpos);
+                    Messenger.m(source,"gi Test circle "+shape+" I hope this works");
+                }
+                /*default:{
                     Messenger.m(source,"gi !"+shape+"| is an incorrect shape, read options for which shapes are available");
                     return 0;
-                }
+                }*/
             }
         }
         
