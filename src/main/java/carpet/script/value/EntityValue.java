@@ -906,7 +906,7 @@ public class EntityValue extends Value
             throw new InternalExpressionException(NumericValue.asNumber(v).getLong()+" is an invalid gamemode id");
         });
 
-        put("jump",(e,v)->{
+        put("jumping",(e,v)->{
             if(!(e instanceof LivingEntity)){
                 throw new InternalExpressionException("Non-living entities can't jump");
             }
