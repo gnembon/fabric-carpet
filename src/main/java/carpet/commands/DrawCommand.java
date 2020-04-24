@@ -368,7 +368,7 @@ public class DrawCommand
         int r = radius;
         
         if(orientation<1||orientation>3){
-            Messenger.m(source,"gi Incorrect orientation, 1 for x, 2 for y and 3 for z");
+            Messenger.m(source,"gi Incorrect orientation, must be 1 for x,2 for y or 3 for z");
             return 0;
         }
 
