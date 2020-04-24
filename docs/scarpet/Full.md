@@ -2712,6 +2712,19 @@ and `true`. If no duration is specified, or it is null or 0, the effect is remov
 Sets AI to stay around the home position, within `distance` blocks from it. `distance` defaults to 16 blocks. 
 `null` removes it. _May_ not work fully with mobs that have this AI built in, like Villagers.
 
+### `modify(e, 'gamemode', gamemode?), modify(e, 'gamemode',gamemode_id?)`
+
+Modifies gamemode of player to whatever string (case-insensitive) or number you put in.
+
+* 0: survival
+* 1: creative
+* 2: adventure
+* 3: spectator
+
+### `modify(e, 'jumping', true/false?)`
+
+Will make the entity constantly jump if set to true, and will stop the entity from jumping if set to false. No current way to make it jump once only.
+
 ## Entity Events
 
 There is a number of events that happen to entities that you can attach your own code to in the form of event handlers. 
