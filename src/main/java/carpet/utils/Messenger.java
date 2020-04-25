@@ -1,5 +1,6 @@
 package carpet.utils;
 
+import net.minecraft.class_5251;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
@@ -7,6 +8,7 @@ import net.minecraft.text.BaseText;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.Style;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.Formatting;
@@ -18,65 +20,79 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Messenger
 {
     public static final Logger LOG = LogManager.getLogger();
 
-    /*
-     messsage: "desc me ssa ge"
-     desc contains:
-     i = italic
-     s = strikethrough
-     u = underline
-     b = bold
-     o = obfuscated
+    private static final Pattern colorExtract = Pattern.compile("#([0-9a-fA-F]{6})");
+    public enum CarpetFormatting
+    {
+        ITALIC      ('i', (s, f) -> s.setItalic(true)),
+        STRIKE      ('s', (s, f) -> s.method_27705(Formatting.STRIKETHROUGH)),
+        UNDERLINE   ('u', (s, f) -> s.method_27705(Formatting.UNDERLINE)),
+        BOLD        ('b', (s, f) -> s.setBold(true)),
+        OBFUSCATE   ('o', (s, f) -> s.method_27705(Formatting.OBFUSCATED)),
 
-     w = white
-     y = yellow
-     m = magenta (light purple)
-     r = red
-     c = cyan (aqua)
-     l = lime (green)
-     t = light blue (blue)
-     f = dark gray
-     g = gray
-     d = gold
-     p = dark purple (purple)
-     n = dark red (brown)
-     q = dark aqua
-     e = dark green
-     v = dark blue (navy)
-     k = black
+        WHITE       ('w', (s, f) -> s.setColor(Formatting.WHITE)),
+        YELLOW      ('y', (s, f) -> s.setColor(Formatting.YELLOW)),
+        LIGHT_PURPLE('m', (s, f) -> s.setColor(Formatting.LIGHT_PURPLE)), // magenta
+        RED         ('r', (s, f) -> s.setColor(Formatting.RED)),
+        AQUA        ('c', (s, f) -> s.setColor(Formatting.AQUA)), // cyan
+        GREEN       ('l', (s, f) -> s.setColor(Formatting.GREEN)), // lime
+        BLUE        ('t', (s, f) -> s.setColor(Formatting.BLUE)), // light blue, teal
+        DARK_GRAY   ('f', (s, f) -> s.setColor(Formatting.DARK_GRAY)),
+        GRAY        ('g', (s, f) -> s.setColor(Formatting.GRAY)),
+        GOLD        ('d', (s, f) -> s.setColor(Formatting.GOLD)),
+        DARK_PURPLE ('p', (s, f) -> s.setColor(Formatting.DARK_PURPLE)), // purple
+        DARK_RED    ('n', (s, f) -> s.setColor(Formatting.DARK_RED)),  // brown
+        DARK_AQUA   ('q', (s, f) -> s.setColor(Formatting.DARK_AQUA)),
+        DARK_GREEN  ('e', (s, f) -> s.setColor(Formatting.DARK_GREEN)),
+        DARK_BLUE   ('v', (s, f) -> s.setColor(Formatting.DARK_BLUE)), // navy
+        BLACK       ('k', (s, f) -> s.setColor(Formatting.BLACK)),
 
-     / = action added to the previous component
-     */
+        COLOR       ('#', (s, f) -> {
+            class_5251 color = class_5251.method_27719("#"+f);
+            return color == null ? s : s.method_27703(color);
+        }, s -> {
+            Matcher m = colorExtract.matcher(s);
+            return m.find() ? m.group(1) : null;
+        }),
+        ;
+
+        public char code;
+        public BiFunction<Style, String, Style> applier;
+        public Function<String, String> container;
+        CarpetFormatting(char code, BiFunction<Style, String, Style> applier)
+        {
+            this(code, applier, s -> s.indexOf(code)>=0?Character.toString(code):null);
+        }
+        CarpetFormatting(char code, BiFunction<Style, String, Style> applier, Function<String, String> container)
+        {
+            this.code = code;
+            this.applier = applier;
+            this.container = container;
+        }
+        public Style apply(String format, Style previous)
+        {
+            String fmt;
+            if ((fmt = container.apply(format))!= null) return applier.apply(previous, fmt);
+            return previous;
+        }
+    };
 
     private static BaseText _applyStyleToTextComponent(BaseText comp, String style)
     {
-        //could be rewritten to be more efficient
-        comp.getStyle().setItalic(style.indexOf('i')>=0);
-        if (style.indexOf('s')>=0) comp.setStyle(comp.getStyle().method_27705(Formatting.STRIKETHROUGH));
-        if (style.indexOf('u')>=0) comp.setStyle(comp.getStyle().method_27705(Formatting.UNDERLINE));
-        comp.getStyle().setBold(style.indexOf('b')>=0);
-        if (style.indexOf('o')>=0) comp.setStyle(comp.getStyle().method_27705(Formatting.OBFUSCATED));
-        comp.getStyle().setColor(Formatting.WHITE);
-        if (style.indexOf('w')>=0) comp.getStyle().setColor(Formatting.WHITE); // not needed
-        if (style.indexOf('y')>=0) comp.getStyle().setColor(Formatting.YELLOW);
-        if (style.indexOf('m')>=0) comp.getStyle().setColor(Formatting.LIGHT_PURPLE);
-        if (style.indexOf('r')>=0) comp.getStyle().setColor(Formatting.RED);
-        if (style.indexOf('c')>=0) comp.getStyle().setColor(Formatting.AQUA);
-        if (style.indexOf('l')>=0) comp.getStyle().setColor(Formatting.GREEN);
-        if (style.indexOf('t')>=0) comp.getStyle().setColor(Formatting.BLUE);
-        if (style.indexOf('f')>=0) comp.getStyle().setColor(Formatting.DARK_GRAY);
-        if (style.indexOf('g')>=0) comp.getStyle().setColor(Formatting.GRAY);
-        if (style.indexOf('d')>=0) comp.getStyle().setColor(Formatting.GOLD);
-        if (style.indexOf('p')>=0) comp.getStyle().setColor(Formatting.DARK_PURPLE);
-        if (style.indexOf('n')>=0) comp.getStyle().setColor(Formatting.DARK_RED);
-        if (style.indexOf('q')>=0) comp.getStyle().setColor(Formatting.DARK_AQUA);
-        if (style.indexOf('e')>=0) comp.getStyle().setColor(Formatting.DARK_GREEN);
-        if (style.indexOf('v')>=0) comp.getStyle().setColor(Formatting.DARK_BLUE);
-        if (style.indexOf('k')>=0) comp.getStyle().setColor(Formatting.BLACK);
+        Style myStyle= Style.field_24360.setColor(Formatting.WHITE);
+        for (CarpetFormatting cf: CarpetFormatting.values())
+        {
+            myStyle = cf.apply(style, myStyle);
+        }
+        comp.setStyle(myStyle);
         return comp;
     }
     public static String heatmap_color(double actual, double reference)
