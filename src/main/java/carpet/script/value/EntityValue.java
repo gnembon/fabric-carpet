@@ -914,9 +914,8 @@ public class EntityValue extends Value
         });
 
         put("jumping",(e,v)->{
-            if(!(e instanceof LivingEntity)){
-                throw new InternalExpressionException("Non-living entities can't jump");
-            }
+            if(!(e instanceof LivingEntity)) return;
+
             ((LivingEntity) e).setJumping(v.getBoolean());
         });
 
