@@ -920,7 +920,7 @@ public class EntityValue extends Value
             ((LivingEntity) e).setJumping(v.getBoolean());
         });
 
-        // gamemode_id      [check](gamemode just wont read string)
+        // gamemode         [check]
         // spectate         [check]
         // "fire"           []
         // "extinguish"     []
