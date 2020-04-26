@@ -894,7 +894,7 @@ public class EntityValue extends Value
 
         put("gamemode", (e,v)->{
             if(!(e instanceof ServerPlayerEntity)){
-                throw new InternalExpressionException("Cannot change the gamemode of non-player entities");
+                return;
             }
             
             switch(v.getString().toLowerCase()){
@@ -910,7 +910,7 @@ public class EntityValue extends Value
                 case 2:((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);return;
                 case 3:((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);return;
             }
-            throw new InternalExpressionException(NumericValue.asNumber(v).getLong()+" is an invalid gamemode id");
+            return;
         });
 
         put("jumping",(e,v)->{
