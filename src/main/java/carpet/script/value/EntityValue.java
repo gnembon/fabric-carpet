@@ -10,6 +10,7 @@ import carpet.script.EntityEventsGroup;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
@@ -875,7 +876,7 @@ public class EntityValue extends Value
                     {
                         le.removeStatusEffect(effect);
                         return;
-                    } 
+                    }
                     int amplifier = 0;
                     if (lv.size() > 2)
                         amplifier = (int)NumericValue.asNumber(lv.get(2)).getLong();
@@ -896,7 +897,7 @@ public class EntityValue extends Value
             if(!(e instanceof ServerPlayerEntity)){
                 return;
             }
-            
+
             switch(v.getString().toLowerCase()){
                 case "survival":((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);return;
                 case "creative":((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);return;
@@ -917,6 +918,27 @@ public class EntityValue extends Value
             if(!(e instanceof LivingEntity)) return;
 
             ((LivingEntity) e).setJumping(v.getBoolean());
+        });
+
+        put("jump",(e,v)->{//Most *REDACTED* up code in the world
+
+            float m = e.world.getBlockState(new BlockPos(e)).getBlock().getJumpVelocityMultiplier();
+            float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
+            float JumpVelocityMultiplier= (double)m == 1.0D ? g : m;
+
+            float f = (0.42F * JumpVelocityMultiplier);
+            if (((LivingEntity)e).hasStatusEffect(StatusEffects.JUMP_BOOST)) {
+                f += 0.1F * (float)(((LivingEntity)e).getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1);
+            }
+
+            Vec3d vec3d = e.getVelocity();
+            e.setVelocity(vec3d.x, (double)f, vec3d.z);
+            if (e.isSprinting()) {
+                float u = e.yaw * 0.017453292F;
+                e.setVelocity(e.getVelocity().add((double)(-MathHelper.sin(g) * 0.2F), 0.0D, (double)(MathHelper.cos(u) * 0.2F)));
+            }
+
+            e.velocityDirty = true;
         });
 
         // gamemode         [check]
