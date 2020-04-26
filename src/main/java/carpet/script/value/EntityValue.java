@@ -899,19 +899,18 @@ public class EntityValue extends Value
             }
 
             switch(v.getString().toLowerCase()){
-                case "survival":((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);return;
-                case "creative":((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);return;
-                case "adventure":((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);return;
-                case "spectator":((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);return;
+                case "survival":((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);break;
+                case "creative":((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);break;
+                case "adventure":((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);break;
+                case "spectator":((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);break;
             }
 
             switch((int)NumericValue.asNumber(v).getLong()){
-                case 0:((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);return;
-                case 1:((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);return;
-                case 2:((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);return;
-                case 3:((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);return;
+                case 0:((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);break;
+                case 1:((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);break;
+                case 2:((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);break;
+                case 3:((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);break;
             }
-            return;
         });
 
         put("jumping",(e,v)->{
@@ -932,10 +931,10 @@ public class EntityValue extends Value
             }
 
             Vec3d vec3d = e.getVelocity();
-            e.setVelocity(vec3d.x, (double)f, vec3d.z);
+            e.setVelocity(vec3d.x, f, vec3d.z);
             if (e.isSprinting()) {
                 float u = e.yaw * 0.017453292F;
-                e.setVelocity(e.getVelocity().add((double)(-MathHelper.sin(g) * 0.2F), 0.0D, (double)(MathHelper.cos(u) * 0.2F)));
+                e.setVelocity(e.getVelocity().add((-MathHelper.sin(g) * 0.2F), 0.0D, (MathHelper.cos(u) * 0.2F)));
             }
 
             e.velocityDirty = true;
