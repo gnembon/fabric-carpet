@@ -466,7 +466,11 @@ Modifies gamemode of player to whatever string (case-insensitive) or number you 
 
 ### `modify(e, 'jumping', true/false?)`
 
-Will make the entity constantly jump if set to true, and will stop the entity from jumping if set to false. No current way to make it jump once only.
+Will make the entity constantly jump if set to true, and will stop the entity from jumping if set to false.
+
+### `modify(e, 'jump'))`
+
+Will make the entity jump once only
 
 ## Entity Events
 
