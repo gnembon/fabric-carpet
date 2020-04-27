@@ -40,7 +40,7 @@ public class ServerPlayNetworkHandler_tickMixin
     {
         if (Math.abs(p.getX(player.getX()) - lastTickX) > 0.0001D
                 || Math.abs(p.getY(player.getY()) - lastTickY) > 0.0001D
-                || Math.abs(p.getY(player.getZ()) - lastTickZ) > 0.0001D)
+                || Math.abs(p.getZ(player.getZ()) - lastTickZ) > 0.0001D)
         {
             TickSpeed.reset_player_active_timeout();
         }
