@@ -2729,6 +2729,17 @@ Will make the entity constantly jump if set to true, and will stop the entity fr
 
 Will make the entity jump once only
 
+### `modify(e, 'silent', true/false)`
+
+### `modify(e, 'gravity', true/false)`
+
+### `modify(e, 'fire', ticks)`
+
+Will set mob on fire for `ticks` ticks. Set to 0 to extinguish.
+
+### `modify(e, 'age', age)`
+
+
 ## Entity Events
 
 There is a number of events that happen to entities that you can attach your own code to in the form of event handlers. 

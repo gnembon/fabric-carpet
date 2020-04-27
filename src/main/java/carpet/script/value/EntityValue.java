@@ -912,21 +912,41 @@ public class EntityValue extends Value
             ((LivingEntity) e).setJumping(v.getBoolean());
         });
 
-        put("jump",(e,v)->{//Most *REDACTED* up code in the world
+        put("jump",(e,v)->{
             jump((LivingEntity)e);
+        });
+
+        put("silent",(e,v)->{
+           e.setSilent(v.getBoolean());
+        });
+
+        put("gravity",(e,v)->{
+            e.setNoGravity(!v.getBoolean());
+        });
+
+        put("invulnerable",(e,v)->{
+            e.setInvulnerable(v.getBoolean());
+        });
+
+        put("fire",(e,v)->{
+            e.setFireTicks((int)NumericValue.asNumber(v).getLong());
+        });
+
+        put("age",(e,v)->{
+            e.age=(int)NumericValue.asNumber(v).getLong();
         });
 
         // gamemode         [check]
         // spectate         [check]
-        // "fire"           []
-        // "extinguish"     []
-        // "silent"         []
-        // "gravity"        []
-        // "invulnerable"   []
+        // "fire"           [check]
+        // "extinguish"     [set fire ticks to 0]
+        // "silent"         [check]
+        // "gravity"        [check]
+        // "invulnerable"   [check]
         // "dimension"      []
         // "item"           []
         // "count",         []
-        // "age",           []
+        // "age",           [check]
         // "effect_"name    []
         // "hold"           [inventory_set?]
         // "hold_offhand"   [inventory_set?] 
