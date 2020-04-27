@@ -62,6 +62,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
+import static carpet.utils.MobAI.jump;
 
 // TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
@@ -912,24 +913,7 @@ public class EntityValue extends Value
         });
 
         put("jump",(e,v)->{//Most *REDACTED* up code in the world
-
-            float m = e.world.getBlockState(new BlockPos(e)).getBlock().getJumpVelocityMultiplier();
-            float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
-            float JumpVelocityMultiplier= (double)m == 1.0D ? g : m;
-
-            float f = (0.42F * JumpVelocityMultiplier);
-            if (((LivingEntity)e).hasStatusEffect(StatusEffects.JUMP_BOOST)) {
-                f += 0.1F * (float)(((LivingEntity)e).getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1);
-            }
-
-            Vec3d vec3d = e.getVelocity();
-            e.setVelocity(vec3d.x, f, vec3d.z);
-            if (e.isSprinting()) {
-                float u = e.yaw * 0.017453292F;
-                e.setVelocity(e.getVelocity().add((-MathHelper.sin(g) * 0.2F), 0.0D, (MathHelper.cos(u) * 0.2F)));
-            }
-
-            e.velocityDirty = true;
+            jump((LivingEntity)e);
         });
 
         // gamemode         [check]
