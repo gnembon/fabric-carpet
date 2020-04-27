@@ -98,7 +98,7 @@ public class MobAI
         }
     }
 
-    public static void jump(LivingEntity e){
+    public static void jump(LivingEntity e){//Most *REDACTED* up code in the world
         float m = e.world.getBlockState(new BlockPos(e)).getBlock().getJumpVelocityMultiplier();
         float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
         float JumpVelocityMultiplier= (double)m == 1.0D ? g : m;
