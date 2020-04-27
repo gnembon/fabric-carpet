@@ -897,19 +897,11 @@ public class EntityValue extends Value
             if(!(e instanceof ServerPlayerEntity)){
                 return;
             }
-
             switch(v.getString().toLowerCase()){
-                case "survival":((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);break;
-                case "creative":((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);break;
-                case "adventure":((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);break;
-                case "spectator":((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);break;
-            }
-
-            switch((int)NumericValue.asNumber(v).getLong()){
-                case 0:((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);break;
-                case 1:((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);break;
-                case 2:((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);break;
-                case 3:((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);break;
+                case "survival": case "0":((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);break;
+                case "creative": case "1":((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);break;
+                case "adventure": case "2":((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);break;
+                case "spectator": case "3":((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);break;
             }
         });
 
