@@ -44,6 +44,24 @@ public class TickSpeed
         }
     }
 
+    public static void reset()
+    {
+        tickrate = 20.0f;
+        mspt = 50.0f;
+        time_bias = 0;
+        time_warp_start_time = 0;
+        time_warp_scheduled_ticks = 0;
+        time_advancerer = null;
+        tick_warp_callback = null;
+        tick_warp_sender = null;
+        player_active_timeout = 0;
+        process_entities = true;
+        deepFreeze = false;
+        is_paused = false;
+        is_superHot = false;
+        notifyTickrateListeners("carpet");
+    }
+
     public static void add_ticks_to_run_in_pause(int ticks)
     {
         player_active_timeout = PLAYER_GRACE+ticks;
