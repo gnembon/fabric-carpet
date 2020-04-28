@@ -3,7 +3,6 @@ package carpet.utils;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.Formatting;
@@ -80,7 +79,7 @@ public class Messenger
         }
     };
 
-    private static BaseText _applyStyleToTextComponent(BaseText comp, String style)
+    public static Style parseStyle(String style)
     {
         Style myStyle= Style.EMPTY.withColor(Formatting.WHITE);
         for (CarpetFormatting cf: CarpetFormatting.values())
@@ -154,7 +153,8 @@ public class Messenger
             return previous_message;
         }
         BaseText txt = new LiteralText(str);
-        return _applyStyleToTextComponent(txt, desc);
+        txt.setStyle(parseStyle(desc));
+        return txt;
     }
     public static BaseText tp(String desc, Vec3d pos) { return tp(desc, pos.x, pos.y, pos.z); }
     public static BaseText tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
@@ -274,7 +274,7 @@ public class Messenger
     public static BaseText s(String text, String style)
     {
         BaseText message = new LiteralText(text);
-        _applyStyleToTextComponent(message, style);
+        message.setStyle(parseStyle(style));
         return message;
     }
 
