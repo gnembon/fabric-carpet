@@ -2217,11 +2217,15 @@ It returns a `map` with a report indicating how many chunks were affected, and h
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
-### `scan(cx, cy, cz, dx, dy, dz, px?, py?, pz?, expr)`
+### `scan(cx, cy, cz, dx, dy, dz, px?, py?, pz?, expr)`, `scan(center, range, lower_range?, expr)`
 
-Evaluates expression over area of blocks defined by its center (`cx, cy, cz`), expanded in all directions 
-by `dx, dy, dz` blocks, or optionally in negative with `d` coords, and `p` coords in positive values. `expr` 
-receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
+Evaluates expression over area of blocks defined by its center `center = (cx, cy, cz)`, expanded in all directions 
+by `range = (dx, dy, dz)` blocks, or optionally in negative with `range` coords, and `upper_range` coords in 
+positive values.
+`center` can be defined either as a three coordinates, list of three coords, or block value.
+`range` and `lower_range` can have the same representations, just if its a block, it computes the distance to the center
+as range instead of taking the values as is.
+`expr` receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
 
 Returns number of successful evaluations of `expr` (with `true` boolean result) unless called in void context, 
 which would cause the expression not be evaluated for their boolean value.
@@ -2951,9 +2955,12 @@ scoreboard_add('counter')
 scoreboard_add('lvl','level')
 </pre>
 
-### `scoreboard_remove(objective)`
+### `scoreboard_remove(objective)` `scoreboard_remove(objective, key)`
 
-Removes an objective. Returns `true` if objective has existed and has been removed.
+Removes an entire objective, or an entry in the scoreboard associated with the key. 
+Returns `true` if objective has existed and has been removed, or previous
+value of the scoreboard if players score is removed. Returns `null` if objective didn't exist, or a key was missing
+for the objective.
 
 ### `scoreboard_display(place, objective)`
 

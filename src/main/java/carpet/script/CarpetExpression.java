@@ -1296,6 +1296,26 @@ public class CarpetExpression
 
     }
 
+    private static String getScoreboardKeyFromValue(Value keyValue)
+    {
+        if (keyValue instanceof EntityValue)
+        {
+            Entity e = ((EntityValue) keyValue).getEntity();
+            if (e instanceof PlayerEntity)
+            {
+                return e.getName().getString();
+            }
+            else
+            {
+                return e.getUuidAsString();
+            }
+        }
+        else
+        {
+            return keyValue.getString();
+        }
+    }
+
     private void API_Scoreboard()
     {
         // scoreboard(player,'objective')
@@ -1317,24 +1337,7 @@ public class CarpetExpression
                 Value ret = ListValue.wrap(scoreboard.getAllPlayerScores(objective).stream().map(s -> new StringValue(s.getPlayerName())).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
-            String key;
-            Value keyValue = lv.get(1).evalValue(c);
-            if (keyValue instanceof EntityValue)
-            {
-                Entity e = ((EntityValue) keyValue).getEntity();
-                if (e instanceof PlayerEntity)
-                {
-                    key = e.getDisplayName().getString();
-                }
-                else
-                {
-                    key = e.getUuidAsString();
-                }
-            }
-            else
-            {
-                key = keyValue.getString();
-            }
+            String key = getScoreboardKeyFromValue(lv.get(1).evalValue(c));
             if (!scoreboard.playerHasObjective(key, objective) && lv.size()==2)
                 return LazyValue.NULL;
             ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
@@ -1346,15 +1349,24 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
-        this.expr.addLazyFunction("scoreboard_remove", 1, (c, t, lv)-> {
+        this.expr.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
                 return LazyValue.FALSE;
-            scoreboard.removeObjective(objective);
-            return LazyValue.TRUE;
+            if (lv.size() == 0)
+            {
+                scoreboard.removeObjective(objective);
+                return LazyValue.TRUE;
+            }
+            String key = getScoreboardKeyFromValue(lv.get(1).evalValue(c));
+            if (!scoreboard.playerHasObjective(key, objective)) return LazyValue.NULL;
+            ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
+            Value previous = new NumericValue(scoreboardPlayerScore.getScore());
+            scoreboard.resetPlayerScore(key, objective);
+            return (c_, t_) -> previous;
         });
 
         // objective_add('lvl','level')
