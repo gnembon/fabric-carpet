@@ -3,6 +3,12 @@ package carpet.utils;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.BaseText;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Style;
+import net.minecraft.text.TextColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.Formatting;
@@ -82,12 +88,8 @@ public class Messenger
     public static Style parseStyle(String style)
     {
         Style myStyle= Style.EMPTY.withColor(Formatting.WHITE);
-        for (CarpetFormatting cf: CarpetFormatting.values())
-        {
-            myStyle = cf.apply(style, myStyle);
-        }
-        comp.setStyle(myStyle);
-        return comp;
+        for (CarpetFormatting cf: CarpetFormatting.values()) myStyle = cf.apply(style, myStyle);
+        return myStyle;
     }
     public static String heatmap_color(double actual, double reference)
     {
