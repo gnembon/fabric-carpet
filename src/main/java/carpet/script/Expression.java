@@ -1131,7 +1131,7 @@ public class Expression
         {
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
-                throw new InternalExpressionException("Second argument of 'for' function should be a list or iterator");
+                throw new InternalExpressionException("First argument of 'for' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
             LazyValue expr = lv.get(1);
             //scoping
