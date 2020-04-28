@@ -1,14 +1,9 @@
 package carpet.utils;
 
-import net.minecraft.class_5251;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.BaseText;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Style;
+import net.minecraft.text.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.Formatting;
@@ -32,32 +27,32 @@ public class Messenger
     private static final Pattern colorExtract = Pattern.compile("#([0-9a-fA-F]{6})");
     public enum CarpetFormatting
     {
-        ITALIC      ('i', (s, f) -> s.setItalic(true)),
-        STRIKE      ('s', (s, f) -> s.method_27705(Formatting.STRIKETHROUGH)),
-        UNDERLINE   ('u', (s, f) -> s.method_27705(Formatting.UNDERLINE)),
-        BOLD        ('b', (s, f) -> s.setBold(true)),
-        OBFUSCATE   ('o', (s, f) -> s.method_27705(Formatting.OBFUSCATED)),
+        ITALIC      ('i', (s, f) -> s.withItalic(true)),
+        STRIKE      ('s', (s, f) -> s.withFormatting(Formatting.STRIKETHROUGH)),
+        UNDERLINE   ('u', (s, f) -> s.withFormatting(Formatting.UNDERLINE)),
+        BOLD        ('b', (s, f) -> s.withBold(true)),
+        OBFUSCATE   ('o', (s, f) -> s.withFormatting(Formatting.OBFUSCATED)),
 
-        WHITE       ('w', (s, f) -> s.setColor(Formatting.WHITE)),
-        YELLOW      ('y', (s, f) -> s.setColor(Formatting.YELLOW)),
-        LIGHT_PURPLE('m', (s, f) -> s.setColor(Formatting.LIGHT_PURPLE)), // magenta
-        RED         ('r', (s, f) -> s.setColor(Formatting.RED)),
-        AQUA        ('c', (s, f) -> s.setColor(Formatting.AQUA)), // cyan
-        GREEN       ('l', (s, f) -> s.setColor(Formatting.GREEN)), // lime
-        BLUE        ('t', (s, f) -> s.setColor(Formatting.BLUE)), // light blue, teal
-        DARK_GRAY   ('f', (s, f) -> s.setColor(Formatting.DARK_GRAY)),
-        GRAY        ('g', (s, f) -> s.setColor(Formatting.GRAY)),
-        GOLD        ('d', (s, f) -> s.setColor(Formatting.GOLD)),
-        DARK_PURPLE ('p', (s, f) -> s.setColor(Formatting.DARK_PURPLE)), // purple
-        DARK_RED    ('n', (s, f) -> s.setColor(Formatting.DARK_RED)),  // brown
-        DARK_AQUA   ('q', (s, f) -> s.setColor(Formatting.DARK_AQUA)),
-        DARK_GREEN  ('e', (s, f) -> s.setColor(Formatting.DARK_GREEN)),
-        DARK_BLUE   ('v', (s, f) -> s.setColor(Formatting.DARK_BLUE)), // navy
-        BLACK       ('k', (s, f) -> s.setColor(Formatting.BLACK)),
+        WHITE       ('w', (s, f) -> s.withColor(Formatting.WHITE)),
+        YELLOW      ('y', (s, f) -> s.withColor(Formatting.YELLOW)),
+        LIGHT_PURPLE('m', (s, f) -> s.withColor(Formatting.LIGHT_PURPLE)), // magenta
+        RED         ('r', (s, f) -> s.withColor(Formatting.RED)),
+        AQUA        ('c', (s, f) -> s.withColor(Formatting.AQUA)), // cyan
+        GREEN       ('l', (s, f) -> s.withColor(Formatting.GREEN)), // lime
+        BLUE        ('t', (s, f) -> s.withColor(Formatting.BLUE)), // light blue, teal
+        DARK_GRAY   ('f', (s, f) -> s.withColor(Formatting.DARK_GRAY)),
+        GRAY        ('g', (s, f) -> s.withColor(Formatting.GRAY)),
+        GOLD        ('d', (s, f) -> s.withColor(Formatting.GOLD)),
+        DARK_PURPLE ('p', (s, f) -> s.withColor(Formatting.DARK_PURPLE)), // purple
+        DARK_RED    ('n', (s, f) -> s.withColor(Formatting.DARK_RED)),  // brown
+        DARK_AQUA   ('q', (s, f) -> s.withColor(Formatting.DARK_AQUA)),
+        DARK_GREEN  ('e', (s, f) -> s.withColor(Formatting.DARK_GREEN)),
+        DARK_BLUE   ('v', (s, f) -> s.withColor(Formatting.DARK_BLUE)), // navy
+        BLACK       ('k', (s, f) -> s.withColor(Formatting.BLACK)),
 
         COLOR       ('#', (s, f) -> {
-            class_5251 color = class_5251.method_27719("#"+f);
-            return color == null ? s : s.method_27703(color);
+            TextColor color = TextColor.parse("#"+f);
+            return color == null ? s : s.withColor(color);
         }, s -> {
             Matcher m = colorExtract.matcher(s);
             return m.find() ? m.group(1) : null;
@@ -87,7 +82,7 @@ public class Messenger
 
     private static BaseText _applyStyleToTextComponent(BaseText comp, String style)
     {
-        Style myStyle= Style.field_24360.setColor(Formatting.WHITE);
+        Style myStyle= Style.EMPTY.withColor(Formatting.WHITE);
         for (CarpetFormatting cf: CarpetFormatting.values())
         {
             myStyle = cf.apply(style, myStyle);
@@ -137,25 +132,25 @@ public class Messenger
         if (desc.charAt(0) == '/') // deprecated
         {
             if (previous_message != null)
-                previous_message.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message));
+                previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message));
             return previous_message;
         }
         if (desc.charAt(0) == '?')
         {
             if (previous_message != null)
-                previous_message.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
+                previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
             return previous_message;
         }
         if (desc.charAt(0) == '!')
         {
             if (previous_message != null)
-                previous_message.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
+                previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
             return previous_message;
         }
         if (desc.charAt(0) == '^')
         {
             if (previous_message != null)
-                previous_message.getStyle().setHoverEvent(new HoverEvent(HoverEvent.class_5247.field_24342, c(message.substring(1))));
+                previous_message.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
             return previous_message;
         }
         BaseText txt = new LiteralText(str);
