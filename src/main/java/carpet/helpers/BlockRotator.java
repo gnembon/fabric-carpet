@@ -263,13 +263,20 @@ public class BlockRotator
             }
             world.setBlockState(blockpos, iblockstate.with(HorizontalFacingBlock.FACING, face), 3);
         }
+        else if(block == Blocks.HOPPER )
+        {
+            Direction face = iblockstate.get(HopperBlock.FACING);
+            if (face != Direction.DOWN)
+            {
+                face = rotateClockwise(face, Direction.Axis.Y);
+                world.setBlockState(blockpos, iblockstate.with(HopperBlock.FACING, face), 3);
+            }
+        }
         // Send block update to the block that just have been rotated.
         world.updateNeighbor(blockpos, block, source.getBlockPos());
 
         return stack;
     }
-
-
 
 
     public static boolean flip_block(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
