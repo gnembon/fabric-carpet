@@ -116,10 +116,14 @@ public class Messenger
         {
             message = "w"+message;
         }
-        String[] parts = message.split("\\s", 2);
-        String desc = parts[0];
+        int limit = message.indexOf(' ');
+        String desc = message;
         String str = "";
-        if (parts.length > 1) str = parts[1];
+        if (limit >= 0)
+        {
+            desc = message.substring(0, limit);
+            str = message.substring(limit+1);
+        }
         if (desc.charAt(0) == '/') // deprecated
         {
             if (previous_message != null)
