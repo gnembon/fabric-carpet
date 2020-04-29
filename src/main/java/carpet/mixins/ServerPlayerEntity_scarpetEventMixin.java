@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stat;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,9 +25,10 @@ import static carpet.script.CarpetEventServer.Event.STATISTICS;
 @Mixin(ServerPlayerEntity.class)
 public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
 {
-    public ServerPlayerEntity_scarpetEventMixin(World world_1, GameProfile gameProfile_1)
+
+    public ServerPlayerEntity_scarpetEventMixin(World world, BlockPos blockPos, GameProfile gameProfile)
     {
-        super(world_1, gameProfile_1);
+        super(world, blockPos, gameProfile);
     }
 
     @Shadow protected abstract void consumeItem();

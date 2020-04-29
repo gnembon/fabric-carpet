@@ -27,7 +27,9 @@ import static net.minecraft.block.RedstoneWireBlock.POWER;
 
 @Mixin(RedstoneWireBlock.class)
 public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterface {
-    // =
+    /*
+
+    needs reworking
 
     @Shadow
     private boolean wiresGivePower;
@@ -72,7 +74,7 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
 
     /**
      * @author theosib, soykaf, gnembon
-     */
+     *
     @Inject(method = "updateLogic", at = @At("HEAD"), cancellable = true)
     private void updateLogicAlternative(World world, BlockPos pos, BlockState state, CallbackInfoReturnable<BlockState> cir)
     {
@@ -164,4 +166,6 @@ public abstract class RedstoneWireBlockMixin implements RedstoneWireBlockInterfa
             boolean boolean_1) {
         return fastUpdate(world_1, blockPos_1, blockState_1, blockPos_3);
     }
+
+     */
 }

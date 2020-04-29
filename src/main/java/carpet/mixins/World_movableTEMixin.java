@@ -7,6 +7,7 @@ import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.class_5217;
+import net.minecraft.class_5269;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profiler;
@@ -29,7 +30,7 @@ public abstract class World_movableTEMixin implements WorldInterface
     public boolean isClient;
     @Shadow
     @Final
-    protected class_5217 properties; //LevelProperties
+    protected class_5269 properties; //LevelProperties
 
     @Shadow
     public abstract WorldChunk getWorldChunk(BlockPos blockPos_1);

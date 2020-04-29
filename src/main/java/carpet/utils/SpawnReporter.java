@@ -37,7 +37,6 @@ public class SpawnReporter
     public static boolean mock_spawns = false;
     
     public static Long track_spawns = 0L;
-    public static final HashMap<DimensionType, Object2IntMap<EntityCategory>> mobCounts = new HashMap<>();
     public static final HashMap<DimensionType, Integer> chunkCounts = new HashMap<>();
 
     public static final HashMap<Pair<DimensionType, EntityCategory>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
@@ -82,13 +81,15 @@ public class SpawnReporter
     }
 
 
-    public static List<BaseText> printMobcapsForDimension(DimensionType dim, boolean multiline)
+    public static List<BaseText> printMobcapsForDimension(ServerWorld world, boolean multiline)
     {
+        DimensionType dim = world.getDimension().getType();
         String name = dim.toString();
         List<BaseText> lst = new ArrayList<>();
         if (multiline)
             lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
-        Object2IntMap<EntityCategory> dimCounts = mobCounts.get(dim);
+        SpawnHelper.class_5262 lastSpawner = world.getChunkManager().method_27908();
+        Object2IntMap<EntityCategory> dimCounts = lastSpawner.method_27830();
         int chunkcount = chunkCounts.getOrDefault(dim, -1);
         if (dimCounts == null || chunkcount < 0)
         {
@@ -163,7 +164,7 @@ public class SpawnReporter
 
     }
     
-    public static List<BaseText> show_mobcaps(BlockPos pos, World worldIn)
+    public static List<BaseText> show_mobcaps(BlockPos pos, ServerWorld worldIn)
     {
         DyeColor under = WoolTool.getWoolColorAtPosition(worldIn, pos.down());
         if (under == null)
@@ -174,7 +175,7 @@ public class SpawnReporter
             }
             else
             {
-                return printMobcapsForDimension(worldIn.dimension.getType(), true );
+                return printMobcapsForDimension(worldIn, true );
             }
         }
         EntityCategory creature_type = get_type_code_from_wool_code(under);
@@ -197,7 +198,7 @@ public class SpawnReporter
         }
         else
         {
-            return printMobcapsForDimension(worldIn.dimension.getType(), true );
+            return printMobcapsForDimension(worldIn, true );
         }
         
     }

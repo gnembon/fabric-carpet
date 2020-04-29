@@ -71,7 +71,7 @@ public class HUDController
                         dim = DimensionType.THE_END;
                         break;
                 }
-                return new BaseText[]{SpawnReporter.printMobcapsForDimension(dim, false).get(0)};
+                return new BaseText[]{SpawnReporter.printMobcapsForDimension(server.getWorld(dim), false).get(0)};
             });
 
         if(LoggerRegistry.__counter)

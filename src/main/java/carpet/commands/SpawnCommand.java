@@ -225,7 +225,7 @@ public class SpawnCommand
 
     private static int generalMobcaps(ServerCommandSource source)
     {
-        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getWorld().getDimension().getType(), true));
+        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getWorld(), true));
         return 1;
     }
 
@@ -258,7 +258,7 @@ public class SpawnCommand
 
     private static int mobcapsForDimension(ServerCommandSource source, DimensionType dim)
     {
-        Messenger.send(source, SpawnReporter.printMobcapsForDimension(dim, true));
+        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getWorld(), true));
         return 1;
     }
 

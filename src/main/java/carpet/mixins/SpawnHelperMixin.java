@@ -27,7 +27,11 @@ import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.dimension.DimensionType;
+import org.apache.commons.lang3.tuple.Pair;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -38,6 +42,8 @@ public class SpawnHelperMixin
 {
     
     // in World: private static Map<EntityType, Entity> precookedMobs= new HashMap<>();
+
+    @Shadow @Final private static int field_24392;
 
     @Redirect(method = "method_24934", at = @At(
             value = "INVOKE",
@@ -142,7 +148,7 @@ public class SpawnHelperMixin
         return entityType.create(world_1);
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;)V", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$class_5261;Lnet/minecraft/world/SpawnHelper$class_5259;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
     ))
@@ -165,7 +171,7 @@ public class SpawnHelperMixin
         return false;
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;)V", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$class_5261;Lnet/minecraft/world/SpawnHelper$class_5259;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnType;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
     ))
@@ -176,7 +182,7 @@ public class SpawnHelperMixin
         return null;
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;)V", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$class_5261;Lnet/minecraft/world/SpawnHelper$class_5259;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(DDD)D"
     ))
@@ -188,4 +194,69 @@ public class SpawnHelperMixin
             return 0.0;
         return distanceTo;
     }
+
+
+
+    ////
+
+    @Redirect(method = "method_27821", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/world/SpawnHelper$class_5261;Lnet/minecraft/world/SpawnHelper$class_5259;)V"
+    ))
+    // inject our repeat of spawns if more spawn ticks per tick are chosen.
+    private static void spawnMultipleTimes(EntityCategory category, ServerWorld world, WorldChunk chunk, SpawnHelper.class_5261 arg, SpawnHelper.class_5259 arg2)
+    {
+        for (int i = 0; i < SpawnReporter.spawn_tries.get(category); i++)
+        {
+            SpawnHelper.spawnEntitiesInChunk(category, world, chunk, arg, arg2);
+        }
+    }
+
+    @Redirect(method = "method_27821", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/SpawnHelper$class_5262;method_27826(Lnet/minecraft/entity/EntityCategory;)Z"
+    ))
+    // allows to change mobcaps and captures each category try per dimension before it fails due to full mobcaps.
+    private static boolean getNewMobcaps(
+            SpawnHelper.class_5262 class_526, EntityCategory entityCategory,
+            ServerWorld serverWorld, WorldChunk worldChunk, Object arg, boolean bl, boolean bl2, boolean bl3)
+    {
+        DimensionType dim = serverWorld.dimension.getType();
+        int newCap = (int) ((double)entityCategory.getSpawnCap()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
+        if (SpawnReporter.track_spawns > 0L)
+        {
+            int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning
+            int int_3 = newCap * int_2 / field_24392; //current spawning limits
+            int mobCount = class_526.method_27830().getInt(entityCategory);
+
+            if (SpawnReporter.track_spawns > 0L && !SpawnReporter.first_chunk_marker.contains(entityCategory))
+            {
+                SpawnReporter.first_chunk_marker.add(entityCategory);
+                //first chunk with spawn eligibility for that category
+                Pair key = Pair.of(dim, entityCategory);
+
+
+                int spawnTries = SpawnReporter.spawn_tries.get(entityCategory);
+
+                SpawnReporter.spawn_attempts.put(key,
+                        SpawnReporter.spawn_attempts.get(key) + spawnTries);
+
+                SpawnReporter.spawn_cap_count.put(key,
+                        SpawnReporter.spawn_cap_count.get(key) + mobCount);
+            }
+
+            if (mobCount <= int_3 || SpawnReporter.mock_spawns)
+            {
+                //place 0 to indicate there were spawn attempts for a category
+                //if (entityCategory != EntityCategory.CREATURE || world.getServer().getTicks() % 400 == 0)
+                // this will only be called once every 400 ticks anyways
+                SpawnReporter.local_spawns.putIfAbsent(entityCategory, 0L);
+
+                //else
+                //full mobcaps - and key in local_spawns will be missing
+            }
+        }
+        return SpawnReporter.mock_spawns || class_526.method_27830().getInt(entityCategory) < newCap;
+    }
+
 }
