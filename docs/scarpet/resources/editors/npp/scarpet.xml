@@ -65,7 +65,7 @@
 
                 scan volume neighbours rect diamond
 
-                logger sound particle particle_line particle_rect
+                format logger sound particle particle_line particle_rect
 
                 run save tick_time world_time day_time last_tick_times game_tick seed current_dimension in_dimension
 

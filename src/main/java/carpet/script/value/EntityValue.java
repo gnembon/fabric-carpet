@@ -2,6 +2,7 @@ package carpet.script.value;
 
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
+import carpet.fakes.LivingEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.helpers.Tracer;
 import carpet.patches.EntityPlayerMPFake;
@@ -45,6 +46,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameMode;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -60,6 +62,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
+import static carpet.utils.MobAI.genericJump;
 
 // TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
@@ -279,13 +282,13 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
-        /*put("jumping", (e, a) -> {
+        put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
-                return  ((LivingEntity) e).getJumping()?Value.TRUE:Value.FALSE;
+                return  ((LivingEntityInterface) e).isJumpingCM()?Value.TRUE:Value.FALSE;
             }
             return Value.NULL;
-        });*/ //needs mixing
+        });
         put("gamemode", (e, a) -> {
             if (e instanceof  ServerPlayerEntity)
             {
@@ -374,6 +377,7 @@ public class EntityValue extends Value
             StatusEffectInstance pe = ((LivingEntity) e).getStatusEffect(potion);
             return ListValue.of( new NumericValue(pe.getAmplifier()), new NumericValue(pe.getDuration()) );
         });
+
         put("health", (e, a) ->
         {
             if (e instanceof LivingEntity)
@@ -528,8 +532,6 @@ public class EntityValue extends Value
         e.velocityModified = true;
         //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
-
-
 
     private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
         put("remove", (entity, value) -> entity.remove());
@@ -876,7 +878,7 @@ public class EntityValue extends Value
                     {
                         le.removeStatusEffect(effect);
                         return;
-                    } 
+                    }
                     int amplifier = 0;
                     if (lv.size() > 2)
                         amplifier = (int)NumericValue.asNumber(lv.get(2)).getLong();
@@ -893,21 +895,61 @@ public class EntityValue extends Value
             throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
 
-        // gamemode
-        // spectate
-        // "fire"
-        // "extinguish"
-        // "silent"
-        // "gravity"
-        // "invulnerable"
-        // "dimension"
-        // "item"
-        // "count",
-        // "age",
-        // "effect_"name
-        // "hold"
-        // "hold_offhand"
-        // "jump"
+        put("gamemode", (e,v)->{
+            if(!(e instanceof ServerPlayerEntity)) return;
+            GameMode toSet = v instanceof NumericValue ?
+                    GameMode.byId(((NumericValue) v).getInt(), null) :
+                    GameMode.byName(v.getString().toLowerCase(Locale.ROOT), null);
+            if (toSet != null) ((ServerPlayerEntity) e).setGameMode(toSet);
+        });
+
+        put("jumping",(e,v)->{
+            if(!(e instanceof LivingEntity)) return;
+            ((LivingEntity) e).setJumping(v.getBoolean());
+        });
+
+        put("jump",(e,v)->{
+            if (e instanceof LivingEntity)
+            {
+                ((LivingEntityInterface)e).doJumpCM();
+            }
+            else
+            {
+                genericJump(e);
+            }
+        });
+
+        put("silent",(e,v)->{
+           e.setSilent(v.getBoolean());
+        });
+
+        put("gravity",(e,v)->{
+            e.setNoGravity(!v.getBoolean());
+        });
+
+        put("invulnerable",(e,v)->{
+            e.setInvulnerable(v.getBoolean());
+        });
+
+        put("fire",(e,v)->{
+            e.setFireTicks((int)NumericValue.asNumber(v).getLong());
+        });
+
+        // gamemode         [check]
+        // spectate         [check]
+        // "fire"           [check]
+        // "extinguish"     [set fire ticks to 0]
+        // "silent"         [check]
+        // "gravity"        [check]
+        // "invulnerable"   [check]
+        // "dimension"      []
+        // "item"           []
+        // "count",         []
+        // "age",           [check]
+        // "effect_"name    []
+        // "hold"           [inventory_set?]
+        // "hold_offhand"   [inventory_set?] 
+        // "jump"           [check]
         // "nbt" <-big one, for now use run('data merge entity ...
     }};
 
