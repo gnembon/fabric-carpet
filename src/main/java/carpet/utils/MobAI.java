@@ -4,7 +4,12 @@ import carpet.CarpetServer;
 import com.google.common.collect.Sets;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 
 import java.util.HashMap;
@@ -91,6 +96,26 @@ public class MobAI
                     return type;
             return null;
         }
+    }
+
+    public static void jump(LivingEntity e){//Most *REDACTED* up code in the world
+        float m = e.world.getBlockState(new BlockPos(e)).getBlock().getJumpVelocityMultiplier();
+        float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
+        float JumpVelocityMultiplier= (double)m == 1.0D ? g : m;
+
+        float f = (0.42F * JumpVelocityMultiplier);
+        if (e.hasStatusEffect(StatusEffects.JUMP_BOOST)) {
+            f += 0.1F * (float)(e.getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1);
+        }
+
+        Vec3d vec3d = e.getVelocity();
+        e.setVelocity(vec3d.x, f, vec3d.z);
+        if (e.isSprinting()) {
+            float u = e.yaw * 0.017453292F;
+            e.setVelocity(e.getVelocity().add((-MathHelper.sin(g) * 0.2F), 0.0D, (MathHelper.cos(u) * 0.2F)));
+        }
+
+        e.velocityDirty = true;
     }
 
 }

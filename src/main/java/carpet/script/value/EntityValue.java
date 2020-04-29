@@ -45,6 +45,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameMode;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
+import static carpet.utils.MobAI.jump;
 
 // TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
@@ -876,7 +878,7 @@ public class EntityValue extends Value
                     {
                         le.removeStatusEffect(effect);
                         return;
-                    } 
+                    }
                     int amplifier = 0;
                     if (lv.size() > 2)
                         amplifier = (int)NumericValue.asNumber(lv.get(2)).getLong();
@@ -893,21 +895,63 @@ public class EntityValue extends Value
             throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
 
-        // gamemode
-        // spectate
-        // "fire"
-        // "extinguish"
-        // "silent"
-        // "gravity"
-        // "invulnerable"
-        // "dimension"
-        // "item"
-        // "count",
-        // "age",
-        // "effect_"name
-        // "hold"
-        // "hold_offhand"
-        // "jump"
+        put("gamemode", (e,v)->{
+            if(!(e instanceof ServerPlayerEntity)){
+                return;
+            }
+            switch(v.getString().toLowerCase()){
+                case "survival": case "0":((ServerPlayerEntity) e).setGameMode(GameMode.SURVIVAL);break;
+                case "creative": case "1":((ServerPlayerEntity) e).setGameMode(GameMode.CREATIVE);break;
+                case "adventure": case "2":((ServerPlayerEntity) e).setGameMode(GameMode.ADVENTURE);break;
+                case "spectator": case "3":((ServerPlayerEntity) e).setGameMode(GameMode.SPECTATOR);break;
+            }
+        });
+
+        put("jumping",(e,v)->{
+            if(!(e instanceof LivingEntity)) return;
+
+            ((LivingEntity) e).setJumping(v.getBoolean());
+        });
+
+        put("jump",(e,v)->{
+            jump((LivingEntity)e);
+        });
+
+        put("silent",(e,v)->{
+           e.setSilent(v.getBoolean());
+        });
+
+        put("gravity",(e,v)->{
+            e.setNoGravity(!v.getBoolean());
+        });
+
+        put("invulnerable",(e,v)->{
+            e.setInvulnerable(v.getBoolean());
+        });
+
+        put("fire",(e,v)->{
+            e.setFireTicks((int)NumericValue.asNumber(v).getLong());
+        });
+
+        put("age",(e,v)->{
+            e.age=(int)NumericValue.asNumber(v).getLong();
+        });
+
+        // gamemode         [check]
+        // spectate         [check]
+        // "fire"           [check]
+        // "extinguish"     [set fire ticks to 0]
+        // "silent"         [check]
+        // "gravity"        [check]
+        // "invulnerable"   [check]
+        // "dimension"      []
+        // "item"           []
+        // "count",         []
+        // "age",           [check]
+        // "effect_"name    []
+        // "hold"           [inventory_set?]
+        // "hold_offhand"   [inventory_set?] 
+        // "jump"           [check]
         // "nbt" <-big one, for now use run('data merge entity ...
     }};
 
