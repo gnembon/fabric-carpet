@@ -2661,7 +2661,7 @@ Adds a vector to the motion vector. Most realistic way to apply a force to an en
 
 ### `modify(e, 'age', number)`
 
-Modifies entity's internal age counter. Fiddling with this will affect directly behaviours of complex 
+Modifies entity's internal age counter. Fiddling with this will affect directly AI behaviours of complex 
 entities, so use it with caution.
 
 ### `modify(e, 'pickup_delay', number)`
@@ -2728,13 +2728,17 @@ Modifies gamemode of player to whatever string (case-insensitive) or number you 
 * 2: adventure
 * 3: spectator
 
-### `modify(e, 'jumping', true/false?)`
+### `modify(e, 'jumping', true/false)`
 
 Will make the entity constantly jump if set to true, and will stop the entity from jumping if set to false.
+Note that jumping parameter can be fully controlled by the entity AI, so don't expect that this will have 
+a permanent effect. Use `'jump'` to make an entity jump once for sure.
+
+Requires a living entity as an argument.
 
 ### `modify(e, 'jump'))`
 
-Will make the entity jump once only
+Will make the entity jump once.
 
 ### `modify(e, 'silent', true/false)`
 
@@ -2743,9 +2747,6 @@ Will make the entity jump once only
 ### `modify(e, 'fire', ticks)`
 
 Will set mob on fire for `ticks` ticks. Set to 0 to extinguish.
-
-### `modify(e, 'age', age)`
-
 
 ## Entity Events
 
@@ -3090,7 +3091,7 @@ And colors:
  * `e` - grEEn
  * `v` - naVy blue
  * `k` - blaK
- * `#FFAACC` - arbitrary RGB color (1.16+), hex notation
+ * `#FFAACC` - arbitrary RGB color (1.16+), hex notation. Use uppercase for A-F symbols
  
 Decorators (listed as extra argument after the component they would affect):
  * `'^<format> <text>'` - hover over tooltip text, appearing when hovering with your mouse over the text below.

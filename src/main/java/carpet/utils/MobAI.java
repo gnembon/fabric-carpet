@@ -7,6 +7,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.tag.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -98,23 +99,24 @@ public class MobAI
         }
     }
 
-    public static void jump(LivingEntity e){//Most *REDACTED* up code in the world
+    /**
+     * Not a replacement for living entity jump() - this barely is to allow other entities that can't jump in vanilla to 'jump'
+     * @param e
+     */
+    public static void genericJump(Entity e)
+    {
+        if (!e.onGround && !e.isInFluid(FluidTags.WATER) && !e.isInLava()) return;
         float m = e.world.getBlockState(new BlockPos(e)).getBlock().getJumpVelocityMultiplier();
         float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
-        float JumpVelocityMultiplier= (double)m == 1.0D ? g : m;
-
-        float f = (0.42F * JumpVelocityMultiplier);
-        if (e.hasStatusEffect(StatusEffects.JUMP_BOOST)) {
-            f += 0.1F * (float)(e.getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1);
-        }
-
+        float jumpVelocityMultiplier = (double) m == 1.0D ? g : m;
+        float jumpStrength = (0.42F * jumpVelocityMultiplier);
         Vec3d vec3d = e.getVelocity();
-        e.setVelocity(vec3d.x, f, vec3d.z);
-        if (e.isSprinting()) {
+        e.setVelocity(vec3d.x, jumpStrength, vec3d.z);
+        if (e.isSprinting())
+        {
             float u = e.yaw * 0.017453292F;
             e.setVelocity(e.getVelocity().add((-MathHelper.sin(g) * 0.2F), 0.0D, (MathHelper.cos(u) * 0.2F)));
         }
-
         e.velocityDirty = true;
     }
 
