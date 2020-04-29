@@ -25,6 +25,7 @@ entity_list
 entity_selector
 escape_nbt
 flammable
+format
 game_tick
 generation_status
 hardness
