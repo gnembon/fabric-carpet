@@ -23,6 +23,7 @@ import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
@@ -2676,15 +2677,31 @@ public class CarpetExpression
         {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value res = lv.get(0).evalValue(c);
-            if (s.getEntity() instanceof  PlayerEntity)
+            if (res instanceof FormattedTextValue)
             {
-                Messenger.m((PlayerEntity) s.getEntity(), "w "+ res.getString());
+                s.sendFeedback(((FormattedTextValue) res).getText(), false);
             }
             else
             {
-                Messenger.m(s, "w "+ res.getString());
+                if (s.getEntity() instanceof PlayerEntity)
+                {
+                    Messenger.m((PlayerEntity) s.getEntity(), "w " + res.getString());
+                }
+                else
+                {
+                    Messenger.m(s, "w " + res.getString());
+                }
             }
             return (_c, _t) -> res; // pass through for variables
+        });
+
+        this.expr.addLazyFunction("format", -1, (c, t, lv) -> {
+            if (lv.size() == 0 ) throw new InternalExpressionException("'format' requires at least one component");
+            List<Value> values = lv.stream().map(lazy -> lazy.evalValue(c)).collect(Collectors.toList());
+            if (values.get(0) instanceof ListValue && values.size()==1)
+                values = ((ListValue) values.get(0)).getItems();
+            Value ret = new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
+            return (cc, tt) -> ret;
         });
 
         //"overidden" native call to cancel if on main thread
