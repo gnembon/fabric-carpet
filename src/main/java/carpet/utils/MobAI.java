@@ -105,8 +105,8 @@ public class MobAI
      */
     public static void genericJump(Entity e)
     {
-        if (!e.onGround && !e.isInFluid(FluidTags.WATER) && !e.isInLava()) return;
-        float m = e.world.getBlockState(new BlockPos(e)).getBlock().getJumpVelocityMultiplier();
+        if (!e.isOnGround() && !e.isInsideWaterOrBubbleColumn() && !e.isInLava()) return;
+        float m = e.world.getBlockState(e.getBlockPos()).getBlock().getJumpVelocityMultiplier();
         float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
         float jumpVelocityMultiplier = (double) m == 1.0D ? g : m;
         float jumpStrength = (0.42F * jumpVelocityMultiplier);
