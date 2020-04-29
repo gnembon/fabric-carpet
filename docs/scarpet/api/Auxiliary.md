@@ -95,7 +95,7 @@ And colors:
  * `e` - grEEn
  * `v` - naVy blue
  * `k` - blaK
- * `#FFAACC` - arbitrary RGB color (1.16+), hex notation
+ * `#FFAACC` - arbitrary RGB color (1.16+), hex notation. Use uppercase for A-F symbols
  
 Decorators (listed as extra argument after the component they would affect):
  * `'^<format> <text>'` - hover over tooltip text, appearing when hovering with your mouse over the text below.
