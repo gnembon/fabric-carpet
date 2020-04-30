@@ -152,7 +152,7 @@ Entity that `e` rides.
 
 List of entity tags.
 
-### `query(e,'has_tags',tag)`
+### `query(e,'has_tag',tag)`
 
 Boolean, True if the entity is marked with `tag`.
 
