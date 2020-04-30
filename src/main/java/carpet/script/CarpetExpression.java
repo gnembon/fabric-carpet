@@ -1,10 +1,11 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ServerChunkManagerInterface;
+import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -110,6 +111,7 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
@@ -1291,6 +1293,23 @@ public class CarpetExpression
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
             Value ret = new NumericValue(cc.s.getWorld().getChunk(pos).getInhabitedTime());
+            return (_c, _t) -> ret;
+        });
+
+        this.expr.addLazyFunction("spawn_potential", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            double required_charge = 1;
+            if (lv.size() > locator.offset)
+                required_charge = NumericValue.asNumber(lv.get(locator.offset).evalValue(c)).getDouble();
+            SpawnHelper.class_5262 charger = cc.s.getWorld().getChunkManager().method_27908();
+            if (charger == null) return LazyValue.NULL;
+            Value ret = new NumericValue(
+                    ((SpawnHelperInnerInterface)charger).getPotentialCalculator().
+                            method_27832(pos, required_charge )
+            );
             return (_c, _t) -> ret;
         });
 
