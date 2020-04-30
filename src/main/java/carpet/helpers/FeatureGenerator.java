@@ -227,11 +227,11 @@ public class FeatureGenerator
 
         put("oak", simpleTree(OAK_TREE_CONFIG));
         put("oak_beehive", simpleTree(
-                (OAK_TREE_CONFIG.method_27373((ImmutableList.of(new BeehiveTreeDecorator(1.0F))))
+                (OAK_TREE_CONFIG.setTreeDecorators((ImmutableList.of(new BeehiveTreeDecorator(1.0F))))
         )));
         put("oak_large", simpleTree(DefaultBiomeFeatures.FANCY_TREE_CONFIG));
         put("oak_large_beehive", simpleTree(
-                FANCY_TREE_CONFIG.method_27373(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
+                FANCY_TREE_CONFIG.setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
         put("birch", simpleTree(DefaultBiomeFeatures.BIRCH_TREE_CONFIG));
         put("birch_large", simpleTree(DefaultBiomeFeatures.LARGE_BIRCH_TREE_CONFIG));
         put("shrub", simpleTree(DefaultBiomeFeatures.JUNGLE_GROUND_BUSH_CONFIG));

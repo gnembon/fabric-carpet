@@ -33,7 +33,9 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Map;
 
@@ -44,6 +46,8 @@ public class SpawnHelperMixin
     // in World: private static Map<EntityType, Entity> precookedMobs= new HashMap<>();
 
     @Shadow @Final private static int field_24392;
+
+    @Shadow @Final private static EntityCategory[] field_24393;
 
     @Redirect(method = "method_24934", at = @At(
             value = "INVOKE",
@@ -212,14 +216,16 @@ public class SpawnHelperMixin
         }
     }
 
+    /* shrug - why no inject, no idea. need to inject twice more. Will check with the names next week
+
     @Redirect(method = "method_27821", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/SpawnHelper$class_5262;method_27826(Lnet/minecraft/entity/EntityCategory;)Z"
     ))
     // allows to change mobcaps and captures each category try per dimension before it fails due to full mobcaps.
-    private static boolean getNewMobcaps(
+    private static boolean changeMobcaps(
             SpawnHelper.class_5262 class_526, EntityCategory entityCategory,
-            ServerWorld serverWorld, WorldChunk worldChunk, Object arg, boolean bl, boolean bl2, boolean bl3)
+            ServerWorld serverWorld, WorldChunk worldChunk, SpawnHelper.class_5262 arg, boolean bl, boolean bl2, boolean bl3)
     {
         DimensionType dim = serverWorld.dimension.getType();
         int newCap = (int) ((double)entityCategory.getSpawnCap()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
@@ -257,6 +263,59 @@ public class SpawnHelperMixin
             }
         }
         return SpawnReporter.mock_spawns || class_526.method_27830().getInt(entityCategory) < newCap;
+    }
+    */
+
+    //temporary mixin until naming gets fixed
+
+    @Inject(method = "method_27821", at = @At("HEAD"))
+    // allows to change mobcaps and captures each category try per dimension before it fails due to full mobcaps.
+    private static void checkSpawns(ServerWorld serverWorld, WorldChunk worldChunk, SpawnHelper.class_5262 arg, boolean bl, boolean bl2, boolean bl3, CallbackInfo ci)
+    {
+        if (SpawnReporter.track_spawns > 0L)
+        {
+            EntityCategory[] var6 = field_24393;
+            int var7 = var6.length;
+
+            for(int var8 = 0; var8 < var7; ++var8) {
+                EntityCategory entityCategory = var6[var8];
+                if ((bl || !entityCategory.isPeaceful()) && (bl2 || entityCategory.isPeaceful()) && (bl3 || !entityCategory.isAnimal()) )
+                {
+                    DimensionType dim = serverWorld.dimension.getType();
+                    int newCap = (int) ((double)entityCategory.getSpawnCap()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
+                    int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning
+                    int int_3 = newCap * int_2 / field_24392; //current spawning limits
+                    int mobCount = arg.method_27830().getInt(entityCategory);
+
+                    if (SpawnReporter.track_spawns > 0L && !SpawnReporter.first_chunk_marker.contains(entityCategory))
+                    {
+                        SpawnReporter.first_chunk_marker.add(entityCategory);
+                        //first chunk with spawn eligibility for that category
+                        Pair key = Pair.of(dim, entityCategory);
+
+
+                        int spawnTries = SpawnReporter.spawn_tries.get(entityCategory);
+
+                        SpawnReporter.spawn_attempts.put(key,
+                                SpawnReporter.spawn_attempts.get(key) + spawnTries);
+
+                        SpawnReporter.spawn_cap_count.put(key,
+                                SpawnReporter.spawn_cap_count.get(key) + mobCount);
+                    }
+
+                    if (mobCount <= int_3 || SpawnReporter.mock_spawns)
+                    {
+                        //place 0 to indicate there were spawn attempts for a category
+                        //if (entityCategory != EntityCategory.CREATURE || world.getServer().getTicks() % 400 == 0)
+                        // this will only be called once every 400 ticks anyways
+                        SpawnReporter.local_spawns.putIfAbsent(entityCategory, 0L);
+
+                        //else
+                        //full mobcaps - and key in local_spawns will be missing
+                    }
+                }
+            }
+        }
     }
 
 }
