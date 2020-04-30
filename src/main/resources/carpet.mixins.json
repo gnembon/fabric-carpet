@@ -169,7 +169,8 @@
     "PlayerListHudMixin",
     "PistonBlockEntityRenderer_movableTEMixin",
     "ClientPlayNetworkHandler_smoothClientAnimationsMixin",
-    "ClientPlayerEntity_clientCommandMixin"
+    "ClientPlayerEntity_clientCommandMixin",
+    "WorldRenderer_fogOffMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"

@@ -576,4 +576,11 @@ public class CarpetSettings
             category = CREATIVE
     )
     public static boolean extremeBehaviours = false;
+
+    @Rule(
+            desc = "Removes fog from client in the nether and the end",
+            extra = "Improves visibility, but looks weird",
+            category = CLIENT
+    )
+    public static boolean fogOff = false;
 }
