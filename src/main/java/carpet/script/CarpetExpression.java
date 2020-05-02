@@ -1089,7 +1089,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Chunk chunk = world.getChunk(pos);
+            Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
             ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
             this.forceChunkUpdate(pos, world);
             return LazyValue.NULL;
@@ -1100,7 +1100,7 @@ public class CarpetExpression
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Map<String, LongSet> references = world.getChunk(pos).getStructureReferences();
+            Map<String, LongSet> references = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_REFERENCES).getStructureReferences();
             if (lv.size() == locator.offset)
             {
                 List<Value> referenceList = references.entrySet().stream().
@@ -1126,7 +1126,7 @@ public class CarpetExpression
 
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
+            Map<String, StructureStart> structures = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_STARTS).getStructureStarts();
             if (lv.size() == locator.offset)
             {
                 Map<Value, Value> structureList = new HashMap<>();
