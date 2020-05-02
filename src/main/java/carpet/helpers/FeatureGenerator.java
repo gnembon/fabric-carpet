@@ -164,12 +164,12 @@ public class FeatureGenerator
         ChunkRandom chunkRandom = new ChunkRandom();
         ChunkPos chunkPos = new ChunkPos(pos);
         Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
-        if (structure.shouldStartAt(biomeAccess, generator, chunkRandom, chunkPos.x, chunkPos.z, biome))
+        if (structure.method_27217(biomeAccess, generator, chunkRandom, chunkPos.x, chunkPos.z, biome)) // should start at
         {
             if (!computeBox) return DEFAULT_BOX;
-            StructureManager manager = world.getSaveHandler().getStructureManager();
+            StructureManager manager = world.getStructureManager();
             StructureStart structureStart3 = structure.getStructureStartFactory().create(structure, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, generator.getSeed());
-            structureStart3.initialize(generator, manager, chunkPos.x, chunkPos.z, biome);
+            structureStart3.init(generator, manager, chunkPos.x, chunkPos.z, biome);
             if (!structureStart3.hasChildren()) return null;
             return structureStart3.getBoundingBox();
         }
