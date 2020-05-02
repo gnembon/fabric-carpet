@@ -6,13 +6,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructureManager;
+import net.minecraft.structure.StructureStart;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.biome.DefaultBiomeFeatures;
+import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
 import net.minecraft.world.biome.source.VanillaLayeredBiomeSourceConfig;
+import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.OverworldChunkGenerator;
 import net.minecraft.world.gen.chunk.OverworldChunkGeneratorConfig;
@@ -141,26 +147,48 @@ public class FeatureGenerator
         return null;
     }
 
+    public static BlockBox DEFAULT_BOX = new BlockBox(0,0,0,1,1,1);
+    public static BlockBox shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<?> structure, boolean computeBox)
+    {
+        ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
+        if (!generator.getBiomeSource().hasStructureFeature(structure))
+            return null;
+        BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
+        ChunkRandom chunkRandom = new ChunkRandom();
+        ChunkPos chunkPos = new ChunkPos(pos);
+        Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
+        if (structure.shouldStartAt(biomeAccess, generator, chunkRandom, chunkPos.x, chunkPos.z, biome))
+        {
+            if (!computeBox) return DEFAULT_BOX;
+            StructureManager manager = world.getSaveHandler().getStructureManager();
+            StructureStart structureStart3 = structure.getStructureStartFactory().create(structure, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, generator.getSeed());
+            structureStart3.initialize(generator, manager, chunkPos.x, chunkPos.z, biome);
+            if (!structureStart3.hasChildren()) return null;
+            return structureStart3.getBoundingBox();
+        }
+        return null;
+    }
+
 
     public static final Map<String, List<String>> structureToFeature = new HashMap<>();
     public static final Map<String, String> featureToStructure = new HashMap<>();
     static
     {
-        structureToFeature.put("Monument", Collections.singletonList("monument"));
-        structureToFeature.put("EndCity", Collections.singletonList("end_city"));
-        structureToFeature.put("Ocean_Ruin", Arrays.asList("ocean_ruin", "ocean_ruin_warm", "ocean_ruin_small", "ocean_ruin_warm_small", "ocean_ruin_tall", "ocean_ruin_warm_tall"));
-        structureToFeature.put("Village", Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
-        structureToFeature.put("Mansion", Collections.singletonList("mansion"));
-        structureToFeature.put("Buried_Treasure", Collections.singletonList("treasure"));
-        structureToFeature.put("Swamp_Hut", Collections.singletonList("witch_hut"));
-        structureToFeature.put("Stronghold", Collections.singletonList("stronghold"));
-        structureToFeature.put("Desert_Pyramid", Collections.singletonList("desert_temple"));
-        structureToFeature.put("Jungle_Pyramid", Collections.singletonList("jungle_temple"));
-        structureToFeature.put("Shipwreck", Arrays.asList("shipwreck", "shipwreck2"));
-        structureToFeature.put("Pillager_Outpost", Collections.singletonList("pillager_outpost"));
-        structureToFeature.put("Mineshaft", Arrays.asList("mineshaft", "mineshaft_mesa"));
-        structureToFeature.put("Igloo", Collections.singletonList("igloo"));
-        structureToFeature.put("Fortress", Collections.singletonList("fortress"));
+        structureToFeature.put(Feature.OCEAN_MONUMENT.getName(), Collections.singletonList("monument"));
+        structureToFeature.put(Feature.END_CITY.getName(), Collections.singletonList("end_city"));
+        structureToFeature.put(Feature.OCEAN_RUIN.getName(), Arrays.asList("ocean_ruin", "ocean_ruin_warm", "ocean_ruin_small", "ocean_ruin_warm_small", "ocean_ruin_tall", "ocean_ruin_warm_tall"));
+        structureToFeature.put(Feature.VILLAGE.getName(), Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
+        structureToFeature.put(Feature.WOODLAND_MANSION.getName(), Collections.singletonList("mansion"));
+        structureToFeature.put(Feature.BURIED_TREASURE.getName(), Collections.singletonList("treasure"));
+        structureToFeature.put(Feature.SWAMP_HUT.getName(), Collections.singletonList("witch_hut"));
+        structureToFeature.put(Feature.STRONGHOLD.getName(), Collections.singletonList("stronghold"));
+        structureToFeature.put(Feature.DESERT_PYRAMID.getName(), Collections.singletonList("desert_temple"));
+        structureToFeature.put(Feature.JUNGLE_TEMPLE.getName(), Collections.singletonList("jungle_temple"));
+        structureToFeature.put(Feature.SHIPWRECK.getName(), Arrays.asList("shipwreck", "shipwreck2"));
+        structureToFeature.put(Feature.PILLAGER_OUTPOST.getName(), Collections.singletonList("pillager_outpost"));
+        structureToFeature.put(Feature.MINESHAFT.getName(), Arrays.asList("mineshaft", "mineshaft_mesa"));
+        structureToFeature.put(Feature.IGLOO.getName(), Collections.singletonList("igloo"));
+        structureToFeature.put(Feature.NETHER_BRIDGE.getName(), Collections.singletonList("fortress"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }

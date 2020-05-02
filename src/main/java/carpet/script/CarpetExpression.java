@@ -111,6 +111,8 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
@@ -1117,6 +1119,56 @@ public class CarpetExpression
                     Value.ZERO,
                     new NumericValue(16*ChunkPos.getPackedZ(l)))).collect(Collectors.toList()));
             return (_c, _t) -> ret;
+        });
+
+        this.expr.addLazyFunction("structure_eligibility", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            StructureFeature<?> structure = null;
+            boolean needSize = false;
+            if (lv.size() > locator.offset)
+            {
+                Value requested = lv.get(locator.offset+0).evalValue(c);
+                if (!(requested instanceof NullValue))
+                {
+                    String reqString = requested.getString();
+                    String structureName = FeatureGenerator.featureToStructure.get(reqString);
+                    if (structureName == null) throw new InternalExpressionException("Unknown structure: " + reqString);
+                    structure = Feature.STRUCTURES.get(structureName);
+                }
+                if (lv.size() > locator.offset+1)
+                {
+                    needSize = lv.get(locator.offset+1).evalValue(c).getBoolean();
+                }
+            }
+            if (structure != null)
+            {
+                BlockBox box = FeatureGenerator.shouldStructureStartAt(world, pos, structure, needSize);
+                if (box == null) return LazyValue.NULL;
+                if (!needSize) return LazyValue.TRUE;
+                Value ret = ListValue.of(
+                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
+                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ))
+                );
+                return (_c, _t) -> ret;
+            }
+            Map<Value, Value> ret = new HashMap<>();
+            for(StructureFeature<?> str : Feature.STRUCTURES.values())
+            {
+                BlockBox box = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                if (box == null) continue;
+                Value key = new StringValue(FeatureGenerator.structureToFeature.get(str.getName()).get(0));
+                ret.put(key, (!needSize)?Value.NULL:ListValue.of(
+                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
+                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ))
+                ));
+            }
+            Value retMap = MapValue.wrap(ret);
+            return (_c, _t) -> retMap;
         });
 
         this.expr.addLazyFunction("structures", -1, (c, t, lv) -> {
