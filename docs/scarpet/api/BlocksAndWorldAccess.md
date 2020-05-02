@@ -523,6 +523,25 @@ if the chunk is not in memory unless called with optional `true`.
 
 Returns inhabited time for a chunk.
 
+### `spawn_potential(pos)`
+
+Returns spawn potential at a location (1.16+ only)
+
+### `structure_eligibility(pos, ?structure, ?size_needed)`
+
+Checks wordgen eligibility for a structure in a given chunk. If no structure is given, or `null`, then it will check
+ for all structures. If bounding box of the structures is also requested, it will compute size of potential
+  structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
+  making it preferred for scoping ungenerated terrain.
+  
+If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
+a pair of coordinates indicating bounding box of the structure.
+
+If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+as keys, and pair of bounding box coordinates as values. An empty set or an empty map would indicate that nothing
+should be generated there.
+
+
 ### `structures(pos), structures(pos, structure_name)`
 
 Returns structure information for a given block position. Note that structure information is the same for all the 
