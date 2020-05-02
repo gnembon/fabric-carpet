@@ -201,6 +201,11 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 {
                     token.append(input.charAt(pos++));
                     linepos++;
+                    if (ch=='\n')
+                    {
+                        lineno++;
+                        linepos = 0;
+                    }
                     if (pos == input.length() && expression != null && context != null)
                         throw new ExpressionException(context, this.expression, token, "Program truncated");
                 }
