@@ -86,10 +86,12 @@ sky_light
 solid
 sound
 spawn
+spawn_potential
 stack_limit
 statistic
 store_app_data
 structures
+structure_eligibility
 structure_references
 suffocates
 tick_time

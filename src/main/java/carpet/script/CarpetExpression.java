@@ -1153,7 +1153,7 @@ public class CarpetExpression
                 if (!needSize) return LazyValue.TRUE;
                 Value ret = ListValue.of(
                         ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
-                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ))
+                        ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ))
                 );
                 return (_c, _t) -> ret;
             }
@@ -1165,7 +1165,7 @@ public class CarpetExpression
                 Value key = new StringValue(FeatureGenerator.structureToFeature.get(str.getName()).get(0));
                 ret.put(key, (!needSize)?Value.NULL:ListValue.of(
                         ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
-                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ))
+                        ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ))
                 ));
             }
             Value retMap = MapValue.wrap(ret);
