@@ -137,25 +137,33 @@ public class Messenger
         if (desc.charAt(0) == '/') // deprecated
         {
             if (previous_message != null)
-                previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message));
+                previous_message.setStyle(
+                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message))
+                );
             return previous_message;
         }
         if (desc.charAt(0) == '?')
         {
             if (previous_message != null)
-                previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)));
+                previous_message.setStyle(
+                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, message.substring(1)))
+                );
             return previous_message;
         }
         if (desc.charAt(0) == '!')
         {
             if (previous_message != null)
-                previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)));
+                previous_message.setStyle(
+                        previous_message.getStyle().withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, message.substring(1)))
+                );
             return previous_message;
         }
         if (desc.charAt(0) == '^')
         {
             if (previous_message != null)
-                previous_message.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))));
+                previous_message.setStyle(
+                        previous_message.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))))
+                );
             return previous_message;
         }
         BaseText txt = new LiteralText(str);
