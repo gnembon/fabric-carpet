@@ -156,7 +156,10 @@
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
     "WorldChunk_movableTEMixin",
-    "PistonHandler_movableTEMixin"
+    "PistonHandler_movableTEMixin",
+    "PlayerEntity_creativeNoClipMixin",
+    "PistonBlockEntity_creativeNoClipMixin"
+
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",
@@ -169,7 +172,9 @@
     "PistonBlockEntityRenderer_movableTEMixin",
     "ClientPlayNetworkHandler_smoothClientAnimationsMixin",
     "ClientPlayerEntity_clientCommandMixin",
-    "WorldRenderer_fogOffMixin"
+    "WorldRenderer_fogOffMixin",
+    "WorldRenderer_creativeNoClipMixin"
+
   ],
   "server": [
     "MinecraftDedicatedServerMixin"
