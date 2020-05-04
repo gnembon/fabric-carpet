@@ -195,9 +195,9 @@ public class FeatureGenerator
         structureToFeature.put(Feature.MINESHAFT.getName(), Arrays.asList("mineshaft", "mineshaft_mesa"));
         structureToFeature.put(Feature.IGLOO.getName(), Collections.singletonList("igloo"));
         structureToFeature.put(Feature.NETHER_BRIDGE.getName(), Collections.singletonList("fortress"));
-        structureToFeature.put("Nether_Fossil", Collections.singletonList("nether_fossil"));
-        structureToFeature.put("Bastion_Remnant", Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
-        structureToFeature.put("Ruined_Portal", Collections.singletonList("ruined_portal"));
+        structureToFeature.put(Feature.NETHER_FOSSIL.getName(), Collections.singletonList("nether_fossil"));
+        structureToFeature.put(Feature.BASTION_REMNANT.getName(), Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
+        structureToFeature.put(Feature.RUINED_PORTAL.getName(), Collections.singletonList("ruined_portal"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
