@@ -147,10 +147,9 @@ public class FeatureGenerator
         return null;
     }
 
-    public static BlockBox DEFAULT_BOX = new BlockBox(0,0,0,1,1,1);
-    public static BlockBox shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<?> structure, boolean computeBox)
+    public static StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<?> structure, boolean computeBox)
     {
-        ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
+        ChunkGenerator<?> generator = world.getChunkManager().getChunkGenerator();
         if (!generator.getBiomeSource().hasStructureFeature(structure))
             return null;
         BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
@@ -159,12 +158,12 @@ public class FeatureGenerator
         Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
         if (structure.shouldStartAt(biomeAccess, generator, chunkRandom, chunkPos.x, chunkPos.z, biome))
         {
-            if (!computeBox) return DEFAULT_BOX;
+            if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getSaveHandler().getStructureManager();
             StructureStart structureStart3 = structure.getStructureStartFactory().create(structure, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, generator.getSeed());
             structureStart3.initialize(generator, manager, chunkPos.x, chunkPos.z, biome);
             if (!structureStart3.hasChildren()) return null;
-            return structureStart3.getBoundingBox();
+            return structureStart3;
         }
         return null;
     }
