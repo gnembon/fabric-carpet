@@ -583,4 +583,10 @@ public class CarpetSettings
             category = CLIENT
     )
     public static boolean fogOff = false;
+
+    @Rule(
+            desc = "Creative No Clip",
+            category = {CREATIVE, CLIENT}
+    )
+    public static boolean creativeNoClip = false;
 }
