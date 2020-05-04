@@ -1575,7 +1575,7 @@ public class Expression
             if (lv.size() == 1)
                 return new StringValue(format);
             int argIndex = 1;
-            if (lv.get(1) instanceof ListValue)
+            if (lv.get(1) instanceof ListValue && lv.size() == 2)
             {
                 lv = ((ListValue) lv.get(1)).getItems();
                 argIndex = 0;

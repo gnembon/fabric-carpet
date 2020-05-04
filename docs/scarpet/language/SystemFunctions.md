@@ -46,15 +46,22 @@ number('3bar') => null
 number('2')+number('2') => 4
 </pre>
 
-### `str(expr, params? ... ), str(expr, param_list)`
+### `str(expr)`,`str(expr, params? ... )`, `str(expr, param_list)`
 
-Returns a formatted string representing expression. Accepts formatting style accepted by `String.format`. 
-Supported types (with `"%?"` syntax):
+If called with one argument, returns string representation of such value.
+
+Otherwise, returns a formatted string representing the expression. Arguments for formatting can either be provided as
+ each consecutive parameter, or as a list which then would be the only extra parameter. To format one list argument
+ , you can use `str(list)`, or `str('foo %s', l(list))`.
+
+Accepts formatting style accepted by `String.format`. 
+Supported types (with `"%<?>"` syntax):
 
 *   `d`, `o`, `x`: integers, octal, hex
 *   `a`, `e`, `f`, `g`: floats
 *   `b`: booleans
 *   `s`: strings
+*   `%%`: '%' character
 
 <pre>
 str(null) => null
