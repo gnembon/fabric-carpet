@@ -910,7 +910,7 @@ public class CarpetExpression
             if (playerBreak && state.getHardness(world, where) < 0.0) return LazyValue.FALSE;
             boolean removed = world.removeBlock(where, false);
             if (!removed) return LazyValue.FALSE;
-            world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
+            world.syncWorldEvent(null, 2001, where, Block.getRawIdFromState(state));
 
             boolean toolBroke = false;
             boolean dropLoot = true;
@@ -979,7 +979,7 @@ public class CarpetExpression
             if (!((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.interactionManager.isSurvivalLike()))
                 success = tryBreakBlock_copy_from_ServerPlayerInteractionManager(player, where);
             if (success)
-                world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
+                world.syncWorldEvent(null, 2001, where, Block.getRawIdFromState(state));
             return success ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
@@ -1356,11 +1356,11 @@ public class CarpetExpression
             double required_charge = 1;
             if (lv.size() > locator.offset)
                 required_charge = NumericValue.asNumber(lv.get(locator.offset).evalValue(c)).getDouble();
-            SpawnHelper.class_5262 charger = cc.s.getWorld().getChunkManager().method_27908();
+            SpawnHelper.Info charger = cc.s.getWorld().getChunkManager().getSpawnInfo();
             if (charger == null) return LazyValue.NULL;
             Value ret = new NumericValue(
                     ((SpawnHelperInnerInterface)charger).getPotentialCalculator().
-                            method_27832(pos, required_charge )
+                            calculate(pos, required_charge )
             );
             return (_c, _t) -> ret;
         });

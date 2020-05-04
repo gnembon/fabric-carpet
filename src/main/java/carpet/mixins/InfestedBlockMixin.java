@@ -21,7 +21,7 @@ public abstract class InfestedBlockMixin extends Block
         super(block$Settings_1);
     }
 
-    @Inject(method = "method_24797", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
+    @Inject(method = "spawnSilverfish", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
             target = "Lnet/minecraft/entity/mob/SilverfishEntity;playSpawnEffects()V"))
     private void onOnStacksDropped(World world, BlockPos blockPos, CallbackInfo ci)
     {

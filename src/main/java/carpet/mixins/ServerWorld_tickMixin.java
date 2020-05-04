@@ -30,16 +30,15 @@ import java.util.function.Supplier;
 @Mixin(ServerWorld.class)
 public abstract class ServerWorld_tickMixin extends World
 {
+    @Shadow protected abstract void processSyncedBlockEvents();
+    //@Shadow protected abstract void sendBlockActions();
+
     protected ServerWorld_tickMixin(LevelProperties levelProperties, DimensionType dimensionType, BiFunction<World, Dimension, ChunkManager> chunkManagerProvider, Supplier<Profiler> supplier, boolean isClient)
     {
         super(levelProperties, dimensionType, chunkManagerProvider, supplier, isClient);
     }
 
-    @Shadow protected abstract void sendBlockActions();
-
-    CarpetProfiler.ProfilerToken currentSection;
-
-
+    private CarpetProfiler.ProfilerToken currentSection;
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
@@ -183,11 +182,11 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;sendBlockActions()V"
+            target = "Lnet/minecraft/server/world/ServerWorld;processSyncedBlockEvents()V" // aka sendBlockActions
     ))
     private void tickConditionally(ServerWorld serverWorld)
     {
-        if (TickSpeed.process_entities) sendBlockActions();
+        if (TickSpeed.process_entities) processSyncedBlockEvents();
     }
 
 

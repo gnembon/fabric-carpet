@@ -88,8 +88,8 @@ public class SpawnReporter
         List<BaseText> lst = new ArrayList<>();
         if (multiline)
             lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
-        SpawnHelper.class_5262 lastSpawner = world.getChunkManager().method_27908();
-        Object2IntMap<EntityCategory> dimCounts = lastSpawner.method_27830();
+        SpawnHelper.Info lastSpawner = world.getChunkManager().getSpawnInfo();
+        Object2IntMap<EntityCategory> dimCounts = lastSpawner.getCategoryToCount();
         int chunkcount = chunkCounts.getOrDefault(dim, -1);
         if (dimCounts == null || chunkcount < 0)
         {

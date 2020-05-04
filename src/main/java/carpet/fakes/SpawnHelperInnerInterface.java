@@ -1,8 +1,8 @@
 package carpet.fakes;
 
-import net.minecraft.class_5263;
+import net.minecraft.util.math.GravityField;
 
 public interface SpawnHelperInnerInterface
 {
-    class_5263 getPotentialCalculator();
+    GravityField getPotentialCalculator();
 }
