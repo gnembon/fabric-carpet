@@ -398,6 +398,32 @@ public class CarpetExpression
         }
     }
 
+
+
+    private static Value structureToValue(StructureStart structure)
+    {
+        if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
+        List<Value> pieces = new ArrayList<>();
+        for (StructurePiece piece : structure.getChildren())
+        {
+            BlockBox box = piece.getBoundingBox();
+            pieces.add(ListValue.of(
+                    new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
+                    (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
+                    ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                    ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+            ));
+        };
+        BlockBox boundingBox = structure.getBoundingBox();
+        Map<Value, Value> ret = new HashMap<>();
+        ret.put(new StringValue("box"), ListValue.of(
+                ListValue.fromTriple(boundingBox.minX, boundingBox.minY, boundingBox.minZ),
+                ListValue.fromTriple(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ)
+        ));
+        ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
+        return MapValue.wrap(ret);
+    }
+
     private void API_BlockManipulation()
     {
         this.expr.addLazyFunction("block", -1, (c, t, lv) ->
@@ -1148,25 +1174,20 @@ public class CarpetExpression
             }
             if (structure != null)
             {
-                BlockBox box = FeatureGenerator.shouldStructureStartAt(world, pos, structure, needSize);
-                if (box == null) return LazyValue.NULL;
+                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, structure, needSize);
+                if (start == null) return LazyValue.NULL;
                 if (!needSize) return LazyValue.TRUE;
-                Value ret = ListValue.of(
-                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
-                        ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ))
-                );
+                Value ret = structureToValue(start);
                 return (_c, _t) -> ret;
             }
             Map<Value, Value> ret = new HashMap<>();
             for(StructureFeature<?> str : Feature.STRUCTURES.values())
             {
-                BlockBox box = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
-                if (box == null) continue;
+                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                if (start == null) continue;
+
                 Value key = new StringValue(FeatureGenerator.structureToFeature.get(str.getName()).get(0));
-                ret.put(key, (!needSize)?Value.NULL:ListValue.of(
-                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
-                        ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ))
-                ));
+                ret.put(key, (!needSize)?Value.NULL:structureToValue(start));
             }
             Value retMap = MapValue.wrap(ret);
             return (_c, _t) -> retMap;
@@ -1188,28 +1209,17 @@ public class CarpetExpression
                     if (start == StructureStart.DEFAULT)
                         continue;
                     BlockBox box = start.getBoundingBox();
-                    ListValue coord1 = ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ));
-                    ListValue coord2 = ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ));
-                    structureList.put(new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)), ListValue.of(coord1, coord2));
+                    structureList.put(
+                            new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)),
+                            ListValue.of(ListValue.fromTriple(box.minX, box.minY, box.minZ), ListValue.fromTriple(box.maxX, box.maxY, box.maxZ))
+                    );
                 }
                 Value ret = MapValue.wrap(structureList);
                 return (_c, _t) -> ret;
             }
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             StructureStart start = structures.get(FeatureGenerator.featureToStructure.get(structureName));
-            if (start == null || start == StructureStart.DEFAULT) return LazyValue.NULL;
-            List<Value> pieces = new ArrayList<>();
-            for (StructurePiece piece : start.getChildren())
-            {
-                BlockBox box = piece.getBoundingBox();
-                pieces.add(ListValue.of(
-                        new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
-                        (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
-                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
-                        ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ))
-                ));
-            }
-            Value ret = ListValue.wrap(pieces);
+            Value ret = structureToValue(start);
             return (_c, _t) -> ret;
         });
 
