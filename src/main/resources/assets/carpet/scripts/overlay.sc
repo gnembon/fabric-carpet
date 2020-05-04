@@ -93,7 +93,7 @@ __structure_renderer(player_name) ->
 		for (starts, l(position, name) = _;
 		    structure_data = structures(position):name;
 		    if (!structure_data, continue()); // messed up references - shouldn't happen
-		    structure_pieces = structures(position, name);
+		    structure_pieces = structures(position, name):'pieces';
 		    if (!structure_pieces, continue()); // messed up references - shouldn't happen
 		    l(from, to) = structure_data;
 		    total_size = _euclidean(from, to);

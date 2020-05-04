@@ -154,10 +154,9 @@ public class FeatureGenerator
         return null;
     }
 
-    public static BlockBox DEFAULT_BOX = new BlockBox(0,0,0,1,1,1);
-    public static BlockBox shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<?> structure, boolean computeBox)
+    public static StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<?> structure, boolean computeBox)
     {
-        ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
+        ChunkGenerator<?> generator = world.getChunkManager().getChunkGenerator();
         if (!generator.getBiomeSource().hasStructureFeature(structure))
             return null;
         BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
@@ -166,12 +165,12 @@ public class FeatureGenerator
         Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
         if (structure.method_27217(biomeAccess, generator, chunkRandom, chunkPos.x, chunkPos.z, biome)) // should start at
         {
-            if (!computeBox) return DEFAULT_BOX;
+            if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
             StructureStart structureStart3 = structure.getStructureStartFactory().create(structure, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, generator.getSeed());
             structureStart3.init(generator, manager, chunkPos.x, chunkPos.z, biome);
             if (!structureStart3.hasChildren()) return null;
-            return structureStart3.getBoundingBox();
+            return structureStart3;
         }
         return null;
     }
@@ -196,9 +195,9 @@ public class FeatureGenerator
         structureToFeature.put(Feature.MINESHAFT.getName(), Arrays.asList("mineshaft", "mineshaft_mesa"));
         structureToFeature.put(Feature.IGLOO.getName(), Collections.singletonList("igloo"));
         structureToFeature.put(Feature.NETHER_BRIDGE.getName(), Collections.singletonList("fortress"));
-        structureToFeature.put("Nether_Fossil", Collections.singletonList("nether_fossil"));
-        structureToFeature.put("Bastion_Remnant", Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
-        structureToFeature.put("Ruined_Portal", Collections.singletonList("ruined_portal"));
+        structureToFeature.put(Feature.NETHER_FOSSIL.getName(), Collections.singletonList("nether_fossil"));
+        structureToFeature.put(Feature.BASTION_REMNANT.getName(), Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
+        structureToFeature.put(Feature.RUINED_PORTAL.getName(), Collections.singletonList("ruined_portal"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
