@@ -159,7 +159,8 @@
     "WorldChunk_movableTEMixin",
     "PistonHandler_movableTEMixin",
     "PlayerEntity_creativeNoClipMixin",
-    "PistonBlockEntity_creativeNoClipMixin"
+    "PistonBlockEntity_creativeNoClipMixin",
+    "BlockItem_creativeNoClipMixin"
 
   ],
   "client": [
