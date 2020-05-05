@@ -98,6 +98,7 @@ import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
@@ -1009,6 +1010,7 @@ public class CarpetExpression
             return success ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
+        // TODO rename to use_item
         this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
@@ -1024,18 +1026,28 @@ public class CarpetExpression
             boolean sneakPlace = false;
             if (lv.size() > locator.offset+1)
                 sneakPlace = lv.get(locator.offset+1).evalValue(c).getBoolean();
-            if (stackArg.getItem() instanceof BlockItem)
+
+            BlockValue.PlacementContext ctx;
+            try
             {
+                ctx = BlockValue.PlacementContext.from(cc.s.getWorld(), where, facing, sneakPlace, stackArg.createStack(1, false));
+            }
+            catch (CommandSyntaxException e)
+            {
+                throw new InternalExpressionException(e.getMessage());
+            }
+
+            if (!(stackArg.getItem() instanceof BlockItem))
+            {
+                ActionResult useResult = ctx.getStack().useOnBlock(ctx);
+                if (useResult == ActionResult.CONSUME || useResult == ActionResult.SUCCESS)
+                {
+                    return LazyValue.TRUE;
+                }
+            }
+            else
+            { // not sure we need special case for block items, since useOnBlock can do that as well
                 BlockItem blockItem = (BlockItem) stackArg.getItem();
-                BlockValue.PlacementContext ctx;
-                try
-                {
-                    ctx = BlockValue.PlacementContext.from(cc.s.getWorld(), where, facing, sneakPlace, stackArg.createStack(1, false));
-                }
-                catch (CommandSyntaxException e)
-                {
-                    throw new InternalExpressionException(e.getMessage());
-                }
                 if (!ctx.canPlace())
                     return (_c, _t) -> Value.FALSE;
                 BlockState placementState = blockItem.getBlock().getPlacementState(ctx);
@@ -1165,7 +1177,8 @@ public class CarpetExpression
                     String reqString = requested.getString();
                     String structureName = FeatureGenerator.featureToStructure.get(reqString);
                     if (structureName == null) throw new InternalExpressionException("Unknown structure: " + reqString);
-                    structure = Feature.STRUCTURES.get(structureName);
+                    structure = Feature.STRUCTURES.get(structureName.toLowerCase(Locale.ROOT));
+                    if (structure == null) throw new InternalExpressionException("Unsupported structure: " + structureName);
                 }
                 if (lv.size() > locator.offset+1)
                 {
