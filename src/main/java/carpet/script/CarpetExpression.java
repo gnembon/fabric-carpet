@@ -1164,7 +1164,8 @@ public class CarpetExpression
                     String reqString = requested.getString();
                     String structureName = FeatureGenerator.featureToStructure.get(reqString);
                     if (structureName == null) throw new InternalExpressionException("Unknown structure: " + reqString);
-                    structure = Feature.STRUCTURES.get(structureName);
+                    structure = Feature.STRUCTURES.get(structureName.toLowerCase(Locale.ROOT));
+                    if (structure == null) throw new InternalExpressionException("Unsupported structure: " + structureName);
                 }
                 if (lv.size() > locator.offset+1)
                 {
