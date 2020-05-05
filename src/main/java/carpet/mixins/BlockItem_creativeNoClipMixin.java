@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityContext;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
@@ -18,9 +18,9 @@ public class BlockItem_creativeNoClipMixin
 {
     @Redirect(method = "canPlace", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/World;canPlace(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/EntityContext;)Z"
+            target = "Lnet/minecraft/world/World;canPlace(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/ShapeContext;)Z"
     ))
-    private boolean canSpectatingPlace(World world, BlockState state, BlockPos pos, EntityContext context,
+    private boolean canSpectatingPlace(World world, BlockState state, BlockPos pos, ShapeContext context,
                                        ItemPlacementContext contextOuter, BlockState stateOuter)
     {
         PlayerEntity player = contextOuter.getPlayer();
