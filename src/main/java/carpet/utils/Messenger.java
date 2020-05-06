@@ -112,6 +112,8 @@ public class Messenger
                 return "f";
             case WATER_CREATURE:
                 return "v";
+            case WATER_AMBIENT:
+                return "q";
         }
         return "w";
     }

@@ -215,6 +215,8 @@ public class SpawnReporter
                 return EntityCategory.WATER_CREATURE;
             case BROWN:
                 return EntityCategory.AMBIENT;
+            case CYAN:
+                return EntityCategory.WATER_AMBIENT;
         }
         return null;
     }
@@ -232,6 +234,10 @@ public class SpawnReporter
         else if ("water".equalsIgnoreCase(type_code))
         {
             return EntityCategory.WATER_CREATURE;
+        }
+        else if ("fish".equalsIgnoreCase(type_code))
+        {
+            return EntityCategory.WATER_AMBIENT;
         }
         else if ("ambient".equalsIgnoreCase(type_code))
         {

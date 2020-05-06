@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.util.math.GravityField;
 import net.minecraft.world.SpawnHelper;
@@ -26,7 +27,7 @@ public class SpawnHelperInnerMixin implements SpawnHelperInnerInterface
 
     @Shadow @Final private int spawningChunkCount;
 
-    @Shadow @Final private Object2IntMap<EntityCategory> categoryToCount;
+    @Shadow @Final private Object2IntOpenHashMap<EntityCategory> categoryToCount;
 
     @Shadow @Final private GravityField densityField;
 
