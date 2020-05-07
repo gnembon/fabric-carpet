@@ -69,6 +69,7 @@ public class CarpetSettings
     )
     public static int portalSurvivalDelay = 80;
 
+
     private static class OneHourMaxDelayLimit extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue > 0 && newValue <= 72000) ? newValue : null;
@@ -586,4 +587,17 @@ public class CarpetSettings
             category = {CREATIVE, CLIENT}
     )
     public static boolean creativeNoClip = false;
+
+
+    @Rule(
+            desc = "Creative flying speed multiplier",
+            category = {CREATIVE, CLIENT}
+    )
+    public static double creativeFlySpeed = 1.0f;
+
+    @Rule(
+            desc = "Creative air drag",
+            category = {CREATIVE, CLIENT}
+    )
+    public static double creativeFlyDrag = 0.91f;
 }
