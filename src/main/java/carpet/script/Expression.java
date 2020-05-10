@@ -440,7 +440,7 @@ public class Expression
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
-                FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, true);
+                FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, false, true);
                 FunctionValue fun = functionArgument.function;
                 Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
                 return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
@@ -1878,7 +1878,7 @@ public class Expression
         addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, true, false);
             Value queue = Value.NULL;
             if (lv.size() > functionArgument.offset) queue = lv.get(functionArgument.offset).evalValue(c);
             ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.args);
