@@ -2809,6 +2809,18 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
+        this.expr.addLazyFunction("task_dock", 1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            MinecraftServer server = cc.s.getMinecraftServer();
+            if (server.isOnThread()) return lv.get(1); // pass through for on thread tasks
+            Value[] result = new Value[]{Value.NULL};
+            ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() -> result[0] = lv.get(0).evalValue(c, t));
+            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
+            return (_c, _t) -> ret;
+            // pass through placeholder
+            // implmenetation should dock the task on the main thread.
+        });
+
         this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
         {
             Value res = lv.get(0).evalValue(c);
@@ -2985,7 +2997,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, this.expr.module, lv, 1, true);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, this.expr.module, lv, 1, true, true);
 
             CarpetServer.scriptServer.events.scheduleCall(
                     (CarpetContext) c,
@@ -2994,29 +3006,6 @@ public class CarpetExpression
                     delay
             );
             return (c_, t_) -> Value.TRUE;
-            /*
-            Value functionValue = lv.get(1).evalValue(c);
-            if (!(functionValue instanceof FunctionValue))
-            {
-                String name = functionValue.getString();
-                functionValue = c.host.getAssertFunction(this.expr.module, name);
-            }
-            FunctionValue function = (FunctionValue)functionValue;
-
-            CarpetContext cc = (CarpetContext)c;
-            List<Value> args = new ArrayList<>();
-            for (int i=2; i < lv.size(); i++)
-            {
-                Value arg = lv.get(i).evalValue(cc);
-                args.add(arg);
-            }
-            if (function.getArguments().size() != args.size())
-                throw new InternalExpressionException("Function "+function.getString()+" takes "+
-                        function.getArguments().size()+" arguments, "+args.size()+" provided.");
-            CarpetServer.scriptServer.events.scheduleCall(cc, function, args, delay);
-            return (c_, t_) -> Value.TRUE;
-            */
-
         });
 
         this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->
