@@ -69,6 +69,7 @@ public class CarpetSettings
     )
     public static int portalSurvivalDelay = 80;
 
+
     private static class OneHourMaxDelayLimit extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
             return (newValue > 0 && newValue <= 72000) ? newValue : null;
@@ -586,7 +587,39 @@ public class CarpetSettings
 
     @Rule(
             desc = "Creative No Clip",
+            extra = {
+                    "On servers it needs to be set on both ",
+                    "client and server to function properly.",
+                    "Has no effect when set on the server only",
+                    "Can allow to phase through walls",
+                    "if only set on the carpet client side",
+                    "but requires some trapdoor magic to",
+                    "allow the player to enter blocks"
+            },
             category = {CREATIVE, CLIENT}
     )
     public static boolean creativeNoClip = false;
+
+
+    @Rule(
+            desc = "Creative flying speed multiplier",
+            extra = {
+                    "Purely client side setting, meaning that",
+                    "having it set on the decicated server has no effect",
+                    "but this also means it will work on vanilla servers as well"
+            },
+            category = {CREATIVE, CLIENT}
+    )
+    public static double creativeFlySpeed = 1.0f;
+
+    @Rule(
+            desc = "Creative air drag",
+            extra = {
+                    "Purely client side setting, meaning that",
+                    "having it set on the decicated server has no effect",
+                    "but this also means it will work on vanilla servers as well"
+            },
+            category = {CREATIVE, CLIENT}
+    )
+    public static double creativeFlyDrag = 0.91f;
 }
