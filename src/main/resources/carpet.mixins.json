@@ -159,7 +159,8 @@
     "PistonHandler_movableTEMixin",
     "PlayerEntity_creativeNoClipMixin",
     "PistonBlockEntity_creativeNoClipMixin",
-    "BlockItem_creativeNoClipMixin"
+    "BlockItem_creativeNoClipMixin",
+    "LivingEntity_creativeFlyMixin"
 
   ],
   "client": [

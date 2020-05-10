@@ -28,8 +28,6 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
 
     @Shadow protected boolean jumping;
 
-    @Shadow public float flyingSpeed;
-
     public LivingEntity_scarpetEventsMixin(EntityType<?> type, World world)
     {
         super(type, world);
@@ -51,30 +49,5 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     public boolean isJumpingCM()
     {
         return jumping;
-    }
-
-
-    @ModifyConstant(method = "travel", constant = @Constant(floatValue = 0.91F), expect = 2)
-    private float drag(float original)
-    {
-        if ((Object)this instanceof PlayerEntity)
-        {
-            PlayerEntity self = (PlayerEntity)(Object)(this);
-            if (self.abilities.flying && !onGround)
-                return (float)CarpetSettings.creativeFlyDrag;
-        }
-        return original;
-    }
-
-
-    @Inject(method = "getMovementSpeed(F)F", at = @At("HEAD"), cancellable = true)
-    private void flyingAltSpeed(float slipperiness, CallbackInfoReturnable<Float> cir)
-    {
-        if ((Object)this instanceof PlayerEntity)
-        {
-            PlayerEntity self = (PlayerEntity)(Object)(this);
-            if (self.abilities.flying && !onGround)
-                cir.setReturnValue(flyingSpeed* (float)CarpetSettings.creativeFlySpeed);
-        }
     }
 }
