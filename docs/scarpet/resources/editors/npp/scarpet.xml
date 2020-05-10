@@ -36,7 +36,7 @@
 
                 print return exit throw try
 
-                task task_count task_value task_join task_completed synchronize
+                task task_count task_value task_join task_completed synchronize task_dock
 
                 system_variable_get system_variable_set
 
