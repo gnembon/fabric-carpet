@@ -1,8 +1,11 @@
 package carpet.utils;
 
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Material;
+import net.minecraft.block.MaterialColor;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.ai.pathing.NavigationType;
@@ -57,7 +60,7 @@ public class BlockInfo
         put(BlockSoundGroup.BASALT, "basalt");
         put(BlockSoundGroup.WART_BLOCK, "wart");
         put(BlockSoundGroup.NETHERRACK, "netherrack");
-        put(BlockSoundGroup.NETHER_BRICK, "nether_bricks");
+        put(BlockSoundGroup.NETHER_BRICKS, "nether_bricks");
         put(BlockSoundGroup.NETHER_SPROUTS, "nether_sprouts");
         put(BlockSoundGroup.NETHER_ORE, "nether_ore");
         put(BlockSoundGroup.BONE, "bone");
@@ -220,7 +223,7 @@ public class BlockInfo
     private static BaseText wander_chances(BlockPos pos, World worldIn)
     {
         MobEntityWithAi creature = new ZombifiedPiglinEntity(EntityType.ZOMBIFIED_PIGLIN, worldIn);
-        creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);
+        creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnReason.NATURAL, null, null);
         creature.refreshPositionAndAngles(pos, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);
         int success = 0;

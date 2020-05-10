@@ -71,7 +71,7 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -1765,7 +1765,7 @@ public class CarpetExpression
             }
             else
             {
-                Vec3d point = Vec3d.method_24953(inventoryLocator.position); //pos+0.5v
+                Vec3d point = Vec3d.ofCenter(inventoryLocator.position); //pos+0.5v
                 item = new ItemEntity(cc.s.getWorld(), point.x, point.y, point.z, droppedStack);
                 item.setToDefaultPickupDelay();
                 cc.s.getWorld().spawnEntity(item);
@@ -1907,7 +1907,7 @@ public class CarpetExpression
                     return LazyValue.NULL;
                 } else {
                     if (!hasTag && entity_1 instanceof MobEntity) {
-                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnType.COMMAND, null, null);
+                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
                     }
                     Value res = new EntityValue(entity_1);
                     return (_c, _t) -> res;

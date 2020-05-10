@@ -235,7 +235,7 @@ public class BlockValue extends Value
             SpecificDirection dir = SpecificDirection.DIRECTION_MAP.get(direction);
             if (dir == null)
                 throw new InternalExpressionException("unknown block placement direction: "+direction);
-            BlockHitResult hitres =  new BlockHitResult(Vec3d.method_24954(pos).add(dir.hitOffset), dir.facing, pos, false);
+            BlockHitResult hitres =  new BlockHitResult(Vec3d.of(pos).add(dir.hitOffset), dir.facing, pos, false);
             return new PlacementContext(world, dir.facing, sneakPlace, itemStack, hitres);
         }
         private PlacementContext(World world_1, Direction direction_1, boolean sneakPlace, ItemStack itemStack_1, BlockHitResult hitres) {

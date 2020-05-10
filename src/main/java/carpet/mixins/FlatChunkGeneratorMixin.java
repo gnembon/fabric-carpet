@@ -2,7 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.biome.Biome;
@@ -25,23 +25,23 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator<FlatChunkGe
     }
     
     @Override
-    public List<Biome.SpawnEntry> getEntitySpawnList(StructureAccessor arg, EntityCategory category, BlockPos pos)
+    public List<Biome.SpawnEntry> getEntitySpawnList(StructureAccessor arg, SpawnGroup category, BlockPos pos)
     {
         if (CarpetSettings.flatWorldStructureSpawning)
         {
             if (Feature.SWAMP_HUT.method_14029(this.world, arg, pos))
             {
-                if (category == EntityCategory.MONSTER)
+                if (category == SpawnGroup.MONSTER)
                 {
                     return Feature.SWAMP_HUT.getMonsterSpawns();
                 }
         
-                if (category == EntityCategory.CREATURE)
+                if (category == SpawnGroup.CREATURE)
                 {
                     return Feature.SWAMP_HUT.getCreatureSpawns();
                 }
             }
-            else if (category == EntityCategory.MONSTER)
+            else if (category == SpawnGroup.MONSTER)
             {
                 if (Feature.PILLAGER_OUTPOST.isApproximatelyInsideStructure(this.world, arg, pos))
                 {

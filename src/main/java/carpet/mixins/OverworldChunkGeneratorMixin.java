@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.biome.Biome;
@@ -29,7 +29,7 @@ public abstract class OverworldChunkGeneratorMixin extends SurfaceChunkGenerator
     @Inject(method = "getEntitySpawnList", at = @At(value = "INVOKE", ordinal = 1, shift = At.Shift.BEFORE,
             target = "Lnet/minecraft/world/gen/feature/StructureFeature;isApproximatelyInsideStructure(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/util/math/BlockPos;)Z"),
             cancellable = true)
-    private void onGetEntitySpawnList(StructureAccessor arg, EntityCategory entityCategory, BlockPos blockPos, CallbackInfoReturnable<List<Biome.SpawnEntry>> cir)
+    private void onGetEntitySpawnList(StructureAccessor arg, SpawnGroup entityCategory, BlockPos blockPos, CallbackInfoReturnable<List<Biome.SpawnEntry>> cir)
     {
         if (CarpetSettings.huskSpawningInTemples)
         {

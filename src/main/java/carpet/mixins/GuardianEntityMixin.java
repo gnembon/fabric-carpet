@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
-import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.ElderGuardianEntity;
 import net.minecraft.entity.mob.GuardianEntity;
 import net.minecraft.entity.mob.HostileEntity;
@@ -28,7 +28,7 @@ public abstract class GuardianEntityMixin extends HostileEntity
         {
             ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
             elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.yaw, this.pitch);
-            elderGuardian.initialize(this.world ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnType.CONVERSION, (EntityData)null, (CompoundTag)null);
+            elderGuardian.initialize(this.world ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnReason.CONVERSION, (EntityData)null, (CompoundTag)null);
             elderGuardian.setAiDisabled(this.isAiDisabled());
             
             if (this.hasCustomName())

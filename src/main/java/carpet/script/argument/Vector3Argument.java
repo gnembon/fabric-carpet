@@ -52,7 +52,7 @@ public class Vector3Argument extends Argument
             if (v1 instanceof BlockValue)
             {
                 // pos + 0.5v
-                return (new Vector3Argument(Vec3d.method_24953(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
+                return (new Vector3Argument(Vec3d.ofCenter(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
             }
             if (v1 instanceof ListValue)
             {

@@ -7,10 +7,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FenceGateBlock;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
@@ -44,9 +44,9 @@ public class SpawnHelperMixin
 {
     @Shadow @Final private static int CHUNK_AREA;
 
-    @Shadow @Final private static EntityCategory[] SPAWNABLE_CATEGORIES;
+    @Shadow @Final private static SpawnGroup[] SPAWNABLE_GROUPS;
 
-    @Redirect(method = "canSpawn(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/gen/chunk/ChunkGenerator;Lnet/minecraft/world/biome/Biome$SpawnEntry;Lnet/minecraft/util/math/BlockPos$Mutable;D)Z", at = @At(
+    @Redirect(method = "canSpawn(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/gen/chunk/ChunkGenerator;Lnet/minecraft/world/biome/Biome$SpawnEntry;Lnet/minecraft/util/math/BlockPos$Mutable;D)Z", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerWorld;doesNotCollide(Lnet/minecraft/util/math/Box;)Z"
     ))
@@ -149,7 +149,7 @@ public class SpawnHelperMixin
         return entityType.create(world_1);
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
     ))
@@ -164,7 +164,7 @@ public class SpawnHelperMixin
             SpawnReporter.registerSpawn(
                     world.dimension.getType(),
                     (MobEntity) entity_1,
-                    entity_1.getType().getCategory(),
+                    entity_1.getType().getSpawnGroup(),
                     entity_1.getBlockPos());
         }
         if (!SpawnReporter.mock_spawns)
@@ -172,26 +172,26 @@ public class SpawnHelperMixin
         return false;
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnType;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
+            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
     ))
-    private static EntityData spawnEntity(MobEntity mobEntity, IWorld iWorld_1, LocalDifficulty localDifficulty_1, SpawnType spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
+    private static EntityData spawnEntity(MobEntity mobEntity, IWorld iWorld_1, LocalDifficulty localDifficulty_1, SpawnReason spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
     {
         if (!SpawnReporter.mock_spawns)
             return mobEntity.initialize(iWorld_1, localDifficulty_1, spawnType_1, entityData_1, compoundTag_1);
         return null;
     }
 
-    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
+    @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(DDD)D"
     ))
     private static double getSqDistanceTo(PlayerEntity playerEntity, double double_1, double double_2, double double_3,
-                                          EntityCategory entityCategory, ServerWorld serverWorld, Chunk chunk, BlockPos blockPos)
+                                          SpawnGroup entityCategory, ServerWorld serverWorld, Chunk chunk, BlockPos blockPos)
     {
         double distanceTo = playerEntity.squaredDistanceTo(double_1, double_2, double_3);
-        if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory != EntityCategory.CREATURE)
+        if (CarpetSettings.lagFreeSpawning && distanceTo > 16384.0D && entityCategory != SpawnGroup.CREATURE)
             return 0.0;
         return distanceTo;
     }
@@ -202,10 +202,10 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawn", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/EntityCategory;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V"
+            target = "Lnet/minecraft/world/SpawnHelper;spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V"
     ))
     // inject our repeat of spawns if more spawn ticks per tick are chosen.
-    private static void spawnMultipleTimes(EntityCategory category, ServerWorld world, WorldChunk chunk, SpawnHelper.Checker checker, SpawnHelper.Runner runner)
+    private static void spawnMultipleTimes(SpawnGroup category, ServerWorld world, WorldChunk chunk, SpawnHelper.Checker checker, SpawnHelper.Runner runner)
     {
         for (int i = 0; i < SpawnReporter.spawn_tries.get(category); i++)
         {
@@ -217,11 +217,11 @@ public class SpawnHelperMixin
 /*
     @Redirect(method = "spawn", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/SpawnHelper$Info;isBelowCap(Lnet/minecraft/entity/EntityCategory;)Z"
+            target = "Lnet/minecraft/world/SpawnHelper$Info;isBelowCap(Lnet/minecraft/entity/SpawnGroup;)Z"
     ))
     // allows to change mobcaps and captures each category try per dimension before it fails due to full mobcaps.
     private static boolean changeMobcaps(
-            SpawnHelper.Info info, EntityCategory entityCategory,
+            SpawnHelper.Info info, SpawnGroup entityCategory,
             ServerWorld serverWorld, WorldChunk chunk, SpawnHelper.Info info_outer, boolean spawnAnimals, boolean spawnMonsters, boolean shouldSpawnAnimals
     )
     {
@@ -273,18 +273,18 @@ public class SpawnHelperMixin
     {
         if (SpawnReporter.track_spawns > 0L)
         {
-            EntityCategory[] var6 = SPAWNABLE_CATEGORIES;
+            SpawnGroup[] var6 = SPAWNABLE_GROUPS;
             int var7 = var6.length;
 
             for(int var8 = 0; var8 < var7; ++var8) {
-                EntityCategory entityCategory = var6[var8];
+                SpawnGroup entityCategory = var6[var8];
                 if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isAnimal()) )
                 {
                     DimensionType dim = world.dimension.getType();
-                    int newCap = (int) ((double)entityCategory.getSpawnCap()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
+                    int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
                     int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning
                     int int_3 = newCap * int_2 / CHUNK_AREA; //current spawning limits
-                    int mobCount = info.getCategoryToCount().getInt(entityCategory);
+                    int mobCount = info.getGroupToCount().getInt(entityCategory);
 
                     if (SpawnReporter.track_spawns > 0L && !SpawnReporter.first_chunk_marker.contains(entityCategory))
                     {

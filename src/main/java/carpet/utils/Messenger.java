@@ -1,7 +1,7 @@
 package carpet.utils;
 
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.BaseText;
 import net.minecraft.text.ClickEvent;
@@ -100,7 +100,7 @@ public class Messenger
         if (actual > reference) color = "m";
         return color;
     }
-    public static String creatureTypeColor(EntityCategory type)
+    public static String creatureTypeColor(SpawnGroup type)
     {
         switch (type)
         {

@@ -4,7 +4,7 @@ import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.class_5217;
-import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.server.world.ChunkTicketManager;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
@@ -56,7 +56,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
             //local spawns now need to be tracked globally cause each calll is just for chunk
             SpawnReporter.local_spawns = new HashMap<>();
             SpawnReporter.first_chunk_marker = new HashSet<>();
-            for (EntityCategory cat : EntityCategory.values())
+            for (SpawnGroup cat : SpawnGroup.values())
             {
                 Pair key = Pair.of(dim, cat);
                 SpawnReporter.overall_spawn_ticks.put(key,
@@ -75,7 +75,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
         boolean boolean_3 = levelProperties_1.getTime() % 400L == 0L;
         if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
         {
-            for (EntityCategory cat: EntityCategory.values())
+            for (SpawnGroup cat: SpawnGroup.values())
             {
                 DimensionType dim = world.dimension.getType();
                 Pair key = Pair.of(world.dimension.getType(), cat);

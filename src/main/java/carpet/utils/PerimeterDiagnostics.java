@@ -4,9 +4,9 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnRestriction;
-import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.mob.AmbientEntity;
 import net.minecraft.entity.mob.MobEntity;
@@ -35,9 +35,9 @@ public class PerimeterDiagnostics
     }
     private Biome.SpawnEntry sle;
     private ServerWorld worldServer;
-    private EntityCategory ctype;
+    private SpawnGroup ctype;
     private MobEntity el;
-    private PerimeterDiagnostics(ServerWorld server, EntityCategory ctype, MobEntity el)
+    private PerimeterDiagnostics(ServerWorld server, SpawnGroup ctype, MobEntity el)
     {
         this.sle = null;
         this.worldServer = server;
@@ -60,28 +60,28 @@ public class PerimeterDiagnostics
         //int specific_spawns = 0;
         boolean add_water = false;
         boolean add_ground = false;
-        EntityCategory ctype = null;
+        SpawnGroup ctype = null;
 
         if (el != null)
         {
             if (el instanceof WaterCreatureEntity)
             {
                 add_water = true;
-                ctype = EntityCategory.WATER_CREATURE;
+                ctype = SpawnGroup.WATER_CREATURE;
             }
             else if (el instanceof PassiveEntity)
             {
                 add_ground = true;
-                ctype = EntityCategory.CREATURE;
+                ctype = SpawnGroup.CREATURE;
             }
             else if (el instanceof Monster)
             {
                 add_ground = true;
-                ctype = EntityCategory.MONSTER;
+                ctype = SpawnGroup.MONSTER;
             }
             else if (el instanceof AmbientEntity)
             {
-                ctype = EntityCategory.AMBIENT;
+                ctype = SpawnGroup.AMBIENT;
             }
         }
         PerimeterDiagnostics diagnostic = new PerimeterDiagnostics(worldserver,ctype,el);
@@ -177,8 +177,8 @@ public class PerimeterDiagnostics
         if (SpawnHelper.canSpawn(spt, worldServer, pos, sle.type))
         {
             el.refreshPositionAndAngles((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
-            return el.canSpawn(worldServer) && el.canSpawn(worldServer, SpawnType.NATURAL) &&
-                    SpawnRestriction.canSpawn(el.getType(),el.getEntityWorld(), SpawnType.NATURAL, el.getBlockPos(), el.getEntityWorld().random) &&
+            return el.canSpawn(worldServer) && el.canSpawn(worldServer, SpawnReason.NATURAL) &&
+                    SpawnRestriction.canSpawn(el.getType(),el.getEntityWorld(), SpawnReason.NATURAL, el.getBlockPos(), el.getEntityWorld().random) &&
                     worldServer.doesNotCollide(el); // check collision rules once they stop fiddling with them after 1.14.1
         }
         return false;
