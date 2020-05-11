@@ -1,0 +1,50 @@
+{
+  "carpet.rule.portalSuffocationFix.name": "",
+//the key is genetated as:
+//String.format("carpet.rule.%s.name", rule.name)
+
+
+  "carpet.rule.portalSuffocationFix.desc": "",
+//the key is genetated as:
+//String.format("carpet.rule.%s.desc", rule.name)
+
+
+  "carpet.rule.portalSuffocationFix.extra.0": "",
+  "carpet.rule.portalSuffocationFix.extra.1": "",
+//the key is genetated as:
+//String.format("carpet.rule.%s.extra.%i", rule.name, extra.index)
+//index starts from zero
+
+
+  "carpet.ui.category.bugfix": "BUG修复",
+  "carpet.ui.category.survival": "生存",
+  "carpet.ui.category.creative": "创造",
+  "carpet.ui.category.experimental": "试验性",
+  "carpet.ui.category.optimization": "优化",
+  "carpet.ui.category.feature": "特性",
+  "carpet.ui.category.command": "指令",
+  "carpet.ui.category.tnt": "TNT",
+  "carpet.ui.category.dispenser": "发射器",
+  "carpet.ui.category.scarpet": "SCarpet脚本语言",
+  "carpet.ui.category.client": "客户端",
+//categories
+
+  "carpet.ui.statement.browse_categories": "浏览分类",
+  "carpet.ui.statement.list_all_%s_settings": "列出所有 %s 选项",
+  "carpet.ui.statement.version": "版本",
+  "carpet.ui.statement.current_%s_settings": "目前启用的 %s 选项",
+  "carpet.ui.statement.switch_to": "切换至",
+  "carpet.ui.statement.settings_are_locked": "选项被锁定",
+  "carpet.ui.statement.is_set_to": "被设置为",
+  "carpet.ui.statement.unknown_rule": "未知的规则选项",
+  "carpet.ui.statement.current_%s_startup_settings_from_%s": "目前启用的%s选项，从%s中读取得",
+  "carpet.ui.statement.%s_settings_matching_'%s'": "%s中符合\"%s\"的选项：",
+  "carpet.ui.statement.all_%s_settings": "所有的%s选项",
+  "carpet.ui.statement.tags": "分类",
+  "carpet.ui.statement.change_permanently": "永久更改",
+  "carpet.ui.statement.click_to_keep_the_settings_in_%s_to_save_across_restarts": "点击此按钮以使此选项保存于%s，重启后依旧生效",
+  "carpet.ui.statement.rule_%s_will_now_default_to_%s": "规则%s将会被默认设置为%s",
+  "carpet.ui.statement.current_value": "当前的值"
+//ui statements making up the command output
+
+}
