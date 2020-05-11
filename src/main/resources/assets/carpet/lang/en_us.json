@@ -1,3 +1,7 @@
+// This file isn't necessary at all, because the language module would use the strings coded in the source if language "none" is selected.
+// So en_us is the default language and probably no change will be made after loading this file.
+// But it could be a good example for writing the language file for other languages.
+
 {
   "carpet.rule.portalSuffocationFix.name": "",
   "// the key is genetated as:" : "String.format('carpet.rule.%s.name', rule.name)",
