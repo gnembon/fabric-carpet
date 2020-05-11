@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -71,14 +69,13 @@ public class LanguageUtils
         return (extras.isEmpty()) ? defaultList : ImmutableList.copyOf(extras);
     }
 
-    public static boolean updateLanguage(ServerCommandSource source, String language)
+    public static void setLanguage(String language)
     {
         if (language.equals("none"))
         {
             currentLanguage = language;
             translationMap = null;
-            source.sendFeedback(new LiteralText("§aSucceeded: Switched to default"), false);
-            return true;
+            return;
         }
 
         String langJs;
@@ -87,19 +84,18 @@ public class LanguageUtils
                     Objects.requireNonNull(LanguageUtils.class.getClassLoader().getResourceAsStream(String.format("assets/carpet/lang/%s.json", language))),
                     StandardCharsets.UTF_8);
         } catch (NullPointerException | IOException e) {
-            source.sendFeedback(new LiteralText("§4No such language file."), false);
-            return false;
+            return;
         }
         Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
         Type type = new TypeToken<Map<String, String>>() {}.getType();
         Map<String, String> map1 = gson.fromJson(langJs, type);
-        if(map1.isEmpty()){
-            source.sendFeedback(new LiteralText("§6The current file has no contents"), false);
-        }
         currentLanguage = language;
         translationMap = map1;
-        source.sendFeedback(new LiteralText("§aSucceeded: Switched to " + language), false);
-        return true;
+    }
+
+    public static void loadConfiguration()
+    {
+
     }
 
 
