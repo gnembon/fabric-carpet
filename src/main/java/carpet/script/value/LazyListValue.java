@@ -48,7 +48,7 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
             @Override
             public String getString()
             {
-                return String.format(Locale.ROOT, "[%d, %d, ..., %d]",start, start+stepp, limit);
+                return String.format(Locale.ROOT, "[%d, %d, ..., %d)",start, start+stepp, limit);
             }
         };
     }

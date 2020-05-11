@@ -2812,7 +2812,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("task_dock", 1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer server = cc.s.getMinecraftServer();
-            if (server.isOnThread()) return lv.get(1); // pass through for on thread tasks
+            if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks
             Value[] result = new Value[]{Value.NULL};
             ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() -> result[0] = lv.get(0).evalValue(c, t));
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
