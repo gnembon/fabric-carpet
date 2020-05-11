@@ -1,19 +1,15 @@
 {
   "carpet.rule.portalSuffocationFix.name": "",
-//the key is genetated as:
-//String.format("carpet.rule.%s.name", rule.name)
+  "// the key is genetated as:" : "String.format('carpet.rule.%s.name', rule.name)",
 
 
   "carpet.rule.portalSuffocationFix.desc": "",
-//the key is genetated as:
-//String.format("carpet.rule.%s.desc", rule.name)
+  "// the key is genetated as:" : "String.format('carpet.rule.%s.desc', rule.name)",
 
 
   "carpet.rule.portalSuffocationFix.extra.0": "",
   "carpet.rule.portalSuffocationFix.extra.1": "",
-//the key is genetated as:
-//String.format("carpet.rule.%s.extra.%i", rule.name, extra.index)
-//index starts from zero
+  "// the key is genetated as:" : "String.format('carpet.rule.%s.extra.%i', rule.name, index)",
 
 
   "carpet.ui.category.bugfix": "BUG修复",
@@ -27,7 +23,7 @@
   "carpet.ui.category.dispenser": "发射器",
   "carpet.ui.category.scarpet": "SCarpet脚本语言",
   "carpet.ui.category.client": "客户端",
-//categories
+
 
   "carpet.ui.statement.browse_categories": "浏览分类",
   "carpet.ui.statement.list_all_%s_settings": "列出所有 %s 选项",
@@ -45,6 +41,5 @@
   "carpet.ui.statement.click_to_keep_the_settings_in_%s_to_save_across_restarts": "点击此按钮以使此选项保存于%s，重启后依旧生效",
   "carpet.ui.statement.rule_%s_will_now_default_to_%s": "规则%s将会被默认设置为%s",
   "carpet.ui.statement.current_value": "当前的值"
-//ui statements making up the command output
 
 }
