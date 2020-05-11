@@ -353,7 +353,11 @@ public class SettingsManager
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = literal(identifier).requires((player) ->
                 player.hasPermissionLevel(2) && !locked);
 
-        literalargumentbuilder.executes((context)->listAllSettings(context.getSource())).
+        literalargumentbuilder.executes((context)->
+        {
+            LanguageUtils.setLanguage(CarpetSettings.carpetLanguage);
+            return listAllSettings(context.getSource());
+        }).
                 then(literal("list").
                         executes( (c) -> listSettings(c.getSource(), String.format(LanguageUtils.translateOrDefault("carpet.ui.statement.all_%s_settings","All %s Settings"), fancyName),
                                 getRules())).
