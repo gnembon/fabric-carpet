@@ -91,7 +91,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
         MobAICommand.register(dispatcher);
-        SetLanguageCommand.register(dispatcher);
         // registering command of extensions that has registered before either server is created
         // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> e.registerCommands(dispatcher));
