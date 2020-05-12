@@ -275,7 +275,7 @@ Boolean function, true if the block is solid.
 
 ### `air(pos)`
 
-Boolean function, true if a block is air, cave air, or void air, or any other air they come up with.
+Boolean function, true if a block is air... or cave air... or void air... or any other air they come up with.
 
 ### `liquid(pos)`
 
