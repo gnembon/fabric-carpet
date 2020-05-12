@@ -98,7 +98,8 @@ public class SpawnCommand
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
                                 suggests( (c, b)->suggestMatching(Arrays.stream(SpawnGroup.values()).map(SpawnGroup::getName), b)).
-                                executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type")))));
+                                executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), false)).
+                                then(literal("all").executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), true)))));
 
         dispatcher.register(literalargumentbuilder);
     }
@@ -262,10 +263,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int listEntitiesOfType(ServerCommandSource source, String mobtype) throws CommandSyntaxException
+    private static int listEntitiesOfType(ServerCommandSource source, String mobtype, boolean all) throws CommandSyntaxException
     {
         SpawnGroup cat = getCategory(mobtype);
-        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getWorld()));
+        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getWorld(), all));
         return 1;
     }
 }
