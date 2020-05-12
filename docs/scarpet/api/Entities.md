@@ -3,23 +3,23 @@
 ## Entity Selection
 
 Entities have to be fetched before using them. Entities can also change their state between calls to the script if 
-game happens either in between separate calls to the programs, or if the program calls `game_tick` on its own. 
-In this case - entities would need to be re-fetched, or the code should account for entities getting dead.
+game ticks occur either in between separate calls to the programs, or if the program calls `game_tick` on its own. 
+In this case - entities would need to be re-fetched, or the code should account for entities dying.
 
 ### `player(), player(type), player(name)`
 
 With no arguments, it returns the calling player or the player closest to the caller. Note that the main context 
-will receive `p` variable pointing to this player. With `type` or `name` specified it will try first to match a type, 
+will receive `p` variable pointing to this player. With `type` or `name` specified, it will try first to match a type, 
 returning a list of players matching a type, and if this fails, will assume its player name query retuning player with 
 that name, or `null` if no player was found. With `'all'`, list of all players in the game, in all dimensions, so end 
 user needs to be cautious, that you might be referring to wrong blocks and entities around the player in question. 
 With `type = '*'` it returns all players in caller dimension, `'survival'` returns all survival and adventure players,
 `'creative'` returns all creative players, `'spectating'` returns all spectating players, and `'!spectating'`, 
-all not-spectating players. If all fails, with `name`, the player in question, if is logged in.
+all not-spectating players. If all fails, with `name`, the player in question, if he/she is logged in.
 
 ### `entity_id(uuid), entity_id(id)`
 
-Fetching entities wither by their ID obtained via `entity ~ 'id'`, which is unique for a dimension and current world 
+Fetching entities either by their ID obtained via `entity ~ 'id'`, which is unique for a dimension and current world 
 run, or by UUID, obtained via `entity ~ 'uuid'`. It returns null if no such entity is found. Safer way to 'store' 
 entities between calls, as missing entities will be returning `null`. Both calls using UUID or numerical ID are `O(1)`, 
 but obviously using UUIDs takes more memory and compute.
@@ -38,12 +38,12 @@ selectors are available:
 ### `entity_area(type, cx, cy, cz, dx, dy, dz)`
 
 Returns entities of a specified type in an area centered on `cx, cy, cz` and at most `dx, dy, dz` blocks away from 
-the center point. Uses same selectors as `entities_list`
+the center point. Uses the same selectors as `entities_list`.
 
 ### `entity_selector(selector)`
 
-Returns entities satisfying given vanilla entity selector. Most complex among all the methods of selecting entities, 
-but the most capable. Selectors are cached so should be as fast as other methods of selecting entities.
+Returns entities satisifying given vanilla entity selector. Most complex among all the methods of selecting entities, 
+but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities.
 
 ### `spawn(name, pos, nbt?)`
 
@@ -53,12 +53,12 @@ you get the entity back as a return value, which is swell.
 
 ## Entity Manipulation
 
-Unlike with blocks, that use plethora of vastly different querying functions, entities are queried with `query` 
-function and altered via `modify` function. Type of information needed or values to be modified are different for 
+Unlike with blocks, that use a plethora of vastly different querying functions, entities are queried with the `query` 
+function and altered via the `modify` function. Type of information needed or values to be modified are different for 
 each call.
 
 Using `~` (in) operator is an alias for `query`. Especially useful if a statement has no arguments, 
-which in this case can be radically simplified
+which in this case can be radically simplified:
 
 <pre>
 query(p, 'name') <=> p ~ 'name'     // much shorter and cleaner
@@ -67,19 +67,19 @@ query(p, 'holds', 'offhand') <=> p ~ l('holds', 'offhand')    // not really but 
 
 ### `query(e,'removed')`
 
-Boolean. True if the entity is removed
+Boolean. True if the entity is removed.
 
 ### `query(e,'id')`
 
 Returns numerical id of the entity. Most efficient way to keep track of entites in a script. 
 Ids are only unique within current game session (ids are not preserved between restarts), 
-and dimension (each dimension has its own ids which can overlap.
+and dimension (each dimension has its own ids which can overlap).
 
 ### `query(e,'uuid')`
 
-Returns UUID (unique id) of the entity. Can be used to access entities with the other vanilla commands and 
+Returns the UUID (unique id) of the entity. Can be used to access entities with the other vanilla commands and 
 remains unique regardless of the dimension, and is preserved between game restarts. Apparently players cannot be 
-accessed via UUID, but name instead.
+accessed via UUID, but should be accessed with their name instead.
 
 <pre>
 map(entities_area('*',x,y,z,30,30,30),run('kill '+query(_,'id'))) // doesn't kill the player
@@ -87,15 +87,15 @@ map(entities_area('*',x,y,z,30,30,30),run('kill '+query(_,'id'))) // doesn't kil
 
 ### `query(e,'pos')`
 
-Triple of entity position
+Triple of the entity's position
 
 ### `query(e,'location')`
 
-Quin-tuple of entity position (x, y, and z coords), and rotation (yaw, pitch)
+Quin-tuple of the entity's position (x, y, and z coords), and rotation (yaw, pitch)
 
 ### `query(e,'x'), query(e,'y'), query(e,'z')`
 
-Respective entity coordinate
+Respective component of entity's coordinates
 
 ### `query(e,'pitch'), query(e,'yaw')`
 
@@ -107,11 +107,11 @@ Returns a 3d vector where the entity is looking.
 
 ### `query(e,'motion')`
 
-Triple of entity motion vector, `l(motion_x, motion_y, motion_z)`
+Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`
 
 ### `query(e,'motion_x'), query(e,'motion_y'), query(e,'motion_z')`
 
-Respective component of the motion vector
+Respective component of the entity's motion vector
 
 ### `query(e,'name'), query(e,'display_name'), query(e,'custom_name'), query(e,'type')`
 
@@ -134,11 +134,11 @@ run('/kill ' + e~'command_name');
 
 ### `query(e,'is_riding')`
 
-Boolean. True if riding another entity.
+Boolean, true if the entity is riding another entity.
 
 ### `query(e,'is_ridden')`
 
-Boolean. True if another entity is riding it.
+Boolean, true if another entity is riding it.
 
 ### `query(e,'passengers')`
 
@@ -150,15 +150,15 @@ Entity that `e` rides.
 
 ### `query(e,'tags')`
 
-List of entity tags.
+List of entity's tags.
 
 ### `query(e,'has_tag',tag)`
 
-Boolean, True if the entity is marked with `tag`.
+Boolean, true if the entity is marked with `tag`.
 
 ### `query(e,'is_burning')`
 
-Boolean, True if the entity is burning.
+Boolean, true if the entity is burning.
 
 ### `query(e,'fire')`
 
@@ -166,43 +166,43 @@ Number of remaining ticks of being on fire.
 
 ### `query(e,'silent')`
 
-Boolean, True if the entity is silent.
+Boolean, true if the entity is silent.
 
 ### `query(e,'gravity')`
 
-Boolean, True if the entity is affected by gravity, like most entities do.
+Boolean, true if the entity is affected by gravity, like most entities are.
 
 ### `query(e,'immune_to_fire')`
 
-Boolean, True if the entity is immune to fire.
+Boolean, true if the entity is immune to fire.
 
 ### `query(e,'dimension')`
 
-Name of the dimension entity is in.
+Name of the dimension the entity is in.
 
 ### `query(e,'height')`
 
-Height of the entity.
+Height of the entity in blocks.
 
 ### `query(e,'width')`
 
-Width of the entity.
+Width of the entity in blocks.
 
 ### `query(e,'eye_height')`
 
-Eye height of the entity.
+Eye height of the entity in blocks.
 
 ### `query(e,'age')`
 
-Age, in ticks, of the entity, i.e. how long it existed.
+Age of the entity in ticks, i.e. how long it existed.
 
 ### `query(e,'breeding_age')`
 
-Breeding age of passive entity, in ticks. If negative it it time to adulthood, if positive, breeding cooldown
+Breeding age of passive entity, in ticks. If negative, time to adulthood, if positive, breeding cooldown
 
 ### `query(e,'despawn_timer')`
 
-For living entities - the number of ticks they fall outside of immediate player presence.
+For living entities, the number of ticks they fall outside of immediate player presence.
 
 ### `query(e,'item')`
 
@@ -241,19 +241,19 @@ Returns a pose of an entity, one of the following options
 
 ### `query(e,'sneaking')`
 
-Boolean, true if entity is sneaking.
+Boolean, true if the entity is sneaking.
 
 ### `query(e,'sprinting')`
 
-Boolean, true if entity is sprinting.
+Boolean, true if the entity is sprinting.
 
 ### `query(e,'swimming')`
 
-Boolean, true if entity is swimming.
+Boolean, true if the entity is swimming.
 
 ### `query(e,'jumping')`
 
-Boolean, true if entity is jumping.
+Boolean, true if the entity is jumping.
 
 ### `query(e,'gamemode')`
 
@@ -293,7 +293,7 @@ Player's permission level, or `null` if not applicable for this entity.
 ### `query(e,'effect',name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
-effect name, amplifier, and remaining duration. With an argument, if the living entity has not that potion active, 
+effect name, amplifier, and remaining duration in ticks. With an argument, if the living entity has not that potion active, 
 returns `null`, otherwise return a tuple of amplifier and remaining duration.
 
 <pre>
@@ -308,7 +308,7 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 ### `query(e,'holds',slot?)`
 
-Returns triple of short name, stack count, and NBT of item held in `slot`. Available options for `slot` are:
+Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
 
 *   `mainhand`
 *   `offhand`
@@ -321,7 +321,7 @@ If `slot` is not specified, it defaults to the main hand.
 
 ### `query(e,'selected_slot')`
 
-Number indicating the selected slot of entity inventory. Currently only applicable to players.
+Number indicating the selected slot of entity's inventory. Currently only applicable to players.
 
 ### `query(e,'facing', order?)`
 
@@ -342,7 +342,7 @@ entity, and block value if block is in reach.
 
 ### `query(e,'nbt',path?)`
 
-Returns full NBT of the entity. If path is specified, it fetches only that portion of the NBT, that corresponds to the 
+Returns full NBT of the entity. If path is specified, it fetches only the portion of the NBT that corresponds to the 
 path. For specification of `path` attribute, consult vanilla `/data get entity` command.
 
 Note that calls to `nbt` are considerably more expensive comparing to other calls in Minecraft API, and should only 
@@ -354,7 +354,7 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
 don't work currently on players as their position is controlled by clients.
 
-Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity`
+Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`
 
 ### `modify(e,'remove')`
 
@@ -374,7 +374,7 @@ Changes full location vector all at once.
 
 ### `modify(e, 'x', x), modify(e, 'y', y), modify(e, 'z', z)`
 
-Moves the entity in.... one direction.
+Moves the entity in one direction.
 
 ### `modify(e, 'pitch', pitch), modify(e, 'yaw', yaw)`
 
@@ -429,11 +429,11 @@ Mounts on all listed entities on `e`.
 
 ### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', l(tags) )`
 
-Adds tag / tags to the entity.
+Adds tag(s) to the entity.
 
 ### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', l(tags) )`
 
-Removes tag from entity.
+Removes tag(s) from the entity.
 
 ### `modify(e, 'talk')`
 
@@ -446,12 +446,12 @@ If called with `false` value, it will disable AI in the mob. `true` will enable 
 ### `modify(e, 'no_clip', boolean)`
 
 Sets if the entity obeys any collisions, including collisions with the terrain and basic physics. Not affecting 
-players, since they are controlled client side
+players, since they are controlled client side.
 
 ### `modify(e, 'effect', name, duration?, amplifier?, show_particles?, show_icon?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true` 
-and `true`. If no duration is specified, or it is null or 0, the effect is removed.
+and `true`. If no duration is specified, or if it's null or 0, the effect is removed.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
@@ -481,11 +481,15 @@ Will make the entity jump once.
 
 ### `modify(e, 'silent', true/false)`
 
+Silences or unsilences the entity.
+
 ### `modify(e, 'gravity', true/false)`
+
+Toggles gravity for the entity.
 
 ### `modify(e, 'fire', ticks)`
 
-Will set mob on fire for `ticks` ticks. Set to 0 to extinguish.
+Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
 ## Entity Events
 
@@ -497,19 +501,19 @@ defining the callback with `entity_event`
 
 The following events can be handled by entities.
 
-*   `'on_tick'`: executes every tick right before entity is ticked in the game. Required arguments: `entity`
+*   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
 *   `'on_damaged'`: executed every time a living entity is about to receive damage. 
 Required arguments: `entity, amount, source, attacking_entity`
 
 It doesn't mean that all entity types will have a chance to execute a given event, but entities will not error 
-when you will attach inapplicable event to it.
+when you attach inapplicable event to it.
 
 ### `entity_event(e, event, call_name, args...)`
 
-Attaches specific function from the current package to be called upon the `event`, with extra `args` curried to the 
-original required arguments for the event handler
+Attaches specific function from the current package to be called upon the `event`, with extra `args` carried to the 
+original required arguments for the event handler.
 
 <pre>
 protect_villager(entity, amount, source, source_entity, healing_player) ->
