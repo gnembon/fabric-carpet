@@ -65,17 +65,17 @@ query(p, 'name') <=> p ~ 'name'     // much shorter and cleaner
 query(p, 'holds', 'offhand') <=> p ~ l('holds', 'offhand')    // not really but can be done
 </pre>
 
-### `query(e,'removed')`
+### `query(e, 'removed')`
 
 Boolean. True if the entity is removed.
 
-### `query(e,'id')`
+### `query(e, 'id')`
 
 Returns numerical id of the entity. Most efficient way to keep track of entites in a script. 
 Ids are only unique within current game session (ids are not preserved between restarts), 
 and dimension (each dimension has its own ids which can overlap).
 
-### `query(e,'uuid')`
+### `query(e, 'uuid')`
 
 Returns the UUID (unique id) of the entity. Can be used to access entities with the other vanilla commands and 
 remains unique regardless of the dimension, and is preserved between game restarts. Apparently players cannot be 
@@ -85,35 +85,35 @@ accessed via UUID, but should be accessed with their name instead.
 map(entities_area('*',x,y,z,30,30,30),run('kill '+query(_,'id'))) // doesn't kill the player
 </pre>
 
-### `query(e,'pos')`
+### `query(e, 'pos')`
 
 Triple of the entity's position
 
-### `query(e,'location')`
+### `query(e, 'location')`
 
 Quin-tuple of the entity's position (x, y, and z coords), and rotation (yaw, pitch)
 
-### `query(e,'x'), query(e,'y'), query(e,'z')`
+### `query(e, 'x'), query(e, 'y'), query(e, 'z')`
 
 Respective component of entity's coordinates
 
-### `query(e,'pitch'), query(e,'yaw')`
+### `query(e, 'pitch'), query(e, 'yaw')`
 
 Pitch and Yaw or where entity is looking.
 
-### `query(e,'look')`
+### `query(e, 'look')`
 
 Returns a 3d vector where the entity is looking.
 
-### `query(e,'motion')`
+### `query(e, 'motion')`
 
 Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`
 
-### `query(e,'motion_x'), query(e,'motion_y'), query(e,'motion_z')`
+### `query(e, 'motion_x'), query(e, 'motion_y'), query(e, 'motion_z')`
 
 Respective component of the entity's motion vector
 
-### `query(e,'name'), query(e,'display_name'), query(e,'custom_name'), query(e,'type')`
+### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
 String of entity name
 
@@ -132,99 +132,99 @@ player, where its their name.
 run('/kill ' + e~'command_name');
 </pre>
 
-### `query(e,'is_riding')`
+### `query(e, 'is_riding')`
 
 Boolean, true if the entity is riding another entity.
 
-### `query(e,'is_ridden')`
+### `query(e, 'is_ridden')`
 
 Boolean, true if another entity is riding it.
 
-### `query(e,'passengers')`
+### `query(e, 'passengers')`
 
 List of entities riding the entity.
 
-### `query(e,'mount')`
+### `query(e, 'mount')`
 
 Entity that `e` rides.
 
-### `query(e,'tags')`
+### `query(e, 'tags')`
 
 List of entity's tags.
 
-### `query(e,'has_tag',tag)`
+### `query(e, 'has_tag',tag)`
 
 Boolean, true if the entity is marked with `tag`.
 
-### `query(e,'is_burning')`
+### `query(e, 'is_burning')`
 
 Boolean, true if the entity is burning.
 
-### `query(e,'fire')`
+### `query(e, 'fire')`
 
 Number of remaining ticks of being on fire.
 
-### `query(e,'silent')`
+### `query(e, 'silent')`
 
 Boolean, true if the entity is silent.
 
-### `query(e,'gravity')`
+### `query(e, 'gravity')`
 
 Boolean, true if the entity is affected by gravity, like most entities are.
 
-### `query(e,'immune_to_fire')`
+### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
 
-### `query(e,'dimension')`
+### `query(e, 'dimension')`
 
 Name of the dimension the entity is in.
 
-### `query(e,'height')`
+### `query(e, 'height')`
 
 Height of the entity in blocks.
 
-### `query(e,'width')`
+### `query(e, 'width')`
 
 Width of the entity in blocks.
 
-### `query(e,'eye_height')`
+### `query(e, 'eye_height')`
 
 Eye height of the entity in blocks.
 
-### `query(e,'age')`
+### `query(e, 'age')`
 
 Age of the entity in ticks, i.e. how long it existed.
 
-### `query(e,'breeding_age')`
+### `query(e, 'breeding_age')`
 
 Breeding age of passive entity, in ticks. If negative, time to adulthood, if positive, breeding cooldown
 
-### `query(e,'despawn_timer')`
+### `query(e, 'despawn_timer')`
 
 For living entities, the number of ticks they fall outside of immediate player presence.
 
-### `query(e,'item')`
+### `query(e, 'item')`
 
 The item triple (name, count, nbt) if its an item entity, `null` otherwise
 
-### `query(e,'count')`
+### `query(e, 'count')`
 
 Number of items in a stack from item entity, `null` otherwise
 
-### `query(e,'pickup_delay')`
+### `query(e, 'pickup_delay')`
 
 Retrieves pickup delay timeout for an item entity, `null` otherwise
 
-### `query(e,'is_baby')`
+### `query(e, 'is_baby')`
 
 Boolean, true if its a baby.
 
-### `query(e,'target')`
+### `query(e, 'target')`
 
 Returns mob's attack target or null if none or not applicable.
 
-### `query(e,'home')`
+### `query(e, 'home')`
 
 Returns creature's home position or null if none or not applicable.
 
@@ -239,31 +239,31 @@ Returns a pose of an entity, one of the following options
  * `'crouching'`
  * `'dying'`
 
-### `query(e,'sneaking')`
+### `query(e, 'sneaking')`
 
 Boolean, true if the entity is sneaking.
 
-### `query(e,'sprinting')`
+### `query(e, 'sprinting')`
 
 Boolean, true if the entity is sprinting.
 
-### `query(e,'swimming')`
+### `query(e, 'swimming')`
 
 Boolean, true if the entity is swimming.
 
-### `query(e,'jumping')`
+### `query(e, 'jumping')`
 
 Boolean, true if the entity is jumping.
 
-### `query(e,'gamemode')`
+### `query(e, 'gamemode')`
 
 String with gamemode, or `null` if not a player.
 
-### `query(e,'gamemode_id')`
+### `query(e, 'gamemode_id')`
 
 Good'ol gamemode id, or null if not a player.
 
-### `query(e,'player_type')`
+### `query(e, 'player_type')`
 
 Returns `null` if the argument is not a player, otherwise:
 
@@ -282,15 +282,15 @@ Returns a lowercase string containing the category of the entity (hostile, passi
 
 Team name for entity, or `null` if no team is assigned.
 
-### `query(e,'ping')`
+### `query(e, 'ping')`
     
 Player's ping in milliseconds, or `null` if its not a player.
 
-### `query(e,'permission_level')`
+### `query(e, 'permission_level')`
 
 Player's permission level, or `null` if not applicable for this entity.
 
-### `query(e,'effect',name?)`
+### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
 effect name, amplifier, and remaining duration in ticks. With an argument, if the living entity has not that potion active, 
@@ -302,11 +302,11 @@ query(p,'effect','haste')  => [0, 177]
 query(p,'effect','resistance')  => null
 </pre>
 
-### `query(e,'health')`
+### `query(e, 'health')`
 
 Number indicating remaining entity health, or `null` if not applicable.
 
-### `query(e,'holds',slot?)`
+### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
 
@@ -319,16 +319,16 @@ Returns triple of short name, stack count, and NBT of item held in `slot`, or `n
 
 If `slot` is not specified, it defaults to the main hand.
 
-### `query(e,'selected_slot')`
+### `query(e, 'selected_slot')`
 
 Number indicating the selected slot of entity's inventory. Currently only applicable to players.
 
-### `query(e,'facing', order?)`
+### `query(e, 'facing', order?)`
 
 Returns where the entity is facing. optional order (number from 0 to 5, and negative), indicating primary directions 
 where entity is looking at. From most prominent (order 0) to opposite (order 5, or -1)
 
-### `query(e,'trace', reach?, options?...)`
+### `query(e, 'trace', reach?, options?...)`
 
 Returns the result of ray tracing from entity perspective, indicating what it is looking at. Default reach is 4.5 
 blocks (5 for creative players), and by default it traces for blocks and entities, identical to player attack tracing 
@@ -340,7 +340,7 @@ entities and blocks, blocks will take over the priority even if transparent or n
 Regardless of the options selected, the result could be `null` if nothing is in reach, entity, if look targets an
 entity, and block value if block is in reach.
 
-### `query(e,'nbt',path?)`
+### `query(e, 'nbt', path?)`
 
 Returns full NBT of the entity. If path is specified, it fetches only the portion of the NBT that corresponds to the 
 path. For specification of `path` attribute, consult vanilla `/data get entity` command.
@@ -356,11 +356,11 @@ don't work currently on players as their position is controlled by clients.
 
 Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`
 
-### `modify(e,'remove')`
+### `modify(e, 'remove')`
 
 Removes (not kills) entity from the game.
 
-### `modify(e,'kill')`
+### `modify(e, 'kill')`
 
 Kills the entity.
 
@@ -396,7 +396,9 @@ Sets the corresponding component of the motion vector.
 
 Adds a vector to the motion vector. Most realistic way to apply a force to an entity.
 
-### `modify(e, 'custom_name'), modify(e, 'custom_name', name )`
+### `modify(e, 'custom_name'), modify(e, 'custom_name', name)`
+
+Sets the custom name of the entity.
 
 ### `modify(e, 'age', number)`
 
@@ -405,7 +407,11 @@ entities, so use it with caution.
 
 ### `modify(e, 'pickup_delay', number)`
 
+Sets the pickup delay for the item entity.
+
 ### `modify(e, 'breeding_age', number)`
+
+Sets the breeding age for the animal.
 
 ### `modify(e, 'despawn_timer', number)`
 
@@ -458,7 +464,7 @@ and `true`. If no duration is specified, or if it's null or 0, the effect is rem
 Sets AI to stay around the home position, within `distance` blocks from it. `distance` defaults to 16 blocks. 
 `null` removes it. _May_ not work fully with mobs that have this AI built in, like Villagers.
 
-### `modify(e, 'gamemode', gamemode?), modify(e, 'gamemode',gamemode_id?)`
+### `modify(e, 'gamemode', gamemode?), modify(e, 'gamemode', gamemode_id?)`
 
 Modifies gamemode of player to whatever string (case-insensitive) or number you put in.
 
@@ -467,7 +473,7 @@ Modifies gamemode of player to whatever string (case-insensitive) or number you 
 * 2: adventure
 * 3: spectator
 
-### `modify(e, 'jumping', true/false)`
+### `modify(e, 'jumping', boolean)`
 
 Will make the entity constantly jump if set to true, and will stop the entity from jumping if set to false.
 Note that jumping parameter can be fully controlled by the entity AI, so don't expect that this will have 
@@ -479,11 +485,11 @@ Requires a living entity as an argument.
 
 Will make the entity jump once.
 
-### `modify(e, 'silent', true/false)`
+### `modify(e, 'silent', boolean)`
 
 Silences or unsilences the entity.
 
-### `modify(e, 'gravity', true/false)`
+### `modify(e, 'gravity', boolean)`
 
 Toggles gravity for the entity.
 
