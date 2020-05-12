@@ -1996,7 +1996,7 @@ public class CarpetExpression
                 ((EntityValue) v).set(what, lv.get(2).evalValue(c));
             else
                 ((EntityValue) v).set(what, ListValue.wrap(lv.subList(2, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList())));
-            return lv.get(0);
+            return (cc, tt) -> v;
         });
 
         // or update
