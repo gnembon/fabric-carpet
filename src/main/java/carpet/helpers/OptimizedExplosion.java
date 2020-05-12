@@ -243,14 +243,15 @@ public class OptimizedExplosion
                     {
                         BlockEntity blockEntity = block.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;
 
-                        LootContext.Builder lootBuilder = new LootContext.Builder((ServerWorld) eAccess.getWorld())
-                                .setRandom(eAccess.getWorld().random)
-                                .put(LootContextParameters.POSITION, blockpos)
-                                .put(LootContextParameters.TOOL, ItemStack.EMPTY)
-                                .putNullable(LootContextParameters.BLOCK_ENTITY, blockEntity);
+                        LootContext.Builder lootBuilder = (new LootContext.Builder((ServerWorld)eAccess.getWorld()))
+                                .random(eAccess.getWorld().random)
+                                .parameter(LootContextParameters.POSITION, blockpos)
+                                .parameter(LootContextParameters.TOOL, ItemStack.EMPTY)
+                                .optionalParameter(LootContextParameters.BLOCK_ENTITY, blockEntity)
+                                .optionalParameter(LootContextParameters.THIS_ENTITY, eAccess.getEntity());
 
                         if (eAccess.getDestructionType() == Explosion.DestructionType.DESTROY)
-                            lootBuilder.put(LootContextParameters.EXPLOSION_RADIUS, eAccess.getPower());
+                            lootBuilder.parameter(LootContextParameters.EXPLOSION_RADIUS, eAccess.getPower());
 
                         state.getDroppedStacks(lootBuilder).forEach((itemStackx) -> {
                             method_24023(objectArrayList, itemStackx, blockpos.toImmutable());
