@@ -70,8 +70,8 @@ set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:
 
 Evaluates subexpression without causing updates when blocks change in the world
 
-Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perling noise 
-generator. The following code causes cascading effect as blocks placed on chunk borders will cause other chunks to get 
+Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
+generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 
 loaded to full, thus generated:
 
 <pre>
@@ -85,7 +85,7 @@ __on_chunk_generated(x, z) -> (
 )
 </pre>
 
-The following addition resolves this issue, by not allowing block updates pass chunk borders:
+The following addition resolves this issue, by not allowing block updates past chunk borders:
 
 <pre>
 __config() -> m(l('scope', 'global'));
@@ -110,7 +110,7 @@ block, or 'up-north', which means a block placed facing up (player looking down)
 center towards north. Optional sneak is a boolean indicating if a player would be sneaking while placing the 
 block - this option only affects placement of chests and scaffolding at the moment. 
 
-Works with items that have the right-click effect on the block placed, `'like bone_meal`` on grass or axes on logs,
+Works with items that have the right-click effect on the block placed, like `bone_meal` on grass or axes on logs,
 but doesn't open chests / containers, so have no effect on interactive blocks, like TNT, comparators, etc.
 
 Returns true if placement/use was 
@@ -136,7 +136,7 @@ markers for scarpet apps. `meeting` is the only one with increased max occupancy
 
 ### `set_biome(pos, biome_name)`
 
-changes biome at that block position.
+Changes the biome at that block position.
 
 ### `update(pos)`
 
@@ -152,7 +152,7 @@ Causes a random tick at position.
 
 ### `destroy(pos), destroy(pos, -1), destroy(pos, <N>), destroy(pos, tool, nbt?)`
 
-Destroys the block like it was mined by a player. Add -1 for silk touch, and positive number for fortune level. 
+Destroys the block like it was mined by a player. Add -1 for silk touch, and a positive number for fortune level. 
 If tool is specified, and optionally its nbt, it will use that tool and will attempt to mine the block with this tool. 
 If called without item context, this function, unlike harvest, will affect all kinds of blocks. If called with item 
 in context, it will fail to break blocks that cannot be broken by a survival player.
@@ -168,28 +168,28 @@ for mining. Obviously, in this case the use of `harvest` would be much more appl
 <pre>
 mine(x,y,z) ->
 (
-   p = player();
-   slot = p~'selected_slot';
-   item_tuple = inventory_get(p, slot);
-   if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
-   l(item, count, tag) = item_tuple;
-   tag_back = destroy(x,y,z, item, tag);
-   if (tag_back == false, // failed to break the item
-	     return(tag_back)
-   );
-   if (tag_back == true, // block broke, tool has no tag
-	     return(tag_back)
-   );
-   if (tag_back == null, //item broke
-	     delete(tag:'Damage');
-	     inventory_set(p, slot, count-1, item, tag);
-	     return(tag_back)
-   );
-   if (type(tag_back) == 'nbt', // item didn't break, here is the effective nbt
-	     inventory_set(p, slot, count, item, tag_back);
-	     return(tag_back)
-   );
-   print('How did we get here?');
+  p = player();
+  slot = p~'selected_slot';
+  item_tuple = inventory_get(p, slot);
+  if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
+  l(item, count, tag) = item_tuple;
+  tag_back = destroy(x,y,z, item, tag);
+  if (tag_back == false, // failed to break the item
+    return(tag_back)
+  );
+  if (tag_back == true, // block broke, tool has no tag
+    return(tag_back)
+  );
+  if (tag_back == null, //item broke
+    delete(tag:'Damage');
+    inventory_set(p, slot, count-1, item, tag);
+    return(tag_back)
+  );
+  if (type(tag_back) == 'nbt', // item didn't break, here is the effective nbt
+    inventory_set(p, slot, count, item, tag_back);
+    return(tag_back)
+  );
+  print('How did we get here?');
 )
 </pre>
 
@@ -207,9 +207,9 @@ Returns a triple of coordinates of a specified block or entity. Technically enti
 and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos` allows to pass all positional objects.
 
 <pre>
-pos(block(0,5,0))  => l(0,5,0)
+pos(block(0,5,0)) => l(0,5,0)
 pos(players()) => l(12.3, 45.6, 32.05)
-pos(block('stone'))  => Error: Cannot fetch position of an unrealized block
+pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
 ### `pos_offset(pos, direction, amount?)`
@@ -267,51 +267,51 @@ poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two
 
 ### `biome(pos)`
 
-returns biome at that block position.
+Returns the biome at that block position.
 
 ### `solid(pos)`
 
-Boolean function, true if the block is solid
+Boolean function, true if the block is solid.
 
 ### `air(pos)`
 
-Boolean function, true if a block is air.... or cave air... or void air.... or any other air they come up with.
+Boolean function, true if a block is air... or cave air... or void air... or any other air they come up with.
 
 ### `liquid(pos)`
 
-Boolean function, true if the block is liquid, or liquidlogged
+Boolean function, true if the block is liquid, or waterlogged (with any liquid).
 
 ### `flammable(pos)`
 
-Boolean function, true if the block is flammable
+Boolean function, true if the block is flammable.
 
 ### `transparent(pos)`
 
-Boolean function, true if the block is transparent
+Boolean function, true if the block is transparent.
 
 ### `opacity(pos)`
 
-Numeric, returning opacity level of a block
+Numeric function, returning the opacity level of a block.
 
 ### `blocks_daylight(pos)`
 
-Boolean function, true if the block blocks daylight
+Boolean function, true if the block blocks daylight.
 
 ### `emitted_light(pos)`
 
-Numeric, returning light level emitted from block
+Numeric function, returning the light level emitted from the block.
 
 ### `light(pos)`
 
-Integer function, returning total light level at position
+Numeric function, returning the total light level at position.
 
 ### `block_light(pos)`
 
-Integer function, returning block light at position. From torches and other light sources.
+Numeric function, returning the block light at position (from torches and other light sources).
 
 ### `sky_light(pos)`
 
-Numeric function, returning sky light at position. From the sky access.
+Numeric function, returning the sky light at position (from sky access).
 
 ### `see_sky(pos)`
 
@@ -359,7 +359,7 @@ Boolean function, true if the block ticks randomly.
 
 ### `blocks_movement(pos)`
 
-Boolean function, true if block at position blocks movement.
+Boolean function, true if the block at position blocks movement.
 
 ### `block_sound(pos)`
 
@@ -485,11 +485,11 @@ Returns the map colour of a block at position. One of:
 ### `loaded(pos)`
 
 Boolean function, true if the block is accessible for the game mechanics. Normally `scarpet` doesn't check if operates 
-on loaded area - the game will automatically load missing blocks. We see this as advantage. Vanilla `fill/clone` 
+on loaded area - the game will automatically load missing blocks. We see this as an advantage. Vanilla `fill/clone` 
 commands only check the specified corners for loadness.
 
-To check if block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
-outside of the playable area, just are not used any of the game mechanics processes.
+To check if a block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
+outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
 loaded(pos(players()))  => 1
@@ -504,7 +504,7 @@ Deprecated as of scarpet 1.6, use `loaded_status(x) > 0`, or just `loaded(x)` wi
 
 ### `loaded_status(pos)`
 
-Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for ticking, 
+Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for redstone ticking, 
 3 for entity ticking
 
 ### `is_chunk_generated(pos)`, `is_chunk_generated(pos, force)`
@@ -539,10 +539,10 @@ Returns spawn potential at a location (1.16+ only)
 Checks wordgen eligibility for a structure in a given chunk. If no structure is given, or `null`, then it will check
  for all structures. If bounding box of the structures is also requested, it will compute size of potential
   structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
-  making it preferred for scoping ungenerated terrain, but it takes some compute money to calculate the structure.
+  making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
   
   Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
-  actual structure from forming.
+  the actual structure from forming.
   
 If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
@@ -575,7 +575,7 @@ then to get its bounding boxes.
 
 Creates or removes structure information of a structure associated with a chunk of `pos`. Unlike `plop`, blocks are 
 not placed in the world, only structure information is set. For the game this is a fully functional structure even 
-if blocks are not set. To remove structure a given point is in, use `structure_references` to find where current 
+if blocks are not set. To remove the structure a given point is in, use `structure_references` to find where current 
 structure starts.
 
 ### `plop(pos, what)`

@@ -28,7 +28,7 @@ apart you would want particles to appear, so `0.1` means one every 10cm.
 
 ### `particle_rect(name, pos, pos2, density?)`
 
-Renders a cuboid of particles between point `pos` to `pos2` with supplied density.
+Renders a cuboid of particles between points `pos` and `pos2` with supplied density.
 
 ## Markers
 
@@ -36,7 +36,7 @@ Renders a cuboid of particles between point `pos` to `pos2` with supplied densit
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
 Unloading the app that spawned them will cause all the markers from the loaded portion of the world to be removed. 
-Also - if the game loads that marker in the future and the app is not loaded, it will be removed as well.
+Also, if the game loads that marker in the future and the app is not loaded, it will be removed as well.
 
 ### `remove_all_markers()`
 
@@ -124,7 +124,7 @@ Prints the message to system logs, and not to chat.
 Runs a vanilla command from the string result of the `expr` and returns its success count
 
 <pre>
-run('fill 1 1 1 10 10 10 air') -> 123 // 123 block were filled, this operation was successful 123 times out of a possible 1000 blocks volume
+run('fill 1 1 1 10 10 10 air') -> 123 // 123 block were filled, this operation was successful 123 times out of a possible 1000 block volume
 run('give @s stone 4') -> 1 // this operation was successful once
 </pre>
 
@@ -136,7 +136,7 @@ performance reasons and saves the world only on demand.
 ### `load_app_data(), load_app_data(file), load_app_data(file, shared?)`
 
 Loads the app data associated with the app from the world /scripts folder. Without argument returns the memory 
-managed and buffered / throttled NBT tag. With a file name - reads explicitly a file with that name from the 
+managed and buffered / throttled NBT tag. With a file name, reads explicitly a file with that name from the 
 scripts folder that belongs exclusively to the app. if `shared` is true, the file location is not exclusive
 to the app anymore, but located in a shared app space. 
 
@@ -235,7 +235,7 @@ Queries in-game statistics for certain values. Categories include:
 
 For the options of `entry`, consult your statistics page, or give it a guess.
 
-The call will return `null` if the statistics options are incorrect, or player didn't get these in their history. 
+The call will return `null` if the statistics options are incorrect, or player doesn't have them in their history. 
 If the player encountered the statistic, or game created for him empty one, it will return a number. 
 Scarpet will not affect the entries of the statistics, even if it is just creating empty ones. With `null` response 
-it could either mean your input is wrong, or statistic has effectively a value of `0`.
+it could either mean your input is wrong, or statistic effectively has a value of `0`.
