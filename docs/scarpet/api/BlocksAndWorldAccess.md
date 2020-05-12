@@ -539,7 +539,7 @@ Returns spawn potential at a location (1.16+ only)
 Checks wordgen eligibility for a structure in a given chunk. If no structure is given, or `null`, then it will check
  for all structures. If bounding box of the structures is also requested, it will compute size of potential
   structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
-  making it preferred for scoping ungenerated terrain, but it takes some compute power to calculate the structure.
+  making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
   
   Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
   the actual structure from forming.
