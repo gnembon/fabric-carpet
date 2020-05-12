@@ -186,7 +186,7 @@ public class SpawnReporter
             }
             else
             {
-                return printEntitiesByType(creature_type, worldIn);
+                return printEntitiesByType(creature_type, worldIn, true);
                 
             }
             
@@ -250,22 +250,24 @@ public class SpawnReporter
         return get_type_string(get_creature_type_from_code(str));
     }
     
-    public static List<BaseText> printEntitiesByType(EntityCategory cat, World worldIn) //Class<?> entityType)
+    public static List<BaseText> printEntitiesByType(EntityCategory cat, World worldIn, boolean all) //Class<?> entityType)
     {
         List<BaseText> lst = new ArrayList<>();
         lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
         for (Entity entity : ((ServerWorld)worldIn).getEntities(null, (e) -> e.getType().getCategory()==cat))
         {
-            if (!(entity instanceof MobEntity) || !((MobEntity)entity).isPersistent())
-            {
-                EntityType type = entity.getType();
-                BlockPos pos = entity.getBlockPos();
-                lst.add( Messenger.c(
-                        "w  - ",
-                        Messenger.tp("wb",pos),
-                        String.format("w : %s", type.getName().getString())
-                        ));
-            }
+            boolean persistent = entity instanceof MobEntity && ( ((MobEntity) entity).isPersistent() || ((MobEntity) entity).cannotDespawn());
+            if (!all && persistent)
+                continue;
+
+            EntityType type = entity.getType();
+            BlockPos pos = entity.getBlockPos();
+            lst.add( Messenger.c(
+                    "w  - ",
+                    Messenger.tp(persistent?"gb":"wb",pos),
+                    String.format(persistent?"g : %s":"w : %s", type.getName().getString())
+            ));
+
         }
         if (lst.size()==1)
         {
