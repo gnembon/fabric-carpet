@@ -504,7 +504,7 @@ Deprecated as of scarpet 1.6, use `loaded_status(x) > 0`, or just `loaded(x)` wi
 
 ### `loaded_status(pos)`
 
-Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for (non-entity) ticking, 
+Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for redstone ticking, 
 3 for entity ticking
 
 ### `is_chunk_generated(pos)`, `is_chunk_generated(pos, force)`
