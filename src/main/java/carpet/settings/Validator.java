@@ -17,17 +17,6 @@ public abstract class Validator<T>
     public abstract T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string);
     public String description() {return null;}
 
-    public static class POSITIVE_NUMBER<T extends Number> extends Validator<T>
-    {
-        @Override
-        public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string)
-        {
-            return newValue.doubleValue() > 0 ? newValue : null;
-        }
-        @Override
-        public String description() { return "Must be a positive number"; }
-    }
-
     public static class _COMMAND<T> extends Validator<T>
     {
         @Override
@@ -118,5 +107,16 @@ public abstract class Validator<T>
         }
         @Override
         public String description() { return "Must be a positive number";}
+    }
+
+    public static class PROBABILITY <T extends Number> extends Validator<T>
+    {
+        @Override
+        public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string)
+        {
+            return (newValue.doubleValue() >= 0 && newValue.doubleValue() <= 1 )? newValue : null;
+        }
+        @Override
+        public String description() { return "Must be between 0 and 1";}
     }
 }
