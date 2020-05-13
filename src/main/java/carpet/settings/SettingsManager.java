@@ -21,9 +21,23 @@ import net.minecraft.text.BaseText;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.TriConsumer;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -396,19 +410,19 @@ public class SettingsManager
     private int displayRuleMenu(ServerCommandSource source, ParsedRule<?> rule)
     {
         PlayerEntity player;
-        String translatedName = LanguageUtils.translateOrDefault(LanguageUtils.getRuleNameKey(rule.name), rule.name);
+        String translatedPlusName = LanguageUtils.translatePlusDefault(LanguageUtils.getRuleNameKey(rule.name), rule.name);
         try
         {
             player = source.getPlayer();
         }
         catch (CommandSyntaxException e)
         {
-            Messenger.m(source, "w "+ translatedName +" "+LanguageUtils.translateOrDefault( "carpet.ui.statement.is_set_to","is set to")+": ","wb "+rule.getAsString());
+            Messenger.m(source, "w "+ translatedPlusName +" "+LanguageUtils.translateOrDefault( "carpet.ui.statement.is_set_to","is set to")+": ","wb "+rule.getAsString());
             return 1;
         }
 
         Messenger.m(player, "");
-        Messenger.m(player, "wb "+ translatedName ,"!/"+identifier+" "+rule.name,"^g refresh");
+        Messenger.m(player, "wb "+ translatedPlusName ,"!/"+identifier+" "+rule.name,"^g refresh");
         Messenger.m(player, "w "+ LanguageUtils.translateOrDefault(LanguageUtils.getRuleDescKey(rule.name), rule.description));
 
         ImmutableList<String> translatedExtraInfo = LanguageUtils.getRuleExtras(rule.name, rule.extraInfo);
@@ -476,9 +490,9 @@ public class SettingsManager
 
     private BaseText displayInteractiveSetting(ParsedRule<?> rule)
     {
-        String translatedName = LanguageUtils.translateOrDefault(LanguageUtils.getRuleNameKey(rule.name), rule.name);
+        String translatedPlusName = LanguageUtils.translatePlusDefault(LanguageUtils.getRuleNameKey(rule.name), rule.name);
         List<Object> args = new ArrayList<>();
-        args.add("w - "+ translatedName +" ");
+        args.add("w - "+ translatedPlusName +" ");
         args.add("!/"+identifier+" "+rule.name);
         args.add("^y "+LanguageUtils.translateOrDefault(LanguageUtils.getRuleDescKey(rule.name), rule.description));
         for (String option: rule.options)
@@ -545,9 +559,10 @@ public class SettingsManager
             for (String t : getCategories())
             {
                 String translated = LanguageUtils.translateOrDefault("carpet.ui.category." + t, t);
+                String translatedPlus = LanguageUtils.translatePlusDefault("carpet.ui.category." + t, t);
                 tags.add("c [" + translated +"]");
                 //tags.add("^g list all " + translated + " settings");
-                tags.add("^g " + String.format(LanguageUtils.translateOrDefault("carpet.ui.statement.list_all_%s_settings","list all %s settings"), translated));
+                tags.add("^g " + String.format(LanguageUtils.translateOrDefault("carpet.ui.statement.list_all_%s_settings","list all %s settings"), translatedPlus));
                 tags.add("!/"+identifier+" list " + t);
                 tags.add("w  ");
             }
