@@ -2,20 +2,14 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.class_5217;
 import net.minecraft.class_5269;
 import net.minecraft.entity.raid.RaidManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
-import net.minecraft.village.ZombieSiegeManager;
 import net.minecraft.world.WanderingTraderManager;
 import net.minecraft.world.World;
 import net.minecraft.world.border.WorldBorder;
-import net.minecraft.world.chunk.ChunkManager;
-import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.level.LevelGeneratorType;
-import net.minecraft.world.level.LevelProperties;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,9 +27,9 @@ public abstract class ServerWorld_tickMixin extends World
     @Shadow protected abstract void processSyncedBlockEvents();
     //@Shadow protected abstract void sendBlockActions();
 
-    protected ServerWorld_tickMixin(LevelProperties levelProperties, DimensionType dimensionType, BiFunction<World, Dimension, ChunkManager> chunkManagerProvider, Supplier<Profiler> supplier, boolean isClient)
+    protected ServerWorld_tickMixin(class_5269 arg, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
     {
-        super(levelProperties, dimensionType, chunkManagerProvider, supplier, isClient);
+        super(arg, dimensionType, supplier, bl, bl2, l);
     }
 
     private CarpetProfiler.ProfilerToken currentSection;
@@ -135,9 +129,9 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/dimension/Dimension;hasSkyLight()Z"
+            target = "Lnet/minecraft/world/dimension/DimensionType;hasSkyLight()Z"
     ))
-    private boolean tickWorldBorder(Dimension dimension)
+    private boolean tickWorldBorder(DimensionType dimension)
     {
         return TickSpeed.process_entities && dimension.hasSkyLight();
     }
@@ -153,13 +147,13 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/class_5269;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
+            target = "Lnet/minecraft/server/world/ServerWorld;method_27982()Z" // isDebug
             //target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
     ))
-    private LevelGeneratorType tickPendingBlocks(class_5269 levelProperties)
+    private boolean tickPendingBlocks(ServerWorld serverWorld)
     {
-        if (TickSpeed.process_entities) return levelProperties.getGeneratorType();
-        return LevelGeneratorType.DEBUG_ALL_BLOCK_STATES;
+        if (TickSpeed.process_entities) return true;
+        return serverWorld.method_27982(); // isDebug()
     }
 
     @Redirect(method = "tick", at = @At(

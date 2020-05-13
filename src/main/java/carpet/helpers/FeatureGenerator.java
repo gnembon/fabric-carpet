@@ -18,8 +18,9 @@ import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.biome.DefaultBiomeFeatures;
 import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
-import net.minecraft.world.biome.source.VanillaLayeredBiomeSourceConfig;
+import net.minecraft.world.biome.source.FixedBiomeSource;
+//import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
+//import net.minecraft.world.biome.source.VanillaLayeredBiomeSourceConfig;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.OverworldChunkGenerator;
@@ -106,7 +107,7 @@ public class FeatureGenerator
         //if (1+2==3)
         //    throw new RuntimeException("rebuild me");
         return (w, p) -> {
-            ChunkGenerator chunkgen = new OverworldChunkGenerator(w, w.getChunkManager().getChunkGenerator().getBiomeSource(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
+            ChunkGenerator chunkgen = new OverworldChunkGenerator(w.getChunkManager().getChunkGenerator().getBiomeSource(), w.getSeed(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
             {
                 @Override
                 public <C extends FeatureConfig> C getStructureConfig(Biome biome_1, StructureFeature<C> structureFeature_1)
@@ -117,7 +118,8 @@ public class FeatureGenerator
                 @Override
                 public BiomeSource getBiomeSource()
                 {
-                    return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties().getSeed()))
+                    return new FixedBiomeSource(biome);
+                    /*return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties().getSeed()))
                     {
                         @Override
                         public Biome getBiomeForNoiseGen(int i, int j, int k)
@@ -130,7 +132,7 @@ public class FeatureGenerator
                         {
                             return Sets.newHashSet(biome);
                         }
-                    };
+                    };*/
                 }
             };
 
@@ -156,18 +158,19 @@ public class FeatureGenerator
 
     public static StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<?> structure, boolean computeBox)
     {
-        ChunkGenerator<?> generator = world.getChunkManager().getChunkGenerator();
+        long seed = world.getSeed();
+        ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
         if (!generator.getBiomeSource().hasStructureFeature(structure))
             return null;
         BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
         ChunkRandom chunkRandom = new ChunkRandom();
         ChunkPos chunkPos = new ChunkPos(pos);
         Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
-        if (structure.method_27217(biomeAccess, generator, chunkRandom, chunkPos.x, chunkPos.z, biome)) // should start at
+        if (structure.method_27217(biomeAccess, generator, seed, chunkRandom, chunkPos.x, chunkPos.z, biome)) // should start at
         {
             if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
-            StructureStart structureStart3 = structure.getStructureStartFactory().create(structure, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, generator.getSeed());
+            StructureStart structureStart3 = structure.getStructureStartFactory().create(structure, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, seed);
             structureStart3.init(generator, manager, chunkPos.x, chunkPos.z, biome);
             if (!structureStart3.hasChildren()) return null;
             return structureStart3;

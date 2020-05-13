@@ -236,7 +236,7 @@ public class PlayerCommand
         );
         DimensionType dim = tryGetArg(
                 () -> DimensionArgumentType.getDimensionArgument(context, "dimension"),
-                () -> source.getWorld().dimension.getType()
+                () -> source.getWorld().method_27983() // dimension.getType()
         );
         GameMode mode = GameMode.CREATIVE;
         try

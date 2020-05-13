@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.class_5294;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.world.dimension.Dimension;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,12 +13,12 @@ public class WorldRenderer_fogOffMixin
 {
     @Redirect(method = "render", require = 0, expect = 0, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/world/dimension/Dimension;isFogThick(II)Z"
+            target = "Lnet/minecraft/class_5294;method_28110(II)Z"  //method_28110  isFogThick
     ))
-    private boolean isReallyThick(Dimension dimension, int x, int z)
+    private boolean isReallyThick(class_5294 class_5294, int x, int z)
     {
         if (CarpetSettings.fogOff) return false;
-        return dimension.isFogThick(x, z);
+        return class_5294.method_28110(x, z); //isFogThick
     }
 
 }

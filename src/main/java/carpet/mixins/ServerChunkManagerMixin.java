@@ -47,7 +47,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     private int setupTracking(ChunkTicketManager chunkTicketManager)
     {
         int j = chunkTicketManager.getSpawningChunkCount();
-        DimensionType dim = this.world.dimension.getType();
+        DimensionType dim = this.world.method_27983(); // getDimensionType;
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);
 
@@ -77,8 +77,8 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
         {
             for (SpawnGroup cat: SpawnGroup.values())
             {
-                DimensionType dim = world.dimension.getType();
-                Pair key = Pair.of(world.dimension.getType(), cat);
+                DimensionType dim = world.method_27983(); // getDimensionType;
+                Pair key = Pair.of(dim, cat);
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))
                 {

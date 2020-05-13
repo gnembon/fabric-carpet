@@ -2921,7 +2921,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(s.getWorld().dimension.getType())));
+            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(s.getWorld().method_27983()))); // getDImensionType
             return (cc, tt) -> retval;
         });
 

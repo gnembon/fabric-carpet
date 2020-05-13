@@ -9,5 +9,5 @@ public interface StructureFeatureInterface
 {
     boolean plopAnywhere(ServerWorld world, BlockPos pos);
     boolean gridAnywhere(ServerWorld world, BlockPos pos);
-    boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator, boolean wireOnly);
+    boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly);
 }

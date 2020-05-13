@@ -45,7 +45,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
     }
 
     @Override
-    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator<? extends ChunkGeneratorConfig> generator, boolean wireOnly)
+    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly)
     {
         if (world.isClient())
             return false;
@@ -108,7 +108,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
         return true;
     }
 
-    private StructureStart forceStructureStart(IWorld worldIn, ChunkGenerator <? extends ChunkGeneratorConfig > generator, Random rand, long packedChunkPos)
+    private StructureStart forceStructureStart(ServerWorld worldIn, ChunkGenerator generator, Random rand, long packedChunkPos)
     {
         ChunkPos chunkpos = new ChunkPos(packedChunkPos);
         StructureStart structurestart;
@@ -125,8 +125,8 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             }
         }
         Biome biome_1 = generator.getBiomeSource().getBiomeForNoiseGen((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
-        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,generator.getSeed());
-        structurestart1.init(generator, ((ServerWorld)worldIn).getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
+        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,worldIn.getSeed());
+        structurestart1.init(generator, worldIn.getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;
 
         if (structurestart.hasChildren())

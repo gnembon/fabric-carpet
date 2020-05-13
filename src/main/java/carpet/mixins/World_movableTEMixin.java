@@ -6,24 +6,21 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.class_5217;
 import net.minecraft.class_5269;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.chunk.EmptyChunk;
 import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.level.LevelGeneratorType;
-import net.minecraft.world.level.LevelProperties;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(World.class)
-public abstract class World_movableTEMixin implements WorldInterface
+public abstract class World_movableTEMixin implements WorldInterface, IWorld
 {
     @Shadow
     @Final
@@ -38,8 +35,8 @@ public abstract class World_movableTEMixin implements WorldInterface
     @Shadow
     public abstract BlockState getBlockState(BlockPos blockPos_1);
     
-    @Shadow
-    public abstract ChunkManager getChunkManager();
+    //@Shadow
+    //public abstract ChunkManager getChunkManager();
     
     @Shadow
     public abstract void checkBlockRerender(BlockPos blockPos_1, BlockState s1, BlockState s2);
@@ -59,6 +56,8 @@ public abstract class World_movableTEMixin implements WorldInterface
 
     @Shadow public abstract boolean setBlockState(BlockPos pos, BlockState state, int flags);
 
+    @Shadow public abstract boolean method_27982(); //isDebug()
+
     /**
      * @author 2No2Name
      */
@@ -71,7 +70,7 @@ public abstract class World_movableTEMixin implements WorldInterface
         {
             return false;
         }
-        else if (!this.isClient && this.properties.getGeneratorType() == LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
+        else if (!this.isClient && method_27982())
         {
             return false;
         }

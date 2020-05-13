@@ -42,8 +42,8 @@ public class ServerPlayerInteractionManager_scarpetEventsMixin
             value = "RETURN",
             ordinal = 2
     ))
-    private void onBlockActivated(PlayerEntity playerArg, World world, ItemStack stack, Hand hand, BlockHitResult blockHitResult, CallbackInfoReturnable<ActionResult> cir)
+    private void onBlockActivated(ServerPlayerEntity serverPlayerEntity, World world, ItemStack stack, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> cir)
     {
-        PLAYER_INTERACTS_WITH_BLOCK.onBlockHit(player, hand, blockHitResult);
+        PLAYER_INTERACTS_WITH_BLOCK.onBlockHit(player, hand, hitResult);
     }
 }

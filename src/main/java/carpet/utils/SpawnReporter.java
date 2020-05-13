@@ -410,7 +410,7 @@ public class SpawnReporter
         for (SpawnGroup enumcreaturetype : SpawnGroup.values())
         {
             String type_code = String.format("%s", enumcreaturetype).substring(0, 3);
-            List<Biome.SpawnEntry> lst = ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(worldIn.getStructureAccessor(), enumcreaturetype, pos);
+            List<Biome.SpawnEntry> lst = ((ChunkGenerator)worldIn.getChunkManager().getChunkGenerator()).getEntitySpawnList(worldIn.getBiome(pos), worldIn.getStructureAccessor(), enumcreaturetype, pos);
             if (lst != null && !lst.isEmpty())
             {
                 for (Biome.SpawnEntry spawnEntry : lst)

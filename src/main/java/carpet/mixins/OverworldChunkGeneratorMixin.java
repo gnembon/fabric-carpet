@@ -21,19 +21,19 @@ import java.util.List;
 @Mixin(OverworldChunkGenerator.class)
 public abstract class OverworldChunkGeneratorMixin extends SurfaceChunkGenerator<OverworldChunkGeneratorConfig>
 {
-    public OverworldChunkGeneratorMixin(IWorld iWorld_1, BiomeSource biomeSource_1, int int_1, int int_2, int int_3, OverworldChunkGeneratorConfig chunkGeneratorConfig_1, boolean boolean_1)
+    public OverworldChunkGeneratorMixin(BiomeSource biomeSource, long seed, OverworldChunkGeneratorConfig arg, int i, int j, int k, boolean bl)
     {
-        super(iWorld_1, biomeSource_1, int_1, int_2, int_3, chunkGeneratorConfig_1, boolean_1);
+        super(biomeSource, seed, arg, i, j, k, bl);
     }
-    
+
     @Inject(method = "getEntitySpawnList", at = @At(value = "INVOKE", ordinal = 1, shift = At.Shift.BEFORE,
-            target = "Lnet/minecraft/world/gen/feature/StructureFeature;isApproximatelyInsideStructure(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/util/math/BlockPos;)Z"),
+            target = "Lnet/minecraft/world/gen/feature/StructureFeature;isApproximatelyInsideStructure(Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/util/math/BlockPos;)Z"),
             cancellable = true)
-    private void onGetEntitySpawnList(StructureAccessor arg, SpawnGroup entityCategory, BlockPos blockPos, CallbackInfoReturnable<List<Biome.SpawnEntry>> cir)
+    private void onGetEntitySpawnList(Biome biome, StructureAccessor structureAccessor, SpawnGroup spawnGroup, BlockPos blockPos, CallbackInfoReturnable<List<Biome.SpawnEntry>> cir)
     {
         if (CarpetSettings.huskSpawningInTemples)
         {
-            if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(this.world, arg, blockPos))
+            if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(structureAccessor, blockPos))
             {
                 cir.setReturnValue(Feature.DESERT_PYRAMID.getMonsterSpawns());
             }
