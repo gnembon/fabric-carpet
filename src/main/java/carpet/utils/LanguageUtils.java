@@ -38,6 +38,10 @@ public class LanguageUtils
         return translationMap.getOrDefault(translationKey, defaultValue);
     }
 
+    public static String translatePlusDefault(String translationKey, String defaultValue){
+        return translationMap.containsKey(translationKey) ? translateOrDefault(translationKey, defaultValue) + String.format(" (%s)", defaultValue): defaultValue;
+    }
+
     public static String getRuleNameKey(String rule)
     {
         return String.format("carpet.rule.%s.name", rule);
