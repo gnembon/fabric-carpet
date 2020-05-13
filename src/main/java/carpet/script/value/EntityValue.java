@@ -8,6 +8,7 @@ import carpet.helpers.Tracer;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
+import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -789,26 +790,12 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                if (lv.get(0) instanceof BlockValue)
+                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false);
+                pos = new BlockPos(locator.vec.x, locator.vec.y, locator.vec.z);
+                if (lv.size() > locator.offset)
                 {
-                    pos = ((BlockValue) lv.get(0)).getPos();
-                    if (lv.size()>1)
-                    {
-                        distance = (int) NumericValue.asNumber(lv.get(1)).getLong();
-                    }
+                    distance = (int) NumericValue.asNumber(lv.get(locator.offset)).getLong();
                 }
-                else if (lv.size()>=3)
-                {
-                    pos = new BlockPos(NumericValue.asNumber(lv.get(0)).getLong(),
-                            NumericValue.asNumber(lv.get(1)).getLong(),
-                            NumericValue.asNumber(lv.get(2)).getLong());
-                    if (lv.size()>3)
-                    {
-                        distance = (int) NumericValue.asNumber(lv.get(4)).getLong();
-                    }
-                }
-                else throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
-
             }
             else throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
 
