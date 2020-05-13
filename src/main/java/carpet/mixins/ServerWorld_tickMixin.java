@@ -152,7 +152,7 @@ public abstract class ServerWorld_tickMixin extends World
     ))
     private boolean tickPendingBlocks(ServerWorld serverWorld)
     {
-        if (TickSpeed.process_entities) return true;
+        if (!TickSpeed.process_entities) return true;
         return serverWorld.method_27982(); // isDebug()
     }
 
