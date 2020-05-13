@@ -47,9 +47,9 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
 
     @Shadow protected abstract int getAvailableFood();
 
-    @Shadow protected abstract void depleteFood(int int_1);
+    //@Shadow protected abstract void depleteFood(int int_1);
 
-    @Shadow protected abstract boolean lacksFood();
+    //@Shadow protected abstract boolean lacksFood();
 
     @Shadow public abstract void eatForBreeding();
 
@@ -72,21 +72,21 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             }
             boolean recentlySeen = hasSeenGolemRecently(getEntityWorld().getTime());
             Optional<Timestamp> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);
-            Optional<Timestamp> optional_22 = this.brain.getOptionalMemory(MemoryModuleType.LAST_WORKED_AT_POI);
-            boolean work = false;
+            //Optional<Timestamp> optional_22 = this.brain.getOptionalMemory(MemoryModuleType.LAST_WORKED_AT_POI);
+            //boolean work = false;
             boolean sleep = false;
             boolean panic = this.brain.hasActivity(Activity.PANIC);
             long currentTime = this.world.getTime();
             if (optional_11.isPresent()) {
                 sleep = (currentTime - optional_11.get().getTime()) < 24000L;
             }
-            if (optional_22.isPresent()) {
-                work = (currentTime - optional_22.get().getTime()) < 36000L;
-            }
+            //if (optional_22.isPresent()) {
+            //    work = (currentTime - optional_22.get().getTime()) < 36000L;
+            //}
 
             this.setCustomName(Messenger.c(
                     (sleep?"eb ":"fb ")+"\u263d ",
-                    (work?"eb ":"fb ")+"\u2692 ",//"\u26CF ",
+                    //(work?"eb ":"fb ")+"\u2692 ",//"\u26CF ",
                     (panic?"lb ":"fb ")+"\u2623 ",//"\u2622 \u2620 \u26A1 ",
                     (recentlySeen?"rb ":"lb ")+time ));
             this.setCustomNameVisible(true);
