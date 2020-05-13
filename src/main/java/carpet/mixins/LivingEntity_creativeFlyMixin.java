@@ -27,11 +27,11 @@ public abstract class LivingEntity_creativeFlyMixin extends Entity
     @ModifyConstant(method = "travel", constant = @Constant(floatValue = 0.91F), expect = 2)
     private float drag(float original)
     {
-        if (CarpetSettings.creativeFlyDrag != 0.91D && (Object)this instanceof PlayerEntity)
+        if (CarpetSettings.creativeFlyDrag != 0.09 && (Object)this instanceof PlayerEntity)
         {
             PlayerEntity self = (PlayerEntity)(Object)(this);
             if (self.abilities.flying && ! onGround )
-                return (float)CarpetSettings.creativeFlyDrag;
+                return (float)(1.0-CarpetSettings.creativeFlyDrag);
         }
         return original;
     }

@@ -33,7 +33,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.22+v200506";
+    public static final String carpetVersion = "1.3.23+v200513";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -608,18 +608,23 @@ public class CarpetSettings
                     "having it set on the decicated server has no effect",
                     "but this also means it will work on vanilla servers as well"
             },
-            category = {CREATIVE, CLIENT}
+            category = {CREATIVE, CLIENT},
+            validate = Validator.NONNEGATIVE_NUMBER.class
     )
-    public static double creativeFlySpeed = 1.0f;
+    public static double creativeFlySpeed = 1.0;
 
     @Rule(
             desc = "Creative air drag",
             extra = {
+                    "Increased drag will slow down your flight",
+                    "So need to adjust speed accordingly",
+                    "With 1.0 drag, using speed of 11 seems to matching vanilla speeds.",
                     "Purely client side setting, meaning that",
                     "having it set on the decicated server has no effect",
                     "but this also means it will work on vanilla servers as well"
             },
-            category = {CREATIVE, CLIENT}
+            category = {CREATIVE, CLIENT},
+            validate = Validator.PROBABILITY.class
     )
-    public static double creativeFlyDrag = 0.91f;
+    public static double creativeFlyDrag = 0.09;
 }
