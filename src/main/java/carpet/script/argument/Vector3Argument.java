@@ -99,7 +99,7 @@ public class Vector3Argument extends Argument
             Value v1 = params.get(0 + offset);
             if (v1 instanceof BlockValue)
             {
-                return (new Vector3Argument(new Vec3d(((BlockValue) v1).getPos()).add(0.5,0.5,0.5), 1+offset)).fromBlock();
+                return (new Vector3Argument(Vec3d.ofCenter(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
             }
             if (v1 instanceof ListValue)
             {
