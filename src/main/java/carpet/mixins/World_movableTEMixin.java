@@ -11,7 +11,7 @@ import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.BlockView;
-import net.minecraft.world.IWorld;
+import net.minecraft.world.WorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.EmptyChunk;
 import net.minecraft.world.chunk.WorldChunk;
@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(World.class)
-public abstract class World_movableTEMixin implements WorldInterface, IWorld
+public abstract class World_movableTEMixin implements WorldInterface, WorldAccess
 {
     @Shadow
     @Final
@@ -125,9 +125,9 @@ public abstract class World_movableTEMixin implements WorldInterface, IWorld
                     if ((int_1 & 16) == 0)
                     {
                         int int_2 = int_1 & -2;
-                        blockState_2.prepare((net.minecraft.world.IWorld) this, blockPos_1, int_2);
-                        blockState_1.updateNeighbors((net.minecraft.world.IWorld) this, blockPos_1, int_2);
-                        blockState_1.prepare((net.minecraft.world.IWorld) this, blockPos_1, int_2);
+                        blockState_2.prepare((net.minecraft.world.WorldAccess) this, blockPos_1, int_2);
+                        blockState_1.updateNeighbors((net.minecraft.world.WorldAccess) this, blockPos_1, int_2);
+                        blockState_1.prepare((net.minecraft.world.WorldAccess) this, blockPos_1, int_2);
                     }
                     this.onBlockChanged(blockPos_1, blockState_2, blockState_3);
                 }

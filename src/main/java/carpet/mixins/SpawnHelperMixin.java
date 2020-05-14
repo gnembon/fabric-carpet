@@ -21,7 +21,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.IWorld;
+import net.minecraft.world.WorldAccess;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
@@ -174,12 +174,12 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/IWorld;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
+            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/WorldAccess;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
     ))
-    private static EntityData spawnEntity(MobEntity mobEntity, IWorld iWorld_1, LocalDifficulty localDifficulty_1, SpawnReason spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
+    private static EntityData spawnEntity(MobEntity mobEntity, WorldAccess WorldAccess_1, LocalDifficulty localDifficulty_1, SpawnReason spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
     {
         if (!SpawnReporter.mock_spawns)
-            return mobEntity.initialize(iWorld_1, localDifficulty_1, spawnType_1, entityData_1, compoundTag_1);
+            return mobEntity.initialize(WorldAccess_1, localDifficulty_1, spawnType_1, entityData_1, compoundTag_1);
         return null;
     }
 
