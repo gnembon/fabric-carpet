@@ -1,6 +1,7 @@
 package carpet.settings;
 
 import carpet.CarpetServer;
+import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.server.command.ServerCommandSource;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+import static carpet.utils.Translations.tr;
 
 public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final Field field;
@@ -224,5 +227,33 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public String toString()
     {
         return this.name + ": " + getAsString();
+    }
+
+    private String translationKey()
+    {
+        return String.format("rule.%s.name", name);
+    }
+
+    public String translatedName(){
+        String key = translationKey();
+        return Translations.hasTranslation(key) ? tr(key) + String.format(" (%s)", name): name;
+    }
+
+    public String translatedDescription()
+    {
+        return tr(String.format("rule.%s.desc", (name)), description);
+    }
+
+    public List<String> translatedExtras()
+    {
+        if (!Translations.hasTranslations()) return extraInfo;
+        String keyBase = String.format("rule.%s.extra.", name);
+        List<String> extras = new ArrayList<>();
+        int i = 0;
+        while (Translations.hasTranslation(keyBase+i))
+        {
+            extras.add(Translations.tr(keyBase+i));
+        }
+        return (extras.isEmpty()) ? extraInfo : extras;
     }
 }

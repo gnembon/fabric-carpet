@@ -1,0 +1,41 @@
+{
+  "rule.portalSuffocationFix.name": "传送门窒息修复",
+
+
+  "rule.portalSuffocationFix.desc": "使下界传送门正确地传送实体",
+
+
+  "rule.portalSuffocationFix.extra.0": "0000000",
+  "rule.portalSuffocationFix.extra.1": "1111111",
+
+
+  "category.bugfix": "BUG修复",
+  "category.survival": "生存",
+  "category.creative": "创造",
+  "category.experimental": "试验性",
+  "category.optimization": "优化",
+  "category.feature": "特性",
+  "category.command": "指令",
+  "category.tnt": "TNT",
+  "category.dispenser": "发射器",
+  "category.scarpet": "scarpet脚本语言",
+  "category.client": "客户端",
+
+  "ui.browse_categories": "浏览分类",
+  "ui.list_all_%(cat)s_settings": "列出所有 %s 选项",
+  "ui.version": "版本",
+  "ui.current_%(mod)s_settings": "目前启用的 %s 选项",
+  "ui.switch_to": "切换至",
+  "ui.settings_are_locked": "选项被锁定",
+  "ui.is_set_to": "被设置为",
+  "ui.unknown_rule": "未知的规则选项",
+  "ui.current_%(mod)s_startup_settings_from_%(conf)s": "目前启用的%s选项，从%s中读取得",
+  "ui.%(mod)s_settings_matching_'%(query)s'": "%s中符合\"%s\"的选项：",
+  "ui.all_%(mod)s_settings": "所有的%s选项",
+  "ui.tags": "分类",
+  "ui.change_permanently": "永久更改",
+  "ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts": "点击此按钮以使此选项保存于%s，重启后依旧生效",
+  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "规则%s将会被默认设置为%s",
+  "ui.current_value": "当前的值"
+
+}
