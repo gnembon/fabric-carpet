@@ -57,6 +57,7 @@ public class Translations
         Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
         Type type = new TypeToken<Map<String, String>>() {}.getType();
         translationMap = gson.fromJson(langJs, type);
+        translationMap.entrySet().removeIf(e -> e.getKey().startsWith("//"));
     }
 
 

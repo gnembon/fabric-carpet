@@ -231,7 +231,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
 
     private String translationKey()
     {
-        return String.format("carpet.rule.%s.name", name);
+        return String.format("rule.%s.name", name);
     }
 
     public String translatedName(){
@@ -241,13 +241,13 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
 
     public String translatedDescription()
     {
-        return tr(String.format("carpet.rule.%s.desc", (name)), description);
+        return tr(String.format("rule.%s.desc", (name)), description);
     }
 
     public List<String> translatedExtras()
     {
         if (!Translations.hasTranslations()) return extraInfo;
-        String keyBase = String.format("carpet.rule.%s.extra.", name);
+        String keyBase = String.format("rule.%s.extra.", name);
         List<String> extras = new ArrayList<>();
         int i = 0;
         while (Translations.hasTranslation(keyBase+i))

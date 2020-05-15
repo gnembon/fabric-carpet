@@ -3,47 +3,51 @@
 // But it could be a good example for writing the language file for other languages.
 
 {
-  "carpet.rule.portalSuffocationFix.name": "",
-  "// the key is genetated as:" : "String.format('carpet.rule.%s.name', rule.name)",
+  "// Rules:": "",
+  "rule.portalSuffocationFix.name": "",
+  "// the key is genetated as:" : "String.format('rule.%s.name', rule.name)",
 
 
-  "carpet.rule.portalSuffocationFix.desc": "",
-  "// the key is genetated as:" : "String.format('carpet.rule.%s.desc', rule.name)",
+  "rule.portalSuffocationFix.desc": "",
+  "// the key is genetated as:" : "String.format('rule.%s.desc', rule.name)",
 
 
-  "carpet.rule.portalSuffocationFix.extra.0": "",
-  "carpet.rule.portalSuffocationFix.extra.1": "",
-  "// the key is genetated as:" : "String.format('carpet.rule.%s.extra.%i', rule.name, index)",
+  "rule.portalSuffocationFix.extra.0": "",
+  "rule.portalSuffocationFix.extra.1": "",
+  "// the key is genetated as:" : "String.format('rule.%s.extra.%i', rule.name, index)",
 
 
-  "carpet.ui.category.bugfix": "bugfix",
-  "carpet.ui.category.survival": "survival",
-  "carpet.ui.category.creative": "creative",
-  "carpet.ui.category.experimental": "experimental",
-  "carpet.ui.category.optimization": "optimization",
-  "carpet.ui.category.feature": "feature",
-  "carpet.ui.category.command": "command",
-  "carpet.ui.category.tnt": "TNT",
-  "carpet.ui.category.dispenser": "dispenser",
-  "carpet.ui.category.scarpet": "scarpet",
-  "carpet.ui.category.client": "client",
+  "// Categories:": "",
 
+  "category.bugfix": "bugfix",
+  "category.survival": "survival",
+  "category.creative": "creative",
+  "category.experimental": "experimental",
+  "category.optimization": "optimization",
+  "category.feature": "feature",
+  "category.command": "command",
+  "category.tnt": "TNT",
+  "category.dispenser": "dispenser",
+  "category.scarpet": "scarpet",
+  "category.client": "client",
 
-  "carpet.ui.statement.browse_categories": "Brouse categories",
-  "carpet.ui.statement.list_all_%s_settings": "list all %s settings",
-  "carpet.ui.statement.version": "Version",
-  "carpet.ui.statement.current_%s_settings": "Current %s settings",
-  "carpet.ui.statement.switch_to": "Switch to",
-  "carpet.ui.statement.settings_are_locked": "settings are locked",
-  "carpet.ui.statement.is_set_to": "is set to",
-  "carpet.ui.statement.unknown_rule": "Unknown ruls",
-  "carpet.ui.statement.current_%s_startup_settings_from_%s": "current %s startup settings from %s",
-  "carpet.ui.statement.%s_settings_matching_'%s'": "%s settings matching \"%s\" ",
-  "carpet.ui.statement.all_%s_settings": "all %s settings",
-  "carpet.ui.statement.tags": "Tags",
-  "carpet.ui.statement.change_permanently": "Change permanently",
-  "carpet.ui.statement.click_to_keep_the_settings_in_%s_to_save_across_restarts": "click to keep the settings in %s to save across restarts",
-  "carpet.ui.statement.rule_%s_will_now_default_to_%s": "rule %s will now default to %s",
-  "carpet.ui.statement.current_value": "current value"
+  "// Settings command UI elements": "",
+
+  "ui.browse_categories": "Browse categories",
+  "ui.list_all_%(cat)s_settings": "list all %s settings",
+  "ui.version": "Version",
+  "ui.current_%(mod)s_settings": "Current %s settings",
+  "ui.switch_to": "Switch to",
+  "ui.settings_are_locked": "settings are locked",
+  "ui.is_set_to": "is set to",
+  "ui.unknown_rule": "Unknown rule",
+  "ui.current_%(mod)s_startup_settings_from_%(conf)s": "Current %s Startup Settings from %s",
+  "ui.%(mod)s_settings_matching_'%(query)s'": "%s settings matching \"%s\" ",
+  "ui.all_%(mod)s_settings": "All %s settings",
+  "ui.tags": "Tags",
+  "ui.change_permanently": "Change permanently",
+  "ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts": "click to keep the settings in %s to save across restarts",
+  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "rule %s will now default to %s",
+  "ui.current_value": "current value"
 
 }
