@@ -4,6 +4,7 @@ import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
 import carpet.settings.SettingsManager;
 import carpet.settings.Validator;
+import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.minecraft.server.MinecraftServer;
@@ -41,13 +42,30 @@ public class CarpetSettings
     public static Vec3d fixedPosition = null;
     public static int runPermissionLevel = 2;
 
+    private static class LanguageValidator extends Validator<String> {
+        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            if (currentRule.get().equals(newValue))
+            {
+                return newValue;
+            }
+            if (!Translations.isValidLanguage(newValue))
+            {
+                Messenger.m(source, "r "+newValue+" is not a valid language");
+                return null;
+            }
+            CarpetSettings.language = newValue;
+            Translations.updateLanguage(source);
+            return newValue;
+        }
+    }
     @Rule(
-            desc = "sets the language of CarpetMod",
-            category = {CREATIVE, SURVIVAL},
-            options = {"none"},
-            strict = false
+            desc = "sets the language for carpet",
+            category = FEATURE,
+            options = {"none", "zh_cn"},
+            strict = false,
+            validate = LanguageValidator.class
     )
-    public static String carpetLanguage = "none";
+    public static String language = "none";
 
     @Rule(
             desc = "Nether portals correctly place entities going through",
