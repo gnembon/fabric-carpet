@@ -134,9 +134,10 @@ If type is `null`, POI at position is removed. In any case, previous POI is also
 Interestingly, `unemployed`, and `nitwit` are not used in the game, meaning, they could be used as permanent spatial 
 markers for scarpet apps. `meeting` is the only one with increased max occupancy of 32.
 
-### `set_biome(pos, biome_name)`
+### `set_biome(pos, biome_name, update=true)`
 
-Changes the biome at that block position.
+Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
+on the clients. Biome changes can only be send to clients with the entire data from the chunk.
 
 ### `update(pos)`
 
@@ -692,6 +693,10 @@ Feature list:
 *   `weeping_vines` (1.16)
 *   `twisting_vines` (1.16)
 *   `basalt_pillar` (1.16)
+
+### `reload_chunk(pos)`
+
+Sends full chunk data to clients. Useful when lots stuff happened and you want to refresh it on the clients.
 
 ### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
 Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous

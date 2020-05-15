@@ -55,7 +55,7 @@
                 set without_updates
                 blocks_movement block_sound material map_colour property block_properties block_data poi set_poi
                 place_item set_biome biome loaded_status generation_status inhabited_time spawn_potential chunk_tickets
-                structure_eligibility structures structure_references set_structure reset_chunk
+                structure_eligibility structures structure_references set_structure reset_chunk reload_chunk
 
                 scoreboard scoreboard_add scoreboard_remove scoreboard_display
 
