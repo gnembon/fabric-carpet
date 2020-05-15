@@ -42,6 +42,14 @@ public class CarpetSettings
     public static int runPermissionLevel = 2;
 
     @Rule(
+            desc = "sets the language of CarpetMod",
+            category = {CREATIVE, SURVIVAL},
+            options = {"none"},
+            strict = false
+    )
+    public static String carpetLanguage = "none";
+
+    @Rule(
             desc = "Nether portals correctly place entities going through",
             extra = "Entities shouldn't suffocate in obsidian",
             category = BUGFIX
