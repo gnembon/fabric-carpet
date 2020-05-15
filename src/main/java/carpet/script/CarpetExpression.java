@@ -344,7 +344,7 @@ public class CarpetExpression
         return pcount;
     }
 
-    private void forceChunkUpdate(BlockPos pos, ServerWorld world)
+    private static void forceChunkUpdate(BlockPos pos, ServerWorld world)
     {
         Chunk chunk = world.getChunk(pos);
         chunk.setShouldSave(true);
@@ -1135,13 +1135,15 @@ public class CarpetExpression
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
             ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
-            if (doImmediateUpdate) this.forceChunkUpdate(pos, world);
+            if (doImmediateUpdate) forceChunkUpdate(pos, world);
             return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("reload_chunk", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            this.forceChunkUpdate(BlockArgument.findIn(cc, lv, 0).block.getPos(), cc.s.getWorld());
+            BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
+            ServerWorld world = cc.s.getWorld();
+            cc.s.getMinecraftServer().submitAndJoin( () -> forceChunkUpdate(pos, world));
             return LazyValue.TRUE;
         });
 
@@ -1361,7 +1363,7 @@ public class CarpetExpression
                 {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
                     {
-                        this.forceChunkUpdate(chpos.getCenterBlockPos(), world);
+                        forceChunkUpdate(chpos.getCenterBlockPos(), world);
                     }
                 }
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
@@ -2978,7 +2980,7 @@ public class CarpetExpression
                 if (res == null)
                     return;
                 if (what.equalsIgnoreCase("boulder"))  // there might be more of those
-                    this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
+                    forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
                 result[0] = new NumericValue(res);
             });
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
