@@ -1127,12 +1127,23 @@ public class CarpetExpression
             Biome biome = Registry.BIOME.get(new Identifier(biomeName));
             if (biome == null)
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
+            boolean doImmediateUpdate = true;
+            if (lv.size() > locator.offset+1)
+            {
+                doImmediateUpdate = lv.get(locator.offset+1).evalValue(c).getBoolean();
+            }
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
             ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
-            this.forceChunkUpdate(pos, world);
-            return LazyValue.NULL;
+            if (doImmediateUpdate) this.forceChunkUpdate(pos, world);
+            return LazyValue.TRUE;
+        });
+
+        this.expr.addLazyFunction("reload_chunk", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            this.forceChunkUpdate(BlockArgument.findIn(cc, lv, 0).block.getPos(), cc.s.getWorld());
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("structure_references", -1, (c, t, lv) -> {

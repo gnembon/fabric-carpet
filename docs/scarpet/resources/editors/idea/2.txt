@@ -66,6 +66,7 @@ property
 query
 random_tick
 rect
+reload_chunk
 remove_all_markers
 reset_chunk
 run
