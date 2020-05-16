@@ -1,0 +1,49 @@
+// This file isn't necessary at all, because the language module would use the strings coded in the source if language "none" is selected.
+// So en_us is the default language and probably no change will be made after loading this file.
+// But it could be a good example for writing the language file for other languages.
+
+{
+  "carpet.rule.portalSuffocationFix.name": "",
+  "// the key is genetated as:" : "String.format('carpet.rule.%s.name', rule.name)",
+
+
+  "carpet.rule.portalSuffocationFix.desc": "",
+  "// the key is genetated as:" : "String.format('carpet.rule.%s.desc', rule.name)",
+
+
+  "carpet.rule.portalSuffocationFix.extra.0": "",
+  "carpet.rule.portalSuffocationFix.extra.1": "",
+  "// the key is genetated as:" : "String.format('carpet.rule.%s.extra.%i', rule.name, index)",
+
+
+  "carpet.ui.category.bugfix": "bugfix",
+  "carpet.ui.category.survival": "survival",
+  "carpet.ui.category.creative": "creative",
+  "carpet.ui.category.experimental": "experimental",
+  "carpet.ui.category.optimization": "optimization",
+  "carpet.ui.category.feature": "feature",
+  "carpet.ui.category.command": "command",
+  "carpet.ui.category.tnt": "TNT",
+  "carpet.ui.category.dispenser": "dispenser",
+  "carpet.ui.category.scarpet": "scarpet",
+  "carpet.ui.category.client": "client",
+
+
+  "carpet.ui.statement.browse_categories": "Brouse categories",
+  "carpet.ui.statement.list_all_%s_settings": "list all %s settings",
+  "carpet.ui.statement.version": "Version",
+  "carpet.ui.statement.current_%s_settings": "Current %s settings",
+  "carpet.ui.statement.switch_to": "Switch to",
+  "carpet.ui.statement.settings_are_locked": "settings are locked",
+  "carpet.ui.statement.is_set_to": "is set to",
+  "carpet.ui.statement.unknown_rule": "Unknown ruls",
+  "carpet.ui.statement.current_%s_startup_settings_from_%s": "current %s startup settings from %s",
+  "carpet.ui.statement.%s_settings_matching_'%s'": "%s settings matching \"%s\" ",
+  "carpet.ui.statement.all_%s_settings": "all %s settings",
+  "carpet.ui.statement.tags": "Tags",
+  "carpet.ui.statement.change_permanently": "Change permanently",
+  "carpet.ui.statement.click_to_keep_the_settings_in_%s_to_save_across_restarts": "click to keep the settings in %s to save across restarts",
+  "carpet.ui.statement.rule_%s_will_now_default_to_%s": "rule %s will now default to %s",
+  "carpet.ui.statement.current_value": "current value"
+
+}
