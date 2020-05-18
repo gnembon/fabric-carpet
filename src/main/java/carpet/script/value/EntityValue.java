@@ -284,6 +284,7 @@ public class EntityValue extends Value
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
         put("hunger", (e, a) -> new NumericValue(((PlayerEntity) e).getHungerManager().getFoodLevel()));
+        put("saturation", (e, a) -> new NumericValue(((PlayerEntity) e).getHungerManager().getSaturationLevel()));
         put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
@@ -916,6 +917,10 @@ public class EntityValue extends Value
         put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
 
         put("hunger", (e, v)-> ((PlayerEntity) e).getHungerManager().setFoodLevel((int)NumericValue.asNumber(v).getLong()));
+
+        put("exhaustion", (e, v)-> ((PlayerEntity) e).getHungerManager().addExhaustion((int)NumericValue.asNumber(v).getLong()));
+
+        put("saturation", (e, v)->((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong()));
 
         // gamemode         [check]
         // spectate         [check]
