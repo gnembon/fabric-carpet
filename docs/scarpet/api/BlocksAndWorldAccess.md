@@ -712,3 +712,10 @@ It returns a `map` with a report indicating how many chunks were affected, and h
  * `layer_count_<status>`: number of chunks for which a `<status>` generation step has been performed
  * `layer_time_<status>`: cumulative time for all chunks spent on generating `<status>` step
  
+### add_chunk_ticket(pos, type, radius)
+
+Adds a chunk ticket at a position, which makes the game to keep the designated area centered around
+`pos` with radius of `radius` loaded for a predefined amount of ticks, defined by `type`. Allowed types
+are `portal`: 300 ticks, `teleport`: 5 ticks, and `unknown`: 1 tick. Radius can be from 1 to 32 ticks.
+
+This function is tentative - will likely change when chunk ticket API is properly fleshed out.

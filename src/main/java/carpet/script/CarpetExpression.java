@@ -88,6 +88,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
+import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
@@ -1383,7 +1384,35 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
+        this.expr.addLazyFunction("add_chunk_ticket", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            if (lv.size() != locator.offset+2) throw new InternalExpressionException("'add_chunk_ticket' requires block position, ticket type and radius");
+            String type = lv.get(locator.offset).evalValue(c).getString();
+            ChunkTicketType ticket = ticketTypes.get(type.toLowerCase(Locale.ROOT));
+            if (ticket == null) throw new InternalExpressionException("Unknown ticket type: "+type);
+            int radius = NumericValue.asNumber(lv.get(locator.offset+1).evalValue(c)).getInt();
+            if (radius < 1 || radius > 32) throw new InternalExpressionException("Ticket radius should be between 1 and 32 chunks");
+            // due to types we will wing it:
+            ChunkPos target = new ChunkPos(pos);
+            if (ticket == ChunkTicketType.PORTAL)
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.PORTAL, target, radius, pos);
+            else if (ticket == ChunkTicketType.POST_TELEPORT)
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, target, radius, 1);
+            else
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.UNKNOWN, target, radius, target);
+            Value ret = new NumericValue(ticket.getExpiryTicks());
+            return (_c, _t) -> ret;
+        });
+
     }
+    private Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
+        put("portal", ChunkTicketType.PORTAL);
+        put("teleport", ChunkTicketType.POST_TELEPORT);
+        put("unknown", ChunkTicketType.UNKNOWN);
+    }};
 
     private static String getScoreboardKeyFromValue(Value keyValue)
     {
