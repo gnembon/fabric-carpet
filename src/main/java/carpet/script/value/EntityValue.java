@@ -907,21 +907,13 @@ public class EntityValue extends Value
             }
         });
 
-        put("silent",(e,v)->{
-           e.setSilent(v.getBoolean());
-        });
+        put("silent",(e,v)-> e.setSilent(v.getBoolean()));
 
-        put("gravity",(e,v)->{
-            e.setNoGravity(!v.getBoolean());
-        });
+        put("gravity",(e,v)-> e.setNoGravity(!v.getBoolean()));
 
-        put("invulnerable",(e,v)->{
-            e.setInvulnerable(v.getBoolean());
-        });
+        put("invulnerable",(e,v)-> e.setInvulnerable(v.getBoolean()));
 
-        put("fire",(e,v)->{
-            e.setFireTicks((int)NumericValue.asNumber(v).getLong());
-        });
+        put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
 
         put("hunger", (e, v)-> ((PlayerEntity) e).getHungerManager().setFoodLevel((int)NumericValue.asNumber(v).getLong()));
 
