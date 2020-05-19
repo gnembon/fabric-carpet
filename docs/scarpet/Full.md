@@ -2268,7 +2268,13 @@ It returns a `map` with a report indicating how many chunks were affected, and h
  * `layer_count_<status>`: number of chunks for which a `<status>` generation step has been performed
  * `layer_time_<status>`: cumulative time for all chunks spent on generating `<status>` step
  
-# Iterating over larger areas of blocks
+### add_chunk_ticket(pos, type, radius)
+
+Adds a chunk ticket at a position, which makes the game to keep the designated area centered around
+`pos` with radius of `radius` loaded for a predefined amount of ticks, defined by `type`. Allowed types
+are `portal`: 300 ticks, `teleport`: 5 ticks, and `unknown`: 1 tick. Radius can be from 1 to 32 ticks.
+
+This function is tentative - will likely change when chunk ticket API is properly fleshed out.# Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
@@ -2993,7 +2999,7 @@ __on_tick()         // can access blocks and entities in the overworld
 __on_tick_nether()  // can access blocks and entities in the nether
 __on_tick_ender()   // can access blocks and entities in the end
 __on_chunk_generated(x,z) // called after a chunk is promoted to the full chunk,
-                          // prodiving lowest x and z coords in the chunk
+                          // providing lowest x and z coords in the chunk
                           // event will not work with optifine installed in the game
 __on_lightning(block, mode) // mode is `true` if lightning caused horse trap to spawn
 // player specific callbacks
@@ -3011,6 +3017,7 @@ __on_player_takes_damage(player, amount, source, source_entity)
 __on_player_deals_damage(player, amount, entity)
 __on_player_dies(player)
 __on_player_respawns(player)
+__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)
 __on_player_rides(player, forward, strafe, jumping, sneaking)
 __on_player_jumps(player)
 __on_player_deploys_elytra(player)
@@ -3023,6 +3030,11 @@ __on_player_drops_item(player)
 __on_player_drops_stack(player)
 __on_statistic(player, category, event, value) // player statistic changes
 </pre>
+
+Couple special cases.
+* `__on_player_changes_dimension` returns `null` as `to_pos` when player goes back to the overworld from the end
+, since the respawn location of the player is not control by the teleport, or a player can see the end credits. After
+ the player is eligible to respawn in the overworld, `__on_player_respawns` will be triggered.
 
 ### `/script event` command
 

@@ -527,6 +527,26 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
+        PLAYER_CHANGES_DIMENSION("player_changes_dimension", 5, false)
+        {
+            @Override
+            public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, DimensionType fromDim, DimensionType dimTo)
+            {
+                // eligibility already checked in mixin
+                Value fromValue = ListValue.fromTriple(from.x, from.y, from.z);
+                Value toValue = (to == null)?Value.NULL:ListValue.fromTriple(to.x, to.y, to.z);
+                Value fromDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(fromDim)));
+                Value toDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(dimTo)));
+
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> fromValue),
+                        ((c, t) -> fromDimStr),
+                        ((c, t) -> toValue),
+                        ((c, t) -> toDimStr)
+                ), player::getCommandSource);
+            }
+        },
         STATISTICS("statistic", 4, false)
         {
             private <T> Identifier getStatId(Stat<T> stat)
@@ -599,7 +619,9 @@ public class CarpetEventServer
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+        public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, DimensionType fromDim, DimensionType dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }
+
 
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
