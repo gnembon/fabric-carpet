@@ -510,7 +510,7 @@ public class CarpetExpression
                     return LazyValue.NULL;
             }
 
-            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).map( p ->
+            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).sorted(Comparator.comparingDouble(p -> p.getPos().getSquaredDistance(pos))).map(p ->
                     ListValue.of(
                             new StringValue(p.getType().toString()),
                             new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
