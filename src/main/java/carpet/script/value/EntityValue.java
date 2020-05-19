@@ -916,11 +916,17 @@ public class EntityValue extends Value
 
         put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
 
-        put("hunger", (e, v)-> ((PlayerEntity) e).getHungerManager().setFoodLevel((int)NumericValue.asNumber(v).getLong()));
+        put("hunger", (e, v)-> {
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setFoodLevel((int) NumericValue.asNumber(v).getLong());
+        });
 
-        put("exhaustion", (e, v)-> ((PlayerEntity) e).getHungerManager().addExhaustion((int)NumericValue.asNumber(v).getLong()));
+        put("exhaustion", (e, v)-> {
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
+        });
 
-        put("saturation", (e, v)->((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong()));
+        put("saturation", (e, v)-> {
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
+        });
 
         // gamemode         [check]
         // spectate         [check]
