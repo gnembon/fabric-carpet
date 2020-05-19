@@ -423,7 +423,7 @@ public class DrawCommand
         ServerCommandSource source = ctx.getSource();
 
         int affected = 0;
-        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
+        BlockPos.Mutable mbpos = pos.mutableCopy();
 
         List<BlockPos> list = Lists.newArrayList();
 
