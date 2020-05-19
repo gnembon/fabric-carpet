@@ -220,3 +220,13 @@ __on_player_respawns(player) ->
     print('__on_player_respawns(player)');
     print('Player '+player+' respawns.')
 );
+
+__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension) ->
+(
+    print('');
+    print('__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)');
+    print('player changes dimensions:');
+    print('  - player: '+player);
+    print('  - from '+from_dimension+' at '+map(from_pos, str('%.2f',_)));
+    print('  - to '+to_dimension+if(to_pos == null, '', ' at '+map(to_pos, str('%.2f',_))));
+)

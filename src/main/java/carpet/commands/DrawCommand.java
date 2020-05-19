@@ -64,7 +64,19 @@ public class DrawCommand
                                         then(argument("height",IntegerArgumentType.integer(1)).
                                                 then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"up","down"},b)).
                                                         then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
-                                                                .then(drawShape(c -> DrawCommand.drawPyramid(c, "circle", true)))))))));
+                                                                .then(drawShape(c -> DrawCommand.drawPyramid(c, "circle", true))))))))).
+                then(literal("cylinder").
+                        then(argument("center", BlockPosArgumentType.blockPos()).
+                                then(argument("radius", IntegerArgumentType.integer(1)).
+                                        then(argument("height",IntegerArgumentType.integer(1)).
+                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
+                                                                .then(drawShape(c -> DrawCommand.drawPrism(c, "circle")))))))).
+                then(literal("cuboid").
+                        then(argument("center", BlockPosArgumentType.blockPos()).
+                                then(argument("radius", IntegerArgumentType.integer(1)).
+                                        then(argument("height",IntegerArgumentType.integer(1)).
+                                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
+                                                        .then(drawShape(c -> DrawCommand.drawPrism(c, "square"))))))));
         dispatcher.register(command);
     }
 
@@ -375,6 +387,57 @@ public class DrawCommand
             affected+= fillFlat(world, pos, i, r, isSquare, orientation, block, replacement, list, mbpos);
         }
         
+        CarpetSettings.impendingFillSkipUpdates = false;
+
+        if (CarpetSettings.fillUpdates) {
+
+            for (BlockPos blockpos1 : list) {
+                Block blokc = world.getBlockState(blockpos1).getBlock();
+                world.updateNeighbors(blockpos1, blokc);
+            }
+        }
+
+        Messenger.m(source, "gi Filled " + affected + " blocks");
+
+        return affected;
+    }
+
+    private static int drawPrism(CommandContext<ServerCommandSource> ctx, String base){
+        BlockPos pos;
+        double radius;
+        int height;
+        String orientation;
+        BlockStateArgument block;
+        Predicate<CachedBlockPosition> replacement;
+        try
+        {
+            pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
+            radius = getArg(ctx, IntegerArgumentType::getInteger, "radius")+0.5D;
+            height = getArg(ctx, IntegerArgumentType::getInteger, "height");
+            orientation = getArg(ctx, StringArgumentType::getString,"orientation");
+            block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
+            replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
+        }
+        catch (ErrorHandled | CommandSyntaxException ignored) { return 0; }
+
+        ServerCommandSource source = ctx.getSource();
+
+        int affected = 0;
+        BlockPos.Mutable mbpos = new BlockPos.Mutable(pos);
+
+        List<BlockPos> list = Lists.newArrayList();
+
+        ServerWorld world = source.getWorld();
+
+        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+
+        boolean isSquare = base.equalsIgnoreCase("square");
+
+        for(int i =0; i<height;++i)
+        {
+            affected+= fillFlat(world, pos, i, radius, isSquare, orientation, block, replacement, list, mbpos);
+        }
+
         CarpetSettings.impendingFillSkipUpdates = false;
 
         if (CarpetSettings.fillUpdates) {
