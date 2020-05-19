@@ -283,8 +283,14 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
-        put("hunger", (e, a) -> new NumericValue(((PlayerEntity) e).getHungerManager().getFoodLevel()));
-        put("saturation", (e, a) -> new NumericValue(((PlayerEntity) e).getHungerManager().getSaturationLevel()));
+        put("hunger", (e, a) -> {
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getFoodLevel());
+            return Value.NULL;
+        });
+        put("saturation", (e, a) -> {
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getSaturationLevel());
+            return Value.NULL;
+        });
         put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
