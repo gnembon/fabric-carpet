@@ -107,7 +107,7 @@ public class MobAI
     {
         if (!e.isOnGround() && !e.isInsideWaterOrBubbleColumn() && !e.isInLava()) return;
         float m = e.world.getBlockState(e.getBlockPos()).getBlock().getJumpVelocityMultiplier();
-        float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
+        float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().minY - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
         float jumpVelocityMultiplier = (double) m == 1.0D ? g : m;
         float jumpStrength = (0.42F * jumpVelocityMultiplier);
         Vec3d vec3d = e.getVelocity();

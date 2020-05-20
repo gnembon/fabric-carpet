@@ -107,7 +107,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
             if (!this.world.isClient)
             {
                 if (!(oldBlock instanceof PistonExtensionBlock))//this is a movableTE special case, if condition wasn't there it would remove the blockentity that was carried for some reason
-                    oldBlockState.onBlockRemoved(this.world, blockPos_1, newBlockState, boolean_1);//this kills it
+                    oldBlockState.onStateReplaced(this.world, blockPos_1, newBlockState, boolean_1);//this kills it
             }
             else if (oldBlock != newBlock && oldBlock instanceof BlockEntityProvider)
             {

@@ -60,10 +60,10 @@ public class SpawnHelperMixin
         {
             return world.doesNotCollide(bb);
         }
-        int minX = MathHelper.floor(bb.x1);
-        int minY = MathHelper.floor(bb.y1);
-        int minZ = MathHelper.floor(bb.z1);
-        int maxY = MathHelper.ceil(bb.y2)-1;
+        int minX = MathHelper.floor(bb.minX);
+        int minY = MathHelper.floor(bb.minY);
+        int minZ = MathHelper.floor(bb.minZ);
+        int maxY = MathHelper.ceil(bb.maxY)-1;
         BlockPos.Mutable blockpos = new BlockPos.Mutable();
         if (bb.getXLength() <= 1) // small mobs
         {
@@ -86,8 +86,8 @@ public class SpawnHelperMixin
             return true;
         }
         // this code is only applied for mobs larger than 1 block in footprint
-        int maxX = MathHelper.ceil(bb.x2)-1;
-        int maxZ = MathHelper.ceil(bb.z2)-1;
+        int maxX = MathHelper.ceil(bb.maxX)-1;
+        int maxZ = MathHelper.ceil(bb.maxZ)-1;
         for (int y = minY; y <= maxY; y++)
             for (int x = minX; x <= maxX; x++)
                 for (int z = minZ; z <= maxZ; z++)
