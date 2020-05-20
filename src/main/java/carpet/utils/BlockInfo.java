@@ -130,14 +130,14 @@ public class BlockInfo
         put(Material.CARPET         , "carpet"       );
         put(Material.PLANT          , "plant"        );
         put(Material.UNDERWATER_PLANT, "water_plant" );
-        put(Material.REPLACEABLE_PLANT, "vine"       );
+        put(Material.REPLACEABLE_PLANT, "vegetation"       );
         put(Material.REPLACEABLE_UNDERWATER_PLANT       , "sea_grass"    );
         put(Material.WATER          , "water"        );
         put(Material.BUBBLE_COLUMN  , "bubble_column");
         put(Material.LAVA           , "lava"         );
         put(Material.SNOW_LAYER           , "snow_layer"   );
         put(Material.FIRE           , "fire"         );
-        put(Material.SUPPORTED          , "redstone_bits");
+        put(Material.SUPPORTED          , "decoration"   );
         put(Material.COBWEB         , "cobweb"       );
         put(Material.REDSTONE_LAMP  , "redstone_lamp");
         put(Material.ORGANIC_PRODUCT           , "clay"         );
