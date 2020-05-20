@@ -259,6 +259,8 @@ public class EntityValue extends Value
         put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
+        put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
+        put("portal_timer", (e , a) ->new NumericValue(e.netherPortalCooldown));
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
@@ -823,6 +825,20 @@ public class EntityValue extends Value
             {
                 ((LivingEntity) e).setDespawnCounter((int)NumericValue.asNumber(v).getLong());
             }
+        });
+
+        put("portal_cooldown", (e , v) ->
+        {
+            if (v==null)
+                throw new InternalExpressionException("'portal_cooldown' requires a value to set");
+            e.netherPortalCooldown = NumericValue.asNumber(v).getInt();
+        });
+
+        put("portal_timer", (e , v) ->
+        {
+            if (v==null)
+                throw new InternalExpressionException("'portal_timer' requires a value to set");
+            ((EntityInterface) e).setPortalTimer(NumericValue.asNumber(v).getInt());
         });
 
         put("ai", (e, v) ->

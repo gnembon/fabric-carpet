@@ -11,4 +11,8 @@ public interface EntityInterface
     boolean isPermanentVehicle();
 
     void setPermanentVehicle(boolean permanent);
+
+    int getPortalTimer();
+
+    void setPortalTimer(int amount);
 }
