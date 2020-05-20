@@ -140,6 +140,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -2851,12 +2852,43 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("task_dock", 1, (c, t, lv) -> {
+        this.expr.addLazyFunctionWithDelegation("task_dock", 1, (c, t, expr, tok, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer server = cc.s.getMinecraftServer();
             if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks
             Value[] result = new Value[]{Value.NULL};
-            ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() -> result[0] = lv.get(0).evalValue(c, t));
+            RuntimeException[] internal = new RuntimeException[]{null};
+            try
+            {
+                ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
+                {
+                    try
+                    {
+                        result[0] = lv.get(0).evalValue(c, t);
+                    }
+                    catch (ExpressionException exc)
+                    {
+                        internal[0] = exc;
+                    }
+                    catch (InternalExpressionException exc)
+                    {
+                        internal[0] = new ExpressionException(c, expr, tok, exc.getMessage(), exc.stack);
+                    }
+
+                    catch (ArithmeticException exc)
+                    {
+                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, "+exc.getMessage());
+                    }
+                });
+            }
+            catch (CompletionException exc)
+            {
+                throw new InternalExpressionException("Error while executing docked task section, internal stack trace is gone");
+            }
+            if (internal[0] != null)
+            {
+                throw internal[0];
+            }
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
             return (_c, _t) -> ret;
             // pass through placeholder

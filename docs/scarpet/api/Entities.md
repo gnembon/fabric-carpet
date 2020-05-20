@@ -204,6 +204,14 @@ Breeding age of passive entity, in ticks. If negative, time to adulthood, if pos
 
 For living entities, the number of ticks they fall outside of immediate player presence.
 
+### `query(e, 'portal_cooldown')`
+
+Number of ticks remaining until an entity can use a portal again.
+
+### `query(e, 'portal_timer')`
+
+Number of ticks an entity sits in a portal.
+
 ### `query(e, 'item')`
 
 The item triple (name, count, nbt) if its an item entity, `null` otherwise
@@ -416,6 +424,14 @@ Sets the breeding age for the animal.
 ### `modify(e, 'despawn_timer', number)`
 
 Sets a custom despawn timer value.
+
+### `modify(e, 'portal_cooldown', number)`
+
+Sets a custom number of ticks remaining until an entity can use a portal again.
+
+### `modify(e, 'portal_timer', number)`
+
+Sets a custom number of ticks an entity sits in a portal.
 
 ### `modify(e, 'dismount')`
 
