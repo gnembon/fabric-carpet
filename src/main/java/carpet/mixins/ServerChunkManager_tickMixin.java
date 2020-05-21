@@ -93,12 +93,12 @@ public abstract class ServerChunkManager_tickMixin
             value = "INVOKE",
             //target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
             //target = "Lnet/minecraft/class_5217;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
-            target = "Lnet/minecraft/server/world/ServerWorld;method_27982()Z" // idDebug
+            target = "Lnet/minecraft/server/world/ServerWorld;isDebugWorld()Z" // idDebug
     ))
     private boolean skipChunkTicking(ServerWorld serverWorld)
     {
         if (!TickSpeed.process_entities) return true;
-        return serverWorld.method_27982(); //isDebug
+        return serverWorld.isDebugWorld();
     }
 
 }

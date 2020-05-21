@@ -530,7 +530,7 @@ public class CarpetSettings
     public static class ChangeSpawnChunksValidator extends Validator<Integer> {
         public static void changeSpawnSize(int size)
         {
-            ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.field_24753); // OW
+            ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD_REGISTRY_KEY); // OW
             if (overworld != null) {
                 ChunkPos centerChunk = new ChunkPos(new BlockPos(
                         overworld.getLevelProperties().getSpawnX(),
@@ -551,7 +551,7 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
-            ServerWorld currentOverworld = CarpetServer.minecraft_server.getWorld(DimensionType.field_24753); // OW
+            ServerWorld currentOverworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD_REGISTRY_KEY); // OW
             if (currentOverworld != null)
             {
                 changeSpawnSize(newValue);

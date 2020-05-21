@@ -6,11 +6,11 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.class_5269;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.EmptyChunk;
@@ -27,7 +27,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
     public boolean isClient;
     @Shadow
     @Final
-    protected class_5269 properties; //LevelProperties
+    protected MutableWorldProperties properties; //LevelProperties
 
     @Shadow
     public abstract WorldChunk getWorldChunk(BlockPos blockPos_1);
@@ -56,7 +56,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
 
     @Shadow public abstract boolean setBlockState(BlockPos pos, BlockState state, int flags);
 
-    @Shadow public abstract boolean method_27982(); //isDebug()
+    @Shadow public abstract boolean isDebugWorld();
 
     /**
      * @author 2No2Name
@@ -70,7 +70,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
         {
             return false;
         }
-        else if (!this.isClient && method_27982())
+        else if (!this.isClient && isDebugWorld())
         {
             return false;
         }

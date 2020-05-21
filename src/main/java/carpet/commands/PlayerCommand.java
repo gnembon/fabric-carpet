@@ -15,7 +15,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.class_5321;
 import net.minecraft.command.arguments.DimensionArgumentType;
 import net.minecraft.command.arguments.RotationArgumentType;
 import net.minecraft.command.arguments.Vec3ArgumentType;
@@ -27,6 +26,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.dimension.DimensionType;
 
@@ -235,7 +235,7 @@ public class PlayerCommand
                 () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
                 source::getRotation
         );
-        class_5321<DimensionType> dimType = tryGetArg(
+        RegistryKey<DimensionType> dimType = tryGetArg(
                 () -> DimensionArgumentType.getDimensionArgument(context, "dimension"),
                 () -> source.getWorld().method_27983() // dimension.getType()
         );

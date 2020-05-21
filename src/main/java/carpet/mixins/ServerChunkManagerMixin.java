@@ -3,14 +3,14 @@ package carpet.mixins;
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.class_5217;
-import net.minecraft.class_5321;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.server.world.ChunkTicketManager;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.SpawnHelper;
+import net.minecraft.world.WorldProperties;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.level.LevelProperties;
@@ -48,7 +48,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     private int setupTracking(ChunkTicketManager chunkTicketManager)
     {
         int j = chunkTicketManager.getSpawningChunkCount();
-        class_5321<DimensionType> dim = this.world.method_27983(); // getDimensionType;
+        RegistryKey<DimensionType> dim = this.world.method_27983(); // getDimensionType;
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);
 
@@ -72,13 +72,13 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     @Inject(method = "tickChunks", at = @At("RETURN"))
     private void onFinishSpawnWorldCycle(CallbackInfo ci)
     {
-        class_5217 levelProperties_1 = this.world.getLevelProperties(); // levelProperies class
+        WorldProperties levelProperties_1 = this.world.getLevelProperties(); // levelProperies class
         boolean boolean_3 = levelProperties_1.getTime() % 400L == 0L;
         if (SpawnReporter.track_spawns > 0L && SpawnReporter.local_spawns != null)
         {
             for (SpawnGroup cat: SpawnGroup.values())
             {
-                class_5321<DimensionType> dim = world.method_27983(); // getDimensionType;
+                RegistryKey<DimensionType> dim = world.method_27983(); // getDimensionType;
                 Pair key = Pair.of(dim, cat);
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))

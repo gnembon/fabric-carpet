@@ -2,10 +2,10 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.class_5269;
 import net.minecraft.entity.raid.RaidManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
+import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.WanderingTraderManager;
 import net.minecraft.world.World;
 import net.minecraft.world.border.WorldBorder;
@@ -28,10 +28,9 @@ public abstract class ServerWorld_tickMixin extends World
     //@Shadow protected abstract void sendBlockActions();
 
     @Shadow protected abstract void method_29203();
-
-    protected ServerWorld_tickMixin(class_5269 arg, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
+    protected ServerWorld_tickMixin(MutableWorldProperties mutableWorldProperties, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
     {
-        super(arg, dimensionType, supplier, bl, bl2, l);
+        super(mutableWorldProperties, dimensionType, supplier, bl, bl2, l);
     }
 
     private CarpetProfiler.ProfilerToken currentSection;
@@ -149,13 +148,13 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;method_27982()Z" // isDebug
+            target = "Lnet/minecraft/server/world/ServerWorld;isDebugWorld()Z" // isDebug
             //target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
     ))
     private boolean tickPendingBlocks(ServerWorld serverWorld)
     {
         if (!TickSpeed.process_entities) return true;
-        return serverWorld.method_27982(); // isDebug()
+        return serverWorld.isDebugWorld(); // isDebug()
     }
 
     @Redirect(method = "tick", at = @At(

@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.class_5294;
+import net.minecraft.client.render.SkyProperties;
 import net.minecraft.client.render.WorldRenderer;
 //import net.minecraft.world.dimension.Dimension;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,12 +13,12 @@ public class WorldRenderer_fogOffMixin
 {
     @Redirect(method = "render", require = 0, expect = 0, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/class_5294;method_28110(II)Z"  //method_28110  isFogThick
+            target = "Lnet/minecraft/client/render/SkyProperties;useThickFog(II)Z"  //method_28110  isFogThick
     ))
-    private boolean isReallyThick(class_5294 class_5294, int x, int z)
+    private boolean isReallyThick(SkyProperties skyProperties, int x, int z)
     {
         if (CarpetSettings.fogOff) return false;
-        return class_5294.method_28110(x, z); //isFogThick
+        return skyProperties.useThickFog(x, z); //isFogThick
     }
 
 }

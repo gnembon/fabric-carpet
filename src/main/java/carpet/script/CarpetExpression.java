@@ -2998,7 +2998,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(s.getWorld().method_27983().method_29177())); // getDImensionType
+            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(s.getWorld().method_27983().getValue())); // getDImensionType
             return (cc, tt) -> retval;
         });
 
@@ -3029,15 +3029,15 @@ public class CarpetExpression
                 {
                     case "nether":
                     case "the_nether":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.field_24754));
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.THE_NETHER_REGISTRY_KEY));
                         break;
                     case "end":
                     case "the_end":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.field_24755));
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.THE_END_REGISTRY_KEY));
                         break;
                     case "overworld":
                     case "over_world":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.field_24753));
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.OVERWORLD_REGISTRY_KEY));
                         break;
                     default:
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);

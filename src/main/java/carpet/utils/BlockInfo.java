@@ -175,7 +175,7 @@ public class BlockInfo
         Material material = state.getMaterial();
         Block block = state.getBlock();
         String metastring = "";
-        for (net.minecraft.state.property.Property<?> iproperty : state.method_28501())//  getProperties())
+        for (net.minecraft.state.property.Property<?> iproperty : state.getProperties())
         {
             metastring += ", "+iproperty.getName() + '='+state.get(iproperty);
         }

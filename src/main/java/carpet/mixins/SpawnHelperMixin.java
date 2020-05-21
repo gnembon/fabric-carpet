@@ -6,7 +6,6 @@ import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FenceGateBlock;
-import net.minecraft.class_5321;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.EntityData;
@@ -20,6 +19,7 @@ import net.minecraft.tag.BlockTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.WorldAccess;
@@ -281,7 +281,7 @@ public class SpawnHelperMixin
                 SpawnGroup entityCategory = var6[var8];
                 if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isAnimal()) )
                 {
-                    class_5321<DimensionType> dim = world.method_27983(); // getDimensionType;
+                    RegistryKey<DimensionType> dim = world.method_27983(); // getDimensionType;
                     int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
                     int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning
                     int int_3 = newCap * int_2 / CHUNK_AREA; //current spawning limits

@@ -5,7 +5,6 @@ import carpet.mixins.WeightedPickerEntryMixin;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import net.minecraft.class_5321;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.EntityType;
@@ -19,6 +18,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
@@ -39,19 +39,19 @@ public class SpawnReporter
     public static boolean mock_spawns = false;
     
     public static Long track_spawns = 0L;
-    public static final HashMap<class_5321<DimensionType>, Integer> chunkCounts = new HashMap<>();
+    public static final HashMap<RegistryKey<DimensionType>, Integer> chunkCounts = new HashMap<>();
 
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
     public static double mobcap_exponent = 0.0D;
     
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Long> spawn_attempts = new HashMap<>();
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Long> overall_spawn_ticks = new HashMap<>();
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Long> spawn_ticks_full = new HashMap<>();
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Long> spawn_ticks_fail = new HashMap<>();
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Long> spawn_ticks_succ = new HashMap<>();
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Long> spawn_ticks_spawns = new HashMap<>();
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, Long> spawn_cap_count = new HashMap<>();
-    public static final HashMap<Pair<class_5321<DimensionType>, SpawnGroup>, EvictingQueue<Pair<EntityType, BlockPos>>> spawned_mobs = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_attempts = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> overall_spawn_ticks = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_full = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_fail = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_succ = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_spawns = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_cap_count = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, EvictingQueue<Pair<EntityType, BlockPos>>> spawned_mobs = new HashMap<>();
     public static final HashMap<SpawnGroup, Integer> spawn_tries = new HashMap<>();
     public static BlockPos lower_spawning_limit = null;
     public static BlockPos upper_spawning_limit = null;
@@ -75,7 +75,7 @@ public class SpawnReporter
                 return;
             }
         }
-        Pair<class_5321<DimensionType>, SpawnGroup> key = Pair.of(mob.world.method_27983(), cat);
+        Pair<RegistryKey<DimensionType>, SpawnGroup> key = Pair.of(mob.world.method_27983(), cat);
         long count = spawn_stats.get(key).getOrDefault(mob.getType(), 0L);
         spawn_stats.get(key).put(mob.getType(), count + 1);
         spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));
@@ -85,7 +85,7 @@ public class SpawnReporter
 
     public static List<BaseText> printMobcapsForDimension(ServerWorld world, boolean multiline)
     {
-        class_5321<DimensionType> dim = world.method_27983();
+        RegistryKey<DimensionType> dim = world.method_27983();
         String name = dim.toString();
         List<BaseText> lst = new ArrayList<>();
         if (multiline)
@@ -305,9 +305,9 @@ public class SpawnReporter
             {
                 spawn_tries.put(enumcreaturetype, 1);
             }
-            for (class_5321<DimensionType> dim : Arrays.asList(DimensionType.field_24753, DimensionType.field_24754, DimensionType.field_24755))
+            for (RegistryKey<DimensionType> dim : Arrays.asList(DimensionType.OVERWORLD_REGISTRY_KEY, DimensionType.THE_NETHER_REGISTRY_KEY, DimensionType.THE_END_REGISTRY_KEY))
             {
-                Pair<class_5321<DimensionType>, SpawnGroup> key = Pair.of(dim, enumcreaturetype);
+                Pair<RegistryKey<DimensionType>, SpawnGroup> key = Pair.of(dim, enumcreaturetype);
                 overall_spawn_ticks.put(key, 0L);
                 spawn_attempts.put(key, 0L);
                 spawn_ticks_full.put(key, 0L);
@@ -345,15 +345,15 @@ public class SpawnReporter
         {
             //String type_code = String.format("%s", enumcreaturetype);
             boolean there_are_mobs_to_list = false;
-            for (class_5321<DimensionType> dim: Arrays.asList(DimensionType.field_24753, DimensionType.field_24754, DimensionType.field_24755)) //String world_code: new String[] {"", " (N)", " (E)"})
+            for (RegistryKey<DimensionType> dim: Arrays.asList(DimensionType.OVERWORLD_REGISTRY_KEY, DimensionType.THE_NETHER_REGISTRY_KEY, DimensionType.THE_END_REGISTRY_KEY)) //String world_code: new String[] {"", " (N)", " (E)"})
             {
-                Pair<class_5321<DimensionType>, SpawnGroup> code = Pair.of(dim, enumcreaturetype);
+                Pair<RegistryKey<DimensionType>, SpawnGroup> code = Pair.of(dim, enumcreaturetype);
                 if (spawn_ticks_spawns.get(code) > 0L)
                 {
                     there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
                     report.add(Messenger.s(String.format(" > %s (%.1f min), %.1f m/t, {%.1f%%F / %.1f%%- / %.1f%%+}; %.2f s/att",
-                        code.getRight()+((code.getLeft()==DimensionType.field_24753)?"":( (code.getLeft()==DimensionType.field_24754)?"(N)":"(E)" )), // OW, nether
+                        code.getRight()+((code.getLeft()==DimensionType.OVERWORLD_REGISTRY_KEY)?"":( (code.getLeft()==DimensionType.THE_NETHER_REGISTRY_KEY)?"(N)":"(E)" )), // OW, nether
                         60*hours,
                         (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
                         (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),
