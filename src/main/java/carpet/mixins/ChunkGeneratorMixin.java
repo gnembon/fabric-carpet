@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGeneratorMixin
 {
+    // this might not be needed anymore
+    /*
     @Inject(method = "hasStructure", at = @At("HEAD"), cancellable = true)
     private void skipGenerationBiomeChecks(Biome biome_1, StructureFeature<? extends FeatureConfig> structureFeature_1, CallbackInfoReturnable<Boolean> cir)
     {
@@ -22,4 +24,6 @@ public abstract class ChunkGeneratorMixin
             cir.cancel();
         }
     }
+
+     */
 }

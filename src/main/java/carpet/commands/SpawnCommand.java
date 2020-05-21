@@ -11,6 +11,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import net.minecraft.class_5321;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.DimensionArgumentType;
 import net.minecraft.entity.SpawnGroup;
@@ -257,9 +258,9 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int mobcapsForDimension(ServerCommandSource source, DimensionType dim)
+    private static int mobcapsForDimension(ServerCommandSource source, class_5321<DimensionType> dim)
     {
-        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getWorld(), true));
+        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getMinecraftServer().getWorld(dim), true));
         return 1;
     }
 

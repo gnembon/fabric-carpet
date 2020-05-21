@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.class_5321;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -88,23 +89,23 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     }
 
     private Vec3d previousLocation;
-    private DimensionType previousDimension;
+    private class_5321<DimensionType> previousDimension;
 
     @Inject(method = "changeDimension", at = @At("HEAD"))
-    private void logPreviousCoordinates(DimensionType newDimension, CallbackInfoReturnable<Entity> cir)
+    private void logPreviousCoordinates(class_5321<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = getPos();
-        previousDimension = dimension;
+        previousDimension = world.method_27983();  //dimension type
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void atChangeDimension(DimensionType newDimension, CallbackInfoReturnable<Entity> cir)
+    private void atChangeDimension(class_5321<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
     {
         if (PLAYER_CHANGES_DIMENSION.isNeeded())
         {
             ServerPlayerEntity player = (ServerPlayerEntity) (Object)this;
             Vec3d to = null;
-            if (!notInAnyWorld || previousDimension != DimensionType.THE_END || newDimension != DimensionType.OVERWORLD)
+            if (!notInAnyWorld || previousDimension != DimensionType.field_24755 || newDimension != DimensionType.field_24753) // end ow
             {
                 to = getPos();
             }

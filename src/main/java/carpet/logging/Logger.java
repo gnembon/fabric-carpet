@@ -5,6 +5,7 @@ import carpet.CarpetSettings;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
+import net.minecraft.util.Util;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -181,7 +182,7 @@ public class Logger
 
     public void sendPlayerMessage(ServerPlayerEntity player, BaseText ... messages)
     {
-        Arrays.stream(messages).forEach(player::sendSystemMessage);
+        Arrays.stream(messages).forEach(message -> player.sendSystemMessage(message, Util.field_25140));
     }
 
     /**

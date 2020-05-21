@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.class_5321;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -21,7 +22,7 @@ public abstract class Entity_portalSuffocationMixin
             value = "INVOKE",
             target = "Lnet/minecraft/entity/Entity;getLastNetherPortalDirection()Lnet/minecraft/util/math/Direction;"
     ))
-    private void registerEntityDimensionChange(DimensionType newDimension, CallbackInfoReturnable<Entity> cir)
+    private void registerEntityDimensionChange(class_5321<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
     {
         if (CarpetSettings.portalSuffocationFix)
         {
@@ -43,7 +44,7 @@ public abstract class Entity_portalSuffocationMixin
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void removeEntity(DimensionType dimensionType_1, CallbackInfoReturnable<Entity> cir)
+    private void removeEntity(class_5321<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
     {
         CarpetSettings.currentTelepotingEntityBox = null;
         CarpetSettings.fixedPosition = null;

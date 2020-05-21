@@ -1,14 +1,17 @@
 package carpet.helpers;
 
 import carpet.CarpetSettings;
+import carpet.fakes.BiomeInterface;
 import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import net.minecraft.block.Blocks;
+import net.minecraft.class_5312;
+import net.minecraft.class_5314;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.structure.BastionRemnantGenerator;
 import net.minecraft.util.math.BlockPos;
@@ -17,14 +20,14 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.biome.DefaultBiomeFeatures;
 import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.biome.source.FixedBiomeSource;
+//import net.minecraft.world.biome.source.BiomeSource;
+//import net.minecraft.world.biome.source.FixedBiomeSource;
 //import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
 //import net.minecraft.world.biome.source.VanillaLayeredBiomeSourceConfig;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.OverworldChunkGenerator;
-import net.minecraft.world.gen.chunk.OverworldChunkGeneratorConfig;
+//import net.minecraft.world.gen.chunk.OverworldChunkGenerator;
+//import net.minecraft.world.gen.chunk.OverworldChunkGeneratorConfig;
 import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.BastionRemnantFeatureConfig;
 import net.minecraft.world.gen.feature.BoulderFeatureConfig;
@@ -50,15 +53,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static net.minecraft.world.biome.DefaultBiomeFeatures.FANCY_TREE_CONFIG;
 import static net.minecraft.world.biome.DefaultBiomeFeatures.OAK_TREE_CONFIG;
 
 public class FeatureGenerator
 {
+    public static String fix(String key)
+    {
+        return key.toLowerCase(Locale.ROOT);
+    }
+
     @FunctionalInterface
     private interface Thing
     {
@@ -104,41 +111,7 @@ public class FeatureGenerator
     }
     private static Thing setupCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome, boolean wireOnly)
         {
-        //if (1+2==3)
-        //    throw new RuntimeException("rebuild me");
-        return (w, p) -> {
-            ChunkGenerator chunkgen = new OverworldChunkGenerator(w.getChunkManager().getChunkGenerator().getBiomeSource(), w.getSeed(), new OverworldChunkGeneratorConfig()) //  BiomeSourceType.VANILLA_LAYERED.applyConfig((BiomeSourceType.VANILLA_LAYERED.getConfig())), ChunkGeneratorType.SURFACE.createSettings())
-            {
-                @Override
-                public <C extends FeatureConfig> C getStructureConfig(Biome biome_1, StructureFeature<C> structureFeature_1)
-                {
-                    return (C)conf;
-                }
-
-                @Override
-                public BiomeSource getBiomeSource()
-                {
-                    return new FixedBiomeSource(biome);
-                    /*return new VanillaLayeredBiomeSource(new VanillaLayeredBiomeSourceConfig(w.getLevelProperties().getSeed()))
-                    {
-                        @Override
-                        public Biome getBiomeForNoiseGen(int i, int j, int k)
-                        {
-                            return biome;
-                        }
-
-                        @Override
-                        public Set<Biome> getBiomesInArea(int int_1, int int_2, int int_3, int int_4)
-                        {
-                            return Sets.newHashSet(biome);
-                        }
-                    };*/
-                }
-            };
-
-
-            return ((StructureFeatureInterface)structure).plopAnywhere(w, p, chunkgen, wireOnly);
-        };
+        return (w, p) -> ((StructureFeatureInterface)structure).plopAnywhere(w, p, w.getChunkManager().getChunkGenerator(), wireOnly, biome, conf);
     }
 
     public static Boolean spawn(String name, ServerWorld world, BlockPos pos)
@@ -156,22 +129,26 @@ public class FeatureGenerator
         return null;
     }
 
-    public static StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<?> structure, boolean computeBox)
+    public static <T extends FeatureConfig> StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<T> structure, boolean computeBox)
     {
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
+        class_5314 params = generator.getConfig().method_28600(structure);
         if (!generator.getBiomeSource().hasStructureFeature(structure))
             return null;
         BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
         ChunkRandom chunkRandom = new ChunkRandom();
         ChunkPos chunkPos = new ChunkPos(pos);
         Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
-        if (structure.method_27217(biomeAccess, generator, seed, chunkRandom, chunkPos.x, chunkPos.z, biome)) // should start at
+        class_5312<?, ?> configuredFeature = ((BiomeInterface)biome).getConfiguredFeature(structure);
+        if (configuredFeature == null) return null;
+        ChunkPos chunkPos2 = structure.method_27218(params, seed, chunkRandom, chunkPos.x, chunkPos.z); //find some chunk I guess
+        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos.x, chunkPos.z, biome, chunkPos, configuredFeature.field_24836)) // should start at
         {
             if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
-            StructureStart structureStart3 = structure.getStructureStartFactory().create(structure, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, seed);
-            structureStart3.init(generator, manager, chunkPos.x, chunkPos.z, biome);
+            StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.field_24835, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, seed);
+            structureStart3.init(generator, manager, chunkPos.x, chunkPos.z, biome, (T) configuredFeature.field_24836);
             if (!structureStart3.hasChildren()) return null;
             return structureStart3;
         }
@@ -183,73 +160,73 @@ public class FeatureGenerator
     public static final Map<String, String> featureToStructure = new HashMap<>();
     static
     {
-        structureToFeature.put(Feature.OCEAN_MONUMENT.getName(), Collections.singletonList("monument"));
-        structureToFeature.put(Feature.END_CITY.getName(), Collections.singletonList("end_city"));
-        structureToFeature.put(Feature.OCEAN_RUIN.getName(), Arrays.asList("ocean_ruin", "ocean_ruin_warm", "ocean_ruin_small", "ocean_ruin_warm_small", "ocean_ruin_tall", "ocean_ruin_warm_tall"));
-        structureToFeature.put(Feature.VILLAGE.getName(), Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
-        structureToFeature.put(Feature.WOODLAND_MANSION.getName(), Collections.singletonList("mansion"));
-        structureToFeature.put(Feature.BURIED_TREASURE.getName(), Collections.singletonList("treasure"));
-        structureToFeature.put(Feature.SWAMP_HUT.getName(), Collections.singletonList("witch_hut"));
-        structureToFeature.put(Feature.STRONGHOLD.getName(), Collections.singletonList("stronghold"));
-        structureToFeature.put(Feature.DESERT_PYRAMID.getName(), Collections.singletonList("desert_temple"));
-        structureToFeature.put(Feature.JUNGLE_TEMPLE.getName(), Collections.singletonList("jungle_temple"));
-        structureToFeature.put(Feature.SHIPWRECK.getName(), Arrays.asList("shipwreck", "shipwreck2"));
-        structureToFeature.put(Feature.PILLAGER_OUTPOST.getName(), Collections.singletonList("pillager_outpost"));
-        structureToFeature.put(Feature.MINESHAFT.getName(), Arrays.asList("mineshaft", "mineshaft_mesa"));
-        structureToFeature.put(Feature.IGLOO.getName(), Collections.singletonList("igloo"));
-        structureToFeature.put(Feature.NETHER_BRIDGE.getName(), Collections.singletonList("fortress"));
-        structureToFeature.put(Feature.NETHER_FOSSIL.getName(), Collections.singletonList("nether_fossil"));
-        structureToFeature.put(Feature.BASTION_REMNANT.getName(), Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
-        structureToFeature.put(Feature.RUINED_PORTAL.getName(), Collections.singletonList("ruined_portal"));
+        structureToFeature.put(StructureFeature.MONUMENT.getName(), Collections.singletonList("monument"));
+        structureToFeature.put(StructureFeature.END_CITY.getName(), Collections.singletonList("end_city"));
+        structureToFeature.put(StructureFeature.OCEAN_RUIN.getName(), Arrays.asList("ocean_ruin", "ocean_ruin_warm", "ocean_ruin_small", "ocean_ruin_warm_small", "ocean_ruin_tall", "ocean_ruin_warm_tall"));
+        structureToFeature.put(StructureFeature.VILLAGE.getName(), Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
+        structureToFeature.put(StructureFeature.MANSION.getName(), Collections.singletonList("mansion"));
+        structureToFeature.put(StructureFeature.BURIED_TREASURE.getName(), Collections.singletonList("treasure"));
+        structureToFeature.put(StructureFeature.field_24851.getName(), Collections.singletonList("witch_hut"));
+        structureToFeature.put(StructureFeature.STRONGHOLD.getName(), Collections.singletonList("stronghold"));
+        structureToFeature.put(StructureFeature.DESERT_PYRAMID.getName(), Collections.singletonList("desert_temple"));
+        structureToFeature.put(StructureFeature.JUNGLE_PYRAMID.getName(), Collections.singletonList("jungle_temple"));
+        structureToFeature.put(StructureFeature.SHIPWRECK.getName(), Arrays.asList("shipwreck", "shipwreck2"));
+        structureToFeature.put(StructureFeature.PILLAGER_OUTPOST.getName(), Collections.singletonList("pillager_outpost"));
+        structureToFeature.put(StructureFeature.MINESHAFT.getName(), Arrays.asList("mineshaft", "mineshaft_mesa"));
+        structureToFeature.put(StructureFeature.IGLOO.getName(), Collections.singletonList("igloo"));
+        structureToFeature.put(StructureFeature.FORTRESS.getName(), Collections.singletonList("fortress"));
+        structureToFeature.put(StructureFeature.NETHER_FOSSIL.getName(), Collections.singletonList("nether_fossil"));
+        structureToFeature.put(StructureFeature.BASTION_REMNANT.getName(), Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
+        structureToFeature.put(StructureFeature.RUINED_PORTAL.getName(), Collections.singletonList("ruined_portal"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
 
 
     private static final Map<String, Thing> gridMap = new HashMap<String, Thing>() {{
-        put("monument",  ((StructureFeatureInterface)Feature.OCEAN_MONUMENT)::gridAnywhere);
-        put("fortress", ((StructureFeatureInterface)Feature.NETHER_BRIDGE)::gridAnywhere);
-        put("mansion", ((StructureFeatureInterface)Feature.WOODLAND_MANSION)::gridAnywhere);
-        put("jungle_temple", ((StructureFeatureInterface)Feature.JUNGLE_TEMPLE)::gridAnywhere);
-        put("desert_temple", ((StructureFeatureInterface)Feature.DESERT_PYRAMID)::gridAnywhere);
-        put("end_city", ((StructureFeatureInterface)Feature.END_CITY)::gridAnywhere);
-        put("igloo", ((StructureFeatureInterface)Feature.IGLOO)::gridAnywhere);
-        put("shipwreck", gridCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
-        put("shipwreck2", gridCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
-        put("witch_hut", ((StructureFeatureInterface)Feature.SWAMP_HUT)::gridAnywhere);
-        put("stronghold", ((StructureFeatureInterface)Feature.STRONGHOLD)::gridAnywhere);
+        put("monument",  ((StructureFeatureInterface)StructureFeature.MONUMENT)::gridAnywhere);
+        put("fortress", ((StructureFeatureInterface)StructureFeature.FORTRESS)::gridAnywhere);
+        put("mansion", ((StructureFeatureInterface)StructureFeature.MANSION)::gridAnywhere);
+        put("jungle_temple", ((StructureFeatureInterface)StructureFeature.JUNGLE_PYRAMID)::gridAnywhere);
+        put("desert_temple", ((StructureFeatureInterface)StructureFeature.DESERT_PYRAMID)::gridAnywhere);
+        put("end_city", ((StructureFeatureInterface)StructureFeature.END_CITY)::gridAnywhere);
+        put("igloo", ((StructureFeatureInterface)StructureFeature.IGLOO)::gridAnywhere);
+        put("shipwreck", gridCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
+        put("shipwreck2", gridCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
+        put("witch_hut", ((StructureFeatureInterface)StructureFeature.field_24851)::gridAnywhere);
+        put("stronghold", ((StructureFeatureInterface)StructureFeature.STRONGHOLD)::gridAnywhere);
 
-        put("ocean_ruin_small", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_small", gridCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 0.0F, 0.5F), Biomes.PLAINS));
-        put("ocean_ruin_warm_small", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_small", gridCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 0.0F, 0.5F), Biomes.PLAINS));
-        put("ocean_ruin_tall", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_tall", gridCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 0.0F), Biomes.PLAINS));
-        put("ocean_ruin_warm_tall", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_tall", gridCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 0.0F), Biomes.PLAINS));
-        put("ocean_ruin", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin", gridCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 1.0F), Biomes.PLAINS));
-        put("ocean_ruin_warm", gridCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm", gridCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 1.0F), Biomes.PLAINS));
-        put("treasure", ((StructureFeatureInterface)Feature.BURIED_TREASURE)::gridAnywhere);
+        put("treasure", ((StructureFeatureInterface)StructureFeature.BURIED_TREASURE)::gridAnywhere);
 
-        put("pillager_outpost", ((StructureFeatureInterface)Feature.PILLAGER_OUTPOST)::gridAnywhere);
+        put("pillager_outpost", ((StructureFeatureInterface)StructureFeature.PILLAGER_OUTPOST)::gridAnywhere);
 
 
-        put("mineshaft", gridCustomStructure(Feature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.NORMAL), Biomes.PLAINS));
-        put("mineshaft_mesa", gridCustomStructure(Feature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.MESA), Biomes.PLAINS));
+        put("mineshaft", gridCustomStructure(StructureFeature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.NORMAL), Biomes.PLAINS));
+        put("mineshaft_mesa", gridCustomStructure(StructureFeature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.MESA), Biomes.PLAINS));
 
-        put("village", gridCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/plains/town_centers",6), Biomes.PLAINS));
-        put("village_desert", gridCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/desert/town_centers", 6), Biomes.PLAINS));
-        put("village_savanna", gridCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/savanna/town_centers", 6), Biomes.PLAINS));
-        put("village_taiga", gridCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
-        put("village_snowy", gridCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
-        put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::gridAnywhere);
-        put("bastion_remnant", gridCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(BastionRemnantGenerator.START_POOLS_TO_SIZES), Biomes.NETHER_WASTES));
-        put("bastion_remnant_housing", gridCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/units/base", 60).build()), Biomes.NETHER_WASTES));
-        put("bastion_remnant_stable", gridCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/hoglin_stable/origin", 60).build()), Biomes.NETHER_WASTES));
-        put("bastion_remnant_treasure", gridCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/treasure/starters", 60).build()), Biomes.NETHER_WASTES));
-        put("bastion_remnant_bridge", gridCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/bridge/start", 60).build()), Biomes.NETHER_WASTES));
+        put("village", gridCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/plains/town_centers"),6), Biomes.PLAINS));
+        put("village_desert", gridCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/desert/town_centers"), 6), Biomes.PLAINS));
+        put("village_savanna", gridCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/savanna/town_centers"), 6), Biomes.PLAINS));
+        put("village_taiga", gridCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/taiga/town_centers"), 6), Biomes.PLAINS));
+        put("village_snowy", gridCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/snowy/town_centers"), 6), Biomes.PLAINS));
+        put("nether_fossil", ((StructureFeatureInterface)StructureFeature.NETHER_FOSSIL)::gridAnywhere);
+        put("bastion_remnant", gridCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(BastionRemnantGenerator.START_POOLS_TO_SIZES), Biomes.NETHER_WASTES));
+        put("bastion_remnant_housing", gridCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/units/base", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_stable", gridCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/hoglin_stable/origin", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_treasure", gridCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/treasure/starters", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_bridge", gridCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/bridge/start", 60).build()), Biomes.NETHER_WASTES));
     }};
 
     private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
@@ -327,50 +304,50 @@ public class FeatureGenerator
         put("basalt_pillar", simplePlop(Feature.BASALT_PILLAR));
 
         //structures
-        put("monument",  ((StructureFeatureInterface)Feature.OCEAN_MONUMENT)::plopAnywhere);
-        put("fortress", ((StructureFeatureInterface)Feature.NETHER_BRIDGE)::plopAnywhere);
-        put("mansion", ((StructureFeatureInterface)Feature.WOODLAND_MANSION)::plopAnywhere);
-        put("jungle_temple", ((StructureFeatureInterface)Feature.JUNGLE_TEMPLE)::plopAnywhere);
-        put("desert_temple", ((StructureFeatureInterface)Feature.DESERT_PYRAMID)::plopAnywhere);
-        put("end_city", ((StructureFeatureInterface)Feature.END_CITY)::plopAnywhere);
-        put("igloo", ((StructureFeatureInterface)Feature.IGLOO)::plopAnywhere);
-        put("shipwreck", spawnCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
-        put("shipwreck2", spawnCustomStructure(Feature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
-        put("witch_hut", ((StructureFeatureInterface)Feature.SWAMP_HUT)::plopAnywhere);
-        put("stronghold", ((StructureFeatureInterface)Feature.STRONGHOLD)::plopAnywhere);
+        put("monument",  ((StructureFeatureInterface)StructureFeature.MONUMENT)::plopAnywhere);
+        put("fortress", ((StructureFeatureInterface)StructureFeature.FORTRESS)::plopAnywhere);
+        put("mansion", ((StructureFeatureInterface)StructureFeature.MANSION)::plopAnywhere);
+        put("jungle_temple", ((StructureFeatureInterface)StructureFeature.JUNGLE_PYRAMID)::plopAnywhere);
+        put("desert_temple", ((StructureFeatureInterface)StructureFeature.DESERT_PYRAMID)::plopAnywhere);
+        put("end_city", ((StructureFeatureInterface)StructureFeature.END_CITY)::plopAnywhere);
+        put("igloo", ((StructureFeatureInterface)StructureFeature.IGLOO)::plopAnywhere);
+        put("shipwreck", spawnCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
+        put("shipwreck2", spawnCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
+        put("witch_hut", ((StructureFeatureInterface)StructureFeature.field_24851)::plopAnywhere);
+        put("stronghold", ((StructureFeatureInterface)StructureFeature.STRONGHOLD)::plopAnywhere);
 
-        put("ocean_ruin_small", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_small", spawnCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 0.0F, 0.5F), Biomes.PLAINS));
-        put("ocean_ruin_warm_small", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_small", spawnCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 0.0F, 0.5F), Biomes.PLAINS));
-        put("ocean_ruin_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_tall", spawnCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 0.0F), Biomes.PLAINS));
-        put("ocean_ruin_warm_tall", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm_tall", spawnCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 0.0F), Biomes.PLAINS));
-        put("ocean_ruin", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin", spawnCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.COLD, 1.0F, 1.0F), Biomes.PLAINS));
-        put("ocean_ruin_warm", spawnCustomStructure(Feature.OCEAN_RUIN,
+        put("ocean_ruin_warm", spawnCustomStructure(StructureFeature.OCEAN_RUIN,
                 new OceanRuinFeatureConfig(OceanRuinFeature.BiomeType.WARM, 1.0F, 1.0F), Biomes.PLAINS));
-        put("treasure", ((StructureFeatureInterface)Feature.BURIED_TREASURE)::plopAnywhere);
+        put("treasure", ((StructureFeatureInterface)StructureFeature.BURIED_TREASURE)::plopAnywhere);
 
-        put("pillager_outpost", ((StructureFeatureInterface)Feature.PILLAGER_OUTPOST)::plopAnywhere);
+        put("pillager_outpost", ((StructureFeatureInterface)StructureFeature.PILLAGER_OUTPOST)::plopAnywhere);
 
 
-        put("mineshaft", spawnCustomStructure(Feature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.NORMAL), Biomes.PLAINS));
-        put("mineshaft_mesa", spawnCustomStructure(Feature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.MESA), Biomes.PLAINS));
+        put("mineshaft", spawnCustomStructure(StructureFeature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.NORMAL), Biomes.PLAINS));
+        put("mineshaft_mesa", spawnCustomStructure(StructureFeature.MINESHAFT, new MineshaftFeatureConfig(0.0, MineshaftFeature.Type.MESA), Biomes.PLAINS));
 
-        put("village", spawnCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/plains/town_centers",6), Biomes.PLAINS));
-        put("village_desert", spawnCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/desert/town_centers", 6), Biomes.PLAINS));
-        put("village_savanna", spawnCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/savanna/town_centers", 6), Biomes.PLAINS));
-        put("village_taiga", spawnCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/taiga/town_centers", 6), Biomes.PLAINS));
-        put("village_snowy", spawnCustomStructure(Feature.VILLAGE, new StructurePoolFeatureConfig("village/snowy/town_centers", 6), Biomes.PLAINS));
-        put("nether_fossil", ((StructureFeatureInterface)Feature.NETHER_FOSSIL)::plopAnywhere);
-        put("bastion_remnant", spawnCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(BastionRemnantGenerator.START_POOLS_TO_SIZES), Biomes.NETHER_WASTES));
-        put("bastion_remnant_housing", spawnCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/units/base", 60).build()), Biomes.NETHER_WASTES));
-        put("bastion_remnant_stable", spawnCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/hoglin_stable/origin", 60).build()), Biomes.NETHER_WASTES));
-        put("bastion_remnant_treasure", spawnCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/treasure/starters", 60).build()), Biomes.NETHER_WASTES));
-        put("bastion_remnant_bridge", spawnCustomStructure(Feature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/bridge/start", 60).build()), Biomes.NETHER_WASTES));
-        put("ruined_portal", ((StructureFeatureInterface)Feature.RUINED_PORTAL)::plopAnywhere);
+        put("village", spawnCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/plains/town_centers"),6), Biomes.PLAINS));
+        put("village_desert", spawnCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/desert/town_centers"), 6), Biomes.PLAINS));
+        put("village_savanna", spawnCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/savanna/town_centers"), 6), Biomes.PLAINS));
+        put("village_taiga", spawnCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/taiga/town_centers"), 6), Biomes.PLAINS));
+        put("village_snowy", spawnCustomStructure(StructureFeature.VILLAGE, new StructurePoolFeatureConfig(new Identifier("village/snowy/town_centers"), 6), Biomes.PLAINS));
+        put("nether_fossil", ((StructureFeatureInterface)StructureFeature.NETHER_FOSSIL)::plopAnywhere);
+        put("bastion_remnant", spawnCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(BastionRemnantGenerator.START_POOLS_TO_SIZES), Biomes.NETHER_WASTES));
+        put("bastion_remnant_housing", spawnCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/units/base", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_stable", spawnCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/hoglin_stable/origin", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_treasure", spawnCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/treasure/starters", 60).build()), Biomes.NETHER_WASTES));
+        put("bastion_remnant_bridge", spawnCustomStructure(StructureFeature.BASTION_REMNANT, new BastionRemnantFeatureConfig(new ImmutableMap.Builder<String,Integer>().put("bastion/bridge/start", 60).build()), Biomes.NETHER_WASTES));
+        put("ruined_portal", ((StructureFeatureInterface)StructureFeature.RUINED_PORTAL)::plopAnywhere);
 
     }};
 

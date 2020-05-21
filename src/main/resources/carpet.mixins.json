@@ -64,6 +64,7 @@
     "CoralFeatureMixin",
     "StructureFeatureMixin",
     "World_scarpetPlopMixin",
+    "Biome_scarpetMixin",
 
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",
@@ -78,7 +79,7 @@
     "DesertPyramidFeatureMixin",
     "HuskEntityMixin",
 
-    "OverworldChunkGeneratorMixin",
+    "SurfaceChunkGenerator_husksSpawnMixin",
 
     "ServerChunkManagerMixin",
     "SpawnHelperMixin",
@@ -113,7 +114,6 @@
     "ThrownEntityMixin",
     "EntityNavigation_pathfindingMixin",
 
-    "FloatingIslandsChunkGeneratorMixin",
     "EndCityFeatureMixin",
 
     "InfestedBlockMixin",

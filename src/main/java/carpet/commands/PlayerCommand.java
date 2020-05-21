@@ -15,6 +15,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.class_5321;
 import net.minecraft.command.arguments.DimensionArgumentType;
 import net.minecraft.command.arguments.RotationArgumentType;
 import net.minecraft.command.arguments.Vec3ArgumentType;
@@ -234,7 +235,7 @@ public class PlayerCommand
                 () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
                 source::getRotation
         );
-        DimensionType dim = tryGetArg(
+        class_5321<DimensionType> dimType = tryGetArg(
                 () -> DimensionArgumentType.getDimensionArgument(context, "dimension"),
                 () -> source.getWorld().method_27983() // dimension.getType()
         );
@@ -252,7 +253,7 @@ public class PlayerCommand
             return 0;
         }
         MinecraftServer server = source.getMinecraftServer();
-        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dim, mode);
+        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode);
         if (player == null)
         {
             Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +

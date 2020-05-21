@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.Material;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.SpawnReason;
@@ -85,6 +86,8 @@ public class PerimeterDiagnostics
             }
         }
         PerimeterDiagnostics diagnostic = new PerimeterDiagnostics(worldserver,ctype,el);
+        EntityType type = EntityType.ZOMBIE;
+        if (el != null) type = el.getType();
         for (int x = -128; x <= 128; ++x)
         {
             for (int z = -128; z <= 128; ++z)
@@ -128,7 +131,7 @@ public class PerimeterDiagnostics
                         {
                             Block block = iblockstate_down.getBlock();
                             boolean flag = block != Blocks.BEDROCK && block != Blocks.BARRIER;
-                            if( flag && SpawnHelper.isClearForSpawn(worldserver, pos, iblockstate, iblockstate.getFluidState()) && SpawnHelper.isClearForSpawn(worldserver, pos.up(), iblockstate_up, iblockstate_up.getFluidState()))
+                            if( flag && SpawnHelper.isClearForSpawn(worldserver, pos, iblockstate, iblockstate.getFluidState(), type) && SpawnHelper.isClearForSpawn(worldserver, pos.up(), iblockstate_up, iblockstate_up.getFluidState(), type))
                             {
                                 result.ground ++;
                                 if (add_ground && diagnostic.check_entity_spawn(pos))

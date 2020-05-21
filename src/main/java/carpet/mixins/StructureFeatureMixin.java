@@ -7,13 +7,14 @@ import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.BlockBox;
-import net.minecraft.world.WorldAccess;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biomes;
+import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
+import net.minecraft.world.gen.feature.DefaultFeatureConfig;
+import net.minecraft.world.gen.feature.FeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,31 +22,33 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.Random;
 
 @Mixin(StructureFeature.class)
-public abstract class StructureFeatureMixin implements StructureFeatureInterface
+public abstract class StructureFeatureMixin<C extends FeatureConfig> implements StructureFeatureInterface<C>
 {
     //problem is that is seems that now chunks deal with its portion of the strucuture
     //on its own.
 
-    @Shadow public abstract int getRadius();
+    //@Shadow public abstract int getRadius();
 
     @Shadow public abstract String getName();
 
     @Shadow public abstract StructureFeature.StructureStartFactory getStructureStartFactory();
 
+    @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, int i, int j, Biome biome, ChunkPos chunkPos, C featureConfig);
+
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos)
     {
-        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), false);
+        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), false, null, null);
     }
 
     @Override
     public boolean gridAnywhere(ServerWorld world, BlockPos pos)
     {
-        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), true);
+        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), true, null, null);
     }
 
     @Override
-    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly)
+    public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly, Biome biome, FeatureConfig config)
     {
         if (world.isClient())
             return false;
@@ -56,7 +59,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             int j = pos.getX() >> 4;
             int k = pos.getZ() >> 4;
             long chId = ChunkPos.toLong(j, k);
-            StructureStart structurestart = forceStructureStart(world, generator, rand, chId);
+            StructureStart structurestart = forceStructureStart(world, generator, rand, chId, biome, config);
             if (structurestart == StructureStart.DEFAULT)
             {
                 return false;
@@ -68,18 +71,19 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             BlockBox box = structurestart.getBoundingBox();
             if (!wireOnly)
             {
-                structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand,
-                    new BlockBox(
+                structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand,box,
+                    /*new BlockBox(
                                 pos.getX() - this.getRadius() * 16,
                                 pos.getZ() - this.getRadius() * 16,
                                 pos.getX() + (this.getRadius() + 1) * 16,
-                                pos.getZ() + (1 + this.getRadius()) * 16),
+                                pos.getZ() + (1 + this.getRadius()) * 16),*/
                         new ChunkPos(j, k)
                 );
             }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
+            int i = Math.max(box.getBlockCountX(),box.getBlockCountZ())/16+1;  //size
 
-            int i = getRadius();
+            //int i = getRadius();
             for (int k1 = j - i; k1 <= j + i; ++k1)
             {
                 for (int l1 = k - i; l1 <= k + i; ++l1)
@@ -108,7 +112,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
         return true;
     }
 
-    private StructureStart forceStructureStart(ServerWorld worldIn, ChunkGenerator generator, Random rand, long packedChunkPos)
+    private StructureStart forceStructureStart(ServerWorld worldIn, ChunkGenerator generator, Random rand, long packedChunkPos, Biome biome, FeatureConfig config)
     {
         ChunkPos chunkpos = new ChunkPos(packedChunkPos);
         StructureStart structurestart;
@@ -124,9 +128,14 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
                 return structurestart;
             }
         }
-        Biome biome_1 = generator.getBiomeSource().getBiomeForNoiseGen((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
+        Biome biome_1 = biome;
+        if (biome == null)
+            biome_1 = generator.getBiomeSource().getBiomeForNoiseGen((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
+
         StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,worldIn.getSeed());
-        structurestart1.init(generator, worldIn.getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
+        if (config == null)
+            config = new DefaultFeatureConfig();
+        structurestart1.init(generator, worldIn.getStructureManager() , chunkpos.x, chunkpos.z, biome_1, config);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;
 
         if (structurestart.hasChildren())
@@ -136,5 +145,11 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
 
         //long2objectmap.put(packedChunkPos, structurestart);
         return structurestart;
+    }
+
+    @Override
+    public boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, int i, int j, Biome biome, ChunkPos chunkPos, C featureConfig)
+    {
+        return shouldStartAt(chunkGenerator, biomeSource, l, chunkRandom, i, j, biome, chunkPos, featureConfig);
     }
 }

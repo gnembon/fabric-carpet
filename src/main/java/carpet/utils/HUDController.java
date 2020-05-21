@@ -5,6 +5,7 @@ import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.PacketCounter;
 import carpet.mixins.PlayerListHeaderS2CPacketMixin;
+import net.minecraft.class_5321;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
@@ -58,17 +59,17 @@ public class HUDController
 
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
-                DimensionType dim = player.dimension;
+                class_5321<DimensionType> dim = player.world.method_27983(); //getDimType
                 switch (option)
                 {
                     case "overworld":
-                        dim = DimensionType.OVERWORLD;
+                        dim = DimensionType.field_24753; // OW
                         break;
                     case "nether":
-                        dim = DimensionType.THE_NETHER;
+                        dim = DimensionType.field_24754; // nrther
                         break;
                     case "end":
-                        dim = DimensionType.THE_END;
+                        dim = DimensionType.field_24755; // end
                         break;
                 }
                 return new BaseText[]{SpawnReporter.printMobcapsForDimension(server.getWorld(dim), false).get(0)};

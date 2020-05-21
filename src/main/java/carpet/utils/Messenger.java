@@ -9,6 +9,7 @@ import net.minecraft.text.HoverEvent;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.TextColor;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.Formatting;
@@ -251,11 +252,11 @@ public class Messenger
     //message source
     public static void m(ServerCommandSource source, Object ... fields)
     {
-        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer().getWorld(DimensionType.OVERWORLD) != null);
+        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer().getWorld(DimensionType.field_24753) != null); //OW
     }
     public static void m(PlayerEntity player, Object ... fields)
     {
-        player.sendSystemMessage(Messenger.c(fields));
+        player.sendSystemMessage(Messenger.c(fields), Util.field_25140); //NULL UUID
     }
 
     /*
@@ -299,7 +300,7 @@ public class Messenger
 
     public static void send(PlayerEntity player, Collection<BaseText> lines)
     {
-        lines.forEach(player::sendSystemMessage);
+        lines.forEach(message -> player.sendSystemMessage(message, Util.field_25140));
     }
     public static void send(ServerCommandSource source, Collection<BaseText> lines)
     {
@@ -311,21 +312,21 @@ public class Messenger
     {
         if (server == null)
             LOG.error("Message not delivered: "+message);
-        server.sendSystemMessage(new LiteralText(message));
+        server.sendSystemMessage(new LiteralText(message), Util.field_25140);
         BaseText txt = c("gi "+message);
         for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
         {
-            entityplayer.sendSystemMessage(txt);
+            entityplayer.sendSystemMessage(txt, Util.field_25140);
         }
     }
     public static void print_server_message(MinecraftServer server, BaseText message)
     {
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
-        server.sendSystemMessage(message);
+        server.sendSystemMessage(message, Util.field_25140);
         for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
         {
-            entityplayer.sendSystemMessage(message);
+            entityplayer.sendSystemMessage(message, Util.field_25140);
         }
     }
 }

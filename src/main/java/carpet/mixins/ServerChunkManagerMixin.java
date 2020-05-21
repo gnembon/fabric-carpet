@@ -4,6 +4,7 @@ import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.class_5217;
+import net.minecraft.class_5321;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.server.world.ChunkTicketManager;
 import net.minecraft.server.world.ServerChunkManager;
@@ -47,7 +48,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     private int setupTracking(ChunkTicketManager chunkTicketManager)
     {
         int j = chunkTicketManager.getSpawningChunkCount();
-        DimensionType dim = this.world.method_27983(); // getDimensionType;
+        class_5321<DimensionType> dim = this.world.method_27983(); // getDimensionType;
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);
 
@@ -77,7 +78,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
         {
             for (SpawnGroup cat: SpawnGroup.values())
             {
-                DimensionType dim = world.method_27983(); // getDimensionType;
+                class_5321<DimensionType> dim = world.method_27983(); // getDimensionType;
                 Pair key = Pair.of(dim, cat);
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))

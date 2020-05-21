@@ -56,15 +56,15 @@ public class CarpetProfiler
     private static String getSectionString(World world, String section)
     {
         return String.format("%s.%s%s",
-                world.getDimension().getType().toString().replaceFirst("minecraft:", ""),
-                section,
+                world.method_27983().method_29177().toString().replaceFirst("minecraft:", ""),
+                section,  // ^ getDImension getId
                 world.isClient ? " (Client)" : "");
     }
 
     private static String getEntityString(World world, Entity e)
     {
         return String.format("%s.%s%s",
-                world.getDimension().getType().toString().replaceFirst("minecraft:", ""),
+                world.method_27983().method_29177().toString().replaceFirst("minecraft:", ""),
                 Registry.ENTITY_TYPE.getId(e.getType()).toString().replaceFirst("minecraft:", ""),
                 world.isClient ? " (Client)" : "");
     }
@@ -72,7 +72,7 @@ public class CarpetProfiler
     private static String getTEntityString(World world, BlockEntity be)
     {
         return String.format("%s.%s%s",
-                world.getDimension().getType().toString().replaceFirst("minecraft:", ""),
+                world.method_27983().method_29177().toString().replaceFirst("minecraft:", ""),
                 Registry.BLOCK_ENTITY_TYPE.getId(be.getType()).toString().replaceFirst("minecraft:", ""),
                 world.isClient ? " (Client)" : "");
     }

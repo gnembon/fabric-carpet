@@ -1,18 +1,20 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.block.Blocks;
+//import net.minecraft.block.Blocks;
+import net.minecraft.class_5311;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldAccess;
+//import net.minecraft.world.WorldAccess;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
+//import net.minecraft.world.gen.chunk.ChunkGeneratorConfig;
 import net.minecraft.world.gen.chunk.FlatChunkGenerator;
-import net.minecraft.world.gen.chunk.FlatChunkGeneratorConfig;
-import net.minecraft.world.gen.feature.Feature;
+//import net.minecraft.world.gen.chunk.FlatChunkGeneratorConfig;
+//import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.List;
@@ -20,63 +22,64 @@ import java.util.List;
 @Mixin(FlatChunkGenerator.class)
 public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
 {
-    public FlatChunkGeneratorMixin(BiomeSource biomeSource, ChunkGeneratorConfig chunkGeneratorConfig)
+
+    public FlatChunkGeneratorMixin(BiomeSource biomeSource, class_5311 arg)
     {
-        super(biomeSource, chunkGeneratorConfig);
+        super(biomeSource, arg);
     }
-    
+
     @Override
-    public List<Biome.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor structureAccessor, SpawnGroup category, BlockPos blockPos)
+    public List<Biome.SpawnEntry> getEntitySpawnList(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos)
     {
         if (CarpetSettings.flatWorldStructureSpawning)
         {
-            if (Feature.SWAMP_HUT.isApproximatelyInsideStructure(structureAccessor, blockPos))
-            {
-                if (category == SpawnGroup.MONSTER)
+            if (accessor.method_28388(pos, true, StructureFeature.field_24851).hasChildren())
+            {  //swamp hut
+                if (group == SpawnGroup.MONSTER)
                 {
-                    return Feature.SWAMP_HUT.getMonsterSpawns();
+                    return StructureFeature.field_24851.getMonsterSpawns();
                 }
-        
-                if (category == SpawnGroup.CREATURE)
+
+                if (group == SpawnGroup.CREATURE)
                 {
-                    return Feature.SWAMP_HUT.getCreatureSpawns();
+                    return StructureFeature.field_24851.getCreatureSpawns();
                 }
             }
-            else if (category == SpawnGroup.MONSTER)
+
+            if (group == SpawnGroup.MONSTER)
             {
-                if (Feature.PILLAGER_OUTPOST.isApproximatelyInsideStructure(structureAccessor, blockPos))
+                if (accessor.method_28388(pos, false, StructureFeature.PILLAGER_OUTPOST).hasChildren())
                 {
-                    return Feature.PILLAGER_OUTPOST.getMonsterSpawns();
+                    return StructureFeature.PILLAGER_OUTPOST.getMonsterSpawns();
                 }
-    
+
                 if (CarpetSettings.huskSpawningInTemples)
                 {
-                    if (Feature.DESERT_PYRAMID.isApproximatelyInsideStructure(structureAccessor, blockPos))
+                    if (accessor.method_28388(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
                     {
-                        return Feature.DESERT_PYRAMID.getMonsterSpawns();
+                        return StructureFeature.DESERT_PYRAMID.getMonsterSpawns();
                     }
                 }
-        
-                if (Feature.OCEAN_MONUMENT.isApproximatelyInsideStructure(structureAccessor, blockPos))
+
+                if (accessor.method_28388(pos, false, StructureFeature.MONUMENT).hasChildren())
                 {
-                    return Feature.OCEAN_MONUMENT.getMonsterSpawns();
+                    return StructureFeature.MONUMENT.getMonsterSpawns();
                 }
-    
-                if (Feature.NETHER_BRIDGE.isInsideStructure(structureAccessor, blockPos))
+
+                if (accessor.method_28388(pos, true, StructureFeature.FORTRESS).hasChildren())
                 {
-                    return Feature.NETHER_BRIDGE.getMonsterSpawns();
+                    return StructureFeature.FORTRESS.getMonsterSpawns();
                 }
-    
+
                 if (CarpetSettings.shulkerSpawningInEndCities)
                 {
-                    if (Feature.END_CITY.isInsideStructure(structureAccessor, blockPos))
+                    if (accessor.method_28388(pos, true, StructureFeature.END_CITY).hasChildren())
                     {
-                        return Feature.END_CITY.getMonsterSpawns();
+                        return StructureFeature.END_CITY.getMonsterSpawns();
                     }
                 }
             }
         }
-        
-        return super.getEntitySpawnList(biome, structureAccessor, category, blockPos);
+        return super.getEntitySpawnList(biome, accessor, group, pos);
     }
 }

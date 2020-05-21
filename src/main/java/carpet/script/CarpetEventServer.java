@@ -12,6 +12,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
+import net.minecraft.class_5321;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
@@ -190,7 +191,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD))
+                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.field_24753))//  OVERWORLD))
                 );
             }
         },
@@ -201,7 +202,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_NETHER))
+                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.field_24754))// THE_NETHER))
                 );
             }
         },
@@ -212,7 +213,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_END))
+                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.field_24755))//THE_END))
                 );
             }
         },
@@ -530,13 +531,13 @@ public class CarpetEventServer
         PLAYER_CHANGES_DIMENSION("player_changes_dimension", 5, false)
         {
             @Override
-            public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, DimensionType fromDim, DimensionType dimTo)
+            public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, class_5321<DimensionType> fromDim, class_5321<DimensionType> dimTo)
             {
                 // eligibility already checked in mixin
                 Value fromValue = ListValue.fromTriple(from.x, from.y, from.z);
                 Value toValue = (to == null)?Value.NULL:ListValue.fromTriple(to.x, to.y, to.z);
-                Value fromDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(fromDim)));
-                Value toDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(dimTo)));
+                Value fromDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(fromDim.method_29177()));
+                Value toDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(dimTo.method_29177()));
 
                 handler.call( () -> Arrays.asList(
                         ((c, t) -> new EntityValue(player)),
@@ -619,7 +620,7 @@ public class CarpetEventServer
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
-        public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, DimensionType fromDim, DimensionType dimTo) {}
+        public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, class_5321<DimensionType> fromDim, class_5321<DimensionType> dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }
 
 

@@ -27,6 +27,8 @@ public abstract class ServerWorld_tickMixin extends World
     @Shadow protected abstract void processSyncedBlockEvents();
     //@Shadow protected abstract void sendBlockActions();
 
+    @Shadow protected abstract void method_29203();
+
     protected ServerWorld_tickMixin(class_5269 arg, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
     {
         super(arg, dimensionType, supplier, bl, bl2, l);
@@ -138,11 +140,11 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;tickTime()V"
+            target = "Lnet/minecraft/server/world/ServerWorld;method_29203()V"  //tickTime() // right before chunk source
     ))
     private void tickTimeConditionally(ServerWorld serverWorld)
     {
-        if (TickSpeed.process_entities) this.tickTime();
+        if (TickSpeed.process_entities) this.method_29203();
     }
 
     @Redirect(method = "tick", at = @At(
@@ -165,14 +167,14 @@ public abstract class ServerWorld_tickMixin extends World
         if (TickSpeed.process_entities) raidManager.tick();
     }
 
-    @Redirect(method = "tick", at = @At(
+    /*@Redirect(method = "tick", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/WanderingTraderManager;tick()V"
     ))
     private void tickConditionally(WanderingTraderManager wanderingTraderManager)
     {
         if (TickSpeed.process_entities) wanderingTraderManager.tick();
-    }
+    }*/
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",

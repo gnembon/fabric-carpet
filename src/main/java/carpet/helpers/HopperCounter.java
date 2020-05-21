@@ -50,7 +50,7 @@ public class HopperCounter
     {
         if (startTick == 0)
         {
-            startTick = server.getWorld(DimensionType.OVERWORLD).getTime();
+            startTick = server.getWorld(DimensionType.field_24753).getTime();  //OW
             startMillis = System.currentTimeMillis();
         }
         Item item = stack.getItem();
@@ -61,7 +61,7 @@ public class HopperCounter
     public void reset(MinecraftServer server)
     {
         counter.clear();
-        startTick = server.getWorld(DimensionType.OVERWORLD).getTime();
+        startTick = server.getWorld(DimensionType.field_24753).getTime();  //OW
         startMillis = System.currentTimeMillis();
         // pubSubProvider.publish();
     }
@@ -105,7 +105,7 @@ public class HopperCounter
             return Collections.singletonList(Messenger.s(String.format("No items for %s yet", color.getName())));
         }
         long total = getTotalItems();
-        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getWorld(DimensionType.OVERWORLD).getTime() - startTick, 1);
+        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getWorld(DimensionType.field_24753).getTime() - startTick, 1);  //OW
         if (total == 0)
         {
             if (brief)
