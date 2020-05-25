@@ -389,6 +389,7 @@ public class EntityPlayerActionPack
                             {
                                 player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.server.getWorldHeight());
                                 ap.currentBlock = null;
+                                ap.blockHitDelay = 5;
                                 blockBroken = true;
                             }
                             player.world.setBlockBreakingInfo(-1, pos, (int) (ap.curBlockDamageMP * 10));
