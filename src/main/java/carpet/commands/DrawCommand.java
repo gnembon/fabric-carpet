@@ -5,6 +5,7 @@ import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -42,11 +43,8 @@ public class DrawCommand
                 then(literal("sphere").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawSphere(c, false)))))).
-                then(literal("ball").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawSphere(c, true)))))).
+                                        then(argument("filled?", BoolArgumentType.bool()).
+                                            then(drawShape(c -> DrawCommand.drawSphere(c, BoolArgumentType.getBool(c,"filled?")))))))).
                 then(literal("diamond").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
