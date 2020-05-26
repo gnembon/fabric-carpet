@@ -65,6 +65,8 @@
     "StructureFeatureMixin",
     "World_scarpetPlopMixin",
     "Biome_scarpetMixin",
+    "ChunkRegion_scarpetPlopMixin",
+    "StructurePiece_scarpetPlopMixin",
 
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",
