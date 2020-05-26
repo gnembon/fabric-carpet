@@ -252,7 +252,7 @@ public class Messenger
     //message source
     public static void m(ServerCommandSource source, Object ... fields)
     {
-        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer().getWorld(DimensionType.OVERWORLD_REGISTRY_KEY) != null); //OW
+        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer() != null && source.getMinecraftServer().getWorld(DimensionType.OVERWORLD_REGISTRY_KEY) != null); //OW
     }
     public static void m(PlayerEntity player, Object ... fields)
     {
