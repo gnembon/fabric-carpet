@@ -13,7 +13,8 @@ public class ClientPlayerEntity_clientCommandMixin
     @Inject(method = "sendChatMessage", at = @At("HEAD"))
     private void inspectMessage(String string, CallbackInfo ci)
     {
+        ClientPlayerEntity playerSource = (ClientPlayerEntity)(Object) this;
         if (CarpetServer.minecraft_server == null)
-            CarpetServer.settingsManager.inspectClientsideCommand(string);
+            CarpetServer.settingsManager.inspectClientsideCommand(playerSource.getCommandSource(), string);
     }
 }

@@ -570,7 +570,7 @@ public class SettingsManager
         return 1;
     }
 
-    public void inspectClientsideCommand(String string)
+    public void inspectClientsideCommand(ServerCommandSource source, String string)
     {
         if (string.startsWith("/carpet "))
         {
@@ -581,7 +581,7 @@ public class SettingsManager
                 String strOption = res[2];
                 if (rules.containsKey(setting) && rules.get(setting).isClient)
                 {
-                    rules.get(setting).set(null, strOption);
+                    rules.get(setting).set(source, strOption);
                 }
             }
 
