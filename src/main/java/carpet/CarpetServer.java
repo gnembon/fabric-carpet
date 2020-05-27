@@ -49,7 +49,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         CarpetServer.settingsManager.addRuleObserver((source, parsedRule, s) -> {
-            ServerNetworkHandler.updateClientRule(parsedRule.name, parsedRule.getAsString(), source);
+            ServerNetworkHandler.sendUpdateToClient(parsedRule.name, parsedRule.getAsString(), source);
         });
     }
 

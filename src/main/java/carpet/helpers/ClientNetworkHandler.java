@@ -20,8 +20,10 @@ public class ClientNetworkHandler
             
             if (id == 1)
                 setOnJoinInfo(data);
-            else if(id == 2)
+            else if (id == 2)
                 updateRule(data);
+            else if (id == 3)
+                updateTickRateClient(data);
         }
     }
     
@@ -47,5 +49,11 @@ public class ClientNetworkHandler
         String rule = data.readString();
         String newValue = data.readString();
         CarpetServer.settingsManager.getRule(rule).set(null, newValue);
+    }
+    
+    private static void updateTickRateClient(PacketByteBuf data)
+    {
+        float rate = data.readFloat();
+        TickSpeed.tickrate(rate);
     }
 }
