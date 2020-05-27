@@ -1,8 +1,8 @@
 package carpet.mixins;
 
 import carpet.fakes.BiomeInterface;
-import net.minecraft.class_5312;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,10 +13,10 @@ import java.util.Map;
 @Mixin(Biome.class)
 public class Biome_scarpetMixin implements BiomeInterface
 {
-    @Shadow @Final private Map<StructureFeature<?>, class_5312<?, ?>> structureFeatures;
+    @Shadow @Final private Map<StructureFeature<?>, ConfiguredStructureFeature<?, ?>> structureFeatures;
 
     @Override
-    public class_5312<?, ?> getConfiguredFeature(StructureFeature<?> arg)
+    public ConfiguredStructureFeature<?, ?> getConfiguredFeature(StructureFeature<?> arg)
     {
         return structureFeatures.get(arg);
     }

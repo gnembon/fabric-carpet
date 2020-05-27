@@ -1195,7 +1195,7 @@ public class CarpetExpression
                     String reqString = requested.getString();
                     String structureName = FeatureGenerator.featureToStructure.get(reqString);
                     if (structureName == null) throw new InternalExpressionException("Unknown structure: " + reqString);
-                    structure = StructureFeature.field_24842.get(structureName.toLowerCase(Locale.ROOT));
+                    structure = StructureFeature.STRUCTURES.get(structureName.toLowerCase(Locale.ROOT));
                     if (structure == null) throw new InternalExpressionException("Unsupported structure: " + structureName);
                 }
                 if (lv.size() > locator.offset+1)
@@ -1212,7 +1212,7 @@ public class CarpetExpression
                 return (_c, _t) -> ret;
             }
             Map<Value, Value> ret = new HashMap<>();
-            for(StructureFeature<?> str : StructureFeature.field_24842.values())
+            for(StructureFeature<?> str : StructureFeature.STRUCTURES.values())
             {
                 StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
                 if (start == null) continue;

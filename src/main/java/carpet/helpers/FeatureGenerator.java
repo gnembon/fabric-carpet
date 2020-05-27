@@ -6,7 +6,6 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.Blocks;
-import net.minecraft.class_5312;
 import net.minecraft.class_5314;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
@@ -32,6 +31,7 @@ import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.BastionRemnantFeatureConfig;
 import net.minecraft.world.gen.feature.BoulderFeatureConfig;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.FeatureConfig;
@@ -140,7 +140,7 @@ public class FeatureGenerator
         ChunkRandom chunkRandom = new ChunkRandom();
         ChunkPos chunkPos = new ChunkPos(pos);
         Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
-        class_5312<?, ?> configuredFeature = ((BiomeInterface)biome).getConfiguredFeature(structure);
+        ConfiguredStructureFeature<?, ?> configuredFeature = ((BiomeInterface)biome).getConfiguredFeature(structure);
         if (configuredFeature == null) return null;
         ChunkPos chunkPos2 = structure.method_27218(params, seed, chunkRandom, chunkPos.x, chunkPos.z); //find some chunk I guess
         if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos.x, chunkPos.z, biome, chunkPos, configuredFeature.field_24836)) // should start at
