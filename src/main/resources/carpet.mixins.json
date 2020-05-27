@@ -177,7 +177,8 @@
     "ClientPlayNetworkHandler_smoothClientAnimationsMixin",
     "ClientPlayerEntity_clientCommandMixin",
     "WorldRenderer_fogOffMixin",
-    "WorldRenderer_creativeNoClipMixin"
+    "WorldRenderer_creativeNoClipMixin",
+    "ClientPlayNetworkHandlerMixin"
 
   ],
   "server": [
