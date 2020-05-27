@@ -221,6 +221,7 @@ public class TickSpeed
 	            }
 	        }
         }
+        ServerNetworkHandler.sendTickRateToPlayers(tickrate);
     }
     
     public static BiConsumer<String, Float> addTickrateListener(String modId, BiConsumer<String, Float> tickrateListener) 
