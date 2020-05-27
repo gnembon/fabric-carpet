@@ -313,13 +313,6 @@ public class CarpetSettings
     public static String commandInfo = "true";
 
     @Rule(
-            desc = "Enables /c and /s commands to quickly switch between camera and survival modes",
-            extra = "/c and /s commands are available to all players regardless of their permission levels",
-            category = COMMAND
-    )
-    public static String commandCameramode = "true";
-
-    @Rule(
             desc = "Enables /perimeterinfo command",
             extra = "... that scans the area around the block for potential spawnable spots",
             category = COMMAND

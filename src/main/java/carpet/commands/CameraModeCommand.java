@@ -18,7 +18,7 @@ import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
 public class CameraModeCommand
-{
+{/*
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> camera = literal("c").
@@ -69,5 +69,5 @@ public class CameraModeCommand
         player.removeStatusEffect(StatusEffects.CONDUIT_POWER);
         return 1;
     }
-
+*/
 }
