@@ -861,7 +861,10 @@ public class EntityValue extends Value
             if (!(e instanceof LivingEntity)) return;
             LivingEntity le = (LivingEntity)e;
             if (v == null)
+            {
                 le.clearStatusEffects();
+                return;
+            }
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
@@ -894,6 +897,15 @@ public class EntityValue extends Value
                     le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
                     return;
                 }
+            }
+            else
+            {
+                String effectName = v.getString();
+                StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
+                if (effect == null)
+                    throw new InternalExpressionException("Wrong effect name: "+effectName);
+                le.removeStatusEffect(effect);
+                return;
             }
             throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
