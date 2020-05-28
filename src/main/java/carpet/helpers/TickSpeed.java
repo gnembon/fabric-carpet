@@ -177,7 +177,8 @@ public class TickSpeed
             }
         }
     }
-    
+    //unused - mod compat reasons
+    public static void tickrate(float rate) {tickrate(rate, true);}
     public static void tickrate(float rate, boolean update)
     {
         tickrate = rate;
