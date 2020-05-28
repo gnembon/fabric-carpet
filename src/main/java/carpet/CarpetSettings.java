@@ -44,7 +44,7 @@ public class CarpetSettings
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (currentRule.get().equals(newValue))
+            if (currentRule.get().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -487,7 +487,7 @@ public class CarpetSettings
     {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
         {
-            if (currentRule.get().equals(newValue))
+            if (currentRule.get().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -538,6 +538,7 @@ public class CarpetSettings
             }
         }
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            if (source == null) return newValue;
             if (newValue < 0 || newValue > 32)
             {
                 Messenger.m(source, "r spawn chunk size has to be between 0 and 32");

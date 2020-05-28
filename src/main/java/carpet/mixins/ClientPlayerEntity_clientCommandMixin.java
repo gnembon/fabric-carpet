@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
+import carpet.network.CarpetClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,8 +14,10 @@ public class ClientPlayerEntity_clientCommandMixin
     @Inject(method = "sendChatMessage", at = @At("HEAD"))
     private void inspectMessage(String string, CallbackInfo ci)
     {
-        ClientPlayerEntity playerSource = (ClientPlayerEntity)(Object) this;
-        if (CarpetServer.minecraft_server == null)
+        if (CarpetServer.minecraft_server == null && !CarpetClient.isCarpet())
+        {
+            ClientPlayerEntity playerSource = (ClientPlayerEntity)(Object) this;
             CarpetServer.settingsManager.inspectClientsideCommand(playerSource.getCommandSource(), string);
+        }
     }
 }

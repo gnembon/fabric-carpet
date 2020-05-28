@@ -6,6 +6,9 @@
   "mixins": [
     "CommandManagerMixin",
 
+    "ServerPlayNetworkHandlerMixin",
+    "CustomPayloadC2SPacketMixin",
+
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",

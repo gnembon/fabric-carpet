@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import carpet.commands.*;
-import carpet.helpers.ServerNetworkHandler;
+import carpet.network.ServerNetworkHandler;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -18,7 +18,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -28,7 +27,6 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static CarpetScriptServer scriptServer;
     public static SettingsManager settingsManager;
     public static final List<CarpetExtension> extensions = new ArrayList<>();
-    public static final Identifier CARPET_CHANNEL = new Identifier("carpet:info");
 
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     public static void manageExtension(CarpetExtension extension)
@@ -48,9 +46,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
-        CarpetServer.settingsManager.addRuleObserver((source, parsedRule, s) -> {
-            ServerNetworkHandler.sendUpdateToClient(parsedRule.name, parsedRule.getAsString(), source);
-        });
     }
 
     public static void onServerLoaded(MinecraftServer server)
@@ -66,6 +61,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer.loadAllWorldScripts();
         MobAI.resetTrackers();
         LoggerRegistry.initLoggers();
+        //TickSpeed.reset();
     }
 
     public static void tick(MinecraftServer server)
@@ -108,31 +104,41 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void onPlayerLoggedIn(ServerPlayerEntity player)
     {
+        ServerNetworkHandler.onPlayerJoin(player);
         LoggerRegistry.playerConnected(player);
         extensions.forEach(e -> e.onPlayerLoggedIn(player));
-        ServerNetworkHandler.onPlayerJoin(player);
+
     }
 
     public static void onPlayerLoggedOut(ServerPlayerEntity player)
     {
+        ServerNetworkHandler.onPlayerLoggedOut(player);
         LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
     }
 
     public static void onServerClosed(MinecraftServer server)
     {
+        ServerNetworkHandler.close();
         currentCommandDispatcher = null;
         if (scriptServer != null) scriptServer.onClose();
-        settingsManager.detachServer();
+
         LoggerRegistry.stopLoggers();
-        TickSpeed.reset();
         extensions.forEach(e -> e.onServerClosed(server));
         minecraft_server = null;
+        disconnect();
     }
 
     public static void registerExtensionLoggers()
     {
         extensions.forEach(CarpetExtension::registerLoggers);
+    }
+
+    public static void disconnect()
+    {
+        // this for whatever reason gets called multiple times even when joining;
+        TickSpeed.reset();
+        settingsManager.detachServer();
     }
 }
 
