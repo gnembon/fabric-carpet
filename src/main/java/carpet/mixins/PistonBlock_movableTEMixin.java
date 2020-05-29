@@ -66,8 +66,8 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
             target = "Ljava/util/List;size()I", ordinal = 4),locals = LocalCapture.CAPTURE_FAILHARD)
     private void onMove(World world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1,
                         CallbackInfoReturnable<Boolean> cir, BlockPos blockPos_2, PistonHandler pistonHandler_1, Map map_1,
-                        List<BlockPos> list_1, List<BlockState> list_2, List list_3, int int_2, BlockState[] blockStates_1,
-                        Direction direction_2)
+                        List<BlockPos> list_1, List<BlockState> list_2, List list_3, BlockState[] blockStates_1,
+                        Direction direction_2, int int_2)
     {
         //Get the blockEntities and remove them from the world before any magic starts to happen
         if (CarpetSettings.movableBlockEntities)
@@ -95,7 +95,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void setBlockEntityWithCarried(World world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1,
                                            CallbackInfoReturnable<Boolean> cir, BlockPos blockPos_2, PistonHandler pistonHandler_1, Map map_1, List list_1,
-                                           List list_2, List list_3, int int_2, BlockState[] blockStates_1, Direction direction_2,
+                                           List list_2, List list_3, BlockState[] blockStates_1, Direction direction_2, int int_2,
                                            int int_3, BlockPos blockPos_4, BlockState blockState_1)
     {
         BlockEntity blockEntityPiston = PistonExtensionBlock.createBlockEntityPiston((BlockState) list_2.get(int_3),

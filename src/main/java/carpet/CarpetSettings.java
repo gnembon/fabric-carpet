@@ -15,6 +15,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -523,7 +524,7 @@ public class CarpetSettings
     public static class ChangeSpawnChunksValidator extends Validator<Integer> {
         public static void changeSpawnSize(int size)
         {
-            ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD_REGISTRY_KEY); // OW
+            ServerWorld overworld = CarpetServer.minecraft_server.getWorld(World.field_25179); // OW
             if (overworld != null) {
                 ChunkPos centerChunk = new ChunkPos(new BlockPos(
                         overworld.getLevelProperties().getSpawnX(),
@@ -544,7 +545,7 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
-            ServerWorld currentOverworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD_REGISTRY_KEY); // OW
+            ServerWorld currentOverworld = CarpetServer.minecraft_server.getWorld(World.field_25179); // OW
             if (currentOverworld != null)
             {
                 changeSpawnSize(newValue);

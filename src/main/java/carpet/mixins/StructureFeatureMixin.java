@@ -66,7 +66,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
             }
             //generator.ge   getStructurePositionToReferenceMap(this).computeIfAbsent(chId,
             //    (x) -> new LongOpenHashSet()).add(chId);
-            world.getChunk(j, k).addStructureReference(this.getName(), chId);  //, ChunkStatus.STRUCTURE_STARTS
+            world.getChunk(j, k).addStructureReference((StructureFeature) (Object)this, chId);  //, ChunkStatus.STRUCTURE_STARTS
 
             BlockBox box = structurestart.getBoundingBox();
             if (!wireOnly)
@@ -93,7 +93,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
                     if (box.intersectsXZ(k1<<4, l1<<4, (k1<<4) + 15, (l1<<4) + 15))
                     {
                         //generator.getStructurePositionToReferenceMap(this).computeIfAbsent(nbchkid, (__) -> new LongOpenHashSet()).add(chId);
-                        world.getChunk(k1, l1).addStructureReference(this.getName(), chId); //, ChunkStatus.STRUCTURE_STARTS
+                        world.getChunk(k1, l1).addStructureReference((StructureFeature) (Object)this, chId); //, ChunkStatus.STRUCTURE_STARTS
                         //structurestart.  notifyPostProcessAt(new ChunkPos(k1, l1));
                     }
                 }
@@ -121,7 +121,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
         if (ichunk != null)
         {
-            structurestart = ichunk.getStructureStart(this.getName());
+            structurestart = ichunk.getStructureStart((StructureFeature)(Object)this);
 
             if (structurestart != null && structurestart != StructureStart.DEFAULT)
             {
@@ -140,7 +140,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
         if (structurestart.hasChildren())
         {
-            worldIn.getChunk(chunkpos.x, chunkpos.z).setStructureStart(this.getName(), structurestart);
+            worldIn.getChunk(chunkpos.x, chunkpos.z).setStructureStart((StructureFeature)(Object)this, structurestart);
         }
 
         //long2objectmap.put(packedChunkPos, structurestart);

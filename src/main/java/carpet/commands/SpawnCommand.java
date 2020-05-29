@@ -19,6 +19,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.Arrays;
@@ -258,7 +259,7 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int mobcapsForDimension(ServerCommandSource source, RegistryKey<DimensionType> dim)
+    private static int mobcapsForDimension(ServerCommandSource source, RegistryKey<World> dim)
     {
         Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getMinecraftServer().getWorld(dim), true));
         return 1;

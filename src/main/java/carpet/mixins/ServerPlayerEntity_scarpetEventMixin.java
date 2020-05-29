@@ -89,7 +89,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     }
 
     private Vec3d previousLocation;
-    private RegistryKey<DimensionType> previousDimension;
+    private RegistryKey<World> previousDimension;
 
     @Inject(method = "changeDimension", at = @At("HEAD"))
     private void logPreviousCoordinates(RegistryKey<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
@@ -99,13 +99,13 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void atChangeDimension(RegistryKey<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
+    private void atChangeDimension(RegistryKey<World> newDimension, CallbackInfoReturnable<Entity> cir)
     {
         if (PLAYER_CHANGES_DIMENSION.isNeeded())
         {
             ServerPlayerEntity player = (ServerPlayerEntity) (Object)this;
             Vec3d to = null;
-            if (!notInAnyWorld || previousDimension != DimensionType.THE_END_REGISTRY_KEY || newDimension != DimensionType.OVERWORLD_REGISTRY_KEY) // end ow
+            if (!notInAnyWorld || previousDimension != World.field_25181 || newDimension != World.field_25179) // end ow
             {
                 to = getPos();
             }

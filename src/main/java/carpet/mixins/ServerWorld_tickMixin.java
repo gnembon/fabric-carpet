@@ -5,6 +5,7 @@ import carpet.utils.CarpetProfiler;
 import net.minecraft.entity.raid.RaidManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.WanderingTraderManager;
 import net.minecraft.world.World;
@@ -28,9 +29,9 @@ public abstract class ServerWorld_tickMixin extends World
     //@Shadow protected abstract void sendBlockActions();
 
     @Shadow protected abstract void method_29203();
-    protected ServerWorld_tickMixin(MutableWorldProperties mutableWorldProperties, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
+    protected ServerWorld_tickMixin(MutableWorldProperties mutableWorldProperties, RegistryKey<World> registryKey, RegistryKey<DimensionType> registryKey2, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
     {
-        super(mutableWorldProperties, dimensionType, supplier, bl, bl2, l);
+        super(mutableWorldProperties, registryKey, registryKey2, dimensionType, supplier, bl, bl2, l);
     }
 
     private CarpetProfiler.ProfilerToken currentSection;

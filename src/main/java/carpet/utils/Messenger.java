@@ -14,6 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.Formatting;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -252,7 +253,7 @@ public class Messenger
     //message source
     public static void m(ServerCommandSource source, Object ... fields)
     {
-        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer() != null && source.getMinecraftServer().getWorld(DimensionType.OVERWORLD_REGISTRY_KEY) != null); //OW
+        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer() != null && source.getMinecraftServer().getWorld(World.field_25179) != null); //OW
     }
     public static void m(PlayerEntity player, Object ... fields)
     {

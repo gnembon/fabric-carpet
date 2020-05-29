@@ -39,19 +39,19 @@ public class SpawnReporter
     public static boolean mock_spawns = false;
     
     public static Long track_spawns = 0L;
-    public static final HashMap<RegistryKey<DimensionType>, Integer> chunkCounts = new HashMap<>();
+    public static final HashMap<RegistryKey<World>, Integer> chunkCounts = new HashMap<>();
 
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Object2LongMap<EntityType>> spawn_stats = new HashMap<>();
     public static double mobcap_exponent = 0.0D;
     
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_attempts = new HashMap<>();
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> overall_spawn_ticks = new HashMap<>();
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_full = new HashMap<>();
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_fail = new HashMap<>();
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_succ = new HashMap<>();
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_ticks_spawns = new HashMap<>();
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, Long> spawn_cap_count = new HashMap<>();
-    public static final HashMap<Pair<RegistryKey<DimensionType>, SpawnGroup>, EvictingQueue<Pair<EntityType, BlockPos>>> spawned_mobs = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Long> spawn_attempts = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Long> overall_spawn_ticks = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Long> spawn_ticks_full = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Long> spawn_ticks_fail = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Long> spawn_ticks_succ = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Long> spawn_ticks_spawns = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, Long> spawn_cap_count = new HashMap<>();
+    public static final HashMap<Pair<RegistryKey<World>, SpawnGroup>, EvictingQueue<Pair<EntityType, BlockPos>>> spawned_mobs = new HashMap<>();
     public static final HashMap<SpawnGroup, Integer> spawn_tries = new HashMap<>();
     public static BlockPos lower_spawning_limit = null;
     public static BlockPos upper_spawning_limit = null;
@@ -75,7 +75,7 @@ public class SpawnReporter
                 return;
             }
         }
-        Pair<RegistryKey<DimensionType>, SpawnGroup> key = Pair.of(mob.world.method_27983(), cat);
+        Pair<RegistryKey<World>, SpawnGroup> key = Pair.of(mob.world.method_27983(), cat);
         long count = spawn_stats.get(key).getOrDefault(mob.getType(), 0L);
         spawn_stats.get(key).put(mob.getType(), count + 1);
         spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));
@@ -85,7 +85,7 @@ public class SpawnReporter
 
     public static List<BaseText> printMobcapsForDimension(ServerWorld world, boolean multiline)
     {
-        RegistryKey<DimensionType> dim = world.method_27983();
+        RegistryKey<World> dim = world.method_27983();
         String name = dim.toString();
         List<BaseText> lst = new ArrayList<>();
         if (multiline)
@@ -305,9 +305,9 @@ public class SpawnReporter
             {
                 spawn_tries.put(enumcreaturetype, 1);
             }
-            for (RegistryKey<DimensionType> dim : Arrays.asList(DimensionType.OVERWORLD_REGISTRY_KEY, DimensionType.THE_NETHER_REGISTRY_KEY, DimensionType.THE_END_REGISTRY_KEY))
+            for (RegistryKey<World> dim : Arrays.asList(World.field_25179, World.field_25180, World.field_25181))
             {
-                Pair<RegistryKey<DimensionType>, SpawnGroup> key = Pair.of(dim, enumcreaturetype);
+                Pair<RegistryKey<World>, SpawnGroup> key = Pair.of(dim, enumcreaturetype);
                 overall_spawn_ticks.put(key, 0L);
                 spawn_attempts.put(key, 0L);
                 spawn_ticks_full.put(key, 0L);

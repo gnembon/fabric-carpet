@@ -10,6 +10,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.SpawnHelper;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
@@ -48,7 +49,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     private int setupTracking(ChunkTicketManager chunkTicketManager)
     {
         int j = chunkTicketManager.getSpawningChunkCount();
-        RegistryKey<DimensionType> dim = this.world.method_27983(); // getDimensionType;
+        RegistryKey<World> dim = this.world.method_27983(); // getDimensionType;
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);
 
@@ -78,7 +79,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
         {
             for (SpawnGroup cat: SpawnGroup.values())
             {
-                RegistryKey<DimensionType> dim = world.method_27983(); // getDimensionType;
+                RegistryKey<World> dim = world.method_27983(); // getDimensionType;
                 Pair key = Pair.of(dim, cat);
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))

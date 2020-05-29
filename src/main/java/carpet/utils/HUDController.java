@@ -13,6 +13,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.text.BaseText;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayList;
@@ -59,17 +60,17 @@ public class HUDController
 
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
-                RegistryKey<DimensionType> dim = player.world.method_27983(); //getDimType
+                RegistryKey<World> dim = player.world.method_27983(); //getDimType
                 switch (option)
                 {
                     case "overworld":
-                        dim = DimensionType.OVERWORLD_REGISTRY_KEY;
+                        dim = World.field_25179; // OW
                         break;
                     case "nether":
-                        dim = DimensionType.THE_NETHER_REGISTRY_KEY;
+                        dim = World.field_25180; // nether
                         break;
                     case "end":
-                        dim = DimensionType.THE_END_REGISTRY_KEY;
+                        dim = World.field_25181; // end
                         break;
                 }
                 return new BaseText[]{SpawnReporter.printMobcapsForDimension(server.getWorld(dim), false).get(0)};

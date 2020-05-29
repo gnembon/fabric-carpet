@@ -945,7 +945,7 @@ public class CarpetExpression
             boolean dropLoot = true;
             if (playerBreak)
             {
-                boolean isUsingEffectiveTool = state.getMaterial().canBreakByHand() || tool.isEffectiveOn(state);
+                boolean isUsingEffectiveTool = !state.method_29291() || tool.isEffectiveOn(state); //!can break by hand
                 //postMine() durability from item classes
                 float hardness = state.getHardness(world, where);
                 int damageAmount = 0;
@@ -1155,19 +1155,19 @@ public class CarpetExpression
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Map<String, LongSet> references = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_REFERENCES).getStructureReferences();
+            Map<StructureFeature<?>, LongSet> references = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_REFERENCES).getStructureReferences();
             if (lv.size() == locator.offset)
             {
                 //CarpetSettings.LOG.error(references.keySet().stream().collect(Collectors.joining(",")));
                 List<Value> referenceList = references.entrySet().stream().
                         filter(e -> e.getValue()!= null && !e.getValue().isEmpty()).
-                        map(e -> new StringValue(FeatureGenerator.structureToFeature.get(FeatureGenerator.fix(e.getKey())).get(0))).collect(Collectors.toList());
+                        map(e -> new StringValue(FeatureGenerator.structureToFeature.get(e.getKey()).get(0))).collect(Collectors.toList());
                 return (_c, _t ) -> ListValue.wrap(referenceList);
             }
             String simpleStructureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             //CarpetSettings.LOG.error(FeatureGenerator.featureToStructure.keySet().stream().collect(Collectors.joining(",")));
             //CarpetSettings.LOG.error(FeatureGenerator.featureToStructure.values().stream().collect(Collectors.joining(",")));
-            String structureName = FeatureGenerator.featureToStructure.get(simpleStructureName);
+            StructureFeature<?> structureName = FeatureGenerator.featureToStructure.get(simpleStructureName);
             if (structureName == null) return LazyValue.NULL;
             LongSet structureReferences = references.get(structureName);
             if (structureReferences == null || structureReferences.isEmpty()) return ListValue.lazyEmpty();
@@ -1179,7 +1179,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("structure_eligibility", -1, (c, t, lv) ->
-        {
+        {// TODO rename structureName to class
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
@@ -1193,10 +1193,8 @@ public class CarpetExpression
                 if (!(requested instanceof NullValue))
                 {
                     String reqString = requested.getString();
-                    String structureName = FeatureGenerator.featureToStructure.get(reqString);
-                    if (structureName == null) throw new InternalExpressionException("Unknown structure: " + reqString);
-                    structure = StructureFeature.STRUCTURES.get(structureName.toLowerCase(Locale.ROOT));
-                    if (structure == null) throw new InternalExpressionException("Unsupported structure: " + structureName);
+                    structure = FeatureGenerator.featureToStructure.get(reqString);
+                    if (structure == null) throw new InternalExpressionException("Unknown structure: " + reqString);
                 }
                 if (lv.size() > locator.offset+1)
                 {
@@ -1217,7 +1215,7 @@ public class CarpetExpression
                 StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
                 if (start == null) continue;
 
-                Value key = new StringValue(FeatureGenerator.structureToFeature.get(FeatureGenerator.fix(str.getName())).get(0));
+                Value key = new StringValue(FeatureGenerator.structureToFeature.get(str).get(0));
                 ret.put(key, (!needSize)?Value.NULL:structureToValue(start));
             }
             Value retMap = MapValue.wrap(ret);
@@ -1230,18 +1228,18 @@ public class CarpetExpression
 
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Map<String, StructureStart<?>> structures = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_STARTS).getStructureStarts();
+            Map<StructureFeature<?>, StructureStart<?>> structures = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_STARTS).getStructureStarts();
             if (lv.size() == locator.offset)
             {
                 Map<Value, Value> structureList = new HashMap<>();
-                for (Map.Entry<String, StructureStart<?>> entry : structures.entrySet())
+                for (Map.Entry<StructureFeature<?>, StructureStart<?>> entry : structures.entrySet())
                 {
                     StructureStart<?> start = entry.getValue();
                     if (start == StructureStart.DEFAULT)
                         continue;
                     BlockBox box = start.getBoundingBox();
                     structureList.put(
-                            new StringValue(FeatureGenerator.structureToFeature.get(FeatureGenerator.fix(entry.getKey())).get(0)),
+                            new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)),
                             ListValue.of(ListValue.fromTriple(box.minX, box.minY, box.minZ), ListValue.fromTriple(box.maxX, box.maxY, box.maxZ))
                     );
                 }
@@ -1265,14 +1263,14 @@ public class CarpetExpression
             if (lv.size() == locator.offset)
                 throw new InternalExpressionException("'set_structure requires at least position and a structure name");
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            String structureId = FeatureGenerator.featureToStructure.get(structureName);
+            StructureFeature<?> structureId = FeatureGenerator.featureToStructure.get(structureName);
             if (structureId == null) throw new InternalExpressionException("Unknown structure: "+structureName);
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it
             ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
             {
-                Map<String, StructureStart<?>> structures = world.getChunk(pos).getStructureStarts();
+                Map<StructureFeature<?>, StructureStart<?>> structures = world.getChunk(pos).getStructureStarts();
                 if (lv.size() == locator.offset + 1)
                 {
                     Boolean res = FeatureGenerator.gridStructure(structureName, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
@@ -1296,7 +1294,7 @@ public class CarpetExpression
                         {
                             ChunkPos chpos = new ChunkPos(chx, chz);
                             // getting a chunk will convert it to full, allowing to modify references
-                            Map<String, LongSet> references = world.getChunk(chpos.getCenterBlockPos()).getStructureReferences();
+                            Map<StructureFeature<?>, LongSet> references = world.getChunk(chpos.getCenterBlockPos()).getStructureReferences();
                             if (references.containsKey(structureId) && references.get(structureId) != null)
                                 references.get(structureId).remove(structureChunkPos.toLong());
                         }
@@ -3029,15 +3027,15 @@ public class CarpetExpression
                 {
                     case "nether":
                     case "the_nether":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.THE_NETHER_REGISTRY_KEY));
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.field_25180)); //nether
                         break;
                     case "end":
                     case "the_end":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.THE_END_REGISTRY_KEY));
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.field_25181)); //end
                         break;
                     case "overworld":
                     case "over_world":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(DimensionType.OVERWORLD_REGISTRY_KEY));
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.field_25179));  //ow
                         break;
                     default:
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);

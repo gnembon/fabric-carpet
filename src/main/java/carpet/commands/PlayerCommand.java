@@ -28,6 +28,7 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.Arrays;
@@ -235,7 +236,7 @@ public class PlayerCommand
                 () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
                 source::getRotation
         );
-        RegistryKey<DimensionType> dimType = tryGetArg(
+        RegistryKey<World> dimType = tryGetArg(
                 () -> DimensionArgumentType.getDimensionArgument(context, "dimension"),
                 () -> source.getWorld().method_27983() // dimension.getType()
         );

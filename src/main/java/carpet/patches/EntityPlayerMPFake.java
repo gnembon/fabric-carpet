@@ -16,6 +16,7 @@ import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.utils.Messenger;
@@ -26,7 +27,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     public Runnable fixStartingPosition = () -> {};
     public boolean isAShadow;
 
-    public static EntityPlayerMPFake createFake(String username, MinecraftServer server, double d0, double d1, double d2, double yaw, double pitch, RegistryKey<DimensionType> dimensionId, GameMode gamemode)
+    public static EntityPlayerMPFake createFake(String username, MinecraftServer server, double d0, double d1, double d2, double yaw, double pitch, RegistryKey<World> dimensionId, GameMode gamemode)
     {
         //prolly half of that crap is not necessary, but it works
         ServerWorld worldIn = server.getWorld(dimensionId);

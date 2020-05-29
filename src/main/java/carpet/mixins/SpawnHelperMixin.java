@@ -281,7 +281,7 @@ public class SpawnHelperMixin
                 SpawnGroup entityCategory = var6[var8];
                 if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isAnimal()) )
                 {
-                    RegistryKey<DimensionType> dim = world.method_27983(); // getDimensionType;
+                    RegistryKey<World> dim = world.method_27983(); // getDimensionType;
                     int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
                     int int_2 = SpawnReporter.chunkCounts.get(dim); // eligible chunks for spawning
                     int int_3 = newCap * int_2 / CHUNK_AREA; //current spawning limits

@@ -29,6 +29,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.commons.lang3.tuple.Pair;
@@ -191,7 +192,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD_REGISTRY_KEY))
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.field_25179))
                 );
             }
         },
@@ -202,7 +203,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_NETHER_REGISTRY_KEY))
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.field_25180))
                 );
             }
         },
@@ -213,7 +214,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(DimensionType.THE_END_REGISTRY_KEY))
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.field_25181))
                 );
             }
         },
@@ -531,7 +532,7 @@ public class CarpetEventServer
         PLAYER_CHANGES_DIMENSION("player_changes_dimension", 5, false)
         {
             @Override
-            public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<DimensionType> fromDim, RegistryKey<DimensionType> dimTo)
+            public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo)
             {
                 // eligibility already checked in mixin
                 Value fromValue = ListValue.fromTriple(from.x, from.y, from.z);
@@ -620,7 +621,7 @@ public class CarpetEventServer
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
-        public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<DimensionType> fromDim, RegistryKey<DimensionType> dimTo) {}
+        public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }
 
 

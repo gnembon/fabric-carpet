@@ -61,11 +61,6 @@ import static net.minecraft.world.biome.DefaultBiomeFeatures.OAK_TREE_CONFIG;
 
 public class FeatureGenerator
 {
-    public static String fix(String key)
-    {
-        return key.toLowerCase(Locale.ROOT);
-    }
-
     @FunctionalInterface
     private interface Thing
     {
@@ -156,28 +151,28 @@ public class FeatureGenerator
     }
 
 
-    public static final Map<String, List<String>> structureToFeature = new HashMap<>();
-    public static final Map<String, String> featureToStructure = new HashMap<>();
+    public static final Map<StructureFeature<?>, List<String>> structureToFeature = new HashMap<>();
+    public static final Map<String, StructureFeature<?>> featureToStructure = new HashMap<>();
     static
     {
-        structureToFeature.put(StructureFeature.MONUMENT.getName(), Collections.singletonList("monument"));
-        structureToFeature.put(StructureFeature.END_CITY.getName(), Collections.singletonList("end_city"));
-        structureToFeature.put(StructureFeature.OCEAN_RUIN.getName(), Arrays.asList("ocean_ruin", "ocean_ruin_warm", "ocean_ruin_small", "ocean_ruin_warm_small", "ocean_ruin_tall", "ocean_ruin_warm_tall"));
-        structureToFeature.put(StructureFeature.VILLAGE.getName(), Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
-        structureToFeature.put(StructureFeature.MANSION.getName(), Collections.singletonList("mansion"));
-        structureToFeature.put(StructureFeature.BURIED_TREASURE.getName(), Collections.singletonList("treasure"));
-        structureToFeature.put(StructureFeature.field_24851.getName(), Collections.singletonList("witch_hut"));
-        structureToFeature.put(StructureFeature.STRONGHOLD.getName(), Collections.singletonList("stronghold"));
-        structureToFeature.put(StructureFeature.DESERT_PYRAMID.getName(), Collections.singletonList("desert_temple"));
-        structureToFeature.put(StructureFeature.JUNGLE_PYRAMID.getName(), Collections.singletonList("jungle_temple"));
-        structureToFeature.put(StructureFeature.SHIPWRECK.getName(), Arrays.asList("shipwreck", "shipwreck2"));
-        structureToFeature.put(StructureFeature.PILLAGER_OUTPOST.getName(), Collections.singletonList("pillager_outpost"));
-        structureToFeature.put(StructureFeature.MINESHAFT.getName(), Arrays.asList("mineshaft", "mineshaft_mesa"));
-        structureToFeature.put(StructureFeature.IGLOO.getName(), Collections.singletonList("igloo"));
-        structureToFeature.put(StructureFeature.FORTRESS.getName(), Collections.singletonList("fortress"));
-        structureToFeature.put(StructureFeature.NETHER_FOSSIL.getName(), Collections.singletonList("nether_fossil"));
-        structureToFeature.put(StructureFeature.BASTION_REMNANT.getName(), Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
-        structureToFeature.put(StructureFeature.RUINED_PORTAL.getName(), Collections.singletonList("ruined_portal"));
+        structureToFeature.put(StructureFeature.MONUMENT, Collections.singletonList("monument"));
+        structureToFeature.put(StructureFeature.END_CITY, Collections.singletonList("end_city"));
+        structureToFeature.put(StructureFeature.OCEAN_RUIN, Arrays.asList("ocean_ruin", "ocean_ruin_warm", "ocean_ruin_small", "ocean_ruin_warm_small", "ocean_ruin_tall", "ocean_ruin_warm_tall"));
+        structureToFeature.put(StructureFeature.VILLAGE, Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
+        structureToFeature.put(StructureFeature.MANSION, Collections.singletonList("mansion"));
+        structureToFeature.put(StructureFeature.BURIED_TREASURE, Collections.singletonList("treasure"));
+        structureToFeature.put(StructureFeature.field_24851, Collections.singletonList("witch_hut"));
+        structureToFeature.put(StructureFeature.STRONGHOLD, Collections.singletonList("stronghold"));
+        structureToFeature.put(StructureFeature.DESERT_PYRAMID, Collections.singletonList("desert_temple"));
+        structureToFeature.put(StructureFeature.JUNGLE_PYRAMID, Collections.singletonList("jungle_temple"));
+        structureToFeature.put(StructureFeature.SHIPWRECK, Arrays.asList("shipwreck", "shipwreck2"));
+        structureToFeature.put(StructureFeature.PILLAGER_OUTPOST, Collections.singletonList("pillager_outpost"));
+        structureToFeature.put(StructureFeature.MINESHAFT, Arrays.asList("mineshaft", "mineshaft_mesa"));
+        structureToFeature.put(StructureFeature.IGLOO, Collections.singletonList("igloo"));
+        structureToFeature.put(StructureFeature.FORTRESS, Collections.singletonList("fortress"));
+        structureToFeature.put(StructureFeature.NETHER_FOSSIL, Collections.singletonList("nether_fossil"));
+        structureToFeature.put(StructureFeature.BASTION_REMNANT, Arrays.asList("bastion_remnant", "bastion_remnant_housing", "bastion_remnant_stable", "bastion_remnant_treasure", "bastion_remnant_bridge"));
+        structureToFeature.put(StructureFeature.RUINED_PORTAL, Collections.singletonList("ruined_portal"));
 
         structureToFeature.forEach((key, value) -> value.forEach(el -> featureToStructure.put(el, key)));
     }
