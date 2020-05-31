@@ -99,7 +99,7 @@ __structure_renderer(player_name) ->
 		    total_size = _euclidean(from, to);
 		    density = max(10, total_size/10);
 		    //particle_box('dust 0 1 1 2', from, to+1, density);
-		    marker_box(from, to+1, 10, 0x00FFFFFF );
+		    marker_box(from, to+1, 15, 0x00FFFFFF );
 		    structure_pieces = slice(sort_key(structure_pieces, _euclidean_sq((_:2+_:3)/2,ppos)), 0, config:'max_pieces');
 		    for (structure_pieces, l(piece, direction, from, to) = _;
 		        //factor = 1- _i / config:'max_pieces' / 2;
@@ -111,11 +111,11 @@ __structure_renderer(player_name) ->
 		        b = 255;
 		        a = 255;
 		        color = a+256*(b+256*(g+256*r));
-		        marker_box(from, to+1, 10, color);
+		        marker_box(from, to+1, 15, color);
 		    )
 		)
 	);
-	schedule(5, '__structure_renderer', player_name);
+	schedule(10, '__structure_renderer', player_name);
 );
 
 __chunk_renderer(player_name) ->
@@ -132,7 +132,7 @@ __chunk_renderer(player_name) ->
         	for (range(-r,r), cz = _;
         	    ref_pos = ppos + l(16*cx,0,16*cz);
                 if(has(config:'tasks':'slime_chunks') && in_slime_chunk(ref_pos),
-                    player_distance = _euclidean(ppos, ref_pos+8);
+                    player_distance = _euclidean(ppos, ref_pos);
                     top_00 = ref_pos + l(0, top('terrain', ref_pos)+10, 0);
                     top_11 = ref_pos + l(16, top('terrain', ref_pos+l(15,0,15))+10, 16);
                     top_10 = ref_pos + l(16, top('terrain', ref_pos+l(15, 0, 0))+10, 0);
@@ -144,12 +144,12 @@ __chunk_renderer(player_name) ->
                     b = 30;
                     a = max(0, 255-player_distance);
                     color = a+256*(b+256*(g+256*r));
-                    marker_line(top_00, top_10, 10, color);
-                    marker_line(top_10, top_11, 10, color);
-                    marker_line(top_11, top_01, 10, color);
-                    marker_line(top_01, top_00, 10, color);
-                    marker_line(top_00, top_11, 10, color);
-                    marker_line(top_01, top_10, 10, color);
+                    marker_line(top_00, top_10, 15, color);
+                    marker_line(top_10, top_11, 15, color);
+                    marker_line(top_11, top_01, 15, color);
+                    marker_line(top_01, top_00, 15, color);
+                    marker_line(top_00, top_11, 15, color);
+                    marker_line(top_01, top_10, 15, color);
 
                     //particle_line(part, top_00, top_10, density);
                     //particle_line(part, top_10, top_11, density);
@@ -161,5 +161,5 @@ __chunk_renderer(player_name) ->
         	)
         )
     );
-    schedule(5, '__chunk_renderer', player_name);
+    schedule(10, '__chunk_renderer', player_name);
 )

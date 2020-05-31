@@ -75,6 +75,7 @@ public class ShapeDispatcher
         protected float r, g, b, a;
         protected int color;
         protected int duration = 0;
+        private int key;
         public ExpiringShape(int duration, int color)
         {
             this.r = (float)(color >> 24 & 0xFF) / 255.0F;
@@ -83,7 +84,8 @@ public class ShapeDispatcher
             this.a = (float)(color & 0xFF) / 255.0F;
             this.color = color;
             this.duration = duration;
-        };
+            key = 0;
+        }
 
         public int getExpiry() { return duration; };
         public CompoundTag toTag()
@@ -94,6 +96,18 @@ public class ShapeDispatcher
             return tag;
         };
         public abstract Consumer<ServerPlayerEntity> alternative();
+        public int key()
+        {
+            if (key!=0) return key;
+            key = calcKey();
+            return key;
+        }
+        protected int calcKey()
+        {
+            int hash = 17;
+            hash = 31*hash + color;
+            return hash;
+        };
     }
 
     public static class Box extends ExpiringShape
@@ -145,6 +159,20 @@ public class ShapeDispatcher
             double dz = z1-z2;
             double density = Math.max(2.0, Math.sqrt(dx*dx+dy*dy+dz*dz) /50) / (a+0.1);
             return p -> mesh(Collections.singletonList(p), particle, density, x1, y1, z1, x2, y2, z2);
+        }
+
+        @Override
+        public int calcKey()
+        {
+            int hash = super.calcKey();
+            hash = 31*hash + 1;
+            hash = 31*hash + Float.hashCode(x1);
+            hash = 31*hash + Float.hashCode(y1);
+            hash = 31*hash + Float.hashCode(z1);
+            hash = 31*hash + Float.hashCode(x2);
+            hash = 31*hash + Float.hashCode(y2);
+            hash = 31*hash + Float.hashCode(z2);
+            return hash;
         }
 
         public static int mesh(List<ServerPlayerEntity> playerList, ParticleEffect particle, double density,
@@ -217,6 +245,20 @@ public class ShapeDispatcher
             double dz = z1-z2;
             double density = Math.max(2.0, Math.sqrt(dx*dx+dy*dy+dz*dz) /50) / (a+0.1);
             return p -> drawParticleLine(Collections.singletonList(p), particle, pos1, pos2, density);
+        }
+
+        @Override
+        public int calcKey()
+        {
+            int hash = super.calcKey();
+            hash = 31*hash + 2;
+            hash = 31*hash + Float.hashCode(x1);
+            hash = 31*hash + Float.hashCode(y1);
+            hash = 31*hash + Float.hashCode(z1);
+            hash = 31*hash + Float.hashCode(x2);
+            hash = 31*hash + Float.hashCode(y2);
+            hash = 31*hash + Float.hashCode(z2);
+            return hash;
         }
     }
 
