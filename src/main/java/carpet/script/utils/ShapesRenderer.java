@@ -2,6 +2,7 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import com.mojang.blaze3d.systems.RenderSystem;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Tessellator;
@@ -14,16 +15,13 @@ import net.minecraft.world.IWorld;
 import net.minecraft.world.dimension.DimensionType;
 import org.lwjgl.opengl.GL11;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 public class ShapesRenderer
 {
-    private final Map<DimensionType, List<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
+    private final Map<DimensionType, Int2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private MinecraftClient client;
 
     private Map<String, BiFunction<MinecraftClient, CompoundTag, RenderedShape<? extends ShapeDispatcher.ExpiringShape >>> renderedShapes
@@ -37,9 +35,9 @@ public class ShapesRenderer
     {
         this.client = minecraftClient;
         shapes = new HashMap<>();
-        shapes.put(DimensionType.OVERWORLD, new ArrayList<>());
-        shapes.put(DimensionType.THE_NETHER, new ArrayList<>());
-        shapes.put(DimensionType.THE_END, new ArrayList<>());
+        shapes.put(DimensionType.OVERWORLD, new Int2ObjectOpenHashMap<>());
+        shapes.put(DimensionType.THE_NETHER, new Int2ObjectOpenHashMap<>());
+        shapes.put(DimensionType.THE_END, new Int2ObjectOpenHashMap<>());
     }
 
     public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, double cameraX, double cameraY, double cameraZ)
@@ -48,8 +46,10 @@ public class ShapesRenderer
         DimensionType dimensionType = iWorld.getDimension().getType();
         if (shapes.get(dimensionType).isEmpty()) return;
         long currentTime = client.world.getTime();
-
         RenderSystem.enableDepthTest();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        //RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ZERO);
         RenderSystem.shadeModel(7425);
         RenderSystem.enableAlphaTest();
         RenderSystem.defaultAlphaFunc();
@@ -59,20 +59,21 @@ public class ShapesRenderer
         double d = 0.0D - cameraY;
         double e = 256.0D - cameraY;
         RenderSystem.disableTexture();
-        RenderSystem.disableBlend();
+        //RenderSystem.disableBlend();
         double f = (double)(entity.chunkX << 4) - cameraX;
         double g = (double)(entity.chunkZ << 4) - cameraZ;
-
         // render
         synchronized (shapes)
         {
-            Iterator<RenderedShape<? extends ShapeDispatcher.ExpiringShape>> it = shapes.get(dimensionType).iterator();
-            while (it.hasNext())
-            {
-                RenderedShape shape = it.next();
-                if (shape.isExpired(currentTime)) it.remove();
-                shape.render(tessellator, bufferBuilder, (float) cameraX, (float) cameraY, (float) cameraZ);
-            }
+            shapes.get(dimensionType).int2ObjectEntrySet().removeIf(
+                    entry -> entry.getValue().isExpired(currentTime)
+            );
+            shapes.get(dimensionType).values().forEach(
+                    s -> s.render(tessellator, bufferBuilder, (float) cameraX, (float) cameraY, (float) cameraZ)
+            );
+            shapes.get(dimensionType).values().forEach(
+                    s -> s.render2pass(tessellator, bufferBuilder, (float) cameraX, (float) cameraY, (float) cameraZ)
+            );
         }
 
         RenderSystem.lineWidth(1.0F);
@@ -91,54 +92,87 @@ public class ShapesRenderer
         }
         else
         {
-            synchronized (shapes) { shapes.get(dim).add(shapeFactory.apply(client, tag)); }
+            RenderedShape<?> rshape = shapeFactory.apply(client, tag);
+            int key = rshape.key();
+            synchronized (shapes)
+            {
+                RenderedShape<?> existing = shapes.get(dim).get(key);
+                if (existing != null)
+                {   // promoting previous shape
+                    existing.expiryTick = rshape.expiryTick;
+                }
+                else
+                {
+                    shapes.get(dim).put(key, rshape);
+                }
+            }
         }
     }
     public void reset()
     {
         synchronized (shapes)
         {
-            shapes.values().forEach(List::clear);
+            shapes.values().forEach(Int2ObjectOpenHashMap::clear);
         }
     }
 
 
     public abstract static class RenderedShape<T extends ShapeDispatcher.ExpiringShape>
     {
-        T shape;
+        protected T shape;
         long expiryTick;
+        float renderEpsilon = 0;
         public abstract void render(Tessellator tessellator, BufferBuilder builder, float cx, float cy, float cz );
+        public void render2pass(Tessellator tessellator, BufferBuilder builder, float cx, float cy, float cz ) {};
         protected RenderedShape(MinecraftClient client, T shape)
         {
             this.shape = shape;
             expiryTick = client.world.getTime()+shape.getExpiry();
+            renderEpsilon = (2+((float)shape.key())/Integer.MAX_VALUE)/1000;
         }
 
         public boolean isExpired(long currentTick)
         {
             return  expiryTick < currentTick;
         }
+        public int key()
+        {
+            return shape.key();
+        };
     }
 
     public static class RenderedBox extends RenderedShape<ShapeDispatcher.Box>
     {
+
         public RenderedBox(MinecraftClient client, CompoundTag boxData)
         {
             super(client, (ShapeDispatcher.Box)ShapeDispatcher.Box.fromTag(boxData));
+
         }
         @Override
         public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
             RenderSystem.lineWidth(2.0F);
             bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
-            drawBox(bufferBuilder,
-                    shape.x1-cx, shape.y1-cy, shape.z1-cz,
-                    shape.x2-cx, shape.y2-cy, shape.z2-cz,
+            drawBoxWireGLLines(bufferBuilder,
+                    shape.x1 - cx-renderEpsilon, shape.y1 - cy-renderEpsilon, shape.z1 - cz-renderEpsilon,
+                    shape.x2 - cx+renderEpsilon, shape.y2 - cy+renderEpsilon, shape.z2 - cz+renderEpsilon,
                     shape.r, shape.g, shape.b, shape.a, shape.r, shape.g, shape.b
             );
             tessellator.draw();
         }
-
+        @Override
+        public void render2pass(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
+        {
+            RenderSystem.lineWidth(1.0F);
+            bufferBuilder.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR); // 3
+            drawBox(bufferBuilder,
+                    shape.x1-cx-renderEpsilon, shape.y1-cy-renderEpsilon, shape.z1-cz-renderEpsilon,
+                    shape.x2-cx+renderEpsilon, shape.y2-cy+renderEpsilon, shape.z2-cz+renderEpsilon,
+                    shape.r, shape.g, shape.b, shape.a/6
+            );
+            tessellator.draw();
+        }
     }
 
     public static class RenderedLine extends RenderedShape<ShapeDispatcher.Line>
@@ -153,8 +187,8 @@ public class ShapesRenderer
             RenderSystem.lineWidth(2.0F);
             bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
             drawLine(bufferBuilder,
-                    shape.x1-cx, shape.y1-cy, shape.z1-cz,
-                    shape.x2-cx, shape.y2-cy, shape.z2-cz,
+                    shape.x1-cx-renderEpsilon, shape.y1-cy-renderEpsilon, shape.z1-cz-renderEpsilon,
+                    shape.x2-cx+renderEpsilon, shape.y2-cy+renderEpsilon, shape.z2-cz+renderEpsilon,
                     shape.r, shape.g, shape.b, shape.a
             );
             tessellator.draw();
@@ -169,7 +203,7 @@ public class ShapesRenderer
         builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
     }
 
-    public static void drawBox(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2) {
+    public static void drawBoxWireGLLines(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2) {
         builder.vertex(x1, y1, z1).color(red1, grn2, blu2, alpha).next();
         builder.vertex(x2, y1, z1).color(red1, grn2, blu2, alpha).next();
         builder.vertex(x1, y1, z1).color(red2, grn1, blu2, alpha).next();
@@ -194,5 +228,37 @@ public class ShapesRenderer
         builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+    }
+
+    public static void drawBox(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
+        builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+
+        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+
+        builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+
+        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+
+        builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+
+        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
     }
 }
