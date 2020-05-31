@@ -98,17 +98,24 @@ __structure_renderer(player_name) ->
 		    l(from, to) = structure_data;
 		    total_size = _euclidean(from, to);
 		    density = max(10, total_size/10);
-		    particle_rect('dust 0 1 1 2', from, to+1, density);
+		    //particle_box('dust 0 1 1 2', from, to+1, density);
+		    marker_box(from, to+1, 10, 0x00FFFFFF );
 		    structure_pieces = slice(sort_key(structure_pieces, _euclidean_sq((_:2+_:3)/2,ppos)), 0, config:'max_pieces');
 		    for (structure_pieces, l(piece, direction, from, to) = _;
-		        factor = 1- _i / config:'max_pieces' / 2;
-		        total_size = _euclidean(from, to);
-                density = max(_i+1, total_size/10);
-		        particle_rect(str('dust %.2f %.2f 1 1',factor, factor), from, to+1, density);
+		        //factor = 1- _i / config:'max_pieces' / 2;
+		        //total_size = _euclidean(from, to);
+                //density = max(_i+1, total_size/10);
+		        //particle_box(str('dust %.2f %.2f 1 1',factor, factor), from, to+1, density);
+		        r = 255 - 128 * _i/config:'max_pieces';
+		        g = r;
+		        b = 255;
+		        a = 255;
+		        color = a+256*(b+256*(g+256*r));
+		        marker_box(from, to+1, 10, color);
 		    )
 		)
 	);
-	schedule(3, '__structure_renderer', player_name);
+	schedule(5, '__structure_renderer', player_name);
 );
 
 __chunk_renderer(player_name) ->
@@ -132,15 +139,27 @@ __chunk_renderer(player_name) ->
                     top_01 = ref_pos + l(0, top('terrain', ref_pos+l(0, 0, 15))+10, 16);
                     part = 'dust 0.2 0.8 0.2 2';
                     density = 2+player_distance/2;
-                    particle_line(part, top_00, top_10, density);
-                    particle_line(part, top_10, top_11, density);
-                    particle_line(part, top_11, top_01, density);
-                    particle_line(part, top_01, top_00, density);
-                    particle_line(part, top_00, top_11, density);
-                    particle_line(part, top_01, top_10, density);
+                    r = 30;
+                    g = 220;
+                    b = 30;
+                    a = max(0, 255-player_distance);
+                    color = a+256*(b+256*(g+256*r));
+                    marker_line(top_00, top_10, 10, color);
+                    marker_line(top_10, top_11, 10, color);
+                    marker_line(top_11, top_01, 10, color);
+                    marker_line(top_01, top_00, 10, color);
+                    marker_line(top_00, top_11, 10, color);
+                    marker_line(top_01, top_10, 10, color);
+
+                    //particle_line(part, top_00, top_10, density);
+                    //particle_line(part, top_10, top_11, density);
+                    //particle_line(part, top_11, top_01, density);
+                    //particle_line(part, top_01, top_00, density);
+                    //particle_line(part, top_00, top_11, density);
+                    //particle_line(part, top_01, top_10, density);
                 )
         	)
         )
     );
-    schedule(3, '__chunk_renderer', player_name);
+    schedule(5, '__chunk_renderer', player_name);
 )

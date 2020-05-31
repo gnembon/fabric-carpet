@@ -2,6 +2,7 @@ package carpet.settings;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.network.ServerNetworkHandler;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
@@ -81,7 +82,7 @@ public class SettingsManager
 
     public void detachServer()
     {
-        for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(server.getCommandSource());
+        for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(null);
         server = null;
     }
 
@@ -104,6 +105,7 @@ public class SettingsManager
     void notifyRuleChanged(ServerCommandSource source, ParsedRule<?> rule, String userTypedValue)
     {
         observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
+        ServerNetworkHandler.updateRuleWithConnectedClients(rule);
     }
 
     public Iterable<String> getCategories()
@@ -585,8 +587,6 @@ public class SettingsManager
                     rules.get(setting).set(source, strOption);
                 }
             }
-
-
         }
     }
 }

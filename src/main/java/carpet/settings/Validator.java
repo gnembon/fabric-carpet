@@ -22,7 +22,7 @@ public abstract class Validator<T>
         @Override
         public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string)
         {
-            if (CarpetServer.settingsManager != null)
+            if (CarpetServer.settingsManager != null && source != null)
                 CarpetServer.settingsManager.notifyPlayersCommandsChanged();
             return newValue;
         }

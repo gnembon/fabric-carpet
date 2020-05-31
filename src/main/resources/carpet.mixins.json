@@ -6,6 +6,9 @@
   "mixins": [ "SpawnHelperInnerMixin",
     "CommandManagerMixin",
 
+    "ServerPlayNetworkHandlerMixin",
+    "CustomPayloadC2SPacketMixin",
+
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",
@@ -178,8 +181,9 @@
     "ClientPlayNetworkHandler_smoothClientAnimationsMixin",
     "ClientPlayerEntity_clientCommandMixin",
     "WorldRenderer_fogOffMixin",
-    "WorldRenderer_creativeNoClipMixin"
-
+    "WorldRenderer_creativeNoClipMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "DebugRenderer_scarpetRenderMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"
