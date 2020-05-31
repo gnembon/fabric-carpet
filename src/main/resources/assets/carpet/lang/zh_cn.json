@@ -88,7 +88,7 @@
   
   "rule.hardcodeTNTangle.name": "硬编码TNT角度",
   "rule.hardcodeTNTangle.desc": "把TNT水平随机角度设为固定值，可用于测试机器",
-  "rule.hardcodeTNTangle.extra.0": "默认为-1，必须在0与2Π之间，或者-1",
+  "rule.hardcodeTNTangle.extra.0": "默认为-1，必须在0与360之间，或者-1",
 
   "rule.hopperCounters.name": "漏斗计数器",
   "rule.hopperCounters.desc": "漏斗指向的羊毛会计算经过的物品",
@@ -172,9 +172,6 @@
   
   "rule.summonNaturalLightning.name": "召唤闪电自然化",
   "rule.summonNaturalLightning.desc": "召唤的闪电将拥有所有自然生成闪电拥有的特性",
-  
-  "rule.superSecretSetting.name": "调试使用",
-  "rule.superSecretSetting.desc": "调试使用Gbhs sgnf sadsgras fhskdpri!",
   
   "rule.tntDoNotUpdate.name": "TNT放置时不产生更新",
   "rule.tntDoNotUpdate.desc": "TNT在放置时不会产生任何方块更新（不会激活）",
