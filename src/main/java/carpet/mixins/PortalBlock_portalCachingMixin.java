@@ -3,7 +3,7 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.PortalForcerInterface;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.PortalBlock;
+import net.minecraft.block.NetherPortalBlock;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -13,12 +13,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(PortalBlock.class)
+@Mixin(NetherPortalBlock.class)
 public class PortalBlock_portalCachingMixin
 {
     @Inject(method = "createPortalAt", at = @At(
             value =  "INVOKE",
-            target = "Lnet/minecraft/block/PortalBlock$AreaHelper;createPortal()V"
+            target = "Lnet/minecraft/block/NetherPortalBlock$AreaHelper;createPortal()V"
     ))
     private void onCreatePortal(IWorld iWorld_1, BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir)
     {

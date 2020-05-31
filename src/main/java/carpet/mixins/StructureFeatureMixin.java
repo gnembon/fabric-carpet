@@ -4,9 +4,9 @@ import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.MutableIntBoundingBox;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
@@ -63,13 +63,13 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             //    (x) -> new LongOpenHashSet()).add(chId);
             world.getChunk(j, k).addStructureReference(this.getName(), chId);  //, ChunkStatus.STRUCTURE_STARTS
 
-            MutableIntBoundingBox box = structurestart.getBoundingBox();
+            BlockBox box = structurestart.getBoundingBox();
             if (!wireOnly)
             {
                 structurestart.generateStructure(
                         world,
                         rand,
-                        new MutableIntBoundingBox(
+                        new BlockBox(
                                 pos.getX() - this.getRadius() * 16,
                                 pos.getZ() - this.getRadius() * 16,
                                 pos.getX() + (this.getRadius() + 1) * 16,
@@ -126,7 +126,7 @@ public abstract class StructureFeatureMixin implements StructureFeatureInterface
             }
         }
         Biome biome_1 = generator.getBiomeSource().getBiome(new BlockPos(chunkpos.getStartX() + 9, 0, chunkpos.getStartZ() + 9));
-        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, biome_1, MutableIntBoundingBox.empty(),0,generator.getSeed());
+        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, biome_1, BlockBox.empty(),0,generator.getSeed());
         structurestart1.initialize(generator, ((ServerWorld)worldIn).getStructureManager() , chunkpos.x, chunkpos.z, biome_1);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;
 

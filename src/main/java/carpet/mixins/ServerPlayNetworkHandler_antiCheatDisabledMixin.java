@@ -1,11 +1,9 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.network.ClientConnection;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Vec3d;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,8 +19,6 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
     @Shadow private int vehicleFloatingTicks;
 
     @Shadow protected abstract boolean isServerOwner();
-
-    @Shadow @Final public ClientConnection client;
 
     @Shadow public ServerPlayerEntity player;
 

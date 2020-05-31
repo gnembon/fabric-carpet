@@ -43,8 +43,8 @@ public abstract class World_movableTEMixin implements WorldInterface
     public abstract ChunkManager getChunkManager();
     
     @Shadow
-    public abstract void scheduleBlockRender(BlockPos blockPos_1, BlockState s1, BlockState s2);
-    
+    public abstract void checkBlockRerender(BlockPos pos, BlockState old, BlockState updated);
+
     @Shadow
     public abstract void updateListeners(BlockPos var1, BlockState var2, BlockState var3, int var4);
     
@@ -92,10 +92,10 @@ public abstract class World_movableTEMixin implements WorldInterface
             {
                 BlockState blockState_3 = this.getBlockState(blockPos_1);
                 
-                if (blockState_3 != blockState_2 && (blockState_3.getLightSubtracted((BlockView) this, blockPos_1) != blockState_2.getLightSubtracted((BlockView) this, blockPos_1) || blockState_3.getLuminance() != blockState_2.getLuminance() || blockState_3.hasSidedTransparency() || blockState_2.hasSidedTransparency()))
+                if (blockState_3 != blockState_2 && (blockState_3.getOpacity((BlockView) this, blockPos_1) != blockState_2.getOpacity((BlockView) this, blockPos_1) || blockState_3.getLuminance() != blockState_2.getLuminance() || blockState_3.hasSidedTransparency() || blockState_2.hasSidedTransparency()))
                 {
                     this.profiler.push("queueCheckLight");
-                    this.getChunkManager().getLightingProvider().enqueueLightUpdate(blockPos_1);
+                    this.getChunkManager().getLightingProvider().checkBlock(blockPos_1);
                     this.profiler.pop();
                 }
                 
@@ -103,7 +103,7 @@ public abstract class World_movableTEMixin implements WorldInterface
                 {
                     if (blockState_2 != blockState_3)
                     {
-                        this.scheduleBlockRender(blockPos_1, blockState_2, blockState_3);
+                        this.checkBlockRerender(blockPos_1, blockState_2, blockState_3);
                     }
                     
                     if ((int_1 & 2) != 0 && (!this.isClient || (int_1 & 4) == 0) && (this.isClient || worldChunk_1.getLevelType() != null && worldChunk_1.getLevelType().isAfter(ChunkHolder.LevelType.TICKING)))

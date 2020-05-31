@@ -7,10 +7,10 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.SpawnType;
-import net.minecraft.entity.WaterCreatureEntity;
 import net.minecraft.entity.mob.AmbientEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.Monster;
+import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -176,7 +176,7 @@ public class PerimeterDiagnostics
 
         if (SpawnHelper.canSpawn(spt, worldServer, pos, sle.type))
         {
-            el.setPositionAndAngles((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
+            el.refreshPositionAndAngles((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
             return el.canSpawn(worldServer) &&
                     SpawnRestriction.method_20638(el.getType(),el.getEntityWorld(), SpawnType.NATURAL, el.getBlockPos(), el.getEntityWorld().random) &&
                     worldServer.doesNotCollide(el); // check collision rules once they stop fiddling with them after 1.14.1

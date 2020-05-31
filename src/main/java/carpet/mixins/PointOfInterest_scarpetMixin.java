@@ -1,6 +1,6 @@
 package carpet.mixins;
 
-import net.minecraft.village.PointOfInterest;
+import net.minecraft.world.poi.PointOfInterest;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;

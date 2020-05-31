@@ -97,7 +97,7 @@ public abstract class PistonHandler_movableTEMixin
 
 
     //Get access to the blockstate to check if it is a chest
-    @Shadow @Final private Direction direction;
+    @Shadow @Final private Direction motionDirection;
 
     @Shadow protected abstract boolean method_11538(BlockPos blockPos_1);
 
@@ -122,7 +122,7 @@ public abstract class PistonHandler_movableTEMixin
     private Block redirectSlimeBlock() {
         if (CarpetSettings.honeySlime && blockState_1.getBlock() == Blocks.ORANGE_STAINED_GLASS)
             return Blocks.ORANGE_STAINED_GLASS;
-        if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.direction.getOpposite()))
+        if (CarpetSettings.movableBlockEntities && isStickyOnSide(blockState_1, this.motionDirection.getOpposite()))
             return blockState_1.getBlock(); //this makes the comparison in the while condition "while(blockState_1.getBlock() == redirectSlimeBlock())" evaluate to true, so the block is treated as sticky
         return Blocks.SLIME_BLOCK; //vanilla behavior
     }

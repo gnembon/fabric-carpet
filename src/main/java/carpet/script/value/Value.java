@@ -165,7 +165,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         String s = getString();
         try
         {
-            return Double.valueOf(s);
+            return Double.parseDouble(s);
         }
         catch (NumberFormatException e)
         {

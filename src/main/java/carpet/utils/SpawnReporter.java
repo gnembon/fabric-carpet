@@ -380,7 +380,7 @@ public class SpawnReporter
         }
         if (entity instanceof OcelotEntity)
         {
-            for (Entity e: entity.getEntityWorld().getEntities(OcelotEntity.class, entity.getBoundingBox()))
+            for (Entity e: entity.getEntityWorld().getNonSpectatingEntities(OcelotEntity.class, entity.getBoundingBox()))
             {
                 e.remove();
             }
@@ -434,7 +434,7 @@ public class SpawnReporter
                         {
                             float f = (float)x + 0.5F;
                             float f1 = (float)z + 0.5F;
-                            mob.setPositionAndAngles((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
+                            mob.refreshPositionAndAngles((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
                             fits1 = worldIn.doesNotCollide(mob);
                             
                             for (int i = 0; i < 20; ++i)

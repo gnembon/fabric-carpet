@@ -2,12 +2,12 @@ package carpet.patches;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
-import net.minecraft.client.network.packet.EntityPositionS2CPacket;
-import net.minecraft.client.network.packet.EntitySetHeadYawS2CPacket;
-import net.minecraft.client.network.packet.PlayerListS2CPacket;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.NetworkSide;
+import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -39,7 +39,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             gameprofile = SkullBlockEntity.loadProperties(gameprofile);
         }
         EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn);
-        instance.fixStartingPosition = () -> instance.setPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
+        instance.fixStartingPosition = () -> instance.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
         if (instance.dimension != dimension) //player was logged in in a different dimension
         {
@@ -61,8 +61,8 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         interactionManagerIn.setGameMode(gamemode);
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), instance.dimension);
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), instance.dimension);
-        instance.getServerWorld().method_14178().updateCameraPosition(instance);
-        instance.dataTracker.set(PLAYER_MODEL_BIT_MASK, (byte) 0x7f); // show all model layers (incl. capes)
+        instance.getServerWorld().getChunkManager().updateCameraPosition(instance);
+        instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
         return instance;
     }
 
@@ -81,12 +81,12 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         interactionManagerIn.setGameMode(player.interactionManager.getGameMode());
         ((ServerPlayerEntityInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerEntityInterface) player).getActionPack());
         playerShadow.stepHeight = 0.6F;
-        playerShadow.dataTracker.set(PLAYER_MODEL_BIT_MASK, player.getDataTracker().get(PLAYER_MODEL_BIT_MASK));
+        playerShadow.dataTracker.set(PLAYER_MODEL_PARTS, player.getDataTracker().get(PLAYER_MODEL_PARTS));
 
 
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(playerShadow, (byte) (player.headYaw * 256 / 360)), playerShadow.dimension);
         server.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, playerShadow));
-        player.getServerWorld().method_14178().updateCameraPosition(playerShadow);
+        player.getServerWorld().getChunkManager().updateCameraPosition(playerShadow);
         return playerShadow;
     }
 
@@ -99,7 +99,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     @Override
     public void kill()
     {
-        this.server.method_18858(new ServerTask(this.server.getTicks(), () -> {
+        this.server.send(new ServerTask(this.server.getTicks(), () -> {
             this.networkHandler.onDisconnected(Messenger.s("Killed"));
         }));
     }
@@ -110,7 +110,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         if (this.getServer().getTicks() % 10 == 0)
         {
             this.networkHandler.syncWithPlayerPosition();
-            this.getServerWorld().method_14178().updateCameraPosition(this);
+            this.getServerWorld().getChunkManager().updateCameraPosition(this);
         }
         super.tick();
         this.method_14226();

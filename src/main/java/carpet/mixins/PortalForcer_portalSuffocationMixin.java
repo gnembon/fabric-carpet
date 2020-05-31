@@ -20,7 +20,7 @@ public class PortalForcer_portalSuffocationMixin
 {
     @Inject(method = "usePortal", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;getLastPortalDirectionVector()Lnet/minecraft/util/math/Vec3d;"
+            target = "Lnet/minecraft/entity/Entity;getLastNetherPortalDirectionVector()Lnet/minecraft/util/math/Vec3d;"
     ))
     private void registerEntityDimensionChange(Entity entity_1, float float_1, CallbackInfoReturnable<Boolean> cir)
     {
@@ -33,14 +33,14 @@ public class PortalForcer_portalSuffocationMixin
 
     @Redirect(method = "usePortal", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/Entity;setPositionAndAngles(DDDFF)V"
+            target = "Lnet/minecraft/entity/Entity;refreshPositionAndAngles(DDDFF)V"
     ))
     private void alternativeSetPositionAndAngles(Entity entity, double double_1, double double_2, double double_3, float float_1, float float_2)
     {
         if (CarpetSettings.portalSuffocationFix && CarpetSettings.fixedPosition != null)
-            entity.setPositionAndAngles(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z, float_1, float_2);
+            entity.refreshPositionAndAngles(CarpetSettings.fixedPosition.x, CarpetSettings.fixedPosition.y, CarpetSettings.fixedPosition.z, float_1, float_2);
         else
-            entity.setPositionAndAngles(double_1, double_2, double_3, float_1, float_2);
+            entity.refreshPositionAndAngles(double_1, double_2, double_3, float_1, float_2);
 
     }
 
@@ -73,8 +73,8 @@ public class PortalForcer_portalSuffocationMixin
     {
         if (CarpetSettings.portalSuffocationFix && CarpetSettings.currentTelepotingEntityBox != null)
         {
-            double entityWidth = CarpetSettings.currentTelepotingEntityBox.getXSize();
-            double entityHeight = CarpetSettings.currentTelepotingEntityBox.getYSize();
+            double entityWidth = CarpetSettings.currentTelepotingEntityBox.getXLength();
+            double entityHeight = CarpetSettings.currentTelepotingEntityBox.getYLength();
             if (entityWidth >= portal.getWidth())
             {
                 width_position = 0.5; // will suffocate anyways, placing in the middle
