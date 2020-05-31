@@ -62,7 +62,7 @@ public class PortalForcer_portalCachingMixin implements PortalForcerInterface
             //((TicketInfoInterface)ticketInfo).getPos();
             //ColumnPos cpos = (ColumnPos)key;
             //BlockPos fakePos = new BlockPos(((ColumnPos) key).x, 0, ((ColumnPos) key).z);
-            world.method_14178().addTicket(ChunkTicketType.PORTAL, new ChunkPos( ((TicketInfoInterface)ticketInfo).getPos()), 3, (ColumnPos) key);
+            world.getChunkManager().addTicket(ChunkTicketType.PORTAL, new ChunkPos( ((TicketInfoInterface)ticketInfo).getPos()), 3, (ColumnPos) key);
         }
         return ticketInfo;
     }

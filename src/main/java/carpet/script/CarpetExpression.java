@@ -43,8 +43,6 @@ import net.minecraft.block.CommandBlock;
 import net.minecraft.block.JigsawBlock;
 import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.network.packet.GuiSlotUpdateS2CPacket;
-import net.minecraft.client.network.packet.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
 import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.enchantment.Enchantments;
@@ -62,9 +60,13 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.packet.s2c.play.ContainerSlotUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
@@ -76,7 +78,7 @@ import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
-import net.minecraft.state.StateFactory;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
@@ -84,17 +86,8 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.EulerAngle;
-import net.minecraft.util.math.MutableIntBoundingBox;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.village.PointOfInterest;
-import net.minecraft.village.PointOfInterestStorage;
-import net.minecraft.village.PointOfInterestType;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
@@ -104,10 +97,12 @@ import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.ChunkRandom;
-import net.minecraft.world.loot.context.LootContext;
-import net.minecraft.world.loot.context.LootContextParameters;
+import net.minecraft.world.poi.PointOfInterest;
+import net.minecraft.world.poi.PointOfInterestStorage;
+import net.minecraft.world.poi.PointOfInterestType;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.naming.spi.StateFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -273,7 +268,7 @@ public class CarpetExpression
     private <T extends Comparable<T>> BlockState setProperty(Property<T> property, String name, String value,
                                                               BlockState bs)
     {
-        Optional<T> optional = property.getValue(value);
+        Optional<T> optional = property.parse(value);
 
         if (optional.isPresent())
         {
@@ -378,10 +373,10 @@ public class CarpetExpression
         for (int i = 0; i<16; i++)
         {
             BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
-            world.method_14178().markForUpdate(section);
-            world.method_14178().markForUpdate(section.east());
-            world.method_14178().markForUpdate(section.west());
-            world.method_14178().markForUpdate(section.north());
+            world.getChunkManager().markForUpdate(section);
+            world.getChunkManager().markForUpdate(section.east());
+            world.getChunkManager().markForUpdate(section.west());
+            world.getChunkManager().markForUpdate(section.north());
         }
     }
 
@@ -403,7 +398,7 @@ public class CarpetExpression
                 return false;
             } else {
                 block_1.onBreak(player.world, blockPos_1, blockState_1, player);
-                boolean boolean_1 = player.world.clearBlockState(blockPos_1, false);
+                boolean boolean_1 = player.world.removeBlock(blockPos_1, false);
                 if (boolean_1) {
                     block_1.onBroken(player.world, blockPos_1, blockState_1);
                 }
@@ -1092,7 +1087,7 @@ public class CarpetExpression
             Chunk chunk = ((CarpetContext)c).s.getWorld().getChunk(pos.getX()>>4, pos.getZ()>>4, ChunkStatus.EMPTY, forceLoad);
             if (chunk == null)
                 return LazyValue.NULL;
-            Value retval = new StringValue(chunk.getStatus().getName());
+            Value retval = new StringValue(chunk.getStatus().getId());
             return (c_, t_) -> retval;
         });
 
@@ -1100,7 +1095,7 @@ public class CarpetExpression
         {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
             Long2ObjectOpenHashMap<ObjectSortedSet<ChunkTicket<?>>> levelTickets = (
-                    (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.method_14178())
+                    (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.getChunkManager())
                             .getTicketManager()
             ).getTicketsByPosition();
             List<Value> res = new ArrayList<>();
@@ -1186,7 +1181,7 @@ public class CarpetExpression
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
             if (sourceLocator.offset < lv.size())
             {
-                StateFactory<Block, BlockState> states = sourceBlockState.getBlock().getStateFactory();
+                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateManager();
                 for (int i = sourceLocator.offset; i < lv.size(); i += 2)
                 {
                     String paramString = lv.get(i).evalValue(c).getString();
@@ -1204,7 +1199,7 @@ public class CarpetExpression
                 return (c_, t_) -> Value.FALSE;
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
-            cc.s.getMinecraftServer().executeSync( () ->
+            cc.s.getMinecraftServer().submitAndJoin( () ->
             {
                 CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
                 Clearable.clear(world.getBlockEntity(targetPos));
@@ -1214,7 +1209,7 @@ public class CarpetExpression
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
                     {
-                        CompoundTag destTag = data.method_10553();
+                        CompoundTag destTag = data.copy();
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
@@ -1257,7 +1252,7 @@ public class CarpetExpression
                 else
                     tag = NBTSerializableValue.parseString(tagValue.getString()).getCompoundTag();
             }
-            world.clearBlockState(where, false);
+            world.removeBlock(where, false);
             world.playLevelEvent(null, 2001, where, Block.getRawIdFromState(state));
             // WIP tool still mines everything, and only enchantments count.
             // need to verify the durability changes
@@ -1384,7 +1379,7 @@ public class CarpetExpression
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'property' requires to specify a property to query");
             String tag = lv.get(locator.offset).evalValue(c).getString();
-            StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
+            StateManager<Block, BlockState> states = state.getBlock().getStateManager();
             Property<?> property = states.getProperty(tag);
             if (property == null)
                 return LazyValue.NULL;
@@ -1396,7 +1391,7 @@ public class CarpetExpression
         {
             BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
-            StateFactory<Block, BlockState> states = state.getBlock().getStateFactory();
+            StateManager<Block, BlockState> states = state.getBlock().getStateManager();
             Value res = ListValue.wrap(states.getProperties().stream().map(
                     p -> new StringValue(p.getName())).collect(Collectors.toList())
             );
@@ -1470,7 +1465,7 @@ public class CarpetExpression
                     StructureStart start = entry.getValue();
                     if (start == StructureStart.DEFAULT)
                         continue;
-                    MutableIntBoundingBox box = start.getBoundingBox();
+                    BlockBox box = start.getBoundingBox();
                     ListValue coord1 = ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ));
                     ListValue coord2 = ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ));
                     structureList.put(new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)), ListValue.of(coord1, coord2));
@@ -1484,7 +1479,7 @@ public class CarpetExpression
             List<Value> pieces = new ArrayList<>();
             for (StructurePiece piece : start.getChildren())
             {
-                MutableIntBoundingBox box = piece.getBoundingBox();
+                BlockBox box = piece.getBoundingBox();
                 pieces.add(ListValue.of(
                         new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
                         (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
@@ -1512,7 +1507,7 @@ public class CarpetExpression
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it
-            ((CarpetContext) c).s.getMinecraftServer().executeSync(() ->
+            ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
             {
                 Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
                 if (lv.size() == locator.offset + 1)
@@ -1531,7 +1526,7 @@ public class CarpetExpression
                     }
                     StructureStart start = structures.get(structureId);
                     ChunkPos structureChunkPos = new ChunkPos(start.getChunkX(), start.getChunkZ());
-                    MutableIntBoundingBox box = start.getBoundingBox();
+                    BlockBox box = start.getBoundingBox();
                     for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
                     {
                         for (int chz = box.minZ / 16; chz <= box.maxZ / 16; chz++)
@@ -1913,7 +1908,7 @@ public class CarpetExpression
         if (inventory.owner instanceof ServerPlayerEntity && !inventory.isEnder)
         {
             ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
-            player.networkHandler.sendPacket(new GuiSlotUpdateS2CPacket(
+            player.networkHandler.sendPacket(new ContainerSlotUpdateS2CPacket(
                     -2,
                     int_1,
                     inventory.inventory.getInvStack(int_1)
@@ -2334,7 +2329,7 @@ public class CarpetExpression
             } else {
                 ServerWorld serverWorld = cc.s.getWorld();
                 Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
-                    entity_1x.setPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
+                    entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
                     return !serverWorld.method_18768(entity_1x) ? null : entity_1x;
                 });
                 if (entity_1 == null) {
@@ -3303,7 +3298,7 @@ public class CarpetExpression
             }
 
             ArmorStandEntity armorstand = new ArmorStandEntity(EntityType.ARMOR_STAND, cc.s.getWorld());
-            armorstand.setPositionAndAngles(
+            armorstand.refreshPositionAndAngles(
                     pointLocator.vec.x,
                     pointLocator.vec.y - ((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3)),
                     pointLocator.vec.z,
@@ -3313,7 +3308,7 @@ public class CarpetExpression
             armorstand.addScoreboardTag(ExpressionInspector.MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName()));
             armorstand.addScoreboardTag(ExpressionInspector.MARKER_STRING);
             if (targetBlock != null)
-                armorstand.setEquippedStack(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
+                armorstand.equipStack(EquipmentSlot.HEAD, new ItemStack(targetBlock.getBlock().asItem()));
             if (!name.isEmpty())
             {
                 armorstand.setCustomName(new LiteralText(name));
@@ -3509,7 +3504,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).evalValue(c).getString();
             Value [] result = new Value[]{Value.NULL};
-            ((CarpetContext)c).s.getMinecraftServer().executeSync( () ->
+            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
 
                 Boolean res = FeatureGenerator.spawn(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());

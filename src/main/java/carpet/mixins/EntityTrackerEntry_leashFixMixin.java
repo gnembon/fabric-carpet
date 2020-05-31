@@ -1,10 +1,10 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.client.network.packet.EntityAttachS2CPacket;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.network.Packet;
+import net.minecraft.network.packet.s2c.play.EntityAttachS2CPacket;
 import net.minecraft.server.network.EntityTrackerEntry;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

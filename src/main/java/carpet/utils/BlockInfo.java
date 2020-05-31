@@ -3,13 +3,13 @@ package carpet.utils;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnType;
+import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.block.Material;
 import net.minecraft.block.MaterialColor;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
-import net.minecraft.entity.ai.PathfindingUtil;
 import net.minecraft.entity.mob.ZombiePigmanEntity;
 import net.minecraft.block.BlockPlacementEnvironment;
 import net.minecraft.util.math.BlockPos;
@@ -203,13 +203,13 @@ public class BlockInfo
     {
         MobEntityWithAi creature = new ZombiePigmanEntity(EntityType.ZOMBIE_PIGMAN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnType.NATURAL, null, null);
-        creature.setPositionAndAngles(pos.getX()+0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
+        creature.refreshPositionAndAngles(pos.getX()+0.5F, pos.getY(), pos.getZ()+0.5F, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);
         int success = 0;
         for (int i=0; i<1000; i++)
         {
 
-            Vec3d vec = PathfindingUtil.findTarget(creature, 10, 7);
+            Vec3d vec = TargetFinder.findTarget(creature, 10, 7);
             if (vec == null)
             {
                 continue;

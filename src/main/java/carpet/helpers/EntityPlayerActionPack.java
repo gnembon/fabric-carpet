@@ -7,8 +7,8 @@ import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.packet.PlayerActionC2SPacket;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -344,7 +344,7 @@ public class EntityPlayerActionPack
                                 player.interactionManager.method_14263(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.server.getWorldHeight());
                                 ap.currentBlock = null;
                             }
-                            player.world.setBlockBreakingProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));
+                            player.world.setBlockBreakingInfo(-1, pos, (int) (ap.curBlockDamageMP * 10));
 
                         }
                         player.updateLastActionTime();
@@ -360,7 +360,7 @@ public class EntityPlayerActionPack
             {
                 EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
                 if (ap.currentBlock == null) return;
-                player.world.setBlockBreakingProgress(-1, ap.currentBlock, -1);
+                player.world.setBlockBreakingInfo(-1, ap.currentBlock, -1);
                 player.interactionManager.method_14263(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.server.getWorldHeight());
                 ap.currentBlock = null;
             }

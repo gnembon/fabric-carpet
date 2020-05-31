@@ -9,9 +9,6 @@ import carpet.script.EntityEventsGroup;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.client.network.packet.EntityPassengersSetS2CPacket;
-import net.minecraft.client.network.packet.EntityPositionS2CPacket;
-import net.minecraft.client.network.packet.PlayerPositionLookS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
 import net.minecraft.entity.Entity;
@@ -29,6 +26,9 @@ import net.minecraft.entity.mob.MobEntityWithAi;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -267,7 +267,7 @@ public class EntityValue extends Value
         put("home", (e, a) -> {
             if (e instanceof MobEntity)
             {
-                return (((MobEntity) e).getWalkTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((MobEntityWithAi) e).getWalkTarget()):Value.FALSE;
+                return (((MobEntity) e).getPositionTargetRange() > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((MobEntityWithAi) e).getPositionTarget()):Value.FALSE;
             }
             return Value.NULL;
         });
@@ -483,7 +483,7 @@ public class EntityValue extends Value
             float prevYaw = e.yaw;
             float prevPitch = e.pitch;
 
-            e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
+            e.refreshPositionAndAngles(x, y, z, yaw, pitch);
             ((ServerPlayerEntity) e).networkHandler.sendPacket(new PlayerPositionLookS2CPacket(
                     x - prevX,
                     y - prevY,
@@ -495,8 +495,8 @@ public class EntityValue extends Value
         }
         else
         {
-            e.setPositionAnglesAndUpdate(x, y, z, yaw, pitch);
-            ((ServerWorld) e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
+            e.refreshPositionAndAngles(x, y, z, yaw, pitch);
+            ((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
         }
 
     }
@@ -711,7 +711,7 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("'home' requires at least one position argument, and optional distance, or null to cancel");
             if (v instanceof NullValue)
             {
-                ec.setWalkTarget(BlockPos.ORIGIN, -1);
+                ec.setPositionTarget(BlockPos.ORIGIN, -1);
                 Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
                 ((MobEntityInterface)ec).getAI(false).remove(tasks.get("home"));
                 tasks.remove("home");
@@ -752,7 +752,7 @@ public class EntityValue extends Value
             }
             else throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
 
-            ec.setWalkTarget(pos, distance);
+            ec.setPositionTarget(pos, distance);
             Map<String,Goal> tasks = ((MobEntityInterface)ec).getTemporaryTasks();
             if (!tasks.containsKey("home"))
             {
@@ -798,7 +798,7 @@ public class EntityValue extends Value
             if (!(e instanceof LivingEntity)) return;
             LivingEntity le = (LivingEntity)e;
             if (v == null)
-                le.clearPotionEffects();
+                le.clearStatusEffects();
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
@@ -828,7 +828,7 @@ public class EntityValue extends Value
                     boolean showIcon = true;
                     if (lv.size() > 4)
                         showIcon = lv.get(4).getBoolean();
-                    le.addPotionEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
+                    le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
                     return;
                 }
             }

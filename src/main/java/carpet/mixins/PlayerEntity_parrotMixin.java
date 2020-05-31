@@ -51,7 +51,7 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     private void onTickMovement(CallbackInfo ci)
     {
         boolean parrots_will_drop = !CarpetSettings.persistentParrots || this.abilities.invulnerable;
-        if (!this.world.isClient && ((parrots_will_drop && this.fallDistance > 0.5F) || this.isInWater() || (parrots_will_drop && this.hasVehicle())) || this.abilities.flying)
+        if (!this.world.isClient && ((parrots_will_drop && this.fallDistance > 0.5F) || this.isSubmergedInWater() || (parrots_will_drop && this.hasVehicle())) || this.abilities.flying)
         {
             this.dropShoulderEntities();
         }

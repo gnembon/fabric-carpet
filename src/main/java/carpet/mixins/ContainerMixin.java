@@ -19,7 +19,7 @@ import java.util.List;
 @Mixin(Container.class)
 public abstract class ContainerMixin
 {
-    @Shadow @Final public List<Slot> slotList;
+    @Shadow @Final public List<Slot> slots;
     
     @Shadow public abstract ItemStack onSlotClick(int int_1, int int_2, SlotActionType slotActionType_1, PlayerEntity playerEntity_1);
     
@@ -31,7 +31,7 @@ public abstract class ContainerMixin
         if (actionType == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity.inventory.getCursorStack().isEmpty() && slotId >= 0)
         {
             ItemStack itemStack_1 = ItemStack.EMPTY;
-            Slot slot_4 = slotList.get(slotId);
+            Slot slot_4 = slots.get(slotId);
             if (slot_4 != null && slot_4.hasStack() && slot_4.canTakeItems(playerEntity))
             {
                 if(slotId == 0 && clickData == 1)

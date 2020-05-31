@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntityMixin
 {
-    @ModifyConstant(method = "getMaxPortalTime",
+    @ModifyConstant(method = "getMaxNetherPortalTime",
             constant = @Constant(intValue = 1))
     private int addFillUpdatesInt(int original) {
         if (CarpetSettings.portalCreativeDelay)

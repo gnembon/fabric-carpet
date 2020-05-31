@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PistonBlockEntityRenderer.class)
 public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEntityRenderer<PistonBlockEntity>
 {
-    @Inject(method = "method_3576", at = @At(value = "INVOKE",
+    @Inject(method = "render", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/render/block/entity/PistonBlockEntityRenderer;method_3575(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/client/render/BufferBuilder;Lnet/minecraft/world/World;Z)Z", ordinal = 3))
     private void updateRenderBool(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2,
             double double_3, float float_1, int int_1, CallbackInfo ci)
@@ -25,7 +25,7 @@ public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEnti
             ((PistonBlockEntityInterface) pistonBlockEntity_1).setRenderCarriedBlockEntity(CarpetSettings.movableBlockEntities && ((PistonBlockEntityInterface) pistonBlockEntity_1).getCarriedBlockEntity() != null);
     }
     
-    @Inject(method = "method_3576", at = @At("RETURN"))
+    @Inject(method = "render", at = @At("RETURN"))
     private void endMethod3576(PistonBlockEntity pistonBlockEntity_1, double double_1, double double_2, double double_3,
             float float_1, int int_1, CallbackInfo ci)
     {

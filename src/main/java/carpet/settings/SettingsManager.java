@@ -180,7 +180,7 @@ public class SettingsManager
         {
             return;
         }
-        server.method_18858(new ServerTask(this.server.getTicks(), () ->
+        server.send(new ServerTask(this.server.getTicks(), () ->
         {
             for (ServerPlayerEntity entityplayermp : server.getPlayerManager().getPlayerList())
             {

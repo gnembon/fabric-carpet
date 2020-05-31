@@ -138,7 +138,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
                     }
                     if (newBlockEntity != oldBlockEntity && newBlockEntity != null)
                     {
-                        newBlockEntity.validate();
+                        newBlockEntity.cancelRemoval();
                         this.world.setBlockEntity(blockPos_1, newBlockEntity);
                         newBlockEntity.resetBlock();
                     }

@@ -47,12 +47,12 @@ public class SpawnHelperMixin
         if (CarpetSettings.lagFreeSpawning)
         {
             BlockPos.Mutable blockpos = new BlockPos.Mutable();
-            int minX = MathHelper.floor(bb.minX);
-            int maxX = MathHelper.ceil(bb.maxX);
-            int minY = MathHelper.floor(bb.minY);
-            int maxY = MathHelper.ceil(bb.maxY);
-            int minZ = MathHelper.floor(bb.minZ);
-            int maxZ = MathHelper.ceil(bb.maxZ);
+            int minX = MathHelper.floor(bb.x1);
+            int maxX = MathHelper.ceil(bb.x2);
+            int minY = MathHelper.floor(bb.y1);
+            int maxY = MathHelper.ceil(bb.y2);
+            int minZ = MathHelper.floor(bb.z1);
+            int maxZ = MathHelper.ceil(bb.z2);
             for (int y = minY; y < maxY; y++)
                 for (int x = minX; x < maxX; x++)
                     for (int z = minZ; z < maxZ; z++)

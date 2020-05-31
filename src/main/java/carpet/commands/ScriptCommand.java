@@ -1,14 +1,8 @@
 package carpet.commands;
 
 import carpet.CarpetServer;
-import carpet.script.CarpetScriptHost;
 import carpet.CarpetSettings;
-import carpet.script.CarpetEventServer;
-import carpet.script.CarpetExpression;
-import carpet.script.Expression;
-import carpet.script.ExpressionInspector;
-import carpet.script.LazyValue;
-import carpet.script.Tokenizer;
+import carpet.script.*;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.utils.Messenger;
@@ -19,17 +13,17 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.BlockPredicateArgumentType;
 import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.command.arguments.BlockStateArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.Clearable;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.MutableIntBoundingBox;
+import net.minecraft.util.Clearable;
+import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -426,7 +420,7 @@ public class ScriptCommand
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
-        MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
+        BlockBox area = new BlockBox(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
 
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
@@ -476,7 +470,7 @@ public class ScriptCommand
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
-        MutableIntBoundingBox area = new MutableIntBoundingBox(a, b);
+        BlockBox area = new BlockBox(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)

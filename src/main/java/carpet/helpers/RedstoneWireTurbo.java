@@ -324,7 +324,7 @@ public class RedstoneWireTurbo
         if (!oldState.canPlaceAt(worldIn, pos)) {
             // Pop off the redstone dust
             Block.dropStacks(oldState, worldIn, pos);
-            worldIn.clearBlockState(pos, false);
+            worldIn.removeBlock(pos, false);
              
             // Mark this position as not being redstone wire
             upd1.type = UpdateNode.Type.OTHER;
