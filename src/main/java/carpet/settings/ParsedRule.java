@@ -253,6 +253,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         while (Translations.hasTranslation(keyBase+i))
         {
             extras.add(Translations.tr(keyBase+i));
+            i++;
         }
         return (extras.isEmpty()) ? extraInfo : extras;
     }
