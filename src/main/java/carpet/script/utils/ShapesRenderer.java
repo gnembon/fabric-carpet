@@ -1,16 +1,20 @@
 package carpet.script.utils;
 
 import carpet.CarpetSettings;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.Matrix4f;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,10 +50,23 @@ public class ShapesRenderer
         ClientWorld iWorld = this.client.world;
         RegistryKey<World> dimensionType = iWorld.method_27983();
         if (shapes.get(dimensionType).isEmpty()) return;
-        //BlockPos blockPos = new BlockPos(camera.getPos().x, 0.0D, camera.getPos().z);
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getLines());
         long currentTime = client.world.getTime();
 
+        RenderSystem.enableDepthTest();
+        RenderSystem.shadeModel(7425);
+        RenderSystem.enableAlphaTest();
+        RenderSystem.defaultAlphaFunc();
+        Entity entity = this.client.gameRenderer.getCamera().getFocusedEntity();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        double d = 0.0D - cameraY;
+        double e = 256.0D - cameraY;
+        RenderSystem.disableTexture();
+        RenderSystem.disableBlend();
+        double f = (double)(entity.chunkX << 4) - cameraX;
+        double g = (double)(entity.chunkZ << 4) - cameraZ;
+
+        // render
         synchronized (shapes)
         {
             Iterator<RenderedShape<? extends ShapeDispatcher.ExpiringShape>> it = shapes.get(dimensionType).iterator();
@@ -57,10 +74,16 @@ public class ShapesRenderer
             {
                 RenderedShape shape = it.next();
                 if (shape.isExpired(currentTime)) it.remove();
-                shape.render(matrices, vertexConsumer, (float) cameraX, (float) cameraY, (float) cameraZ);
+                shape.render(tessellator, bufferBuilder, (float) cameraX, (float) cameraY, (float) cameraZ);
             }
         }
+
+        RenderSystem.lineWidth(1.0F);
+        RenderSystem.enableBlend();
+        RenderSystem.enableTexture();
+        RenderSystem.shadeModel(7424);
     }
+
     public void addShape(String type, RegistryKey<World> dim, CompoundTag tag)
     {
         BiFunction<MinecraftClient, CompoundTag, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
@@ -87,7 +110,7 @@ public class ShapesRenderer
     {
         T shape;
         long expiryTick;
-        public abstract void render(MatrixStack matrices, VertexConsumer vertexConsumer, float cx, float cy, float cz );
+        public abstract void render(Tessellator tessellator, BufferBuilder builder, float cx, float cy, float cz );
         protected RenderedShape(MinecraftClient client, T shape)
         {
             this.shape = shape;
@@ -107,14 +130,18 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Box)ShapeDispatcher.Box.fromTag(boxData));
         }
         @Override
-        public void render(MatrixStack matrices, VertexConsumer vertexConsumer, float cx, float cy, float cz)
+        public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
-            drawBox(matrices, vertexConsumer,
+            RenderSystem.lineWidth(2.0F);
+            bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
+            drawBox(bufferBuilder,
                     shape.x1-cx, shape.y1-cy, shape.z1-cz,
                     shape.x2-cx, shape.y2-cy, shape.z2-cz,
                     shape.r, shape.g, shape.b, shape.a, shape.r, shape.g, shape.b
             );
+            tessellator.draw();
         }
+
     }
 
     public static class RenderedLine extends RenderedShape<ShapeDispatcher.Line>
@@ -124,49 +151,51 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Line)ShapeDispatcher.Line.fromTag(boxData));
         }
         @Override
-        public void render(MatrixStack matrices, VertexConsumer vertexConsumer, float cx, float cy, float cz)
+        public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
-            drawLine(matrices, vertexConsumer,
+            RenderSystem.lineWidth(2.0F);
+            bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
+            drawLine(bufferBuilder,
                     shape.x1-cx, shape.y1-cy, shape.z1-cz,
                     shape.x2-cx, shape.y2-cy, shape.z2-cz,
                     shape.r, shape.g, shape.b, shape.a
             );
+            tessellator.draw();
         }
     }
 
     // some raw shit
 
-    public static void drawLine(MatrixStack matrix, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
-        Matrix4f matrix4f = matrix.peek().getModel();
-        vertexConsumer.vertex(matrix4f, x1, y1, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+    public static void drawLine(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
+
+        builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
     }
 
-    public static void drawBox(MatrixStack matrix, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2) {
-        Matrix4f matrix4f = matrix.peek().getModel();
-        vertexConsumer.vertex(matrix4f, x1, y1, z1).color(red1, grn2, blu2, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y1, z1).color(red1, grn2, blu2, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y1, z1).color(red2, grn1, blu2, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y2, z1).color(red2, grn1, blu2, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y1, z1).color(red2, grn2, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y1, z2).color(red2, grn2, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y1, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y2, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y2, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y1, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y1, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y1, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y2, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y2, z2).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        vertexConsumer.vertex(matrix4f, x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+    public static void drawBox(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2) {
+        builder.vertex(x1, y1, z1).color(red1, grn2, blu2, alpha).next();
+        builder.vertex(x2, y1, z1).color(red1, grn2, blu2, alpha).next();
+        builder.vertex(x1, y1, z1).color(red2, grn1, blu2, alpha).next();
+        builder.vertex(x1, y2, z1).color(red2, grn1, blu2, alpha).next();
+        builder.vertex(x1, y1, z1).color(red2, grn2, blu1, alpha).next();
+        builder.vertex(x1, y1, z2).color(red2, grn2, blu1, alpha).next();
+        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
     }
 }
