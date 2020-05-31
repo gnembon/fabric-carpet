@@ -21,6 +21,7 @@ import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.ShapeDispatcher;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -63,7 +64,6 @@ import net.minecraft.item.TridentItem;
 import net.minecraft.network.packet.s2c.play.ContainerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
-import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -148,7 +148,6 @@ import static carpet.script.utils.WorldTools.canHasChunk;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static java.lang.Math.sqrt;
 
 public class CarpetExpression
 {
@@ -261,90 +260,6 @@ public class CarpetExpression
         return bs;
     }
 
-    private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
-    private ParticleEffect getParticleData(String name)
-    {
-        ParticleEffect particle = particleCache.get(name);
-        if (particle != null)
-            return particle;
-        try
-        {
-            particle = ParticleArgumentType.readParameters(new StringReader(name));
-        }
-        catch (CommandSyntaxException e)
-        {
-            throw new InternalExpressionException("No such particle: "+name);
-        }
-        particleCache.put(name, particle);
-        return particle;
-    }
-
-
-    private boolean isStraight(Vec3d from, Vec3d to, double density)
-    {
-        if ( (from.x == to.x && from.y == to.y) || (from.x == to.x && from.z == to.z) || (from.y == to.y && from.z == to.z))
-            return from.distanceTo(to) / density > 20;
-        return false;
-    }
-
-    private int drawOptimizedParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
-    {
-        double distance = from.distanceTo(to);
-        int particles = (int)(distance/density);
-        Vec3d towards = to.subtract(from);
-        int parts = 0;
-        for (PlayerEntity player : world.getPlayers())
-        {
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    (towards.x)/2+from.x, (towards.y)/2+from.y, (towards.z)/2+from.z, particles/3,
-                    towards.x/6, towards.y/6, towards.z/6, 0.0);
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    from.x, from.y, from.z,1,0.0,0.0,0.0,0.0);
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    to.x, to.y, to.z,1,0.0,0.0,0.0,0.0);
-            parts += particles/3+2;
-        }
-        int divider = 6;
-        while (particles/divider > 1)
-        {
-            int center = (divider*2)/3;
-            int dev = 2*divider;
-            for (PlayerEntity player : world.getPlayers())
-            {
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        (towards.x)/center+from.x, (towards.y)/center+from.y, (towards.z)/center+from.z, particles/divider,
-                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        (towards.x)*(1.0-1.0/center)+from.x, (towards.y)*(1.0-1.0/center)+from.y, (towards.z)*(1.0-1.0/center)+from.z, particles/divider,
-                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
-            }
-            parts += 2*particles/divider;
-            divider = 2*divider;
-        }
-        return parts;
-    }
-
-    private int drawParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
-    {
-        if (isStraight(from, to, density)) return drawOptimizedParticleLine(world, particle, from, to, density);
-        double lineLengthSq = from.squaredDistanceTo(to);
-        if (lineLengthSq == 0) return 0;
-        Vec3d incvec = to.subtract(from).multiply(2*density/sqrt(lineLengthSq));
-        int pcount = 0;
-        for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
-             delta.lengthSquared()<lineLengthSq;
-             delta = delta.add(incvec.multiply(Expression.randomizer.nextFloat())))
-        {
-            for (PlayerEntity player : world.getPlayers())
-            {
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        delta.x+from.x, delta.y+from.y, delta.z+from.z, 1,
-                        0.0, 0.0, 0.0, 0.0);
-                pcount ++;
-            }
-        }
-        return pcount;
-    }
 
     private static void forceChunkUpdate(BlockPos pos, ServerWorld world)
     {
@@ -2625,7 +2540,7 @@ public class CarpetExpression
                     }
                 }
             }
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
             Vec3d vec = locator.vec;
             if (player == null)
             {
@@ -2650,36 +2565,73 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             String particleName = lv.get(0).evalValue(c).getString();
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
             Vector3Argument pos1 = Vector3Argument.findIn(cc, lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(cc, lv, pos1.offset);
-            int offset = pos2.offset;
-            double density = (lv.size() > offset)? NumericValue.asNumber(lv.get(offset).evalValue(c)).getDouble():1.0;
-            if (density <= 0)
+            double density = 1.0;
+            ServerPlayerEntity player = null;
+            if (lv.size() > pos2.offset+0 )
             {
-                throw new InternalExpressionException("Particle density should be positive");
+                density = NumericValue.asNumber(lv.get(pos2.offset+0).evalValue(c)).getDouble();
+                if (density <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > pos2.offset+1)
+                {
+                    Value playerValue = lv.get(pos2.offset+1).evalValue(c);
+                    if (playerValue instanceof EntityValue)
+                    {
+                        Entity e = ((EntityValue) playerValue).getEntity();
+                        if (!(e instanceof ServerPlayerEntity)) throw new InternalExpressionException("'particle_line' player argument has to be a player");
+                        player = (ServerPlayerEntity) e;
+                    }
+                    else
+                    {
+                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                    }
+                }
             }
-            Value retval = new NumericValue(drawParticleLine(world, particle, pos1.vec, pos2.vec, density));
+
+            Value retval = new NumericValue(ShapeDispatcher.drawParticleLine(
+                    (player == null)?world.getPlayers():Collections.singletonList(player),
+                    particle, pos1.vec, pos2.vec, density));
+
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("particle_rect", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             String particleName = lv.get(0).evalValue(c).getString();
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
             Vector3Argument pos1 = Vector3Argument.findIn(cc, lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(cc, lv, pos1.offset);
-            int offset = pos2.offset;
+
             double density = 1.0;
-            if (lv.size() > offset)
+            ServerPlayerEntity player = null;
+            if (lv.size() > pos2.offset+0 )
             {
-                density = NumericValue.asNumber(lv.get(offset).evalValue(c)).getDouble();
-            }
-            if (density <= 0)
-            {
-                throw new InternalExpressionException("Particle density should be positive");
+                density = NumericValue.asNumber(lv.get(pos2.offset+0).evalValue(c)).getDouble();
+                if (density <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > pos2.offset+1)
+                {
+                    Value playerValue = lv.get(pos2.offset+1).evalValue(c);
+                    if (playerValue instanceof EntityValue)
+                    {
+                        Entity e = ((EntityValue) playerValue).getEntity();
+                        if (!(e instanceof ServerPlayerEntity)) throw new InternalExpressionException("'particle_box' player argument has to be a player");
+                        player = (ServerPlayerEntity) e;
+                    }
+                    else
+                    {
+                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                    }
+                }
             }
             Vec3d a = pos1.vec;
             Vec3d b = pos2.vec;
@@ -2689,23 +2641,106 @@ public class CarpetExpression
             double bx = max(a.x, b.x);
             double by = max(a.y, b.y);
             double bz = max(a.z, b.z);
-            int pc = 0;
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, az), new Vec3d(ax, by, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, az), new Vec3d(bx, by, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, az), new Vec3d(bx, ay, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, az), new Vec3d(ax, ay, az), density);
-
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, bz), new Vec3d(ax, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, bz), new Vec3d(bx, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, bz), new Vec3d(bx, ay, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, bz), new Vec3d(ax, ay, bz), density);
-
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, az), new Vec3d(ax, ay, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, az), new Vec3d(ax, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, az), new Vec3d(bx, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, az), new Vec3d(bx, ay, bz), density);
-            int particleCount = pc;
+            int particleCount = ShapeDispatcher.Box.mesh(
+                    player==null?world.getPlayers():Collections.singletonList(player),
+                    particle, density, ax, ay, az, bx, by, bz
+            );
             return (c_, t_) -> new NumericValue(particleCount);
+        });
+        // deprecated
+        this.expr.alias("particle_rect", "particle_box");
+
+
+        this.expr.addLazyFunction("marker_box", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            Vector3Argument from = Vector3Argument.findIn(cc, lv, 0);
+            Vector3Argument to = Vector3Argument.findIn(cc, lv, from.offset);
+            int duration = 10;
+            int color = -1; // hwite
+            ServerPlayerEntity player = null;
+
+            if (lv.size() > to.offset+0 )
+            {
+                duration = NumericValue.asNumber(lv.get(to.offset).evalValue(c)).getInt();
+                if (duration <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > to.offset + 1)
+                {
+                    color = NumericValue.asNumber(lv.get(to.offset+1).evalValue(c)).getInt();
+
+
+                    if (lv.size() > to.offset + 2)
+                    {
+                        Value playerValue = lv.get(to.offset + 2).evalValue(c);
+                        if (playerValue instanceof EntityValue)
+                        {
+                            Entity e = ((EntityValue) playerValue).getEntity();
+                            if (!(e instanceof ServerPlayerEntity))
+                                throw new InternalExpressionException("'particle_box' player argument has to be a player");
+                            player = (ServerPlayerEntity) e;
+                        }
+                        else
+                        {
+                            player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                        }
+                    }
+                }
+            }
+            ShapeDispatcher.sendShape(
+                    (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
+                    cc.s.getWorld().getDimension().getType(),
+                    new ShapeDispatcher.Box(duration, from.vec, to.vec, color)
+            );
+            return LazyValue.TRUE;
+        });
+
+        this.expr.addLazyFunction("marker_line", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            Vector3Argument from = Vector3Argument.findIn(cc, lv, 0);
+            Vector3Argument to = Vector3Argument.findIn(cc, lv, from.offset);
+            int duration = 10;
+            int color = -1; // hwite
+            ServerPlayerEntity player = null;
+
+            if (lv.size() > to.offset+0 )
+            {
+                duration = NumericValue.asNumber(lv.get(to.offset).evalValue(c)).getInt();
+                if (duration <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > to.offset + 1)
+                {
+                    color = NumericValue.asNumber(lv.get(to.offset+1).evalValue(c)).getInt();
+
+
+                    if (lv.size() > to.offset + 2)
+                    {
+                        Value playerValue = lv.get(to.offset + 2).evalValue(c);
+                        if (playerValue instanceof EntityValue)
+                        {
+                            Entity e = ((EntityValue) playerValue).getEntity();
+                            if (!(e instanceof ServerPlayerEntity))
+                                throw new InternalExpressionException("'particle_box' player argument has to be a player");
+                            player = (ServerPlayerEntity) e;
+                        }
+                        else
+                        {
+                            player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                        }
+                    }
+                }
+            }
+            ShapeDispatcher.sendShape(
+                    (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
+                    cc.s.getWorld().getDimension().getType(),
+                    new ShapeDispatcher.Line(duration, from.vec, to.vec, color)
+            );
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("create_marker", -1, (c, t, lv) ->{

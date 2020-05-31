@@ -418,6 +418,12 @@ public class Expression
         return result;
     }
 
+    public void alias(String copy, String original)
+    {
+        functions.put(copy, functions.get(original));
+    }
+
+
     private void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions

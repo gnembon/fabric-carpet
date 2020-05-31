@@ -14,23 +14,41 @@ and `voice`. `pos` can be either a block, triple of coords, or a list of thee nu
 
 ## Particles
 
-### `particle(name, pos, count?. spread?, speed?, playername?)`
+### `particle(name, pos, count?. spread?, speed?, player?)`
 
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
 
-### `particle_line(name, pos, pos2, density?)`
+### `particle_line(name, pos, pos2, density?, player?)`
 
 Renders a line of particles from point `pos` to `pos2` with supplied density (defaults to 1), which indicates how far 
-apart you would want particles to appear, so `0.1` means one every 10cm.
+apart you would want particles to appear, so `0.1` means one every 10cm. If a player (or player name) is supplied, only
+that player will receive particles.
 
-### `particle_rect(name, pos, pos2, density?)`
 
-Renders a cuboid of particles between points `pos` and `pos2` with supplied density.
+### `particle_box(name, pos, pos2, density?, player?)`
+### `particle_rect` (deprecated)
+
+Renders a cuboid of particles between points `pos` and `pos2` with supplied density. If a player (or player name) is 
+supplied, only that player will receive particles.
 
 ## Markers
+
+### `marker_box(from, to, duration?, color?, player?)`
+
+Draws a box with `from` and `to` corners in the box. The boxes will dissipate after `duration` ticks (defaults to 10).
+The color is an integer that indicate red, green, blue and alpha components in the form of `0xRRGGBBAA`, with the
+default of `-1`, so white opaque, or `0xFFFFFFFF`. If player is specified, only displays for that player, otherwise all 
+players will see them. `marker_box` requires proper client synchronization to display these, and on non-supported
+clients, the box will be replaced with close matching dust particles, so using of `marker_box` is safe to use for
+scripts regardless who is targeted. The only consideration is that with vanilla clients, duration of particles cannot
+be controlled, and last whatever the original particles do.
+
+### `marker_line(from, to, duration?, color?, player?)`
+
+Draws a marker line on client's screen. Uses similar setup as `marker_box`.
 
 ### `create_marker(text, pos, rotation?, block?)`
 

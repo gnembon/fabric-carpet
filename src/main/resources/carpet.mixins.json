@@ -181,8 +181,8 @@
     "ClientPlayerEntity_clientCommandMixin",
     "WorldRenderer_fogOffMixin",
     "WorldRenderer_creativeNoClipMixin",
-    "ClientPlayNetworkHandlerMixin"
-
+    "ClientPlayNetworkHandlerMixin",
+    "DebugRenderer_scarpetRenderMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"

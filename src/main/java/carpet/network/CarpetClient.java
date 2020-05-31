@@ -1,6 +1,7 @@
 package carpet.network;
 
 import carpet.CarpetServer;
+import carpet.script.utils.ShapesRenderer;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.Identifier;
 
@@ -10,6 +11,7 @@ public class CarpetClient
     public static final int HI = 69;
     public static final int HELLO = 420;
     public static final int DATA = 1;
+    public static ShapesRenderer shapes = null;
 
     private static ClientPlayerEntity clientPlayer = null;
     private static boolean isServerCarpet = false;

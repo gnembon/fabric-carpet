@@ -11,6 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.util.PacketByteBuf;
+import net.minecraft.world.dimension.DimensionType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +36,17 @@ public class ClientNetworkHandler
             }
         });
         put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
+        put("renderShape", (p, t) -> {
+            if (CarpetClient.shapes != null)
+            {
+                CompoundTag boxData = (CompoundTag)t;
+                CarpetClient.shapes.addShape(
+                        boxData.getString("type"),
+                        DimensionType.byRawId(boxData.getInt("dim")),
+                        boxData
+                );
+            }
+        });
     }};
 
 

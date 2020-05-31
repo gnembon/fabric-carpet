@@ -1513,7 +1513,7 @@ range(5,10)  => [5, 6, 7, 8, 9]
 range(20, 10, -2)  => [20, 18, 16, 14, 12]
 </pre>
 
-### `element(list, index)(deprecated)`
+### `element(list, index)` (deprecated)
 
 Legacy support for older method that worked only on lists. Please use `get(...)` for equivalent support, or `.` 
 operator. Also previous unique behaviours with `put` on lists has been removed to support all type of 

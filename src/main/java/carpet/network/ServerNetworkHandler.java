@@ -6,16 +6,18 @@ import carpet.helpers.TickSpeed;
 import carpet.settings.ParsedRule;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.PacketByteBuf;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ServerNetworkHandler
 {
-    private static List<ServerPlayerEntity> carpetPlayers = new ArrayList<>();
+    public static Set<ServerPlayerEntity> remoteCarpetPlayers = new HashSet<>();
+    public static Set<ServerPlayerEntity> validCarpetPlayers = new HashSet<>();
 
     public static void handleData(PacketByteBuf data, ServerPlayerEntity player)
     {
@@ -35,11 +37,17 @@ public class ServerNetworkHandler
                     (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.HI).writeString(CarpetSettings.carpetVersion)
             ));
         }
+        else
+        {
+            validCarpetPlayers.add(playerEntity);
+        }
+
     }
 
     public static void onHello(ServerPlayerEntity playerEntity, PacketByteBuf packetData)
     {
-        carpetPlayers.add(playerEntity);
+        remoteCarpetPlayers.add(playerEntity);
+        validCarpetPlayers.add(playerEntity);
         String clientVersion = packetData.readString(64);
         if (clientVersion.equals(CarpetSettings.carpetVersion))
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
@@ -52,7 +60,7 @@ public class ServerNetworkHandler
     
     public static void updateRuleWithConnectedClients(ParsedRule<?> rule)
     {
-        for (ServerPlayerEntity player : carpetPlayers)
+        for (ServerPlayerEntity player : remoteCarpetPlayers)
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -63,7 +71,7 @@ public class ServerNetworkHandler
     
     public static void updateTickSpeedToConnectedPlayers()
     {
-        for (ServerPlayerEntity player : carpetPlayers)
+        for (ServerPlayerEntity player : remoteCarpetPlayers)
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -72,15 +80,40 @@ public class ServerNetworkHandler
         }
     }
 
+    public static void sendCustomCommand(String command, Tag data)
+    {
+        for (ServerPlayerEntity player : validCarpetPlayers)
+        {
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+                    CarpetClient.CARPET_CHANNEL,
+                    DataBuilder.create().withCustomNbt(command, data).build()
+            ));
+        }
+    }
+
+    public static void sendCustomCommand(ServerPlayerEntity player, String command, Tag data)
+    {
+        if (validCarpetPlayers.contains(player))
+        {
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+                    CarpetClient.CARPET_CHANNEL,
+                    DataBuilder.create().withCustomNbt(command, data).build()
+            ));
+        }
+    }
+
+
     public static void onPlayerLoggedOut(ServerPlayerEntity player)
     {
+        validCarpetPlayers.remove(player);
         if (!player.networkHandler.connection.isLocal())
-            carpetPlayers.remove(player);
+            remoteCarpetPlayers.remove(player);
     }
 
     public static void close()
     {
-        carpetPlayers.clear();
+        remoteCarpetPlayers.clear();
+        validCarpetPlayers.clear();
     }
 
     private static class DataBuilder
@@ -112,6 +145,13 @@ public class ServerNetworkHandler
             rules.put(rule.name, ruleNBT);
             return this;
         }
+
+        public DataBuilder withCustomNbt(String key, Tag value)
+        {
+            tag.put(key, value);
+            return this;
+        }
+
         private PacketByteBuf build()
         {
             PacketByteBuf packetBuf = new PacketByteBuf(Unpooled.buffer());
@@ -119,5 +159,7 @@ public class ServerNetworkHandler
             packetBuf.writeCompoundTag(tag);
             return packetBuf;
         }
+
+
     }
 }
