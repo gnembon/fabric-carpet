@@ -11,7 +11,8 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ public class ShapeDispatcher
 {
     private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
 
-    public static void sendShape(List<ServerPlayerEntity> players, DimensionType dim, ExpiringShape shape)
+    public static void sendShape(List<ServerPlayerEntity> players, RegistryKey<World> dim, ExpiringShape shape)
     {
         Consumer<ServerPlayerEntity> alternative = null;
         CompoundTag tag = null;
@@ -35,7 +36,7 @@ public class ShapeDispatcher
             if (ServerNetworkHandler.validCarpetPlayers.contains(player))
             {
                 if (tag == null) tag = shape.toTag();
-                tag.putInt("dim", dim.getRawId());
+                tag.putString("dim", dim.getValue().toString());
                 ServerNetworkHandler.sendCustomCommand(player,"renderShape", tag);
             }
             else

@@ -5,11 +5,12 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.Matrix4f;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.Matrix4f;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.IWorld;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import java.util.function.BiFunction;
 
 public class ShapesRenderer
 {
-    private final Map<DimensionType, List<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
+    private final Map<RegistryKey<World>, List<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private MinecraftClient client;
 
     private Map<String, BiFunction<MinecraftClient, CompoundTag, RenderedShape<? extends ShapeDispatcher.ExpiringShape >>> renderedShapes
@@ -34,16 +35,16 @@ public class ShapesRenderer
     {
         this.client = minecraftClient;
         shapes = new HashMap<>();
-        shapes.put(DimensionType.OVERWORLD, new ArrayList<>());
-        shapes.put(DimensionType.THE_NETHER, new ArrayList<>());
-        shapes.put(DimensionType.THE_END, new ArrayList<>());
+        shapes.put(World.field_25179, new ArrayList<>());
+        shapes.put(World.field_25180, new ArrayList<>());
+        shapes.put(World.field_25181, new ArrayList<>());
     }
 
     public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, double cameraX, double cameraY, double cameraZ)
     {
         //Camera camera = this.client.gameRenderer.getCamera();
-        IWorld iWorld = this.client.world;
-        DimensionType dimensionType = iWorld.getDimension().getType();
+        ClientWorld iWorld = this.client.world;
+        RegistryKey<World> dimensionType = iWorld.method_27983();
         if (shapes.get(dimensionType).isEmpty()) return;
         //BlockPos blockPos = new BlockPos(camera.getPos().x, 0.0D, camera.getPos().z);
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getLines());
@@ -60,7 +61,7 @@ public class ShapesRenderer
             }
         }
     }
-    public void addShape(String type, DimensionType dim, CompoundTag tag)
+    public void addShape(String type, RegistryKey<World> dim, CompoundTag tag)
     {
         BiFunction<MinecraftClient, CompoundTag, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
         shapeFactory = renderedShapes.get(type);

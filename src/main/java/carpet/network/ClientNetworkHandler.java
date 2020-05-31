@@ -9,9 +9,12 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
-import net.minecraft.util.PacketByteBuf;
-import net.minecraft.world.dimension.DimensionType;
+
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +45,7 @@ public class ClientNetworkHandler
                 CompoundTag boxData = (CompoundTag)t;
                 CarpetClient.shapes.addShape(
                         boxData.getString("type"),
-                        DimensionType.byRawId(boxData.getInt("dim")),
+                        RegistryKey.of(Registry.DIMENSION, new Identifier(boxData.getString("dim"))),
                         boxData
                 );
             }

@@ -2710,7 +2710,7 @@ public class CarpetExpression
             }
             ShapeDispatcher.sendShape(
                     (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
-                    cc.s.getWorld().getDimension().getType(),
+                    cc.s.getWorld().method_27983(),
                     new ShapeDispatcher.Box(duration, from.vec, to.vec, color)
             );
             return LazyValue.TRUE;
@@ -2756,7 +2756,7 @@ public class CarpetExpression
             }
             ShapeDispatcher.sendShape(
                     (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
-                    cc.s.getWorld().getDimension().getType(),
+                    cc.s.getWorld().method_27983(),
                     new ShapeDispatcher.Line(duration, from.vec, to.vec, color)
             );
             return LazyValue.TRUE;
