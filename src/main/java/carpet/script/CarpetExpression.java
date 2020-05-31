@@ -2916,7 +2916,12 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("mobcaps",0, (c, t, lv) -> {
             String m = ((CarpetContext) c).s.getWorld().getMobCountsByCategory().toString();
-            return (cc, tt) -> new StringValue(m);
+            List temp = Arrays.asList(m.replace("{", "").replace("}", "").replace(" ", "").split("=>"));
+            List<Value> listM = new ArrayList<>();
+            for(int i=0;i<temp.size();i++){
+                listM.add(new StringValue((String)temp.get(i)));
+            }
+            return (cc, tt) -> ListValue.wrap(listM);
         });
 
         this.expr.addLazyFunction("day_time", -1, (c, t, lv) ->
