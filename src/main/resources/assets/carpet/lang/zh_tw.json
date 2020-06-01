@@ -53,7 +53,7 @@
   "rule.customMOTD.extra.0": "設置成'_'時將採用默認的MOTD(從server.properties中讀取的)",
 
   "rule.defaultLoggers.name": "默認開啟的遊戲數據追蹤器",
-  "rule.defaultLoggers.desc": "為所有新加入的玩家設置部分遊戲數據追蹤器莫認為開啟狀態",
+  "rule.defaultLoggers.desc": "為所有新加入的玩家設置部分遊戲數據追蹤器默認為開啟狀態",
   "rule.defaultLoggers.extra.0": "比如設置'tps,mobcaps'最為默認遊戲數據追蹤",
 
   "rule.desertShrubs.name": "樹苗在沙漠中乾枯",
@@ -88,7 +88,7 @@
 
   "rule.hardcodeTNTangle.name": "強制TNT角度",
   "rule.hardcodeTNTangle.desc": "把TNT水平隨機角度設定為固定值，可用於測試機器",
-  "rule.hardcodeTNTangle.extra.0": "莫認為-1，必須在0與360之間，或者-1",
+  "rule.hardcodeTNTangle.extra.0": "默認為-1，必須在0與360之間，或者-1",
 
   "rule.hopperCounters.name": "漏斗計數器",
   "rule.hopperCounters.desc": "漏斗指向的羊毛方塊會計算吸收的物品並清除",
@@ -176,8 +176,8 @@
   "rule.tntDoNotUpdate.name": "TNT放置時不會被更新",
   "rule.tntDoNotUpdate.desc": "TNT在放置時不會產生任何方塊更新（不會激活）",
 
-  "rule.tntPrimerMomentumRemoved.name": "移除TNT點燃時隨機動能",
-  "rule.tntPrimerMomentumRemoved.desc": "TNT點燃時的隨機動能將被移除",
+  "rule.tntPrimerMomentumRemoved.name": "移除TNT點燃時隨機動量",
+  "rule.tntPrimerMomentumRemoved.desc": "TNT點燃時的隨機動量將被移除",
 
   "rule.tntRandomRange.name": "TNT爆炸範圍設置",
   "rule.tntRandomRange.desc": "設置TNT隨機爆炸範圍為一個固定的值,設為-1以禁用",
