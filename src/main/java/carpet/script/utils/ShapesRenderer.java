@@ -11,6 +11,8 @@ import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.dimension.DimensionType;
 import org.lwjgl.opengl.GL11;
@@ -24,11 +26,11 @@ public class ShapesRenderer
     private final Map<DimensionType, Int2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private MinecraftClient client;
 
-    private Map<String, BiFunction<MinecraftClient, CompoundTag, RenderedShape<? extends ShapeDispatcher.ExpiringShape >>> renderedShapes
-            = new HashMap<String, BiFunction<MinecraftClient, CompoundTag, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>>()
+    private Map<String, BiFunction<MinecraftClient, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >>> renderedShapes
+            = new HashMap<String, BiFunction<MinecraftClient, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape>>>()
     {{
-        put("debugBox", RenderedBox::new);
-        put("debugLine", RenderedLine::new);
+        put("line", RenderedLine::new);
+        put("box", RenderedBox::new);
     }};
 
     public ShapesRenderer(MinecraftClient minecraftClient)
@@ -82,17 +84,24 @@ public class ShapesRenderer
         RenderSystem.shadeModel(7424);
     }
 
-    public void addShape(String type, DimensionType dim, CompoundTag tag)
+    public void addShape(CompoundTag tag)
     {
-        BiFunction<MinecraftClient, CompoundTag, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
-        shapeFactory = renderedShapes.get(type);
+        //CarpetSettings.LOG.error("Received tag: "+tag.asString());
+        ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.fromTag(tag);
+        if (shape == null) return;
+        BiFunction<MinecraftClient, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
+        shapeFactory = renderedShapes.get(tag.getString("shape"));
+
+
+
         if (shapeFactory == null)
         {
-            CarpetSettings.LOG.error("Unrecognized shape: "+type);
+            CarpetSettings.LOG.error("Unrecognized shape: "+tag.getString("shape"));
         }
         else
         {
-            RenderedShape<?> rshape = shapeFactory.apply(client, tag);
+            RenderedShape<?> rshape = shapeFactory.apply(client, shape);
+            DimensionType dim = Registry.DIMENSION_TYPE.get(new Identifier(tag.getString("dim")));
             int key = rshape.key();
             synchronized (shapes)
             {
@@ -144,9 +153,9 @@ public class ShapesRenderer
     public static class RenderedBox extends RenderedShape<ShapeDispatcher.Box>
     {
 
-        public RenderedBox(MinecraftClient client, CompoundTag boxData)
+        private RenderedBox(MinecraftClient client, ShapeDispatcher.ExpiringShape shape)
         {
-            super(client, (ShapeDispatcher.Box)ShapeDispatcher.Box.fromTag(boxData));
+            super(client, (ShapeDispatcher.Box)shape);
 
         }
         @Override
@@ -177,9 +186,9 @@ public class ShapesRenderer
 
     public static class RenderedLine extends RenderedShape<ShapeDispatcher.Line>
     {
-        public RenderedLine(MinecraftClient client, CompoundTag boxData)
+        public RenderedLine(MinecraftClient client, ShapeDispatcher.ExpiringShape shape)
         {
-            super(client, (ShapeDispatcher.Line)ShapeDispatcher.Line.fromTag(boxData));
+            super(client, (ShapeDispatcher.Line)shape);
         }
         @Override
         public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)

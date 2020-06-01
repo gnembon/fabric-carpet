@@ -95,7 +95,7 @@ __structure_renderer(player_name) ->
 		    total_size = _euclidean(from, to);
 		    density = max(10, total_size/10);
 		    //particle_box('dust 0 1 1 2', from, to+1, density);
-		    marker_box(from, to+1, 15, 0x00FFFFFF );
+		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF);
 		    structure_pieces = slice(sort_key(structure_pieces, _euclidean_sq((_:2+_:3)/2,ppos)), 0, config:'max_pieces');
 		    for (structure_pieces, l(piece, direction, from, to) = _;
 		        //factor = 1- _i / config:'max_pieces' / 2;
@@ -107,7 +107,7 @@ __structure_renderer(player_name) ->
 		        b = 255;
 		        a = 255;
 		        color = a+256*(b+256*(g+256*r));
-		        marker_box(from, to+1, 15, color);
+		        draw_shape('box', 15, 'from', from, 'to', to+1, 'color', color);
 		    )
 		)
 	);
@@ -133,20 +133,20 @@ __chunk_renderer(player_name) ->
                     top_11 = ref_pos + l(16, top('terrain', ref_pos+l(15,0,15))+10, 16);
                     top_10 = ref_pos + l(16, top('terrain', ref_pos+l(15, 0, 0))+10, 0);
                     top_01 = ref_pos + l(0, top('terrain', ref_pos+l(0, 0, 15))+10, 16);
-                    part = 'dust 0.2 0.8 0.2 2';
-                    density = 2+player_distance/2;
                     r = 30;
                     g = 220;
                     b = 30;
                     a = max(0, 255-player_distance);
                     color = a+256*(b+256*(g+256*r));
-                    marker_line(top_00, top_10, 15, color);
-                    marker_line(top_10, top_11, 15, color);
-                    marker_line(top_11, top_01, 15, color);
-                    marker_line(top_01, top_00, 15, color);
-                    marker_line(top_00, top_11, 15, color);
-                    marker_line(top_01, top_10, 15, color);
+                    draw_shape('box', 15, 'from', top_00, 'to', top_10, 'color', color);
+                    draw_shape('box', 15, 'from', top_10, 'to', top_11, 'color', color);
+                    draw_shape('box', 15, 'from', top_11, 'to', top_01, 'color', color);
+                    draw_shape('box', 15, 'from', top_01, 'to', top_00, 'color', color);
+                    draw_shape('box', 15, 'from', top_00, 'to', top_11, 'color', color);
+                    draw_shape('box', 15, 'from', top_01, 'to', top_10, 'color', color);
 
+                    //part = 'dust 0.2 0.8 0.2 2';
+                    //density = 2+player_distance/2;
                     //particle_line(part, top_00, top_10, density);
                     //particle_line(part, top_10, top_11, density);
                     //particle_line(part, top_11, top_01, density);
