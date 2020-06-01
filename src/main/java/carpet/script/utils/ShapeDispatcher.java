@@ -103,16 +103,14 @@ public class ShapeDispatcher
     public static ExpiringShape create(CarpetContext cc, String shapeType, Map<String, Value> userParams)
     {
         userParams.put("shape", new StringValue(shapeType));
-        Map<String, Value> validatedParams = new HashMap<>();
-        userParams.forEach((key, value) ->
-        {
+        userParams.keySet().forEach(key -> {
             Param param = Param.coders.get(key);
             if (param==null) throw new InternalExpressionException("Unknown feature for shape: "+key);
-            validatedParams.put(key, param.validate(cc, value));
+            userParams.put(key, param.validate(cc, userParams.get(key)));
         });
         Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeType);
         if (factory == null) throw new InternalExpressionException("Unknown shape: "+shapeType);
-        return factory.apply(validatedParams);
+        return factory.apply(userParams);
     }
 
     // client
@@ -227,7 +225,7 @@ public class ShapeDispatcher
         }
         // list of params that need to be there
         private final Set<String> required = ImmutableSet.of("duration", "shape", "dim");
-        private final Map<String, Value> optional = ImmutableMap.of("color", new NumericValue(-1));
+        private final Map<String, Value> optional = ImmutableMap.of("color", new NumericValue(-1), "player", Value.NULL);
         protected Set<String> requiredParams() {return required;}
         // list of params that can be there, with defaults
         protected Set<String> optionalParams() {return optional.keySet();}

@@ -2685,7 +2685,7 @@ public class CarpetExpression
             ServerPlayerEntity player = null;
             if (params.containsKey("player"))
             {
-                player = (ServerPlayerEntity) ((EntityValue)params.get("player")).getEntity();
+                player = (ServerPlayerEntity)((EntityValue)params.get("player")).getEntity();
             }
             ShapeDispatcher.sendShape(
                     (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
