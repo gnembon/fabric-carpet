@@ -15,6 +15,7 @@ import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.util.PacketByteBuf;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,14 +42,7 @@ public class ClientNetworkHandler
         put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
         put("renderShape", (p, t) -> {
             if (CarpetClient.shapes != null)
-            {
-                CompoundTag boxData = (CompoundTag)t;
-                CarpetClient.shapes.addShape(
-                        boxData.getString("type"),
-                        RegistryKey.of(Registry.DIMENSION, new Identifier(boxData.getString("dim"))),
-                        boxData
-                );
-            }
+                CarpetClient.shapes.addShape((CompoundTag)t);
         });
     }};
 

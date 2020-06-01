@@ -2670,94 +2670,46 @@ public class CarpetExpression
         this.expr.alias("particle_rect", "particle_box");
 
 
-        this.expr.addLazyFunction("marker_box", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("draw_shape", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            Vector3Argument from = Vector3Argument.findIn(cc, lv, 0);
-            Vector3Argument to = Vector3Argument.findIn(cc, lv, from.offset);
-            int duration = 10;
-            int color = -1; // hwite
-            ServerPlayerEntity player = null;
-
-            if (lv.size() > to.offset+0 )
+            if (lv.size() < 3) throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
+            String shapeType = lv.get(0).evalValue(c).getString();
+            Value duration = NumericValue.asNumber(lv.get(1).evalValue(c));
+            Map<String, Value> params;
+            if (lv.size() == 3)
             {
-                duration = NumericValue.asNumber(lv.get(to.offset).evalValue(c)).getInt();
-                if (duration <= 0)
+                Value paramValue = lv.get(2).evalValue(c);
+                if (paramValue instanceof MapValue)
                 {
-                    throw new InternalExpressionException("Particle density should be positive");
+                    params = new HashMap<>();
+                    ((MapValue) paramValue).getMap().entrySet().forEach(e -> params.put(e.getKey().getString(),e.getValue()));
                 }
-                if (lv.size() > to.offset + 1)
+                else if (paramValue instanceof ListValue)
                 {
-                    color = NumericValue.asNumber(lv.get(to.offset+1).evalValue(c)).getInt();
-
-
-                    if (lv.size() > to.offset + 2)
-                    {
-                        Value playerValue = lv.get(to.offset + 2).evalValue(c);
-                        if (playerValue instanceof EntityValue)
-                        {
-                            Entity e = ((EntityValue) playerValue).getEntity();
-                            if (!(e instanceof ServerPlayerEntity))
-                                throw new InternalExpressionException("'particle_box' player argument has to be a player");
-                            player = (ServerPlayerEntity) e;
-                        }
-                        else
-                        {
-                            player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
-                        }
-                    }
+                    params = ShapeDispatcher.parseParams(((ListValue) paramValue).getItems());
                 }
+                else throw new InternalExpressionException("Parameters for 'draw_shape' need to be defined either in a list or a map");
+            }
+            else
+            {
+                List<Value> paramList = new ArrayList<>();
+                for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i).evalValue(c));
+                params = ShapeDispatcher.parseParams(paramList);
+            }
+            params.putIfAbsent("dim", new StringValue(cc.s.getWorld().method_27983().toString()));
+            params.putIfAbsent("duration", duration);
+
+            ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.create(cc, shapeType, params);
+            ServerPlayerEntity player = null;
+            if (params.containsKey("player"))
+            {
+                player = (ServerPlayerEntity) ((EntityValue)params.get("player")).getEntity();
             }
             ShapeDispatcher.sendShape(
                     (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
-                    cc.s.getWorld().method_27983(),
-                    new ShapeDispatcher.Box(duration, from.vec, to.vec, color)
-            );
-            return LazyValue.TRUE;
-        });
-
-        this.expr.addLazyFunction("marker_line", -1, (c, t, lv) ->
-        {
-            CarpetContext cc = (CarpetContext)c;
-            Vector3Argument from = Vector3Argument.findIn(cc, lv, 0);
-            Vector3Argument to = Vector3Argument.findIn(cc, lv, from.offset);
-            int duration = 10;
-            int color = -1; // hwite
-            ServerPlayerEntity player = null;
-
-            if (lv.size() > to.offset+0 )
-            {
-                duration = NumericValue.asNumber(lv.get(to.offset).evalValue(c)).getInt();
-                if (duration <= 0)
-                {
-                    throw new InternalExpressionException("Particle density should be positive");
-                }
-                if (lv.size() > to.offset + 1)
-                {
-                    color = NumericValue.asNumber(lv.get(to.offset+1).evalValue(c)).getInt();
-
-
-                    if (lv.size() > to.offset + 2)
-                    {
-                        Value playerValue = lv.get(to.offset + 2).evalValue(c);
-                        if (playerValue instanceof EntityValue)
-                        {
-                            Entity e = ((EntityValue) playerValue).getEntity();
-                            if (!(e instanceof ServerPlayerEntity))
-                                throw new InternalExpressionException("'particle_box' player argument has to be a player");
-                            player = (ServerPlayerEntity) e;
-                        }
-                        else
-                        {
-                            player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
-                        }
-                    }
-                }
-            }
-            ShapeDispatcher.sendShape(
-                    (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
-                    cc.s.getWorld().method_27983(),
-                    new ShapeDispatcher.Line(duration, from.vec, to.vec, color)
+                    shape,
+                    params
             );
             return LazyValue.TRUE;
         });
