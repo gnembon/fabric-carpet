@@ -61,7 +61,7 @@ public class CarpetSettings
     @Rule(
             desc = "sets the language for carpet",
             category = FEATURE,
-            options = {"none", "zh_cn"},
+            options = {"none", "zh_cn", "zh_tw"},
             strict = false,
             validate = LanguageValidator.class
     )
