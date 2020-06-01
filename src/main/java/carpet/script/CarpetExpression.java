@@ -2697,7 +2697,7 @@ public class CarpetExpression
                 for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i).evalValue(c));
                 params = ShapeDispatcher.parseParams(paramList);
             }
-            params.putIfAbsent("dim", new StringValue(cc.s.getWorld().method_27983().toString()));
+            params.putIfAbsent("dim", new StringValue(cc.s.getWorld().method_27983().getValue().toString()));
             params.putIfAbsent("duration", duration);
 
             ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.create(cc, shapeType, params);

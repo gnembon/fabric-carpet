@@ -427,14 +427,6 @@ public class ShapeDispatcher
     public static class DimensionParam extends StringParam
     {
         @Override
-        public Value validate(CarpetContext cc, Value value)
-        {
-            String dimStr = value.getString();
-            Optional<DimensionType> dimOp = Registry.DIMENSION_TYPE.getOrEmpty(new Identifier(dimStr));
-            if (!dimOp.isPresent()) throw new InternalExpressionException("Unknown dimension "+dimStr);
-            return value;
-        }
-        @Override
         public boolean appliesTo(ExpiringShape shape) { return true; }
         @Override
         public String identify() { return "dim"; }

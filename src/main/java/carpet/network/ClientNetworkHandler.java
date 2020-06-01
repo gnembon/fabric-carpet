@@ -12,11 +12,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.util.PacketByteBuf;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;

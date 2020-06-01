@@ -103,7 +103,7 @@ public class ShapesRenderer
         else
         {
             RenderedShape<?> rshape = shapeFactory.apply(client, shape);
-            DimensionType dim = Registry.DIMENSION_TYPE.get(new Identifier(tag.getString("dim")));
+            RegistryKey<World> dim = RegistryKey.of(Registry.DIMENSION, new Identifier(tag.getString("dim")));
             int key = rshape.key();
             synchronized (shapes)
             {
