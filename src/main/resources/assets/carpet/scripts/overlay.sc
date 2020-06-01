@@ -138,12 +138,12 @@ __chunk_renderer(player_name) ->
                     b = 30;
                     a = max(0, 255-player_distance);
                     color = a+256*(b+256*(g+256*r));
-                    draw_shape('box', 15, 'from', top_00, 'to', top_10, 'color', color);
-                    draw_shape('box', 15, 'from', top_10, 'to', top_11, 'color', color);
-                    draw_shape('box', 15, 'from', top_11, 'to', top_01, 'color', color);
-                    draw_shape('box', 15, 'from', top_01, 'to', top_00, 'color', color);
-                    draw_shape('box', 15, 'from', top_00, 'to', top_11, 'color', color);
-                    draw_shape('box', 15, 'from', top_01, 'to', top_10, 'color', color);
+                    draw_shape('line', 15, 'from', top_00, 'to', top_10, 'color', color);
+                    draw_shape('line', 15, 'from', top_10, 'to', top_11, 'color', color);
+                    draw_shape('line', 15, 'from', top_11, 'to', top_01, 'color', color);
+                    draw_shape('line', 15, 'from', top_01, 'to', top_00, 'color', color);
+                    draw_shape('line', 15, 'from', top_00, 'to', top_11, 'color', color);
+                    draw_shape('line', 15, 'from', top_01, 'to', top_10, 'color', color);
 
                     //part = 'dust 0.2 0.8 0.2 2';
                     //density = 2+player_distance/2;
