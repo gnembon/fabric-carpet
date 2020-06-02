@@ -5,6 +5,7 @@ import carpet.script.Expression;
 import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
+import carpet.script.bundled.Module;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
@@ -57,6 +58,8 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     {
         return name;
     }
+
+    public Module getModule() {return expression.module;}
 
     @Override
     public String getPrettyString()
