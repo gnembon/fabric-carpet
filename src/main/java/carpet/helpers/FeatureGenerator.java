@@ -17,7 +17,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
-import net.minecraft.world.biome.DefaultBiomeFeatures;
+import net.minecraft.world.gen.feature.DefaultBiomeFeatures;
 import net.minecraft.world.biome.source.BiomeAccess;
 //import net.minecraft.world.biome.source.BiomeSource;
 //import net.minecraft.world.biome.source.FixedBiomeSource;
@@ -56,8 +56,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static net.minecraft.world.biome.DefaultBiomeFeatures.FANCY_TREE_CONFIG;
-import static net.minecraft.world.biome.DefaultBiomeFeatures.OAK_TREE_CONFIG;
+import static net.minecraft.world.gen.feature.DefaultBiomeFeatures.FANCY_TREE_CONFIG;
+import static net.minecraft.world.gen.feature.DefaultBiomeFeatures.OAK_TREE_CONFIG;
 
 public class FeatureGenerator
 {

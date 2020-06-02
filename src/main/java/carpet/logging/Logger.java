@@ -182,7 +182,7 @@ public class Logger
 
     public void sendPlayerMessage(ServerPlayerEntity player, BaseText ... messages)
     {
-        Arrays.stream(messages).forEach(message -> player.sendSystemMessage(message, Util.field_25140));
+        Arrays.stream(messages).forEach(message -> player.sendSystemMessage(message, Util.NIL_UUID));
     }
 
     /**

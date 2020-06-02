@@ -860,7 +860,7 @@ public class CarpetExpression
             boolean dropLoot = true;
             if (playerBreak)
             {
-                boolean isUsingEffectiveTool = !state.method_29291() || tool.isEffectiveOn(state); //!can break by hand
+                boolean isUsingEffectiveTool = !state.isToolRequired() || tool.isEffectiveOn(state);
                 //postMine() durability from item classes
                 float hardness = state.getHardness(world, where);
                 int damageAmount = 0;
