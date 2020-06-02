@@ -66,11 +66,16 @@ Available shapes:
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
+   * Optional attributes:
+     * `width` - line thickness, defaults to 2.0pt
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one corner of the box
      * `to` - other corner, same format as `from`
+   * Optional attributes:
+     * `width` - mesh line thickness, defaults to 2.0pt
+     * `fill` - color for the box faces, defaults to no fill, use shared color attribute format
 
 ### `create_marker(text, pos, rotation?, block?)`
 

@@ -35,7 +35,7 @@ public class ClientNetworkHandler
             }
         });
         put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
-        put("renderShape", (p, t) -> {
+        put("scShape", (p, t) -> {
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((CompoundTag)t);
         });

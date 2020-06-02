@@ -19,6 +19,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -57,7 +58,7 @@ public class ShapeDispatcher
             if (ServerNetworkHandler.validCarpetPlayers.contains(player))
             {
                 if (tag == null) tag = ExpiringShape.toTag(params);
-                ServerNetworkHandler.sendCustomCommand(player,"renderShape", tag);
+                ServerNetworkHandler.sendCustomCommand(player,"scShape", tag);
             }
             else
             {
@@ -122,7 +123,7 @@ public class ShapeDispatcher
             Function<Tag, Value> decoder = Param.decoders.get(key);
             if (decoder==null)
             {
-                CarpetSettings.LOG.error("Unknown parameter for shape: "+key);
+                CarpetSettings.LOG.info("Unknown parameter for shape: "+key);
                 return null;
             }
             Value decodedValue = decoder.apply(tag.get(key));
@@ -131,13 +132,13 @@ public class ShapeDispatcher
         Value shapeValue = options.get("shape");
         if (shapeValue == null)
         {
-            CarpetSettings.LOG.error("Shape id missing in "+ String.join(", ", tag.getKeys()));
+            CarpetSettings.LOG.info("Shape id missing in "+ String.join(", ", tag.getKeys()));
             return null;
         }
         Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeValue.getString());
         if (factory == null)
         {
-            CarpetSettings.LOG.error("Unknown shape: "+shapeValue.getString());
+            CarpetSettings.LOG.info("Unknown shape: "+shapeValue.getString());
             return null;
         }
         try
@@ -146,7 +147,7 @@ public class ShapeDispatcher
         }
         catch (InternalExpressionException exc)
         {
-            CarpetSettings.LOG.error(exc.getMessage());
+            CarpetSettings.LOG.info(exc.getMessage());
         }
         return null;
     }
@@ -225,7 +226,10 @@ public class ShapeDispatcher
         }
         // list of params that need to be there
         private final Set<String> required = ImmutableSet.of("duration", "shape", "dim");
-        private final Map<String, Value> optional = ImmutableMap.of("color", new NumericValue(-1), "player", Value.NULL);
+        private final Map<String, Value> optional = ImmutableMap.of(
+                "color", new NumericValue(-1),
+                "player", Value.NULL
+        );
         protected Set<String> requiredParams() {return required;}
         // list of params that can be there, with defaults
         protected Set<String> optionalParams() {return optional.keySet();}
@@ -234,7 +238,10 @@ public class ShapeDispatcher
     public static class Box extends ExpiringShape
     {
         private final Set<String> required = ImmutableSet.of("from", "to");
-        private final Map<String, Value> optional = ImmutableMap.of();
+        private final Map<String, Value> optional = ImmutableMap.of(
+                "width", new NumericValue(2.0),
+                "fill", new NumericValue(0xffffff00)
+        );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -243,6 +250,10 @@ public class ShapeDispatcher
 
         float x1, y1, z1;
         float x2, y2, z2;
+        float lineWidth;
+
+        protected float fr, fg, fb, fa;
+        protected int fillColor;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -256,6 +267,12 @@ public class ShapeDispatcher
             x2 = NumericValue.asNumber(to.get(0)).getFloat();
             y2 = NumericValue.asNumber(to.get(1)).getFloat();
             z2 = NumericValue.asNumber(to.get(2)).getFloat();
+            lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
+            fillColor = NumericValue.asNumber(options.getOrDefault("fill", optional.get("fill"))).getInt();
+            this.fr = (float)(fillColor >> 24 & 0xFF) / 255.0F;
+            this.fg = (float)(fillColor >> 16 & 0xFF) / 255.0F;
+            this.fb = (float)(fillColor >>  8 & 0xFF) / 255.0F;
+            this.fa = (float)(fillColor & 0xFF) / 255.0F;
         }
 
         @Override
@@ -281,6 +298,8 @@ public class ShapeDispatcher
             hash = 31*hash + Float.hashCode(x2);
             hash = 31*hash + Float.hashCode(y2);
             hash = 31*hash + Float.hashCode(z2);
+            hash = 31*hash + Float.hashCode(lineWidth);
+            if (fa != 0.0) hash = 31*hash + fillColor;
             return hash;
         }
 
@@ -308,7 +327,7 @@ public class ShapeDispatcher
     public static class Line extends ExpiringShape
     {
         private final Set<String> required = ImmutableSet.of("from", "to");
-        private final Map<String, Value> optional = ImmutableMap.of();
+        private final Map<String, Value> optional = ImmutableMap.of("width", new NumericValue(2.0));
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -321,6 +340,7 @@ public class ShapeDispatcher
 
         float x1, y1, z1;
         float x2, y2, z2;
+        float lineWidth;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -334,6 +354,7 @@ public class ShapeDispatcher
             x2 = NumericValue.asNumber(to.get(0)).getFloat();
             y2 = NumericValue.asNumber(to.get(1)).getFloat();
             z2 = NumericValue.asNumber(to.get(2)).getFloat();
+            lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
         }
 
         @Override
@@ -361,6 +382,7 @@ public class ShapeDispatcher
             hash = 31*hash + Float.hashCode(x2);
             hash = 31*hash + Float.hashCode(y2);
             hash = 31*hash + Float.hashCode(z2);
+            hash = 31*hash + Float.hashCode(lineWidth);
             return hash;
         }
     }
@@ -374,16 +396,19 @@ public class ShapeDispatcher
             put("color", ShapeDispatcher::decodeInt);
             put("from", Vec3Param::decode);
             put("to", Vec3Param::decode);
-
+            put("width", ShapeDispatcher::decodeFloat);
+            put("fill", ShapeDispatcher::decodeInt);
         }};
         Map<String, Param> coders = new HashMap<String, Param>(){{
-            put("shape", new ShapeParam());
             put("player", new PlayerParam());
+            put("shape", new ShapeParam());
             put("dim", new DimensionParam());
             put("duration", new DurationParam());
             put("color", new ColorParam());
             put("from", new FromParam());
             put("to", new ToParam());
+            put("width", new WidthParam());
+            put("fill", new FillColorParam());
         }};
         Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         Value validate(CarpetContext cc, Value value); // makes sure the value is proper
@@ -453,8 +478,6 @@ public class ShapeDispatcher
     public static abstract class NumericParam implements Param
     {
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
-        @Override
         public Value validate(CarpetContext cc, Value value)
         {
             if (!(value instanceof NumericValue))
@@ -471,14 +494,33 @@ public class ShapeDispatcher
             return ret;
         }
     }
+    public static abstract class PositiveFloatParam extends PositiveParam
+    {
+        @Override
+        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value).getFloat()); }
 
+    }
+    public static abstract class PositiveIntParam extends PositiveParam
+    {
+        @Override
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+
+    }
     public static Value decodeInt(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
-    public static class DurationParam extends PositiveParam
+    public static Value decodeFloat(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
+    public static class DurationParam extends PositiveIntParam
     {
         @Override
         public boolean appliesTo(ExpiringShape shape) { return true; }
         @Override
         public String identify() { return "duration"; }
+    }
+    public static class WidthParam extends PositiveFloatParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box || shape instanceof Line; }
+        @Override
+        public String identify() { return "width"; }
     }
 
     public static abstract class Vec3Param implements Param
@@ -547,9 +589,19 @@ public class ShapeDispatcher
     public static class ColorParam extends NumericParam
     {
         @Override
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+        @Override
         public boolean appliesTo(ExpiringShape shape) { return true; }
         @Override
         public String identify() { return "color"; }
+    }
+
+    public static class FillColorParam extends ColorParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box; }
+        @Override
+        public String identify() { return "fill"; }
     }
 
     public static class FromParam extends Vec3Param

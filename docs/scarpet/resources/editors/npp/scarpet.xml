@@ -70,7 +70,9 @@
 
                 run save tick_time world_time day_time last_tick_times game_tick seed current_dimension in_dimension
 
-                plop harvest destroy schedule nbt create_marker remove_all_markers load_app_data store_app_data escape_nbt statistic
+                plop harvest destroy schedule nbt draw_shape create_marker remove_all_markers
+
+                load_app_data store_app_data escape_nbt statistic
             </Keywords>
             <Keywords name="Keywords3">euler pi null true false</Keywords>
             <Keywords name="Keywords4">x y z p</Keywords>

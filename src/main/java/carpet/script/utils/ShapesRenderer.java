@@ -91,12 +91,9 @@ public class ShapesRenderer
         if (shape == null) return;
         BiFunction<MinecraftClient, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
         shapeFactory = renderedShapes.get(tag.getString("shape"));
-
-
-
         if (shapeFactory == null)
         {
-            CarpetSettings.LOG.error("Unrecognized shape: "+tag.getString("shape"));
+            CarpetSettings.LOG.info("Unrecognized shape: "+tag.getString("shape"));
         }
         else
         {
@@ -161,7 +158,7 @@ public class ShapesRenderer
         @Override
         public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
-            RenderSystem.lineWidth(2.0F);
+            RenderSystem.lineWidth(shape.lineWidth);
             bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
             drawBoxWireGLLines(bufferBuilder,
                     shape.x1 - cx-renderEpsilon, shape.y1 - cy-renderEpsilon, shape.z1 - cz-renderEpsilon,
@@ -173,12 +170,13 @@ public class ShapesRenderer
         @Override
         public void render2pass(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
+            if (shape.fa == 0.0) return;
             RenderSystem.lineWidth(1.0F);
             bufferBuilder.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR); // 3
             drawBox(bufferBuilder,
                     shape.x1-cx-renderEpsilon, shape.y1-cy-renderEpsilon, shape.z1-cz-renderEpsilon,
                     shape.x2-cx+renderEpsilon, shape.y2-cy+renderEpsilon, shape.z2-cz+renderEpsilon,
-                    shape.r, shape.g, shape.b, shape.a/6
+                    shape.fr, shape.fg, shape.fb, shape.fa
             );
             tessellator.draw();
         }
@@ -193,7 +191,7 @@ public class ShapesRenderer
         @Override
         public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
-            RenderSystem.lineWidth(2.0F);
+            RenderSystem.lineWidth(shape.lineWidth);
             bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
             drawLine(bufferBuilder,
                     shape.x1-cx-renderEpsilon, shape.y1-cy-renderEpsilon, shape.z1-cz-renderEpsilon,
