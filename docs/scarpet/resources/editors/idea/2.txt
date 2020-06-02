@@ -102,6 +102,7 @@ ticks_randomly
 top
 transparent
 update
+view_distance
 volume
 without_updates
 world_time

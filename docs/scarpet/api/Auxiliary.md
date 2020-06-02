@@ -258,6 +258,9 @@ Returns current dimension that the script runs in.
 Evaluates the expression `expr` with different dimension execution context. `smth` can be an entity, 
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
+ 
+### `view_distance()`
+Returns the view distance of the server.
 
 ### `schedule(delay, function, args...)`
 

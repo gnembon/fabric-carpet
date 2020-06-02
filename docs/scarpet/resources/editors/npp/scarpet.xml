@@ -68,7 +68,7 @@
 
                 format logger sound particle particle_line particle_rect
 
-                run save tick_time world_time day_time last_tick_times game_tick seed current_dimension in_dimension
+                run save tick_time world_time day_time last_tick_times game_tick seed current_dimension in_dimension view_distance
 
                 plop harvest destroy schedule nbt draw_shape create_marker remove_all_markers
 
