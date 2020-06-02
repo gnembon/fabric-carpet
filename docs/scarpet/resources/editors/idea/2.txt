@@ -17,6 +17,7 @@ current_dimension
 day_time
 destroy
 diamond
+draw_shape
 drop_item
 emitted_light
 entity_area

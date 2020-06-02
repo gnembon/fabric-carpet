@@ -96,7 +96,7 @@ public class CarpetScriptHost extends ScriptHost
     public void addUserDefinedFunction(Context ctx, Module module, String funName, FunctionValue function)
     {
         super.addUserDefinedFunction(ctx, module, funName, function);
-        // mcarpet
+        if (ctx.host.main != module) return; // not dealing with automatic imports / exports /configs / apps from imports
         if (funName.startsWith("__")) // potential fishy activity
         {
             if (funName.startsWith("__on_")) // here we can make a determination if we want to only accept events from main module.

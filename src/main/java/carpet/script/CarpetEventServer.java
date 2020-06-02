@@ -128,7 +128,13 @@ public class CarpetEventServer
                 List<LazyValue> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source = cmdSourceSupplier.get();
                 assert argv.size() == reqArgs;
-                callList.removeIf(call -> !CarpetServer.scriptServer.runas(source, call.host, call.function, argv)); // this actually does the calls
+                List<Callback> fails = new ArrayList<>();
+                for (Callback call: callList)
+                {
+                    if (!CarpetServer.scriptServer.runas(source, call.host, call.function, argv))
+                        fails.add(call);
+                }
+                for (Callback call : fails) callList.remove(call);
             }
         }
         public boolean addEventCall(ServerCommandSource source,  String hostName, String funName, Function<ScriptHost, Boolean> verifier)
