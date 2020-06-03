@@ -553,6 +553,23 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
+        PLAYER_CONNECTS("player_connects", 1, false) {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_DISCONNECTS("player_disconnects", 2, false) {
+            @Override
+            public void onPlayerMessage(ServerPlayerEntity player, String message)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new StringValue(message))
+                ), player::getCommandSource);
+            }
+        },
         STATISTICS("statistic", 4, false)
         {
             private <T> Identifier getStatId(Stat<T> stat)
@@ -617,6 +634,7 @@ public class CarpetEventServer
         public void onTick() { }
         public void onChunkGenerated(ServerWorld world, Chunk chunk) { }
         public void onPlayerEvent(ServerPlayerEntity player) { }
+        public void onPlayerMessage(ServerPlayerEntity player, String message) { }
         public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount) { }
         public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
         public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) { }

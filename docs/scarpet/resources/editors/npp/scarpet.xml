@@ -112,6 +112,8 @@
                 __on_player_deals_damage
                 __on_player_dies
                 __on_player_respawns
+                __on_player_disconnects
+                __on_player_connects
             </Keywords>
             <Keywords name="Keywords8">$</Keywords>
             <Keywords name="Delimiters">00&apos; 01\ 02&apos; 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>

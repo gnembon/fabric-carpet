@@ -31,3 +31,5 @@ __on_player_takes_damage
 __on_player_deals_damage
 __on_player_dies
 __on_player_respawns
+__on_player_disconnects
+__on_player_connects

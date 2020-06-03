@@ -3047,6 +3047,8 @@ __on_player_starts_sprinting(player)
 __on_player_stops_sprinting(player)
 __on_player_drops_item(player)
 __on_player_drops_stack(player)
+__on_player_connects(player)
+__on_player_disconnects(player, reason)
 __on_statistic(player, category, event, value) // player statistic changes
 </pre>
 
