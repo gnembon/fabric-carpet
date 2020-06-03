@@ -19,7 +19,7 @@ __on_tick()         // can access blocks and entities in the overworld
 __on_tick_nether()  // can access blocks and entities in the nether
 __on_tick_ender()   // can access blocks and entities in the end
 __on_chunk_generated(x,z) // called after a chunk is promoted to the full chunk,
-                          // prodiving lowest x and z coords in the chunk
+                          // providing lowest x and z coords in the chunk
                           // event will not work with optifine installed in the game
 __on_lightning(block, mode) // mode is `true` if lightning caused horse trap to spawn
 // player specific callbacks
@@ -37,6 +37,7 @@ __on_player_takes_damage(player, amount, source, source_entity)
 __on_player_deals_damage(player, amount, entity)
 __on_player_dies(player)
 __on_player_respawns(player)
+__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)
 __on_player_rides(player, forward, strafe, jumping, sneaking)
 __on_player_jumps(player)
 __on_player_deploys_elytra(player)
@@ -47,8 +48,15 @@ __on_player_starts_sprinting(player)
 __on_player_stops_sprinting(player)
 __on_player_drops_item(player)
 __on_player_drops_stack(player)
+__on_player_connects(player)
+__on_player_disconnects(player, reason)
 __on_statistic(player, category, event, value) // player statistic changes
 </pre>
+
+Couple special cases.
+* `__on_player_changes_dimension` returns `null` as `to_pos` when player goes back to the overworld from the end
+, since the respawn location of the player is not control by the teleport, or a player can see the end credits. After
+ the player is eligible to respawn in the overworld, `__on_player_respawns` will be triggered.
 
 ### `/script event` command
 

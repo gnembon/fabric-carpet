@@ -4,6 +4,7 @@ import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
 import carpet.settings.SettingsManager;
 import carpet.settings.Validator;
+import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.minecraft.server.MinecraftServer;
@@ -33,13 +34,38 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.22+v200506";
+    public static final String carpetVersion = "1.3.25+v200527";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
     public static Box currentTelepotingEntityBox = null;
     public static Vec3d fixedPosition = null;
     public static int runPermissionLevel = 2;
+
+    private static class LanguageValidator extends Validator<String> {
+        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            if (currentRule.get().equals(newValue) || source == null)
+            {
+                return newValue;
+            }
+            if (!Translations.isValidLanguage(newValue))
+            {
+                Messenger.m(source, "r "+newValue+" is not a valid language");
+                return null;
+            }
+            CarpetSettings.language = newValue;
+            Translations.updateLanguage(source);
+            return newValue;
+        }
+    }
+    @Rule(
+            desc = "sets the language for carpet",
+            category = FEATURE,
+            options = {"none", "zh_cn", "zh_tw"},
+            strict = false,
+            validate = LanguageValidator.class
+    )
+    public static String language = "none";
 
     @Rule(
             desc = "Nether portals correctly place entities going through",
@@ -68,6 +94,7 @@ public class CarpetSettings
             validate = OneHourMaxDelayLimit.class
     )
     public static int portalSurvivalDelay = 80;
+
 
     private static class OneHourMaxDelayLimit extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
@@ -460,7 +487,7 @@ public class CarpetSettings
     {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
         {
-            if (currentRule.get().equals(newValue))
+            if (currentRule.get().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -511,6 +538,7 @@ public class CarpetSettings
             }
         }
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            if (source == null) return newValue;
             if (newValue < 0 || newValue > 32)
             {
                 Messenger.m(source, "r spawn chunk size has to be between 0 and 32");
@@ -583,7 +611,44 @@ public class CarpetSettings
 
     @Rule(
             desc = "Creative No Clip",
+            extra = {
+                    "On servers it needs to be set on both ",
+                    "client and server to function properly.",
+                    "Has no effect when set on the server only",
+                    "Can allow to phase through walls",
+                    "if only set on the carpet client side",
+                    "but requires some trapdoor magic to",
+                    "allow the player to enter blocks"
+            },
             category = {CREATIVE, CLIENT}
     )
     public static boolean creativeNoClip = false;
+
+
+    @Rule(
+            desc = "Creative flying speed multiplier",
+            extra = {
+                    "Purely client side setting, meaning that",
+                    "having it set on the decicated server has no effect",
+                    "but this also means it will work on vanilla servers as well"
+            },
+            category = {CREATIVE, CLIENT},
+            validate = Validator.NONNEGATIVE_NUMBER.class
+    )
+    public static double creativeFlySpeed = 1.0;
+
+    @Rule(
+            desc = "Creative air drag",
+            extra = {
+                    "Increased drag will slow down your flight",
+                    "So need to adjust speed accordingly",
+                    "With 1.0 drag, using speed of 11 seems to matching vanilla speeds.",
+                    "Purely client side setting, meaning that",
+                    "having it set on the decicated server has no effect",
+                    "but this also means it will work on vanilla servers as well"
+            },
+            category = {CREATIVE, CLIENT},
+            validate = Validator.PROBABILITY.class
+    )
+    public static double creativeFlyDrag = 0.09;
 }

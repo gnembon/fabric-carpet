@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import carpet.CarpetServer;
+import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
@@ -176,8 +177,9 @@ public class TickSpeed
             }
         }
     }
-    
-    public static void tickrate(float rate)
+    //unused - mod compat reasons
+    public static void tickrate(float rate) {tickrate(rate, true);}
+    public static void tickrate(float rate, boolean update)
     {
         tickrate = rate;
         long mspt = (long)(1000.0 / tickrate);
@@ -189,7 +191,7 @@ public class TickSpeed
         
         TickSpeed.mspt = (float)mspt;
         
-        notifyTickrateListeners("carpet");
+        if (update) notifyTickrateListeners("carpet");
     }
     
     private static void tickrateChanged(String modId, float rate)
@@ -221,6 +223,7 @@ public class TickSpeed
 	            }
 	        }
         }
+        ServerNetworkHandler.updateTickSpeedToConnectedPlayers();
     }
     
     public static BiConsumer<String, Float> addTickrateListener(String modId, BiConsumer<String, Float> tickrateListener) 

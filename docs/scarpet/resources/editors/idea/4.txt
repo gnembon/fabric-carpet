@@ -5,6 +5,7 @@ __on_close
 __on_player_attacks_entity
 __on_player_breaks_block
 __on_player_clicks_block
+__on_player_changes_dimension
 __on_player_deploys_elytra
 __on_player_drops_item
 __on_player_drops_stack
@@ -30,3 +31,5 @@ __on_player_takes_damage
 __on_player_deals_damage
 __on_player_dies
 __on_player_respawns
+__on_player_disconnects
+__on_player_connects

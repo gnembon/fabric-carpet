@@ -147,6 +147,18 @@ Returns true if task has completed, or false otherwise.
 
 Evaluates `expression` synchronized with respect to the lock `lock`. Returns the value of the expression.
 
+### `task_dock(expr)`
+
+In a not-task (running regular code on the main game thread) it is a pass-through command. In tasks - it docks
+the current thread on the main server thread and executes expression as one server offline server task.
+This is especially helpful in case a task has several docking operations to perform, such as setting a block, and
+it would be much more efficient to do them all at once rather then packing each block access in each own call.
+
+Be mindful, that docking the task means that the tick execution will be delayed until the expression is evaluated.
+This will synchronize your task with other tasks using `task_dock`, but if you should be using `synchronize` to
+synchronize tasks without locking the main thread.
+
+
 * * *
 
 ## Auxiliary functions
@@ -251,8 +263,11 @@ sleep(50)
 
 ### `time()`
 
-Returns the number of milliseconds since 'some point', like Java's `System.nanoTime()`. 
-It returns a float, which has 1 microsecond precision (0.001 ms)
+Returns the number of milliseconds since 'some point', like Java's `System.nanoTime()`, which varies from system to 
+system and from Java to Java. This measure should NOT be used to determine the current (date)time, but to measure
+durations of things.
+it returns a float with time in milliseconds (ms) for convenience and microsecond (μs) resolution for sanity.
+
 
 <pre>
 start_time = time();

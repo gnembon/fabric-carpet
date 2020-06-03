@@ -14,6 +14,7 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
 {
     @Shadow public boolean removed;
 
+    @Shadow protected int netherPortalTime;
     private boolean permanentVehicle;
 
     private final EntityEventsGroup events = new EntityEventsGroup();
@@ -34,6 +35,18 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     public void setPermanentVehicle(boolean permanent)
     {
         permanentVehicle = permanent;
+    }
+
+    @Override
+    public int getPortalTimer()
+    {
+        return netherPortalTime;
+    }
+
+    @Override
+    public void setPortalTimer(int amount)
+    {
+        netherPortalTime = amount;
     }
 
     @Inject(method = "tick", at = @At("HEAD"))

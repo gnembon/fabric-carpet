@@ -21,6 +21,7 @@ import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.ShapeDispatcher;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -63,7 +64,6 @@ import net.minecraft.item.TridentItem;
 import net.minecraft.network.packet.s2c.play.ContainerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
-import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -88,6 +88,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
+import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
@@ -138,6 +139,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -146,7 +148,6 @@ import static carpet.script.utils.WorldTools.canHasChunk;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static java.lang.Math.sqrt;
 
 public class CarpetExpression
 {
@@ -259,92 +260,8 @@ public class CarpetExpression
         return bs;
     }
 
-    private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
-    private ParticleEffect getParticleData(String name)
-    {
-        ParticleEffect particle = particleCache.get(name);
-        if (particle != null)
-            return particle;
-        try
-        {
-            particle = ParticleArgumentType.readParameters(new StringReader(name));
-        }
-        catch (CommandSyntaxException e)
-        {
-            throw new InternalExpressionException("No such particle: "+name);
-        }
-        particleCache.put(name, particle);
-        return particle;
-    }
 
-
-    private boolean isStraight(Vec3d from, Vec3d to, double density)
-    {
-        if ( (from.x == to.x && from.y == to.y) || (from.x == to.x && from.z == to.z) || (from.y == to.y && from.z == to.z))
-            return from.distanceTo(to) / density > 20;
-        return false;
-    }
-
-    private int drawOptimizedParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
-    {
-        double distance = from.distanceTo(to);
-        int particles = (int)(distance/density);
-        Vec3d towards = to.subtract(from);
-        int parts = 0;
-        for (PlayerEntity player : world.getPlayers())
-        {
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    (towards.x)/2+from.x, (towards.y)/2+from.y, (towards.z)/2+from.z, particles/3,
-                    towards.x/6, towards.y/6, towards.z/6, 0.0);
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    from.x, from.y, from.z,1,0.0,0.0,0.0,0.0);
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    to.x, to.y, to.z,1,0.0,0.0,0.0,0.0);
-            parts += particles/3+2;
-        }
-        int divider = 6;
-        while (particles/divider > 1)
-        {
-            int center = (divider*2)/3;
-            int dev = 2*divider;
-            for (PlayerEntity player : world.getPlayers())
-            {
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        (towards.x)/center+from.x, (towards.y)/center+from.y, (towards.z)/center+from.z, particles/divider,
-                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        (towards.x)*(1.0-1.0/center)+from.x, (towards.y)*(1.0-1.0/center)+from.y, (towards.z)*(1.0-1.0/center)+from.z, particles/divider,
-                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
-            }
-            parts += 2*particles/divider;
-            divider = 2*divider;
-        }
-        return parts;
-    }
-
-    private int drawParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
-    {
-        if (isStraight(from, to, density)) return drawOptimizedParticleLine(world, particle, from, to, density);
-        double lineLengthSq = from.squaredDistanceTo(to);
-        if (lineLengthSq == 0) return 0;
-        Vec3d incvec = to.subtract(from).multiply(2*density/sqrt(lineLengthSq));
-        int pcount = 0;
-        for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
-             delta.lengthSquared()<lineLengthSq;
-             delta = delta.add(incvec.multiply(Expression.randomizer.nextFloat())))
-        {
-            for (PlayerEntity player : world.getPlayers())
-            {
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        delta.x+from.x, delta.y+from.y, delta.z+from.z, 1,
-                        0.0, 0.0, 0.0, 0.0);
-                pcount ++;
-            }
-        }
-        return pcount;
-    }
-
-    private void forceChunkUpdate(BlockPos pos, ServerWorld world)
+    private static void forceChunkUpdate(BlockPos pos, ServerWorld world)
     {
         Chunk chunk = world.getChunk(pos);
         chunk.setShouldSave(true);
@@ -509,7 +426,7 @@ public class CarpetExpression
                     return LazyValue.NULL;
             }
 
-            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).map( p ->
+            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).sorted(Comparator.comparingDouble(p -> p.getPos().getSquaredDistance(pos))).map(p ->
                     ListValue.of(
                             new StringValue(p.getType().toString()),
                             new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
@@ -1126,12 +1043,25 @@ public class CarpetExpression
             Biome biome = Registry.BIOME.get(new Identifier(biomeName));
             if (biome == null)
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
+            boolean doImmediateUpdate = true;
+            if (lv.size() > locator.offset+1)
+            {
+                doImmediateUpdate = lv.get(locator.offset+1).evalValue(c).getBoolean();
+            }
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
             ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
-            this.forceChunkUpdate(pos, world);
-            return LazyValue.NULL;
+            if (doImmediateUpdate) forceChunkUpdate(pos, world);
+            return LazyValue.TRUE;
+        });
+
+        this.expr.addLazyFunction("reload_chunk", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
+            ServerWorld world = cc.s.getWorld();
+            cc.s.getMinecraftServer().submitAndJoin( () -> forceChunkUpdate(pos, world));
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("structure_references", -1, (c, t, lv) -> {
@@ -1350,7 +1280,7 @@ public class CarpetExpression
                 {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
                     {
-                        this.forceChunkUpdate(chpos.getCenterBlockPos(), world);
+                        forceChunkUpdate(chpos.getCenterBlockPos(), world);
                     }
                 }
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
@@ -1370,7 +1300,35 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
+        this.expr.addLazyFunction("add_chunk_ticket", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            if (lv.size() != locator.offset+2) throw new InternalExpressionException("'add_chunk_ticket' requires block position, ticket type and radius");
+            String type = lv.get(locator.offset).evalValue(c).getString();
+            ChunkTicketType ticket = ticketTypes.get(type.toLowerCase(Locale.ROOT));
+            if (ticket == null) throw new InternalExpressionException("Unknown ticket type: "+type);
+            int radius = NumericValue.asNumber(lv.get(locator.offset+1).evalValue(c)).getInt();
+            if (radius < 1 || radius > 32) throw new InternalExpressionException("Ticket radius should be between 1 and 32 chunks");
+            // due to types we will wing it:
+            ChunkPos target = new ChunkPos(pos);
+            if (ticket == ChunkTicketType.PORTAL)
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.PORTAL, target, radius, pos);
+            else if (ticket == ChunkTicketType.POST_TELEPORT)
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, target, radius, 1);
+            else
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.UNKNOWN, target, radius, target);
+            Value ret = new NumericValue(ticket.getExpiryTicks());
+            return (_c, _t) -> ret;
+        });
+
     }
+    private Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
+        put("portal", ChunkTicketType.PORTAL);
+        put("teleport", ChunkTicketType.POST_TELEPORT);
+        put("unknown", ChunkTicketType.UNKNOWN);
+    }};
 
     private static String getScoreboardKeyFromValue(Value keyValue)
     {
@@ -1996,7 +1954,7 @@ public class CarpetExpression
                 ((EntityValue) v).set(what, lv.get(2).evalValue(c));
             else
                 ((EntityValue) v).set(what, ListValue.wrap(lv.subList(2, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList())));
-            return lv.get(0);
+            return (cc, tt) -> v;
         });
 
         // or update
@@ -2582,7 +2540,7 @@ public class CarpetExpression
                     }
                 }
             }
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
             Vec3d vec = locator.vec;
             if (player == null)
             {
@@ -2607,36 +2565,73 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             String particleName = lv.get(0).evalValue(c).getString();
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
             Vector3Argument pos1 = Vector3Argument.findIn(cc, lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(cc, lv, pos1.offset);
-            int offset = pos2.offset;
-            double density = (lv.size() > offset)? NumericValue.asNumber(lv.get(offset).evalValue(c)).getDouble():1.0;
-            if (density <= 0)
+            double density = 1.0;
+            ServerPlayerEntity player = null;
+            if (lv.size() > pos2.offset+0 )
             {
-                throw new InternalExpressionException("Particle density should be positive");
+                density = NumericValue.asNumber(lv.get(pos2.offset+0).evalValue(c)).getDouble();
+                if (density <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > pos2.offset+1)
+                {
+                    Value playerValue = lv.get(pos2.offset+1).evalValue(c);
+                    if (playerValue instanceof EntityValue)
+                    {
+                        Entity e = ((EntityValue) playerValue).getEntity();
+                        if (!(e instanceof ServerPlayerEntity)) throw new InternalExpressionException("'particle_line' player argument has to be a player");
+                        player = (ServerPlayerEntity) e;
+                    }
+                    else
+                    {
+                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                    }
+                }
             }
-            Value retval = new NumericValue(drawParticleLine(world, particle, pos1.vec, pos2.vec, density));
+
+            Value retval = new NumericValue(ShapeDispatcher.drawParticleLine(
+                    (player == null)?world.getPlayers():Collections.singletonList(player),
+                    particle, pos1.vec, pos2.vec, density));
+
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("particle_rect", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             String particleName = lv.get(0).evalValue(c).getString();
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
             Vector3Argument pos1 = Vector3Argument.findIn(cc, lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(cc, lv, pos1.offset);
-            int offset = pos2.offset;
+
             double density = 1.0;
-            if (lv.size() > offset)
+            ServerPlayerEntity player = null;
+            if (lv.size() > pos2.offset+0 )
             {
-                density = NumericValue.asNumber(lv.get(offset).evalValue(c)).getDouble();
-            }
-            if (density <= 0)
-            {
-                throw new InternalExpressionException("Particle density should be positive");
+                density = NumericValue.asNumber(lv.get(pos2.offset+0).evalValue(c)).getDouble();
+                if (density <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > pos2.offset+1)
+                {
+                    Value playerValue = lv.get(pos2.offset+1).evalValue(c);
+                    if (playerValue instanceof EntityValue)
+                    {
+                        Entity e = ((EntityValue) playerValue).getEntity();
+                        if (!(e instanceof ServerPlayerEntity)) throw new InternalExpressionException("'particle_box' player argument has to be a player");
+                        player = (ServerPlayerEntity) e;
+                    }
+                    else
+                    {
+                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                    }
+                }
             }
             Vec3d a = pos1.vec;
             Vec3d b = pos2.vec;
@@ -2646,23 +2641,58 @@ public class CarpetExpression
             double bx = max(a.x, b.x);
             double by = max(a.y, b.y);
             double bz = max(a.z, b.z);
-            int pc = 0;
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, az), new Vec3d(ax, by, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, az), new Vec3d(bx, by, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, az), new Vec3d(bx, ay, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, az), new Vec3d(ax, ay, az), density);
-
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, bz), new Vec3d(ax, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, bz), new Vec3d(bx, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, bz), new Vec3d(bx, ay, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, bz), new Vec3d(ax, ay, bz), density);
-
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, az), new Vec3d(ax, ay, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, az), new Vec3d(ax, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, az), new Vec3d(bx, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, az), new Vec3d(bx, ay, bz), density);
-            int particleCount = pc;
+            int particleCount = ShapeDispatcher.Box.mesh(
+                    player==null?world.getPlayers():Collections.singletonList(player),
+                    particle, density, ax, ay, az, bx, by, bz
+            );
             return (c_, t_) -> new NumericValue(particleCount);
+        });
+        // deprecated
+        this.expr.alias("particle_rect", "particle_box");
+
+
+        this.expr.addLazyFunction("draw_shape", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 3) throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
+            String shapeType = lv.get(0).evalValue(c).getString();
+            Value duration = NumericValue.asNumber(lv.get(1).evalValue(c));
+            Map<String, Value> params;
+            if (lv.size() == 3)
+            {
+                Value paramValue = lv.get(2).evalValue(c);
+                if (paramValue instanceof MapValue)
+                {
+                    params = new HashMap<>();
+                    ((MapValue) paramValue).getMap().entrySet().forEach(e -> params.put(e.getKey().getString(),e.getValue()));
+                }
+                else if (paramValue instanceof ListValue)
+                {
+                    params = ShapeDispatcher.parseParams(((ListValue) paramValue).getItems());
+                }
+                else throw new InternalExpressionException("Parameters for 'draw_shape' need to be defined either in a list or a map");
+            }
+            else
+            {
+                List<Value> paramList = new ArrayList<>();
+                for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i).evalValue(c));
+                params = ShapeDispatcher.parseParams(paramList);
+            }
+            params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getDimension().getType().toString()));
+            params.putIfAbsent("duration", duration);
+
+            ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.create(cc, shapeType, params);
+            ServerPlayerEntity player = null;
+            if (params.containsKey("player"))
+            {
+                player = (ServerPlayerEntity)((EntityValue)params.get("player")).getEntity();
+            }
+            ShapeDispatcher.sendShape(
+                    (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
+                    shape,
+                    params
+            );
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("create_marker", -1, (c, t, lv) ->{
@@ -2791,6 +2821,49 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
+        this.expr.addLazyFunctionWithDelegation("task_dock", 1, (c, t, expr, tok, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            MinecraftServer server = cc.s.getMinecraftServer();
+            if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks
+            Value[] result = new Value[]{Value.NULL};
+            RuntimeException[] internal = new RuntimeException[]{null};
+            try
+            {
+                ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
+                {
+                    try
+                    {
+                        result[0] = lv.get(0).evalValue(c, t);
+                    }
+                    catch (ExpressionException exc)
+                    {
+                        internal[0] = exc;
+                    }
+                    catch (InternalExpressionException exc)
+                    {
+                        internal[0] = new ExpressionException(c, expr, tok, exc.getMessage(), exc.stack);
+                    }
+
+                    catch (ArithmeticException exc)
+                    {
+                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, "+exc.getMessage());
+                    }
+                });
+            }
+            catch (CompletionException exc)
+            {
+                throw new InternalExpressionException("Error while executing docked task section, internal stack trace is gone");
+            }
+            if (internal[0] != null)
+            {
+                throw internal[0];
+            }
+            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
+            return (_c, _t) -> ret;
+            // pass through placeholder
+            // implmenetation should dock the task on the main thread.
+        });
+
         this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
         {
             Value res = lv.get(0).evalValue(c);
@@ -2895,6 +2968,12 @@ public class CarpetExpression
             return (cc, tt) -> retval;
         });
 
+        this.expr.addLazyFunction("view_distance", 0, (c, t, lv) -> {
+            ServerCommandSource s = ((CarpetContext)c).s;
+            Value retval = new NumericValue(s.getMinecraftServer().getPlayerManager().getViewDistance());
+            return (cc, tt) -> retval;
+        });
+
         this.expr.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
             ServerCommandSource outerSource = ((CarpetContext)c).s;
             Value dimensionValue = lv.get(0).evalValue(c);
@@ -2955,7 +3034,7 @@ public class CarpetExpression
                 if (res == null)
                     return;
                 if (what.equalsIgnoreCase("boulder"))  // there might be more of those
-                    this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
+                    forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
                 result[0] = new NumericValue(res);
             });
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
@@ -2967,7 +3046,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, this.expr.module, lv, 1, true);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, this.expr.module, lv, 1, true, true);
 
             CarpetServer.scriptServer.events.scheduleCall(
                     (CarpetContext) c,
@@ -2976,29 +3055,6 @@ public class CarpetExpression
                     delay
             );
             return (c_, t_) -> Value.TRUE;
-            /*
-            Value functionValue = lv.get(1).evalValue(c);
-            if (!(functionValue instanceof FunctionValue))
-            {
-                String name = functionValue.getString();
-                functionValue = c.host.getAssertFunction(this.expr.module, name);
-            }
-            FunctionValue function = (FunctionValue)functionValue;
-
-            CarpetContext cc = (CarpetContext)c;
-            List<Value> args = new ArrayList<>();
-            for (int i=2; i < lv.size(); i++)
-            {
-                Value arg = lv.get(i).evalValue(cc);
-                args.add(arg);
-            }
-            if (function.getArguments().size() != args.size())
-                throw new InternalExpressionException("Function "+function.getString()+" takes "+
-                        function.getArguments().size()+" arguments, "+args.size()+" provided.");
-            CarpetServer.scriptServer.events.scheduleCall(cc, function, args, delay);
-            return (c_, t_) -> Value.TRUE;
-            */
-
         });
 
         this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->

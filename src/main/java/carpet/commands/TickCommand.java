@@ -67,7 +67,7 @@ public class TickCommand
 
     private static int setTps(ServerCommandSource source, float tps)
     {
-        TickSpeed.tickrate(tps);
+        TickSpeed.tickrate(tps, true);
         queryTps(source);
         return (int)tps;
     }

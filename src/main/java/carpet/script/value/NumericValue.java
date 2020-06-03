@@ -56,6 +56,10 @@ public class NumericValue extends Value
     {
         return value;
     }
+    public float getFloat()
+    {
+        return value.floatValue();
+    }
 
     public static long floor(double double_1) {
         long int_1 = (long)double_1;

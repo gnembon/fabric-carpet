@@ -418,6 +418,12 @@ public class Expression
         return result;
     }
 
+    public void alias(String copy, String original)
+    {
+        functions.put(copy, functions.get(original));
+    }
+
+
     private void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
@@ -440,27 +446,10 @@ public class Expression
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
-                FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, true);
+                FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, false, true);
                 FunctionValue fun = functionArgument.function;
                 Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
                 return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
-
-                /*
-                Value functionValue = lv.get(0).evalValue(c);
-                if (!(functionValue instanceof FunctionValue))
-                {
-                    String name = functionValue.getString();
-                    functionValue = c.host.getAssertFunction(module, name);
-                }
-                List<LazyValue> lvargs = new ArrayList<>(lv.size()-1);
-                for (int i=1; i< lv.size(); i++)
-                {
-                    lvargs.add(lv.get(i));
-                }
-                FunctionValue fun = (FunctionValue)functionValue;
-                Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), lvargs).evalValue(c);
-                return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
-                */
             }
             // gimme signature
             String name = lv.get(0).evalValue(c).getString();
@@ -1878,35 +1867,12 @@ public class Expression
         addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, true, false);
             Value queue = Value.NULL;
             if (lv.size() > functionArgument.offset) queue = lv.get(functionArgument.offset).evalValue(c);
             ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.args);
             Thread.yield();
             return (cc, tt) -> thread;
-            /*
-            Value funcDesc = lv.get(0).evalValue(c);
-            if (!(funcDesc instanceof FunctionValue))
-            {
-                String name = funcDesc.getString();
-                funcDesc = c.host.getAssertFunction(module, name);
-            }
-            FunctionValue fun = (FunctionValue)funcDesc;
-            int extraargs = lv.size() - fun.getArguments().size();
-            if (extraargs != 1 && extraargs != 2)
-            {
-                throw new InternalExpressionException("Function takes "+fun.getArguments().size()+" arguments.");
-            }
-            List<LazyValue> lvargs = new ArrayList<>();
-            for (int i=0; i< fun.getArguments().size(); i++)
-            {
-                lvargs.add(lv.get(i+1));
-            }
-            Value queue = Value.NULL;
-            if (extraargs == 2) queue = lv.get(lv.size()-1).evalValue(c);
-            ThreadValue thread = new ThreadValue(queue, fun, expr, tok, c, lvargs);
-            Thread.yield();
-            return (cc, tt) -> thread;*/
         });
 
         addFunction("task_count", (lv) ->
@@ -1928,6 +1894,12 @@ public class Expression
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'task_join' could only be used with a task value");
             return ((ThreadValue) v).join();
+        });
+
+        addLazyFunction("task_dock", 1, (c, t, lv) -> {
+            // pass through placeholder
+            // implmenetation should dock the task on the main thread.
+            return lv.get(0);
         });
 
         addUnaryFunction("task_completed", (v) -> {

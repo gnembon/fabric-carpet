@@ -14,29 +14,82 @@ and `voice`. `pos` can be either a block, triple of coords, or a list of thee nu
 
 ## Particles
 
-### `particle(name, pos, count?. spread?, speed?, playername?)`
+### `particle(name, pos, count?. spread?, speed?, player?)`
 
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
 
-### `particle_line(name, pos, pos2, density?)`
+### `particle_line(name, pos, pos2, density?, player?)`
 
 Renders a line of particles from point `pos` to `pos2` with supplied density (defaults to 1), which indicates how far 
-apart you would want particles to appear, so `0.1` means one every 10cm.
+apart you would want particles to appear, so `0.1` means one every 10cm. If a player (or player name) is supplied, only
+that player will receive particles.
 
-### `particle_rect(name, pos, pos2, density?)`
 
-Renders a cuboid of particles between point `pos` to `pos2` with supplied density.
+### `particle_box(name, pos, pos2, density?, player?)`
+### `particle_rect` (deprecated)
+
+Renders a cuboid of particles between points `pos` and `pos2` with supplied density. If a player (or player name) is 
+supplied, only that player will receive particles.
 
 ## Markers
+
+### `draw_shape(shape, duration, key?, value?, ... )`, `draw_shape(shape, duration, l(key?, value?, ... ))`, `draw_shape(shape, duration, attribute_map)`
+
+Draws a shape in the world that will expire in `duration` ticks. Other attributes of the shape should be provided as 
+consecutive key - value argument pairs, either as next arguments, or packed in a list, or supplied as a proper key-value
+`map`. Arguments may include shared shape attributes, which are all optional, as well as shape-specific attributes, that
+could be either optional or required. Shapes will draw properly on all carpet clients. Other connected players that don't
+have carpet installed will still be able to see the required shapes in the form of dust particles. Replacement shapes
+are not required to follow all attributes precisely, but will allow vanilla clients to receive some experience of your 
+apps. One of the attributes that will definitely not be honored is the duration - particles will be send once
+per shape and last whatever they typically last in the game.
+
+Shapes will fail to draw and raise a runtime error if not all its required parameters
+are specified and all available shapes have some parameters that are required, so make sure to have them in place:
+
+On the client, shapes can recognize that they are being redrawn again with the same parameters, disregarding the 
+duration parameter. This updates the expiry on the drawn shape to the new value, instead of adding new shape in its 
+place. This can be used for toggling the shapes on and off that has been send previously with very large durations, 
+or simply refresh the shapes periodically in more dynamic applications.
+
+Optional shared shape attributes:
+ * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
+ in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
+ * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
+ player, otherwise it will be send to all players in the dimension.
+
+Available shapes:
+ * `'line'` - draws a straight line between two points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one end of the line
+     * `to` - other end of the line, same format as `from`
+   * Optional attributes:
+     * `width` - line thickness, defaults to 2.0pt
+     
+ * `'box'` - draws a box with corners in specified points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one corner of the box
+     * `to` - other corner, same format as `from`
+   * Optional attributes:
+     * `width` - mesh line thickness, defaults to 2.0pt
+     * `fill` - color for the box faces, defaults to no fill, use shared color attribute format
+ * `'sphere'` - draws a sphere
+   * Required attributes:
+     * `center` - center of the sphere
+     * `radius` - radius of the sphere
+   * Optional attributes:
+     * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
+      level of detail will be selected automatically based on radius.
+     * `width` - line thickness
 
 ### `create_marker(text, pos, rotation?, block?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
 Unloading the app that spawned them will cause all the markers from the loaded portion of the world to be removed. 
-Also - if the game loads that marker in the future and the app is not loaded, it will be removed as well.
+Also, if the game loads that marker in the future and the app is not loaded, it will be removed as well.
 
 ### `remove_all_markers()`
 
@@ -124,7 +177,7 @@ Prints the message to system logs, and not to chat.
 Runs a vanilla command from the string result of the `expr` and returns its success count
 
 <pre>
-run('fill 1 1 1 10 10 10 air') -> 123 // 123 block were filled, this operation was successful 123 times out of a possible 1000 blocks volume
+run('fill 1 1 1 10 10 10 air') -> 123 // 123 block were filled, this operation was successful 123 times out of a possible 1000 block volume
 run('give @s stone 4') -> 1 // this operation was successful once
 </pre>
 
@@ -136,7 +189,7 @@ performance reasons and saves the world only on demand.
 ### `load_app_data(), load_app_data(file), load_app_data(file, shared?)`
 
 Loads the app data associated with the app from the world /scripts folder. Without argument returns the memory 
-managed and buffered / throttled NBT tag. With a file name - reads explicitly a file with that name from the 
+managed and buffered / throttled NBT tag. With a file name, reads explicitly a file with that name from the 
 scripts folder that belongs exclusively to the app. if `shared` is true, the file location is not exclusive
 to the app anymore, but located in a shared app space. 
 
@@ -213,6 +266,9 @@ Returns current dimension that the script runs in.
 Evaluates the expression `expr` with different dimension execution context. `smth` can be an entity, 
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
+ 
+### `view_distance()`
+Returns the view distance of the server.
 
 ### `schedule(delay, function, args...)`
 
@@ -235,7 +291,7 @@ Queries in-game statistics for certain values. Categories include:
 
 For the options of `entry`, consult your statistics page, or give it a guess.
 
-The call will return `null` if the statistics options are incorrect, or player didn't get these in their history. 
+The call will return `null` if the statistics options are incorrect, or player doesn't have them in their history. 
 If the player encountered the statistic, or game created for him empty one, it will return a number. 
 Scarpet will not affect the entries of the statistics, even if it is just creating empty ones. With `null` response 
-it could either mean your input is wrong, or statistic has effectively a value of `0`.
+it could either mean your input is wrong, or statistic effectively has a value of `0`.

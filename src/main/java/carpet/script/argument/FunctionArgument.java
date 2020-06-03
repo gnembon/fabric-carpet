@@ -22,11 +22,7 @@ public class FunctionArgument extends Argument
         this.function = function;
         this.args = args;
     }
-    public static FunctionArgument findIn(Context c, Module module, List<LazyValue> params, int offset)
-    {
-        return findIn(c, module, params, offset, false);
-    }
-    public static FunctionArgument findIn(Context c, Module module, List<LazyValue> params, int offset, boolean strict)
+    public static FunctionArgument findIn(Context c, Module module, List<LazyValue> params, int offset, boolean prematureEvaluation, boolean strict)
     {
         Value functionValue = params.get(offset).evalValue(c);
         if (!(functionValue instanceof FunctionValue))
@@ -40,9 +36,17 @@ public class FunctionArgument extends Argument
         if (extraargs < 0 || (extraargs > 0 && strict))
             throw new InternalExpressionException("Function "+fun.getPrettyString()+" requires "+fun.getArguments().size()+" arguments");
         List<LazyValue> lvargs = new ArrayList<>();
-        for (int i=0; i< argsize; i++)
+        if (prematureEvaluation)
         {
-            lvargs.add(params.get(offset+1+i));
+            for (int i = 0; i < argsize; i++)
+            {
+                Value arg = params.get(offset + 1 + i).evalValue(c);
+                lvargs.add((cc, tt) -> arg);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < argsize; i++) lvargs.add(params.get(offset + 1 + i));
         }
         return new FunctionArgument(fun, offset+1+argsize, lvargs);
     }

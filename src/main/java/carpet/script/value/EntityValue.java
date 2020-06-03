@@ -8,6 +8,7 @@ import carpet.helpers.Tracer;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
+import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -258,6 +259,8 @@ public class EntityValue extends Value
         put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
+        put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
+        put("portal_timer", (e , a) ->new NumericValue(e.netherPortalCooldown));
         // ItemEntity -> despawn timer via ssGetAge
         put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
@@ -789,26 +792,12 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                if (lv.get(0) instanceof BlockValue)
+                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false);
+                pos = new BlockPos(locator.vec.x, locator.vec.y, locator.vec.z);
+                if (lv.size() > locator.offset)
                 {
-                    pos = ((BlockValue) lv.get(0)).getPos();
-                    if (lv.size()>1)
-                    {
-                        distance = (int) NumericValue.asNumber(lv.get(1)).getLong();
-                    }
+                    distance = (int) NumericValue.asNumber(lv.get(locator.offset)).getLong();
                 }
-                else if (lv.size()>=3)
-                {
-                    pos = new BlockPos(NumericValue.asNumber(lv.get(0)).getLong(),
-                            NumericValue.asNumber(lv.get(1)).getLong(),
-                            NumericValue.asNumber(lv.get(2)).getLong());
-                    if (lv.size()>3)
-                    {
-                        distance = (int) NumericValue.asNumber(lv.get(4)).getLong();
-                    }
-                }
-                else throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
-
             }
             else throw new InternalExpressionException("'home' requires at least one position argument, and optional distance");
 
@@ -838,6 +827,20 @@ public class EntityValue extends Value
             }
         });
 
+        put("portal_cooldown", (e , v) ->
+        {
+            if (v==null)
+                throw new InternalExpressionException("'portal_cooldown' requires a value to set");
+            e.netherPortalCooldown = NumericValue.asNumber(v).getInt();
+        });
+
+        put("portal_timer", (e , v) ->
+        {
+            if (v==null)
+                throw new InternalExpressionException("'portal_timer' requires a value to set");
+            ((EntityInterface) e).setPortalTimer(NumericValue.asNumber(v).getInt());
+        });
+
         put("ai", (e, v) ->
         {
             if (e instanceof MobEntity)
@@ -858,7 +861,10 @@ public class EntityValue extends Value
             if (!(e instanceof LivingEntity)) return;
             LivingEntity le = (LivingEntity)e;
             if (v == null)
+            {
                 le.clearStatusEffects();
+                return;
+            }
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
@@ -891,6 +897,15 @@ public class EntityValue extends Value
                     le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
                     return;
                 }
+            }
+            else
+            {
+                String effectName = v.getString();
+                StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
+                if (effect == null)
+                    throw new InternalExpressionException("Wrong effect name: "+effectName);
+                le.removeStatusEffect(effect);
+                return;
             }
             throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
         });
