@@ -3170,6 +3170,14 @@ Available shapes:
    * Optional attributes:
      * `width` - mesh line thickness, defaults to 2.0pt
      * `fill` - color for the box faces, defaults to no fill, use shared color attribute format
+ * `'sphere'` - draws a sphere
+   * Required attributes:
+     * `center` - center of the sphere
+     * `radius` - radius of the sphere
+   * Optional attributes:
+     * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
+      level of detail will be selected automatically based on radius.
+     * `width` - line thickness
 
 ### `create_marker(text, pos, rotation?, block?)`
 

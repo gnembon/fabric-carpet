@@ -28,6 +28,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.dimension.DimensionType;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -157,6 +159,7 @@ public class ShapeDispatcher
         public static final Map<String, Function<Map<String, Value>,ExpiringShape>> shapeProviders = new HashMap<String, Function<Map<String, Value>, ExpiringShape>>(){{
             put("line", creator(Line::new));
             put("box", creator(Box::new));
+            put("sphere", creator(Sphere::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -387,6 +390,83 @@ public class ShapeDispatcher
         }
     }
 
+    public static class Sphere extends ExpiringShape
+    {
+        private final Set<String> required = ImmutableSet.of("center", "radius");
+        private final Map<String, Value> optional = ImmutableMap.of("width", new NumericValue(2.0), "level", Value.ZERO);
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
+
+        private Sphere()
+        {
+            super();
+        }
+
+        float cx, cy, cz;
+        float radius;
+        int level;
+        int subdivisions;
+        float lineWidth;
+
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+            List<Value> from = ((ListValue)options.get("center")).getItems();
+            cx = NumericValue.asNumber(from.get(0)).getFloat();
+            cy = NumericValue.asNumber(from.get(1)).getFloat();
+            cz = NumericValue.asNumber(from.get(2)).getFloat();
+            radius = NumericValue.asNumber(options.get("radius")).getFloat();
+            level = NumericValue.asNumber(options.getOrDefault("level", optional.get("level"))).getInt();
+            subdivisions = level;
+            if (subdivisions <= 0)
+            {
+                subdivisions = Math.max(10, (int)(10*Math.sqrt(radius)));
+            }
+            lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
+        }
+
+        @Override
+        public Consumer<ServerPlayerEntity> alternative() { return p ->
+        {
+            String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
+            ParticleEffect particle = getParticleData(particleName);
+            float pihalf = (float)(Math.PI / 180.0f);
+            int partno = Math.min(1000,20*subdivisions);
+            Random rand = p.world.getRandom();
+            ServerWorld world = p.getServerWorld();
+            for (int i=0; i<partno; i++)
+            {
+                float theta = 360.0f*rand.nextFloat()*pihalf;
+                float phi = 180f*rand.nextFloat()*pihalf;
+                float x = radius * MathHelper.sin(phi) * MathHelper.cos(theta);
+                float y = radius * MathHelper.sin(phi) * MathHelper.sin(theta);
+                float z = radius * MathHelper.cos(phi);
+                world.spawnParticles(p, particle, true,
+                        x+cx, y+cy, z+cz, 1,
+                        0.0, 0.0, 0.0, 0.0);
+            }
+        };}
+
+        @Override
+        public int calcKey()
+        {
+            int hash = super.calcKey();
+            hash = 31*hash + 3;
+            hash = 31*hash + Float.hashCode(cx);
+            hash = 31*hash + Float.hashCode(cy);
+            hash = 31*hash + Float.hashCode(cz);
+            hash = 31*hash + Float.hashCode(radius);
+            hash = 31*hash + level;
+            hash = 31*hash + Float.hashCode(lineWidth);
+
+            return hash;
+        }
+    }
+
+
     public interface Param
     {
         Map<String, Function<Tag, Value>> decoders = new HashMap<String, Function<Tag, Value>>(){{
@@ -398,6 +478,9 @@ public class ShapeDispatcher
             put("to", Vec3Param::decode);
             put("width", ShapeDispatcher::decodeFloat);
             put("fill", ShapeDispatcher::decodeInt);
+            put("center", Vec3Param::decode);
+            put("radius", ShapeDispatcher::decodeFloat);
+            put("level", ShapeDispatcher::decodeInt);
         }};
         Map<String, Param> coders = new HashMap<String, Param>(){{
             put("player", new PlayerParam());
@@ -409,6 +492,9 @@ public class ShapeDispatcher
             put("to", new ToParam());
             put("width", new WidthParam());
             put("fill", new FillColorParam());
+            put("center", new CenterParam());
+            put("radius", new RadiusParam());
+            put("level", new LevelParam());
         }};
         Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         Value validate(CarpetContext cc, Value value); // makes sure the value is proper
@@ -622,6 +708,30 @@ public class ShapeDispatcher
         public boolean roundsUpForBlocks() { return true; }
         @Override
         public String identify() { return "to"; }
+    }
+
+    public static class CenterParam extends Vec3Param
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return (shape instanceof Sphere); }
+        @Override
+        public boolean roundsUpForBlocks() { return false; }
+        @Override
+        public String identify() { return "center"; }
+    }
+    public static class RadiusParam extends PositiveFloatParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Sphere; }
+        @Override
+        public String identify() { return "radius"; }
+    }
+    public static class LevelParam extends PositiveIntParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Sphere; }
+        @Override
+        public String identify() { return "level"; }
     }
 
 
