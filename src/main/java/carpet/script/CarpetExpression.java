@@ -2987,6 +2987,12 @@ public class CarpetExpression
             return (cc, tt) -> retval;
         });
 
+        this.expr.addLazyFunction("view_distance", 0, (c, t, lv) -> {
+            ServerCommandSource s = ((CarpetContext)c).s;
+            Value retval = new NumericValue(s.getMinecraftServer().getPlayerManager().getViewDistance());
+            return (cc, tt) -> retval;
+        });
+
         this.expr.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
             ServerCommandSource outerSource = ((CarpetContext)c).s;
             Value dimensionValue = lv.get(0).evalValue(c);
