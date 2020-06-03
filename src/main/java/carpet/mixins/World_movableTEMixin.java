@@ -39,7 +39,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
     //public abstract ChunkManager getChunkManager();
     
     @Shadow
-    public abstract void checkBlockRerender(BlockPos blockPos_1, BlockState s1, BlockState s2);
+    public abstract void scheduleBlockRerenderIfNeeded(BlockPos blockPos_1, BlockState s1, BlockState s2);
     
     @Shadow
     public abstract void updateListeners(BlockPos var1, BlockState var2, BlockState var3, int var4);
@@ -105,7 +105,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
                 {
                     if (blockState_2 != blockState_3)
                     {
-                        this.checkBlockRerender(blockPos_1, blockState_2, blockState_3);
+                        this.scheduleBlockRerenderIfNeeded(blockPos_1, blockState_2, blockState_3);
                     }
                     
                     if ((int_1 & 2) != 0 && (!this.isClient || (int_1 & 4) == 0) && (this.isClient || worldChunk_1.getLevelType() != null && worldChunk_1.getLevelType().isAfter(ChunkHolder.LevelType.TICKING)))

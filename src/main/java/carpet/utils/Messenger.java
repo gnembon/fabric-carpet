@@ -258,7 +258,7 @@ public class Messenger
     }
     public static void m(PlayerEntity player, Object ... fields)
     {
-        player.sendSystemMessage(Messenger.c(fields), Util.field_25140); //NULL UUID
+        player.sendSystemMessage(Messenger.c(fields), Util.NIL_UUID);
     }
 
     /*
@@ -302,7 +302,7 @@ public class Messenger
 
     public static void send(PlayerEntity player, Collection<BaseText> lines)
     {
-        lines.forEach(message -> player.sendSystemMessage(message, Util.field_25140));
+        lines.forEach(message -> player.sendSystemMessage(message, Util.NIL_UUID));
     }
     public static void send(ServerCommandSource source, Collection<BaseText> lines)
     {
@@ -314,21 +314,21 @@ public class Messenger
     {
         if (server == null)
             LOG.error("Message not delivered: "+message);
-        server.sendSystemMessage(new LiteralText(message), Util.field_25140);
+        server.sendSystemMessage(new LiteralText(message), Util.NIL_UUID);
         BaseText txt = c("gi "+message);
         for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
         {
-            entityplayer.sendSystemMessage(txt, Util.field_25140);
+            entityplayer.sendSystemMessage(txt, Util.NIL_UUID);
         }
     }
     public static void print_server_message(MinecraftServer server, BaseText message)
     {
         if (server == null)
             LOG.error("Message not delivered: "+message.getString());
-        server.sendSystemMessage(message, Util.field_25140);
+        server.sendSystemMessage(message, Util.NIL_UUID);
         for (PlayerEntity entityplayer : server.getPlayerManager().getPlayerList())
         {
-            entityplayer.sendSystemMessage(message, Util.field_25140);
+            entityplayer.sendSystemMessage(message, Util.NIL_UUID);
         }
     }
 }

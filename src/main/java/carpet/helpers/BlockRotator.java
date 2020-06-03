@@ -365,7 +365,7 @@ public class BlockRotator
         if (newState != null)
         {
             world.setBlockState(pos, newState, 2 | 1024);
-            world.checkBlockRerender(pos, state, newState);
+            world.scheduleBlockRerenderIfNeeded(pos, state, newState);
             return true;
         }
         return false;
