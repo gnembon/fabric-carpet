@@ -128,7 +128,13 @@ public class CarpetEventServer
                 List<LazyValue> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source = cmdSourceSupplier.get();
                 assert argv.size() == reqArgs;
-                callList.removeIf(call -> !CarpetServer.scriptServer.runas(source, call.host, call.function, argv)); // this actually does the calls
+                List<Callback> fails = new ArrayList<>();
+                for (Callback call: callList)
+                {
+                    if (!CarpetServer.scriptServer.runas(source, call.host, call.function, argv))
+                        fails.add(call);
+                }
+                for (Callback call : fails) callList.remove(call);
             }
         }
         public boolean addEventCall(ServerCommandSource source,  String hostName, String funName, Function<ScriptHost, Boolean> verifier)
@@ -549,6 +555,23 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         },
+        PLAYER_CONNECTS("player_connects", 1, false) {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_DISCONNECTS("player_disconnects", 2, false) {
+            @Override
+            public void onPlayerMessage(ServerPlayerEntity player, String message)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new StringValue(message))
+                ), player::getCommandSource);
+            }
+        },
         STATISTICS("statistic", 4, false)
         {
             private <T> Identifier getStatId(Stat<T> stat)
@@ -613,6 +636,7 @@ public class CarpetEventServer
         public void onTick() { }
         public void onChunkGenerated(ServerWorld world, Chunk chunk) { }
         public void onPlayerEvent(ServerPlayerEntity player) { }
+        public void onPlayerMessage(ServerPlayerEntity player, String message) { }
         public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount) { }
         public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
         public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) { }

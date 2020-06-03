@@ -1,0 +1,234 @@
+{
+  "rule.antiCheatDisabled.name": "關閉伺服器作弊檢測",
+  "rule.antiCheatDisabled.desc": "防止玩家因為“本伺服器不允許飛行”，“移動速度過快”等原因被請出伺服器",
+
+  "rule.carpets.name": "放置地毯顯示進階數據",
+  "rule.carpets.desc": "通過把地毯放置在地上取得更進階信息",
+
+  "rule.combineXPOrbs.name": "合併小經驗球",
+  "rule.combineXPOrbs.desc": "會將大量的小經驗球合併成等效的大經驗球",
+
+  "rule.commandCameramode.name": "旁觀者模式",
+  "rule.commandCameramode.desc": "允許玩家使用/c切換成旁觀者模式，利用/s切換回生存模式",
+  "rule.commandCameramode.extra.0": "/c及/s不需要op權限也可使用",
+
+  "rule.commandDistance.name": "距離測定",
+  "rule.commandDistance.desc": "使用/distance指令測定兩點的距離",
+  "rule.commandDistance.extra.0": "可以使用放置棕色地毯來使用此功能，前提是“放置地毯顯示進階數據”已啟用",
+
+  "rule.commandDraw.name": "繪製圖形",
+  "rule.commandDraw.desc": "使用/draw指令以允許繪製一些簡易圖形",
+
+  "rule.commandInfo.name": "獲取方塊進階資訊",
+  "rule.commandInfo.desc": "允許使用/info指令以獲得方塊進階資訊",
+  "rule.commandInfo.extra.0": "可以使用放置灰色地毯來使用此功能，前提是“放置地毯顯示進階數據”已啟用",
+
+  "rule.commandLog.name": "遊戲數據追蹤器",
+  "rule.commandLog.desc": "允許使用/log指令使在Tab欄位追蹤遊戲部分數據",
+
+  "rule.commandPerimeterInfo.name": "刷怪區域追蹤器",
+  "rule.commandPerimeterInfo.desc": "允許使用/perimeterinfo指令以探查周圍可生怪區域",
+
+  "rule.commandPlayer.name": "機器人控制",
+  "rule.commandPlayer.desc": "允許使用/player指令以控制/召喚已存在的玩家id作為機器人",
+
+  "rule.commandScript.name": "地毯腳本控制器",
+  "rule.commandScript.desc": "允許使用/script相關指令",
+  "rule.commandScript.extra.0": "一個Scarpet程式語言的遊戲內API",
+
+  "rule.commandSpawn.name": "刷怪追蹤器",
+  "rule.commandSpawn.desc": "允許使用/spawn指令用於怪物生成追蹤",
+
+  "rule.commandTick.name": "遊戲時鐘控制器",
+  "rule.commandTick.desc": "允許使用/tick指令控制遊戲內的伺服器端運行速度",
+
+  "rule.commandTrackAI.name": "AI追蹤器",
+  "rule.commandTrackAI.desc": "允許使用/track指令以追蹤生物的AI",
+
+  "rule.ctrlQCraftingFix.name": "ctrlQ合成修復",
+  "rule.ctrlQCraftingFix.desc": "在合成時允許使用ctrl+Q快捷鍵扔出結果格內所有物品",
+
+  "rule.customMOTD.name": "MOTD更改",
+  "rule.customMOTD.desc": "設置一個不同的MOTD信息",
+  "rule.customMOTD.extra.0": "設置成'_'時將採用默認的MOTD(從server.properties中讀取的)",
+
+  "rule.defaultLoggers.name": "默認開啟的遊戲數據追蹤器",
+  "rule.defaultLoggers.desc": "為所有新加入的玩家設置部分遊戲數據追蹤器默認為開啟狀態",
+  "rule.defaultLoggers.extra.0": "比如設置'tps,mobcaps'最為默認遊戲數據追蹤",
+
+  "rule.desertShrubs.name": "樹苗在沙漠中乾枯",
+  "rule.desertShrubs.desc": "樹苗將在附近無水源狀態的沙漠生態群系變成枯灌木",
+
+  "rule.disableSpawnChunks.name": "允許出生點區塊被卸載",
+  "rule.disableSpawnChunks.desc": "允許出生點區塊被卸載",
+
+  "rule.explosionNoBlockDamage.name": "爆炸不破壞方塊",
+  "rule.explosionNoBlockDamage.desc": "任何形式的爆炸都無法摧毀方塊",
+
+  "rule.extremeBehaviours.name": "隨機參數極端化",
+  "rule.extremeBehaviours.desc": "大幅度提升極端情況出現的概率，僅用於測試",
+  "rule.extremeBehaviours.extra.0": "發射器和投擲器將使用最大隨機刻",
+
+  "rule.fastRedstoneDust.name": "紅石粉卡頓優化",
+  "rule.fastRedstoneDust.desc": "紅石粉卡頓優化 作者 Theosib",
+
+  "rule.fillLimit.name": "fill/clone上限更改",
+  "rule.fillLimit.desc": "將fill/clone上限更改為自己設定的值",
+  "rule.fillLimit.extra.0": "你必須在1-2千萬之間取一個整數值",
+
+  "rule.fillUpdates.name": "fill更新設置",
+  "rule.fillUpdates.desc": "fill/clone/setblock指令以及結構方塊執行時是否產生更新",
+  "rule.fillUpdates.extra.0": "設置為true時有更新 設置為false時為無更新",
+
+  "rule.flatWorldStructureSpawning.name": "特定建築怪在超平坦世界生成",
+  "rule.flatWorldStructureSpawning.desc": "允許特定建築的怪物在超平坦世界生成",
+
+  "rule.flippinCactus.name": "仙人掌扳手",
+  "rule.flippinCactus.desc": "允許使用仙人掌調整方塊朝向，並且不會造成更新",
+
+  "rule.hardcodeTNTangle.name": "強制TNT角度",
+  "rule.hardcodeTNTangle.desc": "把TNT水平隨機角度設定為固定值，可用於測試機器",
+  "rule.hardcodeTNTangle.extra.0": "默認為-1，必須在0與360之間，或者-1",
+
+  "rule.hopperCounters.name": "漏斗計數器",
+  "rule.hopperCounters.desc": "漏斗指向的羊毛方塊會計算吸收的物品並清除",
+  "rule.hopperCounters.extra.0": "在羊毛方塊上放置紅色或綠色地毯，使用/counter指令可啟用",
+  "rule.hopperCounters.extra.1": "使用 /counter <color?> reset重置計數器，使用/counter <color?>查詢資訊",
+  "rule.hopperCounters.extra.2": "在生存模式，在同色羊毛上放置綠色地毯可以查詢，放紅色地毯重置",
+  "rule.hopperCounters.extra.3": "數據是全伺服器玩家共享的，並且有16色可以使用",
+  "rule.hopperCounters.extra.4": "物品會被銷毀，每個漏斗每tick銷毀一組物品",
+
+  "rule.huskSpawningInTemples.name": "屍殼在沙漠神殿裡生成",
+  "rule.huskSpawningInTemples.desc": "只有屍殼會在沙漠神殿生成",
+
+  "rule.lagFreeSpawning.name": "延遲自然生成",
+  "rule.lagFreeSpawning.desc": "生物生成需要更少的CPU和RAM",
+
+  "rule.leadFix.name": "栓繩修復",
+  "rule.leadFix.desc": "修復栓繩在未加載區塊中，變得不可見的問題",
+
+  "rule.maxEntityCollisions.name": "最大實體擠壓數量",
+  "rule.maxEntityCollisions.desc": "設定最大實體擠壓限制，0表示無限大",
+
+  "rule.mergeTNT.name": "合併TNT",
+  "rule.mergeTNT.desc": "合併靜止的點燃的tnt實體",
+
+  "rule.missingTools.name": "工具缺失修復",
+  "rule.missingTools.desc": "活塞，玻璃和海綿可以使用合適的工具更快地破壞",
+
+  "rule.movableBlockEntities.name": "容器方塊移動",
+  "rule.movableBlockEntities.desc": "活塞可以推動具有容器標籤的方塊，比如箱子，漏斗",
+
+  "rule.onePlayerSleeping.name": "單個玩家睡覺跳過夜晚",
+  "rule.onePlayerSleeping.desc": "只要伺服器中其中一人睡覺即可跳過全伺服器夜晚",
+
+  "rule.optimizedTNT.name": "TNT優化",
+  "rule.optimizedTNT.desc": "tnt在相同位置或者在流體裡，爆炸將造成更低延遲",
+
+  "rule.persistentParrots.name": "鸚鵡停留",
+  "rule.persistentParrots.desc": "鸚鵡不會離開你的肩膀，除非你受到傷害",
+
+  "rule.placementRotationFix.name": "放置旋轉問題修復",
+  "rule.placementRotationFix.desc": "修復玩家放置方塊時快速轉身造成的問題",
+
+  "rule.pushLimit.name": "自訂義推動上限",
+  "rule.pushLimit.desc": "自訂義活塞推動上限",
+  "rule.pushLimit.extra.0": "你必須在1-1024中選取一個值，預設是12",
+
+  "rule.quasiConnectivity.name": "半連接激活開關",
+  "rule.quasiConnectivity.desc": "活塞，發射器和投擲器在他們上方方塊激活時是否響應",
+  "rule.quasiConnectivity.extra.0": "設置為true為開啟 設置為false為禁用",
+
+  "rule.railPowerLimit.name": "自訂義動力鐵軌激活距離",
+  "rule.railPowerLimit.desc": "動力鐵軌激活距離能在此更改",
+  "rule.railPowerLimit.extra.0": "你必須在1-1024中選取一個數值",
+
+  "rule.renewableCoral.name": "可再生珊瑚",
+  "rule.renewableCoral.desc": "使用骨粉可催熟珊瑚以長成珊瑚方塊結構",
+
+  "rule.renewableSponges.name": "可再生海綿",
+  "rule.renewableSponges.desc": "深海守衛將在被雷擊後變成遠古深海守衛",
+
+  "rule.rotatorBlock.name": "仙人掌扳手發射器版",
+  "rule.rotatorBlock.desc": "發射器中的仙人掌可以旋轉方塊（盡可能以逆時針）",
+
+  "rule.scriptsAutoload.name": "Scarpet腳本自動加載",
+  "rule.scriptsAutoload.desc": "在伺服器/世界加載的時候將會自動從世界文件中加載Scarpet腳本文件",
+  "rule.scriptsAutoload.extra.0": "/script指令必須為啟用狀態",
+
+  "rule.shulkerSpawningInEndCities.name": "可重生界伏蚌",
+  "rule.shulkerSpawningInEndCities.desc": "界伏蚌將會在終界城市中重生",
+
+  "rule.silverFishDropGravel.name": "蠹魚鑽出放塊掉落礫石",
+  "rule.silverFishDropGravel.desc": "蠹魚鑽出放塊時會掉落礫石",
+
+  "rule.smoothClientAnimations.name": "更平暢玩家端動畫",
+  "rule.smoothClientAnimations.desc": "降低TPS設置時可以使玩家端動畫更加平暢",
+  "rule.smoothClientAnimations.extra.0": "僅在單人模式中生效，並且會降低玩家端運行速度",
+
+  "rule.stackableShulkerBoxes.name": "可堆疊界伏盒",
+  "rule.stackableShulkerBoxes.desc": "空的界伏盒扔在地上時將會自動堆疊，直到堆疊為1組",
+  "rule.stackableShulkerBoxes.extra.0": "在物品GUI中，請使用shift鍵+單擊以移動整組界伏盒",
+
+  "rule.summonNaturalLightning.name": "召喚閃電自然化",
+  "rule.summonNaturalLightning.desc": "召喚的閃電將具有自然生成時的特性",
+
+  "rule.tntDoNotUpdate.name": "TNT放置時不會被更新",
+  "rule.tntDoNotUpdate.desc": "TNT在放置時不會產生任何方塊更新（不會激活）",
+
+  "rule.tntPrimerMomentumRemoved.name": "移除TNT點燃時隨機動量",
+  "rule.tntPrimerMomentumRemoved.desc": "TNT點燃時的隨機動量將被移除",
+
+  "rule.tntRandomRange.name": "TNT爆炸範圍設置",
+  "rule.tntRandomRange.desc": "設置TNT隨機爆炸範圍為一個固定的值,設為-1以禁用",
+  "rule.tntRandomRange.extra.0": "必須啟用optimizedTNT功能",
+  "rule.tntRandomRange.extra.1": "不能設置為負數，除了-1",
+
+  "rule.unloadedEntityFix.name": "未加載實體修復",
+  "rule.unloadedEntityFix.desc": "進入或者被推入未加載區塊的實體不會消失",
+
+  "rule.viewDistance.name": "自訂義視野",
+  "rule.viewDistance.desc": "改變伺服器端視野距離，設置為0以使用默認值",
+  "rule.viewDistance.extra.0": "你必須在0(使用伺服器默認設置)-32取一個整數",
+
+  "rule.xpNoCooldown.name": "經驗球吸收無冷卻",
+  "rule.xpNoCooldown.desc": "玩家吸收經驗球不會有冷卻時間",
+
+  "rule.portalSuffocationFix.name": "傳送門窒息修復",
+  "rule.portalSuffocationFix.desc": "使地獄傳送門正確地傳送實體",
+  "rule.portalSuffocationFix.extra.0": "傳送的實體將不再卡在黑曜石裡",
+
+  "rule.portalCreativeDelay.name": "創造模式玩家地獄門傳送延遲",
+  "rule.portalCreativeDelay.desc": "創造模式下使用地獄傳送門將同生存時產生延遲",
+
+
+  "category.bugfix": "BUG修復",
+  "category.survival": "生存用",
+  "category.creative": "創造用",
+  "category.experimental": "實驗用",
+  "category.optimization": "優化",
+  "category.feature": "特性",
+  "category.command": "指令",
+  "category.tnt": "TNT",
+  "category.dispenser": "發射器",
+  "category.scarpet": "scarpet腳本程式語言",
+  "category.client": "玩家端",
+
+  "ui.browse_categories": "瀏覽分類",
+  "ui.list_all_%(cat)s_settings": "列出所有 %s 選項",
+  "ui.version": "版本",
+  "ui.current_%(mod)s_settings": "目前啟用的 %s 選項",
+  "ui.switch_to": "切換至",
+  "ui.settings_are_locked": "選項被鎖定",
+  "ui.is_set_to": "被設置為",
+  "ui.unknown_rule": "未知的規則選項",
+  "ui.current_%(mod)s_startup_settings_from_%(conf)s": "目前啟用的%s選項，從%s中讀取得",
+  "ui.%(mod)s_settings_matching_'%(query)s'": "%s中符合\"%s\"的選項：",
+  "ui.all_%(mod)s_settings": "所有的%s選項",
+  "ui.tags": "分類",
+  "ui.change_permanently": "設為預設",
+  "ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts": "點擊此按鈕以使此選項保存於%s，重啟後依舊生效",
+  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "規則%s將會被默認設置為%s",
+  "ui.current_value": "當前的值"
+
+}

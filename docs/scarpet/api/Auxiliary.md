@@ -36,19 +36,54 @@ supplied, only that player will receive particles.
 
 ## Markers
 
-### `marker_box(from, to, duration?, color?, player?)`
+### `draw_shape(shape, duration, key?, value?, ... )`, `draw_shape(shape, duration, l(key?, value?, ... ))`, `draw_shape(shape, duration, attribute_map)`
 
-Draws a box with `from` and `to` corners in the box. The boxes will dissipate after `duration` ticks (defaults to 10).
-The color is an integer that indicate red, green, blue and alpha components in the form of `0xRRGGBBAA`, with the
-default of `-1`, so white opaque, or `0xFFFFFFFF`. If player is specified, only displays for that player, otherwise all 
-players will see them. `marker_box` requires proper client synchronization to display these, and on non-supported
-clients, the box will be replaced with close matching dust particles, so using of `marker_box` is safe to use for
-scripts regardless who is targeted. The only consideration is that with vanilla clients, duration of particles cannot
-be controlled, and last whatever the original particles do.
+Draws a shape in the world that will expire in `duration` ticks. Other attributes of the shape should be provided as 
+consecutive key - value argument pairs, either as next arguments, or packed in a list, or supplied as a proper key-value
+`map`. Arguments may include shared shape attributes, which are all optional, as well as shape-specific attributes, that
+could be either optional or required. Shapes will draw properly on all carpet clients. Other connected players that don't
+have carpet installed will still be able to see the required shapes in the form of dust particles. Replacement shapes
+are not required to follow all attributes precisely, but will allow vanilla clients to receive some experience of your 
+apps. One of the attributes that will definitely not be honored is the duration - particles will be send once
+per shape and last whatever they typically last in the game.
 
-### `marker_line(from, to, duration?, color?, player?)`
+Shapes will fail to draw and raise a runtime error if not all its required parameters
+are specified and all available shapes have some parameters that are required, so make sure to have them in place:
 
-Draws a marker line on client's screen. Uses similar setup as `marker_box`.
+On the client, shapes can recognize that they are being redrawn again with the same parameters, disregarding the 
+duration parameter. This updates the expiry on the drawn shape to the new value, instead of adding new shape in its 
+place. This can be used for toggling the shapes on and off that has been send previously with very large durations, 
+or simply refresh the shapes periodically in more dynamic applications.
+
+Optional shared shape attributes:
+ * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
+ in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
+ * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
+ player, otherwise it will be send to all players in the dimension.
+
+Available shapes:
+ * `'line'` - draws a straight line between two points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one end of the line
+     * `to` - other end of the line, same format as `from`
+   * Optional attributes:
+     * `width` - line thickness, defaults to 2.0pt
+     
+ * `'box'` - draws a box with corners in specified points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one corner of the box
+     * `to` - other corner, same format as `from`
+   * Optional attributes:
+     * `width` - mesh line thickness, defaults to 2.0pt
+     * `fill` - color for the box faces, defaults to no fill, use shared color attribute format
+ * `'sphere'` - draws a sphere
+   * Required attributes:
+     * `center` - center of the sphere
+     * `radius` - radius of the sphere
+   * Optional attributes:
+     * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
+      level of detail will be selected automatically based on radius.
+     * `width` - line thickness
 
 ### `create_marker(text, pos, rotation?, block?)`
 
@@ -231,6 +266,9 @@ Returns current dimension that the script runs in.
 Evaluates the expression `expr` with different dimension execution context. `smth` can be an entity, 
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
+ 
+### `view_distance()`
+Returns the view distance of the server.
 
 ### `schedule(delay, function, args...)`
 

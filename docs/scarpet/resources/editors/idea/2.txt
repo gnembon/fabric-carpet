@@ -17,6 +17,7 @@ current_dimension
 day_time
 destroy
 diamond
+draw_shape
 drop_item
 emitted_light
 entity_area
@@ -101,6 +102,7 @@ ticks_randomly
 top
 transparent
 update
+view_distance
 volume
 without_updates
 world_time

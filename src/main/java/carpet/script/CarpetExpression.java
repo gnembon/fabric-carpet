@@ -2704,7 +2704,7 @@ public class CarpetExpression
             ServerPlayerEntity player = null;
             if (params.containsKey("player"))
             {
-                player = (ServerPlayerEntity) ((EntityValue)params.get("player")).getEntity();
+                player = (ServerPlayerEntity)((EntityValue)params.get("player")).getEntity();
             }
             ShapeDispatcher.sendShape(
                     (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
@@ -2984,6 +2984,12 @@ public class CarpetExpression
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(s.getWorld().method_27983().getValue())); // getDImensionType
+            return (cc, tt) -> retval;
+        });
+
+        this.expr.addLazyFunction("view_distance", 0, (c, t, lv) -> {
+            ServerCommandSource s = ((CarpetContext)c).s;
+            Value retval = new NumericValue(s.getMinecraftServer().getPlayerManager().getViewDistance());
             return (cc, tt) -> retval;
         });
 

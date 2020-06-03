@@ -906,8 +906,11 @@ sleep(50)
 
 ### `time()`
 
-Returns the number of milliseconds since 'some point', like Java's `System.nanoTime()`. 
-It returns a float, which has 1 microsecond precision (0.001 ms)
+Returns the number of milliseconds since 'some point', like Java's `System.nanoTime()`, which varies from system to 
+system and from Java to Java. This measure should NOT be used to determine the current (date)time, but to measure
+durations of things.
+it returns a float with time in milliseconds (ms) for convenience and microsecond (μs) resolution for sanity.
+
 
 <pre>
 start_time = time();
@@ -1513,7 +1516,7 @@ range(5,10)  => [5, 6, 7, 8, 9]
 range(20, 10, -2)  => [20, 18, 16, 14, 12]
 </pre>
 
-### `element(list, index)` (deprecated)
+### `element(list, index)(deprecated)`
 
 Legacy support for older method that worked only on lists. Please use `get(...)` for equivalent support, or `.` 
 operator. Also previous unique behaviours with `put` on lists has been removed to support all type of 
@@ -3044,6 +3047,8 @@ __on_player_starts_sprinting(player)
 __on_player_stops_sprinting(player)
 __on_player_drops_item(player)
 __on_player_drops_stack(player)
+__on_player_connects(player)
+__on_player_disconnects(player, reason)
 __on_statistic(player, category, event, value) // player statistic changes
 </pre>
 
@@ -3103,23 +3108,76 @@ and `voice`. `pos` can be either a block, triple of coords, or a list of thee nu
 
 ## Particles
 
-### `particle(name, pos, count?. spread?, speed?, playername?)`
+### `particle(name, pos, count?. spread?, speed?, player?)`
 
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
 
-### `particle_line(name, pos, pos2, density?)`
+### `particle_line(name, pos, pos2, density?, player?)`
 
 Renders a line of particles from point `pos` to `pos2` with supplied density (defaults to 1), which indicates how far 
-apart you would want particles to appear, so `0.1` means one every 10cm.
+apart you would want particles to appear, so `0.1` means one every 10cm. If a player (or player name) is supplied, only
+that player will receive particles.
 
-### `particle_rect(name, pos, pos2, density?)`
 
-Renders a cuboid of particles between points `pos` and `pos2` with supplied density.
+### `particle_box(name, pos, pos2, density?, player?)`
+### `particle_rect` (deprecated)
+
+Renders a cuboid of particles between points `pos` and `pos2` with supplied density. If a player (or player name) is 
+supplied, only that player will receive particles.
 
 ## Markers
+
+### `draw_shape(shape, duration, key?, value?, ... )`, `draw_shape(shape, duration, l(key?, value?, ... ))`, `draw_shape(shape, duration, attribute_map)`
+
+Draws a shape in the world that will expire in `duration` ticks. Other attributes of the shape should be provided as 
+consecutive key - value argument pairs, either as next arguments, or packed in a list, or supplied as a proper key-value
+`map`. Arguments may include shared shape attributes, which are all optional, as well as shape-specific attributes, that
+could be either optional or required. Shapes will draw properly on all carpet clients. Other connected players that don't
+have carpet installed will still be able to see the required shapes in the form of dust particles. Replacement shapes
+are not required to follow all attributes precisely, but will allow vanilla clients to receive some experience of your 
+apps. One of the attributes that will definitely not be honored is the duration - particles will be send once
+per shape and last whatever they typically last in the game.
+
+Shapes will fail to draw and raise a runtime error if not all its required parameters
+are specified and all available shapes have some parameters that are required, so make sure to have them in place:
+
+On the client, shapes can recognize that they are being redrawn again with the same parameters, disregarding the 
+duration parameter. This updates the expiry on the drawn shape to the new value, instead of adding new shape in its 
+place. This can be used for toggling the shapes on and off that has been send previously with very large durations, 
+or simply refresh the shapes periodically in more dynamic applications.
+
+Optional shared shape attributes:
+ * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
+ in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
+ * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
+ player, otherwise it will be send to all players in the dimension.
+
+Available shapes:
+ * `'line'` - draws a straight line between two points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one end of the line
+     * `to` - other end of the line, same format as `from`
+   * Optional attributes:
+     * `width` - line thickness, defaults to 2.0pt
+     
+ * `'box'` - draws a box with corners in specified points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one corner of the box
+     * `to` - other corner, same format as `from`
+   * Optional attributes:
+     * `width` - mesh line thickness, defaults to 2.0pt
+     * `fill` - color for the box faces, defaults to no fill, use shared color attribute format
+ * `'sphere'` - draws a sphere
+   * Required attributes:
+     * `center` - center of the sphere
+     * `radius` - radius of the sphere
+   * Optional attributes:
+     * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
+      level of detail will be selected automatically based on radius.
+     * `width` - line thickness
 
 ### `create_marker(text, pos, rotation?, block?)`
 
@@ -3302,6 +3360,9 @@ Returns current dimension that the script runs in.
 Evaluates the expression `expr` with different dimension execution context. `smth` can be an entity, 
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
+ 
+### `view_distance()`
+Returns the view distance of the server.
 
 ### `schedule(delay, function, args...)`
 

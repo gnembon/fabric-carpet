@@ -13,6 +13,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
@@ -32,6 +33,7 @@ public class ShapesRenderer
     {{
         put("line", RenderedLine::new);
         put("box", RenderedBox::new);
+        put("sphere", RenderedSphere::new);
     }};
 
     public ShapesRenderer(MinecraftClient minecraftClient)
@@ -93,12 +95,9 @@ public class ShapesRenderer
         if (shape == null) return;
         BiFunction<MinecraftClient, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >> shapeFactory;
         shapeFactory = renderedShapes.get(tag.getString("shape"));
-
-
-
         if (shapeFactory == null)
         {
-            CarpetSettings.LOG.error("Unrecognized shape: "+tag.getString("shape"));
+            CarpetSettings.LOG.info("Unrecognized shape: "+tag.getString("shape"));
         }
         else
         {
@@ -163,9 +162,9 @@ public class ShapesRenderer
         @Override
         public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
-            RenderSystem.lineWidth(2.0F);
-            bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
-            drawBoxWireGLLines(bufferBuilder,
+            RenderSystem.lineWidth(shape.lineWidth);
+
+            drawBoxWireGLLines(tessellator, bufferBuilder,
                     shape.x1 - cx-renderEpsilon, shape.y1 - cy-renderEpsilon, shape.z1 - cz-renderEpsilon,
                     shape.x2 - cx+renderEpsilon, shape.y2 - cy+renderEpsilon, shape.z2 - cz+renderEpsilon,
                     shape.r, shape.g, shape.b, shape.a, shape.r, shape.g, shape.b
@@ -175,14 +174,15 @@ public class ShapesRenderer
         @Override
         public void render2pass(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
+            if (shape.fa == 0.0) return;
             RenderSystem.lineWidth(1.0F);
-            bufferBuilder.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR); // 3
-            drawBox(bufferBuilder,
+
+            drawBoxFaces(tessellator, bufferBuilder,
                     shape.x1-cx-renderEpsilon, shape.y1-cy-renderEpsilon, shape.z1-cz-renderEpsilon,
                     shape.x2-cx+renderEpsilon, shape.y2-cy+renderEpsilon, shape.z2-cz+renderEpsilon,
-                    shape.r, shape.g, shape.b, shape.a/6
+                    shape.fr, shape.fg, shape.fb, shape.fa
             );
-            tessellator.draw();
+
         }
     }
 
@@ -195,26 +195,43 @@ public class ShapesRenderer
         @Override
         public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
         {
-            RenderSystem.lineWidth(2.0F);
-            bufferBuilder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
-            drawLine(bufferBuilder,
+            RenderSystem.lineWidth(shape.lineWidth);
+            drawLine(tessellator, bufferBuilder,
                     shape.x1-cx-renderEpsilon, shape.y1-cy-renderEpsilon, shape.z1-cz-renderEpsilon,
                     shape.x2-cx+renderEpsilon, shape.y2-cy+renderEpsilon, shape.z2-cz+renderEpsilon,
                     shape.r, shape.g, shape.b, shape.a
             );
-            tessellator.draw();
+        }
+    }
+
+    public static class RenderedSphere extends RenderedShape<ShapeDispatcher.Sphere>
+    {
+        public RenderedSphere(MinecraftClient client, ShapeDispatcher.ExpiringShape shape)
+        {
+            super(client, (ShapeDispatcher.Sphere)shape);
+        }
+        @Override
+        public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
+        {
+            RenderSystem.lineWidth(shape.lineWidth);
+            drawSphereWireframe(tessellator, bufferBuilder,
+                    shape.cx-cx-renderEpsilon, shape.cy-cy-renderEpsilon, shape.cz-cz-renderEpsilon,
+                    shape.radius, shape.subdivisions,
+                    shape.r, shape.g, shape.b, shape.a);
         }
     }
 
     // some raw shit
 
-    public static void drawLine(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
-
+    public static void drawLine(Tessellator tessellator, BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
+        builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
         builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        tessellator.draw();
     }
 
-    public static void drawBoxWireGLLines(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2) {
+    public static void drawBoxWireGLLines(Tessellator tessellator, BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2) {
+        builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
         builder.vertex(x1, y1, z1).color(red1, grn2, blu2, alpha).next();
         builder.vertex(x2, y1, z1).color(red1, grn2, blu2, alpha).next();
         builder.vertex(x1, y1, z1).color(red2, grn1, blu2, alpha).next();
@@ -241,7 +258,8 @@ public class ShapesRenderer
         builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
     }
 
-    public static void drawBox(BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
+    public static void drawBoxFaces(Tessellator tessellator, BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
+        builder.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR); // 3
         builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
@@ -271,5 +289,44 @@ public class ShapesRenderer
         builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+        tessellator.draw();
+    }
+
+    public static void drawSphereWireframe(Tessellator tessellator, BufferBuilder builder,
+                                           float cx, float cy, float cz,
+                                           float r, int subd,
+                                           float red, float grn, float blu, float alpha)
+    {
+        float pihalf = (float)(Math.PI / 180.0f);
+        float step = 180f / (subd/2);
+        for (float i = 0f; i <= 360.0f; i+=step)
+        {
+            builder.begin(GL11.GL_LINE_STRIP, VertexFormats.POSITION_COLOR);
+            float theta = i * pihalf;
+            for (float j = 0f; j <= 180.0f; j+=step) {
+                float phi = j * pihalf;
+                float x = r * MathHelper.sin(phi) * MathHelper.cos(theta);
+                float z = r * MathHelper.sin(phi) * MathHelper.sin(theta);
+                float y = r * MathHelper.cos(phi);
+                builder.vertex(x+cx, y+cy, z+cz).color(red, grn, blu, alpha).next();
+            }
+            tessellator.draw();
+        }
+        for (float j = 0f; j <= 180.0f; j+=step)
+        {
+            builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+            float phi = j * pihalf;
+
+            for (float i = 0f; i <= 360.0f; i+=step)
+            {
+                float theta = i * pihalf;
+                float x = r * MathHelper.sin(phi) * MathHelper.cos(theta);
+                float z = r * MathHelper.sin(phi) * MathHelper.sin(theta);
+                float y = r * MathHelper.cos(phi);
+                builder.vertex(x+cx, y+cy, z+cz).color(red, grn, blu, alpha).next();
+            }
+            tessellator.draw();
+        }
+
     }
 }

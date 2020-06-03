@@ -19,6 +19,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -27,6 +28,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.dimension.DimensionType;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -59,7 +62,7 @@ public class ShapeDispatcher
             if (ServerNetworkHandler.validCarpetPlayers.contains(player))
             {
                 if (tag == null) tag = ExpiringShape.toTag(params);
-                ServerNetworkHandler.sendCustomCommand(player,"renderShape", tag);
+                ServerNetworkHandler.sendCustomCommand(player,"scShape", tag);
             }
             else
             {
@@ -105,16 +108,14 @@ public class ShapeDispatcher
     public static ExpiringShape create(CarpetContext cc, String shapeType, Map<String, Value> userParams)
     {
         userParams.put("shape", new StringValue(shapeType));
-        Map<String, Value> validatedParams = new HashMap<>();
-        userParams.forEach((key, value) ->
-        {
+        userParams.keySet().forEach(key -> {
             Param param = Param.coders.get(key);
             if (param==null) throw new InternalExpressionException("Unknown feature for shape: "+key);
-            validatedParams.put(key, param.validate(cc, value));
+            userParams.put(key, param.validate(cc, userParams.get(key)));
         });
         Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeType);
         if (factory == null) throw new InternalExpressionException("Unknown shape: "+shapeType);
-        return factory.apply(validatedParams);
+        return factory.apply(userParams);
     }
 
     // client
@@ -126,7 +127,7 @@ public class ShapeDispatcher
             Function<Tag, Value> decoder = Param.decoders.get(key);
             if (decoder==null)
             {
-                CarpetSettings.LOG.error("Unknown parameter for shape: "+key);
+                CarpetSettings.LOG.info("Unknown parameter for shape: "+key);
                 return null;
             }
             Value decodedValue = decoder.apply(tag.get(key));
@@ -135,13 +136,13 @@ public class ShapeDispatcher
         Value shapeValue = options.get("shape");
         if (shapeValue == null)
         {
-            CarpetSettings.LOG.error("Shape id missing in "+ String.join(", ", tag.getKeys()));
+            CarpetSettings.LOG.info("Shape id missing in "+ String.join(", ", tag.getKeys()));
             return null;
         }
         Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeValue.getString());
         if (factory == null)
         {
-            CarpetSettings.LOG.error("Unknown shape: "+shapeValue.getString());
+            CarpetSettings.LOG.info("Unknown shape: "+shapeValue.getString());
             return null;
         }
         try
@@ -150,7 +151,7 @@ public class ShapeDispatcher
         }
         catch (InternalExpressionException exc)
         {
-            CarpetSettings.LOG.error(exc.getMessage());
+            CarpetSettings.LOG.info(exc.getMessage());
         }
         return null;
     }
@@ -160,6 +161,7 @@ public class ShapeDispatcher
         public static final Map<String, Function<Map<String, Value>,ExpiringShape>> shapeProviders = new HashMap<String, Function<Map<String, Value>, ExpiringShape>>(){{
             put("line", creator(Line::new));
             put("box", creator(Box::new));
+            put("sphere", creator(Sphere::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -229,7 +231,10 @@ public class ShapeDispatcher
         }
         // list of params that need to be there
         private final Set<String> required = ImmutableSet.of("duration", "shape", "dim");
-        private final Map<String, Value> optional = ImmutableMap.of("color", new NumericValue(-1));
+        private final Map<String, Value> optional = ImmutableMap.of(
+                "color", new NumericValue(-1),
+                "player", Value.NULL
+        );
         protected Set<String> requiredParams() {return required;}
         // list of params that can be there, with defaults
         protected Set<String> optionalParams() {return optional.keySet();}
@@ -238,7 +243,10 @@ public class ShapeDispatcher
     public static class Box extends ExpiringShape
     {
         private final Set<String> required = ImmutableSet.of("from", "to");
-        private final Map<String, Value> optional = ImmutableMap.of();
+        private final Map<String, Value> optional = ImmutableMap.of(
+                "width", new NumericValue(2.0),
+                "fill", new NumericValue(0xffffff00)
+        );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -247,6 +255,10 @@ public class ShapeDispatcher
 
         float x1, y1, z1;
         float x2, y2, z2;
+        float lineWidth;
+
+        protected float fr, fg, fb, fa;
+        protected int fillColor;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -260,6 +272,12 @@ public class ShapeDispatcher
             x2 = NumericValue.asNumber(to.get(0)).getFloat();
             y2 = NumericValue.asNumber(to.get(1)).getFloat();
             z2 = NumericValue.asNumber(to.get(2)).getFloat();
+            lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
+            fillColor = NumericValue.asNumber(options.getOrDefault("fill", optional.get("fill"))).getInt();
+            this.fr = (float)(fillColor >> 24 & 0xFF) / 255.0F;
+            this.fg = (float)(fillColor >> 16 & 0xFF) / 255.0F;
+            this.fb = (float)(fillColor >>  8 & 0xFF) / 255.0F;
+            this.fa = (float)(fillColor & 0xFF) / 255.0F;
         }
 
         @Override
@@ -285,6 +303,8 @@ public class ShapeDispatcher
             hash = 31*hash + Float.hashCode(x2);
             hash = 31*hash + Float.hashCode(y2);
             hash = 31*hash + Float.hashCode(z2);
+            hash = 31*hash + Float.hashCode(lineWidth);
+            if (fa != 0.0) hash = 31*hash + fillColor;
             return hash;
         }
 
@@ -312,7 +332,7 @@ public class ShapeDispatcher
     public static class Line extends ExpiringShape
     {
         private final Set<String> required = ImmutableSet.of("from", "to");
-        private final Map<String, Value> optional = ImmutableMap.of();
+        private final Map<String, Value> optional = ImmutableMap.of("width", new NumericValue(2.0));
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -325,6 +345,7 @@ public class ShapeDispatcher
 
         float x1, y1, z1;
         float x2, y2, z2;
+        float lineWidth;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -338,6 +359,7 @@ public class ShapeDispatcher
             x2 = NumericValue.asNumber(to.get(0)).getFloat();
             y2 = NumericValue.asNumber(to.get(1)).getFloat();
             z2 = NumericValue.asNumber(to.get(2)).getFloat();
+            lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
         }
 
         @Override
@@ -365,9 +387,87 @@ public class ShapeDispatcher
             hash = 31*hash + Float.hashCode(x2);
             hash = 31*hash + Float.hashCode(y2);
             hash = 31*hash + Float.hashCode(z2);
+            hash = 31*hash + Float.hashCode(lineWidth);
             return hash;
         }
     }
+
+    public static class Sphere extends ExpiringShape
+    {
+        private final Set<String> required = ImmutableSet.of("center", "radius");
+        private final Map<String, Value> optional = ImmutableMap.of("width", new NumericValue(2.0), "level", Value.ZERO);
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
+
+        private Sphere()
+        {
+            super();
+        }
+
+        float cx, cy, cz;
+        float radius;
+        int level;
+        int subdivisions;
+        float lineWidth;
+
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+            List<Value> from = ((ListValue)options.get("center")).getItems();
+            cx = NumericValue.asNumber(from.get(0)).getFloat();
+            cy = NumericValue.asNumber(from.get(1)).getFloat();
+            cz = NumericValue.asNumber(from.get(2)).getFloat();
+            radius = NumericValue.asNumber(options.get("radius")).getFloat();
+            level = NumericValue.asNumber(options.getOrDefault("level", optional.get("level"))).getInt();
+            subdivisions = level;
+            if (subdivisions <= 0)
+            {
+                subdivisions = Math.max(10, (int)(10*Math.sqrt(radius)));
+            }
+            lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
+        }
+
+        @Override
+        public Consumer<ServerPlayerEntity> alternative() { return p ->
+        {
+            String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
+            ParticleEffect particle = getParticleData(particleName);
+            float pihalf = (float)(Math.PI / 180.0f);
+            int partno = Math.min(1000,20*subdivisions);
+            Random rand = p.world.getRandom();
+            ServerWorld world = p.getServerWorld();
+            for (int i=0; i<partno; i++)
+            {
+                float theta = 360.0f*rand.nextFloat()*pihalf;
+                float phi = 180f*rand.nextFloat()*pihalf;
+                float x = radius * MathHelper.sin(phi) * MathHelper.cos(theta);
+                float y = radius * MathHelper.sin(phi) * MathHelper.sin(theta);
+                float z = radius * MathHelper.cos(phi);
+                world.spawnParticles(p, particle, true,
+                        x+cx, y+cy, z+cz, 1,
+                        0.0, 0.0, 0.0, 0.0);
+            }
+        };}
+
+        @Override
+        public int calcKey()
+        {
+            int hash = super.calcKey();
+            hash = 31*hash + 3;
+            hash = 31*hash + Float.hashCode(cx);
+            hash = 31*hash + Float.hashCode(cy);
+            hash = 31*hash + Float.hashCode(cz);
+            hash = 31*hash + Float.hashCode(radius);
+            hash = 31*hash + level;
+            hash = 31*hash + Float.hashCode(lineWidth);
+
+            return hash;
+        }
+    }
+
 
     public interface Param
     {
@@ -378,16 +478,25 @@ public class ShapeDispatcher
             put("color", ShapeDispatcher::decodeInt);
             put("from", Vec3Param::decode);
             put("to", Vec3Param::decode);
-
+            put("width", ShapeDispatcher::decodeFloat);
+            put("fill", ShapeDispatcher::decodeInt);
+            put("center", Vec3Param::decode);
+            put("radius", ShapeDispatcher::decodeFloat);
+            put("level", ShapeDispatcher::decodeInt);
         }};
         Map<String, Param> coders = new HashMap<String, Param>(){{
-            put("shape", new ShapeParam());
             put("player", new PlayerParam());
+            put("shape", new ShapeParam());
             put("dim", new DimensionParam());
             put("duration", new DurationParam());
             put("color", new ColorParam());
             put("from", new FromParam());
             put("to", new ToParam());
+            put("width", new WidthParam());
+            put("fill", new FillColorParam());
+            put("center", new CenterParam());
+            put("radius", new RadiusParam());
+            put("level", new LevelParam());
         }};
         Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         Value validate(CarpetContext cc, Value value); // makes sure the value is proper
@@ -449,8 +558,6 @@ public class ShapeDispatcher
     public static abstract class NumericParam implements Param
     {
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
-        @Override
         public Value validate(CarpetContext cc, Value value)
         {
             if (!(value instanceof NumericValue))
@@ -467,14 +574,33 @@ public class ShapeDispatcher
             return ret;
         }
     }
+    public static abstract class PositiveFloatParam extends PositiveParam
+    {
+        @Override
+        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value).getFloat()); }
 
+    }
+    public static abstract class PositiveIntParam extends PositiveParam
+    {
+        @Override
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+
+    }
     public static Value decodeInt(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
-    public static class DurationParam extends PositiveParam
+    public static Value decodeFloat(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
+    public static class DurationParam extends PositiveIntParam
     {
         @Override
         public boolean appliesTo(ExpiringShape shape) { return true; }
         @Override
         public String identify() { return "duration"; }
+    }
+    public static class WidthParam extends PositiveFloatParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box || shape instanceof Line; }
+        @Override
+        public String identify() { return "width"; }
     }
 
     public static abstract class Vec3Param implements Param
@@ -543,9 +669,19 @@ public class ShapeDispatcher
     public static class ColorParam extends NumericParam
     {
         @Override
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+        @Override
         public boolean appliesTo(ExpiringShape shape) { return true; }
         @Override
         public String identify() { return "color"; }
+    }
+
+    public static class FillColorParam extends ColorParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box; }
+        @Override
+        public String identify() { return "fill"; }
     }
 
     public static class FromParam extends Vec3Param
@@ -566,6 +702,30 @@ public class ShapeDispatcher
         public boolean roundsUpForBlocks() { return true; }
         @Override
         public String identify() { return "to"; }
+    }
+
+    public static class CenterParam extends Vec3Param
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return (shape instanceof Sphere); }
+        @Override
+        public boolean roundsUpForBlocks() { return false; }
+        @Override
+        public String identify() { return "center"; }
+    }
+    public static class RadiusParam extends PositiveFloatParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Sphere; }
+        @Override
+        public String identify() { return "radius"; }
+    }
+    public static class LevelParam extends PositiveIntParam
+    {
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Sphere; }
+        @Override
+        public String identify() { return "level"; }
     }
 
 
