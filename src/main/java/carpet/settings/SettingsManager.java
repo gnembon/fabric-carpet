@@ -76,8 +76,6 @@ public class SettingsManager
     {
         this.server = server;
         loadConfigurationFromConf();
-        registerCommand(server.getCommandManager().getDispatcher());
-        notifyPlayersCommandsChanged();
     }
 
     public void detachServer()
@@ -359,7 +357,7 @@ public class SettingsManager
         return rule;
     }
 
-    private void registerCommand(CommandDispatcher<ServerCommandSource> dispatcher)
+    public void registerCommand(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         if (dispatcher.getRoot().getChildren().stream().anyMatch(node -> node.getName().equalsIgnoreCase(identifier)))
         {

@@ -80,6 +80,11 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
     {
+        settingsManager.registerCommand(dispatcher);
+        extensions.forEach(e -> {
+            SettingsManager sm = e.customSettingsManager();
+            if (sm != null) sm.registerCommand(dispatcher);
+        });
         TickCommand.register(dispatcher);
         ProfileCommand.register(dispatcher);
         CounterCommand.register(dispatcher);
@@ -100,6 +105,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         
         if (FabricLoader.getInstance().isDevelopmentEnvironment())
             TestCommand.register(dispatcher);
+        // todo 1.16 - re-registerer apps if that's a reload operation.
     }
 
     public static void onPlayerLoggedIn(ServerPlayerEntity player)
