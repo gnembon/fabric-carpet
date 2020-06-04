@@ -673,7 +673,7 @@ public class ShapeDispatcher
     public static class WidthParam extends PositiveFloatParam
     {
         @Override
-        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box || shape instanceof Line; }
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box || shape instanceof Line || shape instanceof Sphere; }
         @Override
         public String identify() { return "width"; }
     }
