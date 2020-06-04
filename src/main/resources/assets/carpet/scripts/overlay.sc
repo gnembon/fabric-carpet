@@ -6,7 +6,7 @@ global_renderers = m(
         l('handler', '__structure_renderer'),
         l('tasks', m()),
         l('range', 3),
-        l('max_pieces', 4)
+        l('max_pieces', 6)
     )),
     l('chunks', m(
         l('active', false),
@@ -98,20 +98,16 @@ __structure_renderer(player_name) ->
 		    l(from, to) = structure_data;
 		    total_size = _euclidean(from, to);
 		    density = max(10, total_size/10);
-		    //particle_box('dust 0 1 1 2', from, to+1, density);
-		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF, 'width', 3);
+		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF, 'width', 3, 'fill', 0x00FFFF22);
 		    structure_pieces = slice(sort_key(structure_pieces, _euclidean_sq((_:2+_:3)/2,ppos)), 0, config:'max_pieces');
 		    for (structure_pieces, l(piece, direction, from, to) = _;
-		        //factor = 1- _i / config:'max_pieces' / 2;
-		        //total_size = _euclidean(from, to);
-                //density = max(_i+1, total_size/10);
-		        //particle_box(str('dust %.2f %.2f 1 1',factor, factor), from, to+1, density);
-		        r = 255 - 128 * _i/config:'max_pieces';
+		        r = 255 - floor(128 * _i/config:'max_pieces');
 		        g = r;
 		        b = 255;
 		        a = 255;
 		        color = 256*(b+256*(g+256*r)); // leaving out a
-		        draw_shape('box', 15, 'from', from, 'to', to+1, 'color', color+a, 'fill', color+a/6);
+		        draw_shape('box', 15, 'from', from, 'to', to+1, 'color', color+a);
+		        draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0xffffff00, 'fill', 0xffffff22);
 		    )
 		)
 	);
@@ -147,15 +143,6 @@ __chunk_renderer(player_name) ->
                     draw_shape('line', 15, 'from', top_01, 'to', top_00, 'color', color, 'width', 3);
                     draw_shape('line', 15, 'from', top_00, 'to', top_11, 'color', color, 'width', 3);
                     draw_shape('line', 15, 'from', top_01, 'to', top_10, 'color', color, 'width', 3);
-
-                    //part = 'dust 0.2 0.8 0.2 2';
-                    //density = 2+player_distance/2;
-                    //particle_line(part, top_00, top_10, density);
-                    //particle_line(part, top_10, top_11, density);
-                    //particle_line(part, top_11, top_01, density);
-                    //particle_line(part, top_01, top_00, density);
-                    //particle_line(part, top_00, top_11, density);
-                    //particle_line(part, top_01, top_10, density);
                 )
         	)
         )
