@@ -76,7 +76,7 @@ public class CarpetScriptServer
 
     public Module getModule(String name, boolean allowLibraries)
     {
-        File folder = CarpetServer.minecraft_server.method_27050(WorldSavePath.ROOT).resolve("scripts").toFile();
+        File folder = CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles != null)
             for (File script : listOfFiles)
@@ -110,7 +110,7 @@ public class CarpetScriptServer
                 if (!mi.isLibrary()) moduleNames.add(mi.getName());
             }
         }
-        File folder = CarpetServer.minecraft_server.method_27050(WorldSavePath.ROOT).resolve("scripts").toFile();
+        File folder = CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles == null)
             return moduleNames;

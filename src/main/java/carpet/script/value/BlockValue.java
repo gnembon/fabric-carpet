@@ -169,7 +169,7 @@ public class BlockValue extends Value
     public int hashCode()
     {
         if (world != null && pos != null )
-            return GlobalPos.create(world.method_27983() , pos).hashCode(); //getDimension().getType()
+            return GlobalPos.create(world.getRegistryKey() , pos).hashCode(); //getDimension().getType()
         return ("b"+getString()).hashCode();
     }
 

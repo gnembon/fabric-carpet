@@ -139,7 +139,7 @@ public class SettingsManager
 
     private File getFile()
     {
-        return server.method_27050(WorldSavePath.ROOT).resolve(identifier+".conf").toFile();
+        return server.getSavePath(WorldSavePath.ROOT).resolve(identifier+".conf").toFile();
     }
 
     public void disableBooleanCommands()

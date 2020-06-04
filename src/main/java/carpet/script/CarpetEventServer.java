@@ -198,7 +198,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.field_25179))
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.OVERWORLD))
                 );
             }
         },
@@ -209,7 +209,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.field_25180))
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.NETHER))
                 );
             }
         },
@@ -220,7 +220,7 @@ public class CarpetEventServer
             {
                 handler.call(Collections::emptyList, () ->
                         CarpetServer.minecraft_server.getCommandSource().
-                                withWorld(CarpetServer.minecraft_server.getWorld(World.field_25181))
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.END))
                 );
             }
         },

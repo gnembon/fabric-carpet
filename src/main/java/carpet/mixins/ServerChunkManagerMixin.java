@@ -49,7 +49,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
     private int setupTracking(ChunkTicketManager chunkTicketManager)
     {
         int j = chunkTicketManager.getSpawningChunkCount();
-        RegistryKey<World> dim = this.world.method_27983(); // getDimensionType;
+        RegistryKey<World> dim = this.world.getRegistryKey(); // getDimensionType;
         //((WorldInterface)world).getPrecookedMobs().clear(); not needed because mobs are compared with predefined BBs
         SpawnReporter.chunkCounts.put(dim, j);
 
@@ -79,7 +79,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
         {
             for (SpawnGroup cat: SpawnGroup.values())
             {
-                RegistryKey<World> dim = world.method_27983(); // getDimensionType;
+                RegistryKey<World> dim = world.getRegistryKey(); // getDimensionType;
                 Pair key = Pair.of(dim, cat);
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))

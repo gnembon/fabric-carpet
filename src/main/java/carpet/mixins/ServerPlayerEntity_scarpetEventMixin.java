@@ -95,7 +95,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     private void logPreviousCoordinates(RegistryKey<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = getPos();
-        previousDimension = world.method_27983();  //dimension type
+        previousDimension = world.getRegistryKey();  //dimension type
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
@@ -105,7 +105,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
         {
             ServerPlayerEntity player = (ServerPlayerEntity) (Object)this;
             Vec3d to = null;
-            if (!notInAnyWorld || previousDimension != World.field_25181 || newDimension != World.field_25179) // end ow
+            if (!notInAnyWorld || previousDimension != World.END || newDimension != World.OVERWORLD) // end ow
             {
                 to = getPos();
             }

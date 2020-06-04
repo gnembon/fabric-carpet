@@ -238,7 +238,7 @@ public class PlayerCommand
         );
         RegistryKey<World> dimType = tryGetArg(
                 () -> DimensionArgumentType.getDimensionArgument(context, "dimension"),
-                () -> source.getWorld().method_27983() // dimension.getType()
+                () -> source.getWorld().getRegistryKey() // dimension.getType()
         );
         GameMode mode = GameMode.CREATIVE;
         try

@@ -60,17 +60,17 @@ public class HUDController
 
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
-                RegistryKey<World> dim = player.world.method_27983(); //getDimType
+                RegistryKey<World> dim = player.world.getRegistryKey(); //getDimType
                 switch (option)
                 {
                     case "overworld":
-                        dim = World.field_25179; // OW
+                        dim = World.OVERWORLD; // OW
                         break;
                     case "nether":
-                        dim = World.field_25180; // nether
+                        dim = World.NETHER; // nether
                         break;
                     case "end":
-                        dim = World.field_25181; // end
+                        dim = World.END; // end
                         break;
                 }
                 return new BaseText[]{SpawnReporter.printMobcapsForDimension(server.getWorld(dim), false).get(0)};

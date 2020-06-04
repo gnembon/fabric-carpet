@@ -2697,7 +2697,7 @@ public class CarpetExpression
                 for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i).evalValue(c));
                 params = ShapeDispatcher.parseParams(paramList);
             }
-            params.putIfAbsent("dim", new StringValue(cc.s.getWorld().method_27983().getValue().toString()));
+            params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getRegistryKey().getValue().toString()));
             params.putIfAbsent("duration", duration);
 
             ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.create(cc, shapeType, params);
@@ -2983,7 +2983,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(s.getWorld().method_27983().getValue())); // getDImensionType
+            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(s.getWorld().getRegistryKey().getValue())); // getDImensionType
             return (cc, tt) -> retval;
         });
 
@@ -3020,15 +3020,15 @@ public class CarpetExpression
                 {
                     case "nether":
                     case "the_nether":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.field_25180)); //nether
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.NETHER)); //nether
                         break;
                     case "end":
                     case "the_end":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.field_25181)); //end
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.END)); //end
                         break;
                     case "overworld":
                     case "over_world":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.field_25179));  //ow
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.OVERWORLD));  //ow
                         break;
                     default:
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);

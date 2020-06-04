@@ -33,16 +33,16 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
     {
         if (CarpetSettings.flatWorldStructureSpawning)
         {
-            if (accessor.method_28388(pos, true, StructureFeature.field_24851).hasChildren())
+            if (accessor.method_28388(pos, true, StructureFeature.SWAMP_HUT).hasChildren())
             {  //swamp hut
                 if (group == SpawnGroup.MONSTER)
                 {
-                    return StructureFeature.field_24851.getMonsterSpawns();
+                    return StructureFeature.SWAMP_HUT.getMonsterSpawns();
                 }
 
                 if (group == SpawnGroup.CREATURE)
                 {
-                    return StructureFeature.field_24851.getCreatureSpawns();
+                    return StructureFeature.SWAMP_HUT.getCreatureSpawns();
                 }
             }
 

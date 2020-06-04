@@ -41,16 +41,16 @@ public class ShapesRenderer
     {
         this.client = minecraftClient;
         shapes = new HashMap<>();
-        shapes.put(World.field_25179, new Int2ObjectOpenHashMap<>());
-        shapes.put(World.field_25180, new Int2ObjectOpenHashMap<>());
-        shapes.put(World.field_25181, new Int2ObjectOpenHashMap<>());
+        shapes.put(World.OVERWORLD, new Int2ObjectOpenHashMap<>());
+        shapes.put(World.NETHER, new Int2ObjectOpenHashMap<>());
+        shapes.put(World.END, new Int2ObjectOpenHashMap<>());
     }
 
     public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, double cameraX, double cameraY, double cameraZ)
     {
         //Camera camera = this.client.gameRenderer.getCamera();
         ClientWorld iWorld = this.client.world;
-        RegistryKey<World> dimensionType = iWorld.method_27983();
+        RegistryKey<World> dimensionType = iWorld.getRegistryKey();
         if (shapes.get(dimensionType).isEmpty()) return;
         long currentTime = client.world.getTime();
         RenderSystem.disableTexture();
@@ -168,7 +168,7 @@ public class ShapesRenderer
         {
             if (shape.followEntity <=0 ) return true;
             if (client.world == null) return false;
-            if (client.world.method_27983() != dim) return false;
+            if (client.world.getRegistryKey() != dim) return false;
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
         }

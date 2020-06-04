@@ -25,7 +25,7 @@ public class WorldTools
             if (region == null) return false;
             return region.hasChunk(chpos);
         }
-        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().method_27424(world.method_27983()), "region").toPath();
+        Path regionPath = new File(((MinecraftServerInterface )world.getServer()).getCMSession().method_27424(world.getRegistryKey()), "region").toPath();
         Path regionFilePath = regionPath.resolve(currentRegionName);
         File regionFile = regionFilePath.toFile();
         if (!regionFile.exists())

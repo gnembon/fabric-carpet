@@ -161,7 +161,7 @@ public class FeatureGenerator
         structureToFeature.put(StructureFeature.VILLAGE, Arrays.asList("village", "village_desert", "village_savanna", "village_taiga", "village_snowy"));
         structureToFeature.put(StructureFeature.MANSION, Collections.singletonList("mansion"));
         structureToFeature.put(StructureFeature.BURIED_TREASURE, Collections.singletonList("treasure"));
-        structureToFeature.put(StructureFeature.field_24851, Collections.singletonList("witch_hut"));
+        structureToFeature.put(StructureFeature.SWAMP_HUT, Collections.singletonList("witch_hut"));
         structureToFeature.put(StructureFeature.STRONGHOLD, Collections.singletonList("stronghold"));
         structureToFeature.put(StructureFeature.DESERT_PYRAMID, Collections.singletonList("desert_temple"));
         structureToFeature.put(StructureFeature.JUNGLE_PYRAMID, Collections.singletonList("jungle_temple"));
@@ -188,7 +188,7 @@ public class FeatureGenerator
         put("igloo", ((StructureFeatureInterface)StructureFeature.IGLOO)::gridAnywhere);
         put("shipwreck", gridCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
         put("shipwreck2", gridCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
-        put("witch_hut", ((StructureFeatureInterface)StructureFeature.field_24851)::gridAnywhere);
+        put("witch_hut", ((StructureFeatureInterface)StructureFeature.SWAMP_HUT)::gridAnywhere);
         put("stronghold", ((StructureFeatureInterface)StructureFeature.STRONGHOLD)::gridAnywhere);
 
         put("ocean_ruin_small", gridCustomStructure(StructureFeature.OCEAN_RUIN,
@@ -308,7 +308,7 @@ public class FeatureGenerator
         put("igloo", ((StructureFeatureInterface)StructureFeature.IGLOO)::plopAnywhere);
         put("shipwreck", spawnCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(true), Biomes.PLAINS));
         put("shipwreck2", spawnCustomStructure(StructureFeature.SHIPWRECK, new ShipwreckFeatureConfig(false), Biomes.PLAINS));
-        put("witch_hut", ((StructureFeatureInterface)StructureFeature.field_24851)::plopAnywhere);
+        put("witch_hut", ((StructureFeatureInterface)StructureFeature.SWAMP_HUT)::plopAnywhere);
         put("stronghold", ((StructureFeatureInterface)StructureFeature.STRONGHOLD)::plopAnywhere);
 
         put("ocean_ruin_small", spawnCustomStructure(StructureFeature.OCEAN_RUIN,

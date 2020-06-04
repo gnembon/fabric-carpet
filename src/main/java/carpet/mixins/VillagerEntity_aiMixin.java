@@ -120,7 +120,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             if (itemStack_1.getItem() == Items.EMERALD)
             {
                 GlobalPos bedPos = this.brain.getOptionalMemory(MemoryModuleType.HOME).orElse(null);
-                if (bedPos == null || bedPos.getDimension() != world.method_27983()) // get DImension
+                if (bedPos == null || bedPos.getDimension() != world.getRegistryKey()) // get DImension
                 {
                     sayNo();
                     ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, getX(), getY() + getStandingEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);

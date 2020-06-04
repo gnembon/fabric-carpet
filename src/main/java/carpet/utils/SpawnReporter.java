@@ -75,7 +75,7 @@ public class SpawnReporter
                 return;
             }
         }
-        Pair<RegistryKey<World>, SpawnGroup> key = Pair.of(mob.world.method_27983(), cat);
+        Pair<RegistryKey<World>, SpawnGroup> key = Pair.of(mob.world.getRegistryKey(), cat);
         long count = spawn_stats.get(key).getOrDefault(mob.getType(), 0L);
         spawn_stats.get(key).put(mob.getType(), count + 1);
         spawned_mobs.get(key).put(Pair.of(mob.getType(), pos));
@@ -85,7 +85,7 @@ public class SpawnReporter
 
     public static List<BaseText> printMobcapsForDimension(ServerWorld world, boolean multiline)
     {
-        RegistryKey<World> dim = world.method_27983();
+        RegistryKey<World> dim = world.getRegistryKey();
         String name = dim.toString();
         List<BaseText> lst = new ArrayList<>();
         if (multiline)
@@ -149,7 +149,7 @@ public class SpawnReporter
         String type_code = creature_type.getName();
         
         lst.add(Messenger.s(String.format("Recent %s spawns:",type_code)));
-        for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.method_27983(), creature_type)).keySet()) // getDImTYpe
+        for (Pair<EntityType, BlockPos> pair : spawned_mobs.get(Pair.of(world.getRegistryKey(), creature_type)).keySet()) // getDImTYpe
         {
             lst.add( Messenger.c(
                     "w  - ",
@@ -305,7 +305,7 @@ public class SpawnReporter
             {
                 spawn_tries.put(enumcreaturetype, 1);
             }
-            for (RegistryKey<World> dim : Arrays.asList(World.field_25179, World.field_25180, World.field_25181))
+            for (RegistryKey<World> dim : Arrays.asList(World.OVERWORLD, World.NETHER, World.END))
             {
                 Pair<RegistryKey<World>, SpawnGroup> key = Pair.of(dim, enumcreaturetype);
                 overall_spawn_ticks.put(key, 0L);
