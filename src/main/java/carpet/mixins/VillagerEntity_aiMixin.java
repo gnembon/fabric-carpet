@@ -20,7 +20,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.Hand;
-import net.minecraft.util.dynamic.Timestamp;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.poi.PointOfInterest;
@@ -71,14 +70,14 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
                 time = long_2+600 - getEntityWorld().getTime();
             }
             boolean recentlySeen = hasSeenGolemRecently(getEntityWorld().getTime());
-            Optional<Timestamp> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);
+            Optional<Long> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);
             //Optional<Timestamp> optional_22 = this.brain.getOptionalMemory(MemoryModuleType.LAST_WORKED_AT_POI);
             //boolean work = false;
             boolean sleep = false;
             boolean panic = this.brain.hasActivity(Activity.PANIC);
             long currentTime = this.world.getTime();
             if (optional_11.isPresent()) {
-                sleep = (currentTime - optional_11.get().getTime()) < 24000L;
+                sleep = (currentTime - optional_11.get()) < 24000L;
             }
             //if (optional_22.isPresent()) {
             //    work = (currentTime - optional_22.get().getTime()) < 36000L;

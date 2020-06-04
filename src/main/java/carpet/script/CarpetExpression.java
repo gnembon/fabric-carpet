@@ -1852,25 +1852,19 @@ public class CarpetExpression
             tag.putString("id", entityId.toString());
             Vec3d vec3d = position.vec;
 
-            if (EntityType.getId(EntityType.LIGHTNING_BOLT).equals(entityId)) {
-                LightningEntity lightningEntity_1 = new LightningEntity(cc.s.getWorld(), vec3d.x, vec3d.y, vec3d.z, false);
-                cc.s.getWorld().addLightning(lightningEntity_1);
+            ServerWorld serverWorld = cc.s.getWorld();
+            Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
+                entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
+                return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
+            });
+            if (entity_1 == null) {
                 return LazyValue.NULL;
             } else {
-                ServerWorld serverWorld = cc.s.getWorld();
-                Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
-                    entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
-                    return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
-                });
-                if (entity_1 == null) {
-                    return LazyValue.NULL;
-                } else {
-                    if (!hasTag && entity_1 instanceof MobEntity) {
-                        ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
-                    }
-                    Value res = new EntityValue(entity_1);
-                    return (_c, _t) -> res;
+                if (!hasTag && entity_1 instanceof MobEntity) {
+                    ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
                 }
+                Value res = new EntityValue(entity_1);
+                return (_c, _t) -> res;
             }
         });
 

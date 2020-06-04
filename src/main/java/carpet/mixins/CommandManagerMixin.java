@@ -25,7 +25,7 @@ public abstract class CommandManagerMixin
     private CommandDispatcher<ServerCommandSource> dispatcher;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onRegister(boolean boolean_1, CallbackInfo ci) {
+    private void onRegister(CommandManager.class_5364 arg, CallbackInfo ci) {
         CarpetServer.registerCarpetCommands(this.dispatcher);
     }
 
