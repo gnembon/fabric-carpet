@@ -177,7 +177,7 @@ public class ShapeDispatcher
         protected int duration = 0;
         private int key;
         protected int followEntity;
-        protected DimensionType entityDimension;
+        protected RegistryKey<World> entityDimension;
 
 
         protected ExpiringShape() { }
@@ -222,7 +222,7 @@ public class ShapeDispatcher
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
-                entityDimension = Registry.DIMENSION_TYPE.get(new Identifier(options.get("dim").getString()));
+                entityDimension = RegistryKey.of(Registry.DIMENSION, new Identifier(options.get("dim").getString()));
             }
         }
         public int getExpiry() { return duration; }
@@ -609,13 +609,7 @@ public class ShapeDispatcher
     public static class DimensionParam extends StringParam
     {
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
-        {
-            String dimStr = value.getString();
-            Optional<DimensionType> dimOp = Registry.DIMENSION_TYPE.getOrEmpty(new Identifier(dimStr));
-            if (!dimOp.isPresent()) throw new InternalExpressionException("Unknown dimension "+dimStr);
-            return value;
-        }
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value) { return value; }
         @Override
         public boolean appliesTo(ExpiringShape shape) { return true; }
         @Override

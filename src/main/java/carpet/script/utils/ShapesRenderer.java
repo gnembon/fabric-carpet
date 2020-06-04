@@ -164,11 +164,11 @@ public class ShapesRenderer
         {
             return shape.key();
         };
-        public boolean shouldRender(DimensionType dim)
+        public boolean shouldRender(RegistryKey<World> dim)
         {
             if (shape.followEntity <=0 ) return true;
             if (client.world == null) return false;
-            if (client.world.dimension.getType() != dim) return false;
+            if (client.world.method_27983() != dim) return false;
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
         }
