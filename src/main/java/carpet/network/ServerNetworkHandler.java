@@ -12,12 +12,14 @@ import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class ServerNetworkHandler
 {
-    public static Set<ServerPlayerEntity> remoteCarpetPlayers = new HashSet<>();
+    public static Map<ServerPlayerEntity, String> remoteCarpetPlayers = new HashMap<>();
     public static Set<ServerPlayerEntity> validCarpetPlayers = new HashSet<>();
 
     public static void handleData(PacketByteBuf data, ServerPlayerEntity player)
@@ -47,9 +49,10 @@ public class ServerNetworkHandler
 
     public static void onHello(ServerPlayerEntity playerEntity, PacketByteBuf packetData)
     {
-        remoteCarpetPlayers.add(playerEntity);
+
         validCarpetPlayers.add(playerEntity);
         String clientVersion = packetData.readString(64);
+        remoteCarpetPlayers.put(playerEntity, clientVersion);
         if (clientVersion.equals(CarpetSettings.carpetVersion))
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
@@ -61,7 +64,7 @@ public class ServerNetworkHandler
     
     public static void updateRuleWithConnectedClients(ParsedRule<?> rule)
     {
-        for (ServerPlayerEntity player : remoteCarpetPlayers)
+        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -72,7 +75,7 @@ public class ServerNetworkHandler
     
     public static void updateTickSpeedToConnectedPlayers()
     {
-        for (ServerPlayerEntity player : remoteCarpetPlayers)
+        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -81,7 +84,7 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void sendCustomCommand(String command, Tag data)
+    public static void broadcastCustomCommand(String command, Tag data)
     {
         for (ServerPlayerEntity player : validCarpetPlayers)
         {
