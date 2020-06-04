@@ -150,7 +150,7 @@
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetEventMixin",
-
+    "HungerManagerMixin_scarpetEventsMixin",
 
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
