@@ -3162,6 +3162,9 @@ Available shapes:
      * `to` - other end of the line, same format as `from`
    * Optional attributes:
      * `width` - line thickness, defaults to 2.0pt
+     * `follow` - entity, or player name. Shape will follow an entity instead of being static.
+     Follow attribute requires all positional arguments to be relative to the entity and disallow
+     of using entity or block as position markers. You must specify positions as a triple.
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:

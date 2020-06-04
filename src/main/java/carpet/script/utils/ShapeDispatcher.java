@@ -109,7 +109,7 @@ public class ShapeDispatcher
         userParams.keySet().forEach(key -> {
             Param param = Param.coders.get(key);
             if (param==null) throw new InternalExpressionException("Unknown feature for shape: "+key);
-            userParams.put(key, param.validate(cc, userParams.get(key)));
+            userParams.put(key, param.validate(userParams, cc, userParams.get(key)));
         });
         Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeType);
         if (factory == null) throw new InternalExpressionException("Unknown shape: "+shapeType);
@@ -174,6 +174,9 @@ public class ShapeDispatcher
         protected int color;
         protected int duration = 0;
         private int key;
+        protected int followEntity;
+        protected DimensionType entityDimension;
+
 
         protected ExpiringShape() { }
 
@@ -212,8 +215,19 @@ public class ShapeDispatcher
             this.b = (float)(color >>  8 & 0xFF) / 255.0F;
             this.a = (float)(color & 0xFF) / 255.0F;
             key = 0;
+            followEntity = -1;
+            entityDimension = null;
+            if (options.containsKey("follow"))
+            {
+                followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
+                entityDimension = Registry.DIMENSION_TYPE.get(new Identifier(options.get("dim").getString()));
+            }
         }
         public int getExpiry() { return duration; }
+        public Vec3d toAbsolute(Entity e, float x, float y, float z)
+        {
+            return e.getPos().add(x,y,z);
+        }
         public abstract Consumer<ServerPlayerEntity> alternative();
         public int key()
         {
@@ -225,13 +239,15 @@ public class ShapeDispatcher
         {
             int hash = 17;
             hash = 31*hash + color;
+            hash = 31*hash + followEntity;
             return hash;
         }
         // list of params that need to be there
         private final Set<String> required = ImmutableSet.of("duration", "shape", "dim");
         private final Map<String, Value> optional = ImmutableMap.of(
                 "color", new NumericValue(-1),
-                "player", Value.NULL
+                "player", Value.NULL,
+                "follow", new NumericValue(-1)
         );
         protected Set<String> requiredParams() {return required;}
         // list of params that can be there, with defaults
@@ -281,13 +297,26 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayerEntity> alternative()
         {
+
             String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
             ParticleEffect particle = getParticleData(particleName);
             double dx = x1-x2;
             double dy = y1-y2;
             double dz = z1-z2;
             double density = Math.max(2.0, Math.sqrt(dx*dx+dy*dy+dz*dz) /50) / (a+0.1);
-            return p -> mesh(Collections.singletonList(p), particle, density, x1, y1, z1, x2, y2, z2);
+            return p ->
+            {
+                if (followEntity == -1)
+                {
+                    mesh(Collections.singletonList(p), particle, density, x1, y1, z1, x2, y2, z2);
+                    return;
+                }
+                Entity e = p.getServer().getWorld(entityDimension).getEntityById(followEntity);
+                if (e == null) return;
+                Vec3d rel1 = toAbsolute(e, x1, y1, z1);
+                Vec3d rel2 = toAbsolute(e, x2, y2, z2);
+                mesh(Collections.singletonList(p), particle, density, rel1.x, rel1.y, rel1.z, rel2.x, rel2.y, rel2.z);
+            };
         }
 
         @Override
@@ -371,7 +400,20 @@ public class ShapeDispatcher
             double dy = y1-y2;
             double dz = z1-z2;
             double density = Math.max(2.0, Math.sqrt(dx*dx+dy*dy+dz*dz) /50) / (a+0.1);
-            return p -> drawParticleLine(Collections.singletonList(p), particle, pos1, pos2, density);
+            return p ->
+            {
+                if (followEntity == -1)
+                {
+                    drawParticleLine(Collections.singletonList(p), particle, pos1, pos2, density);
+                    return;
+                }
+
+                Entity e = p.getServer().getWorld(entityDimension).getEntityById(followEntity);
+                if (e == null) return;
+                Vec3d rel1 = toAbsolute(e, x1, y1, z1);
+                Vec3d rel2 = toAbsolute(e, x2, y2, z2);
+                drawParticleLine(Collections.singletonList(p), particle, rel1, rel2, density);
+            };
         }
 
         @Override
@@ -449,15 +491,32 @@ public class ShapeDispatcher
             int partno = Math.min(1000,20*subdivisions);
             Random rand = p.world.getRandom();
             ServerWorld world = p.getServerWorld();
+
+            float ccx, ccy, ccz;
+            if (followEntity == -1)
+            {
+                ccx = cx; ccy = cy; ccz = cz;
+            }
+            else
+            {
+                Entity e = p.getServer().getWorld(entityDimension).getEntityById(followEntity);
+                if (e == null) return;
+                Vec3d rel1 = toAbsolute(e, cx, cy, cz);
+                ccx = (float)rel1.x; ccy = (float)rel1.y; ccz = (float)rel1.z;
+            }
+
             for (int i=0; i<partno; i++)
             {
-                float theta = 360.0f*rand.nextFloat()*pihalf;
-                float phi = 180f*rand.nextFloat()*pihalf;
-                float x = radius * MathHelper.sin(phi) * MathHelper.cos(theta);
-                float y = radius * MathHelper.sin(phi) * MathHelper.sin(theta);
-                float z = radius * MathHelper.cos(phi);
+                //float theta = 360.0f*rand.nextFloat()*pihalf;
+                //float phi = 180f*rand.nextFloat()*pihalf;
+                float theta = (float)Math.asin(rand.nextFloat()*2.0-1.0);
+                float phi = (float)(2*Math.PI*rand.nextFloat());
+
+                float x = radius * MathHelper.cos(theta) * MathHelper.cos(phi);
+                float y = radius * MathHelper.cos(theta) * MathHelper.sin(phi);
+                float z = radius * MathHelper.sin(theta);
                 world.spawnParticles(p, particle, true,
-                        x+cx, y+cy, z+cz, 1,
+                        x+ccx, y+ccy, z+ccz, 1,
                         0.0, 0.0, 0.0, 0.0);
             }
         };}
@@ -486,6 +545,8 @@ public class ShapeDispatcher
             put("dim", StringParam::decode);
             put("duration", ShapeDispatcher::decodeInt);
             put("color", ShapeDispatcher::decodeInt);
+            put("follow", EntityParam::decode);
+
             put("from", Vec3Param::decode);
             put("to", Vec3Param::decode);
             put("width", ShapeDispatcher::decodeFloat);
@@ -500,6 +561,8 @@ public class ShapeDispatcher
             put("dim", new DimensionParam());
             put("duration", new DurationParam());
             put("color", new ColorParam());
+            put("follow", new FollowParam());
+
             put("from", new FromParam());
             put("to", new ToParam());
             put("width", new WidthParam());
@@ -509,7 +572,7 @@ public class ShapeDispatcher
             put("level", new LevelParam());
         }};
         Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
-        Value validate(CarpetContext cc, Value value); // makes sure the value is proper
+        Value validate(Map<String, Value> options, CarpetContext cc, Value value); // makes sure the value is proper
         boolean appliesTo(ExpiringShape shape); // check if applies to the shape
         String identify();
     }
@@ -519,7 +582,7 @@ public class ShapeDispatcher
         public Tag toTag(Value value) { return null; }
 
         @Override
-        public Value validate(CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), value);
             if (player == null)
@@ -538,15 +601,13 @@ public class ShapeDispatcher
     {
         @Override
         public Tag toTag(Value value) { return StringTag.of(value.getString()); }
-        @Override
-        public Value validate(CarpetContext cc, Value value) { return value; }
         public static Value decode(Tag tag) { return new StringValue(tag.asString()); }
     }
 
     public static class DimensionParam extends StringParam
     {
         @Override
-        public Value validate(CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             String dimStr = value.getString();
             Optional<DimensionType> dimOp = Registry.DIMENSION_TYPE.getOrEmpty(new Identifier(dimStr));
@@ -561,7 +622,7 @@ public class ShapeDispatcher
     public static class ShapeParam extends StringParam
     {
         @Override
-        public Value validate(CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             String shape = value.getString();
             if (!ExpiringShape.shapeProviders.containsKey(shape))
@@ -576,7 +637,7 @@ public class ShapeDispatcher
     public static abstract class NumericParam implements Param
     {
         @Override
-        public Value validate(CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             if (!(value instanceof NumericValue))
                 throw new InternalExpressionException("'" + identify() + "' needs to be a number");
@@ -585,9 +646,9 @@ public class ShapeDispatcher
     }
     public static abstract class PositiveParam extends NumericParam
     {
-        @Override public Value validate(CarpetContext cc, Value value)
+        @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
-            Value ret = super.validate(cc, value);
+            Value ret = super.validate(options, cc, value);
             if (((NumericValue)ret).getDouble()<=0) throw new InternalExpressionException("'"+identify()+"' should be positive");
             return ret;
         }
@@ -628,10 +689,12 @@ public class ShapeDispatcher
         public abstract String identify();
 
         @Override
-        public Value validate(CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             if (value instanceof BlockValue)
             {
+                if (options.containsKey("follow"))
+                    throw new InternalExpressionException(identify()+" parameter cannot use blocks as positions for relative positioning due to 'follow' attribute being present");
                 BlockPos pos = ((BlockValue) value).getPos();
                 int offset = roundsUpForBlocks()?1:0;
                 return ListValue.of(
@@ -653,6 +716,8 @@ public class ShapeDispatcher
             }
             if (value instanceof EntityValue)
             {
+                if (options.containsKey("follow"))
+                    throw new InternalExpressionException(identify()+" parameter cannot use entity as positions for relative positioning due to 'follow' attribute being present");
                 Entity e = ((EntityValue) value).getEntity();
                 return ListValue.of(
                         new NumericValue(e.getX()),
@@ -744,6 +809,35 @@ public class ShapeDispatcher
         public boolean appliesTo(ExpiringShape shape) { return shape instanceof Sphere; }
         @Override
         public String identify() { return "level"; }
+    }
+    public abstract static class EntityParam implements Param
+    {
+
+        @Override
+        public Tag toTag(Value value)
+        {
+            return IntTag.of(NumericValue.asNumber(value).getInt());
+        }
+
+        @Override
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        {
+            if (value instanceof EntityValue) return new NumericValue(((EntityValue) value).getEntity().getEntityId());
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), value);
+            if (player == null)
+                throw new InternalExpressionException(identify()+" parameter needs to represent an entity or player");
+            return new NumericValue(player.getEntityId());
+        }
+
+        @Override
+        public boolean appliesTo(ExpiringShape shape) { return true; }
+
+        public static Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
+    }
+    public static class FollowParam extends EntityParam
+    {
+        @Override
+        public String identify() { return "follow"; }
     }
 
 
