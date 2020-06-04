@@ -65,8 +65,8 @@ public class ShapesRenderer
         RenderSystem.disableCull();
         RenderSystem.disableLighting();
         RenderSystem.depthMask(false);
-        RenderSystem.polygonOffset(-3f, -3f);
-        RenderSystem.enablePolygonOffset();
+        //RenderSystem.polygonOffset(-3f, -3f);
+        //RenderSystem.enablePolygonOffset();
         //Entity entity = this.client.gameRenderer.getCamera().getFocusedEntity();
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
@@ -85,6 +85,8 @@ public class ShapesRenderer
                     s -> s.render(tessellator, bufferBuilder, (float) cameraX, (float) cameraY, (float) cameraZ)
             );
         }
+        RenderSystem.enableCull();
+        RenderSystem.depthMask(true);
         RenderSystem.lineWidth(1.0F);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
