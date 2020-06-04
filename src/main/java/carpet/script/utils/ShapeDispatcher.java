@@ -393,7 +393,11 @@ public class ShapeDispatcher
     public static class Sphere extends ExpiringShape
     {
         private final Set<String> required = ImmutableSet.of("center", "radius");
-        private final Map<String, Value> optional = ImmutableMap.of("width", new NumericValue(2.0), "level", Value.ZERO);
+        private final Map<String, Value> optional = ImmutableMap.of(
+                "width", new NumericValue(2.0),
+                "level", Value.ZERO,
+                "fill", new NumericValue(0xffffff00)
+        );
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -409,6 +413,9 @@ public class ShapeDispatcher
         int level;
         int subdivisions;
         float lineWidth;
+
+        protected float fr, fg, fb, fa;
+        protected int fillColor;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -426,6 +433,11 @@ public class ShapeDispatcher
                 subdivisions = Math.max(10, (int)(10*Math.sqrt(radius)));
             }
             lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
+            fillColor = NumericValue.asNumber(options.getOrDefault("fill", optional.get("fill"))).getInt();
+            this.fr = (float)(fillColor >> 24 & 0xFF) / 255.0F;
+            this.fg = (float)(fillColor >> 16 & 0xFF) / 255.0F;
+            this.fb = (float)(fillColor >>  8 & 0xFF) / 255.0F;
+            this.fa = (float)(fillColor & 0xFF) / 255.0F;
         }
 
         @Override
@@ -461,7 +473,7 @@ public class ShapeDispatcher
             hash = 31*hash + Float.hashCode(radius);
             hash = 31*hash + level;
             hash = 31*hash + Float.hashCode(lineWidth);
-
+            if (fa != 0.0) hash = 31*hash + fillColor;
             return hash;
         }
     }
@@ -685,7 +697,7 @@ public class ShapeDispatcher
     public static class FillColorParam extends ColorParam
     {
         @Override
-        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box; }
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Box || shape instanceof Sphere; }
         @Override
         public String identify() { return "fill"; }
     }
@@ -693,7 +705,7 @@ public class ShapeDispatcher
     public static class FromParam extends Vec3Param
     {
         @Override
-        public boolean appliesTo(ExpiringShape shape) { return (shape instanceof Line) || (shape instanceof Box); }
+        public boolean appliesTo(ExpiringShape shape) { return shape instanceof Line || shape instanceof Box; }
         @Override
         public boolean roundsUpForBlocks() { return false; }
         @Override
