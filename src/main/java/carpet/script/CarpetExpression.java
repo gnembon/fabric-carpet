@@ -1332,21 +1332,21 @@ public class CarpetExpression
             if (radius < 1 || radius > 32) throw new InternalExpressionException("Ticket radius should be between 1 and 32 chunks");
             // due to types we will wing it:
             ChunkPos target = new ChunkPos(pos);
-            if (ticket == ChunkTicketType.PORTAL)
-                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.PORTAL, target, radius, pos);
-            else if (ticket == ChunkTicketType.POST_TELEPORT)
-                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, target, radius, 1);
+            if (ticket == ChunkTicketType.field_19280) // portal
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.field_19280, target, radius, pos);
+            else if (ticket == ChunkTicketType.field_19347) // post teleport
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.field_19347, target, radius, 1);
             else
-                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.UNKNOWN, target, radius, target);
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.field_14032, target, radius, target);
             Value ret = new NumericValue(ticket.getExpiryTicks());
             return (_c, _t) -> ret;
         });
 
     }
     private Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
-        put("portal", ChunkTicketType.PORTAL);
-        put("teleport", ChunkTicketType.POST_TELEPORT);
-        put("unknown", ChunkTicketType.UNKNOWN);
+        put("portal", ChunkTicketType.field_19280);
+        put("teleport", ChunkTicketType.field_19347);
+        put("unknown", ChunkTicketType.field_14032);  // unknown
     }};
 
     private static String getScoreboardKeyFromValue(Value keyValue)
