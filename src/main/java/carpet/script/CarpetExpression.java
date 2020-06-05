@@ -2648,15 +2648,11 @@ public class CarpetExpression
             }
             Vec3d a = pos1.vec;
             Vec3d b = pos2.vec;
-            double ax = min(a.x, b.x);
-            double ay = min(a.y, b.y);
-            double az = min(a.z, b.z);
-            double bx = max(a.x, b.x);
-            double by = max(a.y, b.y);
-            double bz = max(a.z, b.z);
-            int particleCount = ShapeDispatcher.Box.mesh(
+            Vec3d from = new Vec3d(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z));
+            Vec3d to = new Vec3d(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z));
+            int particleCount = ShapeDispatcher.Box.particleMesh(
                     player==null?world.getPlayers():Collections.singletonList(player),
-                    particle, density, ax, ay, az, bx, by, bz
+                    particle, density, from, to
             );
             return (c_, t_) -> new NumericValue(particleCount);
         });
@@ -2693,13 +2689,17 @@ public class CarpetExpression
             }
             params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getRegistryKey().getValue().toString()));
             params.putIfAbsent("duration", duration);
-
-            ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.create(cc, shapeType, params);
             ServerPlayerEntity player = null;
             if (params.containsKey("player"))
             {
-                player = (ServerPlayerEntity)((EntityValue)params.get("player")).getEntity();
+                player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), params.get("player"));
+                if (player == null)
+                    throw new InternalExpressionException("'player' parameter needs to represent an existing player");
+                params.remove("player");
             }
+
+            ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.create(cc, shapeType, params);
+
             ShapeDispatcher.sendShape(
                     (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
                     shape,

@@ -60,25 +60,23 @@ Optional shared shape attributes:
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
  * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
  player, otherwise it will be send to all players in the dimension.
+ * `width` - line thickness, defaults to 2.0pt
+ * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
+ * `follow` - entity, or player name. Shape will follow an entity instead of being static.
+   Follow attribute requires all positional arguments to be relative to the entity and disallow
+   of using entity or block as position markers. You must specify positions as a triple.
 
 Available shapes:
  * `'line'` - draws a straight line between two points
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
-   * Optional attributes:
-     * `width` - line thickness, defaults to 2.0pt
-     * `follow` - entity, or player name. Shape will follow an entity instead of being static.
-     Follow attribute requires all positional arguments to be relative to the entity and disallow
-     of using entity or block as position markers. You must specify positions as a triple.
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one corner of the box
      * `to` - other corner, same format as `from`
-   * Optional attributes:
-     * `width` - mesh line thickness, defaults to 2.0pt
-     * `fill` - color for the box faces, defaults to no fill, use shared color attribute format
+
  * `'sphere'` - draws a sphere
    * Required attributes:
      * `center` - center of the sphere
@@ -86,7 +84,6 @@ Available shapes:
    * Optional attributes:
      * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
       level of detail will be selected automatically based on radius.
-     * `width` - line thickness
 
 ### `create_marker(text, pos, rotation?, block?)`
 
