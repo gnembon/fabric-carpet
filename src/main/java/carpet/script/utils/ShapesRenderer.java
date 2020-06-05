@@ -80,14 +80,16 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(
                     s ->
                     {
-                        if ( s.shouldRender(dimensionType)) s.render2pass(tessellator, bufferBuilder, (float) cameraX, (float) cameraY, (float) cameraZ);
+                        if ( s.shouldRender(dimensionType))
+                            s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ);
                     }
             );
             //lines
             shapes.get(dimensionType).values().forEach(
 
                     s -> {
-                        if ( s.shouldRender(dimensionType)) s.render(tessellator, bufferBuilder, (float) cameraX, (float) cameraY, (float) cameraZ);
+                        if ( s.shouldRender(dimensionType))
+                            s.renderLines(tessellator, bufferBuilder, cameraX, cameraY, cameraZ);
                     }
             );
         }
@@ -143,14 +145,14 @@ public class ShapesRenderer
         protected T shape;
         protected MinecraftClient client;
         long expiryTick;
-        float renderEpsilon = 0;
-        public abstract void render(Tessellator tessellator, BufferBuilder builder, float cx, float cy, float cz );
-        public void render2pass(Tessellator tessellator, BufferBuilder builder, float cx, float cy, float cz ) {};
+        double renderEpsilon = 0;
+        public abstract void renderLines(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz );
+        public void renderFaces(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz ) {}
         protected RenderedShape(MinecraftClient client, T shape)
         {
             this.shape = shape;
             expiryTick = client.world.getTime()+shape.getExpiry();
-            renderEpsilon = (2+((float)shape.key())/Integer.MAX_VALUE)/1000;
+            renderEpsilon = (2+((double)shape.key())/Integer.MAX_VALUE)/1000;
             this.client = client;
         }
 
@@ -170,11 +172,11 @@ public class ShapesRenderer
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
         }
-        protected Vec3d relativiseRender(float x, float y, float z)
+        protected Vec3d relativiseRender(Vec3d vec)
         {
-            if (shape.followEntity <= 0) return new Vec3d(x,y,z);
+            if (shape.followEntity <= 0) return vec;
             Entity e = client.world.getEntityById(shape.followEntity);
-            return shape.toAbsolute(e, x, y, z);
+            return shape.toAbsolute(e, vec);
         }
     }
 
@@ -187,31 +189,30 @@ public class ShapesRenderer
 
         }
         @Override
-        public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
+        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
         {
             if (shape.a == 0.0) return;
-            Vec3d v1 = relativiseRender(shape.x1, shape.y1, shape.z1);
-            Vec3d v2 = relativiseRender(shape.x2, shape.y2, shape.z2);
+            Vec3d v1 = relativiseRender(shape.from);
+            Vec3d v2 = relativiseRender(shape.to);
             RenderSystem.lineWidth(shape.lineWidth);
             drawBoxWireGLLines(tessellator, bufferBuilder,
-                    (float)v1.x-cx-renderEpsilon, (float)v1.y-cy-renderEpsilon, (float)v1.z-cz-renderEpsilon,
-                    (float)v2.x-cx+renderEpsilon, (float)v2.y-cy+renderEpsilon, (float)v2.z-cz+renderEpsilon,
+                    (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
+                    (float)(v2.x-cx+renderEpsilon), (float)(v2.y-cy+renderEpsilon), (float)(v2.z-cz+renderEpsilon),
                     shape.r, shape.g, shape.b, shape.a, shape.r, shape.g, shape.b
             );
         }
         @Override
-        public void render2pass(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
+        public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
         {
             if (shape.fa == 0.0) return;
-            Vec3d v1 = relativiseRender(shape.x1, shape.y1, shape.z1);
-            Vec3d v2 = relativiseRender(shape.x2, shape.y2, shape.z2);
+            Vec3d v1 = relativiseRender(shape.from);
+            Vec3d v2 = relativiseRender(shape.to);
             RenderSystem.lineWidth(1.0F);
             drawBoxFaces(tessellator, bufferBuilder,
-                    (float)v1.x-cx-renderEpsilon, (float)v1.y-cy-renderEpsilon, (float)v1.z-cz-renderEpsilon,
-                    (float)v2.x-cx+renderEpsilon, (float)v2.y-cy+renderEpsilon, (float)v2.z-cz+renderEpsilon,
+                    (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
+                    (float)(v2.x-cx+renderEpsilon), (float)(v2.y-cy+renderEpsilon), (float)(v2.z-cz+renderEpsilon),
                     shape.fr, shape.fg, shape.fb, shape.fa
             );
-
         }
 
     }
@@ -223,14 +224,14 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Line)shape);
         }
         @Override
-        public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
+        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
         {
-            Vec3d v1 = relativiseRender(shape.x1, shape.y1, shape.z1);
-            Vec3d v2 = relativiseRender(shape.x2, shape.y2, shape.z2);
+            Vec3d v1 = relativiseRender(shape.from);
+            Vec3d v2 = relativiseRender(shape.to);
             RenderSystem.lineWidth(shape.lineWidth);
             drawLine(tessellator, bufferBuilder,
-                    (float)v1.x-cx-renderEpsilon, (float)v1.y-cy-renderEpsilon, (float)v1.z-cz-renderEpsilon,
-                    (float)v2.x-cx+renderEpsilon, (float)v2.y-cy+renderEpsilon, (float)v2.z-cz+renderEpsilon,
+                    (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
+                    (float)(v2.x-cx+renderEpsilon), (float)(v2.y-cy+renderEpsilon), (float)(v2.z-cz+renderEpsilon),
                     shape.r, shape.g, shape.b, shape.a
             );
         }
@@ -243,25 +244,24 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Sphere)shape);
         }
         @Override
-        public void render(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
+        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
         {
             if (shape.a == 0.0) return;
-            Vec3d vc = relativiseRender(shape.cx, shape.cy, shape.cz);
-
+            Vec3d vc = relativiseRender(shape.center);
             RenderSystem.lineWidth(shape.lineWidth);
             drawSphereWireframe(tessellator, bufferBuilder,
-                    (float)vc.x-cx-renderEpsilon, (float)vc.y-cy-renderEpsilon, (float)vc.z-cz-renderEpsilon,
+                    (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
                     shape.radius, shape.subdivisions,
                     shape.r, shape.g, shape.b, shape.a);
         }
         @Override
-        public void render2pass(Tessellator tessellator, BufferBuilder bufferBuilder, float cx, float cy, float cz)
+        public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
         {
             if (shape.fa == 0.0) return;
-            Vec3d vc = relativiseRender(shape.cx, shape.cy, shape.cz);
+            Vec3d vc = relativiseRender(shape.center);
             RenderSystem.lineWidth(1.0f);
             drawSphereFaces(tessellator, bufferBuilder,
-                    (float)vc.x-cx-renderEpsilon, (float)vc.y-cy-renderEpsilon, (float)vc.z-cz-renderEpsilon,
+                    (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
                     shape.radius, shape.subdivisions,
                     shape.fr, shape.fg, shape.fb, shape.fa);
         }
