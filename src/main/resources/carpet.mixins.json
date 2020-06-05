@@ -3,7 +3,9 @@
   "refmap": "fabric-carpet-refmap.json",
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ "SpawnHelperInnerMixin",
+  "mixins": [
+    "Main_serverCoreMixin",
+    "SpawnHelperInnerMixin",
     "CommandManagerMixin",
 
     "ServerPlayNetworkHandlerMixin",
@@ -170,6 +172,7 @@
 
   ],
   "client": [
+    "Main_clientCoreMixin",
     "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
     "MinecraftClient_pausedShakeMixin",
