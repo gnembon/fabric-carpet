@@ -79,17 +79,17 @@ public class ExplosionLogHelper
         });
     }
 
-    public void onEntityImpacted(Entity entity, Vec3d velocityAfterChange)
+    public void onEntityImpacted(Entity entity, Vec3d deltaVelocity)
     {
         for (EntityChangedStatusWithCount e : entityChangedStatusWithCount)
         {
-            if (e.checkIfEquals(entity, velocityAfterChange.subtract(entity.getVelocity())))
+            if (e.checkIfEquals(entity, deltaVelocity))
             {
                 e.count++;
                 return;
             }
         }
-        entityChangedStatusWithCount.add(new EntityChangedStatusWithCount(entity.getPos(), entity.getType(), velocityAfterChange.subtract(entity.getVelocity())));
+        entityChangedStatusWithCount.add(new EntityChangedStatusWithCount(entity.getPos(), entity.getType(), deltaVelocity));
     }
 
     public BaseText ListToText()
@@ -147,7 +147,7 @@ public class ExplosionLogHelper
                     "m Entity(count="+ this.count +") of",
                     "l " + Registry.ENTITY_TYPE.getId(entityType), "g {",
                     "w    P: ", "y ", Messenger.dblt("t", entityPos.x, entityPos.y, entityPos.z),
-                    "w    dV: ", "y ", Messenger.dblt("d", deltaSpeed.x, deltaSpeed.y, deltaSpeed.z),
+                    "w    dV: ", "gbi " + (deltaSpeed.equals(new Vec3d(0,-0.9923437498509884d, 0)) ? "<TNTs-AT-SAME-SPOT>":""),"y ", Messenger.dblt("d", deltaSpeed.x, deltaSpeed.y, deltaSpeed.z),
                     "g }"
             );
         }
