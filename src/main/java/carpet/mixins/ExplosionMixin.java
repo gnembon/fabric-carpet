@@ -29,6 +29,7 @@ public abstract class ExplosionMixin
     private List<BlockPos> affectedBlocks;
 
     @Shadow @Final private World world;
+
     private ExplosionLogHelper eLogger;
 
     @Inject(method = "collectBlocksAndDamageEntities", at = @At("HEAD"),
@@ -37,7 +38,7 @@ public abstract class ExplosionMixin
     {
         if (CarpetSettings.optimizedTNT)
         {
-            OptimizedExplosion.doExplosionA((Explosion) (Object) this);
+            OptimizedExplosion.doExplosionA((Explosion) (Object) this, eLogger);
             ci.cancel();
         }
     }
@@ -86,7 +87,7 @@ public abstract class ExplosionMixin
     private void setVelocityAndUpdateLogging(Entity entity, Vec3d velocity)
     {
         if (eLogger != null) {
-            eLogger.onEntityImpacted(entity, velocity);
+            eLogger.onEntityImpacted(entity, velocity.subtract(entity.getVelocity()));
         }
         entity.setVelocity(velocity);
     }
