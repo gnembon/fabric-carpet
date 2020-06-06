@@ -5,6 +5,7 @@ import carpet.fakes.PistonBlockEntityInterface;
 import com.google.common.collect.Lists;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.block.piston.PistonHandler;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -62,6 +63,17 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
             return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(block));
         }
     }
+
+    @Redirect(method = "isMovable", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/block/BlockState;getPistonBehavior()Lnet/minecraft/block/piston/PistonBehavior;"
+    ))
+    private static PistonBehavior moveGrindstones(BlockState blockState)
+    {
+        if (CarpetSettings.movableBlockEntities && blockState.getBlock() == Blocks.GRINDSTONE) return PistonBehavior.NORMAL;
+        return blockState.getPistonBehavior();
+    }
+
     @Inject(method = "move", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
             target = "Ljava/util/List;size()I", ordinal = 4),locals = LocalCapture.CAPTURE_FAILHARD)
     private void onMove(World world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1,
