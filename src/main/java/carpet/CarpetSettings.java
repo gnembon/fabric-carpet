@@ -501,8 +501,8 @@ public class CarpetSettings
             if (server.isDedicated())
             {
                 int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().viewDistance;
-                if (vd != CarpetServer.minecraft_server.getPlayerManager().getViewDistance())
-                    CarpetServer.minecraft_server.getPlayerManager().setViewDistance(vd);
+                if (vd != server.getPlayerManager().getViewDistance())
+                    server.getPlayerManager().setViewDistance(vd);
                 return newValue;
             }
             else
@@ -549,6 +549,7 @@ public class CarpetSettings
                 //must been some startup thing
                 return newValue;
             }
+            if (CarpetServer.minecraft_server == null) return newValue;
             ServerWorld currentOverworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD);
             if (currentOverworld != null)
             {

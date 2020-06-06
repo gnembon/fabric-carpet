@@ -7,10 +7,10 @@ import java.util.function.BiConsumer;
 import carpet.CarpetServer;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 
 public class TickSpeed
@@ -21,7 +21,7 @@ public class TickSpeed
     public static long time_bias = 0;
     public static long time_warp_start_time = 0;
     public static long time_warp_scheduled_ticks = 0;
-    public static PlayerEntity time_advancerer = null;
+    public static ServerPlayerEntity time_advancerer = null;
     public static String tick_warp_callback = null;
     public static ServerCommandSource tick_warp_sender = null;
     public static int player_active_timeout = 0;
@@ -68,13 +68,14 @@ public class TickSpeed
         player_active_timeout = PLAYER_GRACE+ticks;
     }
 
-    public static BaseText tickrate_advance(PlayerEntity player, int advance, String callback, ServerCommandSource source)
+    public static BaseText tickrate_advance(ServerPlayerEntity player, int advance, String callback, ServerCommandSource source)
     {
         if (0 == advance)
         {
             tick_warp_callback = null;
-            tick_warp_sender = null;
+            if (source != tick_warp_sender) tick_warp_sender = null;
             finish_time_warp();
+            tick_warp_sender = null;
             return Messenger.c("gi Warp interrupted");
         }
         if (time_bias > 0)

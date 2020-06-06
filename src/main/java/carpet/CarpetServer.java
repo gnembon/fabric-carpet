@@ -57,7 +57,7 @@ public class CarpetServer // static for now - easier to handle all around the co
             if (sm != null) sm.attachServer(server);
             e.onServerLoaded(server);
         });
-        scriptServer = new CarpetScriptServer();
+        scriptServer = new CarpetScriptServer(server);
         scriptServer.loadAllWorldScripts();
         MobAI.resetTrackers();
         LoggerRegistry.initLoggers();

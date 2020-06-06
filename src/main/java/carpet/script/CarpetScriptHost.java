@@ -323,7 +323,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             try
             {
-                callUDF(BlockPos.ORIGIN, CarpetServer.minecraft_server.getCommandSource(), closing, Collections.emptyList());
+                callUDF(BlockPos.ORIGIN, scriptServer.server.getCommandSource(), closing, Collections.emptyList());
             }
             catch (InvalidCallbackException ignored)
             {
@@ -334,8 +334,8 @@ public class CarpetScriptHost extends ScriptHost
             FunctionValue userClosing = value.getFunction("__on_close");
             if (userClosing != null)
             {
-                ServerPlayerEntity player = CarpetServer.minecraft_server.getPlayerManager().getPlayer(key);
-                ServerCommandSource source = (player != null)?player.getCommandSource():CarpetServer.minecraft_server.getCommandSource();
+                ServerPlayerEntity player = scriptServer.server.getPlayerManager().getPlayer(key);
+                ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
                 try
                 {
                     ((CarpetScriptHost) value).callUDF(BlockPos.ORIGIN, source, userClosing, Collections.emptyList());
@@ -347,7 +347,7 @@ public class CarpetScriptHost extends ScriptHost
         });
 
         String markerName = CarpetExpression.MARKER_STRING+"_"+((getName()==null)?"":getName());
-        for (ServerWorld world : CarpetServer.minecraft_server.getWorlds())
+        for (ServerWorld world : scriptServer.server.getWorlds())
         {
             for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {

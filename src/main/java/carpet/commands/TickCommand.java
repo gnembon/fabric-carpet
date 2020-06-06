@@ -9,6 +9,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -80,7 +81,7 @@ public class TickCommand
 
     private static int setWarp(ServerCommandSource source, int advance, String tail_command)
     {
-        PlayerEntity player = null;
+        ServerPlayerEntity player = null;
         try
         {
             player = source.getPlayer();
