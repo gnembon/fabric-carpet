@@ -187,6 +187,10 @@ public class CarpetEventServer
         {
             callList.removeIf((c)-> c.host != null && c.host.equals(hostName));
         }
+        public void clearEverything()
+        {
+            callList.clear();
+        }
     }
 
     public enum Event
@@ -734,6 +738,11 @@ public class CarpetEventServer
     public void removeAllHostEvents(String hostName)
     {
         Event.byName.values().forEach((e) -> e.handler.removeAllCalls(hostName));
+    }
+
+    public void clearAll()
+    {
+        Event.byName.values().forEach(e -> e.handler.clearEverything());
     }
 
     private Pair<String,String> decodeCallback(String funName)

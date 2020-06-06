@@ -15,6 +15,7 @@ import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
@@ -35,12 +36,12 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class CarpetScriptServer
 {
     //make static for now, but will change that later:
-    public final CarpetScriptHost globalHost;
-    public final Map<String, CarpetScriptHost> modules;
+    public  CarpetScriptHost globalHost;
+    public  Map<String, CarpetScriptHost> modules;
     public long tickStart;
     public boolean stopAll;
-    private final Set<String> holyMoly;
-    public final CarpetEventServer events;
+    private  Set<String> holyMoly;
+    public  CarpetEventServer events;
 
     private static final List<Module> bundledModuleData = new ArrayList<Module>(){{
         add(new BundledModule("camera", false));
@@ -51,6 +52,11 @@ public class CarpetScriptServer
     }};
 
     public CarpetScriptServer()
+    {
+        init();
+    }
+
+    private void init()
     {
         ScriptHost.systemGlobals.clear();
         events = new CarpetEventServer();
@@ -280,5 +286,15 @@ public class CarpetScriptServer
             host.onClose();
         }
         ThreadValue.shutdown();
+    }
+
+    public void reload(MinecraftServer server)
+    {
+        Map<String, Boolean> apps = new HashMap<>();
+        modules.forEach((s, h) -> apps.put(s, h.perUser));
+        apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s));
+        events.clearAll();
+        init();
+        apps.forEach((s, pp) -> addScriptHost(server.getCommandSource(), s, pp, false));
     }
 }

@@ -50,6 +50,8 @@ public interface CarpetExtension
 
     default void onServerClosed(MinecraftServer server) {}
 
+    default void onReload(MinecraftServer server) {}
+
     default String version() {return null;}
 
     default void registerLoggers() {}

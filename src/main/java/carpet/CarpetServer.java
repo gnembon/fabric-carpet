@@ -146,5 +146,11 @@ public class CarpetServer // static for now - easier to handle all around the co
         TickSpeed.reset();
         settingsManager.detachServer();
     }
+
+    public static void onReload(MinecraftServer server)
+    {
+        scriptServer.reload(server);
+        extensions.forEach(e -> e.onReload(server));
+    }
 }
 
