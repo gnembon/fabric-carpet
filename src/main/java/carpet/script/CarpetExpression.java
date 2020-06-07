@@ -38,11 +38,13 @@ import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.utils.BlockInfo;
 import carpet.utils.Messenger;
+import carpet.utils.SpawnReporter;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -52,6 +54,7 @@ import net.minecraft.block.StructureBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.FallingBlockEntity;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -3233,6 +3236,47 @@ public class CarpetExpression
         });
     }
 
+    private void API_GaemMonitoring()
+    {
+        // game processed snooper functions
+        this.expr.addLazyFunction("get_mob_counts", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            ServerWorld world = cc.s.getWorld();
+            SpawnHelper.Info info = world.getChunkManager().getSpawnInfo();
+            if (info == null) return LazyValue.NULL;
+            Object2IntMap<SpawnGroup> mobcounts = info.getGroupToCount();
+            int chunks = info.getSpawningChunkCount();
+            Value retVal;
+            if (lv.size() == 0)
+            {
+                Map<Value, Value> retDict = new HashMap<>();
+                for (SpawnGroup category: mobcounts.keySet())
+                {
+                    int currentCap = (int)(category.getCapacity() * chunks / SpawnReporter.currentMagicNumber()); // MAGIC_NUMBER
+                    retDict.put(
+                            new StringValue(category.asString().toLowerCase(Locale.ROOT)),
+                            ListValue.of(
+                                    new NumericValue(mobcounts.getInt(category)),
+                                    new NumericValue(currentCap))
+                    );
+                }
+                retVal = MapValue.wrap(retDict);
+            }
+            else
+            {
+                String catString = lv.get(0).evalValue(c).getString();
+                SpawnGroup cat = SpawnGroup.method_28307(catString.toLowerCase(Locale.ROOT));
+                if (cat == null) throw new InternalExpressionException("Unreconized mob category: "+catString);
+                retVal = ListValue.of(
+                        new NumericValue(mobcounts.getInt(cat)),
+                        new NumericValue((int)(cat.getCapacity() * chunks / SpawnReporter.currentMagicNumber()))
+                );
+            }
+            return (_c, _t) -> retVal;
+        });
+    }
+
     private <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {
         T key = type.getRegistry().get(id);
@@ -3263,6 +3307,7 @@ public class CarpetExpression
         API_AuxiliaryAspects();
         API_Scoreboard();
         API_Interapperability();
+        API_GaemMonitoring();
     }
 
     public boolean fillAndScanCommand(ScriptHost host, int x, int y, int z)

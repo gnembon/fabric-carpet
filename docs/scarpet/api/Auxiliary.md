@@ -332,6 +332,13 @@ world-localized block, so not `block('stone')`, or a string representing a dimen
 ### `view_distance()`
 Returns the view distance of the server.
 
+### `mob_counts()`, `mob_counts(category)` 1.16+
+
+Returns either a map of mob categories with its respective counts and capacities (a.k.a. mobcaps) or just a tuple
+of count and limit for a specific category. If a category was not spawning for whatever reason it may not be
+returned from `mob_counts()`, but could be retrieved for `mob_counts(category)`. Returned counts is what spawning
+algorithm has taken in to account last time mobs spawned. 
+
 ### `schedule(delay, function, args...)`
 
 Schedules a user defined function to run with a specified `delay` ticks of delay. Scheduled functions run at the end 

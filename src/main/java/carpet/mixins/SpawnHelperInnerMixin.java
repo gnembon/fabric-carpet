@@ -29,7 +29,7 @@ public class SpawnHelperInnerMixin implements SpawnHelperInnerInterface
     private void changeMobCaps(SpawnGroup entityCategory, CallbackInfoReturnable<Boolean> cir)
     {
         int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));
-        int i = newCap * spawningChunkCount / (int)Math.pow(17.0D, 2.0D);
+        int i = newCap * spawningChunkCount / SpawnReporter.MAGIC_NUMBER;
         cir.setReturnValue(groupToCount.getInt(entityCategory) < i);
     }
 
