@@ -2967,6 +2967,12 @@ public class CarpetExpression
             return (cc, tt) -> ret;
         });
 
+        this.expr.addLazyFunction("serverTime", -1, (c, t, lv) -> {
+            ServerCommandSource s = ((CarpetContext)c).s;
+            Value time = new NumericValue(s.getMinecraftServer().getTickTime());
+            return (cc, tt) -> time;
+        });
+
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(s.getWorld().dimension.getType())));
