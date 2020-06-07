@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import carpet.logging.logHelpers.ExplosionLogHelper;
 import carpet.mixins.ExplosionAccessor;
 import carpet.CarpetSettings;
+import carpet.mixins.ExplosionMixin;
 import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -51,6 +53,7 @@ public class OptimizedExplosion
     private static List<Entity> entitylist;
     private static Vec3d vec3dmem;
     private static long tickmem;
+    private static Vec3d vec3dZero = new Vec3d(0, 0, 0);
     // For disabling the explosion particles and sound
     public static int explosionSound = 0;
 
@@ -66,7 +69,7 @@ public class OptimizedExplosion
     private static ArrayList<Float> chances = new ArrayList<>();
     private static BlockPos blastChanceLocation;
 
-    public static void doExplosionA(Explosion e) {
+    public static void doExplosionA(Explosion e, ExplosionLogHelper eLogger) {
         ExplosionAccessor eAccess = (ExplosionAccessor) e;
         
         blastCalc(e);
@@ -120,6 +123,9 @@ public class OptimizedExplosion
                     entity.getX() == eAccess.getEntity().getX() &&
                     entity.getY() == eAccess.getEntity().getY() &&
                     entity.getZ() == eAccess.getEntity().getZ()) {
+                if (eLogger != null) {
+                    eLogger.onEntityImpacted(entity, new Vec3d(0,-0.9923437498509884d, 0));
+                }
                 continue;
             }
 
@@ -156,6 +162,10 @@ public class OptimizedExplosion
 
                         if (entity instanceof LivingEntity) {
                             d11 = ProtectionEnchantment.transformExplosionKnockback((LivingEntity) entity, d10);
+                        }
+
+                        if (eLogger != null) {
+                            eLogger.onEntityImpacted(entity, new Vec3d(d5 * d11, d7 * d11, d9 * d11));
                         }
 
                         entity.setVelocity(entity.getVelocity().add(d5 * d11, d7 * d11, d9 * d11));

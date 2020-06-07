@@ -23,7 +23,7 @@ public abstract class PlayerEntity_antiCheatDisabled
     @Inject(method = "checkFallFlying", at = @At("HEAD"), cancellable = true)
     private void allowDeploys(CallbackInfoReturnable<Boolean> cir)
     {
-        if (CarpetSettings.antiCheatDisabled && CarpetServer.minecraft_server.isDedicated())
+        if (CarpetSettings.antiCheatDisabled && CarpetServer.minecraft_server != null && CarpetServer.minecraft_server.isDedicated())
         {
             ItemStack itemStack_1 = getEquippedStack(EquipmentSlot.CHEST);
             if (itemStack_1.getItem() == Items.ELYTRA && ElytraItem.isUsable(itemStack_1)) {

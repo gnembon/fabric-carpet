@@ -13,6 +13,7 @@ import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 public class CarpetEventServer
 {
     public final List<ScheduledCall> scheduledCalls = new LinkedList<>();
+    public final MinecraftServer server;
 
     public static class Callback
     {
@@ -658,8 +660,9 @@ public class CarpetEventServer
     }
 
 
-    public CarpetEventServer()
+    public CarpetEventServer(MinecraftServer server)
     {
+        this.server = server;
         for (Event e: Event.values())
             e.handler.callList.clear();
     }

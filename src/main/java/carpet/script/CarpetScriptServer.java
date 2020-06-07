@@ -36,6 +36,7 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class CarpetScriptServer
 {
     //make static for now, but will change that later:
+    public final MinecraftServer server;
     public  CarpetScriptHost globalHost;
     public  Map<String, CarpetScriptHost> modules;
     public long tickStart;
@@ -51,19 +52,20 @@ public class CarpetScriptServer
         add(new BundledModule("math", true));
     }};
 
-    public CarpetScriptServer()
+    public CarpetScriptServer(MinecraftServer server)
     {
         init();
     }
 
     private void init()
     {
+        this.server = server;
         ScriptHost.systemGlobals.clear();
-        events = new CarpetEventServer();
+        events = new CarpetEventServer(server);
         modules = new HashMap<>();
         tickStart = 0L;
         stopAll = false;
-        holyMoly = CarpetServer.minecraft_server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
+        holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
         globalHost = CarpetScriptHost.create(this, null, false, null);
     }
 
@@ -71,10 +73,10 @@ public class CarpetScriptServer
     {
         if (CarpetSettings.scriptsAutoload)
         {
-            Messenger.m(CarpetServer.minecraft_server.getCommandSource(), "Auto-loading world scarpet apps");
+            Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(CarpetServer.minecraft_server.getCommandSource(), moduleName, true, true);
+                addScriptHost(server.getCommandSource(), moduleName, true, true);
             }
         }
 
@@ -83,6 +85,8 @@ public class CarpetScriptServer
     public Module getModule(String name, boolean allowLibraries)
     {
         File folder = CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
+        File folder = server.getLevelStorage().resolveFile(
+                server.getLevelName(), "scripts");
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles != null)
             for (File script : listOfFiles)
@@ -117,6 +121,8 @@ public class CarpetScriptServer
             }
         }
         File folder = CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
+        File folder = server.getLevelStorage().resolveFile(
+                server.getLevelName(), "scripts");
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles == null)
             return moduleNames;
@@ -228,7 +234,7 @@ public class CarpetScriptServer
                                     })));
         }
         Messenger.m(source, "gi "+hostName+" app loaded with /"+hostName+" command");
-        CarpetServer.minecraft_server.getCommandManager().getDispatcher().register(command);
+        server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
 
