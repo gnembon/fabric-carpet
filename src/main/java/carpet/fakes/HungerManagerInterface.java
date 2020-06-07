@@ -1,5 +1,6 @@
 package carpet.fakes;
 
 public interface HungerManagerInterface {
-    float getExhaustion();
+    float getExhaustionCM();
+    void setExhaustionCM(float exhaust);
 }

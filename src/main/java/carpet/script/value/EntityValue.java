@@ -299,8 +299,7 @@ public class EntityValue extends Value
         });
 
         put("exhaustion",(e, a)->{
-            if(e instanceof PlayerEntity)
-                return new NumericValue(((HungerManagerInterface)((PlayerEntity) e).getHungerManager()).getExhaustion());
+            if(e instanceof PlayerEntity) return new NumericValue(((HungerManagerInterface)((PlayerEntity) e).getHungerManager()).getExhaustionCM());
             return Value.NULL;
         });
 
@@ -966,6 +965,10 @@ public class EntityValue extends Value
         });
 
         put("exhaustion", (e, v)-> {
+            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setExhaustionCM(NumericValue.asNumber(v).getFloat());
+        });
+
+        put("add_exhaustion", (e, v)-> {
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
         });
 
