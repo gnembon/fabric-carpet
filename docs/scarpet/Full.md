@@ -3154,22 +3154,23 @@ Optional shared shape attributes:
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
  * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
  player, otherwise it will be send to all players in the dimension.
+ * `width` - line thickness, defaults to 2.0pt
+ * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
+ * `follow` - entity, or player name. Shape will follow an entity instead of being static.
+   Follow attribute requires all positional arguments to be relative to the entity and disallow
+   of using entity or block as position markers. You must specify positions as a triple.
 
 Available shapes:
  * `'line'` - draws a straight line between two points
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
-   * Optional attributes:
-     * `width` - line thickness, defaults to 2.0pt
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one corner of the box
      * `to` - other corner, same format as `from`
-   * Optional attributes:
-     * `width` - mesh line thickness, defaults to 2.0pt
-     * `fill` - color for the box faces, defaults to no fill, use shared color attribute format
+
  * `'sphere'` - draws a sphere
    * Required attributes:
      * `center` - center of the sphere
@@ -3177,7 +3178,6 @@ Available shapes:
    * Optional attributes:
      * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
       level of detail will be selected automatically based on radius.
-     * `width` - line thickness
 
 ### `create_marker(text, pos, rotation?, block?)`
 
@@ -3266,6 +3266,63 @@ Example usages:
 
 Prints the message to system logs, and not to chat.
 
+### read_file(resource, type)
+### delete_file(resource, type)
+### write_file(resource, type, data, ...)
+
+With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
+ content, or deletes the resource.
+
+Resource is identified by a path to the file.  
+A path can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+from the name. Empty descriptors are invalid. Do not add file extensions to the descriptor - extensions are inferred
+based on the `type` of the file.
+ 
+Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
+resources is guaranteed to be isolated from other apps. Shared resources are... well, shared across all apes, meaning
+they can eat of each others file, however all access to files is synchronized, and files are never left open, so
+this should not lead to any access problems.
+
+If the app's name is `'foo'`, the script location would
+be `world/scripts/foo.sc`, app
+specific data directory is under `world/scripts/foo.data/...`, and shared data space is under
+`world/scripts/shared/...`.
+
+The default no-name app, via `/script run` command can only save/load/read files from the shared space.
+
+Functions return `null` if an error is encounter or no file is present (for read and delete operations). Returns `true`
+for success writes and deletes, and requested data, based on the file type, for read operations.
+
+NBT files can be written once as they an store one tag at a time. Consecutive writes will overwrite previous data.
+
+Write operations to text files always result in appending to the existing file, so consecutive writes will increase
+the size of the file and add data to it. Since files are closed after each write, sending multiple lines of data to
+write is beneficial for writing speed. To send multiple packs of data, either provide them flat or as a list in the
+third argument.
+ * `write_file('temp', 'text', 'foo', 'bar', 'baz')` or
+ * write_file('temp', 'text', l('foo', 'bar', 'baz'))
+ 
+To log a single line of string
+ 
+Supported values for resource `type` is:
+ * `nbt` - NBT tag
+ * `text` - text resource with automatic newlines added
+ * `raw` - text resource without implied newlines
+ * `shared_nbt`, `shared_text`, `shared_raw` - shared versions of the above
+ 
+NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
+stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
+sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
+record to the file.
+
+<pre>
+write_file('foo', 'shared_text, l('one', 'two'));
+write_file('foo', 'shared_text', 'three\n', 'four\n');
+write_file('foo', 'shared_raw', 'five\n', 'six\n');
+
+read_file('foo', 'shared_text')     => ['one', 'two', 'three', '', 'four', '', 'five', 'six']
+</pre>
+  
 ### `run(expr)`
 
 Runs a vanilla command from the string result of the `expr` and returns its success count
@@ -3280,7 +3337,10 @@ run('give @s stone 4') -> 1 // this operation was successful once
 Performs autosave, saves all chunks, player data, etc. Useful for programs where autosave is disabled due to 
 performance reasons and saves the world only on demand.
 
-### `load_app_data(), load_app_data(file), load_app_data(file, shared?)`
+### `load_app_data()`
+
+NOTE: usages with arguments, so `load_app_data(file)` and `load_app_data(file, shared?)` are deprecated.
+Use `read_file` instead.
 
 Loads the app data associated with the app from the world /scripts folder. Without argument returns the memory 
 managed and buffered / throttled NBT tag. With a file name, reads explicitly a file with that name from the 
@@ -3288,7 +3348,7 @@ scripts folder that belongs exclusively to the app. if `shared` is true, the fil
 to the app anymore, but located in a shared app space. 
 
 File descriptor can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
-from the name before saving/loading. Empty descriptors are invalid.
+from the name before saving/loading. Empty descriptors are invalid. Do not add file extensions to the descriptor
 
 Function returns nbt value with the file content, or `null` if the file is missing or there were problems
 with retrieving the data.
@@ -3302,7 +3362,9 @@ specific data directory is under `world/scripts/foo.data/bar/../baz.nbt`, and sh
 
 You can use app data to save non-vanilla information separately from the world and other scripts.
 
-### `store_app_data(tag), store_app_data(tag, file), store_app_data(tag, file, shared?)`
+### `store_app_data(tag)`
+
+Note:  `store_app_data(tag, file)` and `store_app_data(tag, file, shared?)` usages deprecated. Use `write_file` instead.
 
 Stores the app data associated with the app from the world `/scripts` folder. With the `file` parameter saves 
 immediately and with every call to a specific file defined by the `file`, either in app space, or in the scripts
