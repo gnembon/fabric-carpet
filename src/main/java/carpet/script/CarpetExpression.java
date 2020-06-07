@@ -2476,6 +2476,18 @@ public class CarpetExpression
 
     }
 
+    public static String recognizeResource(Value value)
+    {
+        String origfile = value.getString();
+        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+        file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
+        if (file.isEmpty())
+        {
+            throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
+        }
+        return file;
+    }
+
     private void API_AuxiliaryAspects()
     {
         this.expr.addLazyFunction("sound", -1, (c, t, lv) -> {
@@ -2864,13 +2876,6 @@ public class CarpetExpression
             // implmenetation should dock the task on the main thread.
         });
 
-        this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
-        {
-            Value res = lv.get(0).evalValue(c);
-            CarpetSettings.LOG.error(res.getString());
-            return (_c, _t) -> res; // pass through for variables
-        });
-
         this.expr.addLazyFunction("run", 1, (c, t, lv) -> {
             BlockPos target = ((CarpetContext)c).origin;
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
@@ -3057,25 +3062,108 @@ public class CarpetExpression
             return (c_, t_) -> Value.TRUE;
         });
 
+        this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
+        {
+            Value res = lv.get(0).evalValue(c);
+            CarpetSettings.LOG.error(res.getString());
+            return (_c, _t) -> res; // pass through for variables
+        });
+
+        this.expr.addLazyFunction("read_file", 2, (c, t, lv) -> {
+            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            boolean shared = origtype.startsWith("shared_");
+            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
+            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
+                throw new InternalExpressionException("Unsupported file type: "+origtype);
+            Value retVal;
+            if (type.equals("nbt"))
+            {
+                Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(resource, shared);
+                if (state == null) return LazyValue.NULL;
+                retVal = new NBTSerializableValue(state);
+            }
+            else
+            {
+                List<String> content = ((CarpetScriptHost) ((CarpetContext) c).host).readTextResource(resource, shared);
+                if (content == null) return LazyValue.NULL;
+                retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
+            }
+            return (cc, tt) -> retVal;
+        });
+
+        this.expr.addLazyFunction("delete_file", 2, (c, t, lv) -> {
+            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            boolean shared = origtype.startsWith("shared_");
+            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
+            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
+                throw new InternalExpressionException("Unsupported file type: "+origtype);
+            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).removeResourceFile(resource, shared, type);
+            return success?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
+        this.expr.addLazyFunction("write_file", -1, (c, t, lv) -> {
+            if (lv.size() < 3) throw new InternalExpressionException("'write_file' requires three or more arguments");
+            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            boolean shared = origtype.startsWith("shared_");
+            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
+            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
+                throw new InternalExpressionException("Unsupported file type: "+origtype);
+            boolean success;
+            if (type.equals("nbt"))
+            {
+                Value val = lv.get(2).evalValue(c);
+                NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
+                        ? (NBTSerializableValue) val
+                        : new NBTSerializableValue(val.getString());
+                Tag tag = tagValue.getTag();
+                success = ((CarpetScriptHost)((CarpetContext)c).host).writeTagFile(tag, resource, shared);
+            }
+            else
+            {
+                List<String> data = new ArrayList<>();
+                if (lv.size()==3)
+                {
+                    Value val = lv.get(2).evalValue(c);
+                    if (val instanceof ListValue)
+                    {
+                        List<Value> lval = ((ListValue) val).getItems();
+                        lval.forEach(v -> data.add(v.getString()));
+                    }
+                    else
+                    {
+                        data.add(val.getString());
+                    }
+                }
+                else
+                {
+                    for(int i = 2; i < lv.size(); i++)
+                    {
+                        data.add(lv.get(i).evalValue(c).getString());
+                    }
+                }
+                success = ((CarpetScriptHost) ((CarpetContext) c).host).appendLogFile(resource, shared, type, data);
+            }
+            return success?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
+        //write_file
+
         this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
             String file = null;
             boolean shared = false;
             if (lv.size()>0)
             {
-                String origfile = lv.get(0).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
-                file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
-                if (file.isEmpty())
-                {
-                    throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have at least some letters and numbers");
-                }
+                file = recognizeResource(lv.get(0).evalValue(c));
                 if (lv.size() > 1)
                 {
                     shared = lv.get(1).evalValue(c).getBoolean();
                 }
             }
-            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).getGlobalState(file, shared);
+            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -3091,13 +3179,7 @@ public class CarpetExpression
             boolean shared = false;
             if (lv.size()>1)
             {
-                String origfile = lv.get(1).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
-                file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
-                if (file.isEmpty())
-                {
-                    throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
-                }
+                file = recognizeResource(lv.get(1).evalValue(c));
                 if (lv.size() > 2)
                 {
                     shared = lv.get(2).evalValue(c).getBoolean();
@@ -3107,7 +3189,7 @@ public class CarpetExpression
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
             Tag tag = tagValue.getTag();
-            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file, shared);
+            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).writeTagFile(tag, file, shared);
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 

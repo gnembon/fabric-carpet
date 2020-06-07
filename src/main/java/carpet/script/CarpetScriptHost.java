@@ -369,7 +369,7 @@ public class CarpetScriptHost extends ScriptHost
         return Module.getData(main, null, false);
     }
 
-    public Tag getGlobalState(String file, boolean isShared)
+    public Tag readFileTag(String file, boolean isShared)
     {
         if (getName() == null && !isShared) return null;
         if (file != null)
@@ -379,7 +379,7 @@ public class CarpetScriptHost extends ScriptHost
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public boolean setGlobalState(Tag tag, String file, boolean isShared)
+    public boolean writeTagFile(Tag tag, String file, boolean isShared)
     {
         if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
 
@@ -397,6 +397,25 @@ public class CarpetScriptHost extends ScriptHost
         }
         return true;
     }
+
+    public boolean removeResourceFile(String resource, boolean isShared, String type)
+    {
+        if (getName() == null && !isShared) return false; //
+        return Module.dropExistingFile(main, resource, type.equals("nbt")?"nbt":"txt", isShared);
+    }
+
+    public boolean appendLogFile(String resource, boolean isShared, String type, List<String> data)
+    {
+        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
+        return Module.appendToTextFile(main, resource, type, isShared, data);
+    }
+
+    public List<String> readTextResource(String resource, boolean isShared)
+    {
+        if (getName() == null && !isShared) return null; //
+        return Module.listFile(main, resource, "txt", isShared);
+    }
+
 
     public void tick()
     {

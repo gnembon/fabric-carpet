@@ -173,9 +173,9 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                     }
                     else if (nextChar == 't')
                     {
-                        throw new ExpressionException(context, this.expression, token,
-                                "Tab character is not supported");
-                        //token.append('\t');
+                        //throw new ExpressionException(context, this.expression, token,
+                        //        "Tab character is not supported");
+                        token.append('\t');
                     }
                     else if (nextChar == 'r')
                     {
