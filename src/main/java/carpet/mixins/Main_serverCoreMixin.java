@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Main.class)
 public class Main_serverCoreMixin
 {
+    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(method = "main", at = @At( // little bit later than main to add chance for extensions to register.
             value = "INVOKE",
             target = "Ljoptsimple/OptionParser;parse([Ljava/lang/String;)Ljoptsimple/OptionSet;")

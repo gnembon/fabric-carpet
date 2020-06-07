@@ -35,8 +35,6 @@ public abstract class Module
     {
         File dataFile = resolveResource(module, file, "nbt", isShared);
         if (dataFile == null) return null;
-        if (!isShared && (module == null || module.getName() == null)) return null;
-        File dataFile = CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+getDescriptor(module, file, isShared)+".nbt").toFile();
         if (!Files.exists(dataFile.toPath()) || !(dataFile.isFile())) return null;
         synchronized (writeIOSync) { return FileModule.read(dataFile); }
     }
@@ -45,8 +43,6 @@ public abstract class Module
     {
         File dataFile = resolveResource(module, file, "nbt", isShared);
         if (dataFile == null) return false;
-        if (!isShared && (module == null || module.getName() == null)) return false;
-        File dataFile =CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+getDescriptor(module, file, isShared)+".nbt").toFile();
         if (!Files.exists(dataFile.toPath().getParent()) && !dataFile.getParentFile().mkdirs()) return false;
         synchronized (writeIOSync) { return FileModule.write(globalState, dataFile); }
     }
@@ -77,8 +73,7 @@ public abstract class Module
     private static File resolveResource(Module module, String resourceName, String ext, boolean isShared)
     {
         if (!isShared && (module == null || module.getName() == null)) return null;
-        return CarpetServer.minecraft_server.getLevelStorage().resolveFile(
-                CarpetServer.minecraft_server.getLevelName(), "scripts/"+getDescriptor(module, resourceName, isShared)+"."+ext);
+        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+getDescriptor(module, resourceName, isShared)+"."+ext).toFile();
     }
 
     @Override

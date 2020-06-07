@@ -54,12 +54,12 @@ public class CarpetScriptServer
 
     public CarpetScriptServer(MinecraftServer server)
     {
+        this.server = server;
         init();
     }
 
     private void init()
     {
-        this.server = server;
         ScriptHost.systemGlobals.clear();
         events = new CarpetEventServer(server);
         modules = new HashMap<>();
@@ -84,9 +84,7 @@ public class CarpetScriptServer
 
     public Module getModule(String name, boolean allowLibraries)
     {
-        File folder = CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
-        File folder = server.getLevelStorage().resolveFile(
-                server.getLevelName(), "scripts");
+        File folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles != null)
             for (File script : listOfFiles)
@@ -120,9 +118,7 @@ public class CarpetScriptServer
                 if (!mi.isLibrary()) moduleNames.add(mi.getName());
             }
         }
-        File folder = CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
-        File folder = server.getLevelStorage().resolveFile(
-                server.getLevelName(), "scripts");
+        File folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles == null)
             return moduleNames;
