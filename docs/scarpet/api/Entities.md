@@ -473,7 +473,8 @@ players, since they are controlled client side.
 ### `modify(e, 'effect', name, duration?, amplifier?, show_particles?, show_icon?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true` 
-and `true`. If no duration is specified, or if it's null or 0, the effect is removed.
+and `true`. If no duration is specified, or if it's null or 0, the effect is removed. If the effect name is specified
+as `null` that clears all effects.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
