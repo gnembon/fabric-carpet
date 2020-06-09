@@ -1,30 +1,30 @@
 global_chunk_colors = m(
     // loaded ticking
-	l(3,                   l(0xBBFF0000,  0x88bb0000)), // lime, green
+	l(3,                   l(0xAAdd0000,  0x66990000)), // lime, green
 	l(2,                   l(0xFF000000,  0x88000000)), // red
-	l(1,                   l(0xFFFF0000,  0xbbbb0000)), // yellow
+	l(1,                   l(0xFFcc0000,  0xbbaa0000)), // yellowish
 	// 'unloaded' (in memory, so rather 'inaccessible')
 	l(0,                   l(0xcccccc00,  0x11111100)), // gray / hi constast
 	// stable full generation (for '0's, all 1,2,3 are always 'full')
 	l('full',              l(0xbbbbbb00,  0x88888800)), // gray
 	// unstable final bits
-	l('heightmaps',        l(0xFFFFFF00,  0x00000000)), // check
-	l('spawn',             l(0xFFFFFF00,  0x00000000)), // check
-	l('light_gen',         l(0xFFFFFF00,  0x00000000)), // check
+	l('heightmaps',        l(0xFFFFFF00,  0x00000000)), // checker
+	l('spawn',             l(0xFFFFFF00,  0x00000000)), // checker
+	l('light_gen',         l(0xFFFFFF00,  0x00000000)), // checker
 	// stable features
 	l('features',          l(0x88bb2200,    0x66882200)), // green muddled
 	//stable terrain
 	l('liquid_carvers',    l(0x65432100,     0x54321000)), // browns
 	//unstable terrain - not generated yet
-	l('carvers',            l(0xFFFFFF00,  0x00000000)), // check
-	l('surface',            l(0xFFFFFF00,  0x00000000)), // check
-	l('noise',              l(0xFFFFFF00,  0x00000000)), // check
-	l('biomes',             l(0xFFFFFF00,  0x00000000)), // check
-	l('structure_references', l(0xFFFFFF00,  0x00000000)), // check
+	l('carvers',            l(0xFFFFFF00,  0x00000000)), // checker
+	l('surface',            l(0xFFFFFF00,  0x00000000)), // checker
+	l('noise',              l(0xFFFFFF00,  0x00000000)), // checker
+	l('biomes',             l(0xFFFFFF00,  0x00000000)), // checker
+	l('structure_references', l(0xFFFFFF00,  0x00000000)), // checker
 	// stable
 	l('structure_starts',  l(0x66666600,  0x22222200)), // darkgrey
 	// not stated yet
-	l('empty',             l(0xFF88888800,  0xDD444400)), // pink
+	l('empty',             l(0xFF888800,  0xDD444400)), // pink
 	// proper not in memory
 	l(null ,               l(0xFFFFFF00,  0xFFFFFF00)), // hwite
 
@@ -111,7 +111,7 @@ __setup_tracker(player, item) ->
 	loop( 2*setup:'radius'+1, dx = _ - setup:'radius';
 		loop( 2*setup:'radius'+1, dz = _ - setup:'radius';
 			source_pos = l(sx+16*dx,sy,sz+16*dz);
-			global_status_cache:source_pos = null
+			global_status_cache:source_pos = l(null, 0);
 		)
 	);
 	global_current_setup = setup;
@@ -135,6 +135,7 @@ __chunk_visualizer_tick(p) ->
 		source_dimension = setup:'source_dimension';
 
         shapes = l();
+        now = tick_time();
 
 		loop( 2*radius+1, dx = _ - radius;
 			loop( 2*radius+1, dz = _ - radius;
@@ -147,35 +148,35 @@ __chunk_visualizer_tick(p) ->
 				// will mix with light ticket
 				if (status=='light', status = 'light_gen');
 
-				if ( status != global_status_cache:source_pos,
-					global_status_cache:source_pos = status;
-					changed = true;
-				);
+
 				if (loaded_status > 0,
 					tickets = in_dimension( source_dimension, chunk_tickets(source_pos));
 					for(tickets,
 						l(type, level) = _;
 						if (show_activity || type != 'unknown',
-							global_status_cache:source_pos = type;
-							changed = true;
+							//global_status_cache:source_pos = type;
+							//changed = true;
+							status = type;
 						);
 					);
 				);
-				//if (changed,
-					//to = global_status_cache:source_pos;
-					//if(!has(global_chunk_colors:to), print('problem with '+to));
-					//set(px+dx,py,pz+dz, global_chunk_colors:to:((dx+dz)%2));
-					//set(px+dx,py,pz+dz, global_chunk_colors:(global_status_cache:source_pos):((dx+dz)%2));
-					//bpos = l(px+dx/2, py, pz+dz/2);
-					bpos = l(dx/2, -10, dz/2);
-					bcol = global_chunk_colors:(global_status_cache:source_pos):((dx+dz)%2);
-					shapes += l('box', 10, 'from', bpos, 'to', bpos + l(0.5,0,0.5), 'color', bcol, 'fill', bcol+128,
-					'follow', p)
-					;
-				//);
+				l(cached_status, expiry) = global_status_cache:source_pos;
+				changed = (status != cached_status);
+				if ( changed || (expiry < now),
+                    global_status_cache:source_pos = l(status, now+100+floor(rand(20)));
+					bpos = l(dx/2, 10, dz/2);
+					bcol = global_chunk_colors:status:((dx+dz)%2);
+					shapes += l('box', 150, 'from', bpos, 'to', bpos + l(0.5,0,0.5),
+					    'color', 0xffffff00, 'fill', bcol+128, 'follow', p);
+					if (changed,
+					    pbcol = global_chunk_colors:cached_status:((dx+dz)%2);
+					    shapes += l('box', 0, 'from', bpos, 'to', bpos + l(0.5,0,0.5),
+                            'color', 0xffffff00, 'fill', pbcol+128, 'follow', p);
+					);
+				);
 			);
 		);
 		draw_shape(shapes);
 	);
-	schedule(5, '__chunk_visualizer_tick', p)
+	schedule(1, '__chunk_visualizer_tick', p)
 )
