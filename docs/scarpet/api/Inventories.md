@@ -4,7 +4,12 @@
 
 Most functions in this category require inventory as the first argument. Inventory could be specified by an entity, 
 or a block, or position (three coordinates) of a potential block with inventory. Player enderchest inventory require 
-two arguments, keyword `'enderchest'`, followed by the player entity argument. If the entity or a block doesn't have 
+two arguments, keyword `'enderchest'`, followed by the player entity argument, or a single argument as a string of a
+form: `'enderchest_steve'`. If your player name starts with enderchest, it can be always accessed by passing a player
+entity value. If all else fails, it will try to identify first three arguments as coordinates of a block position of
+a block inventory. Player inventories can also be called by their name.
+ 
+ If the entity or a block doesn't have 
 an inventory, they typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 

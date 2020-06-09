@@ -314,6 +314,13 @@ query(p,'effect','resistance')  => null
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'hunger')`
+### `query(e, 'saturation')`
+### `query(e, 'exhaustion')`
+
+Retrieves player hunger related information. For non-players, returns `null`.
+
+
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
@@ -513,6 +520,17 @@ Toggles gravity for the entity.
 ### `modify(e, 'fire', ticks)`
 
 Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
+
+### `modify(e, 'hunger', value)`
+### `modify(e, 'saturation', value)`
+### `modify(e, 'exhaustion', value)`
+
+Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'add_exhaustion', value)`
+
+adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
+to manipulate how much 'food' some action cost.
 
 ## Entity Events
 

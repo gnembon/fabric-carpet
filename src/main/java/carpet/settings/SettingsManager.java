@@ -362,8 +362,7 @@ public class SettingsManager
     {
         if (dispatcher.getRoot().getChildren().stream().anyMatch(node -> node.getName().equalsIgnoreCase(identifier)))
         {
-            Messenger.print_server_message(CarpetServer.minecraft_server,
-                    Messenger.c("rb Failed to add settings command for " + identifier + ". It is masking previous command."));
+            CarpetSettings.LOG.error("Failed to add settings command for " + identifier + ". It is masking previous command.");
             return;
         }
 

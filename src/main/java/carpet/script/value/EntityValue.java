@@ -1,17 +1,21 @@
 package carpet.script.value;
 
+import carpet.CarpetSettings;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.fakes.MobEntityInterface;
+import carpet.fakes.HungerManagerInterface;
 import carpet.helpers.Tracer;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
+import carpet.utils.Messenger;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
@@ -285,6 +289,20 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
+        put("hunger", (e, a) -> {
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getFoodLevel());
+            return Value.NULL;
+        });
+        put("saturation", (e, a) -> {
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getSaturationLevel());
+            return Value.NULL;
+        });
+
+        put("exhaustion",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((HungerManagerInterface)((PlayerEntity) e).getHungerManager()).getExhaustionCM());
+            return Value.NULL;
+        });
+
         put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
@@ -934,20 +952,28 @@ public class EntityValue extends Value
             }
         });
 
-        put("silent",(e,v)->{
-           e.setSilent(v.getBoolean());
+        put("silent",(e,v)-> e.setSilent(v.getBoolean()));
+
+        put("gravity",(e,v)-> e.setNoGravity(!v.getBoolean()));
+
+        put("invulnerable",(e,v)-> e.setInvulnerable(v.getBoolean()));
+
+        put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
+
+        put("hunger", (e, v)-> {
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setFoodLevel((int) NumericValue.asNumber(v).getLong());
         });
 
-        put("gravity",(e,v)->{
-            e.setNoGravity(!v.getBoolean());
+        put("exhaustion", (e, v)-> {
+            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setExhaustionCM(NumericValue.asNumber(v).getFloat());
         });
 
-        put("invulnerable",(e,v)->{
-            e.setInvulnerable(v.getBoolean());
+        put("add_exhaustion", (e, v)-> {
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
         });
 
-        put("fire",(e,v)->{
-            e.setFireTicks((int)NumericValue.asNumber(v).getLong());
+        put("saturation", (e, v)-> {
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
         });
 
         // gamemode         [check]
