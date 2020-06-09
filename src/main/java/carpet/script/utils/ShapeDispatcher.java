@@ -585,7 +585,7 @@ public class ShapeDispatcher
         public static Map<String, Param> of = new HashMap<String, Param>(){{
             put("shape", new ShapeParam());
             put("dim", new DimensionParam());
-            put("duration", new PositiveIntParam("duration"));
+            put("duration", new NonNegativeIntParam("duration"));
             put("color", new ColorParam("color"));
             put("follow", new EntityParam("follow"));
             put("line", new PositiveFloatParam("line"));
@@ -703,6 +703,20 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
 
+    }
+    public static class NonNegativeIntParam extends NumericParam
+    {
+        protected NonNegativeIntParam(String id) { super(id); }
+        @Override
+        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
+        @Override
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+        @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        {
+            Value ret = super.validate(options, cc, value);
+            if (((NumericValue)ret).getDouble()<0) throw new InternalExpressionException("'"+id+"' should be non-negative");
+            return ret;
+        }
     }
 
     public static class Vec3Param extends Param
