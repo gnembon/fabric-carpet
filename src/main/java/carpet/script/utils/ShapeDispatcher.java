@@ -8,6 +8,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -19,8 +20,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
@@ -32,7 +35,9 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.dimension.DimensionType;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -49,22 +54,89 @@ public class ShapeDispatcher
 {
     private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
 
-    public static void sendShape(List<ServerPlayerEntity> players, ExpiringShape shape, Map<String, Value> params)
+    public static Pair<ExpiringShape,Map<String, Value>> fromFunctionArgs(
+            CarpetContext cc,
+            List<Value> lv,
+            ServerPlayerEntity[] playerRef
+    )
     {
-        Consumer<ServerPlayerEntity> alternative = null;
-        CompoundTag tag = null;
+        if (lv.size() < 3) throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
+        String shapeType = lv.get(0).getString();
+        Value duration = NumericValue.asNumber(lv.get(1));
+        Map<String, Value> params;
+        if (lv.size() == 3)
+        {
+            Value paramValue = lv.get(2);
+            if (paramValue instanceof MapValue)
+            {
+                params = new HashMap<>();
+                ((MapValue) paramValue).getMap().entrySet().forEach(e -> params.put(e.getKey().getString(),e.getValue()));
+            }
+            else if (paramValue instanceof ListValue)
+            {
+                params = parseParams(((ListValue) paramValue).getItems());
+            }
+            else throw new InternalExpressionException("Parameters for 'draw_shape' need to be defined either in a list or a map");
+        }
+        else
+        {
+            List<Value> paramList = new ArrayList<>();
+            for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i));
+            params = ShapeDispatcher.parseParams(paramList);
+        }
+        params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getDimension().getType().toString()));
+        params.putIfAbsent("duration", duration);
+
+        if (params.containsKey("player"))
+        {
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), params.get("player"));
+            if (player == null)
+                throw new InternalExpressionException("'player' parameter needs to represent an existing player");
+            params.remove("player");
+            playerRef[0] = player;
+        }
+        return Pair.of(ShapeDispatcher.create(cc, shapeType, params), params);
+    }
+
+    public static void sendShape(List<ServerPlayerEntity> players, List<Pair<ExpiringShape,Map<String, Value>>> shapes)
+    {
+        List<ServerPlayerEntity> clientPlayers = new ArrayList<>();
+        List<ServerPlayerEntity> alternativePlayers = new ArrayList<>();
         for (ServerPlayerEntity player : players)
         {
             if (ServerNetworkHandler.validCarpetPlayers.contains(player))
             {
-                if (tag == null) tag = ExpiringShape.toTag(params);
-                ServerNetworkHandler.sendCustomCommand(player,"scShape", tag);
+                clientPlayers.add(player);
             }
             else
             {
-                if (alternative == null) alternative = shape.alternative();
-                alternative.accept(player);
+                alternativePlayers.add(player);
             }
+        }
+        if (!clientPlayers.isEmpty())
+        {
+
+            ListTag tag = new ListTag();
+            int tagcount = 0;
+            for (Pair<ExpiringShape, Map<String, Value>> s : shapes)
+            {
+                tag.add(ExpiringShape.toTag(s.getRight()));  // 4000 shapes limit boxes
+                if (tagcount++>1000)
+                {
+                    tagcount = 0;
+                    Tag finalTag = tag;
+                    clientPlayers.forEach( p -> ServerNetworkHandler.sendCustomCommand(p, "scShapes", finalTag));
+                    tag = new ListTag();
+                }
+            }
+            Tag finalTag = tag;
+            if (tag.size() > 0) clientPlayers.forEach( p -> ServerNetworkHandler.sendCustomCommand(p, "scShapes", finalTag));
+        }
+        if (!alternativePlayers.isEmpty())
+        {
+            List<Consumer<ServerPlayerEntity>> alternatives = new ArrayList<>();
+            shapes.forEach(s -> alternatives.add(s.getLeft().alternative()));
+            alternativePlayers.forEach(p -> alternatives.forEach( a -> a.accept(p)));
         }
     }
 
@@ -174,7 +246,7 @@ public class ShapeDispatcher
         protected float fr, fg, fb, fa;
         protected int fillColor;
         protected int duration = 0;
-        private int key;
+        private long key;
         protected int followEntity;
         protected DimensionType entityDimension;
 
@@ -214,7 +286,7 @@ public class ShapeDispatcher
 
             duration = NumericValue.asNumber(options.get("duration")).getInt();
 
-            lineWidth = NumericValue.asNumber(options.getOrDefault("width", optional.get("width"))).getFloat();
+            lineWidth = NumericValue.asNumber(options.getOrDefault("line", optional.get("line"))).getFloat();
 
             fillColor = NumericValue.asNumber(options.getOrDefault("fill", optional.get("fill"))).getInt();
             this.fr = (float)(fillColor >> 24 & 0xFF) / 255.0F;
@@ -254,19 +326,19 @@ public class ShapeDispatcher
         }
 
         public abstract Consumer<ServerPlayerEntity> alternative();
-        public int key()
+        public long key()
         {
             if (key!=0) return key;
             key = calcKey();
             return key;
         }
-        protected int calcKey()
-        {
-            int hash = 17;
-            hash = 31*hash + color;
-            hash = 31*hash + followEntity;
-            hash = 31*hash + Float.hashCode(lineWidth);
-            if (fa != 0.0) hash = 31*hash + fillColor;
+        protected long calcKey()
+        { // using FNV-1a algorithm
+            long hash = -3750763034362895579L;
+            hash ^= color;                     hash *= 1099511628211L;
+            hash ^= followEntity;              hash *= 1099511628211L;
+            hash ^= Float.hashCode(lineWidth); hash *= 1099511628211L;
+            if (fa != 0.0) { hash = 31*hash + fillColor; hash *= 1099511628211L; }
             return hash;
         }
         // list of params that need to be there
@@ -274,7 +346,7 @@ public class ShapeDispatcher
         private final Map<String, Value> optional = ImmutableMap.of(
                 "color", new NumericValue(-1),
                 "follow", new NumericValue(-1),
-                "width", new NumericValue(2.0),
+                "line", new NumericValue(2.0),
                 "fill", new NumericValue(0xffffff00)
         );
         protected Set<String> requiredParams() {return required;}
@@ -306,6 +378,7 @@ public class ShapeDispatcher
             super.init(options);
             from = vecFromValue(options.get("from"));
             to = vecFromValue(options.get("to"));
+            if (from.equals(to)) throw new InternalExpressionException("Box dimensions are invalid - cannot draw a zero-size boxes");
         }
 
         @Override
@@ -330,12 +403,12 @@ public class ShapeDispatcher
         }
 
         @Override
-        public int calcKey()
+        public long calcKey()
         {
-            int hash = super.calcKey();
-            hash = 31*hash + 1;
-            hash = 31*hash + from.hashCode();
-            hash = 31*hash + to.hashCode();
+            long hash = super.calcKey();
+            hash ^= 1;                     hash *= 1099511628211L;
+            hash ^= from.hashCode();       hash *= 1099511628211L;
+            hash ^= to.hashCode();         hash *= 1099511628211L;
             return hash;
         }
 
@@ -389,6 +462,7 @@ public class ShapeDispatcher
             super.init(options);
             from = vecFromValue(options.get("from"));
             to = vecFromValue(options.get("to"));
+            if (from.equals(to)) throw new InternalExpressionException("Line dimensions are invalid - cannot draw a zero-length lines");
         }
 
         @Override
@@ -414,12 +488,12 @@ public class ShapeDispatcher
         }
 
         @Override
-        public int calcKey()
+        public long calcKey()
         {
-            int hash = super.calcKey();
-            hash = 31*hash + 2;
-            hash = 31*hash + from.hashCode();
-            hash = 31*hash + to.hashCode();
+            long hash = super.calcKey();
+            hash ^= 2;                     hash *= 1099511628211L;
+            hash ^= from.hashCode();       hash *= 1099511628211L;
+            hash ^= to.hashCode();         hash *= 1099511628211L;
             return hash;
         }
     }
@@ -494,13 +568,13 @@ public class ShapeDispatcher
         };}
 
         @Override
-        public int calcKey()
+        public long calcKey()
         {
-            int hash = super.calcKey();
-            hash = 31*hash + 3;
-            hash = 31*hash + center.hashCode();
-            hash = 31*hash + Double.hashCode(radius);
-            hash = 31*hash + level;
+            long hash = super.calcKey();
+            hash ^= 3;                        hash *= 1099511628211L;
+            hash ^= center.hashCode();        hash *= 1099511628211L;
+            hash ^= Double.hashCode(radius);  hash *= 1099511628211L;
+            hash ^= level;                    hash *= 1099511628211L;
             return hash;
         }
     }
@@ -514,7 +588,7 @@ public class ShapeDispatcher
             put("duration", new PositiveIntParam("duration"));
             put("color", new ColorParam("color"));
             put("follow", new EntityParam("follow"));
-            put("width", new PositiveFloatParam("width"));
+            put("line", new PositiveFloatParam("line"));
             put("fill", new ColorParam("fill"));
 
             put("from", new Vec3Param("from", false));
@@ -522,6 +596,9 @@ public class ShapeDispatcher
             put("center", new Vec3Param("center", false));
             put("radius", new PositiveFloatParam("radius"));
             put("level", new PositiveIntParam("level"));
+            put("height", new PositiveFloatParam("height"));
+            put("axis", new StringChoiceParam("axis", "x", "y", "z"));
+            put("points", new PointsParam("points"));
         }};
         protected String id;
         protected Param(String id)
@@ -541,6 +618,24 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value) { return StringTag.of(value.getString()); }
         public Value decode(Tag tag) { return new StringValue(tag.asString()); }
+    }
+
+    public static class StringChoiceParam extends StringParam
+    {
+        private Set<String> options;
+        public StringChoiceParam(String id, String ... options)
+        {
+            super(id);
+            this.options = Sets.newHashSet(options);
+        }
+
+
+        @Override
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        {
+            if (this.options.contains(value.getString())) return value;
+            return null;
+        }
     }
 
     public static class DimensionParam extends StringParam
@@ -621,12 +716,16 @@ public class ShapeDispatcher
         @Override
         public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
+            return validate(this, options, cc, value, roundsUpForBlocks);
+        }
+        public static Value validate(Param p, Map<String, Value> options, CarpetContext cc, Value value, boolean roundsUp)
+        {
             if (value instanceof BlockValue)
             {
                 if (options.containsKey("follow"))
-                    throw new InternalExpressionException(id+" parameter cannot use blocks as positions for relative positioning due to 'follow' attribute being present");
+                    throw new InternalExpressionException(p.id+" parameter cannot use blocks as positions for relative positioning due to 'follow' attribute being present");
                 BlockPos pos = ((BlockValue) value).getPos();
-                int offset = roundsUpForBlocks?1:0;
+                int offset = roundsUp?1:0;
                 return ListValue.of(
                         new NumericValue(pos.getX()+offset),
                         new NumericValue(pos.getY()+offset),
@@ -636,18 +735,18 @@ public class ShapeDispatcher
             if (value instanceof ListValue)
             {
                 List<Value> values = ((ListValue) value).getItems();
-                if (values.size()!=3) throw new InternalExpressionException("'"+id+"' requires 3 numerical values");
+                if (values.size()!=3) throw new InternalExpressionException("'"+p.id+"' requires 3 numerical values");
                 for (Value component : values)
                 {
                     if (!(component instanceof NumericValue))
-                        throw new InternalExpressionException("'"+id+"' requires 3 numerical values");
+                        throw new InternalExpressionException("'"+p.id+"' requires 3 numerical values");
                 }
                 return value;
             }
             if (value instanceof EntityValue)
             {
                 if (options.containsKey("follow"))
-                    throw new InternalExpressionException(id+" parameter cannot use entity as positions for relative positioning due to 'follow' attribute being present");
+                    throw new InternalExpressionException(p.id+" parameter cannot use entity as positions for relative positioning due to 'follow' attribute being present");
                 Entity e = ((EntityValue) value).getEntity();
                 return ListValue.of(
                         new NumericValue(e.getX()),
@@ -656,29 +755,81 @@ public class ShapeDispatcher
                 );
             }
             CarpetSettings.LOG.error("Value: "+value.getString());
-            throw new InternalExpressionException("'"+id+"' requires a triple, block or entity to indicate position");
+            throw new InternalExpressionException("'"+p.id+"' requires a triple, block or entity to indicate position");
         }
 
         public Value decode(Tag tag)
         {
-            CompoundTag ctag = (CompoundTag)tag;
+            ListTag ctag = (ListTag)tag;
             return ListValue.of(
-                    new NumericValue(ctag.getDouble("x")),
-                    new NumericValue(ctag.getDouble("y")),
-                    new NumericValue(ctag.getDouble("z"))
+                    new NumericValue(ctag.getDouble(0)),
+                    new NumericValue(ctag.getDouble(1)),
+                    new NumericValue(ctag.getDouble(2))
             );
         }
         @Override
         public Tag toTag(Value value)
         {
             List<Value> lv = ((ListValue)value).getItems();
-            CompoundTag tag = new CompoundTag();
-            tag.putDouble("x", NumericValue.asNumber(lv.get(0)).getDouble());
-            tag.putDouble("y", NumericValue.asNumber(lv.get(1)).getDouble());
-            tag.putDouble("z", NumericValue.asNumber(lv.get(2)).getDouble());
+            ListTag tag = new ListTag();
+            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0)).getDouble()));
+            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1)).getDouble()));
+            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2)).getDouble()));
             return tag;
         }
     }
+
+    public static class PointsParam extends Param
+    {
+        public PointsParam(String id)
+        {
+            super(id);
+        }
+        @Override
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        {
+            if (!(value instanceof ListValue))
+                throw new InternalExpressionException(id+ " parameter should be a list");
+            List<Value> points = new ArrayList<>();
+            for (Value point: ((ListValue) value).getItems())
+                points.add(Vec3Param.validate(this, options, cc, point, false));
+            return ListValue.wrap(points);
+        }
+
+        public Value decode(Tag tag)
+        {
+            ListTag ltag = (ListTag)tag;
+            List<Value> points = new ArrayList<>();
+            for (int i=0, ll = ltag.size(); i<ll; i++)
+            {
+                ListTag ptag = ltag.getList(i);
+                points.add(ListValue.of(
+                        new NumericValue(ptag.getDouble(0)),
+                        new NumericValue(ptag.getDouble(1)),
+                        new NumericValue(ptag.getDouble(2))
+                ));
+            }
+            return ListValue.wrap(points);
+        }
+        @Override
+        public Tag toTag(Value pointsValue)
+        {
+            List<Value> lv = ((ListValue)pointsValue).getItems();
+            ListTag ltag = new ListTag();
+            for (Value value : lv)
+            {
+                List<Value> coords = ((ListValue)value).getItems();
+                ListTag tag = new ListTag();
+                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0)).getDouble()));
+                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1)).getDouble()));
+                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2)).getDouble()));
+                ltag.add(tag);
+            }
+            return ltag;
+        }
+    }
+
+
     public static class ColorParam extends NumericParam
     {
         protected ColorParam(String id)

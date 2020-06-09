@@ -2,15 +2,15 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import com.mojang.blaze3d.systems.RenderSystem;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -25,7 +25,7 @@ import java.util.function.BiFunction;
 
 public class ShapesRenderer
 {
-    private final Map<DimensionType, Int2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
+    private final Map<DimensionType, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
     private MinecraftClient client;
 
     private Map<String, BiFunction<MinecraftClient, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >>> renderedShapes
@@ -40,12 +40,12 @@ public class ShapesRenderer
     {
         this.client = minecraftClient;
         shapes = new HashMap<>();
-        shapes.put(DimensionType.OVERWORLD, new Int2ObjectOpenHashMap<>());
-        shapes.put(DimensionType.THE_NETHER, new Int2ObjectOpenHashMap<>());
-        shapes.put(DimensionType.THE_END, new Int2ObjectOpenHashMap<>());
+        shapes.put(DimensionType.OVERWORLD, new Long2ObjectOpenHashMap<>());
+        shapes.put(DimensionType.THE_NETHER, new Long2ObjectOpenHashMap<>());
+        shapes.put(DimensionType.THE_END, new Long2ObjectOpenHashMap<>());
     }
 
-    public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, double cameraX, double cameraY, double cameraZ)
+    public void render(Camera camera, float partialTick)
     {
         IWorld iWorld = this.client.world;
         DimensionType dimensionType = iWorld.getDimension().getType();
@@ -68,20 +68,25 @@ public class ShapesRenderer
         //RenderSystem.polygonOffset(-3f, -3f);
         //RenderSystem.enablePolygonOffset();
         //Entity entity = this.client.gameRenderer.getCamera().getFocusedEntity();
+
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
 
         // render
+        double cameraX = camera.getPos().x;
+        double cameraY = camera.getPos().y;
+        double cameraZ = camera.getPos().z;
+
         synchronized (shapes)
         {
-            shapes.get(dimensionType).int2ObjectEntrySet().removeIf(
+            shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
             shapes.get(dimensionType).values().forEach(
                     s ->
                     {
                         if ( s.shouldRender(dimensionType))
-                            s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ);
+                            s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
             //lines
@@ -89,7 +94,7 @@ public class ShapesRenderer
 
                     s -> {
                         if ( s.shouldRender(dimensionType))
-                            s.renderLines(tessellator, bufferBuilder, cameraX, cameraY, cameraZ);
+                            s.renderLines(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
         }
@@ -100,6 +105,14 @@ public class ShapesRenderer
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableTexture();
         RenderSystem.shadeModel(7424);
+    }
+
+    public void addShapes(ListTag tag)
+    {
+        for (int i=0, count = tag.size(); i < count; i++)
+        {
+            addShape(tag.getCompound(i));
+        }
     }
 
     public void addShape(CompoundTag tag)
@@ -116,7 +129,7 @@ public class ShapesRenderer
         {
             RenderedShape<?> rshape = shapeFactory.apply(client, shape);
             DimensionType dim = Registry.DIMENSION_TYPE.get(new Identifier(tag.getString("dim")));
-            int key = rshape.key();
+            long key = rshape.key();
             synchronized (shapes)
             {
                 RenderedShape<?> existing = shapes.get(dim).get(key);
@@ -135,7 +148,7 @@ public class ShapesRenderer
     {
         synchronized (shapes)
         {
-            shapes.values().forEach(Int2ObjectOpenHashMap::clear);
+            shapes.values().forEach(Long2ObjectOpenHashMap::clear);
         }
     }
 
@@ -146,13 +159,13 @@ public class ShapesRenderer
         protected MinecraftClient client;
         long expiryTick;
         double renderEpsilon = 0;
-        public abstract void renderLines(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz );
-        public void renderFaces(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz ) {}
+        public abstract void renderLines(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick );
+        public void renderFaces(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick ) {}
         protected RenderedShape(MinecraftClient client, T shape)
         {
             this.shape = shape;
             expiryTick = client.world.getTime()+shape.getExpiry();
-            renderEpsilon = (2+((double)shape.key())/Integer.MAX_VALUE)/1000;
+            renderEpsilon = (3+((double)shape.key())/Long.MAX_VALUE)/1000;
             this.client = client;
         }
 
@@ -160,7 +173,7 @@ public class ShapesRenderer
         {
             return  expiryTick < currentTick;
         }
-        public int key()
+        public long key()
         {
             return shape.key();
         };
@@ -172,11 +185,15 @@ public class ShapesRenderer
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
         }
-        protected Vec3d relativiseRender(Vec3d vec)
+        protected Vec3d relativiseRender(Vec3d vec, float partialTick)
         {
             if (shape.followEntity <= 0) return vec;
             Entity e = client.world.getEntityById(shape.followEntity);
-            return shape.toAbsolute(e, vec);
+            return vec.add(
+                    MathHelper.lerp(partialTick, e.prevX, e.getX()),
+                    MathHelper.lerp(partialTick, e.prevY, e.getY()),
+                    MathHelper.lerp(partialTick, e.prevZ, e.getZ())
+            );
         }
     }
 
@@ -189,28 +206,30 @@ public class ShapesRenderer
 
         }
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
+        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.a == 0.0) return;
-            Vec3d v1 = relativiseRender(shape.from);
-            Vec3d v2 = relativiseRender(shape.to);
+            Vec3d v1 = relativiseRender(shape.from, partialTick);
+            Vec3d v2 = relativiseRender(shape.to, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
             drawBoxWireGLLines(tessellator, bufferBuilder,
                     (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
                     (float)(v2.x-cx+renderEpsilon), (float)(v2.y-cy+renderEpsilon), (float)(v2.z-cz+renderEpsilon),
+                    v1.x!=v2.x, v1.y!=v2.y, v1.z!=v2.z,
                     shape.r, shape.g, shape.b, shape.a, shape.r, shape.g, shape.b
             );
         }
         @Override
-        public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
+        public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0) return;
-            Vec3d v1 = relativiseRender(shape.from);
-            Vec3d v2 = relativiseRender(shape.to);
+            Vec3d v1 = relativiseRender(shape.from, partialTick);
+            Vec3d v2 = relativiseRender(shape.to, partialTick);
             RenderSystem.lineWidth(1.0F);
             drawBoxFaces(tessellator, bufferBuilder,
                     (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
                     (float)(v2.x-cx+renderEpsilon), (float)(v2.y-cy+renderEpsilon), (float)(v2.z-cz+renderEpsilon),
+                    v1.x!=v2.x, v1.y!=v2.y, v1.z!=v2.z,
                     shape.fr, shape.fg, shape.fb, shape.fa
             );
         }
@@ -224,10 +243,10 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Line)shape);
         }
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
+        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
-            Vec3d v1 = relativiseRender(shape.from);
-            Vec3d v2 = relativiseRender(shape.to);
+            Vec3d v1 = relativiseRender(shape.from, partialTick);
+            Vec3d v2 = relativiseRender(shape.to, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
             drawLine(tessellator, bufferBuilder,
                     (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
@@ -244,10 +263,10 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Sphere)shape);
         }
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
+        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.a == 0.0) return;
-            Vec3d vc = relativiseRender(shape.center);
+            Vec3d vc = relativiseRender(shape.center, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
             drawSphereWireframe(tessellator, bufferBuilder,
                     (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
@@ -255,10 +274,10 @@ public class ShapesRenderer
                     shape.r, shape.g, shape.b, shape.a);
         }
         @Override
-        public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz)
+        public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0) return;
-            Vec3d vc = relativiseRender(shape.center);
+            Vec3d vc = relativiseRender(shape.center, partialTick);
             RenderSystem.lineWidth(1.0f);
             drawSphereFaces(tessellator, bufferBuilder,
                     (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
@@ -276,68 +295,117 @@ public class ShapesRenderer
         tessellator.draw();
     }
 
-    public static void drawBoxWireGLLines(Tessellator tessellator, BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2)
+    public static void drawBoxWireGLLines(
+            Tessellator tessellator, BufferBuilder builder,
+            float x1, float y1, float z1,
+            float x2, float y2, float z2,
+            boolean xthick, boolean ythick, boolean zthick,
+            float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2)
     {
         builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
-        builder.vertex(x1, y1, z1).color(red1, grn2, blu2, alpha).next();
-        builder.vertex(x2, y1, z1).color(red1, grn2, blu2, alpha).next();
-        builder.vertex(x1, y1, z1).color(red2, grn1, blu2, alpha).next();
-        builder.vertex(x1, y2, z1).color(red2, grn1, blu2, alpha).next();
-        builder.vertex(x1, y1, z1).color(red2, grn2, blu1, alpha).next();
-        builder.vertex(x1, y1, z2).color(red2, grn2, blu1, alpha).next();
-        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        if (xthick)
+        {
+            builder.vertex(x1, y1, z1).color(red1, grn2, blu2, alpha).next();
+            builder.vertex(x2, y1, z1).color(red1, grn2, blu2, alpha).next();
+
+            builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+
+            builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+
+            builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        }
+        if (ythick)
+        {
+            builder.vertex(x1, y1, z1).color(red2, grn1, blu2, alpha).next();
+            builder.vertex(x1, y2, z1).color(red2, grn1, blu2, alpha).next();
+
+            builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+
+            builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+
+            builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        }
+        if (zthick)
+        {
+            builder.vertex(x1, y1, z1).color(red2, grn2, blu1, alpha).next();
+            builder.vertex(x1, y1, z2).color(red2, grn2, blu1, alpha).next();
+
+            builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+
+            builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+
+            builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+        }
         tessellator.draw();
     }
 
-    public static void drawBoxFaces(Tessellator tessellator, BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha)
+    public static void drawBoxFaces(
+            Tessellator tessellator, BufferBuilder builder,
+            float x1, float y1, float z1,
+            float x2, float y2, float z2,
+            boolean xthick, boolean ythick, boolean zthick,
+            float red1, float grn1, float blu1, float alpha)
     {
         builder.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR);
-        builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
 
-        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+        if (xthick && ythick)
+        {
+            builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+            if (zthick)
+            {
+                builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+            }
+        }
 
-        builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
 
-        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+        if (zthick && ythick)
+        {
+            builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
 
-        builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+            if (xthick)
+            {
+                builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+            }
+        }
 
-        builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
-        builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+        // now at least drawing one
+        if (zthick && xthick)
+        {
+            builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y1, z1).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x2, y1, z2).color(red1, grn1, blu1, alpha).next();
+            builder.vertex(x1, y1, z2).color(red1, grn1, blu1, alpha).next();
+
+
+            if (ythick)
+            {
+                builder.vertex(x1, y2, z1).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x2, y2, z1).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
+                builder.vertex(x1, y2, z2).color(red1, grn1, blu1, alpha).next();
+            }
+        }
         tessellator.draw();
     }
 

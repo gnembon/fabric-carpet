@@ -182,7 +182,8 @@
     "WorldRenderer_fogOffMixin",
     "WorldRenderer_creativeNoClipMixin",
     "ClientPlayNetworkHandlerMixin",
-    "DebugRenderer_scarpetRenderMixin"
+    "DebugRenderer_scarpetRenderMixin",
+    "WorldRenderer_scarpetRenderMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"

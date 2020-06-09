@@ -8,6 +8,7 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
 import net.minecraft.util.PacketByteBuf;
@@ -35,9 +36,13 @@ public class ClientNetworkHandler
             }
         });
         put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
-        put("scShape", (p, t) -> {
+        put("scShape", (p, t) -> { // deprecated
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((CompoundTag)t);
+        });
+        put("scShapes", (p, t) -> {
+            if (CarpetClient.shapes != null)
+                CarpetClient.shapes.addShapes((ListTag) t);
         });
     }};
 
