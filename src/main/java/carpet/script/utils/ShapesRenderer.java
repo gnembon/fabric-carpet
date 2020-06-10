@@ -257,8 +257,8 @@ public class ShapesRenderer
             Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
             drawSphereWireframe(tessellator, bufferBuilder,
-                    (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
-                    shape.radius, shape.subdivisions,
+                    (float)(vc.x-cx), (float)(vc.y-cy), (float)(vc.z-cz),
+                    (float)(shape.radius+renderEpsilon), shape.subdivisions,
                     shape.r, shape.g, shape.b, shape.a);
         }
         @Override
@@ -268,8 +268,8 @@ public class ShapesRenderer
             Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
             RenderSystem.lineWidth(1.0f);
             drawSphereFaces(tessellator, bufferBuilder,
-                    (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
-                    shape.radius, shape.subdivisions,
+                    (float)(vc.x-cx), (float)(vc.y-cy), (float)(vc.z-cz),
+                    (float)(shape.radius+renderEpsilon), shape.subdivisions,
                     shape.fr, shape.fg, shape.fb, shape.fa);
         }
     }
@@ -286,21 +286,26 @@ public class ShapesRenderer
             if (shape.a == 0.0) return;
             Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
+            double dir = MathHelper.sign(shape.height);
             drawCylinderWireframe(tessellator, bufferBuilder,
-                    (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
-                    shape.radius, shape.height, shape.axis, shape.subdivisions,
+                    (float) (vc.x - cx - dir * renderEpsilon), (float) (vc.y - cy - dir * renderEpsilon), (float) (vc.z - cz - dir * renderEpsilon),
+                    (float) (shape.radius + renderEpsilon), (float) (shape.height + 2*dir*renderEpsilon), shape.axis,
+                    shape.subdivisions, shape.radius == 0,
                     shape.r, shape.g, shape.b, shape.a);
+
         }
         @Override
         public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0) return;
-            //Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
-            //RenderSystem.lineWidth(1.0f);
-            //drawSphereFaces(tessellator, bufferBuilder,
-            //        (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
-            //        shape.radius, shape.subdivisions,
-            //        shape.fr, shape.fg, shape.fb, shape.fa);
+            Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
+            RenderSystem.lineWidth(1.0f);
+            double dir = MathHelper.sign(shape.height);
+            drawCylinderFaces(tessellator, bufferBuilder,
+                    (float) (vc.x - cx - dir * renderEpsilon), (float) (vc.y - cy - dir * renderEpsilon), (float) (vc.z - cz - dir * renderEpsilon),
+                    (float) (shape.radius + renderEpsilon), (float) (shape.height + 2*dir*renderEpsilon), shape.axis,
+                    shape.subdivisions, shape.radius == 0,
+                    shape.fr, shape.fg, shape.fb, shape.fa);
         }
     }
 
@@ -429,15 +434,19 @@ public class ShapesRenderer
 
     public static void drawCylinderWireframe(Tessellator tessellator, BufferBuilder builder,
                                              float cx, float cy, float cz,
-                                             float r, float h, Direction.Axis axis,  int subd,
+                                             float r, float h, Direction.Axis axis,  int subd, boolean isFlat,
                                              float red, float grn, float blu, float alpha)
     {
         float step = (float)Math.PI / (subd/2);
         int num_steps180 = (int)(Math.PI / step)+1;
         int num_steps360 = (int)(2*Math.PI / step);
-        int hsteps = (h>0) ? ((int)Math.ceil(h / (step*r))+1) : 1;
-        float hstep = (h>0) ? (h / (hsteps-1)) : 1;
-        // draw base
+        int hsteps = 1;
+        float hstep = 1.0f;
+        if (!isFlat)
+        {
+            hsteps = (int) Math.ceil(MathHelper.abs(h) / (step * r)) + 1;
+            hstep = h / (hsteps - 1);
+        }// draw base
 
         if (axis == Direction.Axis.Y)
         {
@@ -456,7 +465,7 @@ public class ShapesRenderer
                 tessellator.draw();
             }
 
-            if (h > 0)
+            if (!isFlat)
             {
                 for (int i = 0; i <= num_steps180; i++)
                 {
@@ -472,6 +481,19 @@ public class ShapesRenderer
                     builder.vertex(cx - x, cy + h, cz + z).color(red, grn, blu, alpha).next();
                     tessellator.draw();
                 }
+            }
+            else
+            {
+                builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps180; i++)
+                {
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+                    float z = r * MathHelper.sin(theta);
+                    builder.vertex(cx - x, cy, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy, cz - z).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
             }
 
         }
@@ -491,6 +513,37 @@ public class ShapesRenderer
                 }
                 tessellator.draw();
             }
+
+            if (!isFlat)
+            {
+                for (int i = 0; i <= num_steps180; i++)
+                {
+                    builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                    float theta = step * i;
+                    float y = r * MathHelper.cos(theta);
+
+                    float z = r * MathHelper.sin(theta);
+
+                    builder.vertex(cx + 0, cy - y, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + 0, cy + y, cz - z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + h, cy + y, cz - z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + h, cy - y, cz + z).color(red, grn, blu, alpha).next();
+                    tessellator.draw();
+                }
+            }
+            else
+            {
+                builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps180; i++)
+                {
+                    float theta = step * i;
+                    float y = r * MathHelper.cos(theta);
+                    float z = r * MathHelper.sin(theta);
+                    builder.vertex(cx, cy - y, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx, cy + y, cz - z).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
         }
         else if (axis == Direction.Axis.Z)
         {
@@ -505,6 +558,161 @@ public class ShapesRenderer
                     float z = hh;
                     float x = r * MathHelper.sin(theta);
                     builder.vertex(x + cx, y + cy, z + cz).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
+            if (!isFlat)
+            {
+                for (int i = 0; i <= num_steps180; i++)
+                {
+                    builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+
+                    float y = r * MathHelper.sin(theta);
+
+                    builder.vertex(cx + x, cy - y, cz + 0).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx - x, cy + y, cz + 0).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx - x, cy + y, cz + h).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy - y, cz + h).color(red, grn, blu, alpha).next();
+                    tessellator.draw();
+                }
+            }
+            else
+            {
+                builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps180; i++)
+                {
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+                    float y = r * MathHelper.sin(theta);
+                    builder.vertex(cx + x, cy - y, cz).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx - x, cy + y, cz).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
+
+        }
+    }
+
+    public static void drawCylinderFaces(Tessellator tessellator, BufferBuilder builder,
+                                             float cx, float cy, float cz,
+                                             float r, float h, Direction.Axis axis,  int subd, boolean isFlat,
+                                             float red, float grn, float blu, float alpha)
+    {
+        float step = (float)Math.PI / (subd/2);
+        int num_steps180 = (int)(Math.PI / step)+1;
+        int num_steps360 = (int)(2*Math.PI / step)+1;
+
+        if (axis == Direction.Axis.Y)
+        {
+
+            builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+            builder.vertex(cx, cy, cz).color(red, grn, blu, alpha).next();
+            for (int i = 0; i <= num_steps360; i++)
+            {
+                float theta = step * i;
+                float x = r * MathHelper.cos(theta);
+                float z = r * MathHelper.sin(theta);
+                builder.vertex(x + cx, cy, z + cz).color(red, grn, blu, alpha).next();
+            }
+            tessellator.draw();
+            if (!isFlat)
+            {
+                builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+                builder.vertex(cx, cy+h, cz).color(red, grn, blu, alpha).next();
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+                    float z = r * MathHelper.sin(theta);
+                    builder.vertex(x + cx, cy+h, z + cz).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+
+                builder.begin(GL11.GL_QUAD_STRIP, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+                    float z = r * MathHelper.sin(theta);
+                    builder.vertex(cx + x, cy + 0, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy + h, cz + z).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
+
+        }
+        else if (axis == Direction.Axis.X)
+        {
+            builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+            builder.vertex(cx, cy, cz).color(red, grn, blu, alpha).next();
+            for (int i = 0; i <= num_steps360; i++)
+            {
+                float theta = step * i;
+                float y = r * MathHelper.cos(theta);
+                float z = r * MathHelper.sin(theta);
+                builder.vertex(cx, cy + y, z + cz).color(red, grn, blu, alpha).next();
+            }
+            tessellator.draw();
+            if (!isFlat)
+            {
+                builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+                builder.vertex(cx+h, cy, cz).color(red, grn, blu, alpha).next();
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float y = r * MathHelper.cos(theta);
+                    float z = r * MathHelper.sin(theta);
+                    builder.vertex(cx+h, cy + y, cz + z).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+
+                builder.begin(GL11.GL_QUAD_STRIP, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float y = r * MathHelper.cos(theta);
+                    float z = r * MathHelper.sin(theta);
+                    builder.vertex(cx + 0, cy + y, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + h, cy + y, cz + z).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
+        }
+        else if (axis == Direction.Axis.Z)
+        {
+            builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+            builder.vertex(cx, cy, cz).color(red, grn, blu, alpha).next();
+            for (int i = 0; i <= num_steps360; i++)
+            {
+                float theta = step * i;
+                float x = r * MathHelper.cos(theta);
+                float y = r * MathHelper.sin(theta);
+                builder.vertex(x + cx, cy+y, cz).color(red, grn, blu, alpha).next();
+            }
+            tessellator.draw();
+            if (!isFlat)
+            {
+                builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+                builder.vertex(cx, cy, cz+h).color(red, grn, blu, alpha).next();
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+                    float y = r * MathHelper.sin(theta);
+                    builder.vertex(x + cx, cy+y, cz+h).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+
+                builder.begin(GL11.GL_QUAD_STRIP, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+                    float y = r * MathHelper.sin(theta);
+                    builder.vertex(cx + x, cy + y, cz + 0).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy + y, cz + h).color(red, grn, blu, alpha).next();
                 }
                 tessellator.draw();
             }

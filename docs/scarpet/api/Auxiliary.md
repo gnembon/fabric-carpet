@@ -88,13 +88,22 @@ Available shapes:
      * `from` - triple coordinates, entity, or block value indicating one corner of the box
      * `to` - other corner, same format as `from`
 
- * `'sphere'` - draws a sphere
+ * `'sphere'`:
    * Required attributes:
      * `center` - center of the sphere
      * `radius` - radius of the sphere
    * Optional attributes:
      * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
       level of detail will be selected automatically based on radius.
+      
+ * `'cylinder'`:
+   * Required attributes:
+     * `center` - center of the base
+     * `radius` - radius of the base circle
+   * Optional attributes:
+     * `axis` - cylinder direction, one of `'x'`, `'y'`, `'z'` defaults to `'y'`
+     * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
+     * `level` - level of details, see `'sphere'`.
 
 ### `create_marker(text, pos, rotation?, block?)`
 

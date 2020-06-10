@@ -714,7 +714,7 @@ public class ShapeDispatcher
             put("center", new Vec3Param("center", false));
             put("radius", new PositiveFloatParam("radius"));
             put("level", new PositiveIntParam("level"));
-            put("height", new NonNegativeFloatParam("height"));
+            put("height", new FloatParam("height"));
             put("axis", new StringChoiceParam("axis", "x", "y", "z"));
             put("points", new PointsParam("points"));
         }};
@@ -794,6 +794,15 @@ public class ShapeDispatcher
             return value;
         }
     }
+    public static class FloatParam extends NumericParam
+    {
+        protected FloatParam(String id) { super(id); }
+        @Override
+        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
+        @Override
+        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value, id).getFloat()); }
+    }
+
     public static abstract class PositiveParam extends NumericParam
     {
         protected PositiveParam(String id) { super(id); }
@@ -850,6 +859,9 @@ public class ShapeDispatcher
             return ret;
         }
     }
+
+
+
 
     public static class Vec3Param extends Param
     {
