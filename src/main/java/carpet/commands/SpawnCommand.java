@@ -17,6 +17,7 @@ import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.RegistryKey;
@@ -260,9 +261,9 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int mobcapsForDimension(ServerCommandSource source, RegistryKey<World> dim)
+    private static int mobcapsForDimension(ServerCommandSource source, ServerWorld world)
     {
-        Messenger.send(source, SpawnReporter.printMobcapsForDimension(source.getMinecraftServer().getWorld(dim), true));
+        Messenger.send(source, SpawnReporter.printMobcapsForDimension(world, true));
         return 1;
     }
 

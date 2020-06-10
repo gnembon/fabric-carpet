@@ -8,6 +8,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.stat.Stat;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -92,24 +93,24 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     private RegistryKey<World> previousDimension;
 
     @Inject(method = "changeDimension", at = @At("HEAD"))
-    private void logPreviousCoordinates(RegistryKey<DimensionType> newDimension, CallbackInfoReturnable<Entity> cir)
+    private void logPreviousCoordinates(ServerWorld serverWorld, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = getPos();
         previousDimension = world.getRegistryKey();  //dimension type
     }
 
     @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void atChangeDimension(RegistryKey<World> newDimension, CallbackInfoReturnable<Entity> cir)
+    private void atChangeDimension(ServerWorld newWorld, CallbackInfoReturnable<Entity> cir)
     {
         if (PLAYER_CHANGES_DIMENSION.isNeeded())
         {
             ServerPlayerEntity player = (ServerPlayerEntity) (Object)this;
             Vec3d to = null;
-            if (!notInAnyWorld || previousDimension != World.END || newDimension != World.OVERWORLD) // end ow
+            if (!notInAnyWorld || previousDimension != World.END || newWorld.getRegistryKey() != World.OVERWORLD) // end ow
             {
                 to = getPos();
             }
-            PLAYER_CHANGES_DIMENSION.onDimensionChange(player, previousLocation, to, previousDimension, newDimension);
+            PLAYER_CHANGES_DIMENSION.onDimensionChange(player, previousLocation, to, previousDimension, newWorld.getRegistryKey());
         }
     }
 

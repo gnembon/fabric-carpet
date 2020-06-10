@@ -237,7 +237,7 @@ public class PlayerCommand
                 source::getRotation
         );
         RegistryKey<World> dimType = tryGetArg(
-                () -> DimensionArgumentType.getDimensionArgument(context, "dimension"),
+                () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
                 () -> source.getWorld().getRegistryKey() // dimension.getType()
         );
         GameMode mode = GameMode.CREATIVE;
