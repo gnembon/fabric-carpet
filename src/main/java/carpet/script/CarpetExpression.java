@@ -2102,8 +2102,7 @@ public class CarpetExpression
             BlockPos pos1 = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
             int offset=3;
 
-            if(lv.size()==3) offset=1;
-            else if(lv.get(3).evalValue(c) instanceof NumericValue & lv.size()!=7) offset=1;
+            if(lv.size()==3 ||(lv.get(3).evalValue(c) instanceof NumericValue && lv.size()!=7)) offset=1;
 
             BlockPos pos2 = BlockArgument.findIn((CarpetContext) c, lv,offset).block.getPos();
             int x1 = pos1.getX();
