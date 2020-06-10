@@ -2096,21 +2096,26 @@ public class CarpetExpression
             return (c_, t_) -> new NumericValue(finalSCount);
         });
 
-        this.expr.addLazyFunction("volume", 7, (c, t, lv) ->
+        this.expr.addLazyFunction("volume", -1, (c, t, lv) ->
         {
-            int xi = (int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-            int yi = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-            int zi = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
-            int xj = (int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong();
-            int yj = (int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong();
-            int zj = (int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong();
+            if(lv.size()!=3 & lv.size()!=7) throw new InternalExpressionException("'volume' takes 3 or 7 arguments.");
+            BlockPos pos1 = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
+            int offset=1;
+            if(lv.size()==7)offset=3;
+            BlockPos pos2 = BlockArgument.findIn((CarpetContext) c, lv,offset).block.getPos();
+            int xi = pos1.getX();
+            int yi = pos1.getY();
+            int zi = pos1.getZ();
+            int xj = pos2.getX();
+            int yj = pos2.getY();
+            int zj = pos2.getZ();
             int minx = min(xi, xj);
             int miny = min(yi, yj);
             int minz = min(zi, zj);
             int maxx = max(xi, xj);
             int maxy = max(yi, yj);
             int maxz = max(zi, zj);
-            LazyValue expr = lv.get(6);
+            LazyValue expr = lv.get(lv.size()-1);
 
             //saving outer scope
             LazyValue _x = c.getVariable("_x");
