@@ -6,7 +6,6 @@ import carpet.fakes.StructureFeatureInterface;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.Blocks;
-import net.minecraft.class_5314;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
 import net.minecraft.structure.StructureStart;
@@ -17,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
+import net.minecraft.world.gen.chunk.StructureConfig;
 import net.minecraft.world.gen.feature.DefaultBiomeFeatures;
 import net.minecraft.world.biome.source.BiomeAccess;
 //import net.minecraft.world.biome.source.BiomeSource;
@@ -128,7 +128,7 @@ public class FeatureGenerator
     {
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
-        class_5314 params = generator.getConfig().method_28600(structure);
+        StructureConfig params = generator.getConfig().method_28600(structure);
         if (!generator.getBiomeSource().hasStructureFeature(structure))
             return null;
         BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());

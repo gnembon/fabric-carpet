@@ -32,7 +32,7 @@ public abstract class LivingEntity_maxCollisionsMixin extends Entity
     {
         List<Entity> list_1 = this.world.getEntities((Entity)this, this.getBoundingBox(), EntityPredicates.canBePushedBy(this));
         if (!list_1.isEmpty()) {
-            int int_1 = this.world.getGameRules().getInt(GameRules.MAX_ENTITY_CRAMMING);
+            int int_1 = this.world.getGameRules().getInt(GameRules.field_19405);//max entity cramming
             int int_2;
             if (int_1 > 0 && list_1.size() > int_1 - 1 && this.random.nextInt(4) == 0) {
                 int_2 = 0;

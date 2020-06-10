@@ -1,13 +1,13 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.class_5311;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.StructuresConfig;
 import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
 //import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.StructureFeature;
@@ -21,10 +21,9 @@ import java.util.List;
 @Mixin(SurfaceChunkGenerator.class)
 public abstract class SurfaceChunkGenerator_husksSpawnMixin extends ChunkGenerator
 {
-
-    public SurfaceChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, class_5311 arg)
+    public SurfaceChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructuresConfig structuresConfig)
     {
-        super(biomeSource, arg);
+        super(biomeSource, structuresConfig);
     }
 
     @Inject(method = "getEntitySpawnList", at = @At("HEAD"), cancellable = true)
