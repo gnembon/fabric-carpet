@@ -2639,6 +2639,13 @@ query(p,'effect','resistance')  => null
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'hunger')`
+### `query(e, 'saturation')`
+### `query(e, 'exhaustion')`
+
+Retrieves player hunger related information. For non-players, returns `null`.
+
+
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
@@ -2795,10 +2802,11 @@ If called with `false` value, it will disable AI in the mob. `true` will enable 
 Sets if the entity obeys any collisions, including collisions with the terrain and basic physics. Not affecting 
 players, since they are controlled client side.
 
-### `modify(e, 'effect', name, duration?, amplifier?, show_particles?, show_icon?)`
+### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true` 
-and `true`. If no duration is specified, or if it's null or 0, the effect is removed.
+and `true`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
+it clears all effects.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
@@ -2837,6 +2845,17 @@ Toggles gravity for the entity.
 ### `modify(e, 'fire', ticks)`
 
 Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
+
+### `modify(e, 'hunger', value)`
+### `modify(e, 'saturation', value)`
+### `modify(e, 'exhaustion', value)`
+
+Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'add_exhaustion', value)`
+
+adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
+to manipulate how much 'food' some action cost.
 
 ## Entity Events
 
@@ -2887,7 +2906,12 @@ health back to the villager after being harmed.
 
 Most functions in this category require inventory as the first argument. Inventory could be specified by an entity, 
 or a block, or position (three coordinates) of a potential block with inventory. Player enderchest inventory require 
-two arguments, keyword `'enderchest'`, followed by the player entity argument. If the entity or a block doesn't have 
+two arguments, keyword `'enderchest'`, followed by the player entity argument, or a single argument as a string of a
+form: `'enderchest_steve'`. If your player name starts with enderchest, it can be always accessed by passing a player
+entity value. If all else fails, it will try to identify first three arguments as coordinates of a block position of
+a block inventory. Player inventories can also be called by their name.
+ 
+ If the entity or a block doesn't have 
 an inventory, they typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
@@ -3130,7 +3154,10 @@ supplied, only that player will receive particles.
 
 ## Markers
 
-### `draw_shape(shape, duration, key?, value?, ... )`, `draw_shape(shape, duration, l(key?, value?, ... ))`, `draw_shape(shape, duration, attribute_map)`
+### `draw_shape(shape, duration, key?, value?, ... )`, 
+### `draw_shape(shape, duration, l(key?, value?, ... ))`, 
+### `draw_shape(shape, duration, attribute_map)`
+### `draw_shape(shape_list)`
 
 Draws a shape in the world that will expire in `duration` ticks. Other attributes of the shape should be provided as 
 consecutive key - value argument pairs, either as next arguments, or packed in a list, or supplied as a proper key-value
@@ -3140,6 +3167,10 @@ have carpet installed will still be able to see the required shapes in the form 
 are not required to follow all attributes precisely, but will allow vanilla clients to receive some experience of your 
 apps. One of the attributes that will definitely not be honored is the duration - particles will be send once
 per shape and last whatever they typically last in the game.
+
+Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
+Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
+sending many small packets to draw several shapes at once.
 
 Shapes will fail to draw and raise a runtime error if not all its required parameters
 are specified and all available shapes have some parameters that are required, so make sure to have them in place:
@@ -3159,6 +3190,10 @@ Optional shared shape attributes:
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
    Follow attribute requires all positional arguments to be relative to the entity and disallow
    of using entity or block as position markers. You must specify positions as a triple.
+ * `snap` - if `follow` is present, indicated on which axis the snapping to entity coordinates occurs, and which axis
+   will be treated statically, i.e. the coordinate passed in a coord triple is the actual value in the world. Default
+   value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
+   instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate.
 
 Available shapes:
  * `'line'` - draws a straight line between two points
@@ -3171,13 +3206,22 @@ Available shapes:
      * `from` - triple coordinates, entity, or block value indicating one corner of the box
      * `to` - other corner, same format as `from`
 
- * `'sphere'` - draws a sphere
+ * `'sphere'`:
    * Required attributes:
      * `center` - center of the sphere
      * `radius` - radius of the sphere
    * Optional attributes:
      * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
       level of detail will be selected automatically based on radius.
+      
+ * `'cylinder'`:
+   * Required attributes:
+     * `center` - center of the base
+     * `radius` - radius of the base circle
+   * Optional attributes:
+     * `axis` - cylinder direction, one of `'x'`, `'y'`, `'z'` defaults to `'y'`
+     * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
+     * `level` - level of details, see `'sphere'`.
 
 ### `create_marker(text, pos, rotation?, block?)`
 
