@@ -2297,7 +2297,7 @@ which would cause the expression not be evaluated for their boolean value.
 `scan` also handles `continue` and `break` statements, using `continue`'s return value to use in place of expression
 return value. `break` return value has no effect.
 
-### `volume(x1, y1, z1, x2, y2, z2, expr)`
+### `volume(x1, y1, z1, x2, y2, z2, expr), volume(pos1, pos2, expr)`
 
 Evaluates expression for each block in the area, the same as the `scan` function, but using two opposite corners of 
 the rectangular cuboid. Any corners can be specified, its like you would do with `/fill` command.
