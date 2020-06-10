@@ -31,9 +31,11 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -62,7 +64,7 @@ public class ShapeDispatcher
     {
         if (lv.size() < 3) throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
         String shapeType = lv.get(0).getString();
-        Value duration = NumericValue.asNumber(lv.get(1));
+        Value duration = NumericValue.asNumber(lv.get(1), "duration");
         Map<String, Value> params;
         if (lv.size() == 3)
         {
@@ -230,6 +232,7 @@ public class ShapeDispatcher
             put("line", creator(Line::new));
             put("box", creator(Box::new));
             put("sphere", creator(Sphere::new));
+            put("cylinder", creator(Cylinder::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -248,7 +251,9 @@ public class ShapeDispatcher
         protected int duration = 0;
         private long key;
         protected int followEntity;
-        protected DimensionType entityDimension;
+        protected String snapTo;
+        protected boolean snapX, snapY, snapZ;
+        public DimensionType shapeDimension;
 
 
         protected ExpiringShape() { }
@@ -302,18 +307,33 @@ public class ShapeDispatcher
 
             key = 0;
             followEntity = -1;
-            entityDimension = null;
+            shapeDimension = Registry.DIMENSION_TYPE.get(new Identifier(options.get("dim").getString()));
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();
-                entityDimension = Registry.DIMENSION_TYPE.get(new Identifier(options.get("dim").getString()));
+                snapTo = options.getOrDefault("snap", optional.get("snap")).getString().toLowerCase(Locale.ROOT);
+                snapX = snapTo.contains("x");
+                snapY = snapTo.contains("y");
+                snapZ = snapTo.contains("z");
             }
         }
         public int getExpiry() { return duration; }
-        public Vec3d toAbsolute(Entity e, Vec3d vec)
+        public Vec3d toAbsolute(Entity e, Vec3d vec, float partialTick)
         {
-            return e.getPos().add(vec);
+            return vec.add(
+                    snapX?MathHelper.lerp(partialTick, e.prevX, e.getX()):0.0,
+                    snapY?MathHelper.lerp(partialTick, e.prevY, e.getY()):0.0,
+                    snapZ?MathHelper.lerp(partialTick, e.prevZ, e.getZ()):0.0
+            );
         }
+        public Vec3d relativiseRender(World world, Vec3d vec, float partialTick)
+        {
+            if (followEntity <= 0) return vec;
+            Entity e = world.getEntityById(followEntity);
+            if (e == null) return vec;
+            return toAbsolute(e, vec, partialTick);
+        }
+
         public Vec3d vecFromValue(Value value)
         {
             if (!(value instanceof ListValue)) throw new InternalExpressionException("decoded value of "+value.getPrettyString()+" is not a triple");
@@ -335,6 +355,7 @@ public class ShapeDispatcher
         protected long calcKey()
         { // using FNV-1a algorithm
             long hash = -3750763034362895579L;
+            hash ^= shapeDimension.hashCode(); hash *= 1099511628211L;
             hash ^= color;                     hash *= 1099511628211L;
             hash ^= followEntity;              hash *= 1099511628211L;
             hash ^= Float.hashCode(lineWidth); hash *= 1099511628211L;
@@ -347,7 +368,8 @@ public class ShapeDispatcher
                 "color", new NumericValue(-1),
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
-                "fill", new NumericValue(0xffffff00)
+                "fill", new NumericValue(0xffffff00),
+                "snap", new StringValue("xyz")
         );
         protected Set<String> requiredParams() {return required;}
         // list of params that can be there, with defaults
@@ -389,16 +411,16 @@ public class ShapeDispatcher
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
             return p ->
             {
-                if (followEntity == -1)
+                if (p.dimension == shapeDimension)
                 {
-                    particleMesh(Collections.singletonList(p), particle, density, from, to);
-                    return;
+                    particleMesh(
+                            Collections.singletonList(p),
+                            particle,
+                            density,
+                            relativiseRender(p.getServerWorld(), from, 0),
+                            relativiseRender(p.getServerWorld(), to, 0)
+                    );
                 }
-                Entity e = p.getServer().getWorld(entityDimension).getEntityById(followEntity);
-                if (e == null) return;
-                Vec3d rel1 = toAbsolute(e, from);
-                Vec3d rel2 = toAbsolute(e, to);
-                particleMesh(Collections.singletonList(p), particle, density, rel1, rel2);
             };
         }
 
@@ -471,19 +493,16 @@ public class ShapeDispatcher
             String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
             ParticleEffect particle = getParticleData(particleName);
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
+
             return p ->
             {
-                if (followEntity == -1)
-                {
-                    drawParticleLine(Collections.singletonList(p), particle, from, to, density);
-                    return;
-                }
-
-                Entity e = p.getServer().getWorld(entityDimension).getEntityById(followEntity);
-                if (e == null) return;
-                Vec3d rel1 = toAbsolute(e, from);
-                Vec3d rel2 = toAbsolute(e, to);
-                drawParticleLine(Collections.singletonList(p), particle, rel1, rel2, density);
+                if (p.dimension == shapeDimension) drawParticleLine(
+                        Collections.singletonList(p),
+                        particle,
+                        relativiseRender(p.getServerWorld(), from, 0),
+                        relativiseRender(p.getServerWorld(), to, 0),
+                        density
+                );
             };
         }
 
@@ -534,24 +553,18 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayerEntity> alternative() { return p ->
         {
+            if (p.dimension != shapeDimension) return;
             String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
             ParticleEffect particle = getParticleData(particleName);
             int partno = Math.min(1000,20*subdivisions);
             Random rand = p.world.getRandom();
             ServerWorld world = p.getServerWorld();
 
-            double ccx, ccy, ccz;
-            if (followEntity == -1)
-            {
-                ccx = center.x; ccy = center.y; ccz = center.z;
-            }
-            else
-            {
-                Entity e = p.getServer().getWorld(entityDimension).getEntityById(followEntity);
-                if (e == null) return;
-                Vec3d rel1 = toAbsolute(e, center);
-                ccx = (float)rel1.x; ccy = (float)rel1.y; ccz = (float)rel1.z;
-            }
+            Vec3d ccenter = relativiseRender(world, center, 0 );
+
+            double ccx = ccenter.x;
+            double ccy = ccenter.y;
+            double ccz = ccenter.z;
 
             for (int i=0; i<partno; i++)
             {
@@ -578,6 +591,110 @@ public class ShapeDispatcher
             return hash;
         }
     }
+    public static class Cylinder extends ExpiringShape
+    {
+        private final Set<String> required = ImmutableSet.of("center", "radius");
+        private final Map<String, Value> optional = ImmutableMap.of(
+                "level", Value.ZERO,
+                "height", Value.ZERO,
+                "axis", new StringValue("y")
+        );
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
+
+        Vec3d center;
+        float height;
+        float radius;
+        int level;
+        int subdivisions;
+        Direction.Axis axis;
+
+        private Cylinder() { super(); }
+
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+            center = vecFromValue(options.get("center"));
+            radius = NumericValue.asNumber(options.get("radius")).getFloat();
+            level = NumericValue.asNumber(options.getOrDefault("level", optional.get("level"))).getInt();
+            subdivisions = level;
+            if (subdivisions <= 0)
+            {
+                subdivisions = Math.max(10, (int)(10*Math.sqrt(radius)));
+            }
+            height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
+            axis = Direction.Axis.fromName(options.getOrDefault("axis", optional.get("axis")).getString());
+        }
+
+
+        @Override
+        public Consumer<ServerPlayerEntity> alternative() { return p ->
+        {
+            String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
+            ParticleEffect particle = getParticleData(particleName);
+            int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
+            Random rand = p.world.getRandom();
+            ServerWorld world = p.getServerWorld();
+
+            Vec3d ccenter = relativiseRender(world, center, 0 );
+
+            double ccx = ccenter.x;
+            double ccy = ccenter.y;
+            double ccz = ccenter.z;
+
+            if (axis == Direction.Axis.Y)
+            {
+                for (int i=0; i<partno; i++)
+                {
+                    float d = rand.nextFloat()*height;
+                    float phi = (float)(2*Math.PI*rand.nextDouble());
+                    double x = radius * MathHelper.cos(phi);
+                    double y = d;
+                    double z = radius * MathHelper.sin(phi);
+                    world.spawnParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                }
+            }
+            else if (axis== Direction.Axis.X)
+            {
+                for (int i=0; i<partno; i++)
+                {
+                    float d = rand.nextFloat()*height;
+                    float phi = (float)(2*Math.PI*rand.nextDouble());
+                    double x = d;
+                    double y = radius * MathHelper.cos(phi);
+                    double z = radius * MathHelper.sin(phi);
+                    world.spawnParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                }
+            }
+            else  // Z
+            {
+                for (int i=0; i<partno; i++)
+                {
+                    float d = rand.nextFloat()*height;
+                    float phi = (float)(2*Math.PI*rand.nextDouble());
+                    double x = radius * MathHelper.sin(phi);
+                    double y = radius * MathHelper.cos(phi);
+                    double z = d;
+                    world.spawnParticles(p, particle, true, x+ccx, y+ccy, z+ccz, 1, 0.0, 0.0, 0.0, 0.0);
+                }
+            }
+        };}
+
+        @Override
+        public long calcKey()
+        {
+            long hash = super.calcKey();
+            hash ^= 3;                        hash *= 1099511628211L;
+            hash ^= center.hashCode();        hash *= 1099511628211L;
+            hash ^= Double.hashCode(radius);  hash *= 1099511628211L;
+            hash ^= Double.hashCode(height);  hash *= 1099511628211L;
+            hash ^= level;                    hash *= 1099511628211L;
+            return hash;
+        }
+    }
 
 
     public static abstract class Param
@@ -588,6 +705,7 @@ public class ShapeDispatcher
             put("duration", new NonNegativeIntParam("duration"));
             put("color", new ColorParam("color"));
             put("follow", new EntityParam("follow"));
+            put("snap", new StringChoiceParam("snap", "xyz", "xz", "yz", "xy", "x", "y", "z"));
             put("line", new PositiveFloatParam("line"));
             put("fill", new ColorParam("fill"));
 
@@ -596,7 +714,7 @@ public class ShapeDispatcher
             put("center", new Vec3Param("center", false));
             put("radius", new PositiveFloatParam("radius"));
             put("level", new PositiveIntParam("level"));
-            put("height", new PositiveFloatParam("height"));
+            put("height", new NonNegativeFloatParam("height"));
             put("axis", new StringChoiceParam("axis", "x", "y", "z"));
             put("points", new PointsParam("points"));
         }};
@@ -692,7 +810,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
         @Override
-        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value).getFloat()); }
+        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value, id).getFloat()); }
 
     }
     public static class PositiveIntParam extends PositiveParam
@@ -701,7 +819,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value, id).getInt()); }
 
     }
     public static class NonNegativeIntParam extends NumericParam
@@ -710,7 +828,21 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value, id).getInt()); }
+        @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        {
+            Value ret = super.validate(options, cc, value);
+            if (((NumericValue)ret).getDouble()<0) throw new InternalExpressionException("'"+id+"' should be non-negative");
+            return ret;
+        }
+    }
+    public static class NonNegativeFloatParam extends NumericParam
+    {
+        protected NonNegativeFloatParam(String id) { super(id); }
+        @Override
+        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
+        @Override
+        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value, id).getFloat()); }
         @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             Value ret = super.validate(options, cc, value);
@@ -786,9 +918,9 @@ public class ShapeDispatcher
         {
             List<Value> lv = ((ListValue)value).getItems();
             ListTag tag = new ListTag();
-            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0)).getDouble()));
-            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1)).getDouble()));
-            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2)).getDouble()));
+            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
+            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
+            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
             return tag;
         }
     }
@@ -834,9 +966,9 @@ public class ShapeDispatcher
             {
                 List<Value> coords = ((ListValue)value).getItems();
                 ListTag tag = new ListTag();
-                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0)).getDouble()));
-                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1)).getDouble()));
-                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2)).getDouble()));
+                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
+                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
+                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
                 ltag.add(tag);
             }
             return ltag;
@@ -853,7 +985,7 @@ public class ShapeDispatcher
 
         public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value).getInt()); }
+        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value, id).getInt()); }
     }
 
     public static class EntityParam extends Param
@@ -864,7 +996,7 @@ public class ShapeDispatcher
         @Override
         public Tag toTag(Value value)
         {
-            return IntTag.of(NumericValue.asNumber(value).getInt());
+            return IntTag.of(NumericValue.asNumber(value, id).getInt());
         }
 
         @Override

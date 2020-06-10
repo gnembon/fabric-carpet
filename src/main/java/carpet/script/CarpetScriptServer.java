@@ -49,6 +49,7 @@ public class CarpetScriptServer
         add(new BundledModule("event_test", false));
         add(new BundledModule("stats_test", false));
         add(new BundledModule("math", true));
+        add(new BundledModule("chunk_display", false));
     }};
 
     public CarpetScriptServer(MinecraftServer server)

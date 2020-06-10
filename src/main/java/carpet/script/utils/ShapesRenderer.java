@@ -8,13 +8,11 @@ import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormats;
-import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.dimension.DimensionType;
 import org.lwjgl.opengl.GL11;
@@ -34,6 +32,7 @@ public class ShapesRenderer
         put("line", RenderedLine::new);
         put("box", RenderedBox::new);
         put("sphere", RenderedSphere::new);
+        put("cylinder", RenderedCylinder::new);
     }};
 
     public ShapesRenderer(MinecraftClient minecraftClient)
@@ -128,7 +127,7 @@ public class ShapesRenderer
         else
         {
             RenderedShape<?> rshape = shapeFactory.apply(client, shape);
-            DimensionType dim = Registry.DIMENSION_TYPE.get(new Identifier(tag.getString("dim")));
+            DimensionType dim = shape.shapeDimension;
             long key = rshape.key();
             synchronized (shapes)
             {
@@ -181,19 +180,8 @@ public class ShapesRenderer
         {
             if (shape.followEntity <=0 ) return true;
             if (client.world == null) return false;
-            if (client.world.dimension.getType() != dim) return false;
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
-        }
-        protected Vec3d relativiseRender(Vec3d vec, float partialTick)
-        {
-            if (shape.followEntity <= 0) return vec;
-            Entity e = client.world.getEntityById(shape.followEntity);
-            return vec.add(
-                    MathHelper.lerp(partialTick, e.prevX, e.getX()),
-                    MathHelper.lerp(partialTick, e.prevY, e.getY()),
-                    MathHelper.lerp(partialTick, e.prevZ, e.getZ())
-            );
         }
     }
 
@@ -209,8 +197,8 @@ public class ShapesRenderer
         public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.a == 0.0) return;
-            Vec3d v1 = relativiseRender(shape.from, partialTick);
-            Vec3d v2 = relativiseRender(shape.to, partialTick);
+            Vec3d v1 = shape.relativiseRender(client.world, shape.from, partialTick);
+            Vec3d v2 = shape.relativiseRender(client.world, shape.to, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
             drawBoxWireGLLines(tessellator, bufferBuilder,
                     (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
@@ -223,8 +211,8 @@ public class ShapesRenderer
         public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0) return;
-            Vec3d v1 = relativiseRender(shape.from, partialTick);
-            Vec3d v2 = relativiseRender(shape.to, partialTick);
+            Vec3d v1 = shape.relativiseRender(client.world, shape.from, partialTick);
+            Vec3d v2 = shape.relativiseRender(client.world, shape.to, partialTick);
             RenderSystem.lineWidth(1.0F);
             drawBoxFaces(tessellator, bufferBuilder,
                     (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
@@ -245,8 +233,8 @@ public class ShapesRenderer
         @Override
         public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
-            Vec3d v1 = relativiseRender(shape.from, partialTick);
-            Vec3d v2 = relativiseRender(shape.to, partialTick);
+            Vec3d v1 = shape.relativiseRender(client.world, shape.from, partialTick);
+            Vec3d v2 = shape.relativiseRender(client.world, shape.to, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
             drawLine(tessellator, bufferBuilder,
                     (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
@@ -266,7 +254,7 @@ public class ShapesRenderer
         public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.a == 0.0) return;
-            Vec3d vc = relativiseRender(shape.center, partialTick);
+            Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
             drawSphereWireframe(tessellator, bufferBuilder,
                     (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
@@ -277,12 +265,42 @@ public class ShapesRenderer
         public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.fa == 0.0) return;
-            Vec3d vc = relativiseRender(shape.center, partialTick);
+            Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
             RenderSystem.lineWidth(1.0f);
             drawSphereFaces(tessellator, bufferBuilder,
                     (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
                     shape.radius, shape.subdivisions,
                     shape.fr, shape.fg, shape.fb, shape.fa);
+        }
+    }
+
+    public static class RenderedCylinder extends RenderedShape<ShapeDispatcher.Cylinder>
+    {
+        public RenderedCylinder(MinecraftClient client, ShapeDispatcher.ExpiringShape shape)
+        {
+            super(client, (ShapeDispatcher.Cylinder)shape);
+        }
+        @Override
+        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
+        {
+            if (shape.a == 0.0) return;
+            Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
+            RenderSystem.lineWidth(shape.lineWidth);
+            drawCylinderWireframe(tessellator, bufferBuilder,
+                    (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
+                    shape.radius, shape.height, shape.axis, shape.subdivisions,
+                    shape.r, shape.g, shape.b, shape.a);
+        }
+        @Override
+        public void renderFaces(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
+        {
+            if (shape.fa == 0.0) return;
+            //Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
+            //RenderSystem.lineWidth(1.0f);
+            //drawSphereFaces(tessellator, bufferBuilder,
+            //        (float)(vc.x-cx-renderEpsilon), (float)(vc.y-cy-renderEpsilon), (float)(vc.z-cz-renderEpsilon),
+            //        shape.radius, shape.subdivisions,
+            //        shape.fr, shape.fg, shape.fb, shape.fa);
         }
     }
 
@@ -407,6 +425,90 @@ public class ShapesRenderer
             }
         }
         tessellator.draw();
+    }
+
+    public static void drawCylinderWireframe(Tessellator tessellator, BufferBuilder builder,
+                                             float cx, float cy, float cz,
+                                             float r, float h, Direction.Axis axis,  int subd,
+                                             float red, float grn, float blu, float alpha)
+    {
+        float step = (float)Math.PI / (subd/2);
+        int num_steps180 = (int)(Math.PI / step)+1;
+        int num_steps360 = (int)(2*Math.PI / step);
+        int hsteps = (h>0) ? ((int)Math.ceil(h / (step*r))+1) : 1;
+        float hstep = (h>0) ? (h / (hsteps-1)) : 1;
+        // draw base
+
+        if (axis == Direction.Axis.Y)
+        {
+            for (int dh = 0; dh < hsteps; dh++)
+            {
+                float hh = dh*hstep;
+                builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+                    float y = hh;
+                    float z = r * MathHelper.sin(theta);
+                    builder.vertex(x + cx, y + cy, z + cz).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
+
+            if (h > 0)
+            {
+                for (int i = 0; i <= num_steps180; i++)
+                {
+                    builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                    float theta = step * i;
+                    float x = r * MathHelper.cos(theta);
+
+                    float z = r * MathHelper.sin(theta);
+
+                    builder.vertex(cx - x, cy + 0, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy + 0, cz - z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy + h, cz - z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx - x, cy + h, cz + z).color(red, grn, blu, alpha).next();
+                    tessellator.draw();
+                }
+            }
+
+        }
+        else if (axis == Direction.Axis.X)
+        {
+            for (int dh = 0; dh < hsteps; dh++)
+            {
+                float hh = dh * hstep;
+                builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float z = r * MathHelper.cos(theta);
+                    float x = hh;
+                    float y = r * MathHelper.sin(theta);
+                    builder.vertex(x + cx, y + cy, z + cz).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
+        }
+        else if (axis == Direction.Axis.Z)
+        {
+            for (int dh = 0; dh < hsteps; dh++)
+            {
+                float hh = dh * hstep;
+                builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                for (int i = 0; i <= num_steps360; i++)
+                {
+                    float theta = step * i;
+                    float y = r * MathHelper.cos(theta);
+                    float z = hh;
+                    float x = r * MathHelper.sin(theta);
+                    builder.vertex(x + cx, y + cy, z + cz).color(red, grn, blu, alpha).next();
+                }
+                tessellator.draw();
+            }
+        }
     }
 
     public static void drawSphereWireframe(Tessellator tessellator, BufferBuilder builder,

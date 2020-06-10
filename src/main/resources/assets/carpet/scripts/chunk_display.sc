@@ -8,19 +8,19 @@ global_chunk_colors = m(
 	// stable full generation (for '0's, all 1,2,3 are always 'full')
 	l('full',              l(0xbbbbbb00,  0x88888800)), // gray
 	// unstable final bits
-	l('heightmaps',        l(0xFFFFFF00,  0x00000000)), // checker
-	l('spawn',             l(0xFFFFFF00,  0x00000000)), // checker
-	l('light_gen',         l(0xFFFFFF00,  0x00000000)), // checker
+	l('heightmaps',        l(0x33333300,  0x22222200)), // checker
+	l('spawn',             l(0x00333300,  0x00222200)), // checker
+	l('light_gen',         l(0x55550000,  0x44440000)), // checker
 	// stable features
 	l('features',          l(0x88bb2200,    0x66882200)), // green muddled
 	//stable terrain
 	l('liquid_carvers',    l(0x65432100,     0x54321000)), // browns
 	//unstable terrain - not generated yet
-	l('carvers',            l(0xFFFFFF00,  0x00000000)), // checker
-	l('surface',            l(0xFFFFFF00,  0x00000000)), // checker
-	l('noise',              l(0xFFFFFF00,  0x00000000)), // checker
-	l('biomes',             l(0xFFFFFF00,  0x00000000)), // checker
-	l('structure_references', l(0xFFFFFF00,  0x00000000)), // checker
+	l('carvers',            l(0x33003300,  0x22002200)), // checker
+	l('surface',            l(0x33330000,  0x22220000)), // checker
+	l('noise',              l(0x33000000,  0x22000000)), // checker
+	l('biomes',             l(0x00330000,  0x00220000)), // checker
+	l('structure_references', l(0x00003300,  0x00002200)), // checker
 	// stable
 	l('structure_starts',  l(0x66666600,  0x22222200)), // darkgrey
 	// not stated yet
@@ -37,7 +37,7 @@ global_chunk_colors = m(
 	l('post_teleport',     l(0xAA00AA00,  0xAA00AA00)), // purple
 	l('start',             l(0xDDFF0000,  0xDDFF0000)), // lime, green
 	// recent chunk requests
-	l('unknown',           l(0xFFFFFF00,  0x00000000)) // check
+	l('unknown',           l(0xFF55FF00,  0xff99ff00)) // pink purple
 );
 
 // map representing current displayed chunkloading setup
@@ -66,8 +66,6 @@ __on_player_uses_item(player, item_tuple, hand) ->
 	inventory_set(player, player~'selected_slot', item_tuple:1, item_tuple:0, tag);
 	__setup_tracker(player, item_tuple);
 );
-
-//__on_tick() -> null;
 
 __remove_previous_setup(new_player) ->
 (
@@ -127,6 +125,7 @@ __chunk_visualizer_tick(p) ->
 	if(!setup, return());
 	if (!global_running, return());
 	show_activity = (p~'holds':0 == 'redstone_torch');
+	yval = setup:'plot_center':1+16;
 	in_dimension( setup:'plot_dimension',
 		l(sx, sy, sz) = setup:'source_center';
 		l(px, py, pz) = setup:'plot_center';
@@ -154,8 +153,6 @@ __chunk_visualizer_tick(p) ->
 					for(tickets,
 						l(type, level) = _;
 						if (show_activity || type != 'unknown',
-							//global_status_cache:source_pos = type;
-							//changed = true;
 							status = type;
 						);
 					);
@@ -163,15 +160,15 @@ __chunk_visualizer_tick(p) ->
 				l(cached_status, expiry) = global_status_cache:source_pos;
 				changed = (status != cached_status);
 				if ( changed || (expiry < now),
-                    global_status_cache:source_pos = l(status, now+100+floor(rand(20)));
-					bpos = l(dx/2, 10, dz/2);
+                    global_status_cache:source_pos = l(status, now+100+floor(rand(40)));
+					bpos = l(dx/2, yval, dz/2);
 					bcol = global_chunk_colors:status:((dx+dz)%2);
 					shapes += l('box', 150, 'from', bpos, 'to', bpos + l(0.5,0,0.5),
-					    'color', 0xffffff00, 'fill', bcol+128, 'follow', p);
+					    'color', 0xffffff00, 'fill', bcol+128, 'follow', p, 'snap', 'xz');
 					if (changed,
 					    pbcol = global_chunk_colors:cached_status:((dx+dz)%2);
 					    shapes += l('box', 0, 'from', bpos, 'to', bpos + l(0.5,0,0.5),
-                            'color', 0xffffff00, 'fill', pbcol+128, 'follow', p);
+                            'color', 0xffffff00, 'fill', pbcol+128, 'follow', p, 'snap', 'xz');
 					);
 				);
 			);
