@@ -477,10 +477,11 @@ If called with `false` value, it will disable AI in the mob. `true` will enable 
 Sets if the entity obeys any collisions, including collisions with the terrain and basic physics. Not affecting 
 players, since they are controlled client side.
 
-### `modify(e, 'effect', name, duration?, amplifier?, show_particles?, show_icon?)`
+### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true` 
-and `true`. If no duration is specified, or if it's null or 0, the effect is removed.
+and `true`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
+it clears all effects.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
