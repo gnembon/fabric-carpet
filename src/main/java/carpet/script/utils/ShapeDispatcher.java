@@ -88,7 +88,7 @@ public class ShapeDispatcher
             for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i));
             params = ShapeDispatcher.parseParams(paramList);
         }
-        params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getDimension().getType().toString()));
+        params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getRegistryKey().getValue().toString()));
         params.putIfAbsent("duration", duration);
 
         if (params.containsKey("player"))
@@ -413,7 +413,7 @@ public class ShapeDispatcher
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
             return p ->
             {
-                if (p.dimension == shapeDimension)
+                if (p.world.getRegistryKey() == shapeDimension)
                 {
                     particleMesh(
                             Collections.singletonList(p),
@@ -498,7 +498,7 @@ public class ShapeDispatcher
 
             return p ->
             {
-                if (p.dimension == shapeDimension) drawParticleLine(
+                if (p.world.getRegistryKey() == shapeDimension) drawParticleLine(
                         Collections.singletonList(p),
                         particle,
                         relativiseRender(p.getServerWorld(), from, 0),
@@ -555,7 +555,7 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayerEntity> alternative() { return p ->
         {
-            if (p.dimension != shapeDimension) return;
+            if (p.world.getRegistryKey() != shapeDimension) return;
             String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
             ParticleEffect particle = getParticleData(particleName);
             int partno = Math.min(1000,20*subdivisions);
