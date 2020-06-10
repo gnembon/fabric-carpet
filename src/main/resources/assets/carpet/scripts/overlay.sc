@@ -98,7 +98,7 @@ __structure_renderer(player_name) ->
 		    l(from, to) = structure_data;
 		    total_size = _euclidean(from, to);
 		    density = max(10, total_size/10);
-		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF, 'width', 3, 'fill', 0x00FFFF22);
+		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF, 'line', 3, 'fill', 0x00FFFF22);
 		    structure_pieces = slice(sort_key(structure_pieces, _euclidean_sq((_:2+_:3)/2,ppos)), 0, config:'max_pieces');
 		    for (structure_pieces, l(piece, direction, from, to) = _;
 		        r = 255 - floor(128 * _i/config:'max_pieces');
@@ -137,12 +137,14 @@ __chunk_renderer(player_name) ->
                     b = 30;
                     a = max(0, 255-player_distance);
                     color = a+256*(b+256*(g+256*r));
-                    draw_shape('line', 15, 'from', top_00, 'to', top_10, 'color', color, 'width', 3);
-                    draw_shape('line', 15, 'from', top_10, 'to', top_11, 'color', color, 'width', 3);
-                    draw_shape('line', 15, 'from', top_11, 'to', top_01, 'color', color, 'width', 3);
-                    draw_shape('line', 15, 'from', top_01, 'to', top_00, 'color', color, 'width', 3);
-                    draw_shape('line', 15, 'from', top_00, 'to', top_11, 'color', color, 'width', 3);
-                    draw_shape('line', 15, 'from', top_01, 'to', top_10, 'color', color, 'width', 3);
+                    draw_shape(l(
+                    l('line', 15, 'from', top_00, 'to', top_10, 'color', color, 'line', 3),
+                    l('line', 15, 'from', top_10, 'to', top_11, 'color', color, 'line', 3),
+                    l('line', 15, 'from', top_11, 'to', top_01, 'color', color, 'line', 3),
+                    l('line', 15, 'from', top_01, 'to', top_00, 'color', color, 'line', 3),
+                    l('line', 15, 'from', top_00, 'to', top_11, 'color', color, 'line', 3),
+                    l('line', 15, 'from', top_01, 'to', top_10, 'color', color, 'line', 3)
+                    ));
                 )
         	)
         )

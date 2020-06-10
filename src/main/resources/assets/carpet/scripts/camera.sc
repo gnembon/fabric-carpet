@@ -49,6 +49,11 @@ __command() ->
    print(' "/camera show": Show current path particles');
    print('    color of particles used is different for different players');
    print(' "/camera hide": Hide path display');
+   print(' "/camera prefer_smooth_play": ');
+   print('    Eat CPU spikes and continue as usual');
+   print(' "/camera prefer_synced_play": ');
+   print('    After CPU spikes jump to where you should be');
+
    print('');
    ''
 );
@@ -483,6 +488,11 @@ hide() ->
 );
 
 // runs the player on the path
+global_prefer_sync = false;
+
+prefer_smooth_play() -> (global_prefer_sync = false; 'Smooth path play');
+prefer_synced_play() -> (global_prefer_sync = true; 'Synchronized path play');
+
 play() ->
 (
    if (err = __is_not_valid_for_motion(), exit(err));
@@ -501,6 +511,7 @@ play() ->
        global_playing_path = true;
        mspt = 1000 / 60;
        start_time = time();
+       very_start = start_time;
        point = 0;
        p = __get_player();
        try (
@@ -514,9 +525,14 @@ play() ->
                    modify(p, 'location', v);
                    point += 1;
                    end_time = time();
-                   took = end_time - start_time;
-                   if (took < mspt, sleep(mspt-took));
-                   start_time = time()
+                   if (global_prefer_sync,
+                       should_be = very_start + mspt*point;
+                       if (end_time < should_be, sleep(should_be-end_time) )
+                   ,
+                       took = end_time - start_time;
+                       if (took < mspt, sleep(mspt-took));
+                       start_time = time()
+                   )
                )
            );
        );

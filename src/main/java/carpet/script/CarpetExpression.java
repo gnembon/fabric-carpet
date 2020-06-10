@@ -2678,47 +2678,28 @@ public class CarpetExpression
         this.expr.addLazyFunction("draw_shape", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            if (lv.size() < 3) throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
-            String shapeType = lv.get(0).evalValue(c).getString();
-            Value duration = NumericValue.asNumber(lv.get(1).evalValue(c));
-            Map<String, Value> params;
-            if (lv.size() == 3)
+            ServerPlayerEntity player[] = {null};
+            List<Pair<ShapeDispatcher.ExpiringShape, Map<String,Value>>> shapes = new ArrayList<>();
+            if (lv.size() == 1) // bulk
             {
-                Value paramValue = lv.get(2).evalValue(c);
-                if (paramValue instanceof MapValue)
+                Value specLoad = lv.get(0).evalValue(c);
+                if (!(specLoad instanceof ListValue)) throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
+                for (Value list : ((ListValue) specLoad).getItems())
                 {
-                    params = new HashMap<>();
-                    ((MapValue) paramValue).getMap().entrySet().forEach(e -> params.put(e.getKey().getString(),e.getValue()));
+                    if (!(list instanceof ListValue))  throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
+                    shapes.add( ShapeDispatcher.fromFunctionArgs(cc, ((ListValue) list).getItems(), player));
                 }
-                else if (paramValue instanceof ListValue)
-                {
-                    params = ShapeDispatcher.parseParams(((ListValue) paramValue).getItems());
-                }
-                else throw new InternalExpressionException("Parameters for 'draw_shape' need to be defined either in a list or a map");
             }
             else
             {
-                List<Value> paramList = new ArrayList<>();
-                for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i).evalValue(c));
-                params = ShapeDispatcher.parseParams(paramList);
+                List<Value> params = new ArrayList<>();
+                for (LazyValue v : lv) params.add(v.evalValue(c));
+                shapes.add(ShapeDispatcher.fromFunctionArgs(cc, params, player));
             }
-            params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getRegistryKey().getValue().toString()));
-            params.putIfAbsent("duration", duration);
-            ServerPlayerEntity player = null;
-            if (params.containsKey("player"))
-            {
-                player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), params.get("player"));
-                if (player == null)
-                    throw new InternalExpressionException("'player' parameter needs to represent an existing player");
-                params.remove("player");
-            }
-
-            ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.create(cc, shapeType, params);
 
             ShapeDispatcher.sendShape(
-                    (player==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player),
-                    shape,
-                    params
+                    (player[0]==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player[0]),
+                    shapes
             );
             return LazyValue.TRUE;
         });

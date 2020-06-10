@@ -36,7 +36,10 @@ supplied, only that player will receive particles.
 
 ## Markers
 
-### `draw_shape(shape, duration, key?, value?, ... )`, `draw_shape(shape, duration, l(key?, value?, ... ))`, `draw_shape(shape, duration, attribute_map)`
+### `draw_shape(shape, duration, key?, value?, ... )`, 
+### `draw_shape(shape, duration, l(key?, value?, ... ))`, 
+### `draw_shape(shape, duration, attribute_map)`
+### `draw_shape(shape_list)`
 
 Draws a shape in the world that will expire in `duration` ticks. Other attributes of the shape should be provided as 
 consecutive key - value argument pairs, either as next arguments, or packed in a list, or supplied as a proper key-value
@@ -46,6 +49,10 @@ have carpet installed will still be able to see the required shapes in the form 
 are not required to follow all attributes precisely, but will allow vanilla clients to receive some experience of your 
 apps. One of the attributes that will definitely not be honored is the duration - particles will be send once
 per shape and last whatever they typically last in the game.
+
+Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
+Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
+sending many small packets to draw several shapes at once.
 
 Shapes will fail to draw and raise a runtime error if not all its required parameters
 are specified and all available shapes have some parameters that are required, so make sure to have them in place:
@@ -65,6 +72,10 @@ Optional shared shape attributes:
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
    Follow attribute requires all positional arguments to be relative to the entity and disallow
    of using entity or block as position markers. You must specify positions as a triple.
+ * `snap` - if `follow` is present, indicated on which axis the snapping to entity coordinates occurs, and which axis
+   will be treated statically, i.e. the coordinate passed in a coord triple is the actual value in the world. Default
+   value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
+   instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate.
 
 Available shapes:
  * `'line'` - draws a straight line between two points

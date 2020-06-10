@@ -158,7 +158,7 @@
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetEventMixin",
-
+    "HungerManagerMixin_scarpetEventsMixin",
 
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
@@ -186,7 +186,8 @@
     "WorldRenderer_fogOffMixin",
     "WorldRenderer_creativeNoClipMixin",
     "ClientPlayNetworkHandlerMixin",
-    "DebugRenderer_scarpetRenderMixin"
+    "DebugRenderer_scarpetRenderMixin",
+    "WorldRenderer_scarpetRenderMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"

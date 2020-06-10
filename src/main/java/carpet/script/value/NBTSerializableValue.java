@@ -27,6 +27,7 @@ import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -35,6 +36,7 @@ import net.minecraft.util.math.Box;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -201,16 +203,30 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset + 1);
             }
-            else if (v1.getString().equalsIgnoreCase("enderchest"))
+            else if (v1 instanceof StringValue)
             {
-                Value v2 = params.get(1 + offset).evalValue(c);
-                if (!(v2 instanceof EntityValue) || !(((EntityValue) v2).getEntity() instanceof PlayerEntity))
+                String strVal = v1.getString().toLowerCase(Locale.ROOT);
+                if (strVal.equals("enderchest"))
                 {
-                    throw new InternalExpressionException("enderchest inventory requires player argument");
+                    Value v2 = params.get(1 + offset).evalValue(c);
+                    ServerPlayerEntity player = EntityValue.getPlayerByValue(c.s.getMinecraftServer(), v2);
+                    if (player == null) throw new InternalExpressionException("enderchest inventory requires player argument");
+                    return new InventoryLocator(player, player.getBlockPos(), player.getEnderChestInventory(), offset + 2, true);
                 }
-                PlayerEntity e = (PlayerEntity)((EntityValue) v2).getEntity();
-                inv = e.getEnderChestInventory();
-                return new InventoryLocator(e, e.getBlockPos(), inv, offset + 2, true);
+                else
+                {
+                    boolean isEnder = strVal.startsWith("enderchest_");
+                    if (isEnder) strVal = strVal.substring(11); // len("enderchest_")
+                    ServerPlayerEntity player = c.s.getMinecraftServer().getPlayerManager().getPlayer(strVal);
+                    if (player == null) throw new InternalExpressionException("String description of an inventory should either denote a player or player's enderchest");
+                    return new InventoryLocator(
+                            player,
+                            player.getBlockPos(),
+                            isEnder ? player.getEnderChestInventory() : player.inventory,
+                            offset + 1,
+                            isEnder
+                    );
+                }
             }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
