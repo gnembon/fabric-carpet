@@ -310,6 +310,14 @@ Returns server tick counter. Can be used to run certain operations every n-th ti
 
 Returns dimension-specific tick counter.
 
+### `system_time()`
+
+Returns system time in the format: 
+
+`day_name month day_number hours:mins:secs time_zone year`
+
+eg:`Thu Jun 11 12:49:52 CEST 2020`
+
 ### `day_time(new_time?)`
 
 Returns current daytime clock value. If `new_time` is specified, sets a new clock
