@@ -24,7 +24,6 @@ import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -91,7 +90,7 @@ public class SpawnReporter
     public static List<BaseText> printMobcapsForDimension(ServerWorld world, boolean multiline)
     {
         RegistryKey<World> dim = world.getRegistryKey();
-        String name = dim.toString();
+        String name = dim.getValue().getPath();
         List<BaseText> lst = new ArrayList<>();
         if (multiline)
             lst.add(Messenger.s(String.format("Mobcaps for %s:",name)));
@@ -108,7 +107,7 @@ public class SpawnReporter
         for (SpawnGroup enumcreaturetype : SpawnGroup.values())
         {
             int cur = dimCounts.getOrDefault(enumcreaturetype, -1);
-            int max = chunkcount * (int)((double)enumcreaturetype.getCapacity() / currentMagicNumber()); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
+            int max = (int)(chunkcount * ((double)enumcreaturetype.getCapacity() / currentMagicNumber())); // from ServerChunkManager.CHUNKS_ELIGIBLE_FOR_SPAWNING
             String color = Messenger.heatmap_color(cur, max);
             String mobColor = Messenger.creatureTypeColor(enumcreaturetype);
             if (multiline)
@@ -350,15 +349,15 @@ public class SpawnReporter
         {
             //String type_code = String.format("%s", enumcreaturetype);
             boolean there_are_mobs_to_list = false;
-            for (RegistryKey<DimensionType> dim: Arrays.asList(DimensionType.OVERWORLD_REGISTRY_KEY, DimensionType.THE_NETHER_REGISTRY_KEY, DimensionType.THE_END_REGISTRY_KEY)) //String world_code: new String[] {"", " (N)", " (E)"})
+            for (RegistryKey<World> dim : Arrays.asList(World.OVERWORLD, World.NETHER, World.END)) //String world_code: new String[] {"", " (N)", " (E)"})
             {
-                Pair<RegistryKey<DimensionType>, SpawnGroup> code = Pair.of(dim, enumcreaturetype);
+                Pair<RegistryKey<World>, SpawnGroup> code = Pair.of(dim, enumcreaturetype);
                 if (spawn_ticks_spawns.get(code) > 0L)
                 {
                     there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
                     report.add(Messenger.s(String.format(" > %s (%.1f min), %.1f m/t, {%.1f%%F / %.1f%%- / %.1f%%+}; %.2f s/att",
-                        code.getRight()+((code.getLeft()==DimensionType.OVERWORLD_REGISTRY_KEY)?"":( (code.getLeft()==DimensionType.THE_NETHER_REGISTRY_KEY)?"(N)":"(E)" )), // OW, nether
+                        code.getRight()+((code.getLeft()==World.OVERWORLD)?"":( (code.getLeft()==World.NETHER)?"(N)":"(E)" )), // OW, nether
                         60*hours,
                         (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
                         (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),
