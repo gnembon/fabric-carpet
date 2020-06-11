@@ -34,13 +34,17 @@ Returns the list of 6 neighbouring blocks to the argument. Commonly used with ot
 for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 </pre>
 
-### `rect(cx, cy, cz, dx?, dy?, dz?, px?, py?, pz?)`
+### `rect(cx, cy, cz, dx?, dy?, dz?, px?, py?, pz?), rect(centre, difference?, positive_diff?)`
 
-returns an iterator, just like `range` function that iterates over rectangular cubarea of blocks. If only center 
-point is specified, it iterates over 27 blocks. If `d` arguments are specified, expands selection by the  respective 
-number of blocks in each direction. If `p` arguments are specified, it uses `d` for negative offset, and `p` for positive.
+Returns an iterator, just like `range` function that iterates over a rectangular area of blocks. If only center
+point is specified, it iterates over 27 blocks. If `d` (`difference`) arguments are specified, expands selection by the  respective 
+number of blocks in each direction. If `p` (`positive_diff`) arguments are specified, it uses `d` (`difference`) for negative offset, and `p` for positive.
 
-### `diamond(cx, cy, cz, radius?, height?)`
+`centre` can be defined either as three coordinates, a list of three coords, or a block value.
+`difference` and `positive_diff` can have the same representations, just if its a block, it computes the distance to the center
+as range instead of taking the values as is.`
+
+### `diamond(cx, cy, cz, radius?, height?), diamond(centre, radius?, height?)`
 
 Iterates over a diamond like area of blocks. With no radius and height, its 7 blocks centered around the middle 
 (block + neighbours). With a radius specified, it expands shape on x and z coords, and with a custom height, on y. 
