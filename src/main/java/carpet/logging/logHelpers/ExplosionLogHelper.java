@@ -2,7 +2,8 @@ package carpet.logging.logHelpers;
 
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
-import com.google.common.collect.Lists;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.text.BaseText;
@@ -10,19 +11,20 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.explosion.Explosion;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static carpet.utils.Messenger.c;
 
 public class ExplosionLogHelper
 {
     private final boolean createFire;
     private final Explosion.DestructionType blockDestructionType;
-    public final double x;
-    public final double y;
-    public final double z;
+    public final Vec3d pos;
     public final Entity entity;
     private final float power;
     private boolean affectBlocks = false;
-    private List<EntityChangedStatusWithCount> entityChangedStatusWithCount = Lists.newArrayList();
+    private Object2IntMap<EntityChangedStatusWithCount> impactedEntities = new Object2IntOpenHashMap<>();
 
     private static long lastGametime = 0;
     private static int explosionCountInCurretGT = 0;
@@ -30,9 +32,7 @@ public class ExplosionLogHelper
     public ExplosionLogHelper(Entity entity, double x, double y, double z, float power, boolean createFire, Explosion.DestructionType blockDestructionType) {
         this.entity = entity;
         this.power = power;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.pos = new Vec3d(x,y,z);
         this.createFire = createFire;
         this.blockDestructionType = blockDestructionType;
     }
@@ -44,113 +44,82 @@ public class ExplosionLogHelper
 
     public void onExplosionDone(long gametime)
     {
-        BaseText timeDisplay;
+        List<BaseText> messages = new ArrayList<>();
         if (!(lastGametime == gametime)){
             explosionCountInCurretGT = 0;
             lastGametime = gametime;
-            timeDisplay = Messenger.c("wb " + ">>>>>> CURRENT GAME TIME : ", "d " + gametime, "wb  >>>>>>\n");
-        }
-        else
-        {
-            timeDisplay = Messenger.s("");
+            messages.add(c("wb tick : ", "d " + gametime));
         }
         explosionCountInCurretGT++;
         LoggerRegistry.getLogger("explosions").log( (option) -> {
-            switch (option)
+            if ("brief".equals(option))
             {
-                case "brief":
-                    return new BaseText[]{Messenger.c(
-                            timeDisplay, "gb EXPLOSION", "d  #" + explosionCountInCurretGT,"gb ->  ",
-                            "w P: ",          "d ",Messenger.dblt("l",x ,y ,z),
-                            "w    affectBlocks: ",      "m " + this.affectBlocks
-                    )};
-                case "full":
-                    return new BaseText[]{Messenger.c(
-                            timeDisplay, "gb EXPLOSION", "d  #" + explosionCountInCurretGT,"gb ->  ",
-                            "w P: ",          "d ",Messenger.dblt("l",x ,y ,z),
-                            "w    createFire: ",        "m " + this.createFire,
-                            "w    power: ",             "c " + this.power,
-                            "w    destructionType: ",   "c " + this.blockDestructionType.name(),
-                            "w    affectBlocks: ",      "m " + this.affectBlocks,
-                            "b \n",   ListToText()
-                    )};
+                messages.add( c("d #" + explosionCountInCurretGT,"gb ->",
+                        Messenger.dblt("l", pos.x, pos.y, pos.z), (affectBlocks)?"m  (affects blocks)":"m  (doesn't affect blocks)" ));
             }
-            return null;
+            if ("full".equals(option))
+            {
+                messages.add( c("d #" + explosionCountInCurretGT,"gb ->", Messenger.dblt("l", pos.x, pos.y, pos.z) ));
+                messages.add(c("w   affects blocks: ", "m " + this.affectBlocks));
+                messages.add(c("w   creates fire: ", "m " + this.createFire));
+                messages.add(c("w   power: ", "c " + this.power));
+                messages.add(c( "w   destruction: ",   "c " + this.blockDestructionType.name()));
+                if (impactedEntities.isEmpty())
+                {
+                    messages.add(c("w   affected entities: ", "m None"));
+                }
+                else
+                {
+                    messages.add(c("w   affected entities:"));
+                    impactedEntities.forEach((k, v) ->
+                    {
+                        messages.add(c((k.pos.equals(pos))?"r   - TNT":"w   - ",
+                                Messenger.dblt((k.pos.equals(pos))?"r":"y", k.pos.x, k.pos.y, k.pos.z), "w  dV",
+                                Messenger.dblt("d", k.accel.x, k.accel.y, k.accel.z),
+                                "w  "+Registry.ENTITY_TYPE.getId(k.type).getPath(), (v>1)?"l ("+v+")":""
+                        ));
+                    });
+                }
+            }
+            return messages.toArray(new BaseText[0]);
         });
     }
 
-    public void onEntityImpacted(Entity entity, Vec3d deltaVelocity)
+    public void onEntityImpacted(Entity entity, Vec3d accel)
     {
-        for (EntityChangedStatusWithCount e : entityChangedStatusWithCount)
-        {
-            if (e.checkIfEquals(entity, deltaVelocity))
-            {
-                e.count++;
-                return;
-            }
-        }
-        entityChangedStatusWithCount.add(new EntityChangedStatusWithCount(entity.getPos(), entity.getType(), deltaVelocity));
-    }
-
-    public BaseText ListToText()
-    {
-        BaseText s = Messenger.s("Entities Impacted:\n");
-        for (EntityChangedStatusWithCount entityChanges : entityChangedStatusWithCount)
-        {
-            s.append(entityChanges.asText());
-            s.append("\n");
-        }
-        return s;
+        EntityChangedStatusWithCount ent = new EntityChangedStatusWithCount(entity, accel);
+        impactedEntities.put(ent, impactedEntities.getOrDefault(ent, 0)+1);
     }
 
 
     public static class EntityChangedStatusWithCount
     {
-        public final Vec3d entityPos;
-        public final EntityType entityType;
-        public final Vec3d deltaSpeed;
-        public int count;
-        public EntityChangedStatusWithCount(Vec3d entityPos, EntityType entityType, Vec3d deltaSpeed)
+        public final Vec3d pos;
+        public final EntityType type;
+        public final Vec3d accel;
+
+        public EntityChangedStatusWithCount(Entity e, Vec3d accel)
         {
-            this.entityPos = entityPos;
-            this.entityType = entityType;
-            this.deltaSpeed = deltaSpeed;
-            this.count = 1;
+            this.pos = e.getPos();
+            this.type = e.getType();
+            this.accel = accel;
         }
 
-        public boolean equals(EntityChangedStatusWithCount e)
+        @Override
+        public boolean equals(Object obj)
         {
-            return (
-                    e.entityType == this.entityType &&
-                        e.deltaSpeed.equals(this.deltaSpeed) &&
-                        e.entityPos.equals(this.entityPos)
-                    );
+            if (obj instanceof EntityChangedStatusWithCount)
+            {
+                EntityChangedStatusWithCount other = (EntityChangedStatusWithCount) obj;
+                return other.pos.equals(pos) && other.accel.equals(accel) && other.type.equals(type);
+            }
+            return super.equals(obj);
         }
 
-        public boolean checkIfEquals(Entity e, Vec3d deltaSpeed)
+        @Override
+        public int hashCode()
         {
-            return (
-                    e.getType() == this.entityType &&
-                            deltaSpeed.equals(this.deltaSpeed) &&
-                            e.getPos().equals(this.entityPos)
-            );
+            return pos.hashCode()+ type.hashCode()+accel.hashCode();
         }
-
-        public String toString()
-        {
-            return String.format("{EntityType: %s, EntityPos: %s ,DeltaSpeed: %s}", entityType.getName().asString(), entityPos.toString(), deltaSpeed.toString());
-        }
-
-        public BaseText asText()
-        {
-            return Messenger.c(
-                    "m Entity(count="+ this.count +") of",
-                    "l " + Registry.ENTITY_TYPE.getId(entityType), "g {",
-                    "w    P: ", "y ", Messenger.dblt("t", entityPos.x, entityPos.y, entityPos.z),
-                    "w    dV: ", "gbi " + (deltaSpeed.equals(new Vec3d(0,-0.9923437498509884d, 0)) ? "<TNTs-AT-SAME-SPOT>":""),"y ", Messenger.dblt("d", deltaSpeed.x, deltaSpeed.y, deltaSpeed.z),
-                    "g }"
-            );
-        }
-
     }
 }
