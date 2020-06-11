@@ -2098,13 +2098,14 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("volume", -1, (c, t, lv) ->
         {
+            CarpetContext cc = (CarpetContext)c;
+
             if(lv.size()!=3 & lv.size()!=5 & lv.size()!=7) throw new InternalExpressionException("'volume' takes 3, 5 or 7 arguments.");
-            BlockPos pos1 = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
-            int offset=3;
 
-            if(lv.size()==3 ||(lv.get(3).evalValue(c) instanceof NumericValue && lv.size()!=7)) offset=1;
+            BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos2 = BlockArgument.findIn(cc, lv, pos1Locator.offset).block.getPos();
+            BlockPos pos1 = pos1Locator.block.getPos();
 
-            BlockPos pos2 = BlockArgument.findIn((CarpetContext) c, lv,offset).block.getPos();
             int x1 = pos1.getX();
             int y1 = pos1.getY();
             int z1 = pos1.getZ();
@@ -2187,10 +2188,13 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("rect", -1, (c, t, lv)->
         {
-            if (lv.size() != 3 && lv.size() != 6 && lv.size() != 9)
+            CarpetContext cc = (CarpetContext) c;
+
+            if (lv.size() != 1 && lv.size() != 3 && lv.size() != 4 && lv.size() != 6 && lv.size() != 7 && lv.size() != 9)
             {
-                throw new InternalExpressionException("Rectangular region should be specified with 3, 6, or 9 coordinates");
+                throw new InternalExpressionException("Rectangular region should be specified with a coordinate and up to 6 other parameters");
             }
+
             int cx;
             int cy;
             int cz;
@@ -2202,50 +2206,61 @@ public class CarpetExpression
             int smaxz;
             try
             {
-                cx = (int)((NumericValue) lv.get(0).evalValue(c)).getLong();
-                cy = (int)((NumericValue) lv.get(1).evalValue(c)).getLong();
-                cz = (int)((NumericValue) lv.get(2).evalValue(c)).getLong();
-                if (lv.size()==3) // only done this way because of stupid Java lambda final reqs
-                {
-                    sminx = 1;
-                    sminy = 1;
-                    sminz = 1;
-                    smaxx = 1;
-                    smaxy = 1;
-                    smaxz = 1;
-                }
-                else if (lv.size()==6)
-                {
-                    sminx = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
-                    sminy = (int) ((NumericValue) lv.get(4).evalValue(c)).getLong();
-                    sminz = (int) ((NumericValue) lv.get(5).evalValue(c)).getLong();
+                BlockArgument cposLocator = BlockArgument.findIn(cc, lv, 0);
+                BlockPos cpos = cposLocator.block.getPos();
+
+                cx = cpos.getX();
+                cy = cpos.getY();
+                cz = cpos.getZ();
+
+                sminx = 1;
+                sminy = 1;
+                sminz = 1;
+                smaxx = 1;
+                smaxy = 1;
+                smaxz = 1;
+
+                if(lv.size()<3){
+                    BlockArgument diff_Locator = BlockArgument.findIn(cc, lv, cposLocator.offset);
+                    BlockPos difference = diff_Locator.block.getPos();
+
+                    sminx = difference.getX();
+                    sminy = difference.getY();
+                    sminz = difference.getZ();
+
                     smaxx = sminx;
                     smaxy = sminy;
                     smaxz = sminz;
-                }
-                else // size == 9
-                {
-                    sminx = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
-                    sminy = (int) ((NumericValue) lv.get(4).evalValue(c)).getLong();
-                    sminz = (int) ((NumericValue) lv.get(5).evalValue(c)).getLong();
-                    smaxx = (int)((NumericValue) lv.get(6).evalValue(c)).getLong();
-                    smaxy = (int)((NumericValue) lv.get(7).evalValue(c)).getLong();
-                    smaxz = (int)((NumericValue) lv.get(8).evalValue(c)).getLong();
+
+                    if(lv.size()<6){
+                        BlockPos pos_diff=BlockArgument.findIn(cc,lv,diff_Locator.offset).block.getPos();
+                        sminx = pos_diff.getX();
+                        sminy = pos_diff.getY();
+                        sminz = pos_diff.getZ();
+                    }
                 }
             }
             catch (ClassCastException exc)
             {
                 throw new InternalExpressionException("Attempted to pass a non-number to rect");
             }
-            CarpetContext cc = (CarpetContext)c;
+
+            int finalSminx = sminx;
+            int finalSminy = sminy;
+            int finalSminz = sminz;
+            int finalSmaxx = smaxx;
+            int finalSmaxy = smaxy;
+            int finalSmaxz = smaxz;
+
             return (c_, t_) -> new LazyListValue()
             {
-                final int minx = cx-sminx;
-                final int miny = cy-sminy;
-                final int minz = cz-sminz;
-                final int maxx = cx+smaxx;
-                final int maxy = cy+smaxy;
-                final int maxz = cz+smaxz;
+                final int minx = cx-finalSminx;
+                final int miny = cy-finalSminy;
+                final int minz = cz-finalSminz;
+                final int maxx = cx+finalSmaxx;
+                final int maxy = cy+finalSmaxy;
+                final int maxz = cz+finalSmaxz;
+
                 int x;
                 int y;
                 int z;
@@ -2305,10 +2320,16 @@ public class CarpetExpression
         this.expr.addLazyFunction("diamond", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
-            if (lv.size() != 3 && lv.size() != 4 && lv.size() != 5)
+            if (lv.size() <1 || lv.size() > 5)//Can be anywhere between 1 and 5 args
             {
-                throw new InternalExpressionException("'diamond' region should be specified with 3 to 5 coordinates");
+                throw new InternalExpressionException("'diamond' region should be specified with 3 to 5 arguments");
             }
+
+            int blockposarg=2;//Checks if the first arg is a block pos triple
+
+            if(lv.get(0).evalValue(c) instanceof NumericValue)blockposarg=0;
+
+            BlockPos cpos=BlockArgument.findIn((CarpetContext)c,lv,0).block.getPos();
 
             int cx;
             int cy;
@@ -2317,10 +2338,11 @@ public class CarpetExpression
             int height;
             try
             {
-                cx = (int)((NumericValue) lv.get(0).evalValue(c)).getLong();
-                cy = (int)((NumericValue) lv.get(1).evalValue(c)).getLong();
-                cz = (int)((NumericValue) lv.get(2).evalValue(c)).getLong();
-                if (lv.size()==3)
+                cx = cpos.getX();
+                cy = cpos.getY();
+                cz = cpos.getZ();
+
+                if (lv.size()==1+blockposarg)
                 {
                     Value retval = ListValue.of(
                             BlockValue.fromCoords(cc, cx, cy-1, cz),
@@ -2333,15 +2355,15 @@ public class CarpetExpression
                     );
                     return (_c, _t ) -> retval;
                 }
-                else if (lv.size()==4)
+                else if (lv.size()==2+blockposarg)
                 {
-                    width = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(lv.size()-1).evalValue(c)).getLong();
                     height = 0;
                 }
-                else // size == 5
+                else // size == 3 + blockposarg
                 {
-                    width = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
-                    height = (int) ((NumericValue) lv.get(4).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(lv.size()-2).evalValue(c)).getLong();
+                    height = (int) ((NumericValue) lv.get(lv.size()-1).evalValue(c)).getLong();
                 }
             }
             catch (ClassCastException exc)
