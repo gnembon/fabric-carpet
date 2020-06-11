@@ -18,8 +18,8 @@ import java.util.Set;
 
 public class ServerNetworkHandler
 {
-    public static Map<ServerPlayerEntity, String> remoteCarpetPlayers = new HashMap<>();
-    public static Set<ServerPlayerEntity> validCarpetPlayers = new HashSet<>();
+    private static Map<ServerPlayerEntity, String> remoteCarpetPlayers = new HashMap<>();
+    private static Set<ServerPlayerEntity> validCarpetPlayers = new HashSet<>();
 
     public static void handleData(PacketByteBuf data, ServerPlayerEntity player)
     {
@@ -63,6 +63,7 @@ public class ServerNetworkHandler
     
     public static void updateRuleWithConnectedClients(ParsedRule<?> rule)
     {
+        if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
@@ -74,6 +75,7 @@ public class ServerNetworkHandler
     
     public static void updateTickSpeedToConnectedPlayers()
     {
+        if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
@@ -85,6 +87,7 @@ public class ServerNetworkHandler
 
     public static void broadcastCustomCommand(String command, Tag data)
     {
+        if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayerEntity player : validCarpetPlayers)
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
@@ -96,7 +99,7 @@ public class ServerNetworkHandler
 
     public static void sendCustomCommand(ServerPlayerEntity player, String command, Tag data)
     {
-        if (validCarpetPlayers.contains(player))
+        if (isValidCarpetPlayer(player))
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
                     CarpetClient.CARPET_CHANNEL,
@@ -117,6 +120,13 @@ public class ServerNetworkHandler
     {
         remoteCarpetPlayers.clear();
         validCarpetPlayers.clear();
+    }
+
+    public static boolean isValidCarpetPlayer(ServerPlayerEntity player)
+    {
+        if (CarpetSettings.superSecretSetting) return false;
+        return validCarpetPlayers.contains(player);
+
     }
 
     private static class DataBuilder
