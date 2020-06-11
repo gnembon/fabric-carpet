@@ -108,7 +108,7 @@ public class ShapeDispatcher
         List<ServerPlayerEntity> alternativePlayers = new ArrayList<>();
         for (ServerPlayerEntity player : players)
         {
-            if (ServerNetworkHandler.validCarpetPlayers.contains(player))
+            if (ServerNetworkHandler.isValidCarpetPlayer(player))
             {
                 clientPlayers.add(player);
             }
@@ -330,7 +330,7 @@ public class ShapeDispatcher
         }
         public Vec3d relativiseRender(World world, Vec3d vec, float partialTick)
         {
-            if (followEntity <= 0) return vec;
+            if (followEntity < 0) return vec;
             Entity e = world.getEntityById(followEntity);
             if (e == null) return vec;
             return toAbsolute(e, vec, partialTick);
@@ -346,6 +346,14 @@ public class ShapeDispatcher
                     NumericValue.asNumber( elements.get(2)).getDouble()
             );
         }
+        protected ParticleEffect replacementParticle()
+        {
+            String particleName = fa ==0 ?
+                    String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b):
+                    String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", fr, fg, fb);
+            return getParticleData(particleName);
+        }
+
 
         public abstract Consumer<ServerPlayerEntity> alternative();
         public long key()
@@ -408,8 +416,7 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayerEntity> alternative()
         {
-            String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
             return p ->
             {
@@ -442,7 +449,7 @@ public class ShapeDispatcher
             double x1 = from.x;
             double y1 = from.y;
             double z1 = from.z;
-            double x2 = to.z;
+            double x2 = to.x;
             double y2 = to.y;
             double z2 = to.z;
             return
@@ -492,10 +499,8 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayerEntity> alternative()
         {
-            String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = replacementParticle();
             double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
-
             return p ->
             {
                 if (p.world.getRegistryKey() == shapeDimension) drawParticleLine(
@@ -555,9 +560,7 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayerEntity> alternative() { return p ->
         {
-            if (p.world.getRegistryKey() != shapeDimension) return;
-            String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = replacementParticle();
             int partno = Math.min(1000,20*subdivisions);
             Random rand = p.world.getRandom();
             ServerWorld world = p.getServerWorld();
@@ -635,8 +638,7 @@ public class ShapeDispatcher
         @Override
         public Consumer<ServerPlayerEntity> alternative() { return p ->
         {
-            String particleName = String.format(Locale.ROOT , "dust %.1f %.1f %.1f 1.0", r, g, b);
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = replacementParticle();
             int partno = (int)Math.min(1000,Math.sqrt(20*subdivisions*(1+height)));
             Random rand = p.world.getRandom();
             ServerWorld world = p.getServerWorld();
