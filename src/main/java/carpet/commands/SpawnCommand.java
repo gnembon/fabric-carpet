@@ -16,6 +16,7 @@ import net.minecraft.command.arguments.DimensionArgumentType;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
@@ -98,7 +99,8 @@ public class SpawnCommand
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
                                 suggests( (c, b)->suggestMatching(Arrays.stream(EntityCategory.values()).map(EntityCategory::getName), b)).
-                                executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type")))));
+                                executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), false)).
+                                then(literal("all").executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), true)))));
 
         dispatcher.register(literalargumentbuilder);
     }
@@ -194,7 +196,7 @@ public class SpawnCommand
         TickSpeed.tickrate_advance(null, 0, null, null);
         // tick warp given player
         ServerCommandSource csource = null;
-        PlayerEntity player = null;
+        ServerPlayerEntity player = null;
         try
         {
             player = source.getPlayer();
@@ -262,10 +264,10 @@ public class SpawnCommand
         return 1;
     }
 
-    private static int listEntitiesOfType(ServerCommandSource source, String mobtype) throws CommandSyntaxException
+    private static int listEntitiesOfType(ServerCommandSource source, String mobtype, boolean all) throws CommandSyntaxException
     {
         EntityCategory cat = getCategory(mobtype);
-        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getWorld()));
+        Messenger.send(source, SpawnReporter.printEntitiesByType(cat, source.getWorld(), all));
         return 1;
     }
 }

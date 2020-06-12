@@ -9,6 +9,8 @@ public class TNTLogHelper
 {
     public boolean initialized;
     private double primedX, primedY, primedZ;
+    private static long lastGametime = 0;
+    private static int tntCount = 0;
     private Vec3d primedAngle;
     /**
      * Runs when the TNT is primed. Expects the position and motion angle of the TNT.
@@ -24,8 +26,13 @@ public class TNTLogHelper
     /**
      * Runs when the TNT explodes. Expects the position of the TNT.
      */
-    public void onExploded(double x, double y, double z)
+    public void onExploded(double x, double y, double z, long gametime)
     {
+        if (!(lastGametime == gametime)){
+            tntCount = 0;
+            lastGametime = gametime;
+        }
+        tntCount++;
         LoggerRegistry.getLogger("tnt").log( (option) -> {
             switch (option)
             {
@@ -36,6 +43,9 @@ public class TNTLogHelper
                             "r  E ",Messenger.dblt("r",x, y, z))};
                 case "full":
                     return new BaseText[]{Messenger.c(
+                            "r #" + String.valueOf(tntCount),
+                            "m @" + String.valueOf(gametime),
+                            "g : ",
                             "l P ",Messenger.dblf("l",primedX,primedY,primedZ),
                             "w  ",Messenger.dblf("l", primedAngle.x, primedAngle.y, primedAngle.z),
                             "r  E ",Messenger.dblf("r",x, y, z))};

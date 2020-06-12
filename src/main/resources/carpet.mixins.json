@@ -6,6 +6,9 @@
   "mixins": [
     "CommandManagerMixin",
 
+    "ServerPlayNetworkHandlerMixin",
+    "CustomPayloadC2SPacketMixin",
+
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",
@@ -25,10 +28,14 @@
     "ServerWorld_tickMixin",
     "ServerChunkManager_tickMixin",
     "ThreadedAnvilChunkStorage_tickMixin",
+    "ChunkTicketManager_tickMixin",
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
     "ServerLightingProvider_scarpetChunkCreationMixin",
+
+    "ChunkTicketManager_spawnChunksMixin",
+    "ServerWorld_spawnChunksMixin",
 
     "MobEntityMixin",
     "ServerWorld_unloadedEntityMixin",
@@ -61,6 +68,8 @@
     "CoralFeatureMixin",
     "StructureFeatureMixin",
     "World_scarpetPlopMixin",
+    "ChunkRegion_scarpetPlopMixin",
+    "StructurePiece_scarpetPlopMixin",
 
     "ServerPlayNetworkHandler_scarpetEventsMixin",
     "ServerPlayerInteractionManager_scarpetEventsMixin",
@@ -141,19 +150,24 @@
     "ServerPlayerEntity_scarpetEventMixin",
     "FallingBlockEntity_scarpetEventsMixin",
     "BlockItem_scarpetEventMixin",
+    "PlayerManager_scarpetEventsMixin",
 
     "ChunkTicketManager_scarpetMixin",
-    "ServerChunkManager_scarpetMixin",
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetEventMixin",
-
+    "HungerManagerMixin_scarpetEventsMixin",
 
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
     "WorldChunk_movableTEMixin",
-    "PistonHandler_movableTEMixin"
+    "PistonHandler_movableTEMixin",
+    "PlayerEntity_creativeNoClipMixin",
+    "PistonBlockEntity_creativeNoClipMixin",
+    "BlockItem_creativeNoClipMixin",
+    "LivingEntity_creativeFlyMixin"
+
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",
@@ -165,7 +179,12 @@
     "PlayerListHudMixin",
     "PistonBlockEntityRenderer_movableTEMixin",
     "ClientPlayNetworkHandler_smoothClientAnimationsMixin",
-    "ClientPlayerEntity_clientCommandMixin"
+    "ClientPlayerEntity_clientCommandMixin",
+    "WorldRenderer_fogOffMixin",
+    "WorldRenderer_creativeNoClipMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "DebugRenderer_scarpetRenderMixin",
+    "WorldRenderer_scarpetRenderMixin"
   ],
   "server": [
     "MinecraftDedicatedServerMixin"

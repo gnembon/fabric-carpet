@@ -1,15 +1,18 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
+import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.mixins.ChunkTicketManager_scarpetMixin;
 import carpet.mixins.PointOfInterest_scarpetMixin;
-import carpet.mixins.ServerChunkManager_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
+import carpet.script.argument.BlockArgument;
+import carpet.script.argument.FunctionArgument;
+import carpet.script.argument.Vector3Argument;
 import carpet.script.bundled.Module;
 import carpet.CarpetSettings;
 import carpet.script.exception.BreakStatement;
@@ -18,8 +21,10 @@ import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.ShapeDispatcher;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.LazyListValue;
 import carpet.script.value.ListValue;
@@ -59,7 +64,6 @@ import net.minecraft.item.TridentItem;
 import net.minecraft.network.packet.s2c.play.ContainerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.command.arguments.ItemStackArgument;
-import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -84,6 +88,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
+import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
@@ -94,6 +99,7 @@ import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
@@ -105,7 +111,10 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
@@ -130,6 +139,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -138,7 +148,6 @@ import static carpet.script.utils.WorldTools.canHasChunk;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static java.lang.Math.sqrt;
 
 public class CarpetExpression
 {
@@ -174,7 +183,7 @@ public class CarpetExpression
             Value retval = test.apply(((BlockValue) v0).getBlockState(), ((BlockValue) v0).getPos()) ? Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         }
-        BlockValue block = BlockValue.fromParams(cc, params, 0).block;
+        BlockValue block = BlockArgument.findIn(cc, params, 0).block;
         Value retval = test.apply(block.getBlockState(), block.getPos()) ? Value.TRUE : Value.FALSE;
         return (c_, t_) -> retval;
     }
@@ -199,7 +208,7 @@ public class CarpetExpression
             Value retval = strVal != null ? new StringValue(strVal) : Value.NULL;
             return (c_, t_) -> retval;
         }
-        BlockValue block = BlockValue.fromParams(cc, params, 0).block;
+        BlockValue block = BlockArgument.findIn(cc, params, 0).block;
         String strVal = test.apply(block.getBlockState(), block.getPos());
         Value retval = strVal != null ? new StringValue(strVal) : Value.NULL;
         return (c_, t_) -> retval;
@@ -230,7 +239,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("'" + name + "' function requires a block that is positioned in the world");
             }
         }
-        BlockValue block = BlockValue.fromParams(cc, params, 0).block;
+        BlockValue block = BlockArgument.findIn(cc, params, 0).block;
         Value retval = test.apply(block.getBlockState(), block.getPos(), cc.s.getWorld());
         return (c_, t_) -> retval;
     }
@@ -251,92 +260,8 @@ public class CarpetExpression
         return bs;
     }
 
-    private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
-    private ParticleEffect getParticleData(String name)
-    {
-        ParticleEffect particle = particleCache.get(name);
-        if (particle != null)
-            return particle;
-        try
-        {
-            particle = ParticleArgumentType.readParameters(new StringReader(name));
-        }
-        catch (CommandSyntaxException e)
-        {
-            throw new InternalExpressionException("No such particle: "+name);
-        }
-        particleCache.put(name, particle);
-        return particle;
-    }
 
-
-    private boolean isStraight(Vec3d from, Vec3d to, double density)
-    {
-        if ( (from.x == to.x && from.y == to.y) || (from.x == to.x && from.z == to.z) || (from.y == to.y && from.z == to.z))
-            return from.distanceTo(to) / density > 20;
-        return false;
-    }
-
-    private int drawOptimizedParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
-    {
-        double distance = from.distanceTo(to);
-        int particles = (int)(distance/density);
-        Vec3d towards = to.subtract(from);
-        int parts = 0;
-        for (PlayerEntity player : world.getPlayers())
-        {
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    (towards.x)/2+from.x, (towards.y)/2+from.y, (towards.z)/2+from.z, particles/3,
-                    towards.x/6, towards.y/6, towards.z/6, 0.0);
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    from.x, from.y, from.z,1,0.0,0.0,0.0,0.0);
-            world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                    to.x, to.y, to.z,1,0.0,0.0,0.0,0.0);
-            parts += particles/3+2;
-        }
-        int divider = 6;
-        while (particles/divider > 1)
-        {
-            int center = (divider*2)/3;
-            int dev = 2*divider;
-            for (PlayerEntity player : world.getPlayers())
-            {
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        (towards.x)/center+from.x, (towards.y)/center+from.y, (towards.z)/center+from.z, particles/divider,
-                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        (towards.x)*(1.0-1.0/center)+from.x, (towards.y)*(1.0-1.0/center)+from.y, (towards.z)*(1.0-1.0/center)+from.z, particles/divider,
-                        towards.x/dev, towards.y/dev, towards.z/dev, 0.0);
-            }
-            parts += 2*particles/divider;
-            divider = 2*divider;
-        }
-        return parts;
-    }
-
-    private int drawParticleLine(ServerWorld world, ParticleEffect particle, Vec3d from, Vec3d to, double density)
-    {
-        if (isStraight(from, to, density)) return drawOptimizedParticleLine(world, particle, from, to, density);
-        double lineLengthSq = from.squaredDistanceTo(to);
-        if (lineLengthSq == 0) return 0;
-        Vec3d incvec = to.subtract(from).multiply(2*density/sqrt(lineLengthSq));
-        int pcount = 0;
-        for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
-             delta.lengthSquared()<lineLengthSq;
-             delta = delta.add(incvec.multiply(Expression.randomizer.nextFloat())))
-        {
-            for (PlayerEntity player : world.getPlayers())
-            {
-                world.spawnParticles((ServerPlayerEntity)player, particle, true,
-                        delta.x+from.x, delta.y+from.y, delta.z+from.z, 1,
-                        0.0, 0.0, 0.0, 0.0);
-                pcount ++;
-            }
-        }
-        return pcount;
-    }
-
-    private void forceChunkUpdate(BlockPos pos, ServerWorld world)
+    private static void forceChunkUpdate(BlockPos pos, ServerWorld world)
     {
         Chunk chunk = world.getChunk(pos);
         chunk.setShouldSave(true);
@@ -390,6 +315,32 @@ public class CarpetExpression
         }
     }
 
+
+
+    private static Value structureToValue(StructureStart structure)
+    {
+        if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
+        List<Value> pieces = new ArrayList<>();
+        for (StructurePiece piece : structure.getChildren())
+        {
+            BlockBox box = piece.getBoundingBox();
+            pieces.add(ListValue.of(
+                    new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
+                    (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
+                    ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                    ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+            ));
+        };
+        BlockBox boundingBox = structure.getBoundingBox();
+        Map<Value, Value> ret = new HashMap<>();
+        ret.put(new StringValue("box"), ListValue.of(
+                ListValue.fromTriple(boundingBox.minX, boundingBox.minY, boundingBox.minZ),
+                ListValue.fromTriple(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ)
+        ));
+        ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
+        return MapValue.wrap(ret);
+    }
+
     private void API_BlockManipulation()
     {
         this.expr.addLazyFunction("block", -1, (c, t, lv) ->
@@ -399,7 +350,7 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Block requires at least one parameter");
             }
-            BlockValue retval = BlockValue.fromParams(cc, lv, 0, true).block;
+            BlockValue retval = BlockArgument.findIn(cc, lv, 0, true).block;
             // fixing block state and data
             retval.getBlockState();
             retval.getData();
@@ -413,7 +364,7 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Block requires at least one parameter");
             }
-            CompoundTag tag = BlockValue.fromParams(cc, lv, 0, true).block.getData();
+            CompoundTag tag = BlockArgument.findIn(cc, lv, 0, true).block.getData();
             if (tag == null)
                 return (c_, t_) -> Value.NULL;
             Value retval = new NBTSerializableValue(tag);
@@ -425,7 +376,7 @@ public class CarpetExpression
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0) throw new InternalExpressionException("'poi' requires at least one parameter");
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, false);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false);
             BlockPos pos = locator.block.getPos();
             PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
             if (lv.size() == locator.offset)
@@ -475,7 +426,7 @@ public class CarpetExpression
                     return LazyValue.NULL;
             }
 
-            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).map( p ->
+            Value ret = ListValue.wrap(store.get(condition, pos, (int)radius, status).sorted(Comparator.comparingDouble(p -> p.getPos().getSquaredDistance(pos))).map(p ->
                     ListValue.of(
                             new StringValue(p.getType().toString()),
                             new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
@@ -491,7 +442,7 @@ public class CarpetExpression
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0) throw new InternalExpressionException("'set_poi' requires at least one parameter");
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0, false);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false);
             BlockPos pos = locator.block.getPos();
             if (lv.size() < locator.offset) throw new InternalExpressionException("'set_poi' requires the new poi type or null, after position argument");
             Value poi = lv.get(locator.offset+0).evalValue(c);
@@ -558,7 +509,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("pos_offset", -1, (c, t, lv) ->
         {
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             BlockPos pos = locator.block.getPos();
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'pos_offset' needs at least position, and direction");
@@ -621,7 +572,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("in_slime_chunk", -1, (c, t, lv) ->
         {
-            BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
+            BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             ChunkPos chunkPos = new ChunkPos(pos);
             Value ret = new NumericValue(ChunkRandom.create(
                     chunkPos.x, chunkPos.z,
@@ -645,7 +596,7 @@ public class CarpetExpression
                 case "surface": htype = Heightmap.Type.WORLD_SURFACE; break;
                 default: throw new InternalExpressionException("Unknown heightmap type: "+type);
             }
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 1);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 1);
             BlockPos pos = locator.block.getPos();
             int x = pos.getX();
             int z = pos.getZ();
@@ -657,21 +608,21 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("loaded", -1, (c, t, lv) ->
         {
-            Value retval = ((CarpetContext) c).s.getWorld().isChunkLoaded(BlockValue.fromParams((CarpetContext) c, lv, 0).block.getPos()) ? Value.TRUE : Value.FALSE;
+            Value retval = ((CarpetContext) c).s.getWorld().isChunkLoaded(BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos()) ? Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         });
 
         // Deprecated, use loaded_status as more indicative
         this.expr.addLazyFunction("loaded_ep", -1, (c, t, lv) ->
         {
-            BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
+            BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             Value retval = ((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos))?Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         });
 
         this.expr.addLazyFunction("loaded_status", -1, (c, t, lv) ->
         {
-            BlockPos pos = BlockValue.fromParams((CarpetContext)c, lv, 0).block.getPos();
+            BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             WorldChunk chunk = ((CarpetContext)c).s.getWorld().getChunkManager().getWorldChunk(pos.getX()>>4, pos.getZ()>>4, false);
             if (chunk == null)
                 return LazyValue.ZERO;
@@ -681,7 +632,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("is_chunk_generated", -1, (c, t, lv) ->
         {
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             BlockPos pos = locator.block.getPos();
             boolean force = false;
             if (lv.size() > locator.offset)
@@ -692,11 +643,11 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("generation_status", -1, (c, t, lv) ->
         {
-            BlockValue.LocatorResult locatorResult = BlockValue.fromParams((CarpetContext)c, lv, 0);
-            BlockPos pos = locatorResult.block.getPos();
+            BlockArgument blockArgument = BlockArgument.findIn((CarpetContext)c, lv, 0);
+            BlockPos pos = blockArgument.block.getPos();
             boolean forceLoad = false;
-            if (lv.size() > locatorResult.offset)
-                forceLoad = lv.get(locatorResult.offset).evalValue(c, Context.BOOLEAN).getBoolean();
+            if (lv.size() > blockArgument.offset)
+                forceLoad = lv.get(blockArgument.offset).evalValue(c, Context.BOOLEAN).getBoolean();
             Chunk chunk = ((CarpetContext)c).s.getWorld().getChunk(pos.getX()>>4, pos.getZ()>>4, ChunkStatus.EMPTY, forceLoad);
             if (chunk == null)
                 return LazyValue.NULL;
@@ -708,8 +659,8 @@ public class CarpetExpression
         {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
             Long2ObjectOpenHashMap<SortedArraySet<ChunkTicket<?>>> levelTickets = (
-                    (ChunkTicketManager_scarpetMixin) ((ServerChunkManager_scarpetMixin) world.getChunkManager())
-                            .getTicketManager()
+                    (ChunkTicketManagerInterface) ((ServerChunkManagerInterface) world.getChunkManager())
+                            .getCMTicketManager()
             ).getTicketsByPosition();
             List<Value> res = new ArrayList<>();
             if (lv.size() == 0)
@@ -730,8 +681,8 @@ public class CarpetExpression
             }
             else
             {
-                BlockValue.LocatorResult locatorResult = BlockValue.fromParams((CarpetContext) c, lv, 0);
-                BlockPos pos = locatorResult.block.getPos();
+                BlockArgument blockArgument = BlockArgument.findIn((CarpetContext) c, lv, 0);
+                BlockPos pos = blockArgument.block.getPos();
                 SortedArraySet<ChunkTicket<?>> tickets = levelTickets.get(new ChunkPos(pos).toLong());
                 if (tickets != null)
                 {
@@ -803,8 +754,8 @@ public class CarpetExpression
             ServerWorld world = cc.s.getWorld();
             if (lv.size() < 2 || lv.size() % 2 == 1)
                 throw new InternalExpressionException("'set' should have at least 2 params and odd attributes");
-            BlockValue.LocatorResult targetLocator = BlockValue.fromParams(cc, lv, 0);
-            BlockValue.LocatorResult sourceLocator = BlockValue.fromParams(cc, lv, targetLocator.offset, true);
+            BlockArgument targetLocator = BlockArgument.findIn(cc, lv, 0);
+            BlockArgument sourceLocator = BlockArgument.findIn(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
             if (sourceLocator.offset < lv.size())
@@ -853,7 +804,7 @@ public class CarpetExpression
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockState state = locator.block.getBlockState();
             if (state.isAir())
                 return (c_, t_) -> Value.FALSE;
@@ -963,7 +914,7 @@ public class CarpetExpression
             if (!(e instanceof ServerPlayerEntity))
                 return (c_, t_) -> Value.FALSE;
             ServerPlayerEntity player = (ServerPlayerEntity)e;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 1);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 1);
             BlockPos where = locator.block.getPos();
             BlockState state = locator.block.getBlockState();
             Block block = state.getBlock();
@@ -975,13 +926,14 @@ public class CarpetExpression
             return success ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
+        // TODO rename to use_item
         this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
                 throw new InternalExpressionException("'place_item' takes at least 2 parameters: item and block, or position, to place onto");
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).evalValue(c).getString();
-            BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
+            Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             ItemStackArgument stackArg = NBTSerializableValue.parseItem(itemString);
             BlockPos where = new BlockPos(locator.vec);
             String facing = "up";
@@ -990,18 +942,28 @@ public class CarpetExpression
             boolean sneakPlace = false;
             if (lv.size() > locator.offset+1)
                 sneakPlace = lv.get(locator.offset+1).evalValue(c).getBoolean();
-            if (stackArg.getItem() instanceof BlockItem)
+
+            BlockValue.PlacementContext ctx;
+            try
             {
+                ctx = BlockValue.PlacementContext.from(cc.s.getWorld(), where, facing, sneakPlace, stackArg.createStack(1, false));
+            }
+            catch (CommandSyntaxException e)
+            {
+                throw new InternalExpressionException(e.getMessage());
+            }
+
+            if (!(stackArg.getItem() instanceof BlockItem))
+            {
+                ActionResult useResult = ctx.getStack().useOnBlock(ctx);
+                if (useResult == ActionResult.CONSUME || useResult == ActionResult.SUCCESS)
+                {
+                    return LazyValue.TRUE;
+                }
+            }
+            else
+            { // not sure we need special case for block items, since useOnBlock can do that as well
                 BlockItem blockItem = (BlockItem) stackArg.getItem();
-                BlockValue.PlacementContext ctx;
-                try
-                {
-                    ctx = BlockValue.PlacementContext.from(cc.s.getWorld(), where, facing, sneakPlace, stackArg.createStack(1, false));
-                }
-                catch (CommandSyntaxException e)
-                {
-                    throw new InternalExpressionException(e.getMessage());
-                }
                 if (!ctx.canPlace())
                     return (_c, _t) -> Value.FALSE;
                 BlockState placementState = blockItem.getBlock().getPlacementState(ctx);
@@ -1037,7 +999,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("property", -1, (c, t, lv) ->
         {
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'property' requires to specify a property to query");
@@ -1052,7 +1014,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("block_properties", -1, (c, t, lv) ->
         {
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext) c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             StateManager<Block, BlockState> states = state.getBlock().getStateManager();
             Value res = ListValue.wrap(states.getProperties().stream().map(
@@ -1063,7 +1025,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Biome biome = world.getBiome(pos);
@@ -1074,27 +1036,40 @@ public class CarpetExpression
         this.expr.addLazyFunction("set_biome", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             if (lv.size() == locator.offset)
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
             Biome biome = Registry.BIOME.get(new Identifier(biomeName));
             if (biome == null)
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
+            boolean doImmediateUpdate = true;
+            if (lv.size() > locator.offset+1)
+            {
+                doImmediateUpdate = lv.get(locator.offset+1).evalValue(c).getBoolean();
+            }
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Chunk chunk = world.getChunk(pos);
+            Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
             ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
-            this.forceChunkUpdate(pos, world);
-            return LazyValue.NULL;
+            if (doImmediateUpdate) forceChunkUpdate(pos, world);
+            return LazyValue.TRUE;
+        });
+
+        this.expr.addLazyFunction("reload_chunk", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
+            ServerWorld world = cc.s.getWorld();
+            cc.s.getMinecraftServer().submitAndJoin( () -> forceChunkUpdate(pos, world));
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("structure_references", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Map<String, LongSet> references = world.getChunk(pos).getStructureReferences();
+            Map<String, LongSet> references = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_REFERENCES).getStructureReferences();
             if (lv.size() == locator.offset)
             {
                 List<Value> referenceList = references.entrySet().stream().
@@ -1114,13 +1089,59 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("structures", -1, (c, t, lv) -> {
+        this.expr.addLazyFunction("structure_eligibility", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext)c;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
-            Map<String, StructureStart> structures = world.getChunk(pos).getStructureStarts();
+            StructureFeature<?> structure = null;
+            boolean needSize = false;
+            if (lv.size() > locator.offset)
+            {
+                Value requested = lv.get(locator.offset+0).evalValue(c);
+                if (!(requested instanceof NullValue))
+                {
+                    String reqString = requested.getString();
+                    String structureName = FeatureGenerator.featureToStructure.get(reqString);
+                    if (structureName == null) throw new InternalExpressionException("Unknown structure: " + reqString);
+                    structure = Feature.STRUCTURES.get(structureName.toLowerCase(Locale.ROOT));
+                    if (structure == null) throw new InternalExpressionException("Unsupported structure: " + structureName);
+                }
+                if (lv.size() > locator.offset+1)
+                {
+                    needSize = lv.get(locator.offset+1).evalValue(c).getBoolean();
+                }
+            }
+            if (structure != null)
+            {
+                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, structure, needSize);
+                if (start == null) return LazyValue.NULL;
+                if (!needSize) return LazyValue.TRUE;
+                Value ret = structureToValue(start);
+                return (_c, _t) -> ret;
+            }
+            Map<Value, Value> ret = new HashMap<>();
+            for(StructureFeature<?> str : Feature.STRUCTURES.values())
+            {
+                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                if (start == null) continue;
+
+                Value key = new StringValue(FeatureGenerator.structureToFeature.get(str.getName()).get(0));
+                ret.put(key, (!needSize)?Value.NULL:structureToValue(start));
+            }
+            Value retMap = MapValue.wrap(ret);
+            return (_c, _t) -> retMap;
+        });
+
+        this.expr.addLazyFunction("structures", -1, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+
+            ServerWorld world = cc.s.getWorld();
+            BlockPos pos = locator.block.getPos();
+            Map<String, StructureStart> structures = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.STRUCTURE_STARTS).getStructureStarts();
             if (lv.size() == locator.offset)
             {
                 Map<Value, Value> structureList = new HashMap<>();
@@ -1130,35 +1151,24 @@ public class CarpetExpression
                     if (start == StructureStart.DEFAULT)
                         continue;
                     BlockBox box = start.getBoundingBox();
-                    ListValue coord1 = ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ));
-                    ListValue coord2 = ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ));
-                    structureList.put(new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)), ListValue.of(coord1, coord2));
+                    structureList.put(
+                            new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)),
+                            ListValue.of(ListValue.fromTriple(box.minX, box.minY, box.minZ), ListValue.fromTriple(box.maxX, box.maxY, box.maxZ))
+                    );
                 }
                 Value ret = MapValue.wrap(structureList);
                 return (_c, _t) -> ret;
             }
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             StructureStart start = structures.get(FeatureGenerator.featureToStructure.get(structureName));
-            if (start == null || start == StructureStart.DEFAULT) return LazyValue.NULL;
-            List<Value> pieces = new ArrayList<>();
-            for (StructurePiece piece : start.getChildren())
-            {
-                BlockBox box = piece.getBoundingBox();
-                pieces.add(ListValue.of(
-                        new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
-                        (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
-                        ListValue.of(new NumericValue(box.minX), new NumericValue(box.minY), new NumericValue(box.minZ)),
-                        ListValue.of(new NumericValue(box.maxX), new NumericValue(box.maxY), new NumericValue(box.maxZ))
-                ));
-            }
-            Value ret = ListValue.wrap(pieces);
+            Value ret = structureToValue(start);
             return (_c, _t) -> ret;
         });
 
         this.expr.addLazyFunction("set_structure", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
@@ -1222,27 +1232,27 @@ public class CarpetExpression
                 {
                     List<Value> listVal = ((ListValue) first).getItems();
                     int offset = 0;
-                    BlockValue.LocatorResult locator = BlockValue.fromParamValues(cc, listVal, 0, false, false);
+                    BlockArgument locator = BlockArgument.findInValues(cc, listVal, 0, false, false);
                     requestedChunks.add(new ChunkPos(locator.block.getPos()));
                     while (listVal.size() > locator.offset)
                     {
-                        locator = BlockValue.fromParamValues(cc, listVal, locator.offset, false, false);
+                        locator = BlockArgument.findInValues(cc, listVal, locator.offset, false, false);
                         requestedChunks.add(new ChunkPos(locator.block.getPos()));
                     }
                 }
                 else
                 {
-                    BlockValue.LocatorResult locator = BlockValue.fromParamValues(cc, Collections.singletonList(first), 0, false, false);
+                    BlockArgument locator = BlockArgument.findInValues(cc, Collections.singletonList(first), 0, false, false);
                     requestedChunks.add(new ChunkPos(locator.block.getPos()));
                 }
             }
             else
             {
-                BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+                BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
                 ChunkPos from = new ChunkPos(locator.block.getPos());
                 if (lv.size() > locator.offset)
                 {
-                    locator = BlockValue.fromParams(cc, lv, locator.offset);
+                    locator = BlockArgument.findIn(cc, lv, locator.offset);
                     ChunkPos to = new ChunkPos(locator.block.getPos());
                     int xmax = Math.max(from.x, to.x);
                     int zmax = Math.max(from.z, to.z);
@@ -1270,7 +1280,7 @@ public class CarpetExpression
                 {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
                     {
-                        this.forceChunkUpdate(chpos.getCenterBlockPos(), world);
+                        forceChunkUpdate(chpos.getCenterBlockPos(), world);
                     }
                 }
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
@@ -1284,12 +1294,60 @@ public class CarpetExpression
         this.expr.addLazyFunction("inhabited_time", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            BlockValue.LocatorResult locator = BlockValue.fromParams(cc, lv, 0);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
             Value ret = new NumericValue(cc.s.getWorld().getChunk(pos).getInhabitedTime());
             return (_c, _t) -> ret;
         });
 
+        this.expr.addLazyFunction("add_chunk_ticket", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            if (lv.size() != locator.offset+2) throw new InternalExpressionException("'add_chunk_ticket' requires block position, ticket type and radius");
+            String type = lv.get(locator.offset).evalValue(c).getString();
+            ChunkTicketType ticket = ticketTypes.get(type.toLowerCase(Locale.ROOT));
+            if (ticket == null) throw new InternalExpressionException("Unknown ticket type: "+type);
+            int radius = NumericValue.asNumber(lv.get(locator.offset+1).evalValue(c)).getInt();
+            if (radius < 1 || radius > 32) throw new InternalExpressionException("Ticket radius should be between 1 and 32 chunks");
+            // due to types we will wing it:
+            ChunkPos target = new ChunkPos(pos);
+            if (ticket == ChunkTicketType.PORTAL)
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.PORTAL, target, radius, pos);
+            else if (ticket == ChunkTicketType.POST_TELEPORT)
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, target, radius, 1);
+            else
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.UNKNOWN, target, radius, target);
+            Value ret = new NumericValue(ticket.getExpiryTicks());
+            return (_c, _t) -> ret;
+        });
+
+    }
+    private Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
+        put("portal", ChunkTicketType.PORTAL);
+        put("teleport", ChunkTicketType.POST_TELEPORT);
+        put("unknown", ChunkTicketType.UNKNOWN);
+    }};
+
+    private static String getScoreboardKeyFromValue(Value keyValue)
+    {
+        if (keyValue instanceof EntityValue)
+        {
+            Entity e = ((EntityValue) keyValue).getEntity();
+            if (e instanceof PlayerEntity)
+            {
+                return e.getName().getString();
+            }
+            else
+            {
+                return e.getUuidAsString();
+            }
+        }
+        else
+        {
+            return keyValue.getString();
+        }
     }
 
     private void API_Scoreboard()
@@ -1313,24 +1371,7 @@ public class CarpetExpression
                 Value ret = ListValue.wrap(scoreboard.getAllPlayerScores(objective).stream().map(s -> new StringValue(s.getPlayerName())).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
-            String key;
-            Value keyValue = lv.get(1).evalValue(c);
-            if (keyValue instanceof EntityValue)
-            {
-                Entity e = ((EntityValue) keyValue).getEntity();
-                if (e instanceof PlayerEntity)
-                {
-                    key = e.getDisplayName().getString();
-                }
-                else
-                {
-                    key = e.getUuidAsString();
-                }
-            }
-            else
-            {
-                key = keyValue.getString();
-            }
+            String key = getScoreboardKeyFromValue(lv.get(1).evalValue(c));
             if (!scoreboard.playerHasObjective(key, objective) && lv.size()==2)
                 return LazyValue.NULL;
             ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
@@ -1342,15 +1383,24 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
-        this.expr.addLazyFunction("scoreboard_remove", 1, (c, t, lv)-> {
+        this.expr.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
                 return LazyValue.FALSE;
-            scoreboard.removeObjective(objective);
-            return LazyValue.TRUE;
+            if (lv.size() == 0)
+            {
+                scoreboard.removeObjective(objective);
+                return LazyValue.TRUE;
+            }
+            String key = getScoreboardKeyFromValue(lv.get(1).evalValue(c));
+            if (!scoreboard.playerHasObjective(key, objective)) return LazyValue.NULL;
+            ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
+            Value previous = new NumericValue(scoreboardPlayerScore.getScore());
+            scoreboard.resetPlayerScore(key, objective);
+            return (c_, t_) -> previous;
         });
 
         // objective_add('lvl','level')
@@ -1764,7 +1814,7 @@ public class CarpetExpression
                  return LazyValue.NULL;
             }
 
-            BlockValue.VectorLocator position = BlockValue.locateVec(cc, lv, 1);
+            Vector3Argument position = Vector3Argument.findIn(cc, lv, 1);
             if (position.fromBlock)
                 position.vec = position.vec.subtract(0, 0.5, 0);
             CompoundTag tag = new CompoundTag();
@@ -1904,7 +1954,7 @@ public class CarpetExpression
                 ((EntityValue) v).set(what, lv.get(2).evalValue(c));
             else
                 ((EntityValue) v).set(what, ListValue.wrap(lv.subList(2, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList())));
-            return lv.get(0);
+            return (cc, tt) -> v;
         });
 
         // or update
@@ -1943,30 +1993,58 @@ public class CarpetExpression
     {
         this.expr.addLazyFunction("scan", -1, (c, t, lv) ->
         {
-            int lvsise = lv.size();
-            if (lvsise != 7 && lvsise != 10)
-                throw new InternalExpressionException("'scan' takes 2, or 3 triples of coords, and the expression");
-            int cx = (int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-            int cy = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-            int cz = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
-            int xrange = (int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong();
-            int yrange = (int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong();
-            int zrange = (int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong();
-            int xprange = xrange;
-            int yprange = yrange;
-            int zprange = zrange;
-            LazyValue expr;
-            if (lvsise == 7)
+            CarpetContext cc = (CarpetContext)c;
+            BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 0);
+            Vector3Argument rangeLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
+            BlockPos center = centerLocator.block.getPos();
+            Vec3i range;
+
+            if (rangeLocator.fromBlock)
             {
-                expr = lv.get(6);
+                range = new Vec3i(
+                        abs(rangeLocator.vec.x - center.getX()),
+                        abs(rangeLocator.vec.y - center.getY()),
+                        abs(rangeLocator.vec.z - center.getZ())
+                );
+                //if (lv.size() > rangeLocator.offset+1) throw new InternalExpressionException("'scan' takes two block positions, and the expression")
             }
             else
             {
-                xprange = (int) NumericValue.asNumber(lv.get(6).evalValue(c)).getLong();
-                yprange = (int) NumericValue.asNumber(lv.get(7).evalValue(c)).getLong();
-                zprange = (int) NumericValue.asNumber(lv.get(8).evalValue(c)).getLong();
-                expr = lv.get(9);
+                range = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
             }
+            Vec3i upperRange = range;
+            if (lv.size() > rangeLocator.offset+1) // +1 cause we still need the expression
+            {
+                rangeLocator = Vector3Argument.findIn(cc, lv, rangeLocator.offset);
+                if (rangeLocator.fromBlock)
+                {
+                    upperRange = new Vec3i(
+                            abs(rangeLocator.vec.x - center.getX()),
+                            abs(rangeLocator.vec.y - center.getY()),
+                            abs(rangeLocator.vec.z - center.getZ())
+                    );
+                    //if (lv.size() > rangeLocator.offset+1) throw new InternalExpressionException("'scan' takes two block positions, and the expression")
+                }
+                else
+                {
+                    upperRange = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
+                }
+            }
+            if (lv.size() != rangeLocator.offset+1)
+            {
+                throw new InternalExpressionException("'scan' takes two, or three block positions, and an expression: "+lv.size()+" "+rangeLocator.offset);
+            }
+            LazyValue expr = lv.get(rangeLocator.offset);
+
+            int cx = center.getX();
+            int cy = center.getY();
+            int cz = center.getZ();
+            int xrange = range.getX();
+            int yrange = range.getY();
+            int zrange = range.getZ();
+            int xprange = upperRange.getX();
+            int yprange = upperRange.getY();
+            int zprange = upperRange.getZ();
 
             //saving outer scope
             LazyValue _x = c.getVariable("_x");
@@ -2086,7 +2164,7 @@ public class CarpetExpression
         this.expr.addLazyFunction("neighbours", -1, (c, t, lv)->
         {
 
-            BlockPos center = BlockValue.fromParams((CarpetContext) c, lv,0).block.getPos();
+            BlockPos center = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
             ServerWorld world = ((CarpetContext) c).s.getWorld();
 
             List<Value> neighbours = new ArrayList<>();
@@ -2378,22 +2456,61 @@ public class CarpetExpression
         });
     }
 
+    private static Map<String,SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
+
+    private void API_Interapperability()
+    {
+        //todo doc and test all
+        this.expr.addLazyFunction("loaded_apps", 0, (c, t, lv) ->
+        {
+            // return a set of all loaded apps
+            Value ret = new MapValue(((CarpetScriptHost) c.host).getScriptServer().modules.keySet().stream().map(StringValue::new).collect(Collectors.toSet()));
+            return (cc, tt) -> ret;
+        });
+
+        this.expr.addLazyFunction("is_app_loaded", 1, (c, t, lv) ->
+        {
+            Value ret = new NumericValue(((CarpetScriptHost) c.host).getScriptServer().modules.containsKey(lv.get(0).evalValue(c).getString()));
+            return (cc, tt) -> ret;
+        });
+
+    }
+
+    public static String recognizeResource(Value value)
+    {
+        String origfile = value.getString();
+        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+        file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
+        if (file.isEmpty())
+        {
+            throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
+        }
+        return file;
+    }
+
     private void API_AuxiliaryAspects()
     {
         this.expr.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
-            BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
+            Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
                 throw new InternalExpressionException("No such sound: "+soundName.getPath());
             float volume = 1.0F;
             float pitch = 1.0F;
+            SoundCategory mixer = SoundCategory.MASTER;
             if (lv.size() > 0+locator.offset)
             {
                 volume = (float) NumericValue.asNumber(lv.get(0+locator.offset).evalValue(c)).getDouble();
                 if (lv.size() > 1+locator.offset)
                 {
                     pitch = (float) NumericValue.asNumber(lv.get(1+locator.offset).evalValue(c)).getDouble();
+                    if (lv.size() > 2+locator.offset)
+                    {
+                        String mixerName = lv.get(2+locator.offset).evalValue(c).getString();
+                        mixer = mixerMap.get(mixerName.toLowerCase(Locale.ROOT));
+                        if (mixer == null) throw  new InternalExpressionException(mixerName +" is not a valid mixer name");
+                    }
                 }
             }
             Vec3d vec = locator.vec;
@@ -2402,7 +2519,7 @@ public class CarpetExpression
             for (ServerPlayerEntity player : cc.s.getWorld().getPlayers( (p) -> p.squaredDistanceTo(vec) < d0))
             {
                 count++;
-                player.networkHandler.sendPacket(new PlaySoundIdS2CPacket(soundName, SoundCategory.PLAYERS, vec, volume, pitch));
+                player.networkHandler.sendPacket(new PlaySoundIdS2CPacket(soundName, mixer, vec, volume, pitch));
             }
             int totalPlayed = count;
             return (_c, _t) -> new NumericValue(totalPlayed);
@@ -2413,7 +2530,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer ms = cc.s.getMinecraftServer();
             ServerWorld world = cc.s.getWorld();
-            BlockValue.VectorLocator locator = BlockValue.locateVec(cc, lv, 1);
+            Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             String particleName = lv.get(0).evalValue(c).getString();
             int count = 10;
             double speed = 0;
@@ -2435,7 +2552,7 @@ public class CarpetExpression
                     }
                 }
             }
-            ParticleEffect particle = getParticleData(particleName);
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
             Vec3d vec = locator.vec;
             if (player == null)
             {
@@ -2460,78 +2577,131 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             String particleName = lv.get(0).evalValue(c).getString();
-            ParticleEffect particle = getParticleData(particleName);
-            BlockValue.VectorLocator pos1 = BlockValue.locateVec(cc, lv, 1);
-            BlockValue.VectorLocator pos2 = BlockValue.locateVec(cc, lv, pos1.offset);
-            int offset = pos2.offset;
-            double density = (lv.size() > offset)? NumericValue.asNumber(lv.get(offset).evalValue(c)).getDouble():1.0;
-            if (density <= 0)
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
+            Vector3Argument pos1 = Vector3Argument.findIn(cc, lv, 1);
+            Vector3Argument pos2 = Vector3Argument.findIn(cc, lv, pos1.offset);
+            double density = 1.0;
+            ServerPlayerEntity player = null;
+            if (lv.size() > pos2.offset+0 )
             {
-                throw new InternalExpressionException("Particle density should be positive");
+                density = NumericValue.asNumber(lv.get(pos2.offset+0).evalValue(c)).getDouble();
+                if (density <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > pos2.offset+1)
+                {
+                    Value playerValue = lv.get(pos2.offset+1).evalValue(c);
+                    if (playerValue instanceof EntityValue)
+                    {
+                        Entity e = ((EntityValue) playerValue).getEntity();
+                        if (!(e instanceof ServerPlayerEntity)) throw new InternalExpressionException("'particle_line' player argument has to be a player");
+                        player = (ServerPlayerEntity) e;
+                    }
+                    else
+                    {
+                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                    }
+                }
             }
-            Value retval = new NumericValue(drawParticleLine(world, particle, pos1.vec, pos2.vec, density));
+
+            Value retval = new NumericValue(ShapeDispatcher.drawParticleLine(
+                    (player == null)?world.getPlayers():Collections.singletonList(player),
+                    particle, pos1.vec, pos2.vec, density));
+
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("particle_rect", -1, (c, t, lv) ->
+        this.expr.addLazyFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             String particleName = lv.get(0).evalValue(c).getString();
-            ParticleEffect particle = getParticleData(particleName);
-            BlockValue.VectorLocator pos1 = BlockValue.locateVec(cc, lv, 1);
-            BlockValue.VectorLocator pos2 = BlockValue.locateVec(cc, lv, pos1.offset);
-            int offset = pos2.offset;
+            ParticleEffect particle = ShapeDispatcher.getParticleData(particleName);
+            Vector3Argument pos1 = Vector3Argument.findIn(cc, lv, 1);
+            Vector3Argument pos2 = Vector3Argument.findIn(cc, lv, pos1.offset);
+
             double density = 1.0;
-            if (lv.size() > offset)
+            ServerPlayerEntity player = null;
+            if (lv.size() > pos2.offset+0 )
             {
-                density = NumericValue.asNumber(lv.get(offset).evalValue(c)).getDouble();
-            }
-            if (density <= 0)
-            {
-                throw new InternalExpressionException("Particle density should be positive");
+                density = NumericValue.asNumber(lv.get(pos2.offset+0).evalValue(c)).getDouble();
+                if (density <= 0)
+                {
+                    throw new InternalExpressionException("Particle density should be positive");
+                }
+                if (lv.size() > pos2.offset+1)
+                {
+                    Value playerValue = lv.get(pos2.offset+1).evalValue(c);
+                    if (playerValue instanceof EntityValue)
+                    {
+                        Entity e = ((EntityValue) playerValue).getEntity();
+                        if (!(e instanceof ServerPlayerEntity)) throw new InternalExpressionException("'particle_box' player argument has to be a player");
+                        player = (ServerPlayerEntity) e;
+                    }
+                    else
+                    {
+                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                    }
+                }
             }
             Vec3d a = pos1.vec;
             Vec3d b = pos2.vec;
-            double ax = min(a.x, b.x);
-            double ay = min(a.y, b.y);
-            double az = min(a.z, b.z);
-            double bx = max(a.x, b.x);
-            double by = max(a.y, b.y);
-            double bz = max(a.z, b.z);
-            int pc = 0;
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, az), new Vec3d(ax, by, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, az), new Vec3d(bx, by, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, az), new Vec3d(bx, ay, az), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, az), new Vec3d(ax, ay, az), density);
-
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, bz), new Vec3d(ax, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, bz), new Vec3d(bx, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, bz), new Vec3d(bx, ay, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, bz), new Vec3d(ax, ay, bz), density);
-
-            pc += drawParticleLine(world, particle, new Vec3d(ax, ay, az), new Vec3d(ax, ay, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(ax, by, az), new Vec3d(ax, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, by, az), new Vec3d(bx, by, bz), density);
-            pc += drawParticleLine(world, particle, new Vec3d(bx, ay, az), new Vec3d(bx, ay, bz), density);
-            int particleCount = pc;
+            Vec3d from = new Vec3d(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z));
+            Vec3d to = new Vec3d(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z));
+            int particleCount = ShapeDispatcher.Box.particleMesh(
+                    player==null?world.getPlayers():Collections.singletonList(player),
+                    particle, density, from, to
+            );
             return (c_, t_) -> new NumericValue(particleCount);
+        });
+        // deprecated
+        this.expr.alias("particle_rect", "particle_box");
+
+
+        this.expr.addLazyFunction("draw_shape", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            ServerPlayerEntity player[] = {null};
+            List<Pair<ShapeDispatcher.ExpiringShape, Map<String,Value>>> shapes = new ArrayList<>();
+            if (lv.size() == 1) // bulk
+            {
+                Value specLoad = lv.get(0).evalValue(c);
+                if (!(specLoad instanceof ListValue)) throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
+                for (Value list : ((ListValue) specLoad).getItems())
+                {
+                    if (!(list instanceof ListValue))  throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
+                    shapes.add( ShapeDispatcher.fromFunctionArgs(cc, ((ListValue) list).getItems(), player));
+                }
+            }
+            else
+            {
+                List<Value> params = new ArrayList<>();
+                for (LazyValue v : lv) params.add(v.evalValue(c));
+                shapes.add(ShapeDispatcher.fromFunctionArgs(cc, params, player));
+            }
+
+            ShapeDispatcher.sendShape(
+                    (player[0]==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player[0]),
+                    shapes
+            );
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("create_marker", -1, (c, t, lv) ->{
             CarpetContext cc = (CarpetContext)c;
             BlockState targetBlock = null;
-            BlockValue.VectorLocator pointLocator;
+            Vector3Argument pointLocator;
             boolean interactable = true;
             String name;
             try
             {
                 Value nameValue = lv.get(0).evalValue(c);
                 name = nameValue instanceof NullValue ? "" : nameValue.getString();
-                pointLocator = BlockValue.locateVec(cc, lv, 1, true);
+                pointLocator = Vector3Argument.findIn(cc, lv, 1, true);
                 if (lv.size()>pointLocator.offset)
                 {
-                    BlockValue.LocatorResult blockLocator = BlockValue.fromParams(cc, lv, pointLocator.offset, true, true);
+                    BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true);
                     if (blockLocator.block != null) targetBlock = blockLocator.block.getBlockState();
                     if (lv.size() > blockLocator.offset)
                     {
@@ -2606,15 +2776,31 @@ public class CarpetExpression
         {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value res = lv.get(0).evalValue(c);
-            if (s.getEntity() instanceof  PlayerEntity)
+            if (res instanceof FormattedTextValue)
             {
-                Messenger.m((PlayerEntity) s.getEntity(), "w "+ res.getString());
+                s.sendFeedback(((FormattedTextValue) res).getText(), false);
             }
             else
             {
-                Messenger.m(s, "w "+ res.getString());
+                if (s.getEntity() instanceof PlayerEntity)
+                {
+                    Messenger.m((PlayerEntity) s.getEntity(), "w " + res.getString());
+                }
+                else
+                {
+                    Messenger.m(s, "w " + res.getString());
+                }
             }
             return (_c, _t) -> res; // pass through for variables
+        });
+
+        this.expr.addLazyFunction("format", -1, (c, t, lv) -> {
+            if (lv.size() == 0 ) throw new InternalExpressionException("'format' requires at least one component");
+            List<Value> values = lv.stream().map(lazy -> lazy.evalValue(c)).collect(Collectors.toList());
+            if (values.get(0) instanceof ListValue && values.size()==1)
+                values = ((ListValue) values.get(0)).getItems();
+            Value ret = new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
+            return (cc, tt) -> ret;
         });
 
         //"overidden" native call to cancel if on main thread
@@ -2628,11 +2814,47 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
-        {
-            Value res = lv.get(0).evalValue(c);
-            CarpetSettings.LOG.error(res.getString());
-            return (_c, _t) -> res; // pass through for variables
+        this.expr.addLazyFunctionWithDelegation("task_dock", 1, (c, t, expr, tok, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            MinecraftServer server = cc.s.getMinecraftServer();
+            if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks
+            Value[] result = new Value[]{Value.NULL};
+            RuntimeException[] internal = new RuntimeException[]{null};
+            try
+            {
+                ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
+                {
+                    try
+                    {
+                        result[0] = lv.get(0).evalValue(c, t);
+                    }
+                    catch (ExpressionException exc)
+                    {
+                        internal[0] = exc;
+                    }
+                    catch (InternalExpressionException exc)
+                    {
+                        internal[0] = new ExpressionException(c, expr, tok, exc.getMessage(), exc.stack);
+                    }
+
+                    catch (ArithmeticException exc)
+                    {
+                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, "+exc.getMessage());
+                    }
+                });
+            }
+            catch (CompletionException exc)
+            {
+                throw new InternalExpressionException("Error while executing docked task section, internal stack trace is gone");
+            }
+            if (internal[0] != null)
+            {
+                throw internal[0];
+            }
+            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
+            return (_c, _t) -> ret;
+            // pass through placeholder
+            // implmenetation should dock the task on the main thread.
         });
 
         this.expr.addLazyFunction("run", 1, (c, t, lv) -> {
@@ -2658,6 +2880,40 @@ public class CarpetExpression
             Value time = new NumericValue(((CarpetContext) c).s.getMinecraftServer().getTicks());
             return (cc, tt) -> time;
         });
+
+        this.expr.addLazyFunction("world_time", 0, (c, t, lv) ->
+        {
+            Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTime());
+            return (cc, tt) -> time;
+        });
+
+        this.expr.addLazyFunction("day_time", -1, (c, t, lv) ->
+        {
+            Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTimeOfDay());
+            if (lv.size() > 0)
+            {
+                long newTime = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+                if (newTime < 0) newTime = 0;
+                ((CarpetContext) c).s.getWorld().setTimeOfDay(newTime);
+            }
+            return (cc, tt) -> time;
+        });
+
+        this.expr.addLazyFunction("last_tick_times", -1, (c, t, lv) ->
+        {
+            //assuming we are in the tick world section
+            // might be off one tick when run in the off tasks or asynchronously.
+            int currentReportedTick = ((CarpetContext) c).s.getMinecraftServer().getTicks()-1;
+            List<Value> ticks = new ArrayList<>(100);
+            final long[] tickArray = ((CarpetContext) c).s.getMinecraftServer().lastTickLengths;
+            for (int i=currentReportedTick+100; i > currentReportedTick; i--)
+            {
+                ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
+            }
+            Value ret = ListValue.wrap(ticks);
+            return (cc, tt) -> ret;
+        });
+
 
         this.expr.addLazyFunction("game_tick", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
@@ -2695,6 +2951,12 @@ public class CarpetExpression
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(s.getWorld().dimension.getType())));
+            return (cc, tt) -> retval;
+        });
+
+        this.expr.addLazyFunction("view_distance", 0, (c, t, lv) -> {
+            ServerCommandSource s = ((CarpetContext)c).s;
+            Value retval = new NumericValue(s.getMinecraftServer().getPlayerManager().getViewDistance());
             return (cc, tt) -> retval;
         });
 
@@ -2746,7 +3008,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
-            BlockValue.LocatorResult locator = BlockValue.fromParams((CarpetContext)c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).evalValue(c).getString();
@@ -2758,7 +3020,7 @@ public class CarpetExpression
                 if (res == null)
                     return;
                 if (what.equalsIgnoreCase("boulder"))  // there might be more of those
-                    this.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
+                    forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
                 result[0] = new NumericValue(res);
             });
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
@@ -2770,41 +3032,119 @@ public class CarpetExpression
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
-            Value functionValue = lv.get(1).evalValue(c);
-            if (!(functionValue instanceof FunctionValue))
-            {
-                String name = functionValue.getString();
-                functionValue = c.host.getAssertFunction(this.expr.module, name);
-            }
-            FunctionValue function = (FunctionValue)functionValue;
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, this.expr.module, lv, 1, true, true);
 
-            CarpetContext cc = (CarpetContext)c;
-            List<Value> args = new ArrayList<>();
-            for (int i=2; i < lv.size(); i++)
-            {
-                Value arg = lv.get(i).evalValue(cc);
-                args.add(arg);
-            }
-            if (function.getArguments().size() != args.size())
-                throw new InternalExpressionException("Function "+function.getString()+" takes "+
-                        function.getArguments().size()+" arguments, "+args.size()+" provided.");
-            CarpetServer.scriptServer.events.scheduleCall(cc, function, args, delay);
+            CarpetServer.scriptServer.events.scheduleCall(
+                    (CarpetContext) c,
+                    functionArgument.function,
+                    functionArgument.resolveArgs(c, Context.NONE),
+                    delay
+            );
             return (c_, t_) -> Value.TRUE;
         });
+
+        this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
+        {
+            Value res = lv.get(0).evalValue(c);
+            CarpetSettings.LOG.error(res.getString());
+            return (_c, _t) -> res; // pass through for variables
+        });
+
+        this.expr.addLazyFunction("read_file", 2, (c, t, lv) -> {
+            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            boolean shared = origtype.startsWith("shared_");
+            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
+            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
+                throw new InternalExpressionException("Unsupported file type: "+origtype);
+            Value retVal;
+            if (type.equals("nbt"))
+            {
+                Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(resource, shared);
+                if (state == null) return LazyValue.NULL;
+                retVal = new NBTSerializableValue(state);
+            }
+            else
+            {
+                List<String> content = ((CarpetScriptHost) ((CarpetContext) c).host).readTextResource(resource, shared);
+                if (content == null) return LazyValue.NULL;
+                retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
+            }
+            return (cc, tt) -> retVal;
+        });
+
+        this.expr.addLazyFunction("delete_file", 2, (c, t, lv) -> {
+            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            boolean shared = origtype.startsWith("shared_");
+            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
+            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
+                throw new InternalExpressionException("Unsupported file type: "+origtype);
+            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).removeResourceFile(resource, shared, type);
+            return success?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
+        this.expr.addLazyFunction("write_file", -1, (c, t, lv) -> {
+            if (lv.size() < 3) throw new InternalExpressionException("'write_file' requires three or more arguments");
+            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            boolean shared = origtype.startsWith("shared_");
+            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
+            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
+                throw new InternalExpressionException("Unsupported file type: "+origtype);
+            boolean success;
+            if (type.equals("nbt"))
+            {
+                Value val = lv.get(2).evalValue(c);
+                NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
+                        ? (NBTSerializableValue) val
+                        : new NBTSerializableValue(val.getString());
+                Tag tag = tagValue.getTag();
+                success = ((CarpetScriptHost)((CarpetContext)c).host).writeTagFile(tag, resource, shared);
+            }
+            else
+            {
+                List<String> data = new ArrayList<>();
+                if (lv.size()==3)
+                {
+                    Value val = lv.get(2).evalValue(c);
+                    if (val instanceof ListValue)
+                    {
+                        List<Value> lval = ((ListValue) val).getItems();
+                        lval.forEach(v -> data.add(v.getString()));
+                    }
+                    else
+                    {
+                        data.add(val.getString());
+                    }
+                }
+                else
+                {
+                    for(int i = 2; i < lv.size(); i++)
+                    {
+                        data.add(lv.get(i).evalValue(c).getString());
+                    }
+                }
+                success = ((CarpetScriptHost) ((CarpetContext) c).host).appendLogFile(resource, shared, type, data);
+            }
+            return success?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
+        //write_file
 
         this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
             String file = null;
+            boolean shared = false;
             if (lv.size()>0)
             {
-                String origfile = lv.get(0).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
-                if (file.isEmpty())
+                file = recognizeResource(lv.get(0).evalValue(c));
+                if (lv.size() > 1)
                 {
-                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                    shared = lv.get(1).evalValue(c).getBoolean();
                 }
             }
-            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).getGlobalState(file);
+            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -2817,21 +3157,21 @@ public class CarpetExpression
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             Value val = lv.get(0).evalValue(c);
             String file = null;
+            boolean shared = false;
             if (lv.size()>1)
             {
-                String origfile = lv.get(1).evalValue(c).getString();
-                file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9]", "");
-                if (file.isEmpty())
+                file = recognizeResource(lv.get(1).evalValue(c));
+                if (lv.size() > 2)
                 {
-                    throw new InternalExpressionException("Cannot use "+file+" as resource name - must have some letters and numbers");
+                    shared = lv.get(2).evalValue(c).getBoolean();
                 }
             }
             NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
             Tag tag = tagValue.getTag();
-            ((CarpetScriptHost)((CarpetContext)c).host).setGlobalState(tag, file);
-            return (cc, tt) -> Value.NULL;
+            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).writeTagFile(tag, file, shared);
+            return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
         this.expr.addLazyFunction("statistic", 3, (c, t, lv) ->
@@ -2890,6 +3230,7 @@ public class CarpetExpression
         API_IteratingOverAreasOfBlocks();
         API_AuxiliaryAspects();
         API_Scoreboard();
+        API_Interapperability();
     }
 
     public boolean fillAndScanCommand(ScriptHost host, int x, int y, int z)

@@ -70,8 +70,8 @@ set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:
 
 Evaluates subexpression without causing updates when blocks change in the world
 
-Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perling noise 
-generator. The following code causes cascading effect as blocks placed on chunk borders will cause other chunks to get 
+Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
+generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 
 loaded to full, thus generated:
 
 <pre>
@@ -85,7 +85,7 @@ __on_chunk_generated(x, z) -> (
 )
 </pre>
 
-The following addition resolves this issue, by not allowing block updates pass chunk borders:
+The following addition resolves this issue, by not allowing block updates past chunk borders:
 
 <pre>
 __config() -> m(l('scope', 'global'));
@@ -102,19 +102,26 @@ __on_chunk_generated(x, z) -> (
 
 ### `place_item(item, pos, facing?, sneak?)`
 
-Places a given item in the world like it was placed by a player. Item names are default minecraft item name, 
+Uses a given item in the world like it was used by a player. Item names are default minecraft item name, 
 less the minecraft prefix. Default facing is 'up', but there are other options: 'down', 'north', 'east', 'south', 
 'west', but also there are other secondary directions important for placement of blocks like stairs, doors, etc. 
 Try experiment with options like 'north-up' which is placed facing north with cursor pointing to the upper part of the 
 block, or 'up-north', which means a block placed facing up (player looking down) and placed smidge away of the block 
 center towards north. Optional sneak is a boolean indicating if a player would be sneaking while placing the 
-block - this option only affects placement of chests and scaffolding at the moment. Returns true if placement was 
+block - this option only affects placement of chests and scaffolding at the moment. 
+
+Works with items that have the right-click effect on the block placed, like `bone_meal` on grass or axes on logs,
+but doesn't open chests / containers, so have no effect on interactive blocks, like TNT, comparators, etc.
+
+Returns true if placement/use was 
 successful, false otherwise.
 
 <pre>
 place_item('stone',x,y,z) // places a stone block on x,y,z block
 place_item('piston,x,y,z,'down') // places a piston facing down
 place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
+place_item('bone_meal',x,y,z) // attempts to bonemeal the ground.
+place_item('wooden_axe',x,y,z) // attempts to strip the log.
 </pre>
 
 ### `set_poi(pos, type, occupancy?)`
@@ -127,9 +134,10 @@ If type is `null`, POI at position is removed. In any case, previous POI is also
 Interestingly, `unemployed`, and `nitwit` are not used in the game, meaning, they could be used as permanent spatial 
 markers for scarpet apps. `meeting` is the only one with increased max occupancy of 32.
 
-### `set_biome(pos, biome_name)`
+### `set_biome(pos, biome_name, update=true)`
 
-changes biome at that block position.
+Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
+on the clients. Biome changes can only be send to clients with the entire data from the chunk.
 
 ### `update(pos)`
 
@@ -145,7 +153,7 @@ Causes a random tick at position.
 
 ### `destroy(pos), destroy(pos, -1), destroy(pos, <N>), destroy(pos, tool, nbt?)`
 
-Destroys the block like it was mined by a player. Add -1 for silk touch, and positive number for fortune level. 
+Destroys the block like it was mined by a player. Add -1 for silk touch, and a positive number for fortune level. 
 If tool is specified, and optionally its nbt, it will use that tool and will attempt to mine the block with this tool. 
 If called without item context, this function, unlike harvest, will affect all kinds of blocks. If called with item 
 in context, it will fail to break blocks that cannot be broken by a survival player.
@@ -161,28 +169,28 @@ for mining. Obviously, in this case the use of `harvest` would be much more appl
 <pre>
 mine(x,y,z) ->
 (
-   p = player();
-   slot = p~'selected_slot';
-   item_tuple = inventory_get(p, slot);
-   if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
-   l(item, count, tag) = item_tuple;
-   tag_back = destroy(x,y,z, item, tag);
-   if (tag_back == false, // failed to break the item
-	     return(tag_back)
-   );
-   if (tag_back == true, // block broke, tool has no tag
-	     return(tag_back)
-   );
-   if (tag_back == null, //item broke
-	     delete(tag:'Damage');
-	     inventory_set(p, slot, count-1, item, tag);
-	     return(tag_back)
-   );
-   if (type(tag_back) == 'nbt', // item didn't break, here is the effective nbt
-	     inventory_set(p, slot, count, item, tag_back);
-	     return(tag_back)
-   );
-   print('How did we get here?');
+  p = player();
+  slot = p~'selected_slot';
+  item_tuple = inventory_get(p, slot);
+  if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
+  l(item, count, tag) = item_tuple;
+  tag_back = destroy(x,y,z, item, tag);
+  if (tag_back == false, // failed to break the item
+    return(tag_back)
+  );
+  if (tag_back == true, // block broke, tool has no tag
+    return(tag_back)
+  );
+  if (tag_back == null, //item broke
+    delete(tag:'Damage');
+    inventory_set(p, slot, count-1, item, tag);
+    return(tag_back)
+  );
+  if (type(tag_back) == 'nbt', // item didn't break, here is the effective nbt
+    inventory_set(p, slot, count, item, tag_back);
+    return(tag_back)
+  );
+  print('How did we get here?');
 )
 </pre>
 
@@ -200,9 +208,9 @@ Returns a triple of coordinates of a specified block or entity. Technically enti
 and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos` allows to pass all positional objects.
 
 <pre>
-pos(block(0,5,0))  => l(0,5,0)
+pos(block(0,5,0)) => l(0,5,0)
 pos(players()) => l(12.3, 45.6, 32.05)
-pos(block('stone'))  => Error: Cannot fetch position of an unrealized block
+pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
 ### `pos_offset(pos, direction, amount?)`
@@ -260,51 +268,51 @@ poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two
 
 ### `biome(pos)`
 
-returns biome at that block position.
+Returns the biome at that block position.
 
 ### `solid(pos)`
 
-Boolean function, true if the block is solid
+Boolean function, true if the block is solid.
 
 ### `air(pos)`
 
-Boolean function, true if a block is air.... or cave air... or void air.... or any other air they come up with.
+Boolean function, true if a block is air... or cave air... or void air... or any other air they come up with.
 
 ### `liquid(pos)`
 
-Boolean function, true if the block is liquid, or liquidlogged
+Boolean function, true if the block is liquid, or waterlogged (with any liquid).
 
 ### `flammable(pos)`
 
-Boolean function, true if the block is flammable
+Boolean function, true if the block is flammable.
 
 ### `transparent(pos)`
 
-Boolean function, true if the block is transparent
+Boolean function, true if the block is transparent.
 
 ### `opacity(pos)`
 
-Numeric, returning opacity level of a block
+Numeric function, returning the opacity level of a block.
 
 ### `blocks_daylight(pos)`
 
-Boolean function, true if the block blocks daylight
+Boolean function, true if the block blocks daylight.
 
 ### `emitted_light(pos)`
 
-Numeric, returning light level emitted from block
+Numeric function, returning the light level emitted from the block.
 
 ### `light(pos)`
 
-Integer function, returning total light level at position
+Numeric function, returning the total light level at position.
 
 ### `block_light(pos)`
 
-Integer function, returning block light at position. From torches and other light sources.
+Numeric function, returning the block light at position (from torches and other light sources).
 
 ### `sky_light(pos)`
 
-Numeric function, returning sky light at position. From the sky access.
+Numeric function, returning the sky light at position (from sky access).
 
 ### `see_sky(pos)`
 
@@ -352,7 +360,7 @@ Boolean function, true if the block ticks randomly.
 
 ### `blocks_movement(pos)`
 
-Boolean function, true if block at position blocks movement.
+Boolean function, true if the block at position blocks movement.
 
 ### `block_sound(pos)`
 
@@ -478,11 +486,11 @@ Returns the map colour of a block at position. One of:
 ### `loaded(pos)`
 
 Boolean function, true if the block is accessible for the game mechanics. Normally `scarpet` doesn't check if operates 
-on loaded area - the game will automatically load missing blocks. We see this as advantage. Vanilla `fill/clone` 
+on loaded area - the game will automatically load missing blocks. We see this as an advantage. Vanilla `fill/clone` 
 commands only check the specified corners for loadness.
 
-To check if block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
-outside of the playable area, just are not used any of the game mechanics processes.
+To check if a block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
+outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
 loaded(pos(players()))  => 1
@@ -497,7 +505,7 @@ Deprecated as of scarpet 1.6, use `loaded_status(x) > 0`, or just `loaded(x)` wi
 
 ### `loaded_status(pos)`
 
-Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for ticking, 
+Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for redstone ticking, 
 3 for entity ticking
 
 ### `is_chunk_generated(pos)`, `is_chunk_generated(pos, force)`
@@ -519,13 +527,41 @@ Returns generation status as per the ticket system. Can return any value from se
 can only be stable in a few states: `full`, `features`, `liquid_carvers`, and `structure_starts`. Returns `null` 
 if the chunk is not in memory unless called with optional `true`.
 
+### `inhabited_time(pos)`
+
+Returns inhabited time for a chunk.
+
+### `spawn_potential(pos)`
+
+Returns spawn potential at a location (1.16+ only)
+
+### `structure_eligibility(pos, ?structure, ?size_needed)`
+
+Checks wordgen eligibility for a structure in a given chunk. If no structure is given, or `null`, then it will check
+ for all structures. If bounding box of the structures is also requested, it will compute size of potential
+  structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
+  making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
+  
+  Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
+  the actual structure from forming.
+  
+If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
+a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
+list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
+
+If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
+should be generated there.
+
+
 ### `structures(pos), structures(pos, structure_name)`
 
 Returns structure information for a given block position. Note that structure information is the same for all the 
 blocks from the same chunk. `structures` function can be called with a block, or a block and a structure name. In 
 the first case it returns a map of structures at a given position, keyed by structure name, with values indicating 
 the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
-name, returns list of components for that structure, with their name, direction and two sets of coordinates 
+name, returns a map with two values, `'box'` for bounding box of the structure, and `'pieces'` for a list of 
+components for that structure, with their name, direction and two sets of coordinates 
 indicating the bounding box of the structure piece.
 
 ### `structure_references(pos), structure_references(pos, structure_name)`
@@ -540,7 +576,7 @@ then to get its bounding boxes.
 
 Creates or removes structure information of a structure associated with a chunk of `pos`. Unlike `plop`, blocks are 
 not placed in the world, only structure information is set. For the game this is a fully functional structure even 
-if blocks are not set. To remove structure a given point is in, use `structure_references` to find where current 
+if blocks are not set. To remove the structure a given point is in, use `structure_references` to find where current 
 structure starts.
 
 ### `plop(pos, what)`
@@ -586,6 +622,13 @@ Structure list:
 *   `village_savanna`: Savanna, acacia village.
 *   `village_taiga`: Taiga, spruce village.
 *   `village_snowy`: Resolute, Canada.
+*   `nether_fossil`: Pile of bones (1.16)
+*   `ruined_portal`: Ruined portal, random variant.
+*   `bastion_remnant`: Piglin bastion, random variant for the chunk (1.16)
+*   `bastion_remnant_housing`: Housing units version of a piglin bastion (1.16)
+*   `bastion_remnant_stable`: Hoglin stables version of q piglin bastion (1.16)
+*   `bastion_remnant_treasure`: Treasure room version of a piglin bastion (1.16)
+*   `bastion_remnant_bridge` : Bridge version of a piglin bastion (1.16)
 
 Feature list:
 
@@ -642,6 +685,18 @@ Feature list:
 *   `coral`: random coral structure. Require water to spawn.
 *   `sea_pickle`
 *   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
+*   `crimson_fungus` (1.16)
+*   `warped_fungus` (1.16)
+*   `nether_sprouts` (1.16)
+*   `crimson_roots` (1.16)
+*   `warped_roots`  (1.16)
+*   `weeping_vines` (1.16)
+*   `twisting_vines` (1.16)
+*   `basalt_pillar` (1.16)
+
+### `reload_chunk(pos)`
+
+Sends full chunk data to clients. Useful when lots stuff happened and you want to refresh it on the clients.
 
 ### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
 Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous
@@ -657,3 +712,10 @@ It returns a `map` with a report indicating how many chunks were affected, and h
  * `layer_count_<status>`: number of chunks for which a `<status>` generation step has been performed
  * `layer_time_<status>`: cumulative time for all chunks spent on generating `<status>` step
  
+### add_chunk_ticket(pos, type, radius)
+
+Adds a chunk ticket at a position, which makes the game to keep the designated area centered around
+`pos` with radius of `radius` loaded for a predefined amount of ticks, defined by `type`. Allowed types
+are `portal`: 300 ticks, `teleport`: 5 ticks, and `unknown`: 1 tick. Radius can be from 1 to 32 ticks.
+
+This function is tentative - will likely change when chunk ticket API is properly fleshed out.

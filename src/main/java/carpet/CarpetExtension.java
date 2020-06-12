@@ -6,6 +6,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+import java.util.Map;
+
 public interface CarpetExtension
 {
     /**
@@ -51,4 +53,6 @@ public interface CarpetExtension
     default String version() {return null;}
 
     default void registerLoggers() {}
+
+    default Map<String, String> canHasTranslations(String lang) { return null;}
 }

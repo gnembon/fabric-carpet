@@ -3,14 +3,15 @@ package carpet.utils;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.text.BaseText;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Style;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.Formatting;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,32 +53,33 @@ public class Messenger
      / = action added to the previous component
      */
 
-    private static BaseText _applyStyleToTextComponent(BaseText comp, String style)
+    public static Style parseStyle(String style)
     {
         //could be rewritten to be more efficient
-        comp.getStyle().setItalic(style.indexOf('i')>=0);
-        comp.getStyle().setStrikethrough(style.indexOf('s')>=0);
-        comp.getStyle().setUnderline(style.indexOf('u')>=0);
-        comp.getStyle().setBold(style.indexOf('b')>=0);
-        comp.getStyle().setObfuscated(style.indexOf('o')>=0);
-        comp.getStyle().setColor(Formatting.WHITE);
-        if (style.indexOf('w')>=0) comp.getStyle().setColor(Formatting.WHITE); // not needed
-        if (style.indexOf('y')>=0) comp.getStyle().setColor(Formatting.YELLOW);
-        if (style.indexOf('m')>=0) comp.getStyle().setColor(Formatting.LIGHT_PURPLE);
-        if (style.indexOf('r')>=0) comp.getStyle().setColor(Formatting.RED);
-        if (style.indexOf('c')>=0) comp.getStyle().setColor(Formatting.AQUA);
-        if (style.indexOf('l')>=0) comp.getStyle().setColor(Formatting.GREEN);
-        if (style.indexOf('t')>=0) comp.getStyle().setColor(Formatting.BLUE);
-        if (style.indexOf('f')>=0) comp.getStyle().setColor(Formatting.DARK_GRAY);
-        if (style.indexOf('g')>=0) comp.getStyle().setColor(Formatting.GRAY);
-        if (style.indexOf('d')>=0) comp.getStyle().setColor(Formatting.GOLD);
-        if (style.indexOf('p')>=0) comp.getStyle().setColor(Formatting.DARK_PURPLE);
-        if (style.indexOf('n')>=0) comp.getStyle().setColor(Formatting.DARK_RED);
-        if (style.indexOf('q')>=0) comp.getStyle().setColor(Formatting.DARK_AQUA);
-        if (style.indexOf('e')>=0) comp.getStyle().setColor(Formatting.DARK_GREEN);
-        if (style.indexOf('v')>=0) comp.getStyle().setColor(Formatting.DARK_BLUE);
-        if (style.indexOf('k')>=0) comp.getStyle().setColor(Formatting.BLACK);
-        return comp;
+        Style styleInstance = new Style();
+        styleInstance.setItalic(style.indexOf('i')>=0);
+        styleInstance.setStrikethrough(style.indexOf('s')>=0);
+        styleInstance.setUnderline(style.indexOf('u')>=0);
+        styleInstance.setBold(style.indexOf('b')>=0);
+        styleInstance.setObfuscated(style.indexOf('o')>=0);
+        styleInstance.setColor(Formatting.WHITE);
+        if (style.indexOf('w')>=0) styleInstance.setColor(Formatting.WHITE); // not needed
+        if (style.indexOf('y')>=0) styleInstance.setColor(Formatting.YELLOW);
+        if (style.indexOf('m')>=0) styleInstance.setColor(Formatting.LIGHT_PURPLE);
+        if (style.indexOf('r')>=0) styleInstance.setColor(Formatting.RED);
+        if (style.indexOf('c')>=0) styleInstance.setColor(Formatting.AQUA);
+        if (style.indexOf('l')>=0) styleInstance.setColor(Formatting.GREEN);
+        if (style.indexOf('t')>=0) styleInstance.setColor(Formatting.BLUE);
+        if (style.indexOf('f')>=0) styleInstance.setColor(Formatting.DARK_GRAY);
+        if (style.indexOf('g')>=0) styleInstance.setColor(Formatting.GRAY);
+        if (style.indexOf('d')>=0) styleInstance.setColor(Formatting.GOLD);
+        if (style.indexOf('p')>=0) styleInstance.setColor(Formatting.DARK_PURPLE);
+        if (style.indexOf('n')>=0) styleInstance.setColor(Formatting.DARK_RED);
+        if (style.indexOf('q')>=0) styleInstance.setColor(Formatting.DARK_AQUA);
+        if (style.indexOf('e')>=0) styleInstance.setColor(Formatting.DARK_GREEN);
+        if (style.indexOf('v')>=0) styleInstance.setColor(Formatting.DARK_BLUE);
+        if (style.indexOf('k')>=0) styleInstance.setColor(Formatting.BLACK);
+        return styleInstance;
     }
     public static String heatmap_color(double actual, double reference)
     {
@@ -114,10 +116,14 @@ public class Messenger
         {
             message = "w"+message;
         }
-        String[] parts = message.split("\\s", 2);
-        String desc = parts[0];
+        int limit = message.indexOf(' ');
+        String desc = message;
         String str = "";
-        if (parts.length > 1) str = parts[1];
+        if (limit >= 0)
+        {
+            desc = message.substring(0, limit);
+            str = message.substring(limit+1);
+        }
         if (desc.charAt(0) == '/') // deprecated
         {
             if (previous_message != null)
@@ -143,7 +149,8 @@ public class Messenger
             return previous_message;
         }
         BaseText txt = new LiteralText(str);
-        return _applyStyleToTextComponent(txt, desc);
+        txt.setStyle(parseStyle(desc));
+        return txt;
     }
     public static BaseText tp(String desc, Vec3d pos) { return tp(desc, pos.x, pos.y, pos.z); }
     public static BaseText tp(String desc, BlockPos pos) { return tp(desc, pos.getX(), pos.getY(), pos.getZ()); }
@@ -224,7 +231,8 @@ public class Messenger
     //message source
     public static void m(ServerCommandSource source, Object ... fields)
     {
-        source.sendFeedback(Messenger.c(fields),source.getMinecraftServer().getWorld(DimensionType.OVERWORLD) != null);
+        if (source != null)
+            source.sendFeedback(Messenger.c(fields),source.getMinecraftServer() != null && source.getMinecraftServer().getWorld(DimensionType.OVERWORLD) != null);
     }
     public static void m(PlayerEntity player, Object ... fields)
     {
@@ -263,7 +271,7 @@ public class Messenger
     public static BaseText s(String text, String style)
     {
         BaseText message = new LiteralText(text);
-        _applyStyleToTextComponent(message, style);
+        message.setStyle(parseStyle(style));
         return message;
     }
 

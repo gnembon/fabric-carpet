@@ -4,7 +4,13 @@ import carpet.CarpetServer;
 import com.google.common.collect.Sets;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.tag.FluidTags;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 
 import java.util.HashMap;
@@ -91,6 +97,27 @@ public class MobAI
                     return type;
             return null;
         }
+    }
+
+    /**
+     * Not a replacement for living entity jump() - this barely is to allow other entities that can't jump in vanilla to 'jump'
+     * @param e
+     */
+    public static void genericJump(Entity e)
+    {
+        if (!e.onGround && !e.isInFluid(FluidTags.WATER) && !e.isInLava()) return;
+        float m = e.world.getBlockState(new BlockPos(e)).getBlock().getJumpVelocityMultiplier();
+        float g = e.world.getBlockState(new BlockPos(e.getX(), e.getBoundingBox().y1 - 0.5000001D, e.getZ())).getBlock().getJumpVelocityMultiplier();
+        float jumpVelocityMultiplier = (double) m == 1.0D ? g : m;
+        float jumpStrength = (0.42F * jumpVelocityMultiplier);
+        Vec3d vec3d = e.getVelocity();
+        e.setVelocity(vec3d.x, jumpStrength, vec3d.z);
+        if (e.isSprinting())
+        {
+            float u = e.yaw * 0.017453292F;
+            e.setVelocity(e.getVelocity().add((-MathHelper.sin(g) * 0.2F), 0.0D, (MathHelper.cos(u) * 0.2F)));
+        }
+        e.velocityDirty = true;
     }
 
 }

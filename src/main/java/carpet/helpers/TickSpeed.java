@@ -5,11 +5,12 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import carpet.CarpetServer;
+import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 
 public class TickSpeed
@@ -20,11 +21,12 @@ public class TickSpeed
     public static long time_bias = 0;
     public static long time_warp_start_time = 0;
     public static long time_warp_scheduled_ticks = 0;
-    public static PlayerEntity time_advancerer = null;
+    public static ServerPlayerEntity time_advancerer = null;
     public static String tick_warp_callback = null;
     public static ServerCommandSource tick_warp_sender = null;
     public static int player_active_timeout = 0;
     public static boolean process_entities = true;
+    public static boolean deepFreeze = false;
     public static boolean is_paused = false;
     public static boolean is_superHot = false;
 
@@ -43,18 +45,37 @@ public class TickSpeed
         }
     }
 
+    public static void reset()
+    {
+        tickrate = 20.0f;
+        mspt = 50.0f;
+        time_bias = 0;
+        time_warp_start_time = 0;
+        time_warp_scheduled_ticks = 0;
+        time_advancerer = null;
+        tick_warp_callback = null;
+        tick_warp_sender = null;
+        player_active_timeout = 0;
+        process_entities = true;
+        deepFreeze = false;
+        is_paused = false;
+        is_superHot = false;
+        notifyTickrateListeners("carpet");
+    }
+
     public static void add_ticks_to_run_in_pause(int ticks)
     {
         player_active_timeout = PLAYER_GRACE+ticks;
     }
 
-    public static BaseText tickrate_advance(PlayerEntity player, int advance, String callback, ServerCommandSource source)
+    public static BaseText tickrate_advance(ServerPlayerEntity player, int advance, String callback, ServerCommandSource source)
     {
         if (0 == advance)
         {
             tick_warp_callback = null;
-            tick_warp_sender = null;
+            if (source != tick_warp_sender) tick_warp_sender = null;
             finish_time_warp();
+            tick_warp_sender = null;
             return Messenger.c("gi Warp interrupted");
         }
         if (time_bias > 0)
@@ -157,8 +178,9 @@ public class TickSpeed
             }
         }
     }
-    
-    public static void tickrate(float rate)
+    //unused - mod compat reasons
+    public static void tickrate(float rate) {tickrate(rate, true);}
+    public static void tickrate(float rate, boolean update)
     {
         tickrate = rate;
         long mspt = (long)(1000.0 / tickrate);
@@ -170,7 +192,7 @@ public class TickSpeed
         
         TickSpeed.mspt = (float)mspt;
         
-        notifyTickrateListeners("carpet");
+        if (update) notifyTickrateListeners("carpet");
     }
     
     private static void tickrateChanged(String modId, float rate)
@@ -202,6 +224,7 @@ public class TickSpeed
 	            }
 	        }
         }
+        ServerNetworkHandler.updateTickSpeedToConnectedPlayers();
     }
     
     public static BiConsumer<String, Float> addTickrateListener(String modId, BiConsumer<String, Float> tickrateListener) 

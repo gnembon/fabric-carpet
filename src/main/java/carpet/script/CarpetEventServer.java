@@ -12,6 +12,8 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -50,6 +52,7 @@ import java.util.stream.Collectors;
 public class CarpetEventServer
 {
     public final List<ScheduledCall> scheduledCalls = new LinkedList<>();
+    public final MinecraftServer server;
 
     public static class Callback
     {
@@ -125,7 +128,13 @@ public class CarpetEventServer
                 List<LazyValue> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source = cmdSourceSupplier.get();
                 assert argv.size() == reqArgs;
-                callList.removeIf(call -> !CarpetServer.scriptServer.runas(source, call.host, call.function, argv)); // this actually does the calls
+                List<Callback> fails = new ArrayList<>();
+                for (Callback call: callList)
+                {
+                    if (!CarpetServer.scriptServer.runas(source, call.host, call.function, argv))
+                        fails.add(call);
+                }
+                for (Callback call : fails) callList.remove(call);
             }
         }
         public boolean addEventCall(ServerCommandSource source,  String hostName, String funName, Function<ScriptHost, Boolean> verifier)
@@ -479,6 +488,90 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
+        PLAYER_TAKES_DAMAGE("player_takes_damage", 4, false)
+        {
+            @Override
+            public void onDamage(Entity target, float amount, DamageSource source)
+            {
+                handler.call( () ->
+                {
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(target)),
+                            ((c, t) -> new NumericValue(amount)),
+                            ((c, t) ->new StringValue(source.getName())),
+                            ((c, t) -> source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker()))
+                    );
+                }, target::getCommandSource);
+            }
+        },
+        PLAYER_DEALS_DAMAGE("player_deals_damage", 3, false)
+        {
+            @Override
+            public void onDamage(Entity target, float amount, DamageSource source)
+            {
+                handler.call( () ->
+                {
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(source.getAttacker())),
+                            ((c, t) -> new NumericValue(amount)),
+                            ((c, t) -> new EntityValue(target))
+                    );
+                }, () -> source.getAttacker().getCommandSource());
+            }
+        },
+        PLAYER_DIES("player_dies", 1, false)
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_RESPAWNS("player_respawns", 1, false)
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_CHANGES_DIMENSION("player_changes_dimension", 5, false)
+        {
+            @Override
+            public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, DimensionType fromDim, DimensionType dimTo)
+            {
+                // eligibility already checked in mixin
+                Value fromValue = ListValue.fromTriple(from.x, from.y, from.z);
+                Value toValue = (to == null)?Value.NULL:ListValue.fromTriple(to.x, to.y, to.z);
+                Value fromDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(fromDim)));
+                Value toDimStr = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(dimTo)));
+
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> fromValue),
+                        ((c, t) -> fromDimStr),
+                        ((c, t) -> toValue),
+                        ((c, t) -> toDimStr)
+                ), player::getCommandSource);
+            }
+        },
+        PLAYER_CONNECTS("player_connects", 1, false) {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
+        PLAYER_DISCONNECTS("player_disconnects", 2, false) {
+            @Override
+            public void onPlayerMessage(ServerPlayerEntity player, String message)
+            {
+                handler.call( () -> Arrays.asList(
+                        ((c, t) -> new EntityValue(player)),
+                        ((c, t) -> new StringValue(message))
+                ), player::getCommandSource);
+            }
+        },
         STATISTICS("statistic", 4, false)
         {
             private <T> Identifier getStatId(Stat<T> stat)
@@ -543,6 +636,7 @@ public class CarpetEventServer
         public void onTick() { }
         public void onChunkGenerated(ServerWorld world, Chunk chunk) { }
         public void onPlayerEvent(ServerPlayerEntity player) { }
+        public void onPlayerMessage(ServerPlayerEntity player, String message) { }
         public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount) { }
         public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking) { }
         public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) { }
@@ -551,13 +645,18 @@ public class CarpetEventServer
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+        public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, DimensionType fromDim, DimensionType dimTo) {}
+        public void onDamage(Entity target, float amount, DamageSource source) { }
+
+
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
     }
 
 
-    public CarpetEventServer()
+    public CarpetEventServer(MinecraftServer server)
     {
+        this.server = server;
         for (Event e: Event.values())
             e.handler.callList.clear();
     }

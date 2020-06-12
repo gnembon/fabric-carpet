@@ -31,6 +31,10 @@ public class ServerPlayNetworkHandler_tickMixin
         }
     }
 
+    // to skip reposition adjustment check
+    private static long lastMovedTick = 0L;
+    private static double lastMoved = 0.0D;
+
     @Inject(method = "onPlayerMove",  at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerPlayerEntity;isSleeping()Z",
@@ -38,10 +42,23 @@ public class ServerPlayNetworkHandler_tickMixin
     ))
     private void checkMove(PlayerMoveC2SPacket p, CallbackInfo ci)
     {
-        if (Math.abs(p.getX(player.getX()) - lastTickX) > 0.0001D
-                || Math.abs(p.getY(player.getY()) - lastTickY) > 0.0001D
-                || Math.abs(p.getY(player.getZ()) - lastTickZ) > 0.0001D)
+        double movedBy = player.getPos().squaredDistanceTo(lastTickX, lastTickY, lastTickZ);
+        if (movedBy == 0.0D) return;
+        // corrective tick
+        if (movedBy < 0.0009 && lastMoved > 0.0009 && Math.abs(player.getServer().getTicks()-lastMovedTick-20)<2)
         {
+            //CarpetSettings.LOG.error("Corrective movement packet");
+            return;
+        }
+        if (movedBy > 0.0D)
+        {
+            //CarpetSettings.LOG.error(String.format(
+            //        "moved by %.6f at %d",
+            //        player.getPos().squaredDistanceTo(lastTickX, lastTickY, lastTickZ),
+            //        player.getServer().getTicks()-lastMovedTick
+            //));
+            lastMoved = movedBy;
+            lastMovedTick = player.getServer().getTicks();
             TickSpeed.reset_player_active_timeout();
         }
     }

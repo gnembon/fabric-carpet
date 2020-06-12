@@ -4,14 +4,13 @@ import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
 import carpet.settings.SettingsManager;
 import carpet.settings.Validator;
+import carpet.utils.Translations;
 import carpet.utils.Messenger;
+import carpet.utils.SpawnChunks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.server.world.ChunkTicketType;
-import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Unit;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
@@ -35,13 +34,38 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.3.17+v200401";
+    public static final String carpetVersion = "1.3.29+v200611";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
     public static Box currentTelepotingEntityBox = null;
     public static Vec3d fixedPosition = null;
     public static int runPermissionLevel = 2;
+
+    private static class LanguageValidator extends Validator<String> {
+        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            if (currentRule.get().equals(newValue) || source == null)
+            {
+                return newValue;
+            }
+            if (!Translations.isValidLanguage(newValue))
+            {
+                Messenger.m(source, "r "+newValue+" is not a valid language");
+                return null;
+            }
+            CarpetSettings.language = newValue;
+            Translations.updateLanguage(source);
+            return newValue;
+        }
+    }
+    @Rule(
+            desc = "sets the language for carpet",
+            category = FEATURE,
+            options = {"none", "zh_cn", "zh_tw"},
+            strict = false,
+            validate = LanguageValidator.class
+    )
+    public static String language = "none";
 
     @Rule(
             desc = "Nether portals correctly place entities going through",
@@ -70,6 +94,7 @@ public class CarpetSettings
             validate = OneHourMaxDelayLimit.class
     )
     public static int portalSurvivalDelay = 80;
+
 
     private static class OneHourMaxDelayLimit extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
@@ -236,13 +261,6 @@ public class CarpetSettings
     @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
     public static boolean movableBlockEntities = false;
 
-    /*@Rule(
-            desc = "Orange stained glass behaves like slime, but doesn't stick to it",
-            extra = "Only available for 1.14. in 1.15 use honey instead",
-            category = {EXPERIMENTAL, FEATURE}
-    )
-    public static boolean honeySlime = false;*/
-
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;
 
@@ -308,7 +326,7 @@ public class CarpetSettings
     )
     public static String commandPerimeterInfo = "true";
 
-    @Rule(desc = "Enables /draw commands", extra = "... allows for drawing simple shapes", category = COMMAND)
+    @Rule(desc = "Enables /draw commands", extra = {"... allows for drawing simple shapes or","other shapes which are sorta difficult to do normally"}, category = COMMAND)
     public static String commandDraw = "true";
 
     @Rule(
@@ -355,9 +373,6 @@ public class CarpetSettings
 
     @Rule(desc = "Pistons, Glass and Sponge can be broken faster with their appropriate tools", category = SURVIVAL)
     public static boolean missingTools = false;
-
-    //@Rule(desc = "Alternative, persistent caching strategy for nether portals", category = {SURVIVAL, CREATIVE})
-    //public static boolean portalCaching = false; // ineffective in 1.15
 
     @Rule(desc = "fill/clone/setblock and structure blocks cause block updates", category = CREATIVE)
     public static boolean fillUpdates = true;
@@ -472,7 +487,7 @@ public class CarpetSettings
     {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string)
         {
-            if (currentRule.get().equals(newValue))
+            if (currentRule.get().equals(newValue) || source == null)
             {
                 return newValue;
             }
@@ -486,8 +501,8 @@ public class CarpetSettings
             if (server.isDedicated())
             {
                 int vd = (newValue >= 2)?newValue:((DedicatedServer) server).getProperties().viewDistance;
-                if (vd != CarpetServer.minecraft_server.getPlayerManager().getViewDistance())
-                    CarpetServer.minecraft_server.getPlayerManager().setViewDistance(vd);
+                if (vd != server.getPlayerManager().getViewDistance())
+                    server.getPlayerManager().setViewDistance(vd);
                 return newValue;
             }
             else
@@ -509,13 +524,9 @@ public class CarpetSettings
     )
     public static int viewDistance = 0;
 
-    private static class DisableSpawnChunksValidator extends Validator<Boolean> {
-        @Override public Boolean validate(ServerCommandSource source, ParsedRule<Boolean> currentRule, Boolean newValue, String string) {
-            if (currentRule.get().booleanValue() == newValue.booleanValue())
-            {
-                //must been some startup thing
-                return newValue;
-            }
+    public static class ChangeSpawnChunksValidator extends Validator<Integer> {
+        public static void changeSpawnSize(int size)
+        {
             ServerWorld overworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD);
             if (overworld != null) {
                 ChunkPos centerChunk = new ChunkPos(new BlockPos(
@@ -523,40 +534,39 @@ public class CarpetSettings
                         overworld.getLevelProperties().getSpawnY(),
                         overworld.getLevelProperties().getSpawnZ()
                 ));
-                ServerChunkManager chunkManager = (ServerChunkManager) overworld.getChunkManager();
-
-                chunkManager.removeTicket(ChunkTicketType.START, centerChunk, 11, Unit.INSTANCE);
-                if (!newValue)
-                {
-                    chunkManager.addTicket(ChunkTicketType.START, centerChunk, 11, Unit.INSTANCE);
-                }
+                SpawnChunks.changeSpawnChunks(overworld.getChunkManager(), centerChunk, size);
+            }
+        }
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            if (source == null) return newValue;
+            if (newValue < 0 || newValue > 32)
+            {
+                Messenger.m(source, "r spawn chunk size has to be between 0 and 32");
+                return null;
+            }
+            if (currentRule.get().intValue() == newValue.intValue())
+            {
+                //must been some startup thing
+                return newValue;
+            }
+            if (CarpetServer.minecraft_server == null) return newValue;
+            ServerWorld currentOverworld = CarpetServer.minecraft_server.getWorld(DimensionType.OVERWORLD);
+            if (currentOverworld != null)
+            {
+                changeSpawnSize(newValue);
             }
             return newValue;
         }
     }
     @Rule(
-            desc = "Allows spawn chunks to unload",
+            desc = "Changes size of spawn chunks",
+            extra = {"Defines new radius", "setting it to 0 - disables spawn chunks"},
             category = CREATIVE,
-            validate = DisableSpawnChunksValidator.class
-    )
-    public static boolean disableSpawnChunks = false;
-
-    /*private static class KelpLimit extends Validator<Integer>
-    {
-        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue>=0 && newValue <=25)?newValue:null;
-        }
-        @Override
-        public String description() { return "You must choose a value from 0 to 25. 25 and all natural kelp can grow 25 blocks, choose 0 to make all generated kelp not to grow";}
-    }
-    @Rule(
-            desc = "limits growth limit of newly naturally generated kelp to this amount of blocks",
-            options = {"0", "2", "25"},
-            category = FEATURE,
             strict = false,
-            validate = KelpLimit.class
+            options = {"0", "11"},
+            validate = ChangeSpawnChunksValidator.class
     )
-    public static int kelpGenerationGrowthLimit = 25;*/
+    public static int spawnChunksSize = 11;
 
     @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
     public static boolean renewableCoral = false;
@@ -573,13 +583,6 @@ public class CarpetSettings
 
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
-
-    //@Rule(
-    //        desc = "Prevents horses and other mobs to wander into the distance after dismounting",
-    //        extra = "Fixes issues with various Joergens wandering off and disappearing client-side",
-    //        category = BUGFIX
-    //)
-    //public static boolean horseWanderingFix = false;
     
     @Rule(
             desc = "Allows structure mobs to spawn in flat worlds",
@@ -599,4 +602,54 @@ public class CarpetSettings
             category = CREATIVE
     )
     public static boolean extremeBehaviours = false;
+
+    @Rule(
+            desc = "Removes fog from client in the nether and the end",
+            extra = "Improves visibility, but looks weird",
+            category = CLIENT
+    )
+    public static boolean fogOff = false;
+
+    @Rule(
+            desc = "Creative No Clip",
+            extra = {
+                    "On servers it needs to be set on both ",
+                    "client and server to function properly.",
+                    "Has no effect when set on the server only",
+                    "Can allow to phase through walls",
+                    "if only set on the carpet client side",
+                    "but requires some trapdoor magic to",
+                    "allow the player to enter blocks"
+            },
+            category = {CREATIVE, CLIENT}
+    )
+    public static boolean creativeNoClip = false;
+
+
+    @Rule(
+            desc = "Creative flying speed multiplier",
+            extra = {
+                    "Purely client side setting, meaning that",
+                    "having it set on the decicated server has no effect",
+                    "but this also means it will work on vanilla servers as well"
+            },
+            category = {CREATIVE, CLIENT},
+            validate = Validator.NONNEGATIVE_NUMBER.class
+    )
+    public static double creativeFlySpeed = 1.0;
+
+    @Rule(
+            desc = "Creative air drag",
+            extra = {
+                    "Increased drag will slow down your flight",
+                    "So need to adjust speed accordingly",
+                    "With 1.0 drag, using speed of 11 seems to matching vanilla speeds.",
+                    "Purely client side setting, meaning that",
+                    "having it set on the decicated server has no effect",
+                    "but this also means it will work on vanilla servers as well"
+            },
+            category = {CREATIVE, CLIENT},
+            validate = Validator.PROBABILITY.class
+    )
+    public static double creativeFlyDrag = 0.09;
 }

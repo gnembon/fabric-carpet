@@ -1,8 +1,10 @@
 package carpet.mixins;
 
+import carpet.fakes.ServerChunkManagerInterface;
 import carpet.utils.SpawnReporter;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.entity.EntityCategory;
+import net.minecraft.server.world.ChunkTicketManager;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -24,11 +26,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 @Mixin(ServerChunkManager.class)
-public abstract class ServerChunkManagerMixin
+public abstract class ServerChunkManagerMixin implements ServerChunkManagerInterface
 {
     @Shadow @Final private ServerWorld world;
 
     @Shadow @Final private static int CHUNKS_ELIGIBLE_FOR_SPAWNING;
+
+    @Shadow @Final private ChunkTicketManager ticketManager;
+
+    @Override // shared between scarpet and spawnChunks setting
+    public ChunkTicketManager getCMTicketManager()
+    {
+        return ticketManager;
+    }
 
     @Inject(
             method = "tickChunks",

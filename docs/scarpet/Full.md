@@ -276,7 +276,8 @@ global_foo = floor(rand(10));
 check_foo_not_zero();
 ...
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
-</pre># Variables and Constants
+</pre>
+# Variables and Constants
 
 `scarpet` provides a number of constants that can be used literally in scripts
 
@@ -688,15 +689,22 @@ number('3bar') => null
 number('2')+number('2') => 4
 </pre>
 
-### `str(expr, params? ... ), str(expr, param_list)`
+### `str(expr)`,`str(expr, params? ... )`, `str(expr, param_list)`
 
-Returns a formatted string representing expression. Accepts formatting style accepted by `String.format`. 
-Supported types (with `"%?"` syntax):
+If called with one argument, returns string representation of such value.
+
+Otherwise, returns a formatted string representing the expression. Arguments for formatting can either be provided as
+ each consecutive parameter, or as a list which then would be the only extra parameter. To format one list argument
+ , you can use `str(list)`, or `str('foo %s', l(list))`.
+
+Accepts formatting style accepted by `String.format`. 
+Supported types (with `"%<?>"` syntax):
 
 *   `d`, `o`, `x`: integers, octal, hex
 *   `a`, `e`, `f`, `g`: floats
 *   `b`: booleans
 *   `s`: strings
+*   `%%`: '%' character
 
 <pre>
 str(null) => null
@@ -781,6 +789,18 @@ Returns true if task has completed, or false otherwise.
 ### `synchronize(lock, expression)`
 
 Evaluates `expression` synchronized with respect to the lock `lock`. Returns the value of the expression.
+
+### `task_dock(expr)`
+
+In a not-task (running regular code on the main game thread) it is a pass-through command. In tasks - it docks
+the current thread on the main server thread and executes expression as one server offline server task.
+This is especially helpful in case a task has several docking operations to perform, such as setting a block, and
+it would be much more efficient to do them all at once rather then packing each block access in each own call.
+
+Be mindful, that docking the task means that the tick execution will be delayed until the expression is evaluated.
+This will synchronize your task with other tasks using `task_dock`, but if you should be using `synchronize` to
+synchronize tasks without locking the main thread.
+
 
 * * *
 
@@ -886,8 +906,11 @@ sleep(50)
 
 ### `time()`
 
-Returns the number of milliseconds since 'some point', like Java's `System.nanoTime()`. 
-It returns a float, which has 1 microsecond precision (0.001 ms)
+Returns the number of milliseconds since 'some point', like Java's `System.nanoTime()`, which varies from system to 
+system and from Java to Java. This measure should NOT be used to determine the current (date)time, but to measure
+durations of things.
+it returns a float with time in milliseconds (ms) for convenience and microsecond (μs) resolution for sanity.
+
 
 <pre>
 start_time = time();
@@ -1606,8 +1629,8 @@ set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:
 
 Evaluates subexpression without causing updates when blocks change in the world
 
-Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perling noise 
-generator. The following code causes cascading effect as blocks placed on chunk borders will cause other chunks to get 
+Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
+generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 
 loaded to full, thus generated:
 
 <pre>
@@ -1621,7 +1644,7 @@ __on_chunk_generated(x, z) -> (
 )
 </pre>
 
-The following addition resolves this issue, by not allowing block updates pass chunk borders:
+The following addition resolves this issue, by not allowing block updates past chunk borders:
 
 <pre>
 __config() -> m(l('scope', 'global'));
@@ -1638,19 +1661,26 @@ __on_chunk_generated(x, z) -> (
 
 ### `place_item(item, pos, facing?, sneak?)`
 
-Places a given item in the world like it was placed by a player. Item names are default minecraft item name, 
+Uses a given item in the world like it was used by a player. Item names are default minecraft item name, 
 less the minecraft prefix. Default facing is 'up', but there are other options: 'down', 'north', 'east', 'south', 
 'west', but also there are other secondary directions important for placement of blocks like stairs, doors, etc. 
 Try experiment with options like 'north-up' which is placed facing north with cursor pointing to the upper part of the 
 block, or 'up-north', which means a block placed facing up (player looking down) and placed smidge away of the block 
 center towards north. Optional sneak is a boolean indicating if a player would be sneaking while placing the 
-block - this option only affects placement of chests and scaffolding at the moment. Returns true if placement was 
+block - this option only affects placement of chests and scaffolding at the moment. 
+
+Works with items that have the right-click effect on the block placed, like `bone_meal` on grass or axes on logs,
+but doesn't open chests / containers, so have no effect on interactive blocks, like TNT, comparators, etc.
+
+Returns true if placement/use was 
 successful, false otherwise.
 
 <pre>
 place_item('stone',x,y,z) // places a stone block on x,y,z block
 place_item('piston,x,y,z,'down') // places a piston facing down
 place_item('carrot',x,y,z) // attempts to plant a carrot plant. Returns true if could place carrots at that position.
+place_item('bone_meal',x,y,z) // attempts to bonemeal the ground.
+place_item('wooden_axe',x,y,z) // attempts to strip the log.
 </pre>
 
 ### `set_poi(pos, type, occupancy?)`
@@ -1663,9 +1693,10 @@ If type is `null`, POI at position is removed. In any case, previous POI is also
 Interestingly, `unemployed`, and `nitwit` are not used in the game, meaning, they could be used as permanent spatial 
 markers for scarpet apps. `meeting` is the only one with increased max occupancy of 32.
 
-### `set_biome(pos, biome_name)`
+### `set_biome(pos, biome_name, update=true)`
 
-changes biome at that block position.
+Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
+on the clients. Biome changes can only be send to clients with the entire data from the chunk.
 
 ### `update(pos)`
 
@@ -1681,7 +1712,7 @@ Causes a random tick at position.
 
 ### `destroy(pos), destroy(pos, -1), destroy(pos, <N>), destroy(pos, tool, nbt?)`
 
-Destroys the block like it was mined by a player. Add -1 for silk touch, and positive number for fortune level. 
+Destroys the block like it was mined by a player. Add -1 for silk touch, and a positive number for fortune level. 
 If tool is specified, and optionally its nbt, it will use that tool and will attempt to mine the block with this tool. 
 If called without item context, this function, unlike harvest, will affect all kinds of blocks. If called with item 
 in context, it will fail to break blocks that cannot be broken by a survival player.
@@ -1697,28 +1728,28 @@ for mining. Obviously, in this case the use of `harvest` would be much more appl
 <pre>
 mine(x,y,z) ->
 (
-   p = player();
-   slot = p~'selected_slot';
-   item_tuple = inventory_get(p, slot);
-   if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
-   l(item, count, tag) = item_tuple;
-   tag_back = destroy(x,y,z, item, tag);
-   if (tag_back == false, // failed to break the item
-	     return(tag_back)
-   );
-   if (tag_back == true, // block broke, tool has no tag
-	     return(tag_back)
-   );
-   if (tag_back == null, //item broke
-	     delete(tag:'Damage');
-	     inventory_set(p, slot, count-1, item, tag);
-	     return(tag_back)
-   );
-   if (type(tag_back) == 'nbt', // item didn't break, here is the effective nbt
-	     inventory_set(p, slot, count, item, tag_back);
-	     return(tag_back)
-   );
-   print('How did we get here?');
+  p = player();
+  slot = p~'selected_slot';
+  item_tuple = inventory_get(p, slot);
+  if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
+  l(item, count, tag) = item_tuple;
+  tag_back = destroy(x,y,z, item, tag);
+  if (tag_back == false, // failed to break the item
+    return(tag_back)
+  );
+  if (tag_back == true, // block broke, tool has no tag
+    return(tag_back)
+  );
+  if (tag_back == null, //item broke
+    delete(tag:'Damage');
+    inventory_set(p, slot, count-1, item, tag);
+    return(tag_back)
+  );
+  if (type(tag_back) == 'nbt', // item didn't break, here is the effective nbt
+    inventory_set(p, slot, count, item, tag_back);
+    return(tag_back)
+  );
+  print('How did we get here?');
 )
 </pre>
 
@@ -1736,9 +1767,9 @@ Returns a triple of coordinates of a specified block or entity. Technically enti
 and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos` allows to pass all positional objects.
 
 <pre>
-pos(block(0,5,0))  => l(0,5,0)
+pos(block(0,5,0)) => l(0,5,0)
 pos(players()) => l(12.3, 45.6, 32.05)
-pos(block('stone'))  => Error: Cannot fetch position of an unrealized block
+pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
 ### `pos_offset(pos, direction, amount?)`
@@ -1796,51 +1827,51 @@ poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two
 
 ### `biome(pos)`
 
-returns biome at that block position.
+Returns the biome at that block position.
 
 ### `solid(pos)`
 
-Boolean function, true if the block is solid
+Boolean function, true if the block is solid.
 
 ### `air(pos)`
 
-Boolean function, true if a block is air.... or cave air... or void air.... or any other air they come up with.
+Boolean function, true if a block is air... or cave air... or void air... or any other air they come up with.
 
 ### `liquid(pos)`
 
-Boolean function, true if the block is liquid, or liquidlogged
+Boolean function, true if the block is liquid, or waterlogged (with any liquid).
 
 ### `flammable(pos)`
 
-Boolean function, true if the block is flammable
+Boolean function, true if the block is flammable.
 
 ### `transparent(pos)`
 
-Boolean function, true if the block is transparent
+Boolean function, true if the block is transparent.
 
 ### `opacity(pos)`
 
-Numeric, returning opacity level of a block
+Numeric function, returning the opacity level of a block.
 
 ### `blocks_daylight(pos)`
 
-Boolean function, true if the block blocks daylight
+Boolean function, true if the block blocks daylight.
 
 ### `emitted_light(pos)`
 
-Numeric, returning light level emitted from block
+Numeric function, returning the light level emitted from the block.
 
 ### `light(pos)`
 
-Integer function, returning total light level at position
+Numeric function, returning the total light level at position.
 
 ### `block_light(pos)`
 
-Integer function, returning block light at position. From torches and other light sources.
+Numeric function, returning the block light at position (from torches and other light sources).
 
 ### `sky_light(pos)`
 
-Numeric function, returning sky light at position. From the sky access.
+Numeric function, returning the sky light at position (from sky access).
 
 ### `see_sky(pos)`
 
@@ -1888,7 +1919,7 @@ Boolean function, true if the block ticks randomly.
 
 ### `blocks_movement(pos)`
 
-Boolean function, true if block at position blocks movement.
+Boolean function, true if the block at position blocks movement.
 
 ### `block_sound(pos)`
 
@@ -2014,11 +2045,11 @@ Returns the map colour of a block at position. One of:
 ### `loaded(pos)`
 
 Boolean function, true if the block is accessible for the game mechanics. Normally `scarpet` doesn't check if operates 
-on loaded area - the game will automatically load missing blocks. We see this as advantage. Vanilla `fill/clone` 
+on loaded area - the game will automatically load missing blocks. We see this as an advantage. Vanilla `fill/clone` 
 commands only check the specified corners for loadness.
 
-To check if block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
-outside of the playable area, just are not used any of the game mechanics processes.
+To check if a block is truly loaded, I mean in memory, use `generation_status(x) != null`, as chunks can still be loaded 
+outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
 loaded(pos(players()))  => 1
@@ -2033,7 +2064,7 @@ Deprecated as of scarpet 1.6, use `loaded_status(x) > 0`, or just `loaded(x)` wi
 
 ### `loaded_status(pos)`
 
-Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for ticking, 
+Returns loaded status as per new 1.14 chunk ticket system, 0 for inaccessible, 1 for border chunk, 2 for redstone ticking, 
 3 for entity ticking
 
 ### `is_chunk_generated(pos)`, `is_chunk_generated(pos, force)`
@@ -2055,13 +2086,41 @@ Returns generation status as per the ticket system. Can return any value from se
 can only be stable in a few states: `full`, `features`, `liquid_carvers`, and `structure_starts`. Returns `null` 
 if the chunk is not in memory unless called with optional `true`.
 
+### `inhabited_time(pos)`
+
+Returns inhabited time for a chunk.
+
+### `spawn_potential(pos)`
+
+Returns spawn potential at a location (1.16+ only)
+
+### `structure_eligibility(pos, ?structure, ?size_needed)`
+
+Checks wordgen eligibility for a structure in a given chunk. If no structure is given, or `null`, then it will check
+ for all structures. If bounding box of the structures is also requested, it will compute size of potential
+  structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
+  making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
+  
+  Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
+  the actual structure from forming.
+  
+If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
+a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
+list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
+
+If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
+should be generated there.
+
+
 ### `structures(pos), structures(pos, structure_name)`
 
 Returns structure information for a given block position. Note that structure information is the same for all the 
 blocks from the same chunk. `structures` function can be called with a block, or a block and a structure name. In 
 the first case it returns a map of structures at a given position, keyed by structure name, with values indicating 
 the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
-name, returns list of components for that structure, with their name, direction and two sets of coordinates 
+name, returns a map with two values, `'box'` for bounding box of the structure, and `'pieces'` for a list of 
+components for that structure, with their name, direction and two sets of coordinates 
 indicating the bounding box of the structure piece.
 
 ### `structure_references(pos), structure_references(pos, structure_name)`
@@ -2076,7 +2135,7 @@ then to get its bounding boxes.
 
 Creates or removes structure information of a structure associated with a chunk of `pos`. Unlike `plop`, blocks are 
 not placed in the world, only structure information is set. For the game this is a fully functional structure even 
-if blocks are not set. To remove structure a given point is in, use `structure_references` to find where current 
+if blocks are not set. To remove the structure a given point is in, use `structure_references` to find where current 
 structure starts.
 
 ### `plop(pos, what)`
@@ -2122,6 +2181,13 @@ Structure list:
 *   `village_savanna`: Savanna, acacia village.
 *   `village_taiga`: Taiga, spruce village.
 *   `village_snowy`: Resolute, Canada.
+*   `nether_fossil`: Pile of bones (1.16)
+*   `ruined_portal`: Ruined portal, random variant.
+*   `bastion_remnant`: Piglin bastion, random variant for the chunk (1.16)
+*   `bastion_remnant_housing`: Housing units version of a piglin bastion (1.16)
+*   `bastion_remnant_stable`: Hoglin stables version of q piglin bastion (1.16)
+*   `bastion_remnant_treasure`: Treasure room version of a piglin bastion (1.16)
+*   `bastion_remnant_bridge` : Bridge version of a piglin bastion (1.16)
 
 Feature list:
 
@@ -2178,6 +2244,18 @@ Feature list:
 *   `coral`: random coral structure. Require water to spawn.
 *   `sea_pickle`
 *   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
+*   `crimson_fungus` (1.16)
+*   `warped_fungus` (1.16)
+*   `nether_sprouts` (1.16)
+*   `crimson_roots` (1.16)
+*   `warped_roots`  (1.16)
+*   `weeping_vines` (1.16)
+*   `twisting_vines` (1.16)
+*   `basalt_pillar` (1.16)
+
+### `reload_chunk(pos)`
+
+Sends full chunk data to clients. Useful when lots stuff happened and you want to refresh it on the clients.
 
 ### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
 Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous
@@ -2193,15 +2271,25 @@ It returns a `map` with a report indicating how many chunks were affected, and h
  * `layer_count_<status>`: number of chunks for which a `<status>` generation step has been performed
  * `layer_time_<status>`: cumulative time for all chunks spent on generating `<status>` step
  
-# Iterating over larger areas of blocks
+### add_chunk_ticket(pos, type, radius)
+
+Adds a chunk ticket at a position, which makes the game to keep the designated area centered around
+`pos` with radius of `radius` loaded for a predefined amount of ticks, defined by `type`. Allowed types
+are `portal`: 300 ticks, `teleport`: 5 ticks, and `unknown`: 1 tick. Radius can be from 1 to 32 ticks.
+
+This function is tentative - will likely change when chunk ticket API is properly fleshed out.# Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
-### `scan(cx, cy, cz, dx, dy, dz, px?, py?, pz?, expr)`
+### `scan(cx, cy, cz, dx, dy, dz, px?, py?, pz?, expr)`, `scan(center, range, lower_range?, expr)`
 
-Evaluates expression over area of blocks defined by its center (`cx, cy, cz`), expanded in all directions 
-by `dx, dy, dz` blocks, or optionally in negative with `d` coords, and `p` coords in positive values. `expr` 
-receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
+Evaluates expression over area of blocks defined by its center `center = (cx, cy, cz)`, expanded in all directions 
+by `range = (dx, dy, dz)` blocks, or optionally in negative with `range` coords, and `upper_range` coords in 
+positive values.
+`center` can be defined either as three coordinates, a list of three coords, or a block value.
+`range` and `lower_range` can have the same representations, just if its a block, it computes the distance to the center
+as range instead of taking the values as is.
+`expr` receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
 
 Returns number of successful evaluations of `expr` (with `true` boolean result) unless called in void context, 
 which would cause the expression not be evaluated for their boolean value.
@@ -2211,7 +2299,7 @@ return value. `break` return value has no effect.
 
 ### `volume(x1, y1, z1, x2, y2, z2, expr)`
 
-Evaluates expression for each block in the area, the same as the `scan`function, but using two opposite corners of 
+Evaluates expression for each block in the area, the same as the `scan` function, but using two opposite corners of 
 the rectangular cuboid. Any corners can be specified, its like you would do with `/fill` command.
 
 For return value and handling `break` and `continue` statements, see `scan` function above.
@@ -2227,7 +2315,7 @@ for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 ### `rect(cx, cy, cz, dx?, dy?, dz?, px?, py?, pz?)`
 
 returns an iterator, just like `range` function that iterates over rectangular cubarea of blocks. If only center 
-point is specified, it iterates over 27 blocks. If `d` arguments are specified, expands selection of respective 
+point is specified, it iterates over 27 blocks. If `d` arguments are specified, expands selection by the  respective 
 number of blocks in each direction. If `p` arguments are specified, it uses `d` for negative offset, and `p` for positive.
 
 ### `diamond(cx, cy, cz, radius?, height?)`
@@ -2240,23 +2328,23 @@ Any of these can be zero as well. radius of 0 makes a stick, height of 0 makes a
 ## Entity Selection
 
 Entities have to be fetched before using them. Entities can also change their state between calls to the script if 
-game happens either in between separate calls to the programs, or if the program calls `game_tick` on its own. 
-In this case - entities would need to be re-fetched, or the code should account for entities getting dead.
+game ticks occur either in between separate calls to the programs, or if the program calls `game_tick` on its own. 
+In this case - entities would need to be re-fetched, or the code should account for entities dying.
 
 ### `player(), player(type), player(name)`
 
 With no arguments, it returns the calling player or the player closest to the caller. Note that the main context 
-will receive `p` variable pointing to this player. With `type` or `name` specified it will try first to match a type, 
+will receive `p` variable pointing to this player. With `type` or `name` specified, it will try first to match a type, 
 returning a list of players matching a type, and if this fails, will assume its player name query retuning player with 
 that name, or `null` if no player was found. With `'all'`, list of all players in the game, in all dimensions, so end 
 user needs to be cautious, that you might be referring to wrong blocks and entities around the player in question. 
 With `type = '*'` it returns all players in caller dimension, `'survival'` returns all survival and adventure players,
 `'creative'` returns all creative players, `'spectating'` returns all spectating players, and `'!spectating'`, 
-all not-spectating players. If all fails, with `name`, the player in question, if is logged in.
+all not-spectating players. If all fails, with `name`, the player in question, if he/she is logged in.
 
 ### `entity_id(uuid), entity_id(id)`
 
-Fetching entities wither by their ID obtained via `entity ~ 'id'`, which is unique for a dimension and current world 
+Fetching entities either by their ID obtained via `entity ~ 'id'`, which is unique for a dimension and current world 
 run, or by UUID, obtained via `entity ~ 'uuid'`. It returns null if no such entity is found. Safer way to 'store' 
 entities between calls, as missing entities will be returning `null`. Both calls using UUID or numerical ID are `O(1)`, 
 but obviously using UUIDs takes more memory and compute.
@@ -2275,12 +2363,12 @@ selectors are available:
 ### `entity_area(type, cx, cy, cz, dx, dy, dz)`
 
 Returns entities of a specified type in an area centered on `cx, cy, cz` and at most `dx, dy, dz` blocks away from 
-the center point. Uses same selectors as `entities_list`
+the center point. Uses the same selectors as `entities_list`.
 
 ### `entity_selector(selector)`
 
-Returns entities satisfying given vanilla entity selector. Most complex among all the methods of selecting entities, 
-but the most capable. Selectors are cached so should be as fast as other methods of selecting entities.
+Returns entities satisifying given vanilla entity selector. Most complex among all the methods of selecting entities, 
+but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities.
 
 ### `spawn(name, pos, nbt?)`
 
@@ -2290,168 +2378,186 @@ you get the entity back as a return value, which is swell.
 
 ## Entity Manipulation
 
-Unlike with blocks, that use plethora of vastly different querying functions, entities are queried with `query` 
-function and altered via `modify` function. Type of information needed or values to be modified are different for 
+Unlike with blocks, that use a plethora of vastly different querying functions, entities are queried with the `query` 
+function and altered via the `modify` function. Type of information needed or values to be modified are different for 
 each call.
 
 Using `~` (in) operator is an alias for `query`. Especially useful if a statement has no arguments, 
-which in this case can be radically simplified
+which in this case can be radically simplified:
 
 <pre>
 query(p, 'name') <=> p ~ 'name'     // much shorter and cleaner
 query(p, 'holds', 'offhand') <=> p ~ l('holds', 'offhand')    // not really but can be done
 </pre>
 
-### `query(e,'removed')`
+### `query(e, 'removed')`
 
-Boolean. True if the entity is removed
+Boolean. True if the entity is removed.
 
-### `query(e,'id')`
+### `query(e, 'id')`
 
 Returns numerical id of the entity. Most efficient way to keep track of entites in a script. 
 Ids are only unique within current game session (ids are not preserved between restarts), 
-and dimension (each dimension has its own ids which can overlap.
+and dimension (each dimension has its own ids which can overlap).
 
-### `query(e,'uuid')`
+### `query(e, 'uuid')`
 
-Returns UUID (unique id) of the entity. Can be used to access entities with the other vanilla commands and 
+Returns the UUID (unique id) of the entity. Can be used to access entities with the other vanilla commands and 
 remains unique regardless of the dimension, and is preserved between game restarts. Apparently players cannot be 
-accessed via UUID, but name instead.
+accessed via UUID, but should be accessed with their name instead.
 
 <pre>
 map(entities_area('*',x,y,z,30,30,30),run('kill '+query(_,'id'))) // doesn't kill the player
 </pre>
 
-### `query(e,'pos')`
+### `query(e, 'pos')`
 
-Triple of entity position
+Triple of the entity's position
 
-### `query(e,'location')`
+### `query(e, 'location')`
 
-Quin-tuple of entity position (x, y, and z coords), and rotation (yaw, pitch)
+Quin-tuple of the entity's position (x, y, and z coords), and rotation (yaw, pitch)
 
-### `query(e,'x'), query(e,'y'), query(e,'z')`
+### `query(e, 'x'), query(e, 'y'), query(e, 'z')`
 
-Respective entity coordinate
+Respective component of entity's coordinates
 
-### `query(e,'pitch'), query(e,'yaw')`
+### `query(e, 'pitch'), query(e, 'yaw')`
 
 Pitch and Yaw or where entity is looking.
 
-### `query(e,'look')`
+### `query(e, 'look')`
 
 Returns a 3d vector where the entity is looking.
 
-### `query(e,'motion')`
+### `query(e, 'motion')`
 
-Triple of entity motion vector, `l(motion_x, motion_y, motion_z)`
+Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`
 
-### `query(e,'motion_x'), query(e,'motion_y'), query(e,'motion_z')`
+### `query(e, 'motion_x'), query(e, 'motion_y'), query(e, 'motion_z')`
 
-Respective component of the motion vector
+Respective component of the entity's motion vector
 
-### `query(e,'name'), query(e,'custom_name'), query(e,'type')`
+### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
 String of entity name
 
-<pre>query(e,'name')  => Leatherworker
+<pre>
+query(e,'name')  => Leatherworker
 query(e,'custom_name')  => null
 query(e,'type')  => villager
 </pre>
 
-### `query(e,'is_riding')`
+## `query(e, 'command_name')`
 
-Boolean. True if riding another entity.
+Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
+player, where its their name.
 
-### `query(e,'is_ridden')`
+<pre>
+run('/kill ' + e~'command_name');
+</pre>
 
-Boolean. True if another entity is riding it.
+### `query(e, 'is_riding')`
 
-### `query(e,'passengers')`
+Boolean, true if the entity is riding another entity.
+
+### `query(e, 'is_ridden')`
+
+Boolean, true if another entity is riding it.
+
+### `query(e, 'passengers')`
 
 List of entities riding the entity.
 
-### `query(e,'mount')`
+### `query(e, 'mount')`
 
 Entity that `e` rides.
 
-### `query(e,'tags')`
+### `query(e, 'tags')`
 
-List of entity tags.
+List of entity's tags.
 
-### `query(e,'has_tags',tag)`
+### `query(e, 'has_tag',tag)`
 
-Boolean, True if the entity is marked with `tag`.
+Boolean, true if the entity is marked with `tag`.
 
-### `query(e,'is_burning')`
+### `query(e, 'is_burning')`
 
-Boolean, True if the entity is burning.
+Boolean, true if the entity is burning.
 
-### `query(e,'fire')`
+### `query(e, 'fire')`
 
 Number of remaining ticks of being on fire.
 
-### `query(e,'silent')`
+### `query(e, 'silent')`
 
-Boolean, True if the entity is silent.
+Boolean, true if the entity is silent.
 
-### `query(e,'gravity')`
+### `query(e, 'gravity')`
 
-Boolean, True if the entity is affected by gravity, like most entities do.
+Boolean, true if the entity is affected by gravity, like most entities are.
 
-### `query(e,'immune_to_fire')`
+### `query(e, 'immune_to_fire')`
 
-Boolean, True if the entity is immune to fire.
+Boolean, true if the entity is immune to fire.
 
-### `query(e,'dimension')`
+### `query(e, 'dimension')`
 
-Name of the dimension entity is in.
+Name of the dimension the entity is in.
 
-### `query(e,'height')`
+### `query(e, 'height')`
 
-Height of the entity.
+Height of the entity in blocks.
 
-### `query(e,'width')`
+### `query(e, 'width')`
 
-Width of the entity.
+Width of the entity in blocks.
 
-### `query(e,'eye_height')`
+### `query(e, 'eye_height')`
 
-Eye height of the entity.
+Eye height of the entity in blocks.
 
-### `query(e,'age')`
+### `query(e, 'age')`
 
-Age, in ticks, of the entity, i.e. how long it existed.
+Age of the entity in ticks, i.e. how long it existed.
 
-### `query(e,'breeding_age')`
+### `query(e, 'breeding_age')`
 
-Breeding age of passive entity, in ticks. If negative it it time to adulthood, if positive, breeding cooldown
+Breeding age of passive entity, in ticks. If negative, time to adulthood, if positive, breeding cooldown
 
-### `query(e,'despawn_timer')`
+### `query(e, 'despawn_timer')`
 
-For living entities - the number of ticks they fall outside of immediate player presence.
+For living entities, the number of ticks they fall outside of immediate player presence.
 
-### `query(e,'item')`
+### `query(e, 'portal_cooldown')`
+
+Number of ticks remaining until an entity can use a portal again.
+
+### `query(e, 'portal_timer')`
+
+Number of ticks an entity sits in a portal.
+
+### `query(e, 'item')`
 
 The item triple (name, count, nbt) if its an item entity, `null` otherwise
 
-### `query(e,'count')`
+### `query(e, 'count')`
 
 Number of items in a stack from item entity, `null` otherwise
 
-### `query(e,'pickup_delay')`
+### `query(e, 'pickup_delay')`
 
 Retrieves pickup delay timeout for an item entity, `null` otherwise
 
-### `query(e,'is_baby')`
+### `query(e, 'is_baby')`
 
 Boolean, true if its a baby.
 
-### `query(e,'target')`
+### `query(e, 'target')`
 
 Returns mob's attack target or null if none or not applicable.
 
-### `query(e,'home')`
+### `query(e, 'home')`
 
 Returns creature's home position or null if none or not applicable.
 
@@ -2466,31 +2572,31 @@ Returns a pose of an entity, one of the following options
  * `'crouching'`
  * `'dying'`
 
-### `query(e,'sneaking')`
+### `query(e, 'sneaking')`
 
-Boolean, true if entity is sneaking.
+Boolean, true if the entity is sneaking.
 
-### `query(e,'sprinting')`
+### `query(e, 'sprinting')`
 
-Boolean, true if entity is sprinting.
+Boolean, true if the entity is sprinting.
 
-### `query(e,'swimming')`
+### `query(e, 'swimming')`
 
-Boolean, true if entity is swimming.
+Boolean, true if the entity is swimming.
 
-### `query(e,'jumping')`
+### `query(e, 'jumping')`
 
-Boolean, true if entity is jumping.
+Boolean, true if the entity is jumping.
 
-### `query(e,'gamemode')`
+### `query(e, 'gamemode')`
 
 String with gamemode, or `null` if not a player.
 
-### `query(e,'gamemode_id')`
+### `query(e, 'gamemode_id')`
 
 Good'ol gamemode id, or null if not a player.
 
-### `query(e,'player_type')`
+### `query(e, 'player_type')`
 
 Returns `null` if the argument is not a player, otherwise:
 
@@ -2502,18 +2608,25 @@ Returns `null` if the argument is not a player, otherwise:
 *   `shadow`: any carpet-shadowed real player
 *   `realms`: ?
 
-### `query(e,'ping')`
+### `query(e, 'category')`
+Returns a lowercase string containing the category of the entity (hostile, passive, water, ambient, misc)
+
+### `query(e, 'team')`
+
+Team name for entity, or `null` if no team is assigned.
+
+### `query(e, 'ping')`
     
 Player's ping in milliseconds, or `null` if its not a player.
 
-### `query(e,'permission_level')`
+### `query(e, 'permission_level')`
 
 Player's permission level, or `null` if not applicable for this entity.
 
-### `query(e,'effect',name?)`
+### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
-effect name, amplifier, and remaining duration. With an argument, if the living entity has not that potion active, 
+effect name, amplifier, and remaining duration in ticks. With an argument, if the living entity has not that potion active, 
 returns `null`, otherwise return a tuple of amplifier and remaining duration.
 
 <pre>
@@ -2522,13 +2635,20 @@ query(p,'effect','haste')  => [0, 177]
 query(p,'effect','resistance')  => null
 </pre>
 
-### `query(e,'health')`
+### `query(e, 'health')`
 
 Number indicating remaining entity health, or `null` if not applicable.
 
-### `query(e,'holds',slot?)`
+### `query(e, 'hunger')`
+### `query(e, 'saturation')`
+### `query(e, 'exhaustion')`
 
-Returns triple of short name, stack count, and NBT of item held in `slot`. Available options for `slot` are:
+Retrieves player hunger related information. For non-players, returns `null`.
+
+
+### `query(e, 'holds', slot?)`
+
+Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
 
 *   `mainhand`
 *   `offhand`
@@ -2539,16 +2659,16 @@ Returns triple of short name, stack count, and NBT of item held in `slot`. Avail
 
 If `slot` is not specified, it defaults to the main hand.
 
-### `query(e,'selected_slot')`
+### `query(e, 'selected_slot')`
 
-Number indicating the selected slot of entity inventory. Currently only applicable to players.
+Number indicating the selected slot of entity's inventory. Currently only applicable to players.
 
-### `query(e,'facing', order?)`
+### `query(e, 'facing', order?)`
 
 Returns where the entity is facing. optional order (number from 0 to 5, and negative), indicating primary directions 
 where entity is looking at. From most prominent (order 0) to opposite (order 5, or -1)
 
-### `query(e,'trace', reach?, options?...)`
+### `query(e, 'trace', reach?, options?...)`
 
 Returns the result of ray tracing from entity perspective, indicating what it is looking at. Default reach is 4.5 
 blocks (5 for creative players), and by default it traces for blocks and entities, identical to player attack tracing 
@@ -2560,9 +2680,9 @@ entities and blocks, blocks will take over the priority even if transparent or n
 Regardless of the options selected, the result could be `null` if nothing is in reach, entity, if look targets an
 entity, and block value if block is in reach.
 
-### `query(e,'nbt',path?)`
+### `query(e, 'nbt', path?)`
 
-Returns full NBT of the entity. If path is specified, it fetches only that portion of the NBT, that corresponds to the 
+Returns full NBT of the entity. If path is specified, it fetches only the portion of the NBT that corresponds to the 
 path. For specification of `path` attribute, consult vanilla `/data get entity` command.
 
 Note that calls to `nbt` are considerably more expensive comparing to other calls in Minecraft API, and should only 
@@ -2574,13 +2694,13 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
 don't work currently on players as their position is controlled by clients.
 
-Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity`
+Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`
 
-### `modify(e,'remove')`
+### `modify(e, 'remove')`
 
 Removes (not kills) entity from the game.
 
-### `modify(e,'kill')`
+### `modify(e, 'kill')`
 
 Kills the entity.
 
@@ -2594,7 +2714,7 @@ Changes full location vector all at once.
 
 ### `modify(e, 'x', x), modify(e, 'y', y), modify(e, 'z', z)`
 
-Moves the entity in.... one direction.
+Moves the entity in one direction.
 
 ### `modify(e, 'pitch', pitch), modify(e, 'yaw', yaw)`
 
@@ -2616,20 +2736,34 @@ Sets the corresponding component of the motion vector.
 
 Adds a vector to the motion vector. Most realistic way to apply a force to an entity.
 
-### `modify(e, 'custom_name'), modify(e, 'custom_name', name )`
+### `modify(e, 'custom_name'), modify(e, 'custom_name', name)`
+
+Sets the custom name of the entity.
 
 ### `modify(e, 'age', number)`
 
-Modifies entity's internal age counter. Fiddling with this will affect directly behaviours of complex 
+Modifies entity's internal age counter. Fiddling with this will affect directly AI behaviours of complex 
 entities, so use it with caution.
 
 ### `modify(e, 'pickup_delay', number)`
 
+Sets the pickup delay for the item entity.
+
 ### `modify(e, 'breeding_age', number)`
+
+Sets the breeding age for the animal.
 
 ### `modify(e, 'despawn_timer', number)`
 
 Sets a custom despawn timer value.
+
+### `modify(e, 'portal_cooldown', number)`
+
+Sets a custom number of ticks remaining until an entity can use a portal again.
+
+### `modify(e, 'portal_timer', number)`
+
+Sets a custom number of ticks an entity sits in a portal.
 
 ### `modify(e, 'dismount')`
 
@@ -2649,11 +2783,11 @@ Mounts on all listed entities on `e`.
 
 ### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', l(tags) )`
 
-Adds tag / tags to the entity.
+Adds tag(s) to the entity.
 
 ### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', l(tags) )`
 
-Removes tag from entity.
+Removes tag(s) from the entity.
 
 ### `modify(e, 'talk')`
 
@@ -2666,17 +2800,62 @@ If called with `false` value, it will disable AI in the mob. `true` will enable 
 ### `modify(e, 'no_clip', boolean)`
 
 Sets if the entity obeys any collisions, including collisions with the terrain and basic physics. Not affecting 
-players, since they are controlled client side
+players, since they are controlled client side.
 
-### `modify(e, 'effect', name, duration?, amplifier?, show_particles?, show_icon?)`
+### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?)`
 
 Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true` 
-and `true`. If no duration is specified, or it is null or 0, the effect is removed.
+and `true`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
+it clears all effects.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
 
 Sets AI to stay around the home position, within `distance` blocks from it. `distance` defaults to 16 blocks. 
 `null` removes it. _May_ not work fully with mobs that have this AI built in, like Villagers.
+
+### `modify(e, 'gamemode', gamemode?), modify(e, 'gamemode', gamemode_id?)`
+
+Modifies gamemode of player to whatever string (case-insensitive) or number you put in.
+
+* 0: survival
+* 1: creative
+* 2: adventure
+* 3: spectator
+
+### `modify(e, 'jumping', boolean)`
+
+Will make the entity constantly jump if set to true, and will stop the entity from jumping if set to false.
+Note that jumping parameter can be fully controlled by the entity AI, so don't expect that this will have 
+a permanent effect. Use `'jump'` to make an entity jump once for sure.
+
+Requires a living entity as an argument.
+
+### `modify(e, 'jump'))`
+
+Will make the entity jump once.
+
+### `modify(e, 'silent', boolean)`
+
+Silences or unsilences the entity.
+
+### `modify(e, 'gravity', boolean)`
+
+Toggles gravity for the entity.
+
+### `modify(e, 'fire', ticks)`
+
+Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
+
+### `modify(e, 'hunger', value)`
+### `modify(e, 'saturation', value)`
+### `modify(e, 'exhaustion', value)`
+
+Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'add_exhaustion', value)`
+
+adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
+to manipulate how much 'food' some action cost.
 
 ## Entity Events
 
@@ -2688,19 +2867,19 @@ defining the callback with `entity_event`
 
 The following events can be handled by entities.
 
-*   `'on_tick'`: executes every tick right before entity is ticked in the game. Required arguments: `entity`
+*   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
 *   `'on_damaged'`: executed every time a living entity is about to receive damage. 
 Required arguments: `entity, amount, source, attacking_entity`
 
 It doesn't mean that all entity types will have a chance to execute a given event, but entities will not error 
-when you will attach inapplicable event to it.
+when you attach inapplicable event to it.
 
 ### `entity_event(e, event, call_name, args...)`
 
-Attaches specific function from the current package to be called upon the `event`, with extra `args` curried to the 
-original required arguments for the event handler
+Attaches specific function from the current package to be called upon the `event`, with extra `args` carried to the 
+original required arguments for the event handler.
 
 <pre>
 protect_villager(entity, amount, source, source_entity, healing_player) ->
@@ -2727,7 +2906,12 @@ health back to the villager after being harmed.
 
 Most functions in this category require inventory as the first argument. Inventory could be specified by an entity, 
 or a block, or position (three coordinates) of a potential block with inventory. Player enderchest inventory require 
-two arguments, keyword `'enderchest'`, followed by the player entity argument. If the entity or a block doesn't have 
+two arguments, keyword `'enderchest'`, followed by the player entity argument, or a single argument as a string of a
+form: `'enderchest_steve'`. If your player name starts with enderchest, it can be always accessed by passing a player
+entity value. If all else fails, it will try to identify first three arguments as coordinates of a block position of
+a block inventory. Player inventories can also be called by their name.
+ 
+ If the entity or a block doesn't have 
 an inventory, they typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
@@ -2858,7 +3042,7 @@ __on_tick()         // can access blocks and entities in the overworld
 __on_tick_nether()  // can access blocks and entities in the nether
 __on_tick_ender()   // can access blocks and entities in the end
 __on_chunk_generated(x,z) // called after a chunk is promoted to the full chunk,
-                          // prodiving lowest x and z coords in the chunk
+                          // providing lowest x and z coords in the chunk
                           // event will not work with optifine installed in the game
 __on_lightning(block, mode) // mode is `true` if lightning caused horse trap to spawn
 // player specific callbacks
@@ -2872,6 +3056,11 @@ __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right cli
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
 __on_player_attacks_entity(player, entity)
+__on_player_takes_damage(player, amount, source, source_entity)
+__on_player_deals_damage(player, amount, entity)
+__on_player_dies(player)
+__on_player_respawns(player)
+__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)
 __on_player_rides(player, forward, strafe, jumping, sneaking)
 __on_player_jumps(player)
 __on_player_deploys_elytra(player)
@@ -2882,8 +3071,15 @@ __on_player_starts_sprinting(player)
 __on_player_stops_sprinting(player)
 __on_player_drops_item(player)
 __on_player_drops_stack(player)
+__on_player_connects(player)
+__on_player_disconnects(player, reason)
 __on_statistic(player, category, event, value) // player statistic changes
 </pre>
+
+Couple special cases.
+* `__on_player_changes_dimension` returns `null` as `to_pos` when player goes back to the overworld from the end
+, since the respawn location of the player is not control by the teleport, or a player can see the end credits. After
+ the player is eligible to respawn in the overworld, `__on_player_respawns` will be triggered.
 
 ### `/script event` command
 
@@ -2910,9 +3106,12 @@ scoreboard_add('counter')
 scoreboard_add('lvl','level')
 </pre>
 
-### `scoreboard_remove(objective)`
+### `scoreboard_remove(objective)` `scoreboard_remove(objective, key)`
 
-Removes an objective. Returns `true` if objective has existed and has been removed.
+Removes an entire objective, or an entry in the scoreboard associated with the key. 
+Returns `true` if objective has existed and has been removed, or previous
+value of the scoreboard if players score is removed. Returns `null` if objective didn't exist, or a key was missing
+for the objective.
 
 ### `scoreboard_display(place, objective)`
 
@@ -2923,36 +3122,112 @@ Collection of other methods that control smaller, yet still important aspects of
 
 ## Sounds
 
-### `sound(name, pos, volume?, pitch?)`
+### `sound(name, pos, volume?, pitch?, mixer?)`
 
-Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`. `pos` can be 
-either a block, triple of coords, or a list of thee numbers. Uses the same options as a corresponding `playsound` command.
+Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
+optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
+Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
+and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
+ corresponding `playsound` command.
 
 ## Particles
 
-### `particle(name, pos, count?. spread?, speed?, playername?)`
+### `particle(name, pos, count?. spread?, speed?, player?)`
 
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
 
-### `particle_line(name, pos, pos2, density?)`
+### `particle_line(name, pos, pos2, density?, player?)`
 
 Renders a line of particles from point `pos` to `pos2` with supplied density (defaults to 1), which indicates how far 
-apart you would want particles to appear, so `0.1` means one every 10cm.
+apart you would want particles to appear, so `0.1` means one every 10cm. If a player (or player name) is supplied, only
+that player will receive particles.
 
-### `particle_rect(name, pos, pos2, density?)`
 
-Renders a cuboid of particles between point `pos` to `pos2` with supplied density.
+### `particle_box(name, pos, pos2, density?, player?)`
+### `particle_rect` (deprecated)
+
+Renders a cuboid of particles between points `pos` and `pos2` with supplied density. If a player (or player name) is 
+supplied, only that player will receive particles.
 
 ## Markers
+
+### `draw_shape(shape, duration, key?, value?, ... )`, 
+### `draw_shape(shape, duration, l(key?, value?, ... ))`, 
+### `draw_shape(shape, duration, attribute_map)`
+### `draw_shape(shape_list)`
+
+Draws a shape in the world that will expire in `duration` ticks. Other attributes of the shape should be provided as 
+consecutive key - value argument pairs, either as next arguments, or packed in a list, or supplied as a proper key-value
+`map`. Arguments may include shared shape attributes, which are all optional, as well as shape-specific attributes, that
+could be either optional or required. Shapes will draw properly on all carpet clients. Other connected players that don't
+have carpet installed will still be able to see the required shapes in the form of dust particles. Replacement shapes
+are not required to follow all attributes precisely, but will allow vanilla clients to receive some experience of your 
+apps. One of the attributes that will definitely not be honored is the duration - particles will be send once
+per shape and last whatever they typically last in the game.
+
+Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
+Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
+sending many small packets to draw several shapes at once.
+
+Shapes will fail to draw and raise a runtime error if not all its required parameters
+are specified and all available shapes have some parameters that are required, so make sure to have them in place:
+
+On the client, shapes can recognize that they are being redrawn again with the same parameters, disregarding the 
+duration parameter. This updates the expiry on the drawn shape to the new value, instead of adding new shape in its 
+place. This can be used for toggling the shapes on and off that has been send previously with very large durations, 
+or simply refresh the shapes periodically in more dynamic applications.
+
+Optional shared shape attributes:
+ * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
+ in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
+ * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
+ player, otherwise it will be send to all players in the dimension.
+ * `width` - line thickness, defaults to 2.0pt
+ * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
+ * `follow` - entity, or player name. Shape will follow an entity instead of being static.
+   Follow attribute requires all positional arguments to be relative to the entity and disallow
+   of using entity or block as position markers. You must specify positions as a triple.
+ * `snap` - if `follow` is present, indicated on which axis the snapping to entity coordinates occurs, and which axis
+   will be treated statically, i.e. the coordinate passed in a coord triple is the actual value in the world. Default
+   value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
+   instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate.
+
+Available shapes:
+ * `'line'` - draws a straight line between two points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one end of the line
+     * `to` - other end of the line, same format as `from`
+     
+ * `'box'` - draws a box with corners in specified points
+   * Required attributes:
+     * `from` - triple coordinates, entity, or block value indicating one corner of the box
+     * `to` - other corner, same format as `from`
+
+ * `'sphere'`:
+   * Required attributes:
+     * `center` - center of the sphere
+     * `radius` - radius of the sphere
+   * Optional attributes:
+     * `level` - level of details, or grid size. The more the denser your sphere. Default level of 0, means that the
+      level of detail will be selected automatically based on radius.
+      
+ * `'cylinder'`:
+   * Required attributes:
+     * `center` - center of the base
+     * `radius` - radius of the base circle
+   * Optional attributes:
+     * `axis` - cylinder direction, one of `'x'`, `'y'`, `'z'` defaults to `'y'`
+     * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
+     * `level` - level of details, see `'sphere'`.
 
 ### `create_marker(text, pos, rotation?, block?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
 Unloading the app that spawned them will cause all the markers from the loaded portion of the world to be removed. 
-Also - if the game loads that marker in the future and the app is not loaded, it will be removed as well.
+Also, if the game loads that marker in the future and the app is not loaded, it will be removed as well.
 
 ### `remove_all_markers()`
 
@@ -2977,16 +3252,127 @@ as a string value.
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
 
+### `format(components, ...)`, `format(l(components, ...))`
+
+Creates a line of formatted text. Each component is either a string indicating formatting and text it corresponds to
+or a decorator affecting the component preceding it.
+
+Regular formatting components is a string that have the structure of: 
+`'<format> <text>'`, like `'gi Hi'`, which in this case indicates a grey, italicised word `'Hi'`. The space to separate the format and the text is mandatory. The format can be empty, but the space still
+needs to be there otherwise the first word of the text will be used as format, which nobody wants.
+
+Format is a list of formatting symbols indicating the format. They can be mixed and matched although color will only be
+applied once. Available symbols include:
+ * `i` - _italic_ 
+ * `b` - **bold**
+ * `s` - ~~strikethrough~~
+ * `u` - <u>underline</u>
+ * `o` - obfuscated
+
+And colors:
+ * `w` - White (default)
+ * `y` - Yellow
+ * `m` - Magenta (light purple)
+ * `r` - Red
+ * `c` - Cyan (aqua)
+ * `l` - Lime
+ * `t` - lighT blue
+ * `f` - dark grayF (weird Flex, but ok)
+ * `g` - Gray
+ * `d` - golD
+ * `p` - PurPle
+ * `n` - browN (dark red)
+ * `q` - turQuoise (dark aqua)
+ * `e` - grEEn
+ * `v` - naVy blue
+ * `k` - blaK
+ * `#FFAACC` - arbitrary RGB color (1.16+), hex notation. Use uppercase for A-F symbols
+ 
+Decorators (listed as extra argument after the component they would affect):
+ * `'^<format> <text>'` - hover over tooltip text, appearing when hovering with your mouse over the text below.
+ * `'?<suggestion>` - command suggestion - a message that will be pasted to chat when text below it is clicked.
+ * `'!<message>'` - a chat message that will be executed when the text below it is clicked.
+ 
+Both suggestions and messages can contain a command, which will be executed as a player that clicks it.
+
+So far the only usecase for formatted texts is with a `print` command. Otherwise it functions like a normal 
+string value representing what is actually displayed on screen.
+ 
+Example usages:
+<pre>
+ print(format('rbu Error: ', 'r Stuff happened!'))
+ print(format('w Click ','tb [HERE]', '^di Awesome!', '!/kill', 'w \ button to win $1000'))
+  // the reason why I backslash the second space is that otherwise command parser may contract consecutive spaces
+  // not a problem in apps
+</pre>
+
 ### `logger(expr)`
 
 Prints the message to system logs, and not to chat.
 
+### read_file(resource, type)
+### delete_file(resource, type)
+### write_file(resource, type, data, ...)
+
+With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
+ content, or deletes the resource.
+
+Resource is identified by a path to the file.  
+A path can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+from the name. Empty descriptors are invalid. Do not add file extensions to the descriptor - extensions are inferred
+based on the `type` of the file.
+ 
+Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
+resources is guaranteed to be isolated from other apps. Shared resources are... well, shared across all apes, meaning
+they can eat of each others file, however all access to files is synchronized, and files are never left open, so
+this should not lead to any access problems.
+
+If the app's name is `'foo'`, the script location would
+be `world/scripts/foo.sc`, app
+specific data directory is under `world/scripts/foo.data/...`, and shared data space is under
+`world/scripts/shared/...`.
+
+The default no-name app, via `/script run` command can only save/load/read files from the shared space.
+
+Functions return `null` if an error is encounter or no file is present (for read and delete operations). Returns `true`
+for success writes and deletes, and requested data, based on the file type, for read operations.
+
+NBT files can be written once as they an store one tag at a time. Consecutive writes will overwrite previous data.
+
+Write operations to text files always result in appending to the existing file, so consecutive writes will increase
+the size of the file and add data to it. Since files are closed after each write, sending multiple lines of data to
+write is beneficial for writing speed. To send multiple packs of data, either provide them flat or as a list in the
+third argument.
+ * `write_file('temp', 'text', 'foo', 'bar', 'baz')` or
+ * write_file('temp', 'text', l('foo', 'bar', 'baz'))
+ 
+To log a single line of string
+ 
+Supported values for resource `type` is:
+ * `nbt` - NBT tag
+ * `text` - text resource with automatic newlines added
+ * `raw` - text resource without implied newlines
+ * `shared_nbt`, `shared_text`, `shared_raw` - shared versions of the above
+ 
+NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
+stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
+sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
+record to the file.
+
+<pre>
+write_file('foo', 'shared_text, l('one', 'two'));
+write_file('foo', 'shared_text', 'three\n', 'four\n');
+write_file('foo', 'shared_raw', 'five\n', 'six\n');
+
+read_file('foo', 'shared_text')     => ['one', 'two', 'three', '', 'four', '', 'five', 'six']
+</pre>
+  
 ### `run(expr)`
 
 Runs a vanilla command from the string result of the `expr` and returns its success count
 
 <pre>
-run('fill 1 1 1 10 10 10 air') -> 123 // 123 block were filled, this operation was successful 123 times out of a possible 1000 blocks volume
+run('fill 1 1 1 10 10 10 air') -> 123 // 123 block were filled, this operation was successful 123 times out of a possible 1000 block volume
 run('give @s stone 4') -> 1 // this operation was successful once
 </pre>
 
@@ -2995,23 +3381,66 @@ run('give @s stone 4') -> 1 // this operation was successful once
 Performs autosave, saves all chunks, player data, etc. Useful for programs where autosave is disabled due to 
 performance reasons and saves the world only on demand.
 
-### `load_app_data(), load_app_data(file)`
+### `load_app_data()`
+
+NOTE: usages with arguments, so `load_app_data(file)` and `load_app_data(file, shared?)` are deprecated.
+Use `read_file` instead.
 
 Loads the app data associated with the app from the world /scripts folder. Without argument returns the memory 
-managed and buffered / throttled NBT tag. With a file name - reads explicitly a file with that name from the 
-scripts folder.
+managed and buffered / throttled NBT tag. With a file name, reads explicitly a file with that name from the 
+scripts folder that belongs exclusively to the app. if `shared` is true, the file location is not exclusive
+to the app anymore, but located in a shared app space. 
+
+File descriptor can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+from the name before saving/loading. Empty descriptors are invalid. Do not add file extensions to the descriptor
+
+Function returns nbt value with the file content, or `null` if the file is missing or there were problems
+with retrieving the data.
+
+The default no-name app, via `/script run` command can only save/load file from the shared data location.
+
+If the app's name is `'foo'`, the script location would
+be `world/scripts/foo.sc`, system-managed default app data storage is in `world/scripts/foo.data.nbt`, app
+specific data directory is under `world/scripts/foo.data/bar/../baz.nbt`, and shared data space is under
+`world/scripts/shared/bar/../baz.nbt`.
 
 You can use app data to save non-vanilla information separately from the world and other scripts.
 
-### `store_app_data(tag), store_app_data(tag, file)`
+### `store_app_data(tag)`
 
-Stores the app data associated with the app from the world /scripts folder. With the `file` parameter saves 
-immediately and with every call, without `file` parameter, it may take up to 10 seconds for the output file 
+Note:  `store_app_data(tag, file)` and `store_app_data(tag, file, shared?)` usages deprecated. Use `write_file` instead.
+
+Stores the app data associated with the app from the world `/scripts` folder. With the `file` parameter saves 
+immediately and with every call to a specific file defined by the `file`, either in app space, or in the scripts
+shared space if `shared` is true. Without `file` parameter, it may take up to 10
+ seconds for the output file 
 to sync preventing flickering in case this tag changes frequently. It will be synced when server closes.
+
+Returns `true` if the file was saved successfully, `false` otherwise.
+
+Uses the same file structure for exclusive app data, and shared data folder as `load_app_data`.
 
 ### `tick_time()`
 
-Returns game tick counter. Can be used to run certain operations every n-th ticks, or to count in-game time
+Returns server tick counter. Can be used to run certain operations every n-th ticks, or to count in-game time.
+
+### `world_time()`
+
+Returns dimension-specific tick counter.
+
+### `day_time(new_time?)`
+
+Returns current daytime clock value. If `new_time` is specified, sets a new clock
+to that value. Daytime clocks are shared between all dimensions.
+
+### `last_tick_times()`
+
+Returns a 100-long array of recent tick times, in milliseconds. First item on the list is the most recent tick
+If called outside of the main tick (either throgh scheduled tasks, or async execution), then the first item on the
+list may refer to the previous tick performance. In this case the last entry (tick 100) would refer to the most current
+tick. For all intent and purpose, `last_tick_times():0` should be used as last tick execution time, but
+individual tick times may vary greatly, and these need to be taken with the little grain of 
+averaging.
 
 ### `game_tick(mstime?)`
 
@@ -3037,6 +3466,9 @@ Returns current dimension that the script runs in.
 Evaluates the expression `expr` with different dimension execution context. `smth` can be an entity, 
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
+ 
+### `view_distance()`
+Returns the view distance of the server.
 
 ### `schedule(delay, function, args...)`
 
@@ -3059,10 +3491,11 @@ Queries in-game statistics for certain values. Categories include:
 
 For the options of `entry`, consult your statistics page, or give it a guess.
 
-The call will return `null` if the statistics options are incorrect, or player didn't get these in their history. 
+The call will return `null` if the statistics options are incorrect, or player doesn't have them in their history. 
 If the player encountered the statistic, or game created for him empty one, it will return a number. 
 Scarpet will not affect the entries of the statistics, even if it is just creating empty ones. With `null` response 
-it could either mean your input is wrong, or statistic has effectively a value of `0`.# `/script run` command
+it could either mean your input is wrong, or statistic effectively has a value of `0`.
+# `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 
 commandblock, etc... The command receives 4 variables, `x`, `y`, `z` and `p` indicating position and 

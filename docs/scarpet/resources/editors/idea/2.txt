@@ -1,4 +1,5 @@
 air
+add_chunk_ticket
 biome
 blast_resistance
 block
@@ -13,8 +14,10 @@ brightness
 chunk_tickets
 create_marker
 current_dimension
+day_time
 destroy
 diamond
+draw_shape
 drop_item
 emitted_light
 entity_area
@@ -24,18 +27,21 @@ entity_list
 entity_selector
 escape_nbt
 flammable
+format
 game_tick
 generation_status
 hardness
 harvest
 in_dimension
 in_slime_chunk
+inhabited_time
 inventory_find
 inventory_get
 inventory_remove
 inventory_set
 inventory_size
 item_category
+last_tick_times
 light
 liquid
 load_app_data
@@ -62,6 +68,7 @@ property
 query
 random_tick
 rect
+reload_chunk
 remove_all_markers
 reset_chunk
 run
@@ -82,10 +89,12 @@ sky_light
 solid
 sound
 spawn
+spawn_potential
 stack_limit
 statistic
 store_app_data
 structures
+structure_eligibility
 structure_references
 suffocates
 tick_time
@@ -93,5 +102,7 @@ ticks_randomly
 top
 transparent
 update
+view_distance
 volume
 without_updates
+world_time

@@ -9,6 +9,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -43,7 +44,8 @@ public class TickCommand
                                                 c.getSource(),
                                                 getInteger(c,"ticks"),
                                                 getString(c, "tail command")))))).
-                then(literal("freeze").executes( (c)-> toggleFreeze(c.getSource()))).
+                then(literal("freeze").executes( (c)-> toggleFreeze(c.getSource(), false)).
+                        then(literal("deep").executes( (c)-> toggleFreeze(c.getSource(), true)))).
                 then(literal("step").
                         executes((c) -> step(1)).
                         then(argument("ticks", integer(1,72000)).
@@ -66,7 +68,7 @@ public class TickCommand
 
     private static int setTps(ServerCommandSource source, float tps)
     {
-        TickSpeed.tickrate(tps);
+        TickSpeed.tickrate(tps, true);
         queryTps(source);
         return (int)tps;
     }
@@ -79,7 +81,7 @@ public class TickCommand
 
     private static int setWarp(ServerCommandSource source, int advance, String tail_command)
     {
-        PlayerEntity player = null;
+        ServerPlayerEntity player = null;
         try
         {
             player = source.getPlayer();
@@ -95,15 +97,18 @@ public class TickCommand
         return 1;
     }
 
-    private static int toggleFreeze(ServerCommandSource source)
+    private static int toggleFreeze(ServerCommandSource source, boolean isDeep)
     {
         TickSpeed.is_paused = !TickSpeed.is_paused;
         if (TickSpeed.is_paused)
         {
-            Messenger.m(source, "gi Game is paused");
+            TickSpeed.deepFreeze = isDeep;
+            Messenger.m(source, "gi Game is "+(isDeep?"deeply ":"")+"frozen");
+
         }
         else
         {
+            TickSpeed.deepFreeze = false;
             Messenger.m(source, "gi Game runs normally");
         }
         return 1;

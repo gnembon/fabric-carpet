@@ -75,6 +75,18 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         );
     }
 
+    public static Value fromTriple(double a, double b, double c)
+    {
+        return ListValue.of(new NumericValue(a), new NumericValue(b), new NumericValue(c));
+    }
+
+    public static Value fromTriple(int a, int b, int c)
+    {
+        return fromTriple((double) a, b, c);
+    }
+
+
+
 
     public static ListValue wrap(List<Value> list)
     {

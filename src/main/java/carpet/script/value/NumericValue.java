@@ -13,6 +13,13 @@ public class NumericValue extends Value
     private Double value;
     final static double epsilon = 1024*Double.MIN_VALUE;
 
+    public static NumericValue asNumber(Value v1, String id)
+    {
+        if (!(v1 instanceof NumericValue))
+            throw new InternalExpressionException("Argument "+id+" has to be of a numeric type");
+        return ((NumericValue) v1);
+    }
+
     public static NumericValue asNumber(Value v1)
     {
         if (!(v1 instanceof NumericValue))
@@ -55,6 +62,10 @@ public class NumericValue extends Value
     public double getDouble()
     {
         return value;
+    }
+    public float getFloat()
+    {
+        return value.floatValue();
     }
 
     public static long floor(double double_1) {

@@ -185,3 +185,62 @@ __on_player_places_block(player, item_tuple, hand, block) ->
     print('    > count: '+count);
     print('    > nbt: '+nbt);
 );
+
+__on_player_takes_damage(player, amount, source, entity) ->
+(
+    print('');
+    print('__on_player_takes_damage(player, amount, source, source_entity)');
+    print('player takes damage:');
+    print('  - player: '+player);
+    print('  - amount: '+str('%.2f',amount));
+    print('  - source: '+source);
+    print('  - source_entity: '+entity);
+);
+
+__on_player_deals_damage(player, amount, entity) ->
+(
+    print('');
+    print('__on_player_deals_damage(player, amount, target)');
+    print('player deals damage:');
+    print('  - player: '+player);
+    print('  - amount: '+str('%.2f',amount));
+    print('  - target: '+entity);
+);
+
+__on_player_dies(player) ->
+(
+    print('');
+    print('__on_player_dies(player)');
+    print('Player '+player+' dies.')
+);
+
+__on_player_respawns(player) ->
+(
+    print('');
+    print('__on_player_respawns(player)');
+    print('Player '+player+' respawns.')
+);
+
+__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension) ->
+(
+    print('');
+    print('__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)');
+    print('player changes dimensions:');
+    print('  - player: '+player);
+    print('  - from '+from_dimension+' at '+map(from_pos, str('%.2f',_)));
+    print('  - to '+to_dimension+if(to_pos == null, '', ' at '+map(to_pos, str('%.2f',_))));
+);
+
+__on_player_connects(player) ->
+( // you will never sees it
+    print('');
+    print('__on_player_connects(player)');
+    print('Player '+player+' connects.')
+);
+
+__on_player_disconnects(player, reason) ->
+( // you will never sees it either
+    print('');
+    print('__on_player_disconnects(player)');
+    print('Player '+player+' disconnects because: '+reason)
+);

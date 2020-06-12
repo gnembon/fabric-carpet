@@ -96,7 +96,7 @@ public class CarpetScriptHost extends ScriptHost
     public void addUserDefinedFunction(Context ctx, Module module, String funName, FunctionValue function)
     {
         super.addUserDefinedFunction(ctx, module, funName, function);
-        // mcarpet
+        if (ctx.host.main != module) return; // not dealing with automatic imports / exports /configs / apps from imports
         if (funName.startsWith("__")) // potential fishy activity
         {
             if (funName.startsWith("__on_")) // here we can make a determination if we want to only accept events from main module.
@@ -323,7 +323,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             try
             {
-                callUDF(BlockPos.ORIGIN, CarpetServer.minecraft_server.getCommandSource(), closing, Collections.emptyList());
+                callUDF(BlockPos.ORIGIN, scriptServer.server.getCommandSource(), closing, Collections.emptyList());
             }
             catch (InvalidCallbackException ignored)
             {
@@ -334,8 +334,8 @@ public class CarpetScriptHost extends ScriptHost
             FunctionValue userClosing = value.getFunction("__on_close");
             if (userClosing != null)
             {
-                ServerPlayerEntity player = CarpetServer.minecraft_server.getPlayerManager().getPlayer(key);
-                ServerCommandSource source = (player != null)?player.getCommandSource():CarpetServer.minecraft_server.getCommandSource();
+                ServerPlayerEntity player = scriptServer.server.getPlayerManager().getPlayer(key);
+                ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
                 try
                 {
                     ((CarpetScriptHost) value).callUDF(BlockPos.ORIGIN, source, userClosing, Collections.emptyList());
@@ -347,7 +347,7 @@ public class CarpetScriptHost extends ScriptHost
         });
 
         String markerName = CarpetExpression.MARKER_STRING+"_"+((getName()==null)?"":getName());
-        for (ServerWorld world : CarpetServer.minecraft_server.getWorlds())
+        for (ServerWorld world : scriptServer.server.getWorlds())
         {
             for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {
@@ -361,32 +361,31 @@ public class CarpetScriptHost extends ScriptHost
 
     private void dumpState()
     {
-        main.saveData(null, globalState);
+        Module.saveData(main, null, globalState, false);
     }
 
     private Tag loadState()
     {
-        return main.getData(null);
+        return Module.getData(main, null, false);
     }
 
-    public Tag getGlobalState(String file)
+    public Tag readFileTag(String file, boolean isShared)
     {
-        if (getName() == null ) return null;
+        if (getName() == null && !isShared) return null;
         if (file != null)
-            return main.getData(file);
+            return Module.getData(main, file, isShared);
         if (parent == null)
             return globalState;
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public void setGlobalState(Tag tag, String file)
+    public boolean writeTagFile(Tag tag, String file, boolean isShared)
     {
-        if (getName() == null ) return;
+        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
 
         if (file!= null)
         {
-            main.saveData(file, tag);
-            return;
+            return Module.saveData(main, file, tag, isShared);
         }
 
         CarpetScriptHost responsibleHost = (parent != null)?(CarpetScriptHost) parent:this;
@@ -396,7 +395,27 @@ public class CarpetScriptHost extends ScriptHost
             responsibleHost.dumpState();
             responsibleHost.saveTimeout = 200;
         }
+        return true;
     }
+
+    public boolean removeResourceFile(String resource, boolean isShared, String type)
+    {
+        if (getName() == null && !isShared) return false; //
+        return Module.dropExistingFile(main, resource, type.equals("nbt")?"nbt":"txt", isShared);
+    }
+
+    public boolean appendLogFile(String resource, boolean isShared, String type, List<String> data)
+    {
+        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
+        return Module.appendToTextFile(main, resource, type, isShared, data);
+    }
+
+    public List<String> readTextResource(String resource, boolean isShared)
+    {
+        if (getName() == null && !isShared) return null; //
+        return Module.listFile(main, resource, "txt", isShared);
+    }
+
 
     public void tick()
     {
@@ -490,5 +509,10 @@ public class CarpetScriptHost extends ScriptHost
     public void handleExpressionException(String message, ExpressionException exc)
     {
         handleErrorWithStack(message, new CarpetExpressionException(exc.getMessage(), exc.stack));
+    }
+
+    public CarpetScriptServer getScriptServer()
+    {
+        return scriptServer;
     }
 }

@@ -1,17 +1,24 @@
 package carpet.script.bundled;
 
-import carpet.CarpetServer;
 import net.minecraft.nbt.PositionTracker;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagReaders;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class FileModule extends Module
@@ -74,7 +81,7 @@ public class FileModule extends Module
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static void write(Tag tag_1, File file)
+    public static boolean write(Tag tag_1, File file)
     {
         File file_2 = new File(file.getAbsolutePath() + "_tmp");
         if (file_2.exists()) file_2.delete();
@@ -90,9 +97,50 @@ public class FileModule extends Module
         }
         catch (IOException e)
         {
-            return;
+            return false;
         }
         if (file.exists()) file.delete();
         if (!file.exists()) file_2.renameTo(file);
+        return true;
+    }
+
+    public static boolean appendText(File filePath, boolean addNewLines, List<String> data)
+    {
+        try
+        {
+            OutputStream out = Files.newOutputStream(filePath.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)))
+            {
+                for (String line: data)
+                {
+                    writer.append(line);
+                    if (addNewLines) writer.newLine();
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            return false;
+        }
+        return true;
+    }
+
+
+    public static List<String> listFileContent(File filePath)
+    {
+        try (BufferedReader reader = Files.newBufferedReader(filePath.toPath(), StandardCharsets.UTF_8)) {
+            List<String> result = new ArrayList<>();
+            for (;;) {
+                String line = reader.readLine();
+                if (line == null)
+                    break;
+                result.add(line.replaceAll("[\n\r]+",""));
+            }
+            return result;
+        }
+        catch (IOException e)
+        {
+            return null;
+        }
     }
 }

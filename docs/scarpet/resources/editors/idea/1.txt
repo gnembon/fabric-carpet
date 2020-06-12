@@ -85,6 +85,7 @@ tanh
 task
 task_completed
 task_count
+task_dock
 task_join
 task_value
 throw

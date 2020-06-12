@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import carpet.commands.*;
+import carpet.network.ServerNetworkHandler;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -56,10 +57,11 @@ public class CarpetServer // static for now - easier to handle all around the co
             if (sm != null) sm.attachServer(server);
             e.onServerLoaded(server);
         });
-        scriptServer = new CarpetScriptServer();
+        scriptServer = new CarpetScriptServer(server);
         scriptServer.loadAllWorldScripts();
         MobAI.resetTrackers();
         LoggerRegistry.initLoggers();
+        //TickSpeed.reset();
     }
 
     public static void tick(MinecraftServer server)
@@ -102,29 +104,41 @@ public class CarpetServer // static for now - easier to handle all around the co
 
     public static void onPlayerLoggedIn(ServerPlayerEntity player)
     {
+        ServerNetworkHandler.onPlayerJoin(player);
         LoggerRegistry.playerConnected(player);
         extensions.forEach(e -> e.onPlayerLoggedIn(player));
+
     }
 
     public static void onPlayerLoggedOut(ServerPlayerEntity player)
     {
+        ServerNetworkHandler.onPlayerLoggedOut(player);
         LoggerRegistry.playerDisconnected(player);
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
     }
 
     public static void onServerClosed(MinecraftServer server)
     {
+        ServerNetworkHandler.close();
         currentCommandDispatcher = null;
         if (scriptServer != null) scriptServer.onClose();
-        settingsManager.detachServer();
+
         LoggerRegistry.stopLoggers();
         extensions.forEach(e -> e.onServerClosed(server));
         minecraft_server = null;
+        disconnect();
     }
 
     public static void registerExtensionLoggers()
     {
         extensions.forEach(CarpetExtension::registerLoggers);
+    }
+
+    public static void disconnect()
+    {
+        // this for whatever reason gets called multiple times even when joining;
+        TickSpeed.reset();
+        settingsManager.detachServer();
     }
 }
 
