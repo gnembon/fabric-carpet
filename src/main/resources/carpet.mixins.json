@@ -32,6 +32,10 @@
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
+    "ServerLightingProvider_scarpetMixin",
+
+    "ChunkTicketManager_spawnChunksMixin",
+    "ServerWorld_spawnChunksMixin",
     "ServerLightingProvider_scarpetChunkCreationMixin",
 
     "ChunkTicketManager_spawnChunksMixin",

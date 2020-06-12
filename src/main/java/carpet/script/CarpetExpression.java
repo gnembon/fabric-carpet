@@ -5,6 +5,7 @@ import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ServerChunkManagerInterface;
+import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -2946,6 +2947,16 @@ public class CarpetExpression
             ServerCommandSource s = ((CarpetContext)c).s;
             Value ret = new NumericValue(s.getWorld().getSeed());
             return (cc, tt) -> ret;
+        });
+
+        this.expr.addLazyFunction("relight", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            ServerWorld world = cc.s.getWorld();
+            ((ServerLightingProviderInterface)world.getChunkManager().getLightingProvider()).resetLight(new ChunkPos(pos)); //light(world.getChunk(pos), false);
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {

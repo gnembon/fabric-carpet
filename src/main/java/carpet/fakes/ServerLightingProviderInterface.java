@@ -6,4 +6,5 @@ public interface ServerLightingProviderInterface
 {
     void publicUpdateChunkStatus(ChunkPos pos);
     void flush();
+    void resetLight(ChunkPos pos);
 }
