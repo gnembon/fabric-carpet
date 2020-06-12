@@ -312,7 +312,7 @@ Returns dimension-specific tick counter.
 
 ### `unix_time()`
 
-Returns system time as a number of milliseconds
+Returns standard POSIX time as a number of milliseconds since the start of the epoch (1 Jan 1970)
 
 ### `unit_date()`
 
