@@ -2955,7 +2955,9 @@ public class CarpetExpression
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
             ServerWorld world = cc.s.getWorld();
-            ((ServerLightingProviderInterface)world.getChunkManager().getLightingProvider()).resetLight(new ChunkPos(pos)); //light(world.getChunk(pos), false);
+            ((ServerLightingProviderInterface)world.getChunkManager().getLightingProvider()).resetLight(world.getChunk(pos), new ChunkPos(pos)); //light(world.getChunk(pos), false);
+            forceChunkUpdate(pos, world);
+            world.getChunkManager().getLightingProvider().light(world.getChunk(pos), false);
             return LazyValue.TRUE;
         });
 
