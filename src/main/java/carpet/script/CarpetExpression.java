@@ -2900,9 +2900,36 @@ public class CarpetExpression
             return (cc, tt) -> time;
         });
 
-        this.expr.addLazyFunction("system_time",0,(c,t,lv)->{
-            return (_c,_t)-> new StringValue(new Date(System.currentTimeMillis()).toString());
+        this.expr.addLazyFunction("unix_time",0,(c,t,lv)->{
+            Value time = new NumericValue(System.currentTimeMillis());
+            return (_c,_t)-> time;
         });
+
+        this.expr.addLazyFunction("unix_date",0,(c,t,lv)->{
+            String[] list_date = new Date(System.currentTimeMillis()).toString().split(" ");
+            List<Value> value_list = new ArrayList<>();
+            for (String s : list_date) {
+                if(s.matches("-?\\d+(\\.\\d+)?"))
+                    value_list.add(new NumericValue(Integer.parseInt(s)));
+                else
+                    value_list.add(new StringValue(s));
+            };
+            return (_c,_t)-> ListValue.wrap(value_list);
+        });
+
+        //WHY U NO WORK!?!?!?
+        //this.expr.addLazyFunction("convert_date",1,(c,t,lv)->{
+        //    if(lv.get(0) instanceof NumericValue) {
+        //        Date date = new Date(NumericValue.asNumber((Value) lv.get(0)).getLong());
+        //        List<String> list_date = Arrays.asList(date.toString().split(" "));
+        //        List<Value> value_list = new ArrayList<>();
+        //        for (String s : list_date) value_list.add(new StringValue(s));
+        //        Value retval = ListValue.wrap(value_list);
+        //        return (_c,_t)-> retval;
+        //    }
+        //
+        //    return LazyValue.NULL;
+        //});
 
         this.expr.addLazyFunction("last_tick_times", -1, (c, t, lv) ->
         {
