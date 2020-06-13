@@ -2905,31 +2905,54 @@ public class CarpetExpression
             return (_c,_t)-> time;
         });
 
-        this.expr.addLazyFunction("unix_date",0,(c,t,lv)->{
-            String[] list_date = new Date(System.currentTimeMillis()).toString().split(" ");
-            List<Value> value_list = new ArrayList<>();
-            for (String s : list_date) {
-                if(s.matches("-?\\d+(\\.\\d+)?"))
-                    value_list.add(new NumericValue(Integer.parseInt(s)));
-                else
-                    value_list.add(new StringValue(s));
-            };
-            return (_c,_t)-> ListValue.wrap(value_list);
-        });
+        this.expr.addLazyFunction("convert_date",-1,(c,t,lv)->{
 
-        //WHY U NO WORK!?!?!?
-        //this.expr.addLazyFunction("convert_date",1,(c,t,lv)->{
-        //    if(lv.get(0) instanceof NumericValue) {
-        //        Date date = new Date(NumericValue.asNumber((Value) lv.get(0)).getLong());
-        //        List<String> list_date = Arrays.asList(date.toString().split(" "));
-        //        List<Value> value_list = new ArrayList<>();
-        //        for (String s : list_date) value_list.add(new StringValue(s));
-        //        Value retval = ListValue.wrap(value_list);
-        //        return (_c,_t)-> retval;
-        //    }
-        //
-        //    return LazyValue.NULL;
-        //});
+            for (int i = 0; i<lv.size();i++){
+                if(!(lv.get(i).evalValue(c) instanceof NumericValue))
+                    throw new InternalExpressionException("Attempted to pass non-numerical value to convert_date");
+            }
+
+            if(lv.size()==1) {
+                Date date = new Date(NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
+                List<Value> value_list = new ArrayList<>();
+                //l(year, month, date, hour, minute, second,day_long_name)
+                value_list.add(new NumericValue(date.getYear()+1900));//Cos returns year - 1900
+                value_list.add(new NumericValue(date.getMonth()));//So it returns 1 for Jan
+                value_list.add(new NumericValue(date.getDate()));//So it returns 1 for 1st of month
+                value_list.add(new NumericValue(date.getHours()));
+                value_list.add(new NumericValue(date.getMinutes()));
+                value_list.add(new NumericValue(date.getSeconds()));
+
+                switch (date.getDay()){
+                    case 0:value_list.add(new StringValue("Monday"));break;
+                    case 1:value_list.add(new StringValue("Tuesday"));break;
+                    case 2:value_list.add(new StringValue("Wednesday"));break;
+                    case 3:value_list.add(new StringValue("Thursday"));break;
+                    case 4:value_list.add(new StringValue("Friday"));break;
+                    case 5:value_list.add(new StringValue("Saturday"));break;
+                    case 6:value_list.add(new StringValue("Sunday"));break;
+                }
+
+                ListValue retval = ListValue.wrap(value_list);
+
+                return (_c,_t)-> retval;
+            } else if(lv.size()==6) {
+                Date date = new Date();
+                date.setYear((int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
+                date.setMonth((int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong());
+                date.setDate((int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong());
+                date.setHours((int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong());
+                date.setMinutes((int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong());
+                date.setSeconds((int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong());
+
+                int time = (int) date.getTime();
+
+                NumericValue retval = new NumericValue(time);
+
+                return (_c, _t) -> retval;
+            }
+            throw new InternalExpressionException("Incorrect number of arguments, convert_date only takes 1 or 6 arguments");
+        });
 
         this.expr.addLazyFunction("last_tick_times", -1, (c, t, lv) ->
         {
