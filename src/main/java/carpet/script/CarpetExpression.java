@@ -2944,7 +2944,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("seed", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value ret = new NumericValue(s.getWorld().getSeed());
+            Value ret = new StringValue(Long.toString(s.getWorld().getSeed()));
             return (cc, tt) -> ret;
         });
 
