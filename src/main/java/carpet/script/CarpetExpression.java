@@ -1538,7 +1538,6 @@ public class CarpetExpression
             {
                 ItemStack result = recipe.getOutput();
                 List<Value> ingredientValue = new ArrayList<>();
-                CarpetSettings.LOG.error("input size: "+recipe.getPreviewInputs().size());
                 recipe.getPreviewInputs().forEach(
                         ingredient ->
                         {

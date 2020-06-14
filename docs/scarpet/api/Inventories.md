@@ -51,6 +51,7 @@ Recipe type can take one of the following options:
  * `'smoking'` - smoker recipe
  * `'campfire_cooking'` - campfire recipe
  * `'stonecutting'` - stonecutter recipe
+ * `'smithing'` - smithing table (1.16+)
  
  The return value is a list of available recipes (even if there is only one recipe available). Each recipe contains of
  an item triple of the crafting result, list of ingredients, each containing a list of possible variants of the
