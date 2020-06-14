@@ -1,7 +1,6 @@
 package carpet.script;
 
 import carpet.script.value.Value;
-import net.minecraft.entity.player.PlayerEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +22,6 @@ public class Context
     public final Map<String, LazyValue> variables = new HashMap<>();
 
     public final ScriptHost host;
-    public PlayerEntity s;
 
     Context(ScriptHost host)
     {
