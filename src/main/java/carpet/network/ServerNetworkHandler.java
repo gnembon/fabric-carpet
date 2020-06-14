@@ -16,7 +16,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.PacketByteBuf;
 
 import java.util.ArrayList;
 import java.util.HashMap;
