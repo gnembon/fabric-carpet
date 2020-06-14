@@ -2921,16 +2921,7 @@ public class CarpetExpression
                 value_list.add(new NumericValue(date.getHours()));
                 value_list.add(new NumericValue(date.getMinutes()));
                 value_list.add(new NumericValue(date.getSeconds()));
-
-                switch (date.getDay()){
-                    case 0:value_list.add(new StringValue("Sunday"));break;
-                    case 1:value_list.add(new StringValue("Monday"));break;
-                    case 2:value_list.add(new StringValue("Tuesday"));break;
-                    case 3:value_list.add(new StringValue("Wednesday"));break;
-                    case 4:value_list.add(new StringValue("Thursday"));break;
-                    case 5:value_list.add(new StringValue("Friday"));break;
-                    case 6:value_list.add(new StringValue("Saturday"));break;
-                }
+                value_list.add(new NumericValue(date.getDay()));
 
                 ListValue retval = ListValue.wrap(value_list);
 

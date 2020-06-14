@@ -318,13 +318,13 @@ Returns standard POSIX time as a number of milliseconds since the start of the e
 
 Returns standard POSIX time as a list in the format: 
 
-`l(year, month, date, hours, mins, secs, 'day_name')`
+`l(year, month, date, hours, mins, secs, day)`
 
-eg: `convert_date(1592126363317)->l(2020, 5, 14, 11, 19, 23, 'Monday')`
+eg: `convert_date(1592126363317)->l(2020, 5, 14, 11, 19, 23, 1)`
 
 Where the `5` stands for June, but `14` stands for 14th, `11` stands for 11am,
 `19` stands for 19 minutes past the hour, and `23` stands for 23 seconds past the minute,
-and `Monday` stands for Monday. 
+and `1` stands for Monday. 
 
 Run `convert_date(unix_time())` to get current time as list.
 
