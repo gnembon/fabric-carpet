@@ -160,6 +160,9 @@
     "ServerWorld_scarpetEventMixin",
     "HungerManagerMixin_scarpetEventsMixin",
 
+    "RecipeManager_scarpetMixin",
+    "Ingredient_scarpetMixin",
+
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",

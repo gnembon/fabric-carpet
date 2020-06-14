@@ -3,7 +3,10 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
+import carpet.fakes.IngredientInterface;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.BiomeArrayInterface;
+import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.StatTypeInterface;
@@ -83,6 +86,13 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.recipe.AbstractCookingRecipe;
+import net.minecraft.recipe.CuttingRecipe;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.ShapedRecipe;
+import net.minecraft.recipe.ShapelessRecipe;
+import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardCriterion;
 import net.minecraft.scoreboard.ScoreboardObjective;
@@ -135,6 +145,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1492,6 +1503,121 @@ public class CarpetExpression
             Value res = new StringValue(item.getItem().getGroup().getName());
             return (_c, _t) -> res;
         });
+
+        this.expr.addLazyFunction("recipe_data", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 1) throw new InternalExpressionException("'recipe_data' requires at least one argument");
+            String recipeName = lv.get(0).evalValue(c).getString();
+            RecipeType type = RecipeType.CRAFTING;
+            if (lv.size() > 1)
+            {
+                String recipeType = lv.get(1).evalValue(c).getString();
+                try
+                {
+                    type = Registry.RECIPE_TYPE.get(new Identifier(recipeType));
+                }
+                catch (InvalidIdentifierException ignored)
+                {
+                    throw new InternalExpressionException("Unknown crafting category: " + recipeType);
+                }
+            }
+            List<Recipe<?>> recipes;
+            try
+            {
+                recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, new Identifier(recipeName));
+            }
+            catch (InvalidIdentifierException ignored)
+            {
+                return LazyValue.NULL;
+            }
+            if (recipes.isEmpty())
+                return LazyValue.NULL;
+            List<Value> recipesOutput = new ArrayList<>();
+            for (Recipe<?> recipe: recipes)
+            {
+                ItemStack result = recipe.getOutput();
+                List<Value> ingredientValue = new ArrayList<>();
+                CarpetSettings.LOG.error("input size: "+recipe.getPreviewInputs().size());
+                recipe.getPreviewInputs().forEach(
+                        ingredient ->
+                        {
+                            // I am flattening ingredient lists per slot.
+                            // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
+                            // in depths of lists.
+                            List<Collection<ItemStack>> stacks = ((IngredientInterface) (Object) ingredient).getRecipeStacks();
+                            if (stacks.isEmpty())
+                            {
+                                ingredientValue.add(Value.NULL);
+                            }
+                            else
+                            {
+                                List<Value> alternatives = new ArrayList<>();
+                                stacks.forEach(col -> col.stream().map(ListValue::fromItemStack).forEach(alternatives::add));
+                                ingredientValue.add(ListValue.wrap(alternatives));
+                            }
+                        }
+                );
+                Value recipeSpec;
+                if (recipe instanceof ShapedRecipe)
+                {
+                    recipeSpec = ListValue.of(
+                            new StringValue("shaped"),
+                            new NumericValue(((ShapedRecipe) recipe).getWidth()),
+                            new NumericValue(((ShapedRecipe) recipe).getHeight())
+                    );
+                }
+                else if (recipe instanceof ShapelessRecipe)
+                {
+                    recipeSpec = ListValue.of(new StringValue("shapeless"));
+                }
+                else if (recipe instanceof AbstractCookingRecipe)
+                {
+                    recipeSpec = ListValue.of(
+                            new StringValue("smelting"),
+                            new NumericValue(((AbstractCookingRecipe) recipe).getCookTime()),
+                            new NumericValue(((AbstractCookingRecipe) recipe).getExperience())
+                    );
+                }
+                else if (recipe instanceof CuttingRecipe)
+                {
+                    recipeSpec = ListValue.of(new StringValue("cutting"));
+                }
+                else if (recipe instanceof SpecialCraftingRecipe)
+                {
+                    recipeSpec = ListValue.of(new StringValue("special"));
+                }
+                else
+                {
+                    recipeSpec = ListValue.of(new StringValue("custom"));
+                }
+
+                recipesOutput.add(ListValue.of(ListValue.fromItemStack(result), ListValue.wrap(ingredientValue), recipeSpec));
+            }
+            Value ret = ListValue.wrap(recipesOutput);
+            return (_c, _t) -> ret;
+        });
+
+        this.expr.addLazyFunction("crafting_remaining_item", 1, (c, t, lv) ->
+        {
+            String itemStr = lv.get(0).evalValue(c).getString();
+            Item item;
+            try
+            {
+                Identifier id = new Identifier(itemStr);
+                item = Registry.ITEM.get(id);
+                if (item == Items.AIR && !id.getPath().equalsIgnoreCase("air"))
+                    throw new InvalidIdentifierException("boo");
+            }
+            catch (InvalidIdentifierException ignored)
+            {
+                throw new InternalExpressionException("Incorrect item: "+itemStr);
+            }
+            if (!item.hasRecipeRemainder()) return LazyValue.NULL;
+            Value ret = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getId(item.getRecipeRemainder())));
+            return (_c, _t ) -> ret;
+        });
+
 
         this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) ->
         {
@@ -2960,7 +3086,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("seed", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value ret = new NumericValue(s.getWorld().getSeed());
+            Value ret = new StringValue(Long.toString(s.getWorld().getSeed()));
             return (cc, tt) -> ret;
         });
 

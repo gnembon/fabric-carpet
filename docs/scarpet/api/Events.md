@@ -32,6 +32,8 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)  /
 __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right click on a block resulted in activation of said block
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
+__on_player_chooses_recipe(player, recipe, full_stack)
+__on_player_switches_slot(player, from, to)
 __on_player_attacks_entity(player, entity)
 __on_player_takes_damage(player, amount, source, source_entity)
 __on_player_deals_damage(player, amount, entity)

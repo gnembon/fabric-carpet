@@ -24,6 +24,7 @@
   "mixins": [
     "carpet.mixins.json"
   ],
+  "accessWidener" : "carpet.accesswidener",
 
   "depends": {
     "minecraft": "1.16.x",
