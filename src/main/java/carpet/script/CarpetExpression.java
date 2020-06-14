@@ -2900,18 +2900,11 @@ public class CarpetExpression
             return (cc, tt) -> time;
         });
 
-        this.expr.addLazyFunction("unix_time",0,(c,t,lv)->{
-            Value time = new NumericValue(System.currentTimeMillis());
-            return (_c,_t)-> time;
-        });
+        this.expr.addLazyFunction("convert_date",1,(c,t,lv)->{
 
-        this.expr.addLazyFunction("convert_date",-1,(c,t,lv)->{
-            for (int i = 0; i<lv.size();i++){
-                if(!(lv.get(i).evalValue(c) instanceof NumericValue))
-                    throw new InternalExpressionException("Attempted to pass non-numerical value to convert_date");
-            }
+            Value evalValue = lv.get(0).evalValue(c);
 
-            if(lv.size()==1) {
+            if(evalValue instanceof NumericValue) {
                 Date date = new Date(NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
                 List<Value> value_list = new ArrayList<>();
                 //l(year, month, date, hour, minute, second,day_long_name)
@@ -2926,14 +2919,17 @@ public class CarpetExpression
                 ListValue retval = ListValue.wrap(value_list);
 
                 return (_c,_t)-> retval;
-            } else if(lv.size()==6) {
+            } else if(evalValue instanceof ListValue) {
 
-                int year =(int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-                int month = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-                int date = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
-                int hrs = (int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong();
-                int mins = (int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong();
-                int secs = (int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong();//secs are very important
+                List<Value> l = ((ListValue)evalValue).getItems();
+                if (l.size()!=6)//or IndexOutOfBounds exception. Don't need to deal with non-numeric values, scarpet does that already
+                    throw new InternalExpressionException("List of arguments to convert_date needs to have 6 elements");
+                int year =(int) NumericValue.asNumber(l.get(0)).getLong();
+                int month = (int) NumericValue.asNumber(l.get(1)).getLong();
+                int date = (int) NumericValue.asNumber(l.get(2)).getLong();
+                int hrs = (int) NumericValue.asNumber(l.get(3)).getLong();
+                int mins = (int) NumericValue.asNumber(l.get(4)).getLong();
+                int secs = (int) NumericValue.asNumber(l.get(5)).getLong();//secs are very important
 
                 //SO you can input 2020 and not get messed up results
                 int time = (int) new Date(year-1900,month,date,hrs,mins,secs).getTime();
@@ -2941,8 +2937,8 @@ public class CarpetExpression
                 NumericValue retval = new NumericValue(time);
 
                 return (_c, _t) -> retval;
-            }
-            throw new InternalExpressionException("Incorrect number of arguments, convert_date only takes 1 or 6 arguments");
+            } else
+                throw new InternalExpressionException("Function convert_date only accepts a list or a number");
         });
 
         this.expr.addLazyFunction("last_tick_times", -1, (c, t, lv) ->

@@ -1790,6 +1790,11 @@ public class Expression
             return (cc, tt) -> time;
         });
 
+        addLazyFunction("unix_time",0,(c,t,lv)->{
+            Value time = new NumericValue(System.currentTimeMillis());
+            return (_c,_t)-> time;
+        });
+
         addLazyFunction("profile_expr", 1, (c, t, lv) ->
         {
             LazyValue lazy = lv.get(0);
