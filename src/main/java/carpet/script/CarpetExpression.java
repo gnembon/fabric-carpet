@@ -2900,47 +2900,6 @@ public class CarpetExpression
             return (cc, tt) -> time;
         });
 
-        this.expr.addLazyFunction("convert_date",1,(c,t,lv)->{
-
-            Value evalValue = lv.get(0).evalValue(c);
-
-            if(evalValue instanceof NumericValue) {
-                Date date = new Date(NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
-                List<Value> value_list = new ArrayList<>();
-                //l(year, month, date, hour, minute, second,day_long_name)
-                value_list.add(new NumericValue(date.getYear()+1900));//Cos returns year - 1900
-                value_list.add(new NumericValue(date.getMonth()));
-                value_list.add(new NumericValue(date.getDate()));
-                value_list.add(new NumericValue(date.getHours()));
-                value_list.add(new NumericValue(date.getMinutes()));
-                value_list.add(new NumericValue(date.getSeconds()));
-                value_list.add(new NumericValue(date.getDay()));
-
-                ListValue retval = ListValue.wrap(value_list);
-
-                return (_c,_t)-> retval;
-            } else if(evalValue instanceof ListValue) {
-
-                List<Value> l = ((ListValue)evalValue).getItems();
-                if (l.size()!=6)//or IndexOutOfBounds exception. Don't need to deal with non-numeric values, scarpet does that already
-                    throw new InternalExpressionException("List of arguments to convert_date needs to have 6 elements");
-                int year =(int) NumericValue.asNumber(l.get(0)).getLong();
-                int month = (int) NumericValue.asNumber(l.get(1)).getLong();
-                int date = (int) NumericValue.asNumber(l.get(2)).getLong();
-                int hrs = (int) NumericValue.asNumber(l.get(3)).getLong();
-                int mins = (int) NumericValue.asNumber(l.get(4)).getLong();
-                int secs = (int) NumericValue.asNumber(l.get(5)).getLong();//secs are very important
-
-                //SO you can input 2020 and not get messed up results
-                int time = (int) new Date(year-1900,month,date,hrs,mins,secs).getTime();
-
-                NumericValue retval = new NumericValue(time);
-
-                return (_c, _t) -> retval;
-            } else
-                throw new InternalExpressionException("Function convert_date only accepts a list or a number");
-        });
-
         this.expr.addLazyFunction("last_tick_times", -1, (c, t, lv) ->
         {
             //assuming we are in the tick world section
