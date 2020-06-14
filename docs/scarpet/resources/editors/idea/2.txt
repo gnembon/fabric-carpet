@@ -12,6 +12,7 @@ blocks_daylight
 blocks_movement
 brightness
 chunk_tickets
+crafting_remaining_item
 create_marker
 current_dimension
 day_time
@@ -67,6 +68,7 @@ power
 property
 query
 random_tick
+recipe_data
 rect
 reload_chunk
 remove_all_markers

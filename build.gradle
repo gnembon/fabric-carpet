@@ -11,6 +11,7 @@ version = project.minecraft_version+'-'+project.mod_version
 group = project.maven_group
 
 minecraft {
+	accessWidener "src/main/resources/carpet.accesswidener"
 }
 
 dependencies {
