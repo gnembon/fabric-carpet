@@ -2906,7 +2906,6 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("convert_date",-1,(c,t,lv)->{
-
             for (int i = 0; i<lv.size();i++){
                 if(!(lv.get(i).evalValue(c) instanceof NumericValue))
                     throw new InternalExpressionException("Attempted to pass non-numerical value to convert_date");
@@ -2917,35 +2916,36 @@ public class CarpetExpression
                 List<Value> value_list = new ArrayList<>();
                 //l(year, month, date, hour, minute, second,day_long_name)
                 value_list.add(new NumericValue(date.getYear()+1900));//Cos returns year - 1900
-                value_list.add(new NumericValue(date.getMonth()));//So it returns 1 for Jan
-                value_list.add(new NumericValue(date.getDate()));//So it returns 1 for 1st of month
+                value_list.add(new NumericValue(date.getMonth()));
+                value_list.add(new NumericValue(date.getDate()));
                 value_list.add(new NumericValue(date.getHours()));
                 value_list.add(new NumericValue(date.getMinutes()));
                 value_list.add(new NumericValue(date.getSeconds()));
 
                 switch (date.getDay()){
-                    case 0:value_list.add(new StringValue("Monday"));break;
-                    case 1:value_list.add(new StringValue("Tuesday"));break;
-                    case 2:value_list.add(new StringValue("Wednesday"));break;
-                    case 3:value_list.add(new StringValue("Thursday"));break;
-                    case 4:value_list.add(new StringValue("Friday"));break;
-                    case 5:value_list.add(new StringValue("Saturday"));break;
-                    case 6:value_list.add(new StringValue("Sunday"));break;
+                    case 0:value_list.add(new StringValue("Sunday"));break;
+                    case 1:value_list.add(new StringValue("Monday"));break;
+                    case 2:value_list.add(new StringValue("Tuesday"));break;
+                    case 3:value_list.add(new StringValue("Wednesday"));break;
+                    case 4:value_list.add(new StringValue("Thursday"));break;
+                    case 5:value_list.add(new StringValue("Friday"));break;
+                    case 6:value_list.add(new StringValue("Saturday"));break;
                 }
 
                 ListValue retval = ListValue.wrap(value_list);
 
                 return (_c,_t)-> retval;
             } else if(lv.size()==6) {
-                Date date = new Date();
-                date.setYear((int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
-                date.setMonth((int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong());
-                date.setDate((int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong());
-                date.setHours((int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong());
-                date.setMinutes((int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong());
-                date.setSeconds((int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong());
 
-                int time = (int) date.getTime();
+                int year =(int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+                int month = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
+                int date = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
+                int hrs = (int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong();
+                int mins = (int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong();
+                int secs = (int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong();//secs are very important
+
+                //SO you can input 2020 and not get messed up results
+                int time = (int) new Date(year-1900,month,date,hrs,mins,secs).getTime();
 
                 NumericValue retval = new NumericValue(time);
 

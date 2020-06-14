@@ -314,13 +314,29 @@ Returns dimension-specific tick counter.
 
 Returns standard POSIX time as a number of milliseconds since the start of the epoch (1 Jan 1970)
 
-### `unit_date()`
+### `convert_date(milliseconds)`
 
-Returns system time as a list in the format: 
+Returns standard POSIX time as a list in the format: 
 
-`l('day_name', 'month', day_number, 'hours:mins:secs', 'time_zone', year)`
+`l(year, month, date, hours, mins, secs, 'day_name')`
 
-eg: `l('Thu', 'Jun', 11, '12:49:52', 'CEST', 2020)`
+eg: `convert_date(1592126363317)->l(2020, 5, 14, 11, 19, 23, 'Monday')`
+
+Where the `5` stands for June, but `14` stands for 14th, `11` stands for 11am,
+`19` stands for 19 minutes past the hour, and `23` stands for 23 seconds past the minute,
+and `Monday` stands for Monday. 
+
+Run `convert_date(unix_time())` to get current time as list.
+
+### `convert_date(year, month, date, hours, mins, secs)`
+
+Returns standard POSIX time as a number of milliseconds since the start of the epoch (1 Jan 1970),
+using the time inputted into the function as opposed to the system time.
+
+eg: `convert_date(2020, 5, 14, 11, 19, 23)->`
+
+You could in theory use this to get system time, but it would be delayed by a few milliseconds,
+based on your pc, by the fact that it would take a short while to compute both `convert_date` functions.
 
 ### `day_time(new_time?)`
 
