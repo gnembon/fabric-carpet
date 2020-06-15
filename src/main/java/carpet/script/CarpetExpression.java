@@ -2100,10 +2100,9 @@ public class CarpetExpression
         {
             CarpetContext cc = (CarpetContext)c;
 
-            if(lv.size()!=3 & lv.size()!=5 & lv.size()!=7) throw new InternalExpressionException("'volume' takes 3, 5 or 7 arguments.");
-
             BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 0);
-            BlockPos pos2 = BlockArgument.findIn(cc, lv, pos1Locator.offset).block.getPos();
+            BlockArgument pos2Locator = BlockArgument.findIn(cc, lv, pos1Locator.offset);
+            BlockPos pos2 = pos2Locator.block.getPos();
             BlockPos pos1 = pos1Locator.block.getPos();
 
             int x1 = pos1.getX();
@@ -2118,7 +2117,7 @@ public class CarpetExpression
             int maxx = max(x1, x2);
             int maxy = max(y1, y2);
             int maxz = max(z1, z2);
-            LazyValue expr = lv.get(lv.size()-1);
+            LazyValue expr = lv.get(pos2Locator.offset);
 
             //saving outer scope
             LazyValue _x = c.getVariable("_x");
@@ -2190,11 +2189,6 @@ public class CarpetExpression
         {
             CarpetContext cc = (CarpetContext) c;
 
-            if (lv.size() != 1 && lv.size() != 3 && lv.size() != 4 && lv.size() != 6 && lv.size() != 7 && lv.size() != 9)
-            {
-                throw new InternalExpressionException("Rectangular region should be specified with a coordinate and up to 6 other parameters");
-            }
-
             int cx;
             int cy;
             int cz;
@@ -2204,46 +2198,43 @@ public class CarpetExpression
             int smaxx;
             int smaxy;
             int smaxz;
-            try
-            {
-                BlockArgument cposLocator = BlockArgument.findIn(cc, lv, 0);
-                BlockPos cpos = cposLocator.block.getPos();
 
-                cx = cpos.getX();
-                cy = cpos.getY();
-                cz = cpos.getZ();
+            BlockArgument cposLocator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos cpos = cposLocator.block.getPos();
 
+            cx = cpos.getX();
+            cy = cpos.getY();
+            cz = cpos.getZ();
+
+            try{
+                BlockArgument diff_Locator = BlockArgument.findIn(cc, lv, cposLocator.offset);
+                BlockPos difference = diff_Locator.block.getPos();
+
+                sminx = difference.getX();
+                sminy = difference.getY();
+                sminz = difference.getZ();
+
+                try{
+                    BlockPos pos_diff=BlockArgument.findIn(cc,lv,diff_Locator.offset).block.getPos();
+                    smaxx = pos_diff.getX();
+                    smaxy = pos_diff.getY();
+                    smaxz = pos_diff.getZ();
+                    Messenger.m(cc.s,"w 9");
+                } catch(IndexOutOfBoundsException i){//Checing if there are 2 pos
+                    smaxx = sminx;
+                    smaxy = sminy;
+                    smaxz = sminz;
+                }
+
+            } catch (IndexOutOfBoundsException i){//Checking if there is only 1 pos
                 sminx = 1;
                 sminy = 1;
                 sminz = 1;
                 smaxx = 1;
                 smaxy = 1;
                 smaxz = 1;
-
-                if(lv.size()<3){
-                    BlockArgument diff_Locator = BlockArgument.findIn(cc, lv, cposLocator.offset);
-                    BlockPos difference = diff_Locator.block.getPos();
-
-                    sminx = difference.getX();
-                    sminy = difference.getY();
-                    sminz = difference.getZ();
-
-                    smaxx = sminx;
-                    smaxy = sminy;
-                    smaxz = sminz;
-
-                    if(lv.size()<6){
-                        BlockPos pos_diff=BlockArgument.findIn(cc,lv,diff_Locator.offset).block.getPos();
-                        sminx = pos_diff.getX();
-                        sminy = pos_diff.getY();
-                        sminz = pos_diff.getZ();
-                    }
-                }
             }
-            catch (ClassCastException exc)
-            {
-                throw new InternalExpressionException("Attempted to pass a non-number to rect");
-            }
+
 
             int finalSminx = sminx;
             int finalSminy = sminy;
@@ -2320,16 +2311,9 @@ public class CarpetExpression
         this.expr.addLazyFunction("diamond", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
-            if (lv.size() <1 || lv.size() > 5)//Can be anywhere between 1 and 5 args
-            {
-                throw new InternalExpressionException("'diamond' region should be specified with 3 to 5 arguments");
-            }
 
-            int blockposarg=2;//Checks if the first arg is a block pos triple
-
-            if(lv.get(0).evalValue(c) instanceof NumericValue)blockposarg=0;
-
-            BlockPos cpos=BlockArgument.findIn((CarpetContext)c,lv,0).block.getPos();
+            BlockArgument cposLocator=BlockArgument.findIn((CarpetContext)c,lv,0);
+            BlockPos cpos = cposLocator.block.getPos();
 
             int cx;
             int cy;
@@ -2342,7 +2326,7 @@ public class CarpetExpression
                 cy = cpos.getY();
                 cz = cpos.getZ();
 
-                if (lv.size()==1+blockposarg)
+                if (lv.size()==1+cposLocator.offset)
                 {
                     Value retval = ListValue.of(
                             BlockValue.fromCoords(cc, cx, cy-1, cz),
@@ -2355,12 +2339,12 @@ public class CarpetExpression
                     );
                     return (_c, _t ) -> retval;
                 }
-                else if (lv.size()==2+blockposarg)
+                else if (lv.size()==2+cposLocator.offset)
                 {
                     width = (int) ((NumericValue) lv.get(lv.size()-1).evalValue(c)).getLong();
                     height = 0;
                 }
-                else // size == 3 + blockposarg
+                else // size == 3 + cposLocator.offset
                 {
                     width = (int) ((NumericValue) lv.get(lv.size()-2).evalValue(c)).getLong();
                     height = (int) ((NumericValue) lv.get(lv.size()-1).evalValue(c)).getLong();
