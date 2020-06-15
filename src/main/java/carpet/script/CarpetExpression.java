@@ -2913,10 +2913,17 @@ public class CarpetExpression
         });
 
         //"overridden" native call that prints to stderr
-        this.expr.addLazyFunction("print", 1, (c, t, lv) ->
+        this.expr.addLazyFunction("print", -1, (c, t, lv) ->
         {
+            if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
             Value res = lv.get(0).evalValue(c);
+            if (lv.size() == 2)
+            {
+                ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), res);
+                s = player.getCommandSource();
+                res = lv.get(1).evalValue(c);
+            }
             if (res instanceof FormattedTextValue)
             {
                 s.sendFeedback(((FormattedTextValue) res).getText(), false);
@@ -2932,7 +2939,8 @@ public class CarpetExpression
                     Messenger.m(s, "w " + res.getString());
                 }
             }
-            return (_c, _t) -> res; // pass through for variables
+            Value finalRes = res;
+            return (_c, _t) -> finalRes; // pass through for variables
         });
 
         this.expr.addLazyFunction("format", -1, (c, t, lv) -> {
