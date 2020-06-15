@@ -1779,17 +1779,16 @@ public class Expression
             return (cc, tt) -> time;
         });
 
-        addLazyFunction("unix_time",0,(c,t,lv)->{
-            Value time = new NumericValue(System.currentTimeMillis());
-            return (_c,_t)-> time;
-        });
+        addUnaryFunction("unix_time",v->
+            new NumericValue(System.currentTimeMillis())
+        );
 
-        addLazyFunction("convert_date",1,(c,t,lv)->{
+        addFunction("convert_date",lv->{
 
-            Value evalValue = lv.get(0).evalValue(c);
+            Value evalValue = lv.get(0);
 
             if(evalValue instanceof NumericValue) {
-                Date date = new Date(NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
+                Date date = new Date(NumericValue.asNumber(evalValue).getLong());
                 List<Value> value_list = new ArrayList<>();
                 //l(year, month, date, hour, minute, second,day_long_name)
                 value_list.add(new NumericValue(date.getYear()+1900));//Cos returns year - 1900
@@ -1802,7 +1801,7 @@ public class Expression
 
                 ListValue retval = ListValue.wrap(value_list);
 
-                return (_c,_t)-> retval;
+                return retval;
             } else if(evalValue instanceof ListValue) {
 
                 List<Value> l = ((ListValue)evalValue).getItems();
@@ -1820,7 +1819,7 @@ public class Expression
 
                 NumericValue retval = new NumericValue(time);
 
-                return (_c, _t) -> retval;
+                return retval;
             } else
                 throw new InternalExpressionException("Function convert_date only accepts a list or a number");
         });
