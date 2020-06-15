@@ -54,7 +54,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
 
     @Shadow public abstract void updateComparators(BlockPos pos, Block block);
 
-    @Shadow public abstract boolean setBlockState(BlockPos pos, BlockState state, int flags);
+    //@Shadow public abstract boolean setBlockState(BlockPos pos, BlockState state, int flags);
 
     @Shadow public abstract boolean isDebugWorld();
 
@@ -125,9 +125,9 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
                     if ((int_1 & 16) == 0)
                     {
                         int int_2 = int_1 & -2;
-                        blockState_2.prepare((net.minecraft.world.WorldAccess) this, blockPos_1, int_2);
-                        blockState_1.updateNeighbors((net.minecraft.world.WorldAccess) this, blockPos_1, int_2);
-                        blockState_1.prepare((net.minecraft.world.WorldAccess) this, blockPos_1, int_2);
+                        blockState_2.prepare((net.minecraft.world.WorldAccess) this, blockPos_1, int_2, 512);
+                        blockState_1.updateNeighbors((net.minecraft.world.WorldAccess) this, blockPos_1, int_2, 512);
+                        blockState_1.prepare((net.minecraft.world.WorldAccess) this, blockPos_1, int_2, 512);
                     }
                     this.onBlockChanged(blockPos_1, blockState_2, blockState_3);
                 }

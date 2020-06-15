@@ -48,7 +48,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         instance.setHealth(20.0F);
         instance.removed = false;
         instance.stepHeight = 0.6F;
-        interactionManagerIn.setGameMode(gamemode);
+        interactionManagerIn.method_30118(gamemode); // setGameMode
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), dimensionId);//instance.dimension);
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), dimensionId);//instance.dimension);
         instance.getServerWorld().getChunkManager().updateCameraPosition(instance);
@@ -68,7 +68,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
         playerShadow.setHealth(player.getHealth());
         playerShadow.networkHandler.requestTeleport(player.getX(), player.getY(), player.getZ(), player.yaw, player.pitch);
-        interactionManagerIn.setGameMode(player.interactionManager.getGameMode());
+        interactionManagerIn.method_30118(player.interactionManager.getGameMode()); // setGameMode
         ((ServerPlayerEntityInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerEntityInterface) player).getActionPack());
         playerShadow.stepHeight = 0.6F;
         playerShadow.dataTracker.set(PLAYER_MODEL_PARTS, player.getDataTracker().get(PLAYER_MODEL_PARTS));
