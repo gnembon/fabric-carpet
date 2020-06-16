@@ -127,7 +127,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
         if (PLAYER_RIGHT_CLICKS_BLOCK.isNeeded())
         {
             Hand hand = playerInteractBlockC2SPacket_1.getHand();
-            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getHitY();
+            BlockHitResult hitRes = playerInteractBlockC2SPacket_1.getBlockHitResult();
             PLAYER_RIGHT_CLICKS_BLOCK.onBlockHit(player, hand, hitRes);
         }
     }
