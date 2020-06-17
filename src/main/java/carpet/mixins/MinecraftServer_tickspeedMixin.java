@@ -5,6 +5,7 @@ import carpet.utils.CarpetProfiler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.util.TickDurationMonitor;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Util;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.thread.ReentrantThreadExecutor;
@@ -50,6 +51,8 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
     @Shadow private long lastTimeReference;
 
     @Shadow private boolean waitingForNextTick;
+
+    @Shadow public abstract Iterable<ServerWorld> getWorlds();
 
     CarpetProfiler.ProfilerToken currentSection;
 
@@ -117,21 +120,38 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
             this.startMonitor(tickDurationMonitor);
             this.profiler.startTick();
             this.profiler.push("tick");
-            this.tick(TickSpeed.time_warp_start_time != 0 ? ()->!hasRunningTasks() : this::shouldKeepTicking);
+            this.tick(TickSpeed.time_warp_start_time != 0 ? ()->true : this::shouldKeepTicking);
             this.profiler.swap("nextTickWait");
+            if (TickSpeed.time_warp_start_time != 0) // clearing all hanging tasks no matter what when warping
+            {
+                while(this.runEveryTask()) {Thread.yield();}
+            }
             this.waitingForNextTick = true;
             this.field_19248 = Math.max(Util.getMeasuringTimeMs() + /*50L*/ msThisTick, this.timeReference);
-            if (TickSpeed.time_warp_start_time != 0)
-            {
-                runTasks();
-                runTasks(() -> !hasRunningTasks() );
-            }
-            else { this.method_16208(); }
+            // run all tasks (this will not do a lot when warping), but that's fine since we already run them
+            this.method_16208();
             this.profiler.pop();
             this.profiler.endTick();
             this.loading = true;
         }
 
+    }
+
+
+    private boolean runEveryTask() {
+        if (super.runTask()) {
+            return true;
+        } else {
+            if (true) { // unconditionally this time
+                for(ServerWorld serverlevel : getWorlds()) {
+                    if (serverlevel.getChunkManager().executeQueuedTasks()) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
     }
 
     @Inject(method = "tick", at = @At(

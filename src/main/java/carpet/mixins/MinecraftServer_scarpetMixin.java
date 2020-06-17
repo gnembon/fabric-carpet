@@ -43,7 +43,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
     {
         timeReference = lastTimeReference = Util.getMeasuringTimeMs();
         tick(isAhead);
-        runTask();
+        while(runTask()) {Thread.yield();}
     }
 
     @Override
