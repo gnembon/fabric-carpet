@@ -119,6 +119,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
@@ -2227,8 +2228,8 @@ public class CarpetExpression
 
             BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 0);
             BlockArgument pos2Locator = BlockArgument.findIn(cc, lv, pos1Locator.offset);
-            BlockPos pos2 = pos2Locator.block.getPos();
             BlockPos pos1 = pos1Locator.block.getPos();
+            BlockPos pos2 = pos2Locator.block.getPos();
 
             int x1 = pos1.getX();
             int y1 = pos1.getY();
@@ -2313,41 +2314,54 @@ public class CarpetExpression
         this.expr.addLazyFunction("rect", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext) c;
-
-            int cx;
-            int cy;
-            int cz;
-            int sminx;
-            int sminy;
-            int sminz;
-            int smaxx;
-            int smaxy;
-            int smaxz;
-
+            int cx, cy, cz;
+            int sminx, sminy, sminz;
+            int smaxx, smaxy, smaxz;
             BlockArgument cposLocator = BlockArgument.findIn(cc, lv, 0);
             BlockPos cpos = cposLocator.block.getPos();
-
             cx = cpos.getX();
             cy = cpos.getY();
             cz = cpos.getZ();
-
-            if(lv.size()>cposLocator.offset){
-                BlockArgument diff_Locator = BlockArgument.findIn(cc, lv, cposLocator.offset);
-                BlockPos difference = diff_Locator.block.getPos();
-                sminx = difference.getX();
-                sminy = difference.getY();
-                sminz = difference.getZ();
-                if(lv.size()>diff_Locator.offset){
-                    BlockPos pos_diff=BlockArgument.findIn(cc,lv,diff_Locator.offset).block.getPos();
-                    smaxx = pos_diff.getX();
-                    smaxy = pos_diff.getY();
-                    smaxz = pos_diff.getZ();
-                }else{
+            if (lv.size() > cposLocator.offset)
+            {
+                Vector3Argument diffLocator = Vector3Argument.findIn(cc, lv, cposLocator.offset);
+                if (diffLocator.fromBlock)
+                {
+                    sminx = MathHelper.floor(abs(diffLocator.vec.x - cx));
+                    sminy = MathHelper.floor(abs(diffLocator.vec.y - cx));
+                    sminz = MathHelper.floor(abs(diffLocator.vec.z - cx));
+                }
+                else
+                {
+                    sminx = MathHelper.floor(abs(diffLocator.vec.x));
+                    sminy = MathHelper.floor(abs(diffLocator.vec.y));
+                    sminz = MathHelper.floor(abs(diffLocator.vec.z));
+                }
+                if (lv.size() > diffLocator.offset)
+                {
+                    Vector3Argument posDiff = Vector3Argument.findIn(cc, lv, diffLocator.offset);
+                    if (posDiff.fromBlock)
+                    {
+                        smaxx = MathHelper.floor(abs(posDiff.vec.x - cx));
+                        smaxy = MathHelper.floor(abs(posDiff.vec.y - cx));
+                        smaxz = MathHelper.floor(abs(posDiff.vec.z - cx));
+                    }
+                    else
+                    {
+                        smaxx = MathHelper.floor(abs(posDiff.vec.x));
+                        smaxy = MathHelper.floor(abs(posDiff.vec.y));
+                        smaxz = MathHelper.floor(abs(posDiff.vec.z));
+                    }
+                }
+                else
+                {
                     smaxx = sminx;
                     smaxy = sminy;
                     smaxz = sminz;
                 }
-            }else{
+            }
+            else
+            {
                 sminx = 1;
                 sminy = 1;
                 sminz = 1;
@@ -2439,7 +2453,7 @@ public class CarpetExpression
                 cy = cpos.getY();
                 cz = cpos.getZ();
 
-                if (lv.size()==1+cposLocator.offset)
+                if (lv.size()==cposLocator.offset)
                 {
                     Value retval = ListValue.of(
                             BlockValue.fromCoords(cc, cx, cy-1, cz),
@@ -2452,22 +2466,22 @@ public class CarpetExpression
                     );
                     return (_c, _t ) -> retval;
                 }
-                else if (lv.size()==2+cposLocator.offset)
+                else if (lv.size()==1+cposLocator.offset)
                 {
                     width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
                     height = 0;
                 }
-                else if(lv.size()==3+cposLocator.offset)
+                else if(lv.size()==2+cposLocator.offset)
                 {
                     width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
                     height = (int) ((NumericValue) lv.get(cposLocator.offset+1).evalValue(c)).getLong();
                 } else{
-                    throw new InternalExpressionException("Incorrect number of arguments for diamond");
+                    throw new InternalExpressionException("Incorrect number of arguments for 'diamond'");
                 }
             }
             catch (ClassCastException exc)
             {
-                throw new InternalExpressionException("Attempted to pass a non-number to diamond");
+                throw new InternalExpressionException("Attempted to pass a non-number to 'diamond'");
             }
             if (height == 0)
             {
