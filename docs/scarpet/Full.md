@@ -882,10 +882,13 @@ Thou shall not sample from noise changing seed frequently. Scarpet will keep tra
 used for sampling providing similar speed comparing to the default seed of `0`. In case the app engine uses more 
 than 256 seeds at the same time, switching between them can get much more expensive.
 
-### `print(expr)`
+### `print(expr)`, `print(player, expr)`
 
 prints the value of the expression to chat. Passes the result of the argument to the output unchanged, 
-so `print`-statements can be weaved in code to debug programming issues
+so `print`-statements can be weaved in code to debug programming issues. By default it uses the same communication
+channels that most vanilla commands are using.
+
+In case player is directly specified, it only sends the message to that player, like `tell` command.
 
 <pre>
 print('foo') => results in foo, prints: foo
@@ -3000,6 +3003,51 @@ item_category('ender_pearl') => misc
 item_category('stone') => building_blocks
 </pre>
 
+### `recipe_data(item, type?)`, `recipe_data(recipe, type?)`
+
+returns all recipes matching either an `item`, or represent actual `recipe` name. In vanilla datapack, for all items
+that have one recipe available, the recipe name is the same as the item name but if an item has multiple recipes, its
+direct name can be different.
+
+Recipe type can take one of the following options:
+ * `'crafting'` - default, crafting table recipe
+ * `'smelting'` - furnace recipe
+ * `'blasting'` - blast furnace recipe
+ * `'smoking'` - smoker recipe
+ * `'campfire_cooking'` - campfire recipe
+ * `'stonecutting'` - stonecutter recipe
+ * `'smithing'` - smithing table (1.16+)
+ 
+ The return value is a list of available recipes (even if there is only one recipe available). Each recipe contains of
+ an item triple of the crafting result, list of ingredients, each containing a list of possible variants of the
+ ingredients in this slot, as item triples, or `null` if its a shaped recipe and a given slot in the patterns is left
+ empty, and recipe specification as another list. Possible recipe specs is:
+  * `['shaped', width, height]` - shaped crafting. `width` and `height` can be 1, 2 or 3.
+  * `['shapeless']` - shapeless crafting
+  * `['smelting', duration, xp]` - smelting/cooking recipes
+  * `['cutting']` - stonecutter recipe
+  * `['special']` - special crafting recipe, typically not present in the crafting menu
+  * `['custom']` - other recipe types
+  
+Note that ingredients are specified as tripes, with count and nbt information. Currently all recipes require always one
+of the ingredients, and for some recipes, even if the nbt data for the ingredient is specified (e.g. `dispenser`), it
+can accept items of any tags.
+
+Also note that some recipes leave some products in the crafting window, and these can be determined using
+ `crafting_remaining_item()` function 
+  
+ Examples:
+ <pre>
+ recipe_data('iron_ingot_from_nuggets')
+ recipe_data('iron_ingot')
+ recipe_data('glass', 'smelting')
+ </pre>
+
+### `crafting_remaining_item(item)`
+
+returns `null` if the item has no remaining item in the crafting window when used as a crafting ingredient, or an
+item name that serves as a replacement after crafting is done. Currently it can only be buckets and glass bottles.
+
 ### `inventory_size(inventory)`
 
 Returns the size of the inventory for the entity or block in question. Returns null if the block or entity don't 
@@ -3115,6 +3163,8 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)  /
 __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right click on a block resulted in activation of said block
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
+__on_player_chooses_recipe(player, recipe, full_stack)
+__on_player_switches_slot(player, from, to)
 __on_player_attacks_entity(player, entity)
 __on_player_takes_damage(player, amount, source, source_entity)
 __on_player_deals_damage(player, amount, entity)

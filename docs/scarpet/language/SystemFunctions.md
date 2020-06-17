@@ -239,10 +239,13 @@ Thou shall not sample from noise changing seed frequently. Scarpet will keep tra
 used for sampling providing similar speed comparing to the default seed of `0`. In case the app engine uses more 
 than 256 seeds at the same time, switching between them can get much more expensive.
 
-### `print(expr)`
+### `print(expr)`, `print(player, expr)`
 
 prints the value of the expression to chat. Passes the result of the argument to the output unchanged, 
-so `print`-statements can be weaved in code to debug programming issues
+so `print`-statements can be weaved in code to debug programming issues. By default it uses the same communication
+channels that most vanilla commands are using.
+
+In case player is directly specified, it only sends the message to that player, like `tell` command.
 
 <pre>
 print('foo') => results in foo, prints: foo

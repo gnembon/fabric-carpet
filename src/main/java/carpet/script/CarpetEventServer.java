@@ -488,6 +488,37 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
             }
         },
+        PLAYER_CHOOSES_RECIPE("player_chooses_recipe", 3, false)
+        {
+            @Override
+            public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack)
+            {
+                handler.call( () ->
+                {
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> new StringValue(NBTSerializableValue.nameFromRegistryId(recipe))),
+                            ((c, t) -> new NumericValue(fullStack))
+                    );
+                }, player::getCommandSource);
+            }
+        },
+        PLAYER_SWITCHES_SLOT("player_switches_slot", 3, false)
+        {
+            @Override
+            public void onSlotSwitch(ServerPlayerEntity player, int from, int to)
+            {
+                if (from == to) return; // initial slot update
+                handler.call( () ->
+                {
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> new NumericValue(from)),
+                            ((c, t) -> new NumericValue(to))
+                    );
+                }, player::getCommandSource);
+            }
+        },
         PLAYER_TAKES_DAMAGE("player_takes_damage", 4, false)
         {
             @Override
@@ -647,6 +678,8 @@ public class CarpetEventServer
         public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
         public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, DimensionType fromDim, DimensionType dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }
+        public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}
+        public void onSlotSwitch(ServerPlayerEntity player, int from, int to) {}
 
 
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }

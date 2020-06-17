@@ -39,7 +39,7 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
     {
         timeReference = field_4557 = Util.getMeasuringTimeMs();
         tick(isAhead);
-        runTask();
+        while(runTask()) {Thread.yield();}
     }
 
     @Inject(method = "tick", at = @At(

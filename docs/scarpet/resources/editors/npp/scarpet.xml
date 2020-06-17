@@ -62,7 +62,9 @@
 
                 player spawn entity_id entity_list entity_area entity_selector query modify entity_event
 
-                stack_limit item_category inventory_size inventory_has_items inventory_get inventory_set inventory_find inventory_remove drop_item
+                stack_limit item_category recipe_data crafting_remaining_item
+
+                inventory_size inventory_has_items inventory_get inventory_set inventory_find inventory_remove drop_item
 
                 scan volume neighbours rect diamond
 
@@ -87,6 +89,7 @@
                 __on_player_breaks_block
                 __on_player_clicks_block
                 __on_player_changes_dimension
+                __on_player_chooses_recipe
                 __on_player_deploys_elytra
                 __on_player_drops_item
                 __on_player_drops_stack
@@ -102,6 +105,7 @@
                 __on_player_starts_sprinting
                 __on_player_stops_sneaking
                 __on_player_stops_sprinting
+                __on_player_switches_slot
                 __on_player_uses_item
                 __on_player_wakes_up
                 __on_statistic
