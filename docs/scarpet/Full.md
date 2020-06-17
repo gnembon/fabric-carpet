@@ -923,59 +923,45 @@ print(str('this took %d milliseconds',time()-start_time))
 
 ### `unix_time()`
 
-Returns standard POSIX time as a number of milliseconds since the start of the epoch (1:00 am and 0 seconds, 1 Jan 1970).
+Returns standard POSIX time as a number of milliseconds since the start of the epoch 
+(00:00 am and 0 seconds, 1 Jan 1970).
 Unlike the previous function, this can be used to get exact time, but it varies from time zone to time zone.
 
 ### `convert_date(milliseconds)`
+### `convert_date(year, month, date, hours?, mins?, secs?)`
+### `convert_date(l(year, month, date, hours?, mins?, secs?))`
 
-Returns standard POSIX time as a list in the format: 
+If called with a single argument, converts standard POSIX time to a list in the format: 
 
-`l(year, month, date, hours, mins, secs, day)`
+`l(year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year)`
 
-eg: `convert_date(1592126363317)->l(2020, 5, 14, 11, 19, 23, 1)`
+eg: `convert_date(1592401346960) -> [2020, 6, 17, 10, 42, 26, 3, 169, 25]`
 
-Where the `5` stands for June, but `14` stands for 14th, `11` stands for 11am,
-`19` stands for 19 minutes past the hour, and `23` stands for 23 seconds past the minute,
-and `1` stands for Monday. 
+Where the `6` stands for June, but `17` stands for 17th, `10` stands for 10am,
+`42` stands for 42 minutes past the hour, and `26` stands for 26 seconds past the minute,
+and `3` stands for Wednesday, `169` is the day of year, and `25` is a week of year. 
 
 Run `convert_date(unix_time())` to get current time as list.
 
-### `convert_date(year, month, date, hours, mins, secs)`
 
-Returns standard POSIX time as a number of milliseconds since the start of the epoch (1 Jan 1970),
+When called with a list, or with 3 or 6 arguments, returns standard POSIX time as a number of milliseconds since the
+ start of the epoch (1 Jan 1970),
 using the time inputted into the function as opposed to the system time.
 
-eg: `convert_date(2020, 5, 14, 11, 19, 23)->`
-
-You could in theory use this to get system time, but it would be delayed by a few milliseconds,
-based on your pc, by the fact that it would take a short while to compute both `convert_date` functions.
-
 Example editing:
-```
-time_list = convert_date(unix_time());
+<pre>
+date = convert_date(unix_time());
 
-global_months=l('January','February','March','April','May','June','July','August','September','October','November','December');
+months = l('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
 
-get_month(num)->return(global_months:(num+1));
+days = l('Mon','Tue','Wed','Thu','Fri','Sat','Sun');
 
-//to get 01 in time, so forth
-get_0(num)->if(num<10,return('0'+num),return(str(num)));
-
-get_adj(num)->(//to get the 1st, 2nd and 3rd...
-    if(num%10==1,//cos 11th and 12th, as Enlish is a weird language
-        if(num==11,return('th'),return('st')),
-        num%10==2,
-        if(num==12,return('th'),return('nd')),
-        return('th')
-    )
-);
-//So you can run in command line
-print(str('It is currently %s:%s and %d seconds on the %d%s of %s, %d',
-        get_0(time_list:3), get_0(time_list:4),
-        time_list:5, time_list:2, get_adj(time_list:2),
-        get_month(time_list:1), time_list:0
-))
-```
+print(
+  str('Its %s, %d %s %d, %02d:%02d:%02d', 
+    days:(date:6-1), date:2, months:(date:1-1), date:0, date:3, date:4, date:5 
+  )
+)  
+</pre>
 
 This will give you a date:
 

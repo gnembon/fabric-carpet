@@ -41,7 +41,20 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -1779,49 +1792,64 @@ public class Expression
             return (cc, tt) -> time;
         });
 
-        addUnaryFunction("unix_time",v->
-            new NumericValue(System.currentTimeMillis())
-        );
+        addLazyFunction("unix_time", 0, (c, t, lv) ->
+        {
+            Value time = new NumericValue(System.currentTimeMillis());
+            return (cc, tt) -> time;
+        });
 
-        addFunction("convert_date",lv->{
+        addFunction("convert_date", lv ->
+        {
+            int argsize = lv.size();
+            if (lv.size() == 0) throw new InternalExpressionException("'convert_date' requires at least one parameter");
+            Value value = lv.get(0);
+            if (argsize == 1 && !(value instanceof ListValue))
+            {
+                Calendar cal = new GregorianCalendar(Locale.ROOT);
+                cal.setTimeInMillis(NumericValue.asNumber(value, "timestamp").getLong());
+                int weekday = cal.get(Calendar.DAY_OF_WEEK)-1;
+                if (weekday == 0) weekday = 7;
+                Value retVal = ListValue.ofNums(
+                        cal.get(Calendar.YEAR),
+                        cal.get(Calendar.MONTH)+1,
+                        cal.get(Calendar.DAY_OF_MONTH),
+                        cal.get(Calendar.HOUR_OF_DAY),
+                        cal.get(Calendar.MINUTE),
+                        cal.get(Calendar.SECOND),
+                        weekday,
+                        cal.get(Calendar.DAY_OF_YEAR),
+                        cal.get(Calendar.WEEK_OF_YEAR)
+                );
+                return retVal;
+            }
+            else if(value instanceof ListValue)
+            {
+                lv = ((ListValue) value).getItems();
+                argsize = lv.size();
+            }
+            Calendar cal = new GregorianCalendar(0, 0, 0, 0, 0, 0);
 
-            Value evalValue = lv.get(0);
-
-            if(evalValue instanceof NumericValue) {
-                Date date = new Date(NumericValue.asNumber(evalValue).getLong());
-                List<Value> value_list = new ArrayList<>();
-                //l(year, month, date, hour, minute, second,day_long_name)
-                value_list.add(new NumericValue(date.getYear()+1900));//Cos returns year - 1900
-                value_list.add(new NumericValue(date.getMonth()));
-                value_list.add(new NumericValue(date.getDate()));
-                value_list.add(new NumericValue(date.getHours()));
-                value_list.add(new NumericValue(date.getMinutes()));
-                value_list.add(new NumericValue(date.getSeconds()));
-                value_list.add(new NumericValue(date.getDay()));
-
-                ListValue retval = ListValue.wrap(value_list);
-
-                return retval;
-            } else if(evalValue instanceof ListValue) {
-
-                List<Value> l = ((ListValue)evalValue).getItems();
-                if (l.size()!=6)//or IndexOutOfBounds exception. Don't need to deal with non-numeric values, scarpet does that already
-                    throw new InternalExpressionException("List of arguments to convert_date needs to have 6 elements");
-                int year =(int) NumericValue.asNumber(l.get(0)).getLong();
-                int month = (int) NumericValue.asNumber(l.get(1)).getLong();
-                int date = (int) NumericValue.asNumber(l.get(2)).getLong();
-                int hrs = (int) NumericValue.asNumber(l.get(3)).getLong();
-                int mins = (int) NumericValue.asNumber(l.get(4)).getLong();
-                int secs = (int) NumericValue.asNumber(l.get(5)).getLong();//secs are very important
-
-                //SO you can input 2020 and not get messed up results
-                int time = (int) new Date(year-1900,month,date,hrs,mins,secs).getTime();
-
-                NumericValue retval = new NumericValue(time);
-
-                return retval;
-            } else
-                throw new InternalExpressionException("Function convert_date only accepts a list or a number");
+            if (argsize == 3)
+            {
+                cal.set(
+                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.get(1)).getInt()-1,
+                        NumericValue.asNumber(lv.get(2)).getInt()
+                );
+            }
+            else if (argsize == 6)
+            {
+                cal.set(
+                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.get(1)).getInt()-1,
+                        NumericValue.asNumber(lv.get(2)).getInt(),
+                        NumericValue.asNumber(lv.get(3)).getInt(),
+                        NumericValue.asNumber(lv.get(4)).getInt(),
+                        NumericValue.asNumber(lv.get(5)).getInt()
+                );
+            }
+            else throw new InternalExpressionException("Date conversion requires 3 arguments for Dates or 6 arguments, for time");
+            return new NumericValue(cal.getTimeInMillis());
         });
 
         addLazyFunction("profile_expr", 1, (c, t, lv) ->
