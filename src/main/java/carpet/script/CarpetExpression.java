@@ -2206,27 +2206,23 @@ public class CarpetExpression
             cy = cpos.getY();
             cz = cpos.getZ();
 
-            try{
+            if(lv.size()>cposLocator.offset){
                 BlockArgument diff_Locator = BlockArgument.findIn(cc, lv, cposLocator.offset);
                 BlockPos difference = diff_Locator.block.getPos();
-
                 sminx = difference.getX();
                 sminy = difference.getY();
                 sminz = difference.getZ();
-
-                try{
+                if(lv.size()>diff_Locator.offset){
                     BlockPos pos_diff=BlockArgument.findIn(cc,lv,diff_Locator.offset).block.getPos();
                     smaxx = pos_diff.getX();
                     smaxy = pos_diff.getY();
                     smaxz = pos_diff.getZ();
-                    Messenger.m(cc.s,"w 9");
-                } catch(IndexOutOfBoundsException i){//Checing if there are 2 pos
+                }else{
                     smaxx = sminx;
                     smaxy = sminy;
                     smaxz = sminz;
                 }
-
-            } catch (IndexOutOfBoundsException i){//Checking if there is only 1 pos
+            }else{
                 sminx = 1;
                 sminy = 1;
                 sminz = 1;
@@ -2235,22 +2231,14 @@ public class CarpetExpression
                 smaxz = 1;
             }
 
-
-            int finalSminx = sminx;
-            int finalSminy = sminy;
-            int finalSminz = sminz;
-            int finalSmaxx = smaxx;
-            int finalSmaxy = smaxy;
-            int finalSmaxz = smaxz;
-
             return (c_, t_) -> new LazyListValue()
             {
-                final int minx = cx-finalSminx;
-                final int miny = cy-finalSminy;
-                final int minz = cz-finalSminz;
-                final int maxx = cx+finalSmaxx;
-                final int maxy = cy+finalSmaxy;
-                final int maxz = cz+finalSmaxz;
+                final int minx = cx-sminx;
+                final int miny = cy-sminy;
+                final int minz = cz-sminz;
+                final int maxx = cx+smaxx;
+                final int maxy = cy+smaxy;
+                final int maxz = cz+smaxz;
 
                 int x;
                 int y;
@@ -2341,13 +2329,15 @@ public class CarpetExpression
                 }
                 else if (lv.size()==2+cposLocator.offset)
                 {
-                    width = (int) ((NumericValue) lv.get(lv.size()-1).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
                     height = 0;
                 }
-                else // size == 3 + cposLocator.offset
+                else if(lv.size()==3+cposLocator.offset)
                 {
-                    width = (int) ((NumericValue) lv.get(lv.size()-2).evalValue(c)).getLong();
-                    height = (int) ((NumericValue) lv.get(lv.size()-1).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
+                    height = (int) ((NumericValue) lv.get(cposLocator.offset+1).evalValue(c)).getLong();
+                } else{
+                    throw new InternalExpressionException("Incorrect number of arguments for diamond");
                 }
             }
             catch (ClassCastException exc)
