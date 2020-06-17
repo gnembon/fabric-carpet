@@ -98,6 +98,13 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         return ListValue.wrap(Arrays.asList(list));
     }
+    public static ListValue ofNums(Number ... list)
+    {
+        List<Value> valList = new ArrayList<>();
+        for (Number i : list)
+            valList.add(new NumericValue(i.doubleValue()));
+        return ListValue.wrap(valList);
+    }
 
     public static LazyValue lazyEmpty()
     {
