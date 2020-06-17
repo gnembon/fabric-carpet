@@ -29,7 +29,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
 
     @Shadow @Final private static Logger LOGGER;
 
-    @Shadow @Final private Profiler profiler;
+    @Shadow private Profiler profiler;
 
     public MinecraftServer_tickspeedMixin(String name)
     {
