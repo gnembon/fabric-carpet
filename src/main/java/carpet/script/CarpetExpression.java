@@ -1396,13 +1396,14 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
+            if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
                 return LazyValue.FALSE;
-            if (lv.size() == 0)
+            if (lv.size() == 1)
             {
                 scoreboard.removeObjective(objective);
                 return LazyValue.TRUE;
@@ -2621,7 +2622,7 @@ public class CarpetExpression
     public static String recognizeResource(Value value)
     {
         String origfile = value.getString();
-        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
         file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
         if (file.isEmpty())
         {
