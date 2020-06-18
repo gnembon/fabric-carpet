@@ -62,8 +62,7 @@ public class ShapesRenderer
         //RenderSystem.shadeModel(7425);
         RenderSystem.shadeModel(GL11.GL_FLAT);
         RenderSystem.enableAlphaTest();
-        RenderSystem.defaultAlphaFunc();
-        //RenderSystem.alphaFunc(GL11.GL_GREATER, 0.005F);
+        RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
         RenderSystem.disableCull();
         RenderSystem.disableLighting();
         RenderSystem.depthMask(false);
