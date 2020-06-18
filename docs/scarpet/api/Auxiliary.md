@@ -200,7 +200,7 @@ With the specified `resource` in the scripts folder, of a specific `type`, write
  content, or deletes the resource.
 
 Resource is identified by a path to the file.  
-A path can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid. Do not add file extensions to the descriptor - extensions are inferred
 based on the `type` of the file.
  

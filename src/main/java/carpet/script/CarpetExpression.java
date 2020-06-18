@@ -769,27 +769,55 @@ public class CarpetExpression
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
-            if (lv.size() < 2 || lv.size() % 2 == 1)
-                throw new InternalExpressionException("'set' should have at least 2 params and odd attributes");
             BlockArgument targetLocator = BlockArgument.findIn(cc, lv, 0);
             BlockArgument sourceLocator = BlockArgument.findIn(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
-            if (sourceLocator.offset < lv.size())
+            CompoundTag data = null;
+            if (lv.size() > sourceLocator.offset)
             {
-                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateManager();
-                for (int i = sourceLocator.offset; i < lv.size(); i += 2)
+                List<Value> args = new ArrayList<>();
+                for (int i = sourceLocator.offset, m = lv.size(); i < m; i++)
                 {
-                    String paramString = lv.get(i).evalValue(c).getString();
+                    args.add(lv.get(i).evalValue(c));
+                }
+                if (args.get(0) instanceof ListValue)
+                {
+                    if (args.size() == 2)
+                    {
+                        Value dataValue = NBTSerializableValue.fromValue( args.get(1));
+                        if (dataValue instanceof NBTSerializableValue)
+                        {
+                            data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                        }
+                    }
+                    args = ((ListValue) args.get(0)).getItems();
+                }
+                else
+                {
+                    if ((args.size() & 1) == 1)
+                    {
+                        Value dataValue = NBTSerializableValue.fromValue( args.get(args.size()-1));
+                        if (dataValue instanceof NBTSerializableValue)
+                        {
+                            data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                        }
+                    }
+                }
+                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateManager();
+                for (int i = 0; i < args.size()-1; i += 2)
+                {
+                    String paramString = args.get(i).getString();
                     Property<?> property = states.getProperty(paramString);
                     if (property == null)
                         throw new InternalExpressionException("Property " + paramString + " doesn't apply to " + sourceLocator.block.getString());
-                    String paramValue = lv.get(i + 1).evalValue(c).getString();
+                    String paramValue = args.get(i + 1).getString();
                     sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
                 }
             }
 
-            CompoundTag data = sourceLocator.block.getData();
+            if (data == null) data = sourceLocator.block.getData();
+            CompoundTag finalData = data;
 
             if (sourceBlockState == targetBlockState && data == null)
                 return (c_, t_) -> Value.FALSE;
@@ -799,12 +827,12 @@ public class CarpetExpression
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
                 world.setBlockState(targetPos, finalSourceBlockState, 2);
-                if (data != null)
+                if (finalData != null)
                 {
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
                     {
-                        CompoundTag destTag = data.copy();
+                        CompoundTag destTag = finalData.copy();
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
@@ -913,7 +941,7 @@ public class CarpetExpression
             Tag outtag = tool.getTag();
             if (outtag == null)
                 return LazyValue.TRUE;
-            Value ret = new NBTSerializableValue(outtag);
+            Value ret = new NBTSerializableValue(() -> outtag);
             return (_c, _t) -> ret;
 
         });
@@ -1419,13 +1447,14 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
+            if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
                 return LazyValue.FALSE;
-            if (lv.size() == 0)
+            if (lv.size() == 1)
             {
                 scoreboard.removeObjective(objective);
                 return LazyValue.TRUE;
@@ -1973,11 +2002,9 @@ public class CarpetExpression
                 Value nbt = lv.get(position.offset).evalValue(c);
                 NBTSerializableValue v = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
                         : NBTSerializableValue.parseString(nbt.getString());
-                if (v != null)
-                {
-                    hasTag = true;
-                    tag = v.getCompoundTag();
-                }
+                hasTag = true;
+                tag = v.getCompoundTag();
+
             }
             tag.putString("id", entityId.toString());
             Vec3d vec3d = position.vec;
@@ -2638,7 +2665,7 @@ public class CarpetExpression
     public static String recognizeResource(Value value)
     {
         String origfile = value.getString();
-        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
         file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
         if (file.isEmpty())
         {
@@ -2914,12 +2941,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("nbt", 1, (c, t, lv) -> {
-            Value v = lv.get(0).evalValue(c);
-            if (v instanceof NBTSerializableValue)
-                return (cc, tt) -> v;
-            Value ret = NBTSerializableValue.parseString(v.getString());
-            if (ret == null)
-                return LazyValue.NULL;
+            Value ret = NBTSerializableValue.fromValue(lv.get(0).evalValue(c));
             return (cc, tt) -> ret;
         });
 
@@ -2928,6 +2950,20 @@ public class CarpetExpression
             String string = v.getString();
             Value ret = new StringValue(StringTag.escape(string));
             return (cc, tt) -> ret;
+        });
+
+        this.expr.addLazyFunction("parse_nbt", 1, (c, t, lv) -> {
+            Value v = lv.get(0).evalValue(c);
+            if (v instanceof NBTSerializableValue)
+            {
+                Value parsed = ((NBTSerializableValue) v).toValue();
+                return (cc, tt) -> parsed;
+            }
+            NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString());
+            if (ret == null)
+                return LazyValue.NULL;
+            Value parsed = ret.toValue();
+            return (cc, tt) -> parsed;
         });
 
         //"overridden" native call that prints to stderr
