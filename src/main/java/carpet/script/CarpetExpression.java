@@ -768,14 +768,14 @@ public class CarpetExpression
             BlockArgument sourceLocator = BlockArgument.findIn(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
-            List<Value> args = new ArrayList<>();
-            for (int i = sourceLocator.offset, m = lv.size(); i < m; i++)
-            {
-                args.add(lv.get(i).evalValue(c));
-            }
             CompoundTag data = null;
-            if (!args.isEmpty())
+            if (lv.size() > sourceLocator.offset)
             {
+                List<Value> args = new ArrayList<>();
+                for (int i = sourceLocator.offset, m = lv.size(); i < m; i++)
+                {
+                    args.add(lv.get(i).evalValue(c));
+                }
                 if (args.get(0) instanceof ListValue)
                 {
                     if (args.size() == 2)
