@@ -87,11 +87,11 @@ public class EntityValue extends Value
             EntitySelector entitySelector = selectorCache.get(selector);
             if (entitySelector != null)
             {
-                return entitySelector.getEntities(source);
+                return entitySelector.getEntities(source.withMaxLevel(4));
             }
             entitySelector = new EntitySelectorReader(new StringReader(selector), true).read();
             selectorCache.put(selector, entitySelector);
-            return entitySelector.getEntities(source);
+            return entitySelector.getEntities(source.withMaxLevel(4));
         }
         catch (CommandSyntaxException e)
         {

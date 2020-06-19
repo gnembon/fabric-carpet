@@ -882,10 +882,13 @@ Thou shall not sample from noise changing seed frequently. Scarpet will keep tra
 used for sampling providing similar speed comparing to the default seed of `0`. In case the app engine uses more 
 than 256 seeds at the same time, switching between them can get much more expensive.
 
-### `print(expr)`
+### `print(expr)`, `print(player, expr)`
 
 prints the value of the expression to chat. Passes the result of the argument to the output unchanged, 
-so `print`-statements can be weaved in code to debug programming issues
+so `print`-statements can be weaved in code to debug programming issues. By default it uses the same communication
+channels that most vanilla commands are using.
+
+In case player is directly specified, it only sends the message to that player, like `tell` command.
 
 <pre>
 print('foo') => results in foo, prints: foo
@@ -917,6 +920,52 @@ start_time = time();
 flip_my_world_upside_down();
 print(str('this took %d milliseconds',time()-start_time))
 </pre>
+
+### `unix_time()`
+
+Returns standard POSIX time as a number of milliseconds since the start of the epoch 
+(00:00 am and 0 seconds, 1 Jan 1970).
+Unlike the previous function, this can be used to get exact time, but it varies from time zone to time zone.
+
+### `convert_date(milliseconds)`
+### `convert_date(year, month, date, hours?, mins?, secs?)`
+### `convert_date(l(year, month, date, hours?, mins?, secs?))`
+
+If called with a single argument, converts standard POSIX time to a list in the format: 
+
+`l(year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year)`
+
+eg: `convert_date(1592401346960) -> [2020, 6, 17, 10, 42, 26, 3, 169, 25]`
+
+Where the `6` stands for June, but `17` stands for 17th, `10` stands for 10am,
+`42` stands for 42 minutes past the hour, and `26` stands for 26 seconds past the minute,
+and `3` stands for Wednesday, `169` is the day of year, and `25` is a week of year. 
+
+Run `convert_date(unix_time())` to get current time as list.
+
+
+When called with a list, or with 3 or 6 arguments, returns standard POSIX time as a number of milliseconds since the
+ start of the epoch (1 Jan 1970),
+using the time inputted into the function as opposed to the system time.
+
+Example editing:
+<pre>
+date = convert_date(unix_time());
+
+months = l('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+
+days = l('Mon','Tue','Wed','Thu','Fri','Sat','Sun');
+
+print(
+  str('Its %s, %d %s %d, %02d:%02d:%02d', 
+    days:(date:6-1), date:2, months:(date:1-1), date:0, date:3, date:4, date:5 
+  )
+)  
+</pre>
+
+This will give you a date:
+
+It is currently `hrs`:`mins` and `secs` seconds on the `date`th of `month`, `year`
 
 ### `profile_expr(expression)`
 
@@ -2281,7 +2330,7 @@ This function is tentative - will likely change when chunk ticket API is properl
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
-### `scan(cx, cy, cz, dx, dy, dz, px?, py?, pz?, expr)`, `scan(center, range, lower_range?, expr)`
+### `scan(center, range, lower_range?, expr)`
 
 Evaluates expression over area of blocks defined by its center `center = (cx, cy, cz)`, expanded in all directions 
 by `range = (dx, dy, dz)` blocks, or optionally in negative with `range` coords, and `upper_range` coords in 
@@ -2297,14 +2346,15 @@ which would cause the expression not be evaluated for their boolean value.
 `scan` also handles `continue` and `break` statements, using `continue`'s return value to use in place of expression
 return value. `break` return value has no effect.
 
-### `volume(x1, y1, z1, x2, y2, z2, expr)`
+### `volume(from_pos, to_pos, expr)`
 
 Evaluates expression for each block in the area, the same as the `scan` function, but using two opposite corners of 
 the rectangular cuboid. Any corners can be specified, its like you would do with `/fill` command.
+You can use a position or three coordinates to specify, it doesn't matter.
 
 For return value and handling `break` and `continue` statements, see `scan` function above.
 
-### `neighbours(x, y, z), neighbours(block), neighbours(l(x,y,z))`
+### `neighbours(pos)`
 
 Returns the list of 6 neighbouring blocks to the argument. Commonly used with other loop functions like `for`.
 
@@ -2312,13 +2362,18 @@ Returns the list of 6 neighbouring blocks to the argument. Commonly used with ot
 for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 </pre>
 
-### `rect(cx, cy, cz, dx?, dy?, dz?, px?, py?, pz?)`
+### `rect(centre, range?, positive_range?)`
 
-returns an iterator, just like `range` function that iterates over rectangular cubarea of blocks. If only center 
-point is specified, it iterates over 27 blocks. If `d` arguments are specified, expands selection by the  respective 
-number of blocks in each direction. If `p` arguments are specified, it uses `d` for negative offset, and `p` for positive.
+Returns an iterator, just like `range` function that iterates over a rectangular area of blocks. If only center
+point is specified, it iterates over 27 blocks. If `range` arguments are specified, expands selection by the  respective 
+number of blocks in each direction. If `positive_range` arguments are specified,
+ it uses `range` for negative offset, and `positive_range` for positive.
 
-### `diamond(cx, cy, cz, radius?, height?)`
+`centre` can be defined either as three coordinates, a list of three coords, or a block value.
+`range` and `positive_range` can have the same representations, just if its a block, it computes the distance to the center
+as range instead of taking the values as is.`
+
+### `diamond(centre_pos, radius?, height?)`
 
 Iterates over a diamond like area of blocks. With no radius and height, its 7 blocks centered around the middle 
 (block + neighbours). With a radius specified, it expands shape on x and z coords, and with a custom height, on y. 
@@ -2940,6 +2995,51 @@ item_category('ender_pearl') => misc
 item_category('stone') => building_blocks
 </pre>
 
+### `recipe_data(item, type?)`, `recipe_data(recipe, type?)`
+
+returns all recipes matching either an `item`, or represent actual `recipe` name. In vanilla datapack, for all items
+that have one recipe available, the recipe name is the same as the item name but if an item has multiple recipes, its
+direct name can be different.
+
+Recipe type can take one of the following options:
+ * `'crafting'` - default, crafting table recipe
+ * `'smelting'` - furnace recipe
+ * `'blasting'` - blast furnace recipe
+ * `'smoking'` - smoker recipe
+ * `'campfire_cooking'` - campfire recipe
+ * `'stonecutting'` - stonecutter recipe
+ * `'smithing'` - smithing table (1.16+)
+ 
+ The return value is a list of available recipes (even if there is only one recipe available). Each recipe contains of
+ an item triple of the crafting result, list of ingredients, each containing a list of possible variants of the
+ ingredients in this slot, as item triples, or `null` if its a shaped recipe and a given slot in the patterns is left
+ empty, and recipe specification as another list. Possible recipe specs is:
+  * `['shaped', width, height]` - shaped crafting. `width` and `height` can be 1, 2 or 3.
+  * `['shapeless']` - shapeless crafting
+  * `['smelting', duration, xp]` - smelting/cooking recipes
+  * `['cutting']` - stonecutter recipe
+  * `['special']` - special crafting recipe, typically not present in the crafting menu
+  * `['custom']` - other recipe types
+  
+Note that ingredients are specified as tripes, with count and nbt information. Currently all recipes require always one
+of the ingredients, and for some recipes, even if the nbt data for the ingredient is specified (e.g. `dispenser`), it
+can accept items of any tags.
+
+Also note that some recipes leave some products in the crafting window, and these can be determined using
+ `crafting_remaining_item()` function 
+  
+ Examples:
+ <pre>
+ recipe_data('iron_ingot_from_nuggets')
+ recipe_data('iron_ingot')
+ recipe_data('glass', 'smelting')
+ </pre>
+
+### `crafting_remaining_item(item)`
+
+returns `null` if the item has no remaining item in the crafting window when used as a crafting ingredient, or an
+item name that serves as a replacement after crafting is done. Currently it can only be buckets and glass bottles.
+
 ### `inventory_size(inventory)`
 
 Returns the size of the inventory for the entity or block in question. Returns null if the block or entity don't 
@@ -3055,6 +3155,8 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)  /
 __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right click on a block resulted in activation of said block
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
+__on_player_chooses_recipe(player, recipe, full_stack)
+__on_player_switches_slot(player, from, to)
 __on_player_attacks_entity(player, entity)
 __on_player_takes_damage(player, amount, source, source_entity)
 __on_player_deals_damage(player, amount, entity)

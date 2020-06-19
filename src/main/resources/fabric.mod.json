@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "carpet",
-  "version": "1.3.28",
+  "version": "1.3.32",
 
   "name": "Carpet Mod in Fabric",
   "description": "Carpet made out of fabric",
@@ -24,6 +24,7 @@
   "mixins": [
     "carpet.mixins.json"
   ],
+  "accessWidener" : "carpet.accesswidener",
 
   "depends": {
     "minecraft": "1.15.x",

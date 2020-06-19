@@ -244,3 +244,23 @@ __on_player_disconnects(player, reason) ->
     print('__on_player_disconnects(player)');
     print('Player '+player+' disconnects because: '+reason)
 );
+
+__on_player_chooses_recipe(player, recipe, full_stack) ->
+(
+    print('');
+    print('__on_player_chooses_recipe(player, recipe, full_stack)');
+    print('player chooses recipe:');
+    print('  - player: '+player);
+    print('  - recipe: '+recipe);
+    print('  - full stack: '+ full_stack);
+);
+
+__on_player_switches_slot(player, from, to) ->
+(
+    print('');
+    print('__on_player_switches_slot(player, from, to)');
+    print('player switches inventory slot:');
+    print('  - player: '+player);
+    print('  - from: '+ from);
+    print('  - to: '+ to);
+);

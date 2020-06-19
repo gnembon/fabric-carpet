@@ -43,7 +43,9 @@ import org.apache.commons.lang3.text.WordUtils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.Iterator;
@@ -1788,6 +1790,66 @@ public class Expression
         {
             Value time = new NumericValue((System.nanoTime() / 1000) / 1000.0);
             return (cc, tt) -> time;
+        });
+
+        addLazyFunction("unix_time", 0, (c, t, lv) ->
+        {
+            Value time = new NumericValue(System.currentTimeMillis());
+            return (cc, tt) -> time;
+        });
+
+        addFunction("convert_date", lv ->
+        {
+            int argsize = lv.size();
+            if (lv.size() == 0) throw new InternalExpressionException("'convert_date' requires at least one parameter");
+            Value value = lv.get(0);
+            if (argsize == 1 && !(value instanceof ListValue))
+            {
+                Calendar cal = new GregorianCalendar(Locale.ROOT);
+                cal.setTimeInMillis(NumericValue.asNumber(value, "timestamp").getLong());
+                int weekday = cal.get(Calendar.DAY_OF_WEEK)-1;
+                if (weekday == 0) weekday = 7;
+                Value retVal = ListValue.ofNums(
+                        cal.get(Calendar.YEAR),
+                        cal.get(Calendar.MONTH)+1,
+                        cal.get(Calendar.DAY_OF_MONTH),
+                        cal.get(Calendar.HOUR_OF_DAY),
+                        cal.get(Calendar.MINUTE),
+                        cal.get(Calendar.SECOND),
+                        weekday,
+                        cal.get(Calendar.DAY_OF_YEAR),
+                        cal.get(Calendar.WEEK_OF_YEAR)
+                );
+                return retVal;
+            }
+            else if(value instanceof ListValue)
+            {
+                lv = ((ListValue) value).getItems();
+                argsize = lv.size();
+            }
+            Calendar cal = new GregorianCalendar(0, 0, 0, 0, 0, 0);
+
+            if (argsize == 3)
+            {
+                cal.set(
+                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.get(1)).getInt()-1,
+                        NumericValue.asNumber(lv.get(2)).getInt()
+                );
+            }
+            else if (argsize == 6)
+            {
+                cal.set(
+                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.get(1)).getInt()-1,
+                        NumericValue.asNumber(lv.get(2)).getInt(),
+                        NumericValue.asNumber(lv.get(3)).getInt(),
+                        NumericValue.asNumber(lv.get(4)).getInt(),
+                        NumericValue.asNumber(lv.get(5)).getInt()
+                );
+            }
+            else throw new InternalExpressionException("Date conversion requires 3 arguments for Dates or 6 arguments, for time");
+            return new NumericValue(cal.getTimeInMillis());
         });
 
         addLazyFunction("profile_expr", 1, (c, t, lv) ->

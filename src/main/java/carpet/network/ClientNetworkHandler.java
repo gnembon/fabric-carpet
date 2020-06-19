@@ -44,6 +44,9 @@ public class ClientNetworkHandler
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShapes((ListTag) t);
         });
+        put("clientCommand", (p, t) -> {
+            CarpetClient.onClientCommand(t);
+        });
     }};
 
 
@@ -98,5 +101,18 @@ public class ClientNetworkHandler
             else
                 CarpetSettings.LOG.error("Unknown carpet data: "+key);
         }
+    }
+
+    public static void clientCommand(String command)
+    {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("id", command);
+        tag.putString("command", command);
+        CompoundTag outer = new CompoundTag();
+        outer.put("clientCommand", tag);
+        CarpetClient.getPlayer().networkHandler.sendPacket(new CustomPayloadC2SPacket(
+                CarpetClient.CARPET_CHANNEL,
+                (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.DATA).writeCompoundTag(outer)
+        ));
     }
 }

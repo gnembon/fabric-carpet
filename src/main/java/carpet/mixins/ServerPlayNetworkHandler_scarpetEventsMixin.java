@@ -1,6 +1,9 @@
 package carpet.mixins;
 
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.ButtonClickC2SPacket;
+import net.minecraft.network.packet.c2s.play.CraftRequestC2SPacket;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
@@ -29,10 +32,12 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_RELEASED_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RIDES;
 import static carpet.script.CarpetEventServer.Event.PLAYER_JUMPS;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RIGHT_CLICKS_BLOCK;
+import static carpet.script.CarpetEventServer.Event.PLAYER_CHOOSES_RECIPE;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STARTS_SNEAKING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STARTS_SPRINTING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SNEAKING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SPRINTING;
+import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
 
@@ -218,5 +223,29 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     {
         //todo add hit and hand in the future
         PLAYER_ATTACKS_ENTITY.onEntityAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), null);
+    }
+
+    @Inject(method = "onButtonClick", at = @At("HEAD"))
+    private void onItemBeingPickedFromInventory(ButtonClickC2SPacket packet, CallbackInfo ci)
+    {
+        // crafts not int the crafting window
+        //CarpetSettings.LOG.error("Player clicks button "+packet.getButtonId());
+    }
+    @Inject(method = "onCraftRequest", at = @At("HEAD"))
+    private void onRecipeSelectedInRecipeManager(CraftRequestC2SPacket packet, CallbackInfo ci)
+    {
+        if (PLAYER_CHOOSES_RECIPE.isNeeded())
+        {
+            PLAYER_CHOOSES_RECIPE.onRecipeSelected(player, packet.getRecipe(), packet.shouldCraftAll());
+        }
+    }
+
+    @Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"))
+    private void onUpdatedSelectedSLot(UpdateSelectedSlotC2SPacket packet, CallbackInfo ci)
+    {
+        if (PLAYER_SWITCHES_SLOT.isNeeded())
+        {
+            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.inventory.selectedSlot, packet.getSelectedSlot());
+        }
     }
 }
