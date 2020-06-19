@@ -135,7 +135,7 @@
   "rule.pushLimit.desc": "自定义活塞推动上限",
   "rule.pushLimit.extra.0": "你必须在1-1024中选取一个值",
   
-  "rule.quasiConnectivity.name": "qC激活开关",
+  "rule.quasiConnectivity.name": "半连接激活开关",
   "rule.quasiConnectivity.desc": "活塞，发射器和投掷器在他们上方方块激活时是否响应",
   "rule.quasiConnectivity.extra.0": "设置为true为开启 设置为false为禁用",
   
