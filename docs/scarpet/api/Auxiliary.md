@@ -130,6 +130,30 @@ Consult section about container operations in `Expression` to learn about possib
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
 
+### parse_nbt(tag)
+
+Converts NBT tag to a scarpet value, which you can navigate through much better.
+
+Converts:
+ - Compound tags into maps with string keys
+ - List tags into list values
+ - Numbers (Ints, Floats, Doubles, Longs) into a number
+ - Rest is converted to strings.
+ 
+### encode_nbt(expr, force?)
+
+Encodes value of the expression as an NBT tag. By default (or when `force` is false), it will only allow
+to encode values that are guaranteed to return the same value when applied the resulting tag to `parse_nbt()`.
+Supported types that can reliably convert back and forth to and from NBT values are:
+ - Maps with string keywords
+ - Lists of items of the same type (scarpet will take care of unifying value types if possible)
+ - Numbers (encoded as Ints -> Longs -> Doubles, as needed)
+ - Strings
+
+Other value types will only be converted to tags (including NBT tags) if `force` is true. They would require
+extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
+produce an exception.
+
 ### `print(expr)`
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.

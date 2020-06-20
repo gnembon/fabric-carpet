@@ -3,13 +3,23 @@ package carpet.script.value;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.AbstractNumberTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -453,5 +463,66 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public int hashCode()
     {
         return items.hashCode();
+    }
+
+    private enum TagTypeCompat
+    {
+        INT,
+        LONG,
+        DBL,
+        LIST,
+        MAP,
+        STRING;
+        private static TagTypeCompat getType(Tag tag)
+        {
+            if (tag instanceof IntTag) return INT;
+            if (tag instanceof LongTag) return LONG;
+            if (tag instanceof DoubleTag) return DBL;
+            if (tag instanceof ListTag) return LIST;
+            if (tag instanceof CompoundTag) return MAP;
+            return STRING;
+        }
+    }
+
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        int argSize = items.size();
+        if (argSize == 0) return new ListTag();
+        ListTag tag = new ListTag();
+        if (argSize ==1)
+        {
+            tag.add(items.get(0).toTag(force));
+            return tag;
+        }
+        // figuring out the types
+        List<Tag> tags= new ArrayList<>();
+        items.forEach(v -> tags.add(v.toTag(force)));
+        Set<TagTypeCompat> cases = EnumSet.noneOf(TagTypeCompat.class);
+        tags.forEach(t -> cases.add(TagTypeCompat.getType(t)));
+        if (cases.size()==1) // well, one type of items
+        {
+            tag.addAll(tags);
+            return tag;
+        }
+        if (cases.contains(TagTypeCompat.LIST)
+                || cases.contains(TagTypeCompat.MAP)
+                || cases.contains(TagTypeCompat.STRING)) // incompatible types
+        {
+            if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+            tags.forEach(t -> tag.add(StringTag.of(t.asString())));
+            return tag;
+        }
+        // only numbers / mixed types
+        if (cases.contains(TagTypeCompat.DBL))
+        {
+            tags.forEach(t -> tag.add(DoubleTag.of(((AbstractNumberTag)t).getDouble())));
+        }
+        else
+        {
+            tags.forEach(t -> tag.add(LongTag.of(((AbstractNumberTag)t).getLong())));
+        }
+        return tag;
     }
 }

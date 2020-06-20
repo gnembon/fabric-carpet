@@ -1,6 +1,8 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -225,5 +227,17 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     public int hashCode()
     {
         return map.hashCode();
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        CompoundTag tag = new CompoundTag() ;
+        map.forEach( (k, v) ->
+        {
+            if (!force && !(k instanceof StringValue)) throw new NBTSerializableValue.IncompatibleTypeException(k);
+            tag.put(k.getString(), v.toTag(force));
+        });
+        return tag;
     }
 }
