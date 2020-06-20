@@ -143,6 +143,11 @@ markers for scarpet apps. `meeting` is the only one with increased max occupancy
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
 on the clients. Biome changes can only be send to clients with the entire data from the chunk.
 
+Setting a biome is now (as of 1.16) dimension specific. In the overworld and the end changing the biome
+is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
+specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
+noise).
+
 ### `update(pos)`
 
 Causes a block update at position.
