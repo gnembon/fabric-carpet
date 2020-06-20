@@ -1,5 +1,7 @@
 package carpet.script.value;
 
+import net.minecraft.nbt.Tag;
+
 public abstract class FrameworkValue extends Value
 {
     @Override
@@ -24,5 +26,11 @@ public abstract class FrameworkValue extends Value
     public int hashCode()
     {
         throw new UnsupportedOperationException("Scarpet language component cannot be used as map key");
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        throw new UnsupportedOperationException("Scarpet language component cannot be serialized to the tag");
     }
 }

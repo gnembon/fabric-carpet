@@ -41,9 +41,6 @@ public class ShapesRenderer
     {
         this.client = minecraftClient;
         shapes = new HashMap<>();
-        shapes.put(World.OVERWORLD, new Long2ObjectOpenHashMap<>());
-        shapes.put(World.NETHER, new Long2ObjectOpenHashMap<>());
-        shapes.put(World.END, new Long2ObjectOpenHashMap<>());
     }
 
     public void render(Camera camera, float partialTick)
@@ -51,7 +48,7 @@ public class ShapesRenderer
         //Camera camera = this.client.gameRenderer.getCamera();
         ClientWorld iWorld = this.client.world;
         RegistryKey<World> dimensionType = iWorld.getRegistryKey();
-        if (shapes.get(dimensionType).isEmpty()) return;
+        if (shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) return;
         long currentTime = client.world.getTime();
         RenderSystem.disableTexture();
         RenderSystem.enableDepthTest();
@@ -133,7 +130,7 @@ public class ShapesRenderer
             long key = rshape.key();
             synchronized (shapes)
             {
-                RenderedShape<?> existing = shapes.get(dim).get(key);
+                RenderedShape<?> existing = shapes.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
                 if (existing != null)
                 {   // promoting previous shape
                     existing.expiryTick = rshape.expiryTick;

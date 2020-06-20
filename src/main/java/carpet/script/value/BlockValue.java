@@ -12,7 +12,10 @@ import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.property.Property;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -24,8 +27,10 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -180,6 +185,33 @@ public class BlockValue extends Value
 
     public ServerWorld getWorld() { return world;}
 
+    @Override
+    public Tag toTag(boolean force)
+    {
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        // follows falling block convertion
+        CompoundTag tag =  new CompoundTag();
+        CompoundTag state = new CompoundTag();
+        BlockState s = getBlockState();
+        state.put("Name", StringTag.of(Registry.BLOCK.getId(s.getBlock()).toString()));
+        Collection<Property<?>> properties = s.getProperties();
+        if (!properties.isEmpty())
+        {
+            CompoundTag props = new CompoundTag();
+            for (Property<?> p: properties)
+            {
+                props.put(p.getName(), StringTag.of(s.get(p).toString().toLowerCase(Locale.ROOT)));
+            }
+            state.put("Properties", props);
+        }
+        tag.put("BlockState", state);
+        CompoundTag dataTag = getData();
+        if (dataTag != null)
+        {
+            tag.put("TileEntityData", dataTag);
+        }
+        return tag;
+    }
 
     public enum SpecificDirection {
         UP("up",0.5, 0.0, 0.5, Direction.UP),

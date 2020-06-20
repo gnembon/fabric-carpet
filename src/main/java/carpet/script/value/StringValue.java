@@ -1,5 +1,8 @@
 package carpet.script.value;
 
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+
 public class StringValue extends Value
 {
     private String str;
@@ -29,5 +32,11 @@ public class StringValue extends Value
     public String getTypeString()
     {
         return "string";
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        return StringTag.of(str);
     }
 }

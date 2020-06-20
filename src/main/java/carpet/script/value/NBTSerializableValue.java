@@ -638,4 +638,23 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     {
         return "nbt";
     }
+
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        ensureOwnership();
+        return getTag();
+    }
+
+    public static class IncompatibleTypeException extends RuntimeException
+    {
+        private IncompatibleTypeException() {}
+        public Value val;
+        public IncompatibleTypeException(Value val)
+        {
+            this.val = val;
+        }
+    };
 }

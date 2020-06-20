@@ -1,6 +1,10 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.Tag;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
@@ -203,5 +207,21 @@ public class NumericValue extends Value
     public int getInt()
     {
         return (int)getLong();
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        long longValue = getLong();
+        if (value == (double)longValue)
+        {
+            if (abs(value) < Integer.MAX_VALUE-2)
+                return IntTag.of((int)longValue);
+            return LongTag.of(getLong());
+        }
+        else
+        {
+            return DoubleTag.of(value);
+        }
     }
 }

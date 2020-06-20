@@ -2966,6 +2966,24 @@ public class CarpetExpression
             return (cc, tt) -> parsed;
         });
 
+        this.expr.addLazyFunction("encode_nbt", -1, (c, t, lv) -> {
+            int argSize = lv.size();
+            if (argSize==0 || argSize > 2) throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
+            Value v = lv.get(0).evalValue(c);
+            boolean force = (argSize > 1) && lv.get(1).evalValue(c).getBoolean();
+            Tag tag;
+            try
+            {
+                tag = v.toTag(force);
+            }
+            catch (NBTSerializableValue.IncompatibleTypeException ignored)
+            {
+                throw new InternalExpressionException("cannot reliably encode to a tag the value of '"+ignored.val.getPrettyString()+"'");
+            }
+            Value tagValue = new NBTSerializableValue(tag);
+            return (cc, tt) -> tagValue;
+        });
+
         //"overridden" native call that prints to stderr
         this.expr.addLazyFunction("print", -1, (c, t, lv) ->
         {

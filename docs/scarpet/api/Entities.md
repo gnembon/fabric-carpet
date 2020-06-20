@@ -532,6 +532,15 @@ Modifies directly player raw hunger components. Has no effect on non-players
 adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
 to manipulate how much 'food' some action cost.
 
+### `modify(e, 'nbt_merge', partial_tag)`
+
+Merges a partial tag into the entity data and reloads the entity from its updated tag. Cannot be applied to players
+
+### `modify(e, 'nbt', tag)`
+
+Reloads the entity from a supplied tag. Better get a valid entity tag, what can go wrong. Wonder what would happen if
+transplant rabbit's brain into a villager. Cannot be applied to players.
+
 ## Entity Events
 
 There is a number of events that happen to entities that you can attach your own code to in the form of event handlers. 
