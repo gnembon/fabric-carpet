@@ -127,6 +127,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.SpawnHelper;
@@ -3219,7 +3220,20 @@ public class CarpetExpression
                         innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.OVERWORLD));  //ow
                         break;
                     default:
-                        throw new InternalExpressionException("Incorrect dimension string: "+dimString);
+                        RegistryKey<World> dim = null;
+                        Identifier id = new Identifier(dimString);
+                        // not using RegistryKey.of since that one creates on check
+                        for (RegistryKey<World> world : (outerSource.getMinecraftServer().getWorldRegistryKeys()))
+                        {
+                            if (id.equals(world.getValue()))
+                            {
+                                dim = world;
+                                break;
+                            }
+                        }
+                        if (dim == null)
+                            throw new InternalExpressionException("Incorrect dimension string: "+dimString);
+                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(dim));
                 }
             }
             ((CarpetContext) c).s = innerSource;

@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 
 public class SpawnReporter
 {
@@ -325,6 +326,12 @@ public class SpawnReporter
         }
         track_spawns = 0L;
     }
+
+    private static String getWorldCode(RegistryKey<World> world)
+    {
+        if (world == World.OVERWORLD) return "";
+        return "("+world.getValue().getPath().toUpperCase(Locale.ROOT).replace("THE_","").charAt(0)+")";
+    }
     
     public static List<BaseText> tracking_report(World worldIn)
     {
@@ -349,7 +356,7 @@ public class SpawnReporter
         {
             //String type_code = String.format("%s", enumcreaturetype);
             boolean there_are_mobs_to_list = false;
-            for (RegistryKey<World> dim : Arrays.asList(World.OVERWORLD, World.NETHER, World.END)) //String world_code: new String[] {"", " (N)", " (E)"})
+            for (RegistryKey<World> dim : worldIn.getServer().getWorldRegistryKeys()) //String world_code: new String[] {"", " (N)", " (E)"})
             {
                 Pair<RegistryKey<World>, SpawnGroup> code = Pair.of(dim, enumcreaturetype);
                 if (spawn_ticks_spawns.get(code) > 0L)
@@ -357,7 +364,7 @@ public class SpawnReporter
                     there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
                     report.add(Messenger.s(String.format(" > %s (%.1f min), %.1f m/t, {%.1f%%F / %.1f%%- / %.1f%%+}; %.2f s/att",
-                        code.getRight()+((code.getLeft()==World.OVERWORLD)?"":( (code.getLeft()==World.NETHER)?"(N)":"(E)" )), // OW, nether
+                        getWorldCode(dim),
                         60*hours,
                         (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
                         (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),

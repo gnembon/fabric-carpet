@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 
 import java.util.Comparator;
@@ -22,7 +23,6 @@ public class CarpetProfiler
     private static TYPE test_type = TYPE.NONE; //1 for ticks, 2 for entities;
     private static long current_tick_start = 0;
     private static final String[] GENERAL_SECTIONS = {"Network", "Autosave", "Async Tasks"};
-    private static final String[] DIMENSIONS = {"overworld", "the_end", "the_nether"};
     private static final String[] SECTIONS = {
             "Spawning and Random Ticks", "Ticket Manager","Unloading",
             "Blocks", "Entities", "Block Entities",
@@ -56,7 +56,7 @@ public class CarpetProfiler
     private static String getSectionString(World world, String section)
     {
         return String.format("%s.%s%s",
-                world.getRegistryKey().getValue().toString().replaceFirst("minecraft:", ""),
+                world.getRegistryKey().getValue().getPath(),
                 section,  // ^ getDImension getId
                 world.isClient ? " (Client)" : "");
     }
@@ -64,17 +64,22 @@ public class CarpetProfiler
     private static String getEntityString(World world, Entity e)
     {
         return String.format("%s.%s%s",
-                world.getRegistryKey().getValue().toString().replaceFirst("minecraft:", ""),
-                Registry.ENTITY_TYPE.getId(e.getType()).toString().replaceFirst("minecraft:", ""),
+                world.getRegistryKey().getValue().getPath(),
+                Registry.ENTITY_TYPE.getId(e.getType()).getPath(),
                 world.isClient ? " (Client)" : "");
     }
 
     private static String getTEntityString(World world, BlockEntity be)
     {
         return String.format("%s.%s%s",
-                world.getRegistryKey().getValue().toString().replaceFirst("minecraft:", ""),
-                Registry.BLOCK_ENTITY_TYPE.getId(be.getType()).toString().replaceFirst("minecraft:", ""),
+                world.getRegistryKey().getValue().getPath(),
+                Registry.BLOCK_ENTITY_TYPE.getId(be.getType()).getPath(),
                 world.isClient ? " (Client)" : "");
+    }
+
+    private static String getDimName(RegistryKey<World> world)
+    {
+        return world.getValue().getPath();
     }
 
     public static void prepare_tick_report(ServerCommandSource source, int ticks)
@@ -89,11 +94,11 @@ public class CarpetProfiler
         {
             time_repo.put(section, 0L);
         }
-        for (String level : DIMENSIONS)
+        for (RegistryKey<World> level : source.getMinecraftServer().getWorldRegistryKeys())
         {
             for (String section : SECTIONS)
             {
-                time_repo.put(level + "." + section, 0L);
+                time_repo.put(getDimName(level) + "." + section, 0L);
             }
         }
 
@@ -225,8 +230,9 @@ public class CarpetProfiler
             }
         }
 
-        for (String dimension : DIMENSIONS)
+        for (RegistryKey<World> dim : server.getWorldRegistryKeys())
         {
+            String dimension = getDimName(dim);
             boolean hasSomethin = false;
             for (String section : SECTIONS)
             {
