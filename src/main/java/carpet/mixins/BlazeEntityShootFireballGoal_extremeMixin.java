@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Random;
 
-@Mixin(BlazeEntity.ShootFireballGoal.class)
+@Mixin(targets = "net.minecraft.entity.mob.BlazeEntity$ShootFireballGoal")
 public class BlazeEntityShootFireballGoal_extremeMixin
 {
     @Redirect(method = "tick()V", expect = 2, at = @At(
