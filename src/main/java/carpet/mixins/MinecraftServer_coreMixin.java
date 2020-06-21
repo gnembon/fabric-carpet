@@ -36,7 +36,7 @@ public abstract class MinecraftServer_coreMixin
     }
 
     @Inject(method = "loadWorld", at = @At("RETURN"))
-    private void serverLoadedWorlds(String string_1, String string_2, long long_1, LevelGeneratorType levelGeneratorType_1, JsonElement jsonElement_1, CallbackInfo ci)
+    private void serverLoadedWorlds(CallbackInfo ci)
     {
         CarpetServer.onServerLoadedWorlds((MinecraftServer) (Object) this);
     }
