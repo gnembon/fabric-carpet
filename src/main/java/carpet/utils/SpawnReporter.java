@@ -13,6 +13,7 @@ import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.OcelotEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.BaseText;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
@@ -60,7 +61,7 @@ public class SpawnReporter
     public static HashSet<SpawnGroup> first_chunk_marker = null;
 
     static {
-        reset_spawn_stats(true);
+        reset_spawn_stats(null, true);
     }
 
     public static void registerSpawn(MobEntity mob, SpawnGroup cat, BlockPos pos)
@@ -299,7 +300,7 @@ public class SpawnReporter
     {
         mock_spawns = false;
     }
-    public static void reset_spawn_stats(boolean full)
+    public static void reset_spawn_stats(MinecraftServer server, boolean full)
     {
 
         spawn_stats.clear();
@@ -310,7 +311,7 @@ public class SpawnReporter
             {
                 spawn_tries.put(enumcreaturetype, 1);
             }
-            for (RegistryKey<World> dim : Arrays.asList(World.OVERWORLD, World.NETHER, World.END))
+            if (server != null) for (RegistryKey<World> dim : server.getWorldRegistryKeys())
             {
                 Pair<RegistryKey<World>, SpawnGroup> key = Pair.of(dim, enumcreaturetype);
                 overall_spawn_ticks.put(key, 0L);

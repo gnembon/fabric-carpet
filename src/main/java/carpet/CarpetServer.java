@@ -13,6 +13,7 @@ import carpet.script.CarpetScriptServer;
 import carpet.settings.SettingsManager;
 import carpet.utils.HUDController;
 import carpet.utils.MobAI;
+import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.ServerCommandSource;
@@ -51,6 +52,9 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static void onServerLoaded(MinecraftServer server)
     {
         CarpetServer.minecraft_server = server;
+        // shoudl not be needed - that bit needs refactoring, but not now.
+        SpawnReporter.reset_spawn_stats(server, true);
+
         settingsManager.attachServer(server);
         extensions.forEach(e -> {
             SettingsManager sm = e.customSettingsManager();

@@ -150,7 +150,7 @@ public class SpawnCommand
                     Math.max(a.getY(), b.getY()),
                     Math.max(a.getZ(), b.getZ()) );
         }
-        SpawnReporter.reset_spawn_stats(false);
+        SpawnReporter.reset_spawn_stats(source.getMinecraftServer(), false);
         SpawnReporter.track_spawns = (long) source.getMinecraftServer().getTicks();
         SpawnReporter.lower_spawning_limit = lsl;
         SpawnReporter.upper_spawning_limit = usl;
@@ -161,7 +161,7 @@ public class SpawnCommand
     private static int stopTracking(ServerCommandSource source)
     {
         Messenger.send(source, SpawnReporter.tracking_report(source.getWorld()));
-        SpawnReporter.reset_spawn_stats(false);
+        SpawnReporter.reset_spawn_stats(source.getMinecraftServer(),false);
         SpawnReporter.track_spawns = 0L;
         SpawnReporter.lower_spawning_limit = null;
         SpawnReporter.upper_spawning_limit = null;
@@ -179,7 +179,7 @@ public class SpawnCommand
     private static int runTest(ServerCommandSource source, int ticks, String counter)
     {
         //stop tracking
-        SpawnReporter.reset_spawn_stats(false);
+        SpawnReporter.reset_spawn_stats(source.getMinecraftServer(),false);
         //start tracking
         SpawnReporter.track_spawns = (long) source.getMinecraftServer().getTicks();
         //counter reset
