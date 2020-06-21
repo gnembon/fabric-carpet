@@ -492,6 +492,11 @@ public class Expression
         //assigns const procedure to the lhs, returning its previous value
         addLazyBinaryOperatorWithDelegation("->", precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
         {
+            if (type == Context.MAPDEF)
+            {
+                Value result = ListValue.of(lv1.evalValue(c), lv2.evalValue(c));
+                return (cc, tt) -> result;
+            }
             Value v1 = lv1.evalValue(c, Context.SIGNATURE);
             if (!(v1 instanceof FunctionSignatureValue))
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
@@ -1335,11 +1340,18 @@ public class Expression
             return LazyListValue.range(from, to, step);
         });
 
-        addFunction("m", lv ->
+        addLazyFunction("m", -1, (c, t, llv) ->
         {
+            List<Value> lv = new ArrayList<>();
+            for (LazyValue lazyParam : llv) {
+                lv.add(lazyParam.evalValue(c, Context.MAPDEF)); // none type default by design
+            }
+            Value ret;
             if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
-                return new MapValue(((LazyListValue) lv.get(0)).unroll());
-            return new MapValue(lv);
+                ret = new MapValue(((LazyListValue) lv.get(0)).unroll());
+            else
+                ret = new MapValue(lv);
+            return (cc, tt) -> ret;
         });
 
         addUnaryFunction("keys", v -> {
@@ -2062,7 +2074,7 @@ public class Expression
 
         Tokenizer tokenizer = new Tokenizer(c, this, expression, allowComments, allowNewlineSubstitutions);
         // stripping lousy but acceptable semicolons
-        List<Tokenizer.Token> cleanedTokens = tokenizer.fixSemicolons();
+        List<Tokenizer.Token> cleanedTokens = tokenizer.postProcess();
 
         Tokenizer.Token lastFunction = null;
         Tokenizer.Token previousToken = null;
