@@ -47,7 +47,8 @@
   "ui.tags": "Tags",
   "ui.change_permanently": "Change permanently",
   "ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts": "click to keep the settings in %s to save across restarts",
-  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "rule %s will now default to %s",
+  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "Rule %s will now default to %s",
+  "ui.rule_%(rule)s_not_set_restart": "Rule %s will now not be set on restart",
   "ui.current_value": "current value"
 
 }
