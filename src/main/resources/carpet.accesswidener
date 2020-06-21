@@ -1,2 +1,3 @@
 accessWidener	v1  named
 Accessible class net/minecraft/recipe/Ingredient$Entry
+Accessible class net/minecraft/entity/mob/BlazeEntity$ShootFireballGoal
