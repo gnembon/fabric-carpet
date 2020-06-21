@@ -62,10 +62,15 @@ public class CarpetServer // static for now - easier to handle all around the co
             e.onServerLoaded(server);
         });
         scriptServer = new CarpetScriptServer(server);
-        scriptServer.loadAllWorldScripts();
         MobAI.resetTrackers();
         LoggerRegistry.initLoggers();
         //TickSpeed.reset();
+    }
+
+    public static void onServerLoadedWorlds(MinecraftServer minecraftServer)
+    {
+        extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
+        scriptServer.loadAllWorldScripts();
     }
 
     public static void tick(MinecraftServer server)
