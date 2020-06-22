@@ -4,7 +4,7 @@
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "Main_serverCoreMixin",
+    "CrashReport_coreMixin",
     "SpawnHelperInnerMixin",
     "CommandManagerMixin",
 
@@ -175,7 +175,6 @@
 
   ],
   "client": [
-    "Main_clientCoreMixin",
     "RenderTickCounter_tickSpeedMixin",
     "MinecraftClientMixin",
     "MinecraftClient_pausedShakeMixin",
