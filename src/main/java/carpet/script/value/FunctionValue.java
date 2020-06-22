@@ -13,6 +13,8 @@ import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.exception.ThrowStatement;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,6 +95,8 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     {
         return name.hashCode()+(int)variant;
     }
+
+
 
     @Override
     public boolean equals(Object o)
@@ -230,5 +234,12 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     public List<String> getArguments()
     {
         return args;
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        return StringTag.of(getString());
     }
 }

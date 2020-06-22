@@ -1,6 +1,7 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import net.minecraft.nbt.Tag;
 
 public class GlobalValue extends Value
 {
@@ -27,5 +28,11 @@ public class GlobalValue extends Value
     public int hashCode()
     {
         throw new UnsupportedOperationException("Global value cannot be used as a map key");
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        throw new UnsupportedOperationException("Global value cannot be serialized to the tag");
     }
 }

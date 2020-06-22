@@ -16,10 +16,17 @@ public interface CarpetExtension
     default void onGameStarted() {}
 
     /**
-     * Runs once per loaded world once the World files / gamerules etc are fully loaded
+     * Runs once per loaded world once the server / gamerules etc are fully loaded
+     * but before worlds are loaded
      * Can be loaded multiple times in SinglePlayer
      */
     default void onServerLoaded(MinecraftServer server) {}
+
+    /**
+     * Runs once per loaded world once the World files are fully loaded
+     * Can be loaded multiple times in SinglePlayer
+     */
+    default void onServerLoadedWorlds(MinecraftServer server) {}
 
     /**
      * Runs once per game tick, as a first thing in the tick
@@ -55,4 +62,6 @@ public interface CarpetExtension
     default void registerLoggers() {}
 
     default Map<String, String> canHasTranslations(String lang) { return null;}
+
+
 }

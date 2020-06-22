@@ -43,7 +43,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         this.newLinesMarkers = allowNewLineMakers;
     }
 
-    public List<Token> fixSemicolons()
+    public List<Token> postProcess()
     {
         Iterable<Token> iterable = () -> this;
         List<Token> originalTokens = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
@@ -60,9 +60,27 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                     current.surface = ";";
                     current.type = Token.TokenType.OPERATOR;
                 }
+                if (current.type == Token.TokenType.MARKER)
+                {
+                    // dealing with tokens in reversed order
+                    if ("{".equals(current.surface))
+                    {
+                        cleanedTokens.add(current.morphedInto(Token.TokenType.OPEN_PAREN, "("));
+                        current.morph(Token.TokenType.FUNCTION, "m");
+                    }
+                    else if ("[".equals(current.surface))
+                    {
+                        cleanedTokens.add(current.morphedInto(Token.TokenType.OPEN_PAREN, "("));
+                        current.morph(Token.TokenType.FUNCTION, "l");
+                    }
+                    else if ("}".equals(current.surface) || "]".equals(current.surface))
+                    {
+                        current.morph(Token.TokenType.CLOSE_PAREN, ")");
+                    }
+                }
                 cleanedTokens.add(current);
             }
-            if (current.type != Token.TokenType.MARKER)
+            if (!(current.type == Token.TokenType.MARKER && current.surface.equals("$")))
                 last = current;
         }
         Collections.reverse(cleanedTokens);
@@ -242,7 +260,8 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             }
             token.type = ch == '(' ? Token.TokenType.FUNCTION : Token.TokenType.VARIABLE;
         }
-        else if (ch == '(' || ch == ')' || ch == ',')
+        else if (ch == '(' || ch == ')' || ch == ',' ||
+                ch == '{' || ch == '}' || ch == '[' || ch == ']')
         {
             if (ch == '(')
             {
@@ -252,9 +271,13 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             {
                 token.type = Token.TokenType.CLOSE_PAREN;
             }
-            else
+            else if (ch == ',')
             {
                 token.type = Token.TokenType.COMMA;
+            }
+            else
+            {
+                token.type = Token.TokenType.MARKER;
             }
             token.append(ch);
             pos++;
@@ -262,7 +285,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
 
             if (expression != null && context != null && previousToken != null &&
                     previousToken.type == Token.TokenType.OPERATOR &&
-                    (ch == ')' || ch == ',') &&
+                    (ch == ')' || ch == ',' || ch == ']' || ch == '}') &&
                     !previousToken.surface.equalsIgnoreCase(";")
             )
                 throw new ExpressionException(context, this.expression, previousToken,
@@ -376,6 +399,22 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         public int pos;
         public int linepos;
         public int lineno;
+        public Token morphedInto(TokenType newType, String newSurface)
+        {
+            Token created = new Token();
+            created.surface = newSurface;
+            created.type = newType;
+            created.pos = pos;
+            created.linepos = linepos;
+            created.lineno= lineno;
+            return created;
+        }
+
+        public void morph(TokenType type, String s)
+        {
+            this.type = type;
+            this.surface = s;
+        }
 
         public void append(char c)
         {

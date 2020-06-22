@@ -1644,11 +1644,14 @@ print(b); // 'stone', block was evaluated 'eagerly' but call to `block`
 All the functions below can be used with block value, queried with coord triple, or 3-long list. All `pos` in the 
 functions referenced below refer to either method of passing block position.
 
-### `set(pos, block, property?, value?, ...)`
+### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, l(property?, value?, ...), block_data?)`
 
 First part of the `set` function is either a coord triple, list of three numbers, or other block with coordinates. 
 Second part, `block` is either block value as a result of `block()` function string value indicating the block name, 
-and optional `property - value` pairs for extra block properties. If `block` is specified only by name, then if a 
+and optional `property - value` pairs for extra block properties. Optional `block_data` include the block data to 
+be set for the target block.
+
+If `block` is specified only by name, then if a 
 destination block is the same the `set` operation is skipped, otherwise is executed, for other potential extra
 properties.
 
@@ -1672,6 +1675,7 @@ set(x,y,z,'iron_trapdoor[half=top]')  // Incorrect. sets bottom iron trapdoor - 
 set(x,y,z,'iron_trapdoor','half','top') // correct - top trapdoor
 set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
 set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
+set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
 </pre>
 
 ### `without_updates(expr)`
@@ -2912,6 +2916,15 @@ Modifies directly player raw hunger components. Has no effect on non-players
 adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
 to manipulate how much 'food' some action cost.
 
+### `modify(e, 'nbt_merge', partial_tag)`
+
+Merges a partial tag into the entity data and reloads the entity from its updated tag. Cannot be applied to players
+
+### `modify(e, 'nbt', tag)`
+
+Reloads the entity from a supplied tag. Better get a valid entity tag, what can go wrong. Wonder what would happen if
+transplant rabbit's brain into a villager. Cannot be applied to players.
+
 ## Entity Events
 
 There is a number of events that happen to entities that you can attach your own code to in the form of event handlers. 
@@ -3350,6 +3363,30 @@ Consult section about container operations in `Expression` to learn about possib
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
 
+### parse_nbt(tag)
+
+Converts NBT tag to a scarpet value, which you can navigate through much better.
+
+Converts:
+ - Compound tags into maps with string keys
+ - List tags into list values
+ - Numbers (Ints, Floats, Doubles, Longs) into a number
+ - Rest is converted to strings.
+ 
+### encode_nbt(expr, force?)
+
+Encodes value of the expression as an NBT tag. By default (or when `force` is false), it will only allow
+to encode values that are guaranteed to return the same value when applied the resulting tag to `parse_nbt()`.
+Supported types that can reliably convert back and forth to and from NBT values are:
+ - Maps with string keywords
+ - Lists of items of the same type (scarpet will take care of unifying value types if possible)
+ - Numbers (encoded as Ints -> Longs -> Doubles, as needed)
+ - Strings
+
+Other value types will only be converted to tags (including NBT tags) if `force` is true. They would require
+extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
+produce an exception.
+
 ### `print(expr)`
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
@@ -3420,7 +3457,7 @@ With the specified `resource` in the scripts folder, of a specific `type`, write
  content, or deletes the resource.
 
 Resource is identified by a path to the file.  
-A path can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid. Do not add file extensions to the descriptor - extensions are inferred
 based on the `type` of the file.
  
