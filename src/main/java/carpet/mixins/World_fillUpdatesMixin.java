@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(World.class)
 public abstract class World_fillUpdatesMixin
 {
-    @ModifyConstant(method = "method_30092", //setBlockState main
+    @ModifyConstant(method = "setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;II)Z", //setBlockState main
             constant = @Constant(intValue = 16))
     private int addFillUpdatesInt(int original) {
         if (CarpetSettings.impendingFillSkipUpdates)
@@ -21,7 +21,7 @@ public abstract class World_fillUpdatesMixin
         return original;
     }
 
-    @Redirect(method = "method_30092", at = @At( //setBlockState main
+    @Redirect(method = "setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;II)Z", at = @At( //setBlockState main
             value = "INVOKE",
             target = "Lnet/minecraft/world/World;updateNeighbors(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;)V"
     ))

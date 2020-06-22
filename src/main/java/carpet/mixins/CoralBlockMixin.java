@@ -25,12 +25,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import java.util.Random;
 
 @Mixin(CoralBlock.class)
-//@Interface(iface = Fertilizable.class, prefix = "fert$")
 public abstract class CoralBlockMixin implements Fertilizable
 {
     public boolean isFertilizable(BlockView var1, BlockPos var2, BlockState var3, boolean var4)
     {
-        return CarpetSettings.renewableCoral && var3.get(CoralParentBlock.WATERLOGGED) && var1.getFluidState(var2.up()).matches(FluidTags.WATER);
+        return CarpetSettings.renewableCoral && var3.get(CoralParentBlock.WATERLOGGED) && var1.getFluidState(var2.up()).isIn(FluidTags.WATER);
     }
 
     public boolean canGrow(World var1, Random var2, BlockPos var3, BlockState var4)

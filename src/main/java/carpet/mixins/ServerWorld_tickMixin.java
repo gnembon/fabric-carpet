@@ -2,10 +2,10 @@ package carpet.mixins;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
-import net.minecraft.entity.raid.RaidManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.village.raid.RaidManager;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.WanderingTraderManager;
 import net.minecraft.world.World;
@@ -160,7 +160,7 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/raid/RaidManager;tick()V"
+            target = "Lnet/minecraft/village/raid/RaidManager;tick()V"
     ))
     private void tickConditionally(RaidManager raidManager)
     {

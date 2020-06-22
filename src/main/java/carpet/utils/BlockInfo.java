@@ -69,7 +69,7 @@ public class BlockInfo
     }};
 
     public static final Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
-        put(MaterialColor.AIR       , "air"       );
+        put(MaterialColor.CLEAR     , "air"       );
         put(MaterialColor.GRASS     , "grass"     );
         put(MaterialColor.SAND      , "sand"      );
         put(MaterialColor.WEB       , "wool"      );

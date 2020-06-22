@@ -29,12 +29,12 @@ import net.minecraft.world.gen.chunk.ChunkGenerator;
 //import net.minecraft.world.gen.chunk.OverworldChunkGeneratorConfig;
 import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.BastionRemnantFeatureConfig;
-import net.minecraft.world.gen.feature.BoulderFeatureConfig;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.FeatureConfig;
+import net.minecraft.world.gen.feature.ForestRockFeatureConfig;
 import net.minecraft.world.gen.feature.HugeFungusFeatureConfig;
 import net.minecraft.world.gen.feature.MineshaftFeature;
 import net.minecraft.world.gen.feature.MineshaftFeatureConfig;
@@ -288,7 +288,7 @@ public class FeatureGenerator
                                 simplePlop(Feature.CORAL_TREE).plop(w, p))
                         :simplePlop(Feature.CORAL_CLAW).plop(w, p));
         put("sea_pickle", simplePlop(Feature.SEA_PICKLE.configure( new SeaPickleFeatureConfig(20))));
-        put("boulder", simplePlop(Feature.FOREST_ROCK.configure( new BoulderFeatureConfig(Blocks.MOSSY_COBBLESTONE.getDefaultState(), 0))));
+        put("boulder", simplePlop(Feature.FOREST_ROCK.configure( new ForestRockFeatureConfig(Blocks.MOSSY_COBBLESTONE.getDefaultState(), 0))));
         put("crimson_fungus", simplePlop(Feature.HUGE_FUNGUS.configure(HugeFungusFeatureConfig.CRIMSON_FUNGUS_NOT_PLANTED_CONFIG)));
         put("warped_fungus", simplePlop(Feature.HUGE_FUNGUS.configure(HugeFungusFeatureConfig.WARPED_FUNGUS_NOT_PLANTED_CONFIG)));
         put("nether_sprouts", simplePlop(Feature.NETHER_FOREST_VEGETATION.configure(DefaultBiomeFeatures.NETHER_SPROUTS_CONFIG)));
