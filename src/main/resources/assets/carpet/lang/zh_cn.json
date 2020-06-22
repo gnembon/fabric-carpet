@@ -1,8 +1,8 @@
 {
-  "rule.antiCheatDisabled.name": "移动检测通杀",
+  "rule.antiCheatDisabled.name": "禁用反作弊移动监测",
   "rule.antiCheatDisabled.desc": "防止玩家因为“本服务器未启用飞行”，“移动过快”等原因被踢出",
   
-  "rule.carpets.name": "放置地毯执行功能",
+  "rule.carpets.name": "多功能地毯",
   "rule.carpets.desc": "通过放置地毯方块快捷执行部分功能",
   
   "rule.combineXPOrbs.name": "经验球合并",
@@ -135,7 +135,7 @@
   "rule.pushLimit.desc": "自定义活塞推动上限",
   "rule.pushLimit.extra.0": "你必须在1-1024中选取一个值",
   
-  "rule.quasiConnectivity.name": "qC激活开关",
+  "rule.quasiConnectivity.name": "半连接激活开关",
   "rule.quasiConnectivity.desc": "活塞，发射器和投掷器在他们上方方块激活时是否响应",
   "rule.quasiConnectivity.extra.0": "设置为true为开启 设置为false为禁用",
   
@@ -228,7 +228,8 @@
   "ui.tags": "分类",
   "ui.change_permanently": "永久更改",
   "ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts": "点击此按钮以使此选项保存于%s，重启后依旧生效",
-  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "规则%s将会被默认设置为%s",
+  "ui.rule_%(rule)s_will_now_default_to_%(value)s": "规则“%s”将会被默认设置为%s",
+  "ui.rule_%(rule)s_not_set_restart": "规则“%s”将在重启后恢复默认值",
   "ui.current_value": "当前的值"
 
 }
