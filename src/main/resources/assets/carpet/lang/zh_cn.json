@@ -1,8 +1,8 @@
 {
-  "rule.antiCheatDisabled.name": "移动检测通杀",
+  "rule.antiCheatDisabled.name": "禁用反作弊移动监测",
   "rule.antiCheatDisabled.desc": "防止玩家因为“本服务器未启用飞行”，“移动过快”等原因被踢出",
   
-  "rule.carpets.name": "放置地毯执行功能",
+  "rule.carpets.name": "多功能地毯",
   "rule.carpets.desc": "通过放置地毯方块快捷执行部分功能",
   
   "rule.combineXPOrbs.name": "经验球合并",
