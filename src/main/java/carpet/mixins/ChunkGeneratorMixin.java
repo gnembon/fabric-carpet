@@ -1,18 +1,27 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ChunkGeneratorInterface;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.FeatureConfig;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkGenerator.class)
-public abstract class ChunkGeneratorMixin
+public abstract class ChunkGeneratorMixin implements ChunkGeneratorInterface
 {
+    @Shadow protected abstract void method_28509();
+
+    @Override
+    public void initStrongholds()
+    {
+        method_28509();
+    }
     // this might not be needed anymore
     /*
     @Inject(method = "hasStructure", at = @At("HEAD"), cancellable = true)

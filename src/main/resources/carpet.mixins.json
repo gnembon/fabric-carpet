@@ -79,6 +79,7 @@
     "SaplingBlockMixin",
     "EntityMixin",
     "FlatChunkGeneratorMixin",
+    "ChunkGeneratorMixin",
 
     "BiomeArray_getBiomeArrayMixin",
 

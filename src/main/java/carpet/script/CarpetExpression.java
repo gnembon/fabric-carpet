@@ -2,16 +2,17 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.fakes.BiomeArrayInterface;
+import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.IngredientInterface;
 import carpet.fakes.MinecraftServerInterface;
-import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.mixins.ChunkGeneratorMixin;
 import carpet.mixins.PointOfInterest_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.argument.BlockArgument;
@@ -75,7 +76,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -109,7 +109,6 @@ import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
-import net.minecraft.structure.StructureFeatures;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.text.LiteralText;
@@ -130,7 +129,6 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.poi.PointOfInterest;
@@ -143,11 +141,9 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.ChunkRandom;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -361,16 +357,11 @@ public class CarpetExpression
         return MapValue.wrap(ret);
     }
 
-    private static long lastSeed = -1;
     private void BooYah(ChunkGenerator generator)
     {
         synchronized (generator)
         {
-            if (generator.getSeed() != lastSeed)
-            {
-                StructureFeatures.STRONGHOLD.shouldStartAt(null, generator, null, 0, 0, null);
-                lastSeed = generator.getSeed();
-            }
+            ((ChunkGeneratorInterface)generator).initStrongholds();
         }
     }
     private void API_BlockManipulation()
@@ -1159,6 +1150,7 @@ public class CarpetExpression
 
             ServerWorld world = cc.s.getWorld();
 
+            // well, because
             BooYah(world.getChunkManager().getChunkGenerator());
 
             BlockPos pos = locator.block.getPos();
