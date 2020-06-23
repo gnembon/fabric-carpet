@@ -3222,10 +3222,17 @@ public class CarpetExpression
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);
                 }
             }
-            ((CarpetContext) c).s = innerSource;
-            Value retval = lv.get(1).evalValue(c);
-            ((CarpetContext) c).s = outerSource;
-            return (cc, tt) -> retval;
+            try
+            {
+                ((CarpetContext) c).s = innerSource;
+                Value retval = lv.get(1).evalValue(c);
+                return (cc, tt) -> retval;
+            }
+            finally
+            {
+                ((CarpetContext) c).s = outerSource;
+            }
+
         });
 
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
