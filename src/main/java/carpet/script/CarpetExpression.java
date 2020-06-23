@@ -3092,9 +3092,14 @@ public class CarpetExpression
             BlockPos target = ((CarpetContext)c).origin;
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                    s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
-            return (c_, t_) -> retval;
+            try
+            {
+                Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
+                        s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
+                return (c_, t_) -> retval;
+            }
+            catch (Exception ignored) {}
+            return LazyValue.NULL;
         });
 
         this.expr.addLazyFunction("save", 0, (c, t, lv) -> {
