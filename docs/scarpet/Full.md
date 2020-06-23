@@ -1,14 +1,8 @@
-# Fundamental components of `scarpet` programming language (towards version 1.7).
+# Fundamental components of `scarpet` programming language.
 
 Scarpet (a.k.a. Carpet Script, or Script for Carpet) is a programming language 
 designed to provide the ability to write custom programs to run within Minecraft 
 and interact with the world.
-
-The project was initially built based on the EvalEx project, however it now diverged 
-so far away from the original implementation, it would be hard to tell it without 
-this mention. EvalEx is a handy expression evaluator for Java, that allows to evaluate 
-simple mathematical and boolean expressions. For more information, 
-see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)
 
 This specification is divided into two sections: this one is agnostic to any 
 Minecraft related features and could function on its own, and CarpetExpression 
@@ -277,6 +271,13 @@ check_foo_not_zero();
 ...
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
 </pre>
+
+## Mentions
+
+LR1 parser, tokenizer, and several built-in functions are built based on the EvalEx project.
+EvalEx is a handy expression evaluator for Java, that allows to evaluate 
+simple mathematical and boolean expressions. EvalEx is distributed under MIT licence.
+For more information, see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)
 # Variables and Constants
 
 `scarpet` provides a number of constants that can be used literally in scripts
@@ -296,9 +297,9 @@ block positions. All variables starting with `_` are read-only, and cannot be de
 
 `scarpet` accepts numeric and string liters constants. Numbers look like `1, 2.5, -3e-7, 0xff,` and are internally 
 represented as Java's `double` but `scarpet` will try to trim trailing zeros as much as possible so if you need to 
-use them as intergers, you can. Strings using single quoting, for multiple reasons, but primarily to allow for 
+use them as intergers, you can. Strings use single quoting, for multiple reasons, but primarily to allow for 
 easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 
-for example, or when typing in jsons inside scarpet to feed back into a `/data merge` command for example. 
+for example), or when typing in jsons inside scarpet (to feed back into a `/data merge` command for example). 
 Strings also use backslashes `\` for quoting special characters, in both plain strings and regular expressions
 
 <pre>
@@ -3300,7 +3301,7 @@ Optional shared shape attributes:
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
  * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
  player, otherwise it will be send to all players in the dimension.
- * `width` - line thickness, defaults to 2.0pt
+ * `line` - line thickness, defaults to 2.0pt
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
    Follow attribute requires all positional arguments to be relative to the entity and disallow
