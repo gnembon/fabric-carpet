@@ -52,6 +52,9 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         while (originalTokens.size() > 0)
         {
             Token current = originalTokens.remove(originalTokens.size()-1);
+            if (current.type == Token.TokenType.MARKER && current.surface.startsWith("//"))
+                continue;
+                // skipping comments
             if (!isSemicolon(current)
                     || (last != null && last.type != Token.TokenType.CLOSE_PAREN && last.type != Token.TokenType.COMMA && !isSemicolon(last)))
             {
@@ -349,7 +352,9 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
             }
 
             if (previousToken == null || previousToken.type == Token.TokenType.OPERATOR
-                    || previousToken.type == Token.TokenType.OPEN_PAREN || previousToken.type == Token.TokenType.COMMA)
+                    || previousToken.type == Token.TokenType.OPEN_PAREN || previousToken.type == Token.TokenType.COMMA
+                    || (previousToken.type == Token.TokenType.MARKER && ( previousToken.surface.equals("{") || previousToken.surface.equals("[") ) )
+            )
             {
                 token.surface += "u";
                 token.type = Token.TokenType.UNARY_OPERATOR;
