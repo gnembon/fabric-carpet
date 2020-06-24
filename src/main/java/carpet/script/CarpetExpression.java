@@ -105,6 +105,7 @@ import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
+import net.minecraft.structure.StructureFeatures;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.text.LiteralText;
@@ -123,6 +124,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.poi.PointOfInterest;
@@ -353,6 +355,18 @@ public class CarpetExpression
         return MapValue.wrap(ret);
     }
 
+    private static long lastSeed = -1;
+    private void BooYah(ChunkGenerator generator)
+    {
+        synchronized (generator)
+        {
+            if (generator.getSeed() != lastSeed)
+            {
+                StructureFeatures.STRONGHOLD.shouldStartAt(null, generator, null, 0, 0, null);
+                lastSeed = generator.getSeed();
+            }
+        }
+    }
     private void API_BlockManipulation()
     {
         this.expr.addLazyFunction("block", -1, (c, t, lv) ->
@@ -1135,6 +1149,9 @@ public class CarpetExpression
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
             ServerWorld world = cc.s.getWorld();
+
+            BooYah(world.getChunkManager().getChunkGenerator());
+
             BlockPos pos = locator.block.getPos();
             StructureFeature<?> structure = null;
             boolean needSize = false;
@@ -3065,9 +3082,14 @@ public class CarpetExpression
             BlockPos target = ((CarpetContext)c).origin;
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                    s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
-            return (c_, t_) -> retval;
+            try
+            {
+                Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
+                        s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
+                return (c_, t_) -> retval;
+            }
+            catch (Exception ignored) {}
+            return LazyValue.NULL;
         });
 
         this.expr.addLazyFunction("save", 0, (c, t, lv) -> {
@@ -3205,10 +3227,17 @@ public class CarpetExpression
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);
                 }
             }
-            ((CarpetContext) c).s = innerSource;
-            Value retval = lv.get(1).evalValue(c);
-            ((CarpetContext) c).s = outerSource;
-            return (cc, tt) -> retval;
+            try
+            {
+                ((CarpetContext) c).s = innerSource;
+                Value retval = lv.get(1).evalValue(c);
+                return (cc, tt) -> retval;
+            }
+            finally
+            {
+                ((CarpetContext) c).s = outerSource;
+            }
+
         });
 
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
