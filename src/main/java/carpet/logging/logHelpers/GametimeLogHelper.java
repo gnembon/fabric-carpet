@@ -23,7 +23,7 @@ public class GametimeLogHelper
     {
         playersLogged.forEach((name) -> {
             ServerPlayerEntity playerEntity = CarpetServer.minecraft_server.getPlayerManager().getPlayer(name);
-            BaseText message = Messenger.c("wb ⇡ tick " + gametime + "ended");
+            BaseText message = Messenger.c("rb ==== tick " + gametime + " ended ====");
             if (playerEntity == null) { return; }
             LoggerRegistry.getLogger("gametime").sendPlayerMessage(playerEntity, message);
         });
