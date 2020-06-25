@@ -37,6 +37,7 @@ public class TrajectoryLogHelper
 
     public void onFinish()
     {
+        GametimeLogHelper.onLoggerLogged(logger);
         if (!doLog) return;
         logger.log( (option) -> {
             List<BaseText> comp = new ArrayList<>();

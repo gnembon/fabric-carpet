@@ -231,4 +231,9 @@ public class Logger
         if (options != null && Arrays.asList(options).contains(arg)) return arg;
         return null;
     }
+
+    public Map<String, String> getSubscribedOnlinePlayers()
+    {
+        return this.subscribedOnlinePlayers;
+    }
 }

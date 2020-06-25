@@ -1,5 +1,6 @@
 package carpet.logging.logHelpers;
 
+import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -48,10 +49,11 @@ public class ExplosionLogHelper
         if (!(lastGametime == gametime)){
             explosionCountInCurretGT = 0;
             lastGametime = gametime;
-            messages.add(c("wb tick : ", "d " + gametime));
         }
         explosionCountInCurretGT++;
-        LoggerRegistry.getLogger("explosions").log( (option) -> {
+        Logger explosionLogger = LoggerRegistry.getLogger("explosions");
+        GametimeLogHelper.onLoggerLogged(explosionLogger);
+        explosionLogger.log( (option) -> {
             if ("brief".equals(option))
             {
                 messages.add( c("d #" + explosionCountInCurretGT,"gb ->",

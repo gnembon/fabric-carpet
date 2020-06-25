@@ -1,5 +1,6 @@
 package carpet.logging.logHelpers;
 
+import carpet.logging.Logger;
 import carpet.logging.LoggerRegistry;
 import carpet.utils.Messenger;
 import net.minecraft.text.BaseText;
@@ -33,7 +34,9 @@ public class TNTLogHelper
             lastGametime = gametime;
         }
         tntCount++;
-        LoggerRegistry.getLogger("tnt").log( (option) -> {
+        Logger tntLogger = LoggerRegistry.getLogger("tnt");
+        GametimeLogHelper.onLoggerLogged(tntLogger);
+        tntLogger.log( (option) -> {
             switch (option)
             {
                 case "brief":
@@ -44,7 +47,6 @@ public class TNTLogHelper
                 case "full":
                     return new BaseText[]{Messenger.c(
                             "r #" + String.valueOf(tntCount),
-                            "m @" + String.valueOf(gametime),
                             "g : ",
                             "l P ",Messenger.dblf("l",primedX,primedY,primedZ),
                             "w  ",Messenger.dblf("l", primedAngle.x, primedAngle.y, primedAngle.z),

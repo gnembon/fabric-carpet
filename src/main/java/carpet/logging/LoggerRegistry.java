@@ -19,18 +19,20 @@ public class LoggerRegistry
     // Map from player names to the set of names of the logs that player is subscribed to.
     private static Map<String, Map<String, String>> playerSubscriptions = new HashMap<>();
     //statics to quickly asses if its worth even to call each one
-    public static boolean __tnt;
-    public static boolean __projectiles;
-    public static boolean __fallingBlocks;
-    public static boolean __kills;
-    public static boolean __tps;
     public static boolean __counter;
-    public static boolean __mobcaps;
     public static boolean __damage;
-    public static boolean __packets;
-    public static boolean __weather;
-    public static boolean __pathfinding;
     public static boolean __explosions;
+    public static boolean __fallingBlocks;
+    public static boolean __gametime;
+    public static boolean __mobcaps;
+    public static boolean __packets;
+    public static boolean __pathfinding;
+    public static boolean __projectiles;
+    public static boolean __tnt;
+    public static boolean __tps;
+
+    public static boolean __kills;
+    public static boolean __weather;    //nowhere used
 
     public static void initLoggers()
     {
@@ -41,20 +43,21 @@ public class LoggerRegistry
 
     public static void registerLoggers()
     {
-        registerLogger("tnt", Logger.stardardLogger( "tnt", "brief", new String[]{"brief", "full"}));
-        registerLogger("projectiles", Logger.stardardLogger("projectiles", "brief",  new String[]{"brief", "full"}));
-        registerLogger("fallingBlocks",Logger.stardardLogger("fallingBlocks", "brief", new String[]{"brief", "full"}));
+        registerLogger("counter",       HUDLogger.stardardHUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
+        registerLogger("explosions",    HUDLogger.stardardLogger("explosions", "brief",new String[]{"brief", "full"}));
+        registerLogger("fallingBlocks", Logger.stardardLogger("fallingBlocks", "brief", new String[]{"brief", "full"}));
+        registerLogger("gametime",      Logger.stardardLogger("gametime", "default", new String[]{"default"}));
+        registerLogger("mobcaps",       HUDLogger.stardardHUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
+        registerLogger("packets",       HUDLogger.stardardHUDLogger("packets", null, null));
+        registerLogger("pathfinding",   Logger.stardardLogger("pathfinding", "20", new String[]{"2", "5", "10"}));
+        registerLogger("projectiles",   Logger.stardardLogger("projectiles", "brief",  new String[]{"brief", "full"}));
+        registerLogger("tnt",           Logger.stardardLogger("tnt", "brief", new String[]{"brief", "full"}));
+        registerLogger("tps",           HUDLogger.stardardHUDLogger("tps", null, null));
+
+
         //registerLogger("kills", new Logger("kills", null, null));
-        //registerLogger("damage", new Logger("damage", "all", new String[]{"all","players","me"}));
+        //registerLogger("damage", Logger.stardardLogger("damage", "all", new String[]{"all","players","me"}));
         //registerLogger("weather", new Logger("weather", null, null));
-        registerLogger( "pathfinding", Logger.stardardLogger("pathfinding", "20", new String[]{"2", "5", "10"}));
-
-        registerLogger("tps", HUDLogger.stardardHUDLogger("tps", null, null));
-        registerLogger("packets", HUDLogger.stardardHUDLogger("packets", null, null));
-        registerLogger("counter",HUDLogger.stardardHUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
-        registerLogger("mobcaps", HUDLogger.stardardHUDLogger("mobcaps", "dynamic",new String[]{"dynamic", "overworld", "nether","end"}));
-        registerLogger("explosions", HUDLogger.stardardLogger("explosions", "brief",new String[]{"brief", "full"}));
-
     }
 
     /**
