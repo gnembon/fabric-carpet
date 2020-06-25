@@ -36,8 +36,8 @@ public class SummonCommandMixin
         {
             ServerWorld world = (ServerWorld) entity.getEntityWorld();
             BlockPos at = entity.getBlockPos();
-            LocalDifficulty localDifficulty_1 =  world.getLocalDifficulty(at);  //DO MOB SPAWNING
-            boolean boolean_2 = world.getGameRules().getBoolean(GameRules.field_19390) && world.random.nextDouble() < (double)localDifficulty_1.getLocalDifficulty() * 0.01D;
+            LocalDifficulty localDifficulty_1 =  world.getLocalDifficulty(at);
+            boolean boolean_2 = world.getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING) && world.random.nextDouble() < (double)localDifficulty_1.getLocalDifficulty() * 0.01D;
             if (boolean_2) {
                 SkeletonHorseEntity skeletonHorseEntity_1 = (SkeletonHorseEntity) EntityType.SKELETON_HORSE.create(world);
                 skeletonHorseEntity_1.setTrapped(true);
