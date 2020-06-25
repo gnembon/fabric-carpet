@@ -2,6 +2,8 @@ package carpet.mixins;
 
 import carpet.fakes.WorldInterface;
 import carpet.helpers.TickSpeed;
+import carpet.logging.LoggerRegistry;
+import carpet.logging.logHelpers.GametimeLogHelper;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
@@ -9,7 +11,10 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.World;
+import net.minecraft.world.level.LevelProperties;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -89,5 +94,18 @@ public abstract class World_tickMixin implements WorldInterface
         CarpetProfiler.end_current_entity_section(entitySection);
     }
 
+    @Final
+    @Shadow
+    protected LevelProperties properties;
+
+    @Inject(method = "tickTime", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/World;setTime(J)V"
+    ))
+    private void onTimeTicked(CallbackInfo ci) {
+        if (LoggerRegistry.__gametime) {
+            GametimeLogHelper.onTimeTicked(properties.getTime());
+        }
+    }
 
 }
