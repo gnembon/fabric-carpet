@@ -13,7 +13,7 @@
     "sources": "https://github.com/gnembon/fabric-carpet"
   },
 
-  "license": "GNU LGPL V3",
+  "license": "MIT",
   "icon": "assets/carpet/icon.png",
 
   "environment": "*",
