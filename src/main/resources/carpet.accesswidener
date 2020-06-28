@@ -1,0 +1,4 @@
+accessWidener	v1	named
+
+accessible class net/minecraft/server/world/ThreadedAnvilChunkStorage$TicketManager
+accessible class net/minecraft/server/world/ServerLightingProvider$Stage

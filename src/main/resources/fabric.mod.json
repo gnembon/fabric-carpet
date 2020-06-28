@@ -24,7 +24,7 @@
   "mixins": [
     "carpet.mixins.json"
   ],
-
+  "accesswidener": "carpet.accesswidener",
   "depends": {
     "minecraft": "1.15.x",
     "fabricloader": ">=0.7.1"
