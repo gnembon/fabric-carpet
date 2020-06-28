@@ -762,16 +762,21 @@ public class CarpetExpression
         this.expr.addLazyFunction("without_updates", 1, (c, t, lv) ->
         {
             boolean previous = CarpetSettings.impendingFillSkipUpdates;
-            try
+            if (previous) return lv.get(0);
+            Value [] result = new Value[]{Value.NULL};
+            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
-                CarpetSettings.impendingFillSkipUpdates = true;
-                Value ret = lv.get(0).evalValue(c, t);
-                return (cc, tt) -> ret;
-            }
-            finally
-            {
-                CarpetSettings.impendingFillSkipUpdates = previous;
-            }
+                try
+                {
+                    CarpetSettings.impendingFillSkipUpdates = true;
+                    result[0] = lv.get(0).evalValue(c, t);
+                }
+                finally
+                {
+                    CarpetSettings.impendingFillSkipUpdates = previous;
+                }
+            });
+            return (cc, tt) -> result[0];
         });
 
         this.expr.addLazyFunction("set", -1, (c, t, lv) ->
@@ -3226,18 +3231,13 @@ public class CarpetExpression
                     default:
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);
                 }
-            }
-            try
-            {
-                ((CarpetContext) c).s = innerSource;
-                Value retval = lv.get(1).evalValue(c);
-                return (cc, tt) -> retval;
-            }
-            finally
-            {
-                ((CarpetContext) c).s = outerSource;
-            }
-
+            };
+            if (innerSource.getWorld() == outerSource.getWorld()) return lv.get(1);
+            Context newCtx = c.recreate();
+            ((CarpetContext) newCtx).s = innerSource;
+            newCtx.variables = c.variables;
+            Value retval = lv.get(1).evalValue(newCtx);
+            return (cc, tt) -> retval;
         });
 
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
