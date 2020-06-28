@@ -20,7 +20,7 @@ public class Context
     public static final int LVALUE = 9;
     public static final int MAPDEF = 10;
 
-    public final Map<String, LazyValue> variables = new HashMap<>();
+    public Map<String, LazyValue> variables = new HashMap<>();
 
     public final ScriptHost host;
 

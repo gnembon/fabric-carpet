@@ -72,7 +72,10 @@ set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:sl
 
 ### `without_updates(expr)`
 
-Evaluates subexpression without causing updates when blocks change in the world
+Evaluates subexpression without causing updates when blocks change in the world.
+
+For synchronization sake, as well as from the fact that suppressed update can only happen within a tick,
+the call to the `expr` is docked on the main server task.
 
 Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
 generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 
