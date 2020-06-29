@@ -399,7 +399,7 @@ Queries in-game statistics for certain values. Categories include:
 *   `picked_up`: items picked up
 *   `dropped`: items dropped
 *   `killed`: mobs killed
-*   `killed_by`: blocks mined
+*   `killed_by`: mobs killed by
 *   `custom`: various random stats
 
 For the options of `entry`, consult your statistics page, or give it a guess.

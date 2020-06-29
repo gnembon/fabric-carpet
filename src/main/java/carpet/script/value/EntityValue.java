@@ -289,6 +289,10 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
+        put("persistence", (e, a) -> {
+            if (e instanceof MobEntity) return new NumericValue(((MobEntity) e).isPersistent());
+            return Value.NULL;
+        });
         put("hunger", (e, a) -> {
             if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getFoodLevel());
             return Value.NULL;
@@ -520,6 +524,10 @@ public class EntityValue extends Value
         {
             throw new InternalExpressionException("'modify' for '"+what+"' expects a value");
         }
+        catch (IndexOutOfBoundsException ind)
+        {
+            throw new InternalExpressionException("Wrong number of arguments for `modify` option: "+what);
+        }
     }
 
     private static void updatePosition(Entity e, double x, double y, double z, float yaw, float pitch)
@@ -715,9 +723,23 @@ public class EntityValue extends Value
                 e.setCustomName(null);
                 return;
             }
-            e.setCustomNameVisible(true);
+            boolean showName = false;
+            if (v instanceof ListValue)
+            {
+                showName = ((ListValue) v).getItems().get(1).getBoolean();
+                v = ((ListValue) v).getItems().get(0);
+            }
+            e.setCustomNameVisible(showName);
             e.setCustomName(new LiteralText(v.getString()));
         });
+
+        put("persistence", (e, v) ->
+        {
+            if (!(e instanceof MobEntity)) return;
+            if (v == null) v = Value.TRUE;
+            ((MobEntityInterface)e).setPersistence(v.getBoolean());
+        });
+
         put("dismount", (e, v) -> e.stopRiding() );
         put("mount", (e, v) -> {
             if (v instanceof EntityValue)
