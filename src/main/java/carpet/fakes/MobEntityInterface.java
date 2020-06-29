@@ -10,4 +10,6 @@ public interface MobEntityInterface
     GoalSelector getAI(boolean target);
 
     Map<String, Goal> getTemporaryTasks();
+
+    void setPersistence(boolean what);
 }
