@@ -47,6 +47,8 @@ a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1,2
 
 ### `Operator ->`
 
+`->` operator has two uses - as a function definition operator and key-value initializer for maps.
+
 To organize code better than a flat sequence of operations, one can define functions. Definition is correct 
 if has the following form
 
@@ -71,7 +73,17 @@ a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
 </pre>
 
 In case the inner function wants to operate and modify larger objects, lists from the outer scope, but not global, 
-it needs to use `outer` function in function signature
+it needs to use `outer` function in function signature.
+
+in map construction context (directly in `m()` or `{}`), the `->` operator has a different function by converting its
+arguments to a tuple which is used by map constructor as a key-value pair:
+
+<pre>
+{ 'foo' -> 'bar' } => {l('foo', 'bar')}
+</pre>
+
+This means that it is not possible to define literally a set of inline function, however a set of functions can still
+be created by adding elements to an empty set, and building it this way.
 
 ### `outer(arg)`
 
