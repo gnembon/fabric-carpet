@@ -1463,20 +1463,6 @@ public class Expression
             return (cc, tt) -> ret;
         });
 
-        //Deprecated, use "get" instead, or . operator
-        addBinaryFunction("element", (v1, v2) ->
-        {
-            if (!(v1 instanceof ListValue))
-                throw new InternalExpressionException("First argument of 'get' should be a list");
-            List<Value> items = ((ListValue)v1).getItems();
-            long index = NumericValue.asNumber(v2).getLong();
-            int numitems = items.size();
-            long range = abs(index)/numitems;
-            index += (range+2)*numitems;
-            index = index % numitems;
-            return items.get((int)index);
-        });
-
         addLazyFunction("put", -1, (c, t, lv) ->
         {
             if(lv.size()<2)
