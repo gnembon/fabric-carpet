@@ -470,7 +470,7 @@ public class SettingsManager
         writeSettingsToConf(conf.getLeft()); // this may feels weird, but if conf
         // is locked, it will never reach this point.
         rule.set(source,stringValue);
-        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_will_now_default_to_%(value)s","rule %s will now default to %s"), rule.translatedName(), stringValue));
+        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_will_now_default_to_%(value)s","Rule %s will now default to %s"), rule.translatedName(), stringValue));
         return 1;
     }
     // removes overrides of the default values in the file
@@ -482,6 +482,7 @@ public class SettingsManager
         conf.getLeft().remove(rule.name);
         writeSettingsToConf(conf.getLeft());
         rules.get(rule.name).resetToDefault(source);
+        Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_not_set_restart","Rule %s will now not be set on restart"), rule.translatedName()));
         return 1;
     }
 

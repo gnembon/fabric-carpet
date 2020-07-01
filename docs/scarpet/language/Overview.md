@@ -1,14 +1,8 @@
-# Fundamental components of `scarpet` programming language (towards version 1.7).
+# Fundamental components of `scarpet` programming language.
 
 Scarpet (a.k.a. Carpet Script, or Script for Carpet) is a programming language 
 designed to provide the ability to write custom programs to run within Minecraft 
 and interact with the world.
-
-The project was initially built based on the EvalEx project, however it now diverged 
-so far away from the original implementation, it would be hard to tell it without 
-this mention. EvalEx is a handy expression evaluator for Java, that allows to evaluate 
-simple mathematical and boolean expressions. For more information, 
-see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)
 
 This specification is divided into two sections: this one is agnostic to any 
 Minecraft related features and could function on its own, and CarpetExpression 
@@ -277,3 +271,22 @@ check_foo_not_zero();
 ...
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
 </pre>
+
+## Scarpet preprocessor
+
+There are several preprocessing operations applied to the source of your program to clean it up and prepare for
+execution. Some of them will affect your code as it is reported via stack traces and function definition, and some
+are applied only on the surface.
+ - stripping `//` comments (in file mode)
+ - replacing `$` with newlines (in command mode, modifies submitted code)
+ - removing extra semicolons that don't follow `;` use as a binary operator, allowing for lenient use of semicolons
+ - translating `{` into `m(`, `[` into `l(`, and `]` and `}` into `)`
+ 
+No further optimizations are currently applied to your code.
+
+## Mentions
+
+LR1 parser, tokenizer, and several built-in functions are built based on the EvalEx project.
+EvalEx is a handy expression evaluator for Java, that allows to evaluate 
+simple mathematical and boolean expressions. EvalEx is distributed under MIT licence.
+For more information, see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)

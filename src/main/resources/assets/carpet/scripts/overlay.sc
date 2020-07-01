@@ -94,7 +94,7 @@ __structure_renderer(player_name) ->
 		    l(from, to) = structure_data;
 		    total_size = _euclidean(from, to);
 		    density = max(10, total_size/10);
-		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF, 'line', 3, 'fill', 0x00FFFF22);
+		    draw_shape('box', 15, 'from', from, 'to', to+1, 'color', 0x00FFFFFF, 'line', 3, 'fill', 0x00FFFF12);
 		    structure_pieces = slice(sort_key(structure_pieces, _euclidean_sq((_:2+_:3)/2,ppos)), 0, config:'max_pieces');
 		    for (structure_pieces, l(piece, direction, from, to) = _;
 		        r = 255 - floor(128 * _i/config:'max_pieces');

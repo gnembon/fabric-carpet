@@ -43,7 +43,9 @@ import org.apache.commons.lang3.text.WordUtils;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.Iterator;
@@ -490,6 +492,11 @@ public class Expression
         //assigns const procedure to the lhs, returning its previous value
         addLazyBinaryOperatorWithDelegation("->", precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
         {
+            if (type == Context.MAPDEF)
+            {
+                Value result = ListValue.of(lv1.evalValue(c), lv2.evalValue(c));
+                return (cc, tt) -> result;
+            }
             Value v1 = lv1.evalValue(c, Context.SIGNATURE);
             if (!(v1 instanceof FunctionSignatureValue))
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
@@ -1333,11 +1340,18 @@ public class Expression
             return LazyListValue.range(from, to, step);
         });
 
-        addFunction("m", lv ->
+        addLazyFunction("m", -1, (c, t, llv) ->
         {
+            List<Value> lv = new ArrayList<>();
+            for (LazyValue lazyParam : llv) {
+                lv.add(lazyParam.evalValue(c, Context.MAPDEF)); // none type default by design
+            }
+            Value ret;
             if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
-                return new MapValue(((LazyListValue) lv.get(0)).unroll());
-            return new MapValue(lv);
+                ret = new MapValue(((LazyListValue) lv.get(0)).unroll());
+            else
+                ret = new MapValue(lv);
+            return (cc, tt) -> ret;
         });
 
         addUnaryFunction("keys", v -> {
@@ -1447,20 +1461,6 @@ public class Expression
                 return (cc, tt) -> Value.NULL;
             Value ret = new NumericValue(((ContainerValueInterface) container).has(lv.get(lv.size()-1).evalValue(c)));
             return (cc, tt) -> ret;
-        });
-
-        //Deprecated, use "get" instead, or . operator
-        addBinaryFunction("element", (v1, v2) ->
-        {
-            if (!(v1 instanceof ListValue))
-                throw new InternalExpressionException("First argument of 'get' should be a list");
-            List<Value> items = ((ListValue)v1).getItems();
-            long index = NumericValue.asNumber(v2).getLong();
-            int numitems = items.size();
-            long range = abs(index)/numitems;
-            index += (range+2)*numitems;
-            index = index % numitems;
-            return items.get((int)index);
         });
 
         addLazyFunction("put", -1, (c, t, lv) ->
@@ -1790,6 +1790,66 @@ public class Expression
             return (cc, tt) -> time;
         });
 
+        addLazyFunction("unix_time", 0, (c, t, lv) ->
+        {
+            Value time = new NumericValue(System.currentTimeMillis());
+            return (cc, tt) -> time;
+        });
+
+        addFunction("convert_date", lv ->
+        {
+            int argsize = lv.size();
+            if (lv.size() == 0) throw new InternalExpressionException("'convert_date' requires at least one parameter");
+            Value value = lv.get(0);
+            if (argsize == 1 && !(value instanceof ListValue))
+            {
+                Calendar cal = new GregorianCalendar(Locale.ROOT);
+                cal.setTimeInMillis(NumericValue.asNumber(value, "timestamp").getLong());
+                int weekday = cal.get(Calendar.DAY_OF_WEEK)-1;
+                if (weekday == 0) weekday = 7;
+                Value retVal = ListValue.ofNums(
+                        cal.get(Calendar.YEAR),
+                        cal.get(Calendar.MONTH)+1,
+                        cal.get(Calendar.DAY_OF_MONTH),
+                        cal.get(Calendar.HOUR_OF_DAY),
+                        cal.get(Calendar.MINUTE),
+                        cal.get(Calendar.SECOND),
+                        weekday,
+                        cal.get(Calendar.DAY_OF_YEAR),
+                        cal.get(Calendar.WEEK_OF_YEAR)
+                );
+                return retVal;
+            }
+            else if(value instanceof ListValue)
+            {
+                lv = ((ListValue) value).getItems();
+                argsize = lv.size();
+            }
+            Calendar cal = new GregorianCalendar(0, 0, 0, 0, 0, 0);
+
+            if (argsize == 3)
+            {
+                cal.set(
+                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.get(1)).getInt()-1,
+                        NumericValue.asNumber(lv.get(2)).getInt()
+                );
+            }
+            else if (argsize == 6)
+            {
+                cal.set(
+                        NumericValue.asNumber(lv.get(0)).getInt(),
+                        NumericValue.asNumber(lv.get(1)).getInt()-1,
+                        NumericValue.asNumber(lv.get(2)).getInt(),
+                        NumericValue.asNumber(lv.get(3)).getInt(),
+                        NumericValue.asNumber(lv.get(4)).getInt(),
+                        NumericValue.asNumber(lv.get(5)).getInt()
+                );
+            }
+            else throw new InternalExpressionException("Date conversion requires 3 arguments for Dates or 6 arguments, for time");
+            return new NumericValue(cal.getTimeInMillis());
+        });
+
         addLazyFunction("profile_expr", 1, (c, t, lv) ->
         {
             LazyValue lazy = lv.get(0);
@@ -2000,7 +2060,7 @@ public class Expression
 
         Tokenizer tokenizer = new Tokenizer(c, this, expression, allowComments, allowNewlineSubstitutions);
         // stripping lousy but acceptable semicolons
-        List<Tokenizer.Token> cleanedTokens = tokenizer.fixSemicolons();
+        List<Tokenizer.Token> cleanedTokens = tokenizer.postProcess();
 
         Tokenizer.Token lastFunction = null;
         Tokenizer.Token previousToken = null;

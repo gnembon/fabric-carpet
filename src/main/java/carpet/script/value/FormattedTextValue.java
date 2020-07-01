@@ -1,6 +1,9 @@
 package carpet.script.value;
 
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.text.BaseText;
+import net.minecraft.text.Text;
 
 public class FormattedTextValue extends StringValue
 {
@@ -36,5 +39,12 @@ public class FormattedTextValue extends StringValue
     public BaseText getText()
     {
         return text;
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        return StringTag.of(Text.Serializer.toJson(text));
     }
 }

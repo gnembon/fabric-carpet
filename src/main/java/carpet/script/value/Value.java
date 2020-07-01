@@ -1,6 +1,7 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import net.minecraft.nbt.Tag;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -203,4 +204,6 @@ public abstract class Value implements Comparable<Value>, Cloneable
             throw new InternalExpressionException("Cannot make a copy of value: "+this);
         }
     }
+
+    public abstract Tag toTag(boolean force);
 }

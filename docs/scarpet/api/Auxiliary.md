@@ -67,7 +67,7 @@ Optional shared shape attributes:
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
  * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
  player, otherwise it will be send to all players in the dimension.
- * `width` - line thickness, defaults to 2.0pt
+ * `line` - line thickness, defaults to 2.0pt
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
    Follow attribute requires all positional arguments to be relative to the entity and disallow
@@ -129,6 +129,30 @@ Consult section about container operations in `Expression` to learn about possib
 
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
+
+### parse_nbt(tag)
+
+Converts NBT tag to a scarpet value, which you can navigate through much better.
+
+Converts:
+ - Compound tags into maps with string keys
+ - List tags into list values
+ - Numbers (Ints, Floats, Doubles, Longs) into a number
+ - Rest is converted to strings.
+ 
+### encode_nbt(expr, force?)
+
+Encodes value of the expression as an NBT tag. By default (or when `force` is false), it will only allow
+to encode values that are guaranteed to return the same value when applied the resulting tag to `parse_nbt()`.
+Supported types that can reliably convert back and forth to and from NBT values are:
+ - Maps with string keywords
+ - Lists of items of the same type (scarpet will take care of unifying value types if possible)
+ - Numbers (encoded as Ints -> Longs -> Doubles, as needed)
+ - Strings
+
+Other value types will only be converted to tags (including NBT tags) if `force` is true. They would require
+extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
+produce an exception.
 
 ### `print(expr)`
 
@@ -200,7 +224,7 @@ With the specified `resource` in the scripts folder, of a specific `type`, write
  content, or deletes the resource.
 
 Resource is identified by a path to the file.  
-A path can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid. Do not add file extensions to the descriptor - extensions are inferred
 based on the `type` of the file.
  
@@ -368,7 +392,7 @@ Queries in-game statistics for certain values. Categories include:
 *   `picked_up`: items picked up
 *   `dropped`: items dropped
 *   `killed`: mobs killed
-*   `killed_by`: blocks mined
+*   `killed_by`: mobs killed by
 *   `custom`: various random stats
 
 For the options of `entry`, consult your statistics page, or give it a guess.

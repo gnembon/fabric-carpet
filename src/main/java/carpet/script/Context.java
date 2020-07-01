@@ -18,8 +18,9 @@ public class Context
     public static final int SIGNATURE = 7;
     public static final int LOCALIZATION = 8;
     public static final int LVALUE = 9;
+    public static final int MAPDEF = 10;
 
-    public final Map<String, LazyValue> variables = new HashMap<>();
+    public Map<String, LazyValue> variables = new HashMap<>();
 
     public final ScriptHost host;
 

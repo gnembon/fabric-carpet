@@ -1,6 +1,5 @@
 package carpet.script.value;
 
-import carpet.CarpetSettings;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
@@ -12,10 +11,10 @@ import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
-import carpet.utils.Messenger;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.entity.player.HungerManager;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
@@ -61,6 +60,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -87,11 +87,11 @@ public class EntityValue extends Value
             EntitySelector entitySelector = selectorCache.get(selector);
             if (entitySelector != null)
             {
-                return entitySelector.getEntities(source);
+                return entitySelector.getEntities(source.withMaxLevel(4));
             }
             entitySelector = new EntitySelectorReader(new StringReader(selector), true).read();
             selectorCache.put(selector, entitySelector);
-            return entitySelector.getEntities(source);
+            return entitySelector.getEntities(source.withMaxLevel(4));
         }
         catch (CommandSyntaxException e)
         {
@@ -289,6 +289,10 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
+        put("persistence", (e, a) -> {
+            if (e instanceof MobEntity) return new NumericValue(((MobEntity) e).isPersistent());
+            return Value.NULL;
+        });
         put("hunger", (e, a) -> {
             if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getFoodLevel());
             return Value.NULL;
@@ -520,6 +524,10 @@ public class EntityValue extends Value
         {
             throw new InternalExpressionException("'modify' for '"+what+"' expects a value");
         }
+        catch (IndexOutOfBoundsException ind)
+        {
+            throw new InternalExpressionException("Wrong number of arguments for `modify` option: "+what);
+        }
     }
 
     private static void updatePosition(Entity e, double x, double y, double z, float yaw, float pitch)
@@ -715,9 +723,23 @@ public class EntityValue extends Value
                 e.setCustomName(null);
                 return;
             }
-            e.setCustomNameVisible(true);
+            boolean showName = false;
+            if (v instanceof ListValue)
+            {
+                showName = ((ListValue) v).getItems().get(1).getBoolean();
+                v = ((ListValue) v).getItems().get(0);
+            }
+            e.setCustomNameVisible(showName);
             e.setCustomName(new LiteralText(v.getString()));
         });
+
+        put("persistence", (e, v) ->
+        {
+            if (!(e instanceof MobEntity)) return;
+            if (v == null) v = Value.TRUE;
+            ((MobEntityInterface)e).setPersistence(v.getBoolean());
+        });
+
         put("dismount", (e, v) -> e.stopRiding() );
         put("mount", (e, v) -> {
             if (v instanceof EntityValue)
@@ -976,22 +998,37 @@ public class EntityValue extends Value
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
         });
 
-        // gamemode         [check]
-        // spectate         [check]
-        // "fire"           [check]
-        // "extinguish"     [set fire ticks to 0]
-        // "silent"         [check]
-        // "gravity"        [check]
-        // "invulnerable"   [check]
+        put("nbt", (e, v) -> {
+            if (!(e instanceof PlayerEntity))
+            {
+                UUID uUID = e.getUuid();
+                Value tagValue = NBTSerializableValue.fromValue(v);
+                if (tagValue instanceof NBTSerializableValue)
+                {
+                    e.fromTag(((NBTSerializableValue) tagValue).getCompoundTag());
+                    e.setUuid(uUID);
+                }
+            }
+        });
+        put("nbt_merge", (e, v) -> {
+            if (!(e instanceof PlayerEntity))
+            {
+                UUID uUID = e.getUuid();
+                Value tagValue = NBTSerializableValue.fromValue(v);
+                if (tagValue instanceof NBTSerializableValue)
+                {
+                    CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
+                    nbttagcompound.copyFrom(((NBTSerializableValue) tagValue).getCompoundTag());
+                    e.fromTag(nbttagcompound);
+                    e.setUuid(uUID);
+                }
+            }
+        });
+
         // "dimension"      []
         // "item"           []
         // "count",         []
-        // "age",           [check]
         // "effect_"name    []
-        // "hold"           [inventory_set?]
-        // "hold_offhand"   [inventory_set?] 
-        // "jump"           [check]
-        // "nbt" <-big one, for now use run('data merge entity ...
     }};
 
     public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
@@ -1000,5 +1037,15 @@ public class EntityValue extends Value
         if (event == null)
             throw new InternalExpressionException("Unknown entity event: " + eventName);
         ((EntityInterface)entity).getEventContainer().addEvent(event, cc, fun, args);
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        CompoundTag tag = new CompoundTag();
+        tag.put("Data", getEntity().toTag( new CompoundTag()));
+        tag.put("Name", StringTag.of(Registry.ENTITY_TYPE.getId(entity.getType()).toString()));
+        return tag;
     }
 }

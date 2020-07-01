@@ -1,5 +1,8 @@
 package carpet.script.value;
 
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+
 public class NullValue extends NumericValue // TODO check nonsingleton code
 {
     @Override
@@ -49,5 +52,12 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     public int hashCode()
     {
         return 0;
+    }
+
+    @Override
+    public Tag toTag(boolean force)
+    {
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        return StringTag.of("null");
     }
 }

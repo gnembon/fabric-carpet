@@ -6,6 +6,7 @@ import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import net.minecraft.nbt.Tag;
 
 import java.util.HashMap;
 import java.util.List;
@@ -144,4 +145,10 @@ public class ThreadValue extends Value
         locks.clear();
     }
 
+    @Override
+    public Tag toTag(boolean force)
+    {
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        return getValue().toTag(true);
+    }
 }

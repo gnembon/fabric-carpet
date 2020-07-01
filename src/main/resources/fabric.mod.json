@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "carpet",
-  "version": "1.3.29",
+  "version": "1.4.0",
 
   "name": "Carpet Mod in Fabric",
   "description": "Carpet made out of fabric",
@@ -13,7 +13,7 @@
     "sources": "https://github.com/gnembon/fabric-carpet"
   },
 
-  "license": "GNU LGPL V3",
+  "license": "MIT",
   "icon": "assets/carpet/icon.png",
 
   "environment": "*",
@@ -24,7 +24,8 @@
   "mixins": [
     "carpet.mixins.json"
   ],
-  "accesswidener": "carpet.accesswidener",
+  "accessWidener" : "carpet.accesswidener",
+
   "depends": {
     "minecraft": "1.15.x",
     "fabricloader": ">=0.7.1"

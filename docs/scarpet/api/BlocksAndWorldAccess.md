@@ -36,11 +36,14 @@ print(b); // 'stone', block was evaluated 'eagerly' but call to `block`
 All the functions below can be used with block value, queried with coord triple, or 3-long list. All `pos` in the 
 functions referenced below refer to either method of passing block position.
 
-### `set(pos, block, property?, value?, ...)`
+### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, l(property?, value?, ...), block_data?)`
 
 First part of the `set` function is either a coord triple, list of three numbers, or other block with coordinates. 
 Second part, `block` is either block value as a result of `block()` function string value indicating the block name, 
-and optional `property - value` pairs for extra block properties. If `block` is specified only by name, then if a 
+and optional `property - value` pairs for extra block properties. Optional `block_data` include the block data to 
+be set for the target block.
+
+If `block` is specified only by name, then if a 
 destination block is the same the `set` operation is skipped, otherwise is executed, for other potential extra
 properties.
 
@@ -64,11 +67,15 @@ set(x,y,z,'iron_trapdoor[half=top]')  // Incorrect. sets bottom iron trapdoor - 
 set(x,y,z,'iron_trapdoor','half','top') // correct - top trapdoor
 set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
 set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
+set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
 </pre>
 
 ### `without_updates(expr)`
 
-Evaluates subexpression without causing updates when blocks change in the world
+Evaluates subexpression without causing updates when blocks change in the world.
+
+For synchronization sake, as well as from the fact that suppressed update can only happen within a tick,
+the call to the `expr` is docked on the main server task.
 
 Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
 generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 

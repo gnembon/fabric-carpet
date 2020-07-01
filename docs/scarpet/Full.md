@@ -1,14 +1,8 @@
-# Fundamental components of `scarpet` programming language (towards version 1.7).
+# Fundamental components of `scarpet` programming language.
 
 Scarpet (a.k.a. Carpet Script, or Script for Carpet) is a programming language 
 designed to provide the ability to write custom programs to run within Minecraft 
 and interact with the world.
-
-The project was initially built based on the EvalEx project, however it now diverged 
-so far away from the original implementation, it would be hard to tell it without 
-this mention. EvalEx is a handy expression evaluator for Java, that allows to evaluate 
-simple mathematical and boolean expressions. For more information, 
-see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)
 
 This specification is divided into two sections: this one is agnostic to any 
 Minecraft related features and could function on its own, and CarpetExpression 
@@ -277,6 +271,25 @@ check_foo_not_zero();
 ...
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
 </pre>
+
+## Scarpet preprocessor
+
+There are several preprocessing operations applied to the source of your program to clean it up and prepare for
+execution. Some of them will affect your code as it is reported via stack traces and function definition, and some
+are applied only on the surface.
+ - stripping `//` comments (in file mode)
+ - replacing `$` with newlines (in command mode, modifies submitted code)
+ - removing extra semicolons that don't follow `;` use as a binary operator, allowing for lenient use of semicolons
+ - translating `{` into `m(`, `[` into `l(`, and `]` and `}` into `)`
+ 
+No further optimizations are currently applied to your code.
+
+## Mentions
+
+LR1 parser, tokenizer, and several built-in functions are built based on the EvalEx project.
+EvalEx is a handy expression evaluator for Java, that allows to evaluate 
+simple mathematical and boolean expressions. EvalEx is distributed under MIT licence.
+For more information, see: [EvalEx GitHub repository](https://github.com/uklimaschewski/EvalEx)
 # Variables and Constants
 
 `scarpet` provides a number of constants that can be used literally in scripts
@@ -296,9 +309,9 @@ block positions. All variables starting with `_` are read-only, and cannot be de
 
 `scarpet` accepts numeric and string liters constants. Numbers look like `1, 2.5, -3e-7, 0xff,` and are internally 
 represented as Java's `double` but `scarpet` will try to trim trailing zeros as much as possible so if you need to 
-use them as intergers, you can. Strings using single quoting, for multiple reasons, but primarily to allow for 
+use them as intergers, you can. Strings use single quoting, for multiple reasons, but primarily to allow for 
 easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 
-for example, or when typing in jsons inside scarpet to feed back into a `/data merge` command for example. 
+for example), or when typing in jsons inside scarpet (to feed back into a `/data merge` command for example). 
 Strings also use backslashes `\` for quoting special characters, in both plain strings and regular expressions
 
 <pre>
@@ -882,10 +895,13 @@ Thou shall not sample from noise changing seed frequently. Scarpet will keep tra
 used for sampling providing similar speed comparing to the default seed of `0`. In case the app engine uses more 
 than 256 seeds at the same time, switching between them can get much more expensive.
 
-### `print(expr)`
+### `print(expr)`, `print(player, expr)`
 
 prints the value of the expression to chat. Passes the result of the argument to the output unchanged, 
-so `print`-statements can be weaved in code to debug programming issues
+so `print`-statements can be weaved in code to debug programming issues. By default it uses the same communication
+channels that most vanilla commands are using.
+
+In case player is directly specified, it only sends the message to that player, like `tell` command.
 
 <pre>
 print('foo') => results in foo, prints: foo
@@ -917,6 +933,52 @@ start_time = time();
 flip_my_world_upside_down();
 print(str('this took %d milliseconds',time()-start_time))
 </pre>
+
+### `unix_time()`
+
+Returns standard POSIX time as a number of milliseconds since the start of the epoch 
+(00:00 am and 0 seconds, 1 Jan 1970).
+Unlike the previous function, this can be used to get exact time, but it varies from time zone to time zone.
+
+### `convert_date(milliseconds)`
+### `convert_date(year, month, date, hours?, mins?, secs?)`
+### `convert_date(l(year, month, date, hours?, mins?, secs?))`
+
+If called with a single argument, converts standard POSIX time to a list in the format: 
+
+`l(year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year)`
+
+eg: `convert_date(1592401346960) -> [2020, 6, 17, 10, 42, 26, 3, 169, 25]`
+
+Where the `6` stands for June, but `17` stands for 17th, `10` stands for 10am,
+`42` stands for 42 minutes past the hour, and `26` stands for 26 seconds past the minute,
+and `3` stands for Wednesday, `169` is the day of year, and `25` is a week of year. 
+
+Run `convert_date(unix_time())` to get current time as list.
+
+
+When called with a list, or with 3 or 6 arguments, returns standard POSIX time as a number of milliseconds since the
+ start of the epoch (1 Jan 1970),
+using the time inputted into the function as opposed to the system time.
+
+Example editing:
+<pre>
+date = convert_date(unix_time());
+
+months = l('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+
+days = l('Mon','Tue','Wed','Thu','Fri','Sat','Sun');
+
+print(
+  str('Its %s, %d %s %d, %02d:%02d:%02d', 
+    days:(date:6-1), date:2, months:(date:1-1), date:0, date:3, date:4, date:5 
+  )
+)  
+</pre>
+
+This will give you a date:
+
+It is currently `hrs`:`mins` and `secs` seconds on the `date`th of `month`, `year`
 
 ### `profile_expr(expression)`
 
@@ -1183,6 +1245,8 @@ a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1,2
 
 ### `Operator ->`
 
+`->` operator has two uses - as a function definition operator and key-value initializer for maps.
+
 To organize code better than a flat sequence of operations, one can define functions. Definition is correct 
 if has the following form
 
@@ -1207,7 +1271,17 @@ a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
 </pre>
 
 In case the inner function wants to operate and modify larger objects, lists from the outer scope, but not global, 
-it needs to use `outer` function in function signature
+it needs to use `outer` function in function signature.
+
+in map construction context (directly in `m()` or `{}`), the `->` operator has a different function by converting its
+arguments to a tuple which is used by map constructor as a key-value pair:
+
+<pre>
+{ 'foo' -> 'bar' } => {l('foo', 'bar')}
+</pre>
+
+This means that it is not possible to define literally a set of inline function, however a set of functions can still
+be created by adding elements to an empty set, and building it this way.
 
 ### `outer(arg)`
 
@@ -1423,26 +1497,31 @@ tag = nbt('{a:[{lvl:[1,2,3]},{lvl:[3,2,1]},{lvl:[4,5,6]}]}'); put(tag, 'a[].lvl[
 
 ## List operations
 
-### `l(values ...), l(iterator)`
+### `[value, ...?]`,`[iterator]`,`l(value, ...?)`, `l(iterator)`
 
 Creates a list of values of the expressions passed as parameters. It can be used as an L-value and if all 
 elements are variables, you coujld use it to return multiple results from one function call, if that 
-function returns a list of results with the same size as the `l` call uses. In case there is only one 
+function returns a list of results with the same size as the `[]` call uses. In case there is only one 
 argument and it is an iterator (vanilla expression specification has `range`, but Minecraft API implements 
 a bunch of them, like `diamond`), it will convert it to a proper list. Iterators can only be used in high order 
-functions, and are treated as empty lists, unless unrolled with `l`
+functions, and are treated as empty lists, unless unrolled with `[]`. 
+
+Internally, `[elem, ...]`(list syntax) and `l(elem, ...)`(function syntax) are equivalent. `[]` is simply translated to 
+`l()` in the scarpet preprocessing stage. This means that internally the code has always expression syntax despite `[]`
+not using different kinds of brackets and not being proper operators. This means that `l(]` and `[)` are also valid
+although not recommended as they will make your code far less readable. 
 
 <pre>
-l(1,2,'foo') => [1, 2, foo]
-l() => [] (empty list)
-l(range(10)) => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-l(1, 2) = l(3, 4) => Error: l is not a variable
-l(foo, bar) = l(3,4); foo==3 && bar==4 => 1
-l(foo, bar, baz) = l(2, 4, 6); l(min(foo, bar), baz) = l(3, 5); l(foo, bar, baz)  => [3, 4, 5]
+l(1,2,'foo') <=> [1, 2, 'foo']
+l() <=> [] (empty list)
+[range(10)] => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+[1, 2] = [3, 4] => Error: l is not a variable
+[foo, bar] = [3, 4]; foo==3 && bar==4 => 1
+[foo, bar, baz] = [2, 4, 6]; [min(foo, bar), baz] = [3, 5]; [foo, bar, baz]  => [3, 4, 5]
 </pre>
 
-In the last example `l(min(foo, bar), baz)` creates a valid L-value, as min(foo, bar) finds the lower of the 
-variables (in this case `foo`) creating a valid assignable L-list of [foo, baz], and these values 
+In the last example `[min(foo, bar), baz]` creates a valid L-value, as `min(foo, bar)` finds the lower of the 
+variables (in this case `foo`) creating a valid assignable L-list of `[foo, baz]`, and these values 
 will be assigned new values
 
 ### `join(delim, list), join(delim, values ...)`
@@ -1516,29 +1595,37 @@ range(5,10)  => [5, 6, 7, 8, 9]
 range(20, 10, -2)  => [20, 18, 16, 14, 12]
 </pre>
 
-### `element(list, index)(deprecated)`
-
-Legacy support for older method that worked only on lists. Please use `get(...)` for equivalent support, or `.` 
-operator. Also previous unique behaviours with `put` on lists has been removed to support all type of 
-container types.
-
 ## Map operations
 
 Scarpet supports map structures, aka hashmaps, dicts etc. Map structure can also be used, with `null` values as sets. 
 Apart from container access functions, (`. , get, put, has, delete`), the following functions:
 
-### `m(values ...), m(iterator), m(key_value_pairs)`
+### `{values, ...}`,`{iterator}`,`{key -> value, ...}`,`m(values, ...)`, `m(iterator)`, `m(l(key, value), ...))`
 
 creates and initializes a map with supplied keys, and values. If the arguments contains a flat list, these are all 
 treated as keys with no value, same goes with the iterator - creates a map that behaves like a set. If the 
 arguments is a list of lists, they have to have two elements each, and then first is a key, and second, a value
 
+In map creation context (directly inside `{}` or `m{}` call), `->` operator acts like a pair constructor for simpler
+syntax providing key value pairs, so the invocation to `{foo -> bar, baz -> quux}` is equivalent to
+`{l(foo, bar), l(baz, quux)}`, which is equivalent to somewhat older, but more traditional functional form of
+`m(l(foo, bar),l(baz, quuz))`.
+
+Internally, `{?}`(list syntax) and `m(?)`(function syntax) are equivalent. `{}` is simply translated to 
+`m()` in the scarpet preprocessing stage. This means that internally the code has always expression syntax despite `{}`
+not using different kinds of brackets and not being proper operators. This means that `m(}` and `{)` are also valid
+although not recommended as they will make your code far less readable. 
+
+When converting map value to string, `':'` is used as a key-value separator due to tentative compatibility with NBT
+notation, meaning in simpler cases maps can be converted to NBT parsable string by calling `str()`. This however
+does not guarantee a parsable output. To properly convert to NBT value, use `encode_nbt()`.
+
 <pre>
-m(1,2,'foo') => {1: null, 2: null, foo: null}
-m() => {} (empty map)
-m(range(10)) => {0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null}
-m(l(1, 2), l(3, 4)) => {1: 2, 3: 4}
-reduce(range(10), put(_a, _, _*_); _a, m())
+{1, 2, 'foo'} => {1: null, 2: null, foo: null}
+m() <=> {} (empty map)
+{range(10)} => {0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null}
+m(l(1, 2), l(3, 4)) <=> {1 -> 2, 3 -> 4} => {1: 2, 3: 4}
+reduce(range(10), put(_a, _, _*_); _a, {})
      => {0: 0, 1: 1, 2: 4, 3: 9, 4: 16, 5: 25, 6: 36, 7: 49, 8: 64, 9: 81}
 </pre>
 
@@ -1595,11 +1682,14 @@ print(b); // 'stone', block was evaluated 'eagerly' but call to `block`
 All the functions below can be used with block value, queried with coord triple, or 3-long list. All `pos` in the 
 functions referenced below refer to either method of passing block position.
 
-### `set(pos, block, property?, value?, ...)`
+### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, l(property?, value?, ...), block_data?)`
 
 First part of the `set` function is either a coord triple, list of three numbers, or other block with coordinates. 
 Second part, `block` is either block value as a result of `block()` function string value indicating the block name, 
-and optional `property - value` pairs for extra block properties. If `block` is specified only by name, then if a 
+and optional `property - value` pairs for extra block properties. Optional `block_data` include the block data to 
+be set for the target block.
+
+If `block` is specified only by name, then if a 
 destination block is the same the `set` operation is skipped, otherwise is executed, for other potential extra
 properties.
 
@@ -1623,11 +1713,15 @@ set(x,y,z,'iron_trapdoor[half=top]')  // Incorrect. sets bottom iron trapdoor - 
 set(x,y,z,'iron_trapdoor','half','top') // correct - top trapdoor
 set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
 set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
+set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
 </pre>
 
 ### `without_updates(expr)`
 
-Evaluates subexpression without causing updates when blocks change in the world
+Evaluates subexpression without causing updates when blocks change in the world.
+
+For synchronization sake, as well as from the fact that suppressed update can only happen within a tick,
+the call to the `expr` is docked on the main server task.
 
 Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
 generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 
@@ -2281,7 +2375,7 @@ This function is tentative - will likely change when chunk ticket API is properl
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
-### `scan(cx, cy, cz, dx, dy, dz, px?, py?, pz?, expr)`, `scan(center, range, lower_range?, expr)`
+### `scan(center, range, lower_range?, expr)`
 
 Evaluates expression over area of blocks defined by its center `center = (cx, cy, cz)`, expanded in all directions 
 by `range = (dx, dy, dz)` blocks, or optionally in negative with `range` coords, and `upper_range` coords in 
@@ -2297,14 +2391,15 @@ which would cause the expression not be evaluated for their boolean value.
 `scan` also handles `continue` and `break` statements, using `continue`'s return value to use in place of expression
 return value. `break` return value has no effect.
 
-### `volume(x1, y1, z1, x2, y2, z2, expr)`
+### `volume(from_pos, to_pos, expr)`
 
 Evaluates expression for each block in the area, the same as the `scan` function, but using two opposite corners of 
 the rectangular cuboid. Any corners can be specified, its like you would do with `/fill` command.
+You can use a position or three coordinates to specify, it doesn't matter.
 
 For return value and handling `break` and `continue` statements, see `scan` function above.
 
-### `neighbours(x, y, z), neighbours(block), neighbours(l(x,y,z))`
+### `neighbours(pos)`
 
 Returns the list of 6 neighbouring blocks to the argument. Commonly used with other loop functions like `for`.
 
@@ -2312,13 +2407,18 @@ Returns the list of 6 neighbouring blocks to the argument. Commonly used with ot
 for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 </pre>
 
-### `rect(cx, cy, cz, dx?, dy?, dz?, px?, py?, pz?)`
+### `rect(centre, range?, positive_range?)`
 
-returns an iterator, just like `range` function that iterates over rectangular cubarea of blocks. If only center 
-point is specified, it iterates over 27 blocks. If `d` arguments are specified, expands selection by the  respective 
-number of blocks in each direction. If `p` arguments are specified, it uses `d` for negative offset, and `p` for positive.
+Returns an iterator, just like `range` function that iterates over a rectangular area of blocks. If only center
+point is specified, it iterates over 27 blocks. If `range` arguments are specified, expands selection by the  respective 
+number of blocks in each direction. If `positive_range` arguments are specified,
+ it uses `range` for negative offset, and `positive_range` for positive.
 
-### `diamond(cx, cy, cz, radius?, height?)`
+`centre` can be defined either as three coordinates, a list of three coords, or a block value.
+`range` and `positive_range` can have the same representations, just if its a block, it computes the distance to the center
+as range instead of taking the values as is.`
+
+### `diamond(centre_pos, radius?, height?)`
 
 Iterates over a diamond like area of blocks. With no radius and height, its 7 blocks centered around the middle 
 (block + neighbours). With a radius specified, it expands shape on x and z coords, and with a custom height, on y. 
@@ -2857,6 +2957,15 @@ Modifies directly player raw hunger components. Has no effect on non-players
 adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
 to manipulate how much 'food' some action cost.
 
+### `modify(e, 'nbt_merge', partial_tag)`
+
+Merges a partial tag into the entity data and reloads the entity from its updated tag. Cannot be applied to players
+
+### `modify(e, 'nbt', tag)`
+
+Reloads the entity from a supplied tag. Better get a valid entity tag, what can go wrong. Wonder what would happen if
+transplant rabbit's brain into a villager. Cannot be applied to players.
+
 ## Entity Events
 
 There is a number of events that happen to entities that you can attach your own code to in the form of event handlers. 
@@ -2939,6 +3048,51 @@ item_category('wooden_axe') => tools
 item_category('ender_pearl') => misc
 item_category('stone') => building_blocks
 </pre>
+
+### `recipe_data(item, type?)`, `recipe_data(recipe, type?)`
+
+returns all recipes matching either an `item`, or represent actual `recipe` name. In vanilla datapack, for all items
+that have one recipe available, the recipe name is the same as the item name but if an item has multiple recipes, its
+direct name can be different.
+
+Recipe type can take one of the following options:
+ * `'crafting'` - default, crafting table recipe
+ * `'smelting'` - furnace recipe
+ * `'blasting'` - blast furnace recipe
+ * `'smoking'` - smoker recipe
+ * `'campfire_cooking'` - campfire recipe
+ * `'stonecutting'` - stonecutter recipe
+ * `'smithing'` - smithing table (1.16+)
+ 
+ The return value is a list of available recipes (even if there is only one recipe available). Each recipe contains of
+ an item triple of the crafting result, list of ingredients, each containing a list of possible variants of the
+ ingredients in this slot, as item triples, or `null` if its a shaped recipe and a given slot in the patterns is left
+ empty, and recipe specification as another list. Possible recipe specs is:
+  * `['shaped', width, height]` - shaped crafting. `width` and `height` can be 1, 2 or 3.
+  * `['shapeless']` - shapeless crafting
+  * `['smelting', duration, xp]` - smelting/cooking recipes
+  * `['cutting']` - stonecutter recipe
+  * `['special']` - special crafting recipe, typically not present in the crafting menu
+  * `['custom']` - other recipe types
+  
+Note that ingredients are specified as tripes, with count and nbt information. Currently all recipes require always one
+of the ingredients, and for some recipes, even if the nbt data for the ingredient is specified (e.g. `dispenser`), it
+can accept items of any tags.
+
+Also note that some recipes leave some products in the crafting window, and these can be determined using
+ `crafting_remaining_item()` function 
+  
+ Examples:
+ <pre>
+ recipe_data('iron_ingot_from_nuggets')
+ recipe_data('iron_ingot')
+ recipe_data('glass', 'smelting')
+ </pre>
+
+### `crafting_remaining_item(item)`
+
+returns `null` if the item has no remaining item in the crafting window when used as a crafting ingredient, or an
+item name that serves as a replacement after crafting is done. Currently it can only be buckets and glass bottles.
 
 ### `inventory_size(inventory)`
 
@@ -3055,6 +3209,8 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)  /
 __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right click on a block resulted in activation of said block
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
+__on_player_chooses_recipe(player, recipe, full_stack)
+__on_player_switches_slot(player, from, to)
 __on_player_attacks_entity(player, entity)
 __on_player_takes_damage(player, amount, source, source_entity)
 __on_player_deals_damage(player, amount, entity)
@@ -3185,7 +3341,7 @@ Optional shared shape attributes:
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
  * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
  player, otherwise it will be send to all players in the dimension.
- * `width` - line thickness, defaults to 2.0pt
+ * `line` - line thickness, defaults to 2.0pt
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
    Follow attribute requires all positional arguments to be relative to the entity and disallow
@@ -3247,6 +3403,30 @@ Consult section about container operations in `Expression` to learn about possib
 
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
+
+### parse_nbt(tag)
+
+Converts NBT tag to a scarpet value, which you can navigate through much better.
+
+Converts:
+ - Compound tags into maps with string keys
+ - List tags into list values
+ - Numbers (Ints, Floats, Doubles, Longs) into a number
+ - Rest is converted to strings.
+ 
+### encode_nbt(expr, force?)
+
+Encodes value of the expression as an NBT tag. By default (or when `force` is false), it will only allow
+to encode values that are guaranteed to return the same value when applied the resulting tag to `parse_nbt()`.
+Supported types that can reliably convert back and forth to and from NBT values are:
+ - Maps with string keywords
+ - Lists of items of the same type (scarpet will take care of unifying value types if possible)
+ - Numbers (encoded as Ints -> Longs -> Doubles, as needed)
+ - Strings
+
+Other value types will only be converted to tags (including NBT tags) if `force` is true. They would require
+extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
+produce an exception.
 
 ### `print(expr)`
 
@@ -3318,7 +3498,7 @@ With the specified `resource` in the scripts folder, of a specific `type`, write
  content, or deletes the resource.
 
 Resource is identified by a path to the file.  
-A path can contain letters, numbers and folder separator: `'/'`. Any other characters are stripped
+A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid. Do not add file extensions to the descriptor - extensions are inferred
 based on the `type` of the file.
  

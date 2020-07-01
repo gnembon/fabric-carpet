@@ -2,8 +2,10 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.fakes.ChunkTicketManagerInterface;
+import carpet.fakes.IngredientInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
+import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
 import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.StatTypeInterface;
@@ -81,6 +83,13 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.recipe.AbstractCookingRecipe;
+import net.minecraft.recipe.CuttingRecipe;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.ShapedRecipe;
+import net.minecraft.recipe.ShapelessRecipe;
+import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardCriterion;
 import net.minecraft.scoreboard.ScoreboardObjective;
@@ -97,6 +106,7 @@ import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
+import net.minecraft.structure.StructureFeatures;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.text.LiteralText;
@@ -111,9 +121,11 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.poi.PointOfInterest;
@@ -130,8 +142,10 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.ChunkRandom;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -342,6 +356,18 @@ public class CarpetExpression
         return MapValue.wrap(ret);
     }
 
+    private static long lastSeed = -1;
+    private void BooYah(ChunkGenerator generator)
+    {
+        synchronized (generator)
+        {
+            if (generator.getSeed() != lastSeed)
+            {
+                StructureFeatures.STRONGHOLD.shouldStartAt(null, generator, null, 0, 0, null);
+                lastSeed = generator.getSeed();
+            }
+        }
+    }
     private void API_BlockManipulation()
     {
         this.expr.addLazyFunction("block", -1, (c, t, lv) ->
@@ -737,43 +763,76 @@ public class CarpetExpression
         this.expr.addLazyFunction("without_updates", 1, (c, t, lv) ->
         {
             boolean previous = CarpetSettings.impendingFillSkipUpdates;
-            try
+            if (previous) return lv.get(0);
+            Value [] result = new Value[]{Value.NULL};
+            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
-                CarpetSettings.impendingFillSkipUpdates = true;
-                Value ret = lv.get(0).evalValue(c, t);
-                return (cc, tt) -> ret;
-            }
-            finally
-            {
-                CarpetSettings.impendingFillSkipUpdates = previous;
-            }
+                try
+                {
+                    CarpetSettings.impendingFillSkipUpdates = true;
+                    result[0] = lv.get(0).evalValue(c, t);
+                }
+                finally
+                {
+                    CarpetSettings.impendingFillSkipUpdates = previous;
+                }
+            });
+            return (cc, tt) -> result[0];
         });
 
         this.expr.addLazyFunction("set", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
-            if (lv.size() < 2 || lv.size() % 2 == 1)
-                throw new InternalExpressionException("'set' should have at least 2 params and odd attributes");
             BlockArgument targetLocator = BlockArgument.findIn(cc, lv, 0);
             BlockArgument sourceLocator = BlockArgument.findIn(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
-            if (sourceLocator.offset < lv.size())
+            CompoundTag data = null;
+            if (lv.size() > sourceLocator.offset)
             {
-                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateManager();
-                for (int i = sourceLocator.offset; i < lv.size(); i += 2)
+                List<Value> args = new ArrayList<>();
+                for (int i = sourceLocator.offset, m = lv.size(); i < m; i++)
                 {
-                    String paramString = lv.get(i).evalValue(c).getString();
+                    args.add(lv.get(i).evalValue(c));
+                }
+                if (args.get(0) instanceof ListValue)
+                {
+                    if (args.size() == 2)
+                    {
+                        Value dataValue = NBTSerializableValue.fromValue( args.get(1));
+                        if (dataValue instanceof NBTSerializableValue)
+                        {
+                            data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                        }
+                    }
+                    args = ((ListValue) args.get(0)).getItems();
+                }
+                else
+                {
+                    if ((args.size() & 1) == 1)
+                    {
+                        Value dataValue = NBTSerializableValue.fromValue( args.get(args.size()-1));
+                        if (dataValue instanceof NBTSerializableValue)
+                        {
+                            data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                        }
+                    }
+                }
+                StateManager<Block, BlockState> states = sourceBlockState.getBlock().getStateManager();
+                for (int i = 0; i < args.size()-1; i += 2)
+                {
+                    String paramString = args.get(i).getString();
                     Property<?> property = states.getProperty(paramString);
                     if (property == null)
                         throw new InternalExpressionException("Property " + paramString + " doesn't apply to " + sourceLocator.block.getString());
-                    String paramValue = lv.get(i + 1).evalValue(c).getString();
+                    String paramValue = args.get(i + 1).getString();
                     sourceBlockState = setProperty(property, paramString, paramValue, sourceBlockState);
                 }
             }
 
-            CompoundTag data = sourceLocator.block.getData();
+            if (data == null) data = sourceLocator.block.getData();
+            CompoundTag finalData = data;
 
             if (sourceBlockState == targetBlockState && data == null)
                 return (c_, t_) -> Value.FALSE;
@@ -783,12 +842,12 @@ public class CarpetExpression
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
                 world.setBlockState(targetPos, finalSourceBlockState, 2);
-                if (data != null)
+                if (finalData != null)
                 {
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
                     {
-                        CompoundTag destTag = data.copy();
+                        CompoundTag destTag = finalData.copy();
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
@@ -897,7 +956,7 @@ public class CarpetExpression
             Tag outtag = tool.getTag();
             if (outtag == null)
                 return LazyValue.TRUE;
-            Value ret = new NBTSerializableValue(outtag);
+            Value ret = new NBTSerializableValue(() -> outtag);
             return (_c, _t) -> ret;
 
         });
@@ -1096,6 +1155,9 @@ public class CarpetExpression
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
             ServerWorld world = cc.s.getWorld();
+
+            BooYah(world.getChunkManager().getChunkGenerator());
+
             BlockPos pos = locator.block.getPos();
             StructureFeature<?> structure = null;
             boolean needSize = false;
@@ -1385,13 +1447,14 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
+            if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective == null)
                 return LazyValue.FALSE;
-            if (lv.size() == 0)
+            if (lv.size() == 1)
             {
                 scoreboard.removeObjective(objective);
                 return LazyValue.TRUE;
@@ -1471,6 +1534,120 @@ public class CarpetExpression
             Value res = new StringValue(item.getItem().getGroup().getName());
             return (_c, _t) -> res;
         });
+
+        this.expr.addLazyFunction("recipe_data", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            if (lv.size() < 1) throw new InternalExpressionException("'recipe_data' requires at least one argument");
+            String recipeName = lv.get(0).evalValue(c).getString();
+            RecipeType type = RecipeType.CRAFTING;
+            if (lv.size() > 1)
+            {
+                String recipeType = lv.get(1).evalValue(c).getString();
+                try
+                {
+                    type = Registry.RECIPE_TYPE.get(new Identifier(recipeType));
+                }
+                catch (InvalidIdentifierException ignored)
+                {
+                    throw new InternalExpressionException("Unknown crafting category: " + recipeType);
+                }
+            }
+            List<Recipe<?>> recipes;
+            try
+            {
+                recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, new Identifier(recipeName));
+            }
+            catch (InvalidIdentifierException ignored)
+            {
+                return LazyValue.NULL;
+            }
+            if (recipes.isEmpty())
+                return LazyValue.NULL;
+            List<Value> recipesOutput = new ArrayList<>();
+            for (Recipe<?> recipe: recipes)
+            {
+                ItemStack result = recipe.getOutput();
+                List<Value> ingredientValue = new ArrayList<>();
+                recipe.getPreviewInputs().forEach(
+                        ingredient ->
+                        {
+                            // I am flattening ingredient lists per slot.
+                            // consider recipe_data('wooden_sword','crafting') and ('iron_nugget', 'blasting') and notice difference
+                            // in depths of lists.
+                            List<Collection<ItemStack>> stacks = ((IngredientInterface) (Object) ingredient).getRecipeStacks();
+                            if (stacks.isEmpty())
+                            {
+                                ingredientValue.add(Value.NULL);
+                            }
+                            else
+                            {
+                                List<Value> alternatives = new ArrayList<>();
+                                stacks.forEach(col -> col.stream().map(ListValue::fromItemStack).forEach(alternatives::add));
+                                ingredientValue.add(ListValue.wrap(alternatives));
+                            }
+                        }
+                );
+                Value recipeSpec;
+                if (recipe instanceof ShapedRecipe)
+                {
+                    recipeSpec = ListValue.of(
+                            new StringValue("shaped"),
+                            new NumericValue(((ShapedRecipe) recipe).getWidth()),
+                            new NumericValue(((ShapedRecipe) recipe).getHeight())
+                    );
+                }
+                else if (recipe instanceof ShapelessRecipe)
+                {
+                    recipeSpec = ListValue.of(new StringValue("shapeless"));
+                }
+                else if (recipe instanceof AbstractCookingRecipe)
+                {
+                    recipeSpec = ListValue.of(
+                            new StringValue("smelting"),
+                            new NumericValue(((AbstractCookingRecipe) recipe).getCookTime()),
+                            new NumericValue(((AbstractCookingRecipe) recipe).getExperience())
+                    );
+                }
+                else if (recipe instanceof CuttingRecipe)
+                {
+                    recipeSpec = ListValue.of(new StringValue("cutting"));
+                }
+                else if (recipe instanceof SpecialCraftingRecipe)
+                {
+                    recipeSpec = ListValue.of(new StringValue("special"));
+                }
+                else
+                {
+                    recipeSpec = ListValue.of(new StringValue("custom"));
+                }
+
+                recipesOutput.add(ListValue.of(ListValue.fromItemStack(result), ListValue.wrap(ingredientValue), recipeSpec));
+            }
+            Value ret = ListValue.wrap(recipesOutput);
+            return (_c, _t) -> ret;
+        });
+
+        this.expr.addLazyFunction("crafting_remaining_item", 1, (c, t, lv) ->
+        {
+            String itemStr = lv.get(0).evalValue(c).getString();
+            Item item;
+            try
+            {
+                Identifier id = new Identifier(itemStr);
+                item = Registry.ITEM.get(id);
+                if (item == Items.AIR && !id.getPath().equalsIgnoreCase("air"))
+                    throw new InvalidIdentifierException("boo");
+            }
+            catch (InvalidIdentifierException ignored)
+            {
+                throw new InternalExpressionException("Incorrect item: "+itemStr);
+            }
+            if (!item.hasRecipeRemainder()) return LazyValue.NULL;
+            Value ret = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getId(item.getRecipeRemainder())));
+            return (_c, _t ) -> ret;
+        });
+
 
         this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) ->
         {
@@ -1825,11 +2002,9 @@ public class CarpetExpression
                 Value nbt = lv.get(position.offset).evalValue(c);
                 NBTSerializableValue v = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
                         : NBTSerializableValue.parseString(nbt.getString());
-                if (v != null)
-                {
-                    hasTag = true;
-                    tag = v.getCompoundTag();
-                }
+                hasTag = true;
+                tag = v.getCompoundTag();
+
             }
             tag.putString("id", entityId.toString());
             Vec3d vec3d = position.vec;
@@ -2097,21 +2272,28 @@ public class CarpetExpression
             return (c_, t_) -> new NumericValue(finalSCount);
         });
 
-        this.expr.addLazyFunction("volume", 7, (c, t, lv) ->
+        this.expr.addLazyFunction("volume", -1, (c, t, lv) ->
         {
-            int xi = (int) NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-            int yi = (int) NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
-            int zi = (int) NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
-            int xj = (int) NumericValue.asNumber(lv.get(3).evalValue(c)).getLong();
-            int yj = (int) NumericValue.asNumber(lv.get(4).evalValue(c)).getLong();
-            int zj = (int) NumericValue.asNumber(lv.get(5).evalValue(c)).getLong();
-            int minx = min(xi, xj);
-            int miny = min(yi, yj);
-            int minz = min(zi, zj);
-            int maxx = max(xi, xj);
-            int maxy = max(yi, yj);
-            int maxz = max(zi, zj);
-            LazyValue expr = lv.get(6);
+            CarpetContext cc = (CarpetContext)c;
+
+            BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 0);
+            BlockArgument pos2Locator = BlockArgument.findIn(cc, lv, pos1Locator.offset);
+            BlockPos pos1 = pos1Locator.block.getPos();
+            BlockPos pos2 = pos2Locator.block.getPos();
+
+            int x1 = pos1.getX();
+            int y1 = pos1.getY();
+            int z1 = pos1.getZ();
+            int x2 = pos2.getX();
+            int y2 = pos2.getY();
+            int z2 = pos2.getZ();
+            int minx = min(x1, x2);
+            int miny = min(y1, y2);
+            int minz = min(z1, z2);
+            int maxx = max(x1, x2);
+            int maxy = max(y1, y2);
+            int maxz = max(z1, z2);
+            LazyValue expr = lv.get(pos2Locator.offset);
 
             //saving outer scope
             LazyValue _x = c.getVariable("_x");
@@ -2181,57 +2363,63 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("rect", -1, (c, t, lv)->
         {
-            if (lv.size() != 3 && lv.size() != 6 && lv.size() != 9)
+            CarpetContext cc = (CarpetContext) c;
+            int cx, cy, cz;
+            int sminx, sminy, sminz;
+            int smaxx, smaxy, smaxz;
+            BlockArgument cposLocator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos cpos = cposLocator.block.getPos();
+            cx = cpos.getX();
+            cy = cpos.getY();
+            cz = cpos.getZ();
+            if (lv.size() > cposLocator.offset)
             {
-                throw new InternalExpressionException("Rectangular region should be specified with 3, 6, or 9 coordinates");
-            }
-            int cx;
-            int cy;
-            int cz;
-            int sminx;
-            int sminy;
-            int sminz;
-            int smaxx;
-            int smaxy;
-            int smaxz;
-            try
-            {
-                cx = (int)((NumericValue) lv.get(0).evalValue(c)).getLong();
-                cy = (int)((NumericValue) lv.get(1).evalValue(c)).getLong();
-                cz = (int)((NumericValue) lv.get(2).evalValue(c)).getLong();
-                if (lv.size()==3) // only done this way because of stupid Java lambda final reqs
+                Vector3Argument diffLocator = Vector3Argument.findIn(cc, lv, cposLocator.offset);
+                if (diffLocator.fromBlock)
                 {
-                    sminx = 1;
-                    sminy = 1;
-                    sminz = 1;
-                    smaxx = 1;
-                    smaxy = 1;
-                    smaxz = 1;
+                    sminx = MathHelper.floor(abs(diffLocator.vec.x - cx));
+                    sminy = MathHelper.floor(abs(diffLocator.vec.y - cx));
+                    sminz = MathHelper.floor(abs(diffLocator.vec.z - cx));
                 }
-                else if (lv.size()==6)
+                else
                 {
-                    sminx = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
-                    sminy = (int) ((NumericValue) lv.get(4).evalValue(c)).getLong();
-                    sminz = (int) ((NumericValue) lv.get(5).evalValue(c)).getLong();
+                    sminx = MathHelper.floor(abs(diffLocator.vec.x));
+                    sminy = MathHelper.floor(abs(diffLocator.vec.y));
+                    sminz = MathHelper.floor(abs(diffLocator.vec.z));
+                }
+                if (lv.size() > diffLocator.offset)
+                {
+                    Vector3Argument posDiff = Vector3Argument.findIn(cc, lv, diffLocator.offset);
+                    if (posDiff.fromBlock)
+                    {
+                        smaxx = MathHelper.floor(abs(posDiff.vec.x - cx));
+                        smaxy = MathHelper.floor(abs(posDiff.vec.y - cx));
+                        smaxz = MathHelper.floor(abs(posDiff.vec.z - cx));
+                    }
+                    else
+                    {
+                        smaxx = MathHelper.floor(abs(posDiff.vec.x));
+                        smaxy = MathHelper.floor(abs(posDiff.vec.y));
+                        smaxz = MathHelper.floor(abs(posDiff.vec.z));
+                    }
+                }
+                else
+                {
                     smaxx = sminx;
                     smaxy = sminy;
                     smaxz = sminz;
                 }
-                else // size == 9
-                {
-                    sminx = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
-                    sminy = (int) ((NumericValue) lv.get(4).evalValue(c)).getLong();
-                    sminz = (int) ((NumericValue) lv.get(5).evalValue(c)).getLong();
-                    smaxx = (int)((NumericValue) lv.get(6).evalValue(c)).getLong();
-                    smaxy = (int)((NumericValue) lv.get(7).evalValue(c)).getLong();
-                    smaxz = (int)((NumericValue) lv.get(8).evalValue(c)).getLong();
-                }
             }
-            catch (ClassCastException exc)
+            else
             {
-                throw new InternalExpressionException("Attempted to pass a non-number to rect");
+                sminx = 1;
+                sminy = 1;
+                sminz = 1;
+                smaxx = 1;
+                smaxy = 1;
+                smaxz = 1;
             }
-            CarpetContext cc = (CarpetContext)c;
+
             return (c_, t_) -> new LazyListValue()
             {
                 final int minx = cx-sminx;
@@ -2240,6 +2428,7 @@ public class CarpetExpression
                 final int maxx = cx+smaxx;
                 final int maxy = cy+smaxy;
                 final int maxz = cz+smaxz;
+
                 int x;
                 int y;
                 int z;
@@ -2299,10 +2488,9 @@ public class CarpetExpression
         this.expr.addLazyFunction("diamond", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
-            if (lv.size() != 3 && lv.size() != 4 && lv.size() != 5)
-            {
-                throw new InternalExpressionException("'diamond' region should be specified with 3 to 5 coordinates");
-            }
+
+            BlockArgument cposLocator=BlockArgument.findIn((CarpetContext)c,lv,0);
+            BlockPos cpos = cposLocator.block.getPos();
 
             int cx;
             int cy;
@@ -2311,10 +2499,11 @@ public class CarpetExpression
             int height;
             try
             {
-                cx = (int)((NumericValue) lv.get(0).evalValue(c)).getLong();
-                cy = (int)((NumericValue) lv.get(1).evalValue(c)).getLong();
-                cz = (int)((NumericValue) lv.get(2).evalValue(c)).getLong();
-                if (lv.size()==3)
+                cx = cpos.getX();
+                cy = cpos.getY();
+                cz = cpos.getZ();
+
+                if (lv.size()==cposLocator.offset)
                 {
                     Value retval = ListValue.of(
                             BlockValue.fromCoords(cc, cx, cy-1, cz),
@@ -2327,20 +2516,22 @@ public class CarpetExpression
                     );
                     return (_c, _t ) -> retval;
                 }
-                else if (lv.size()==4)
+                else if (lv.size()==1+cposLocator.offset)
                 {
-                    width = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
                     height = 0;
                 }
-                else // size == 5
+                else if(lv.size()==2+cposLocator.offset)
                 {
-                    width = (int) ((NumericValue) lv.get(3).evalValue(c)).getLong();
-                    height = (int) ((NumericValue) lv.get(4).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
+                    height = (int) ((NumericValue) lv.get(cposLocator.offset+1).evalValue(c)).getLong();
+                } else{
+                    throw new InternalExpressionException("Incorrect number of arguments for 'diamond'");
                 }
             }
             catch (ClassCastException exc)
             {
-                throw new InternalExpressionException("Attempted to pass a non-number to diamond");
+                throw new InternalExpressionException("Attempted to pass a non-number to 'diamond'");
             }
             if (height == 0)
             {
@@ -2480,7 +2671,7 @@ public class CarpetExpression
     public static String recognizeResource(Value value)
     {
         String origfile = value.getString();
-        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9/]", "");
+        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
         file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
         if (file.isEmpty())
         {
@@ -2756,12 +2947,7 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("nbt", 1, (c, t, lv) -> {
-            Value v = lv.get(0).evalValue(c);
-            if (v instanceof NBTSerializableValue)
-                return (cc, tt) -> v;
-            Value ret = NBTSerializableValue.parseString(v.getString());
-            if (ret == null)
-                return LazyValue.NULL;
+            Value ret = NBTSerializableValue.fromValue(lv.get(0).evalValue(c));
             return (cc, tt) -> ret;
         });
 
@@ -2772,11 +2958,50 @@ public class CarpetExpression
             return (cc, tt) -> ret;
         });
 
+        this.expr.addLazyFunction("parse_nbt", 1, (c, t, lv) -> {
+            Value v = lv.get(0).evalValue(c);
+            if (v instanceof NBTSerializableValue)
+            {
+                Value parsed = ((NBTSerializableValue) v).toValue();
+                return (cc, tt) -> parsed;
+            }
+            NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString());
+            if (ret == null)
+                return LazyValue.NULL;
+            Value parsed = ret.toValue();
+            return (cc, tt) -> parsed;
+        });
+
+        this.expr.addLazyFunction("encode_nbt", -1, (c, t, lv) -> {
+            int argSize = lv.size();
+            if (argSize==0 || argSize > 2) throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
+            Value v = lv.get(0).evalValue(c);
+            boolean force = (argSize > 1) && lv.get(1).evalValue(c).getBoolean();
+            Tag tag;
+            try
+            {
+                tag = v.toTag(force);
+            }
+            catch (NBTSerializableValue.IncompatibleTypeException ignored)
+            {
+                throw new InternalExpressionException("cannot reliably encode to a tag the value of '"+ignored.val.getPrettyString()+"'");
+            }
+            Value tagValue = new NBTSerializableValue(tag);
+            return (cc, tt) -> tagValue;
+        });
+
         //"overridden" native call that prints to stderr
-        this.expr.addLazyFunction("print", 1, (c, t, lv) ->
+        this.expr.addLazyFunction("print", -1, (c, t, lv) ->
         {
+            if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
             Value res = lv.get(0).evalValue(c);
+            if (lv.size() == 2)
+            {
+                ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), res);
+                s = player.getCommandSource();
+                res = lv.get(1).evalValue(c);
+            }
             if (res instanceof FormattedTextValue)
             {
                 s.sendFeedback(((FormattedTextValue) res).getText(), false);
@@ -2792,7 +3017,8 @@ public class CarpetExpression
                     Messenger.m(s, "w " + res.getString());
                 }
             }
-            return (_c, _t) -> res; // pass through for variables
+            Value finalRes = res;
+            return (_c, _t) -> finalRes; // pass through for variables
         });
 
         this.expr.addLazyFunction("format", -1, (c, t, lv) -> {
@@ -2862,9 +3088,14 @@ public class CarpetExpression
             BlockPos target = ((CarpetContext)c).origin;
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                    s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
-            return (c_, t_) -> retval;
+            try
+            {
+                Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
+                        s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
+                return (c_, t_) -> retval;
+            }
+            catch (Exception ignored) {}
+            return LazyValue.NULL;
         });
 
         this.expr.addLazyFunction("save", 0, (c, t, lv) -> {
@@ -2945,7 +3176,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("seed", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value ret = new NumericValue(s.getWorld().getSeed());
+            Value ret = new StringValue(Long.toString(s.getWorld().getSeed()));
             return (cc, tt) -> ret;
         });
 
@@ -3013,10 +3244,12 @@ public class CarpetExpression
                     default:
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);
                 }
-            }
-            ((CarpetContext) c).s = innerSource;
-            Value retval = lv.get(1).evalValue(c);
-            ((CarpetContext) c).s = outerSource;
+            };
+            if (innerSource.getWorld() == outerSource.getWorld()) return lv.get(1);
+            Context newCtx = c.recreate();
+            ((CarpetContext) newCtx).s = innerSource;
+            newCtx.variables = c.variables;
+            Value retval = lv.get(1).evalValue(newCtx);
             return (cc, tt) -> retval;
         });
 

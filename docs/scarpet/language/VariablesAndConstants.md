@@ -17,9 +17,9 @@ block positions. All variables starting with `_` are read-only, and cannot be de
 
 `scarpet` accepts numeric and string liters constants. Numbers look like `1, 2.5, -3e-7, 0xff,` and are internally 
 represented as Java's `double` but `scarpet` will try to trim trailing zeros as much as possible so if you need to 
-use them as intergers, you can. Strings using single quoting, for multiple reasons, but primarily to allow for 
+use them as intergers, you can. Strings use single quoting, for multiple reasons, but primarily to allow for 
 easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 
-for example, or when typing in jsons inside scarpet to feed back into a `/data merge` command for example. 
+for example), or when typing in jsons inside scarpet (to feed back into a `/data merge` command for example). 
 Strings also use backslashes `\` for quoting special characters, in both plain strings and regular expressions
 
 <pre>

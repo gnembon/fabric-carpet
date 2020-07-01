@@ -331,7 +331,7 @@ select(num) ->
     );
     global_selected_point = if (global_selected_point == selected_point, null, selected_point);
     global_needs_updating = true;
-    // no need to _update since path is still valid
+
 );
 
 // player can also punch the mannequin to select/deselect it
@@ -501,7 +501,7 @@ play() ->
    task( _() -> (
        if (global_playing_path, // we don't want to join_task not to lock it just in case. No need to panic here
            global_playing_path = false; // cancel current path rendering
-           sleep(1500); // in case we interrupt previous playbacks
+           sleep(1500);
        );
        showing_path = global_showing_path;
        hide();
