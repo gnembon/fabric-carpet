@@ -1323,7 +1323,7 @@ public class CarpetExpression
                     {
                         requestedChunks.add(new ChunkPos(x,z));
                     }
-                    CarpetSettings.LOG.error("Regenerating from "+Math.min(from.x, to.x)+", "+Math.min(from.z, to.z)+" to "+Math.max(from.x, to.x)+", "+Math.max(from.z, to.z));
+                    //CarpetSettings.LOG.error("Regenerating from "+Math.min(from.x, to.x)+", "+Math.min(from.z, to.z)+" to "+Math.max(from.x, to.x)+", "+Math.max(from.z, to.z));
                 }
                 else
                 {
