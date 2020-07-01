@@ -72,7 +72,6 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     @Shadow
     @Final
     private ServerLightingProvider serverLightingProvider;
-    @Shadow @Final private Queue<Runnable> field_19343;
 
     @Shadow
     @Final
@@ -114,8 +113,8 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
 
     @Unique
     private void addTicket(final ChunkPos pos, final ChunkStatus status)
-    {
-        this.ticketManager.addTicketWithLevel(ChunkTicketType.UNKNOWN, pos, 33 + ChunkStatus.getTargetGenerationRadius(status), pos);
+    {  // UNKNOWN
+        this.ticketManager.addTicketWithLevel(ChunkTicketType.field_14032, pos, 33 + ChunkStatus.getTargetGenerationRadius(status), pos);
     }
 
     @Unique

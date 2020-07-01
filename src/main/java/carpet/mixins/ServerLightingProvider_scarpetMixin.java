@@ -1,12 +1,10 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import carpet.fakes.ServerLightingProviderInterface;
 import net.minecraft.server.world.ServerLightingProvider;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.LightType;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkNibbleArray;
@@ -39,9 +37,9 @@ public abstract class ServerLightingProvider_scarpetMixin extends LightingProvid
             {
                 //ChunkPos pos = new ChunkPos(x, z);
                 int j;
-                for(j = -1; j < 17; ++j) {
-                    super.queueData(LightType.BLOCK, ChunkSectionPos.from(pos, j), new ChunkNibbleArray());
-                    super.queueData(LightType.SKY, ChunkSectionPos.from(pos, j), new ChunkNibbleArray());
+                for(j = -1; j < 17; ++j) {                                                                 // skip some recomp
+                    super.queueData(LightType.BLOCK, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
+                    super.queueData(LightType.SKY, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
                 }
                 for(j = 0; j < 16; ++j) {
                     super.updateSectionStatus(ChunkSectionPos.from(pos, j), true);
