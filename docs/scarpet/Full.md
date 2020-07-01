@@ -2362,6 +2362,8 @@ It returns a `map` with a report indicating how many chunks were affected, and h
  * `requested_chunks`: total number of chunks in the requested area or list
  * `affected_chunks`: number of chunks that will be removed / regenerated
  * `loaded_chunks`: number of currently loaded chunks in the requested area / list
+ * `relight_count`: number of relit chunks
+ * `relight_time`: time took to relit chunks
  * `layer_count_<status>`: number of chunks for which a `<status>` generation step has been performed
  * `layer_time_<status>`: cumulative time for all chunks spent on generating `<status>` step
  
@@ -2552,6 +2554,10 @@ query(e,'type')  => villager
 
 Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
 player, where its their name.
+
+## `query(e, 'persistence')`
+
+Returns if a mob has a persistence tag or not. Returns `null` for non-mob entities.
 
 <pre>
 run('/kill ' + e~'command_name');
@@ -2836,9 +2842,15 @@ Sets the corresponding component of the motion vector.
 
 Adds a vector to the motion vector. Most realistic way to apply a force to an entity.
 
-### `modify(e, 'custom_name'), modify(e, 'custom_name', name)`
+### `modify(e, 'custom_name')`, `modify(e, 'custom_name', name)`, `modify(e, 'custom_name', name, visible)`
 
-Sets the custom name of the entity.
+Sets the custom name of the entity. Without arguments - clears current custom name. Optional visible affects
+if the custom name is always visible, even through blocks.
+
+### `modify(e, 'persistence', bool?)`
+
+Sets the entity persistence tag to `true` (default) or `false`. Only affects mobs. Persistent mobs
+don't despawn and don't count towards the mobcap.
 
 ### `modify(e, 'age', number)`
 
@@ -3673,7 +3685,7 @@ Queries in-game statistics for certain values. Categories include:
 *   `picked_up`: items picked up
 *   `dropped`: items dropped
 *   `killed`: mobs killed
-*   `killed_by`: blocks mined
+*   `killed_by`: mobs killed by
 *   `custom`: various random stats
 
 For the options of `entry`, consult your statistics page, or give it a guess.

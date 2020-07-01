@@ -230,6 +230,31 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     }
 
     @Override
+    public void relightChunk(ChunkPos pos)
+    {
+        this.addTicket(pos);
+        this.tickTicketManager();
+        if (this.currentChunkHolders.get(pos.toLong()).getCompletedChunk() == null) // chunk unloaded
+            if (WorldTools.canHasChunk(this.world, pos, null, true))
+                this.currentChunkHolders.get(pos.toLong()).createFuture(ChunkStatus.EMPTY, (ThreadedAnvilChunkStorage) (Object) this);
+        final Chunk chunk = this.getCurrentChunk(pos);
+        if (!(chunk.getStatus().isAtLeast(ChunkStatus.LIGHT.getPrevious()))) return;
+        ((ServerLightingProviderInterface) this.serverLightingProvider).removeLightData(chunk);
+        this.addRelightTicket(pos);
+        final CompletableFuture<?> lightFuture = this.createChunkRegionFuture(pos, 1, (pos_) -> ChunkStatus.LIGHT)
+                .thenCompose(
+                    either -> either.map(
+                            list -> ((ServerLightingProviderInterface) this.serverLightingProvider).relight(chunk),
+                            unloaded -> {
+                                this.releaseRelightTicket(pos);
+                                return CompletableFuture.completedFuture(null);
+                            }
+                    )
+                );
+        this.waitFor(lightFuture);
+    }
+
+    @Override
     public Map<String, Integer> regenerateChunkRegion(final List<ChunkPos> requestedChunksList)
     {
         final Object2IntMap<String> report = new Object2IntOpenHashMap<>();
