@@ -6,6 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.InfestedBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,11 +24,11 @@ public abstract class InfestedBlockMixin extends Block
 
     @Inject(method = "spawnSilverfish", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
             target = "Lnet/minecraft/entity/mob/SilverfishEntity;playSpawnEffects()V"))
-    private void onOnStacksDropped(World world, BlockPos blockPos, CallbackInfo ci)
+    private void onOnStacksDropped(ServerWorld serverWorld, BlockPos pos, CallbackInfo ci)
     {
         if (CarpetSettings.silverFishDropGravel)
         {
-            dropStack(world, blockPos, new ItemStack(Blocks.GRAVEL));
+            dropStack(serverWorld, pos, new ItemStack(Blocks.GRAVEL));
         }
     }
 }

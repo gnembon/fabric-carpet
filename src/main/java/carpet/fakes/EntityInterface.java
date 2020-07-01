@@ -15,4 +15,8 @@ public interface EntityInterface
     int getPortalTimer();
 
     void setPortalTimer(int amount);
+
+    int getPublicNetherPortalCooldown();
+    void setPublicNetherPortalCooldown(int what);
+
 }

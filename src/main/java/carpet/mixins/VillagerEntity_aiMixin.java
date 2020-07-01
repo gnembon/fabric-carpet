@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Mixin(VillagerEntity.class)
 public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
 {
-    @Shadow protected abstract boolean hasSeenGolemRecently(long long_1);
+    //@Shadow protected abstract boolean hasSeenGolemRecently(long long_1);
 
     @Shadow protected abstract void sayNo();
 
@@ -62,14 +62,15 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             long time;
-            Optional<Long> optional_1 = this.brain.getOptionalMemory(MemoryModuleType.GOLEM_LAST_SEEN_TIME);
+            Optional<Boolean> optional_1 = this.brain.getOptionalMemory(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
             if (!optional_1.isPresent()) {
                 time = 0;
             } else {
-                Long long_2 = optional_1.get();
-                time = long_2+600 - getEntityWorld().getTime();
+                //Long long_2 = optional_1.get(); #TODO fixme need last seen golem time.
+                //time = long_2+600 - getEntityWorld().getTime();
+                time = 600;
             }
-            boolean recentlySeen = hasSeenGolemRecently(getEntityWorld().getTime());
+            boolean recentlySeen = time > 0;
             Optional<Long> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);
             //Optional<Timestamp> optional_22 = this.brain.getOptionalMemory(MemoryModuleType.LAST_WORKED_AT_POI);
             //boolean work = false;
@@ -177,7 +178,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             target = "Lnet/minecraft/util/math/Box;expand(DDD)Lnet/minecraft/util/math/Box;",
             shift = At.Shift.AFTER
     ))
-    private void particleIt(long long_1, int int_1, CallbackInfo ci)
+    private void particleIt(ServerWorld serverWorld, long l, int i, CallbackInfo ci)
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {

@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import net.minecraft.class_5425;
 import net.minecraft.entity.mob.HuskEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -14,10 +15,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(HuskEntity.class)
 public class HuskEntityMixin
 {
-    @Redirect(method = "canSpawn", at = @At(value = "INVOKE", target="Lnet/minecraft/world/WorldAccess;isSkyVisible(Lnet/minecraft/util/math/BlockPos;)Z"))
-    private static boolean isSkylightOrTempleVisible(WorldAccess WorldAccess, BlockPos blockPos_1)
+    @Redirect(method = "canSpawn", at = @At(value = "INVOKE", target="Lnet/minecraft/class_5425;isSkyVisible(Lnet/minecraft/util/math/BlockPos;)Z"))
+    private static boolean isSkylightOrTempleVisible(class_5425 class_5425, BlockPos pos)
     {
-        return WorldAccess.isSkyVisible(blockPos_1) ||
-                (CarpetSettings.huskSpawningInTemples && (((ServerWorld)WorldAccess).getStructureAccessor().method_28388(blockPos_1, false, StructureFeature.DESERT_PYRAMID).hasChildren()));
+        return class_5425.isSkyVisible(pos) ||
+                (CarpetSettings.huskSpawningInTemples && (((ServerWorld)class_5425).getStructureAccessor().method_28388(pos, false, StructureFeature.DESERT_PYRAMID).hasChildren()));
     }
 }

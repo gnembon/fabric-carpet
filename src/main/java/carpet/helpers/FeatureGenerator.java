@@ -72,7 +72,7 @@ public class FeatureGenerator
             CarpetSettings.skipGenerationChecks=true;
             try
             {
-                return feature.generate(w, w.getStructureAccessor(), w.getChunkManager().getChunkGenerator(), w.random, p);
+                return feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p);
             }
             finally
             {

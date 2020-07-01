@@ -6,6 +6,7 @@ import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FenceGateBlock;
+import net.minecraft.class_5425;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.EntityData;
@@ -175,12 +176,12 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/WorldAccess;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
+            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/class_5425;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
     ))
-    private static EntityData spawnEntity(MobEntity mobEntity, WorldAccess WorldAccess_1, LocalDifficulty localDifficulty_1, SpawnReason spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
+    private static EntityData spawnEntity(MobEntity mobEntity, class_5425 foo, LocalDifficulty localDifficulty_1, SpawnReason spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
     {
-        if (!SpawnReporter.mock_spawns)
-            return mobEntity.initialize(WorldAccess_1, localDifficulty_1, spawnType_1, entityData_1, compoundTag_1);
+        if (!SpawnReporter.mock_spawns) // WorldAccess
+            return mobEntity.initialize(foo, localDifficulty_1, spawnType_1, entityData_1, compoundTag_1);
         return null;
     }
 

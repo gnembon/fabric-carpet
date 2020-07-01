@@ -15,6 +15,7 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Shadow public boolean removed;
 
     @Shadow protected int netherPortalTime;
+    @Shadow private int netherPortalCooldown;
     private boolean permanentVehicle;
 
     private final EntityEventsGroup events = new EntityEventsGroup();
@@ -35,6 +36,18 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     public void setPermanentVehicle(boolean permanent)
     {
         permanentVehicle = permanent;
+    }
+
+    @Override
+    public int getPublicNetherPortalCooldown()
+    {
+        return netherPortalCooldown;
+    }
+
+    @Override
+    public void setPublicNetherPortalCooldown(int what)
+    {
+        netherPortalCooldown = what;
     }
 
     @Override

@@ -11,6 +11,7 @@ import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.mob.ZombifiedPiglinEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.text.BaseText;
 import net.minecraft.util.math.BlockPos;
@@ -169,7 +170,7 @@ public class BlockInfo
         put(Material.CAKE           , "cake"         );
     }};
 
-    public static List<BaseText> blockInfo(BlockPos pos, World world)
+    public static List<BaseText> blockInfo(BlockPos pos, ServerWorld world)
     {
         BlockState state = world.getBlockState(pos);
         Material material = state.getMaterial();
@@ -220,7 +221,7 @@ public class BlockInfo
         return lst;
     }
 
-    private static BaseText wander_chances(BlockPos pos, World worldIn)
+    private static BaseText wander_chances(BlockPos pos, ServerWorld worldIn)
     {
         PathAwareEntity creature = new ZombifiedPiglinEntity(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnReason.NATURAL, null, null);

@@ -9,6 +9,7 @@ import net.minecraft.entity.mob.ElderGuardianEntity;
 import net.minecraft.entity.mob.GuardianEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,15 +21,15 @@ public abstract class GuardianEntityMixin extends HostileEntity
     {
         super(entityType_1, world_1);
     }
-    
+
     @Override
-    public void onStruckByLightning(LightningEntity lightning)
+    public void onStruckByLightning(ServerWorld serverWorld, LightningEntity lightningEntity)
     {
         if (!this.world.isClient && !this.removed && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardianEntity))
         {
             ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
             elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.yaw, this.pitch);
-            elderGuardian.initialize(this.world ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnReason.CONVERSION, (EntityData)null, (CompoundTag)null);
+            elderGuardian.initialize(serverWorld ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnReason.CONVERSION, (EntityData)null, (CompoundTag)null);
             elderGuardian.setAiDisabled(this.isAiDisabled());
             
             if (this.hasCustomName())
@@ -42,7 +43,7 @@ public abstract class GuardianEntityMixin extends HostileEntity
         }
         else
         {
-            super.onStruckByLightning(lightning);
+            super.onStruckByLightning(serverWorld, lightningEntity);
         }
     }
 }
