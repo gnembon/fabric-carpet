@@ -9,7 +9,7 @@ import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.ai.pathing.NavigationType;
-import net.minecraft.entity.mob.MobEntityWithAi;
+import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.mob.ZombifiedPiglinEntity;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.text.BaseText;
@@ -222,7 +222,7 @@ public class BlockInfo
 
     private static BaseText wander_chances(BlockPos pos, World worldIn)
     {
-        MobEntityWithAi creature = new ZombifiedPiglinEntity(EntityType.ZOMBIFIED_PIGLIN, worldIn);
+        PathAwareEntity creature = new ZombifiedPiglinEntity(EntityType.ZOMBIFIED_PIGLIN, worldIn);
         creature.initialize(worldIn, worldIn.getLocalDifficulty(pos), SpawnReason.NATURAL, null, null);
         creature.refreshPositionAndAngles(pos, 0.0F, 0.0F);
         WanderAroundGoal wander = new WanderAroundGoal(creature, 0.8D);

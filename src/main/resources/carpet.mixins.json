@@ -79,6 +79,7 @@
     "ServerWorld_onePlayerSleepingMixin",
     "CoralBlockMixin",
     "CoralFeatureMixin",
+    "FluidBlock_renewableBlackstoneMixin",
     "StructureFeatureMixin",
     "World_scarpetPlopMixin",
     "Biome_scarpetMixin",

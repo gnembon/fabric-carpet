@@ -568,6 +568,13 @@ public class CarpetSettings
     @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
     public static boolean renewableCoral = false;
 
+    @Rule(
+            desc = "Nether basalt generator without soul sand below ",
+            extra = "  .. will convert into blackstone instead",
+            category = FEATURE
+    )
+    public static boolean renewableBlackstone = false;
+
     @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = BUGFIX)
     public static boolean placementRotationFix = false;
 
