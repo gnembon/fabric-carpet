@@ -7,7 +7,6 @@ import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
-import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -142,7 +141,6 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.ChunkRandom;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -3186,9 +3184,8 @@ public class CarpetExpression
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             BlockPos pos = locator.block.getPos();
             ServerWorld world = cc.s.getWorld();
-            ((ServerLightingProviderInterface)world.getChunkManager().getLightingProvider()).resetLight(world.getChunk(pos), new ChunkPos(pos)); //light(world.getChunk(pos), false);
+            ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).relightChunk(new ChunkPos(pos));
             forceChunkUpdate(pos, world);
-            world.getChunkManager().getLightingProvider().light(world.getChunk(pos), false);
             return LazyValue.TRUE;
         });
 

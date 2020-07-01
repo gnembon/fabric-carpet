@@ -9,5 +9,7 @@ public interface ThreadedAnvilChunkStorageInterface
 {
     Map<String, Integer> regenerateChunkRegion(List<ChunkPos> requestedChunks);
 
+    void relightChunk(ChunkPos pos);
+
     void releaseRelightTicket(ChunkPos pos);
 }
