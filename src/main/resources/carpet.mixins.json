@@ -34,6 +34,18 @@
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
+    "ServerLightingProvider_scarpetMixin",
+	"LevelPropagatorInterface",
+	"ChunkTicketManager_scarpetChunkCreationMixin",
+	"LightingProvider_scarpetChunkCreationMixin",
+	"ChunkLightProvider_scarpetChunkCreationMixin",
+	"LightStorage_scarpetChunkCreationMixin",
+	"BlockLightStorage_scarpetChunkCreationMixin",
+	"SkyLightStorage_scarpetChunkCreationMixin",
+
+    "ChunkTicketManager_spawnChunksMixin",
+    "ServerWorld_spawnChunksMixin",
+    "ServerLightingProvider_scarpetChunkCreationMixin",
 
     "ChunkTicketManager_spawnChunksMixin",
     "ServerWorld_spawnChunksMixin",

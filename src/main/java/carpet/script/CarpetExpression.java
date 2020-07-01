@@ -8,6 +8,7 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
+import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
@@ -1321,7 +1322,7 @@ public class CarpetExpression
                     {
                         requestedChunks.add(new ChunkPos(x,z));
                     }
-                    CarpetSettings.LOG.error("Regenerating from "+Math.min(from.x, to.x)+", "+Math.min(from.z, to.z)+" to "+Math.max(from.x, to.x)+", "+Math.max(from.z, to.z));
+                    //CarpetSettings.LOG.error("Regenerating from "+Math.min(from.x, to.x)+", "+Math.min(from.z, to.z)+" to "+Math.max(from.x, to.x)+", "+Math.max(from.z, to.z));
                 }
                 else
                 {
@@ -3187,6 +3188,18 @@ public class CarpetExpression
             ServerCommandSource s = ((CarpetContext)c).s;
             Value ret = new StringValue(Long.toString(s.getWorld().getSeed()));
             return (cc, tt) -> ret;
+        });
+
+        this.expr.addLazyFunction("relight", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            ServerWorld world = cc.s.getWorld();
+            ((ServerLightingProviderInterface)world.getChunkManager().getLightingProvider()).resetLight(world.getChunk(pos), new ChunkPos(pos)); //light(world.getChunk(pos), false);
+            forceChunkUpdate(pos, world);
+            world.getChunkManager().getLightingProvider().light(world.getChunk(pos), false);
+            return LazyValue.TRUE;
         });
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
