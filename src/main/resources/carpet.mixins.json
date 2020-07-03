@@ -136,6 +136,7 @@
     "EntityNavigation_pathfindingMixin",
 
     "EndCityFeatureMixin",
+    "BastionRemnantFeatureMixin",
 
     "InfestedBlockMixin",
     "PlayerEntityMixin_portalDelayMixin",
