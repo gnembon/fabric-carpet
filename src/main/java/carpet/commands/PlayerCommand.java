@@ -73,6 +73,7 @@ public class PlayerCommand
                                 .then(literal("west").executes(manipulation(ap -> ap.look(Direction.WEST))))
                                 .then(literal("up").executes(manipulation(ap -> ap.look(Direction.UP))))
                                 .then(literal("down").executes(manipulation(ap -> ap.look(Direction.DOWN))))
+                                .then(literal("at").then(argument("position", Vec3ArgumentType.vec3()).executes(PlayerCommand::lookAt)))
                                 .then(argument("direction", RotationArgumentType.rotation())
                                         .executes(c -> manipulate(c, ap -> ap.look(RotationArgumentType.getRotation(c, "direction").toAbsoluteRotation(c.getSource())))))
                         ).then(literal("turn")
@@ -202,6 +203,15 @@ public class PlayerCommand
         if (cantReMove(context)) return 0;
         getPlayer(context).kill();
         return 1;
+    }
+
+    private static int lookAt(CommandContext<ServerCommandSource> context)
+    {
+        return manipulate(context, ap -> {
+            try {
+                ap.lookAt(Vec3ArgumentType.getVec3(context, "position"));
+            } catch (CommandSyntaxException ignored) {}
+        });
     }
 
     @FunctionalInterface
