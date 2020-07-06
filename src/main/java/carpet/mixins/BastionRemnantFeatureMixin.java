@@ -18,7 +18,11 @@ import java.util.List;
 @Mixin(BastionRemnantFeature.class)
 public abstract class BastionRemnantFeatureMixin extends StructureFeature<BastionRemnantFeatureConfig> {
 
-    private static final List<Biome.SpawnEntry> spawnList = Lists.newArrayList(new Biome.SpawnEntry(EntityType.PIGLIN_BRUTE, 5, 1, 2), new Biome.SpawnEntry(EntityType.PIGLIN, 10, 2, 4));
+    private static final List<Biome.SpawnEntry> spawnList = Lists.newArrayList(
+            new Biome.SpawnEntry(EntityType.PIGLIN_BRUTE, 5, 1, 2),
+            new Biome.SpawnEntry(EntityType.PIGLIN, 10, 2, 4),
+            new Biome.SpawnEntry(EntityType.HOGLIN, 2, 1, 2)
+    );
 
     public BastionRemnantFeatureMixin(Codec<BastionRemnantFeatureConfig> codec) {
         super(codec);
@@ -27,7 +31,7 @@ public abstract class BastionRemnantFeatureMixin extends StructureFeature<Bastio
     @Override
     public List<Biome.SpawnEntry> getMonsterSpawns()
     {
-        if (CarpetSettings.bruteSpawningInBastionRemnants)
+        if (CarpetSettings.piglinsSpawningInBastions)
             return spawnList;
         return Collections.emptyList();
     }

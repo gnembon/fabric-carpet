@@ -214,8 +214,12 @@ public class CarpetSettings
     @Rule( desc = "Shulkers will respawn in end cities", category = FEATURE )
     public static boolean shulkerSpawningInEndCities = false;
 
-    @Rule( desc = "Piglin brutes will respawn in bastion remnants", category = FEATURE )
-    public static boolean bruteSpawningInBastionRemnants = false;
+    @Rule(
+            desc = "Piglins will respawn in bastion remnants",
+            extra = "Includes piglins, brutes, and a few hoglins",
+            category = FEATURE
+    )
+    public static boolean piglinsSpawningInBastions = false;
 
     @Rule(desc = "Entities pushed or moved into unloaded chunks no longer disappear", category = {EXPERIMENTAL, BUGFIX})
     public static boolean unloadedEntityFix = false;
