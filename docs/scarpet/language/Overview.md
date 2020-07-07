@@ -272,6 +272,18 @@ check_foo_not_zero();
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
 </pre>
 
+## Scarpet preprocessor
+
+There are several preprocessing operations applied to the source of your program to clean it up and prepare for
+execution. Some of them will affect your code as it is reported via stack traces and function definition, and some
+are applied only on the surface.
+ - stripping `//` comments (in file mode)
+ - replacing `$` with newlines (in command mode, modifies submitted code)
+ - removing extra semicolons that don't follow `;` use as a binary operator, allowing for lenient use of semicolons
+ - translating `{` into `m(`, `[` into `l(`, and `]` and `}` into `)`
+ 
+No further optimizations are currently applied to your code.
+
 ## Mentions
 
 LR1 parser, tokenizer, and several built-in functions are built based on the EvalEx project.

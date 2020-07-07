@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "carpet",
-  "version": "1.4.0",
+  "version": "1.4.1",
 
   "name": "Carpet Mod in Fabric",
   "description": "Carpet made out of fabric",
@@ -13,7 +13,7 @@
     "sources": "https://github.com/gnembon/fabric-carpet"
   },
 
-  "license": "GNU LGPL V3",
+  "license": "MIT",
   "icon": "assets/carpet/icon.png",
 
   "environment": "*",

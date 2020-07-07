@@ -272,6 +272,18 @@ check_foo_not_zero();
 check_foo_not_zero() -> if(global_foo == 0, global_foo = 1)
 </pre>
 
+## Scarpet preprocessor
+
+There are several preprocessing operations applied to the source of your program to clean it up and prepare for
+execution. Some of them will affect your code as it is reported via stack traces and function definition, and some
+are applied only on the surface.
+ - stripping `//` comments (in file mode)
+ - replacing `$` with newlines (in command mode, modifies submitted code)
+ - removing extra semicolons that don't follow `;` use as a binary operator, allowing for lenient use of semicolons
+ - translating `{` into `m(`, `[` into `l(`, and `]` and `}` into `)`
+ 
+No further optimizations are currently applied to your code.
+
 ## Mentions
 
 LR1 parser, tokenizer, and several built-in functions are built based on the EvalEx project.
@@ -1233,6 +1245,8 @@ a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1,2
 
 ### `Operator ->`
 
+`->` operator has two uses - as a function definition operator and key-value initializer for maps.
+
 To organize code better than a flat sequence of operations, one can define functions. Definition is correct 
 if has the following form
 
@@ -1257,7 +1271,17 @@ a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
 </pre>
 
 In case the inner function wants to operate and modify larger objects, lists from the outer scope, but not global, 
-it needs to use `outer` function in function signature
+it needs to use `outer` function in function signature.
+
+in map construction context (directly in `m()` or `{}`), the `->` operator has a different function by converting its
+arguments to a tuple which is used by map constructor as a key-value pair:
+
+<pre>
+{ 'foo' -> 'bar' } => {l('foo', 'bar')}
+</pre>
+
+This means that it is not possible to define literally a set of inline function, however a set of functions can still
+be created by adding elements to an empty set, and building it this way.
 
 ### `outer(arg)`
 
@@ -1473,26 +1497,31 @@ tag = nbt('{a:[{lvl:[1,2,3]},{lvl:[3,2,1]},{lvl:[4,5,6]}]}'); put(tag, 'a[].lvl[
 
 ## List operations
 
-### `l(values ...), l(iterator)`
+### `[value, ...?]`,`[iterator]`,`l(value, ...?)`, `l(iterator)`
 
 Creates a list of values of the expressions passed as parameters. It can be used as an L-value and if all 
 elements are variables, you coujld use it to return multiple results from one function call, if that 
-function returns a list of results with the same size as the `l` call uses. In case there is only one 
+function returns a list of results with the same size as the `[]` call uses. In case there is only one 
 argument and it is an iterator (vanilla expression specification has `range`, but Minecraft API implements 
 a bunch of them, like `diamond`), it will convert it to a proper list. Iterators can only be used in high order 
-functions, and are treated as empty lists, unless unrolled with `l`
+functions, and are treated as empty lists, unless unrolled with `[]`. 
+
+Internally, `[elem, ...]`(list syntax) and `l(elem, ...)`(function syntax) are equivalent. `[]` is simply translated to 
+`l()` in the scarpet preprocessing stage. This means that internally the code has always expression syntax despite `[]`
+not using different kinds of brackets and not being proper operators. This means that `l(]` and `[)` are also valid
+although not recommended as they will make your code far less readable. 
 
 <pre>
-l(1,2,'foo') => [1, 2, foo]
-l() => [] (empty list)
-l(range(10)) => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-l(1, 2) = l(3, 4) => Error: l is not a variable
-l(foo, bar) = l(3,4); foo==3 && bar==4 => 1
-l(foo, bar, baz) = l(2, 4, 6); l(min(foo, bar), baz) = l(3, 5); l(foo, bar, baz)  => [3, 4, 5]
+l(1,2,'foo') <=> [1, 2, 'foo']
+l() <=> [] (empty list)
+[range(10)] => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+[1, 2] = [3, 4] => Error: l is not a variable
+[foo, bar] = [3, 4]; foo==3 && bar==4 => 1
+[foo, bar, baz] = [2, 4, 6]; [min(foo, bar), baz] = [3, 5]; [foo, bar, baz]  => [3, 4, 5]
 </pre>
 
-In the last example `l(min(foo, bar), baz)` creates a valid L-value, as min(foo, bar) finds the lower of the 
-variables (in this case `foo`) creating a valid assignable L-list of [foo, baz], and these values 
+In the last example `[min(foo, bar), baz]` creates a valid L-value, as `min(foo, bar)` finds the lower of the 
+variables (in this case `foo`) creating a valid assignable L-list of `[foo, baz]`, and these values 
 will be assigned new values
 
 ### `join(delim, list), join(delim, values ...)`
@@ -1566,29 +1595,37 @@ range(5,10)  => [5, 6, 7, 8, 9]
 range(20, 10, -2)  => [20, 18, 16, 14, 12]
 </pre>
 
-### `element(list, index)(deprecated)`
-
-Legacy support for older method that worked only on lists. Please use `get(...)` for equivalent support, or `.` 
-operator. Also previous unique behaviours with `put` on lists has been removed to support all type of 
-container types.
-
 ## Map operations
 
 Scarpet supports map structures, aka hashmaps, dicts etc. Map structure can also be used, with `null` values as sets. 
 Apart from container access functions, (`. , get, put, has, delete`), the following functions:
 
-### `m(values ...), m(iterator), m(key_value_pairs)`
+### `{values, ...}`,`{iterator}`,`{key -> value, ...}`,`m(values, ...)`, `m(iterator)`, `m(l(key, value), ...))`
 
 creates and initializes a map with supplied keys, and values. If the arguments contains a flat list, these are all 
 treated as keys with no value, same goes with the iterator - creates a map that behaves like a set. If the 
 arguments is a list of lists, they have to have two elements each, and then first is a key, and second, a value
 
+In map creation context (directly inside `{}` or `m{}` call), `->` operator acts like a pair constructor for simpler
+syntax providing key value pairs, so the invocation to `{foo -> bar, baz -> quux}` is equivalent to
+`{l(foo, bar), l(baz, quux)}`, which is equivalent to somewhat older, but more traditional functional form of
+`m(l(foo, bar),l(baz, quuz))`.
+
+Internally, `{?}`(list syntax) and `m(?)`(function syntax) are equivalent. `{}` is simply translated to 
+`m()` in the scarpet preprocessing stage. This means that internally the code has always expression syntax despite `{}`
+not using different kinds of brackets and not being proper operators. This means that `m(}` and `{)` are also valid
+although not recommended as they will make your code far less readable. 
+
+When converting map value to string, `':'` is used as a key-value separator due to tentative compatibility with NBT
+notation, meaning in simpler cases maps can be converted to NBT parsable string by calling `str()`. This however
+does not guarantee a parsable output. To properly convert to NBT value, use `encode_nbt()`.
+
 <pre>
-m(1,2,'foo') => {1: null, 2: null, foo: null}
-m() => {} (empty map)
-m(range(10)) => {0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null}
-m(l(1, 2), l(3, 4)) => {1: 2, 3: 4}
-reduce(range(10), put(_a, _, _*_); _a, m())
+{1, 2, 'foo'} => {1: null, 2: null, foo: null}
+m() <=> {} (empty map)
+{range(10)} => {0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null}
+m(l(1, 2), l(3, 4)) <=> {1 -> 2, 3 -> 4} => {1: 2, 3: 4}
+reduce(range(10), put(_a, _, _*_); _a, {})
      => {0: 0, 1: 1, 2: 4, 3: 9, 4: 16, 5: 25, 6: 36, 7: 49, 8: 64, 9: 81}
 </pre>
 
@@ -1681,7 +1718,10 @@ set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:sl
 
 ### `without_updates(expr)`
 
-Evaluates subexpression without causing updates when blocks change in the world
+Evaluates subexpression without causing updates when blocks change in the world.
+
+For synchronization sake, as well as from the fact that suppressed update can only happen within a tick,
+the call to the `expr` is docked on the main server task.
 
 Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
 generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 
@@ -2322,6 +2362,8 @@ It returns a `map` with a report indicating how many chunks were affected, and h
  * `requested_chunks`: total number of chunks in the requested area or list
  * `affected_chunks`: number of chunks that will be removed / regenerated
  * `loaded_chunks`: number of currently loaded chunks in the requested area / list
+ * `relight_count`: number of relit chunks
+ * `relight_time`: time took to relit chunks
  * `layer_count_<status>`: number of chunks for which a `<status>` generation step has been performed
  * `layer_time_<status>`: cumulative time for all chunks spent on generating `<status>` step
  
@@ -2512,6 +2554,10 @@ query(e,'type')  => villager
 
 Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
 player, where its their name.
+
+## `query(e, 'persistence')`
+
+Returns if a mob has a persistence tag or not. Returns `null` for non-mob entities.
 
 <pre>
 run('/kill ' + e~'command_name');
@@ -2796,9 +2842,15 @@ Sets the corresponding component of the motion vector.
 
 Adds a vector to the motion vector. Most realistic way to apply a force to an entity.
 
-### `modify(e, 'custom_name'), modify(e, 'custom_name', name)`
+### `modify(e, 'custom_name')`, `modify(e, 'custom_name', name)`, `modify(e, 'custom_name', name, visible)`
 
-Sets the custom name of the entity.
+Sets the custom name of the entity. Without arguments - clears current custom name. Optional visible affects
+if the custom name is always visible, even through blocks.
+
+### `modify(e, 'persistence', bool?)`
+
+Sets the entity persistence tag to `true` (default) or `false`. Only affects mobs. Persistent mobs
+don't despawn and don't count towards the mobcap.
 
 ### `modify(e, 'age', number)`
 
@@ -3626,7 +3678,7 @@ Queries in-game statistics for certain values. Categories include:
 *   `picked_up`: items picked up
 *   `dropped`: items dropped
 *   `killed`: mobs killed
-*   `killed_by`: blocks mined
+*   `killed_by`: mobs killed by
 *   `custom`: various random stats
 
 For the options of `entry`, consult your statistics page, or give it a guess.

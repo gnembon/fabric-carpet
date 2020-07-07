@@ -16,6 +16,7 @@ public abstract class MobEntityMixin implements MobEntityInterface
 {
     @Shadow @Final protected GoalSelector targetSelector;
     @Shadow @Final protected GoalSelector goalSelector;
+    @Shadow private boolean persistent;
     public final Map<String, Goal> temporaryTasks = new HashMap<>();
 
     @Override
@@ -30,5 +31,9 @@ public abstract class MobEntityMixin implements MobEntityInterface
         return temporaryTasks;
     }
 
-
+    @Override
+    public void setPersistence(boolean what)
+    {
+        persistent = what;
+    }
 }

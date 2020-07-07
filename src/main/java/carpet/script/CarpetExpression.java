@@ -141,7 +141,6 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.ChunkRandom;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -762,16 +761,21 @@ public class CarpetExpression
         this.expr.addLazyFunction("without_updates", 1, (c, t, lv) ->
         {
             boolean previous = CarpetSettings.impendingFillSkipUpdates;
-            try
+            if (previous) return lv.get(0);
+            Value [] result = new Value[]{Value.NULL};
+            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
-                CarpetSettings.impendingFillSkipUpdates = true;
-                Value ret = lv.get(0).evalValue(c, t);
-                return (cc, tt) -> ret;
-            }
-            finally
-            {
-                CarpetSettings.impendingFillSkipUpdates = previous;
-            }
+                try
+                {
+                    CarpetSettings.impendingFillSkipUpdates = true;
+                    result[0] = lv.get(0).evalValue(c, t);
+                }
+                finally
+                {
+                    CarpetSettings.impendingFillSkipUpdates = previous;
+                }
+            });
+            return (cc, tt) -> result[0];
         });
 
         this.expr.addLazyFunction("set", -1, (c, t, lv) ->
@@ -1317,7 +1321,7 @@ public class CarpetExpression
                     {
                         requestedChunks.add(new ChunkPos(x,z));
                     }
-                    CarpetSettings.LOG.error("Regenerating from "+Math.min(from.x, to.x)+", "+Math.min(from.z, to.z)+" to "+Math.max(from.x, to.x)+", "+Math.max(from.z, to.z));
+                    //CarpetSettings.LOG.error("Regenerating from "+Math.min(from.x, to.x)+", "+Math.min(from.z, to.z)+" to "+Math.max(from.x, to.x)+", "+Math.max(from.z, to.z));
                 }
                 else
                 {
@@ -3174,6 +3178,17 @@ public class CarpetExpression
             return (cc, tt) -> ret;
         });
 
+        this.expr.addLazyFunction("relight", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
+            BlockPos pos = locator.block.getPos();
+            ServerWorld world = cc.s.getWorld();
+            ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).relightChunk(new ChunkPos(pos));
+            forceChunkUpdate(pos, world);
+            return LazyValue.TRUE;
+        });
+
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.DIMENSION_TYPE.getId(s.getWorld().dimension.getType())));
@@ -3226,18 +3241,13 @@ public class CarpetExpression
                     default:
                         throw new InternalExpressionException("Incorrect dimension string: "+dimString);
                 }
-            }
-            try
-            {
-                ((CarpetContext) c).s = innerSource;
-                Value retval = lv.get(1).evalValue(c);
-                return (cc, tt) -> retval;
-            }
-            finally
-            {
-                ((CarpetContext) c).s = outerSource;
-            }
-
+            };
+            if (innerSource.getWorld() == outerSource.getWorld()) return lv.get(1);
+            Context newCtx = c.recreate();
+            ((CarpetContext) newCtx).s = innerSource;
+            newCtx.variables = c.variables;
+            Value retval = lv.get(1).evalValue(newCtx);
+            return (cc, tt) -> retval;
         });
 
         this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
