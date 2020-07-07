@@ -63,5 +63,6 @@ public interface CarpetExtension
 
     default Map<String, String> canHasTranslations(String lang) { return null;}
 
+    default void onUpdateHUD(MinecraftServer server) {}
 
 }
