@@ -97,8 +97,24 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     @Override
     public Value add(Value o)
     {
-        append(o);
-        return this;
+        Map<Value, Value> newItems = new HashMap<>(map);
+        if (o instanceof MapValue)
+        {
+            newItems.putAll(((MapValue) o).map);
+        }
+        else if (o instanceof AbstractListValue)
+        {
+            Iterator<Value> it = ((AbstractListValue) o).iterator();
+            while (it.hasNext())
+            {
+                newItems.put(it.next(), Value.NULL);
+            }
+        }
+        else
+        {
+            newItems.put(o, Value.NULL);
+        }
+        return MapValue.wrap(newItems);
     }
 
     @Override

@@ -2,6 +2,7 @@ package carpet.helpers;
 
 import carpet.fakes.ServerPlayerEntityInterface;
 import net.minecraft.block.BlockState;
+import net.minecraft.command.arguments.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -124,6 +125,12 @@ public class EntityPlayerActionPack
         player.yaw = yaw % 360;
         player.pitch = MathHelper.clamp(pitch, -90, 90);
         // maybe player.setPositionAndAngles(player.x, player.y, player.z, yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
+        return this;
+    }
+
+    public EntityPlayerActionPack lookAt(Vec3d position)
+    {
+        player.lookAt(EntityAnchorArgumentType.EntityAnchor.EYES, position);
         return this;
     }
 
