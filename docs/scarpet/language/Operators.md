@@ -110,9 +110,16 @@ $);
 Allows to add the results of two expressions. If the operands resolve to numbers, the result is arithmetic operation. 
 In case of strings, adding or subtracting from a string results in string concatenation and removal of substrings 
 from that string. Multiplication of strings and numbers results in repeating the string N times and division results 
-in taking the first k'th part of the string, so that `str*n/n ~ str` In case first operand is a list, either it 
+in taking the first k'th part of the string, so that `str*n/n ~ str` 
+
+In case first operand is a list, either it 
 results in a new list with all elements modified one by one with the other operand, or if the operand is a list 
-with the same number of items - element-wise addition/subtraction
+with the same number of items - element-wise addition/subtraction. This prioritize treating lists as value containers
+to lists treated as vectors.
+
+Addition with maps (`{}` or `m()`) results in a new map with keys from both maps added, if both operands are maps,
+adding elements of the right argument to the keys, of left map, or just adding the right value as a new key
+in the output map. 
 
 Examples:
 
@@ -126,6 +133,7 @@ Examples:
 'foofoofoo'-'o' => 'fff'
 l(1,2,3)+1  => l(2,3,4)
 b = l(100,63,100); b+l(10,0,10)  => l(110,63,110)
+{'a' -> 1} + {'b' -> 2} => {'a' -> 1, 'b' -> 2}
 </pre>
 
 ### `Just Operators % ^`
