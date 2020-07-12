@@ -2061,15 +2061,20 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("entity_area", 7, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext) c;
+            BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 1);
+            BlockPos pos1 = pos1Locator.block.getPos();
+            BlockPos pos2 = BlockArgument.findIn(cc, lv, pos1Locator.offset).block.getPos();
+
             BlockPos center = new BlockPos(
-                    NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(2).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(3).evalValue(c)).getDouble()
+                    pos1.getX(),
+                    pos1.getY(),
+                    pos1.getZ()
             );
             Box area = new Box(center).expand(
-                    NumericValue.asNumber(lv.get(4).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(5).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(6).evalValue(c)).getDouble()
+                    pos2.getX(),
+                    pos2.getY(),
+                    pos2.getZ()
             );
             String who = lv.get(0).evalValue(c).getString();
             Pair<EntityType<?>, Predicate<? super Entity>> pair = EntityValue.getPredicate(who);
