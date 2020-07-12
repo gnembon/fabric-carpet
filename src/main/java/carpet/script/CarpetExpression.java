@@ -2082,7 +2082,7 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Unknown entity selection criterion: "+who);
             }
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntities((EntityType<Entity>) pair.getKey(), area, pair.getValue());
+            List<Entity> entityList = cc.s.getWorld().getEntities((EntityType<Entity>) pair.getKey(), area, pair.getValue());
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
