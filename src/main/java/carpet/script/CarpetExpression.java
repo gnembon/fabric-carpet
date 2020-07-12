@@ -125,6 +125,8 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.registry.BuiltinRegistries;
+import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -3318,6 +3320,21 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
         {
+            //CarpetSettings.LOG.error("Standard Structures:");
+            //CarpetSettings.LOG.error(Registry.STRUCTURE_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted(). collect(Collectors.joining(", ")));
+            //CarpetSettings.LOG.error("");
+            //CarpetSettings.LOG.error("Configured Structures:");
+            //CarpetSettings.LOG.error(BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted().collect(Collectors.joining(", ")));
+            //CarpetSettings.LOG.error("");
+            //CarpetSettings.LOG.error("Features:");
+            //CarpetSettings.LOG.error(Registry.FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted().collect(Collectors.joining(", ")));
+            //CarpetSettings.LOG.error("");
+            //CarpetSettings.LOG.error("Configured Features:");
+            //CarpetSettings.LOG.error(BuiltinRegistries.CONFIGURED_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted().collect(Collectors.joining(", ")));
+            //CarpetSettings.LOG.error("");
+            //CarpetSettings.LOG.error("Custom:");
+            //CarpetSettings.LOG.error(FeatureGenerator.featureMap.keySet().stream().map(i -> "`'"+i+"'`").sorted().collect(Collectors.joining(", ")));
+
             Value res = lv.get(0).evalValue(c);
             CarpetSettings.LOG.error(res.getString());
             return (_c, _t) -> res; // pass through for variables
