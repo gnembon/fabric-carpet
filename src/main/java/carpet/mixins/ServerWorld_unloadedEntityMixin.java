@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(ServerWorld.class)
 public class ServerWorld_unloadedEntityMixin
 {
-    @Redirect(method =  "checkChunk", at = @At(
+    @Redirect(method =  "checkEntityChunkPos", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/Entity;teleportRequested()Z"
     ))

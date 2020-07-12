@@ -278,7 +278,11 @@ public class BlockValue extends Value
 
         @Override
         public BlockPos getBlockPos() {
-            return this.hit.getBlockPos();
+            boolean prevcanReplaceExisting = canReplaceExisting;
+            canReplaceExisting = true;
+            BlockPos ret = super.getBlockPos();
+            canReplaceExisting = prevcanReplaceExisting;
+            return ret;
         }
 
         @Override

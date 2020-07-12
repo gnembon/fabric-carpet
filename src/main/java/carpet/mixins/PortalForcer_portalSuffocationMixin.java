@@ -18,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PortalForcer.class)
 public class PortalForcer_portalSuffocationMixin
 {
+    //FIXED IN 20w28a
+    /*
     @Inject(method = "usePortal", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/Entity;getLastNetherPortalDirectionVector()Lnet/minecraft/util/math/Vec3d;"
@@ -84,4 +86,6 @@ public class PortalForcer_portalSuffocationMixin
         CarpetSettings.fixedPosition = target.pos;
         return target;
     }
+
+     */
 }

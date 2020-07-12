@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkGeneratorMixin implements ChunkGeneratorInterface
 {
-    @Shadow protected abstract void method_28509();
+    @Shadow protected abstract void generateStrongholdPositions();
 
     @Override
     public void initStrongholds()
     {
-        method_28509();
+        generateStrongholdPositions();
     }
     // this might not be needed anymore
     /*

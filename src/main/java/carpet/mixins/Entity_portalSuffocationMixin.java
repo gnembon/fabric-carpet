@@ -15,6 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Entity.class)
 public abstract class Entity_portalSuffocationMixin
 {
+    // FIXED IN 20w28a
+    /*
     @Shadow public abstract Box getBoundingBox();
 
     @Inject(method = "changeDimension", at = @At(
@@ -48,4 +50,6 @@ public abstract class Entity_portalSuffocationMixin
         CarpetSettings.currentTelepotingEntityBox = null;
         CarpetSettings.fixedPosition = null;
     }
+
+     */
 }

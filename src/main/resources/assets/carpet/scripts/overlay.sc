@@ -27,20 +27,21 @@ __command() -> '';
 monument() -> __toggle('monument', 'structures');
 fortress() -> __toggle('fortress', 'structures');
 mansion() -> __toggle('mansion', 'structures');
-jungle_temple() -> __toggle('jungle_temple', 'structures');
-desert_temple() -> __toggle('desert_temple', 'structures');
-end_city() -> __toggle('end_city', 'structures');
+jungle_pyramid() -> __toggle('jungle_pyramid', 'structures');
+desert_pyramid() -> __toggle('desert_pyramid', 'structures');
+endcity() -> __toggle('endcity', 'structures');
 igloo() -> __toggle('igloo', 'structures');
 shipwreck() -> __toggle('shipwreck', 'structures');
-witch_hut() -> __toggle('witch_hut', 'structures');
+swamp_hut() -> __toggle('swamp_hut', 'structures');
 stronghold() -> __toggle('stronghold', 'structures');
 ocean_ruin() -> __toggle('ocean_ruin', 'structures');
-treasure() -> __toggle('treasure', 'structures');
+buried_treasure() -> __toggle('buried_treasure', 'structures');
 pillager_outpost() -> __toggle('pillager_outpost', 'structures');
 mineshaft() -> __toggle('mineshaft', 'structures');
 village() -> __toggle('village', 'structures');
 nether_fossil() -> __toggle('nether_fossil', 'structures');
 bastion_remnant() -> __toggle('bastion_remnant', 'structures');
+ruined_portal() -> __toggle('ruined_portal', 'structures');
 
 slime_chunks() -> __toggle('slime_chunks', 'chunks');
 

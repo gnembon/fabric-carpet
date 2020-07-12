@@ -8,12 +8,10 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
-import carpet.fakes.ServerLightingProviderInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.mixins.ChunkGeneratorMixin;
 import carpet.mixins.PointOfInterest_scarpetMixin;
 import carpet.script.Fluff.TriFunction;
 import carpet.script.argument.BlockArgument;
@@ -130,6 +128,7 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.poi.PointOfInterest;
@@ -1086,7 +1085,9 @@ public class CarpetExpression
             ServerWorld world = cc.s.getWorld();
             BlockPos pos = locator.block.getPos();
             Biome biome = world.getBiome(pos);
-            Value res = new StringValue(biome.getTranslationKey().replaceFirst("^biome\\.minecraft\\.", ""));
+            // in locatebiome
+            Identifier biomeId = cc.s.getMinecraftServer().method_30611().method_30530(Registry.BIOME_KEY).getId(biome);
+            Value res = new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             return (_c, _t) -> res;
         });
 
@@ -1097,7 +1098,8 @@ public class CarpetExpression
             if (lv.size() == locator.offset)
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
-            Biome biome = Registry.BIOME.get(new Identifier(biomeName));
+            // from locatebiome command code
+            Biome biome = cc.s.getMinecraftServer().method_30611().method_30530(Registry.BIOME_KEY).get(new Identifier(biomeName));
             if (biome == null)
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
             boolean doImmediateUpdate = true;
@@ -1132,13 +1134,13 @@ public class CarpetExpression
                 //CarpetSettings.LOG.error(references.keySet().stream().collect(Collectors.joining(",")));
                 List<Value> referenceList = references.entrySet().stream().
                         filter(e -> e.getValue()!= null && !e.getValue().isEmpty()).
-                        map(e -> new StringValue(FeatureGenerator.structureToFeature.get(e.getKey()).get(0))).collect(Collectors.toList());
+                        map(e -> new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(e.getKey())))).collect(Collectors.toList());
                 return (_c, _t ) -> ListValue.wrap(referenceList);
             }
             String simpleStructureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             //CarpetSettings.LOG.error(FeatureGenerator.featureToStructure.keySet().stream().collect(Collectors.joining(",")));
             //CarpetSettings.LOG.error(FeatureGenerator.featureToStructure.values().stream().collect(Collectors.joining(",")));
-            StructureFeature<?> structureName = FeatureGenerator.featureToStructure.get(simpleStructureName);
+            StructureFeature<?> structureName = Registry.STRUCTURE_FEATURE.get(new Identifier(simpleStructureName));
             if (structureName == null) return LazyValue.NULL;
             LongSet structureReferences = references.get(structureName);
             if (structureReferences == null || structureReferences.isEmpty()) return ListValue.lazyEmpty();
@@ -1168,7 +1170,7 @@ public class CarpetExpression
                 if (!(requested instanceof NullValue))
                 {
                     String reqString = requested.getString();
-                    structure = FeatureGenerator.featureToStructure.get(reqString);
+                    structure = Registry.STRUCTURE_FEATURE.get(new Identifier(reqString));
                     if (structure == null) throw new InternalExpressionException("Unknown structure: " + reqString);
                 }
                 if (lv.size() > locator.offset+1)
@@ -1190,7 +1192,7 @@ public class CarpetExpression
                 StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
                 if (start == null) continue;
 
-                Value key = new StringValue(FeatureGenerator.structureToFeature.get(str).get(0));
+                Value key = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(str)));
                 ret.put(key, (!needSize)?Value.NULL:structureToValue(start));
             }
             Value retMap = MapValue.wrap(ret);
@@ -1214,7 +1216,7 @@ public class CarpetExpression
                         continue;
                     BlockBox box = start.getBoundingBox();
                     structureList.put(
-                            new StringValue(FeatureGenerator.structureToFeature.get(entry.getKey()).get(0)),
+                            new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(entry.getKey()))),
                             ListValue.of(ListValue.fromTriple(box.minX, box.minY, box.minZ), ListValue.fromTriple(box.maxX, box.maxY, box.maxZ))
                     );
                 }
@@ -1222,7 +1224,7 @@ public class CarpetExpression
                 return (_c, _t) -> ret;
             }
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            StructureStart start = structures.get(FeatureGenerator.featureToStructure.get(structureName));
+            StructureStart start = structures.get(Registry.STRUCTURE_FEATURE.get(new Identifier(structureName)));
             Value ret = structureToValue(start);
             return (_c, _t) -> ret;
         });
@@ -1238,8 +1240,8 @@ public class CarpetExpression
             if (lv.size() == locator.offset)
                 throw new InternalExpressionException("'set_structure requires at least position and a structure name");
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            StructureFeature<?> structureId = FeatureGenerator.featureToStructure.get(structureName);
-            if (structureId == null) throw new InternalExpressionException("Unknown structure: "+structureName);
+            ConfiguredStructureFeature<?, ?> configuredStructure = FeatureGenerator.resolveConfiguredStructure(structureName, world, pos);
+            if (configuredStructure == null) throw new InternalExpressionException("Unknown structure: "+structureName);
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it
@@ -1248,7 +1250,8 @@ public class CarpetExpression
                 Map<StructureFeature<?>, StructureStart<?>> structures = world.getChunk(pos).getStructureStarts();
                 if (lv.size() == locator.offset + 1)
                 {
-                    Boolean res = FeatureGenerator.gridStructure(structureName, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
+                    Boolean res = FeatureGenerator.plopGrid(configuredStructure, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
+                    //Boolean res = FeatureGenerator.gridStructure(structureName, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
                     if (res == null) return;
                     result[0] = res?Value.TRUE:Value.FALSE;
                     return;
@@ -1256,11 +1259,12 @@ public class CarpetExpression
                 Value newValue = lv.get(locator.offset+1).evalValue(c);
                 if (newValue instanceof NullValue) // remove structure
                 {
-                    if (!structures.containsKey(structureId))
+                    StructureFeature<?> structure = configuredStructure.feature;
+                    if (!structures.containsKey(structure))
                     {
                         return;
                     }
-                    StructureStart<?> start = structures.get(structureId);
+                    StructureStart<?> start = structures.get(structure);
                     ChunkPos structureChunkPos = new ChunkPos(start.getChunkX(), start.getChunkZ());
                     BlockBox box = start.getBoundingBox();
                     for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
@@ -1270,11 +1274,11 @@ public class CarpetExpression
                             ChunkPos chpos = new ChunkPos(chx, chz);
                             // getting a chunk will convert it to full, allowing to modify references
                             Map<StructureFeature<?>, LongSet> references = world.getChunk(chpos.getCenterBlockPos()).getStructureReferences();
-                            if (references.containsKey(structureId) && references.get(structureId) != null)
-                                references.get(structureId).remove(structureChunkPos.toLong());
+                            if (references.containsKey(structure) && references.get(structure) != null)
+                                references.get(structure).remove(structureChunkPos.toLong());
                         }
                     }
-                    structures.remove(structureId);
+                    structures.remove(structure);
                     result[0] = Value.TRUE;
                 }
             });
@@ -3136,7 +3140,7 @@ public class CarpetExpression
             {
                 long newTime = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
                 if (newTime < 0) newTime = 0;
-                ((CarpetContext) c).s.getWorld().method_29199(newTime);// setTimeOfDay(newTime);
+                ((CarpetContext) c).s.getWorld().setTimeOfDay(newTime);// setTimeOfDay(newTime);
             }
             return (cc, tt) -> time;
         });
@@ -3283,8 +3287,9 @@ public class CarpetExpression
             Value [] result = new Value[]{Value.NULL};
             ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
+                Boolean res = FeatureGenerator.plop(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
 
-                Boolean res = FeatureGenerator.spawn(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
+                //Boolean res = FeatureGenerator.spawn(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
                 if (res == null)
                     return;
                 if (what.equalsIgnoreCase("boulder"))  // there might be more of those

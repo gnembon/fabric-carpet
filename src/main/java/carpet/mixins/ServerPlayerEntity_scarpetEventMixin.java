@@ -92,25 +92,25 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     private Vec3d previousLocation;
     private RegistryKey<World> previousDimension;
 
-    @Inject(method = "changeDimension", at = @At("HEAD"))
+    @Inject(method = "moveToWorld", at = @At("HEAD"))
     private void logPreviousCoordinates(ServerWorld serverWorld, CallbackInfoReturnable<Entity> cir)
     {
         previousLocation = getPos();
         previousDimension = world.getRegistryKey();  //dimension type
     }
 
-    @Inject(method = "changeDimension", at = @At("RETURN"))
-    private void atChangeDimension(ServerWorld newWorld, CallbackInfoReturnable<Entity> cir)
+    @Inject(method = "moveToWorld", at = @At("RETURN"))
+    private void atChangeDimension(ServerWorld destination, CallbackInfoReturnable<Entity> cir)
     {
         if (PLAYER_CHANGES_DIMENSION.isNeeded())
         {
             ServerPlayerEntity player = (ServerPlayerEntity) (Object)this;
             Vec3d to = null;
-            if (!notInAnyWorld || previousDimension != World.END || newWorld.getRegistryKey() != World.OVERWORLD) // end ow
+            if (!notInAnyWorld || previousDimension != World.END || destination.getRegistryKey() != World.OVERWORLD) // end ow
             {
                 to = getPos();
             }
-            PLAYER_CHANGES_DIMENSION.onDimensionChange(player, previousLocation, to, previousDimension, newWorld.getRegistryKey());
+            PLAYER_CHANGES_DIMENSION.onDimensionChange(player, previousLocation, to, previousDimension, destination.getRegistryKey());
         }
     }
 

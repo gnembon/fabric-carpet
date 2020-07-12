@@ -10,6 +10,7 @@ import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.biome.source.BiomeArray;
 import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,7 +32,7 @@ public class ClientPlayNetworkHandler_smoothClientAnimationsMixin
             shift = At.Shift.AFTER
     ))
     private void recreateMovingPistons(ChunkDataS2CPacket packet, CallbackInfo ci,
-                                       int i, int j, WorldChunk worldChunk, Iterator var5, CompoundTag tag, BlockPos blockPos)
+                                       int i, int j, BiomeArray biomeArray, WorldChunk worldChunk, Iterator var5, CompoundTag tag, BlockPos blockPos)
     {
         if (CarpetSettings.smoothClientAnimations)
         {

@@ -68,13 +68,6 @@ public class CarpetSettings
     )
     public static String language = "none";
 
-    @Rule(
-            desc = "Nether portals correctly place entities going through",
-            extra = "Entities shouldn't suffocate in obsidian",
-            category = BUGFIX
-    )
-    public static boolean portalSuffocationFix = false;
-
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!", category = EXPERIMENTAL)
     public static boolean superSecretSetting = false;
 

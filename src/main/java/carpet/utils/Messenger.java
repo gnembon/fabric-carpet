@@ -166,7 +166,7 @@ public class Messenger
         {
             if (previous_message != null)
                 previous_message.setStyle(
-                        previous_message.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))))
+                        previous_message.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, c(message.substring(1))))
                 );
             return previous_message;
         }

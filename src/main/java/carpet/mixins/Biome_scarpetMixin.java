@@ -11,13 +11,14 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.Map;
 
 @Mixin(Biome.class)
-public class Biome_scarpetMixin implements BiomeInterface
+public class Biome_scarpetMixin
 {
-    @Shadow @Final private Map<StructureFeature<?>, ConfiguredStructureFeature<?, ?>> structureFeatures;
-
+    //@Shadow @Final private Map<StructureFeature<?>, ConfiguredStructureFeature<?, ?>> structureFeatures;
+/*
     @Override
     public ConfiguredStructureFeature<?, ?> getConfiguredFeature(StructureFeature<?> arg)
     {
-        return structureFeatures.get(arg);
-    }
+        return null;
+    //    return structureFeatures.get(arg);
+    }*/
 }
