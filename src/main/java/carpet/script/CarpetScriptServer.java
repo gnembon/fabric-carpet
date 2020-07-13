@@ -43,14 +43,22 @@ public class CarpetScriptServer
     private final Set<String> holyMoly;
     public final CarpetEventServer events;
 
-    private static final List<Module> bundledModuleData = new ArrayList<Module>(){{
-        add(new BundledModule("camera", false));
-        add(new BundledModule("overlay", false));
-        add(new BundledModule("event_test", false));
-        add(new BundledModule("stats_test", false));
-        add(new BundledModule("math", true));
-        add(new BundledModule("chunk_display", false));
-    }};
+    private static final List<Module> bundledModuleData = new ArrayList<>();
+
+    public static void registerBuiltInScript(BundledModule app)
+    {
+        bundledModuleData.add(app);
+    }
+
+    static
+    {
+        registerBuiltInScript(BundledModule.carpetNative("camera", false));
+        registerBuiltInScript(BundledModule.carpetNative("overlay", false));
+        registerBuiltInScript(BundledModule.carpetNative("event_test", false));
+        registerBuiltInScript(BundledModule.carpetNative("stats_test", false));
+        registerBuiltInScript(BundledModule.carpetNative("math", true));
+        registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
+    }
 
     public CarpetScriptServer(MinecraftServer server)
     {

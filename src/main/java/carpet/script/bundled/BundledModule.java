@@ -11,22 +11,29 @@ public class BundledModule extends Module
     private String name;
     private String code;
     private boolean library;
-    public BundledModule(String scriptName, boolean isLibrary)
+    public BundledModule(String name, String code, boolean isLibrary)
     {
         library = isLibrary;
+        this.name = name;
+        this.code = code;
+    }
+    public static BundledModule carpetNative(String scriptName, boolean isLibrary)
+    {
+        BundledModule module = new BundledModule(null, null, isLibrary);
         try
         {
-            name = scriptName.toLowerCase(Locale.ROOT);
-            code = IOUtils.toString(
-                    getClass().getClassLoader().getResourceAsStream("assets/carpet/scripts/"+name+(isLibrary?".scl":".sc")),
+            module.name = scriptName.toLowerCase(Locale.ROOT);
+            module.code = IOUtils.toString(
+                    BundledModule.class.getClassLoader().getResourceAsStream("assets/carpet/scripts/"+scriptName+(isLibrary?".scl":".sc")),
                     StandardCharsets.UTF_8
             );
         }
         catch ( NullPointerException | IOException e)
         {
-            name = null;
-            code = null;
+            module.name = null;
+            module.code = null;
         }
+        return module;
     }
 
     @Override
