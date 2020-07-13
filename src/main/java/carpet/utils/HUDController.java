@@ -1,5 +1,6 @@
 package carpet.utils;
 
+import carpet.CarpetServer;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
@@ -79,6 +80,8 @@ public class HUDController
 
         if (LoggerRegistry.__packets)
             LoggerRegistry.getLogger("packets").log(()-> packetCounter());
+
+        CarpetServer.extensions.forEach(e -> e.onUpdateHUD(server));
 
         for (PlayerEntity player: player_huds.keySet())
         {
