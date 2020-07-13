@@ -609,32 +609,32 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 `'forest_flower_trees'`, `'forest_flower_vegetation'`, `'forest_flower_vegetation_common'`, `'forest_rock'`, 
 `'fossil'`, `'freeze_top_layer'`, `'glowstone'`, `'glowstone_extra'`, `'huge_brown_mushroom'`, 
 `'huge_red_mushroom'`, `'ice_patch'`, `'ice_spike'`, `'iceberg_blue'`, `'iceberg_packed'`, `'jungle_bush'`,
- `'jungle_tree'`, `'jungle_tree_no_vine'`, `'kelp_cold'`, `'kelp_warm'`, `'lake_lava'`, `'lake_water'`, 
- `'large_basalt_columns'`, `'mega_jungle_tree'`, `'mega_pine'`, `'mega_spruce'`, `'monster_room'`, 
- `'mushroom_field_vegetation'`, `'nether_sprouts'`, `'nope'`, `'oak'`, `'oak_badlands'`, `'oak_bees_0002'`, 
- `'oak_bees_002'`, `'oak_bees_005'`, `'ore_andesite'`, `'ore_blackstone'`, `'ore_coal'`, `'ore_debris_large'`,
- `'ore_debris_small'`, `'ore_diamond'`, `'ore_diorite'`, `'ore_dirt'`, `'ore_emerald'`, `'ore_gold'`, 
- `'ore_gold_deltas'`, `'ore_gold_extra'`, `'ore_gold_nether'`, `'ore_granite'`, `'ore_gravel'`, 
- `'ore_gravel_nether'`, `'ore_infested'`, `'ore_iron'`, `'ore_lapis'`, `'ore_magma'`, `'ore_quartz_deltas'`, 
- `'ore_quartz_nether'`, `'ore_redstone'`, `'ore_soul_sand'`, `'patch_berry_bush'`, `'patch_berry_decorated'`, 
- `'patch_berry_sparse'`, `'patch_brown_mushroom'`, `'patch_cactus'`, `'patch_cactus_decorated'`, 
- `'patch_cactus_desert'`, `'patch_crimson_roots'`, `'patch_dead_bush'`, `'patch_dead_bush_2'`, 
- `'patch_dead_bush_badlands'`, `'patch_fire'`, `'patch_grass_badlands'`, `'patch_grass_forest'`, 
- `'patch_grass_jungle'`, `'patch_grass_normal'`, `'patch_grass_plain'`, `'patch_grass_savanna'`, 
- `'patch_grass_taiga'`, `'patch_grass_taiga_2'`, `'patch_large_fern'`, `'patch_melon'`, `'patch_pumpkin'`, 
- `'patch_red_mushroom'`, `'patch_soul_fire'`, `'patch_sugar_cane'`, `'patch_sugar_cane_badlands'`, 
- `'patch_sugar_cane_desert'`, `'patch_sugar_cane_swamp'`, `'patch_sunflower'`, `'patch_taiga_grass'`, 
- `'patch_tall_grass'`, `'patch_tall_grass_2'`, `'patch_waterlilly'`, `'pile_hay'`, `'pile_ice'`, 
- `'pile_melon'`, `'pile_pumpkin'`, `'pile_snow'`, `'pine'`, `'plain_vegetation'`, `'red_mushroom_giant'`,
- `'red_mushroom_nether'`, `'red_mushroom_normal'`, `'red_mushroom_swamp'`, `'red_mushroom_taiga'`, 
- `'sea_pickle'`, `'seagrass_cold'`, `'seagrass_deep'`, `'seagrass_deep_cold'`, `'seagrass_deep_warm'`, 
- `'seagrass_normal'`, `'seagrass_river'`, `'seagrass_simple'`, `'seagrass_swamp'`, `'seagrass_warm'`, 
- `'small_basalt_columns'`, `'spring_closed'`, `'spring_closed_double'`, `'spring_delta'`, `'spring_lava'`, 
- `'spring_lava_double'`, `'spring_open'`, `'spring_water'`, `'spruce'`, `'spruce_snovy'`, `'super_birch_bees_0002'`, 
- `'swamp_tree'`, `'taiga_vegetation'`, `'trees_giant'`, `'trees_giant_spruce'`, `'trees_jungle'`, 
- `'trees_jungle_edge'`, `'trees_mountain'`, `'trees_mountain_edge'`, `'trees_savanna'`, `'trees_shattered_savanna'`, 
- `'trees_water'`, `'twisting_vines'`, `'vines'`, `'void_start_platform'`, `'warm_ocean_vegetation'`, 
- `'warped_forest_vegetation'`, `'warped_fungi'`, `'warped_fungi_planted'`, `'weeping_vines'`
+`'jungle_tree'`, `'jungle_tree_no_vine'`, `'kelp_cold'`, `'kelp_warm'`, `'lake_lava'`, `'lake_water'`, 
+`'large_basalt_columns'`, `'mega_jungle_tree'`, `'mega_pine'`, `'mega_spruce'`, `'monster_room'`, 
+`'mushroom_field_vegetation'`, `'nether_sprouts'`, `'nope'`, `'oak'`, `'oak_badlands'`, `'oak_bees_0002'`, 
+`'oak_bees_002'`, `'oak_bees_005'`, `'ore_andesite'`, `'ore_blackstone'`, `'ore_coal'`, `'ore_debris_large'`,
+`'ore_debris_small'`, `'ore_diamond'`, `'ore_diorite'`, `'ore_dirt'`, `'ore_emerald'`, `'ore_gold'`, 
+`'ore_gold_deltas'`, `'ore_gold_extra'`, `'ore_gold_nether'`, `'ore_granite'`, `'ore_gravel'`, 
+`'ore_gravel_nether'`, `'ore_infested'`, `'ore_iron'`, `'ore_lapis'`, `'ore_magma'`, `'ore_quartz_deltas'`, 
+`'ore_quartz_nether'`, `'ore_redstone'`, `'ore_soul_sand'`, `'patch_berry_bush'`, `'patch_berry_decorated'`, 
+`'patch_berry_sparse'`, `'patch_brown_mushroom'`, `'patch_cactus'`, `'patch_cactus_decorated'`, 
+`'patch_cactus_desert'`, `'patch_crimson_roots'`, `'patch_dead_bush'`, `'patch_dead_bush_2'`, 
+`'patch_dead_bush_badlands'`, `'patch_fire'`, `'patch_grass_badlands'`, `'patch_grass_forest'`, 
+`'patch_grass_jungle'`, `'patch_grass_normal'`, `'patch_grass_plain'`, `'patch_grass_savanna'`, 
+`'patch_grass_taiga'`, `'patch_grass_taiga_2'`, `'patch_large_fern'`, `'patch_melon'`, `'patch_pumpkin'`, 
+`'patch_red_mushroom'`, `'patch_soul_fire'`, `'patch_sugar_cane'`, `'patch_sugar_cane_badlands'`, 
+`'patch_sugar_cane_desert'`, `'patch_sugar_cane_swamp'`, `'patch_sunflower'`, `'patch_taiga_grass'`, 
+`'patch_tall_grass'`, `'patch_tall_grass_2'`, `'patch_waterlilly'`, `'pile_hay'`, `'pile_ice'`, 
+`'pile_melon'`, `'pile_pumpkin'`, `'pile_snow'`, `'pine'`, `'plain_vegetation'`, `'red_mushroom_giant'`,
+`'red_mushroom_nether'`, `'red_mushroom_normal'`, `'red_mushroom_swamp'`, `'red_mushroom_taiga'`, 
+`'sea_pickle'`, `'seagrass_cold'`, `'seagrass_deep'`, `'seagrass_deep_cold'`, `'seagrass_deep_warm'`, 
+`'seagrass_normal'`, `'seagrass_river'`, `'seagrass_simple'`, `'seagrass_swamp'`, `'seagrass_warm'`, 
+`'small_basalt_columns'`, `'spring_closed'`, `'spring_closed_double'`, `'spring_delta'`, `'spring_lava'`, 
+`'spring_lava_double'`, `'spring_open'`, `'spring_water'`, `'spruce'`, `'spruce_snovy'`, `'super_birch_bees_0002'`, 
+`'swamp_tree'`, `'taiga_vegetation'`, `'trees_giant'`, `'trees_giant_spruce'`, `'trees_jungle'`, 
+`'trees_jungle_edge'`, `'trees_mountain'`, `'trees_mountain_edge'`, `'trees_savanna'`, `'trees_shattered_savanna'`, 
+`'trees_water'`, `'twisting_vines'`, `'vines'`, `'void_start_platform'`, `'warm_ocean_vegetation'`, 
+`'warped_forest_vegetation'`, `'warped_fungi'`, `'warped_fungi_planted'`, `'weeping_vines'`
 
 ### Custom Scarpet Features (1.16.2+)
 
@@ -655,12 +655,12 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 
 Checks wordgen eligibility for a structure in a given chunk. Requires a `Standard Structure` name (see above).
 If no structure is given, or `null`, then it will check
- for all structures. If bounding box of the structures is also requested, it will compute size of potential
-  structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
-  making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
+for all structures. If bounding box of the structures is also requested, it will compute size of potential
+structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
+making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
   
-  Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
-  the actual structure from forming.
+Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
+the actual structure from forming.
   
 If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
@@ -724,3 +724,4 @@ which sets it without looking into world blocks, and then use `plop` to fill it 
 All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
+
