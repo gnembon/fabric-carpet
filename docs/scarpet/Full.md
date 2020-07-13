@@ -2027,121 +2027,30 @@ Boolean function, true if the block at position blocks movement.
 
 Returns the name of sound type made by the block at position. One of:
 
-*   `wood`
-*   `gravel`
-*   `grass`
-*   `stone`
-*   `metal`
-*   `glass`
-*   `wool`
-*   `sand`
-*   `snow`
-*   `ladder`
-*   `anvil`
-*   `slime`
-*   `sea_grass`
-*   `coral`
+`'wood'`, `'gravel'`, `'grass'`, `'stone'`, `'metal'`, `'glass'`, `'wool'`, `'sand'`, `'snow'`, 
+`'ladder'`, `'anvil'`, `'slime'`, `'sea_grass'`, `'coral'`
 
 ### `material(pos)`
 
 Returns the name of material of the block at position. very useful to target a group of blocks. One of:
 
-*   `air`
-*   `void`
-*   `portal`
-*   `carpet`
-*   `plant`
-*   `water_plant`
-*   `vine`
-*   `sea_grass`
-*   `water`
-*   `bubble_column`
-*   `lava`
-*   `snow_layer`
-*   `fire`
-*   `redstone_bits`
-*   `cobweb`
-*   `redstone_lamp`
-*   `clay`
-*   `dirt`
-*   `grass`
-*   `packed_ice`
-*   `sand`
-*   `sponge`
-*   `wood`
-*   `wool`
-*   `tnt`
-*   `leaves`
-*   `glass`
-*   `ice`
-*   `cactus`
-*   `stone`
-*   `iron`
-*   `snow`
-*   `anvil`
-*   `barrier`
-*   `piston`
-*   `coral`
-*   `gourd`
-*   `dragon_egg`
-*   `cake`
+`'air'`, `'void'`, `'portal'`, `'carpet'`, `'plant'`, `'water_plant'`, `'vine'`, `'sea_grass'`, `'water'`, 
+`'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
+`'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
+`'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
+`'dragon_egg'`, `'cake'`
 
 ### `map_colour(pos)`
 
 Returns the map colour of a block at position. One of:
 
-*   `air`
-*   `grass`
-*   `sand`
-*   `wool`
-*   `tnt`
-*   `ice`
-*   `iron`
-*   `foliage`
-*   `snow`
-*   `clay`
-*   `dirt`
-*   `stone`
-*   `water`
-*   `wood`
-*   `quartz`
-*   `adobe`
-*   `magenta`
-*   `light_blue`
-*   `yellow`
-*   `lime`
-*   `pink`
-*   `gray`
-*   `light_gray`
-*   `cyan`
-*   `purple`
-*   `blue`
-*   `brown`
-*   `green`
-*   `red`
-*   `black`
-*   `gold`
-*   `diamond`
-*   `lapis`
-*   `emerald`
-*   `obsidian`
-*   `netherrack`
-*   `white_terracotta`
-*   `orange_terracotta`
-*   `magenta_terracotta`
-*   `light_blue_terracotta`
-*   `yellow_terracotta`
-*   `lime_terracotta`
-*   `pink_terracotta`
-*   `gray_terracotta`
-*   `light_gray_terracotta`
-*   `cyan_terracotta`
-*   `purple_terracotta`
-*   `blue_terracotta`
-*   `brown_terracotta`
-*   `green_terracotta`
-*   `red_terracotta`
-*   `black_terracotta`
+`'air'`, `'grass'`, `'sand'`, `'wool'`, `'tnt'`, `'ice'`, `'iron'`, `'foliage'`, `'snow'`, `'clay'`, `'dirt'`, 
+`'stone'`, `'water'`, `'wood'`, `'quartz'`, `'adobe'`, `'magenta'`, `'light_blue'`, `'yellow'`, `'lime'`, `'pink'`, 
+`'gray'`, `'light_gray'`, `'cyan'`, `'purple'`, `'blue'`, `'brown'`, `'green'`, `'red'`, `'black'`, `'gold
+'`, `'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
+`'magenta_terracotta'`, `'light_blue_terracotta'`, `'yellow_terracotta'`, `'lime_terracotta'`, `'pink_terracotta'`, 
+`'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
+`'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`
 
 
 ### `loaded(pos)`
@@ -2196,165 +2105,6 @@ Returns inhabited time for a chunk.
 
 Returns spawn potential at a location (1.16+ only)
 
-### `structure_eligibility(pos, ?structure, ?size_needed)`
-
-Checks wordgen eligibility for a structure in a given chunk. If no structure is given, or `null`, then it will check
- for all structures. If bounding box of the structures is also requested, it will compute size of potential
-  structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
-  making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
-  
-  Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
-  the actual structure from forming.
-  
-If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
-a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
-list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
-
-If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
-as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
-should be generated there.
-
-
-### `structures(pos), structures(pos, structure_name)`
-
-Returns structure information for a given block position. Note that structure information is the same for all the 
-blocks from the same chunk. `structures` function can be called with a block, or a block and a structure name. In 
-the first case it returns a map of structures at a given position, keyed by structure name, with values indicating 
-the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
-name, returns a map with two values, `'box'` for bounding box of the structure, and `'pieces'` for a list of 
-components for that structure, with their name, direction and two sets of coordinates 
-indicating the bounding box of the structure piece.
-
-### `structure_references(pos), structure_references(pos, structure_name)`
-
-Returns structure information that a chunk with a given block position is part of. `structure_references` function 
-can be called with a block, or a block and a structure name. In the first case it returns a list of structure names 
-that give chunk belongs to. When called with an extra structure name, returns list of positions pointing to the 
-lowest block position in chunks that hold structure starts for these structures. You can query that chunk structures 
-then to get its bounding boxes.
-
-### `set_structure(pos, structure_name), set_structure(pos, structure_name, null)`
-
-Creates or removes structure information of a structure associated with a chunk of `pos`. Unlike `plop`, blocks are 
-not placed in the world, only structure information is set. For the game this is a fully functional structure even 
-if blocks are not set. To remove the structure a given point is in, use `structure_references` to find where current 
-structure starts.
-
-### `plop(pos, what)`
-
-Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
-To `what` gets plopped and exactly where it often depends on the feature or structure itself. For example, all 
-structures are chunk aligned, and often span multiple chunks. Repeated calls to plop a structure in the same chunk 
-would result either in the same structure generated on top of each other, or with different state, but same position. 
-Most structures generate at specific altitudes, which are hardcoded, or with certain blocks around them. API will 
-cancel all extra position / biome / random requirements for structure / feature placement, but some hardcoded 
-limitations may still cause some of structures/features not to place. Some features require special blocks to be
-present, like coral -> water or ice spikes -> snow block, and for some features, like fossils, placement is all sorts 
-of messed up. This can be partially avoided for structures by setting their structure information via `set_structure`, 
-which sets it without looking into world blocks, and then use `plop` to fill it with blocks. This may, or may not work.
-
-All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
-itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
-because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
-
-`plop` will not use world random number generator to generate structures and features, but its own. This has a benefit 
-that they will generate properly randomly, not the same time every time.
-
-Structure list:
-
-*   `monument`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
-*   `fortress`: Nether Fortress. Altitude varies, but its bounded by the code.
-*   `mansion`: Woodland Mansion
-*   `jungle_temple`: Jungle Temple
-*   `desert_temple`: Desert Temple. Generates at fixed Y altitude.
-*   `end_city`: End City with Shulkers
-*   `igloo`: Igloo
-*   `shipwreck`: Shipwreck, version1?
-*   `shipwreck2`: Shipwreck, version2?
-*   `witch_hut`
-*   `ocean_ruin`, `ocean_ruin_small`, `ocean_ruin_tall`: Stone variants of ocean ruins.
-*   `ocean_ruin_warm`, `ocean_ruin_warm_small`, `ocean_ruin_warm_tall`: Sandstone variants of ocean ruins.
-*   `treasure`: A treasure chest. Yes, its a whole structure.
-*   `pillager_outpost`: A pillager outpost.
-*   `mineshaft`: A mineshaft.
-*   `mineshaft_mesa`: A Mesa (Badlands) version of a mineshaft.
-*   `village`: Plains, oak village.
-*   `village_desert`: Desert, sandstone village.
-*   `village_savanna`: Savanna, acacia village.
-*   `village_taiga`: Taiga, spruce village.
-*   `village_snowy`: Resolute, Canada.
-*   `nether_fossil`: Pile of bones (1.16)
-*   `ruined_portal`: Ruined portal, random variant.
-*   `bastion_remnant`: Piglin bastion, random variant for the chunk (1.16)
-*   `bastion_remnant_housing`: Housing units version of a piglin bastion (1.16)
-*   `bastion_remnant_stable`: Hoglin stables version of q piglin bastion (1.16)
-*   `bastion_remnant_treasure`: Treasure room version of a piglin bastion (1.16)
-*   `bastion_remnant_bridge` : Bridge version of a piglin bastion (1.16)
-
-Feature list:
-
-*   `oak`
-*   `oak_beehive`: oak with a hive (1.15+).
-*   `oak_large`: oak with branches.
-*   `oak_large_beehive`: oak with branches and a beehive (1.15+).
-*   `birch`
-*   `birch_large`: tall variant of birch tree.
-*   `shrub`: low bushes that grow in jungles.
-*   `shrub_acacia`: low bush but configured with acacia (1.14 only)
-*   `shrub_snowy`: low bush with white blocks (1.14 only)
-*   `jungle`: a tree
-*   `jungle_large`: 2x2 jungle tree
-*   `spruce`
-*   `spruce_large`: 2x2 spruce tree
-*   `pine`: spruce with minimal leafage (1.15+)
-*   `pine_large`: 2x2 spruce with minimal leafage (1.15+)
-*   `spruce_matchstick`: see 1.15 pine (1.14 only).
-*   `spruce_matchstick_large`: see 1.15 pine_large (1.14 only).
-*   `dark_oak`
-*   `acacia`
-*   `oak_swamp`: oak with more leaves and vines.
-*   `well`: desert well
-*   `grass`: a few spots of tall grass
-*   `grass_jungle`: little bushier grass feature (1.14 only)
-*   `lush_grass`: grass with patchy ferns (1.15+)
-*   `tall_grass`: 2-high grass patch (1.15+)
-*   `fern`: a few random 2-high ferns
-*   `cactus`: random cacti
-*   `dead_bush`: a few random dead bushi
-*   `fossils`: underground fossils, placement little wonky
-*   `mushroom_brown`: large brown mushroom.
-*   `mushroom_red`: large red mushroom.
-*   `ice_spike`: ice spike. Require snow block below to place.
-*   `glowstone`: glowstone cluster. Required netherrack above it.
-*   `melon`: a patch of melons
-*   `melon_pile`: a pile of melons (1.15+)
-*   `pumpkin`: a patch of pumpkins
-*   `pumpkin_pile`: a pile of pumpkins (1.15+)
-*   `sugarcane`
-*   `lilypad`
-*   `dungeon`: Dungeon. These are hard to place, and fail often.
-*   `iceberg`: Iceberg. Generate at sea level.
-*   `iceberg_blue`: Blue ice iceberg.
-*   `lake`
-*   `lava_lake`
-*   `end_island`
-*   `chorus`: Chorus plant. Require endstone to place.
-*   `sea_grass`: a patch of sea grass. Require water.
-*   `sea_grass_river`: a variant.
-*   `kelp`
-*   `coral_tree, coral_mushroom, coral_claw`: various coral types, random color.
-*   `coral`: random coral structure. Require water to spawn.
-*   `sea_pickle`
-*   `boulder`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
-*   `crimson_fungus` (1.16)
-*   `warped_fungus` (1.16)
-*   `nether_sprouts` (1.16)
-*   `crimson_roots` (1.16)
-*   `warped_roots`  (1.16)
-*   `weeping_vines` (1.16)
-*   `twisting_vines` (1.16)
-*   `basalt_pillar` (1.16)
-
 ### `reload_chunk(pos)`
 
 Sends full chunk data to clients. Useful when lots stuff happened and you want to refresh it on the clients.
@@ -2381,7 +2131,255 @@ Adds a chunk ticket at a position, which makes the game to keep the designated a
 `pos` with radius of `radius` loaded for a predefined amount of ticks, defined by `type`. Allowed types
 are `portal`: 300 ticks, `teleport`: 5 ticks, and `unknown`: 1 tick. Radius can be from 1 to 32 ticks.
 
-This function is tentative - will likely change when chunk ticket API is properly fleshed out.# Iterating over larger areas of blocks
+This function is tentative - will likely change when chunk ticket API is properly fleshed out.
+
+## Structure and World Generation Features API
+
+Scarpet provides convenient methods to access and modify information about structures as well as spawn in-game
+structures and features. List of available options and names that you can use depends mostly if you are using scarpet
+with minecraft 1.16.1 and below or 1.16.2 and above since in 1.16.2 Mojang has added JSON support for worldgen features
+meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet
+
+### Previous Structure Names, including variants (MC 1.16.1 and below)
+*   `'monument'`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
+*   `'fortress'`: Nether Fortress. Altitude varies, but its bounded by the code.
+*   `'mansion'`: Woodland Mansion
+*   `'jungle_temple'`: Jungle Temple
+*   `'desert_temple'`: Desert Temple. Generates at fixed Y altitude.
+*   `'end_city'`: End City with Shulkers
+*   `'igloo'`: Igloo
+*   `'shipwreck'`: Shipwreck
+*   `'shipwreck2'`: Shipwreck, beached
+*   `'witch_hut'`
+*   `'ocean_ruin'`, `ocean_ruin_small'`, `ocean_ruin_tall'`: Stone variants of ocean ruins.
+*   `'ocean_ruin_warm'`, `ocean_ruin_warm_small'`, `ocean_ruin_warm_tall'`: Sandstone variants of ocean ruins.
+*   `'treasure'`: A treasure chest. Yes, its a whole structure.
+*   `'pillager_outpost'`: A pillager outpost.
+*   `'mineshaft'`: A mineshaft.
+*   `'mineshaft_mesa'`: A Mesa (Badlands) version of a mineshaft.
+*   `'village'`: Plains, oak village.
+*   `'village_desert'`: Desert, sandstone village.
+*   `'village_savanna'`: Savanna, acacia village.
+*   `'village_taiga'`: Taiga, spruce village.
+*   `'village_snowy'`: Resolute, Canada.
+*   `'nether_fossil'`: Pile of bones (1.16)
+*   `'ruined_portal'`: Ruined portal, random variant.
+*   `'bastion_remnant'`: Piglin bastion, random variant for the chunk (1.16)
+*   `'bastion_remnant_housing'`: Housing units version of a piglin bastion (1.16)
+*   `'bastion_remnant_stable'`: Hoglin stables version of q piglin bastion (1.16)
+*   `'bastion_remnant_treasure'`: Treasure room version of a piglin bastion (1.16)
+*   `'bastion_remnant_bridge'` : Bridge version of a piglin bastion (1.16)
+
+### Feature Names (mc1.16.1-) 
+
+*   `'oak'`
+*   `'oak_beehive'`: oak with a hive (1.15+).
+*   `'oak_large'`: oak with branches.
+*   `'oak_large_beehive'`: oak with branches and a beehive (1.15+).
+*   `'birch'`
+*   `'birch_large'`: tall variant of birch tree.
+*   `'shrub'`: low bushes that grow in jungles.
+*   `'shrub_acacia'`: low bush but configured with acacia (1.14 only)
+*   `'shrub_snowy'`: low bush with white blocks (1.14 only)
+*   `'jungle'`: a tree
+*   `'jungle_large'`: 2x2 jungle tree
+*   `'spruce'`
+*   `'spruce_large'`: 2x2 spruce tree
+*   `'pine'`: spruce with minimal leafage (1.15+)
+*   `'pine_large'`: 2x2 spruce with minimal leafage (1.15+)
+*   `'spruce_matchstick'`: see 1.15 pine (1.14 only).
+*   `'spruce_matchstick_large'`: see 1.15 pine_large (1.14 only).
+*   `'dark_oak'`
+*   `'acacia'`
+*   `'oak_swamp'`: oak with more leaves and vines.
+*   `'well'`: desert well
+*   `'grass'`: a few spots of tall grass
+*   `'grass_jungle'`: little bushier grass feature (1.14 only)
+*   `'lush_grass'`: grass with patchy ferns (1.15+)
+*   `'tall_grass'`: 2-high grass patch (1.15+)
+*   `'fern'`: a few random 2-high ferns
+*   `'cactus'`: random cacti
+*   `'dead_bush'`: a few random dead bushi
+*   `'fossils'`: underground fossils, placement little wonky
+*   `'mushroom_brown'`: large brown mushroom.
+*   `'mushroom_red'`: large red mushroom.
+*   `'ice_spike'`: ice spike. Require snow block below to place.
+*   `'glowstone'`: glowstone cluster. Required netherrack above it.
+*   `'melon'`: a patch of melons
+*   `'melon_pile'`: a pile of melons (1.15+)
+*   `'pumpkin'`: a patch of pumpkins
+*   `'pumpkin_pile'`: a pile of pumpkins (1.15+)
+*   `'sugarcane'`
+*   `'lilypad'`
+*   `'dungeon'`: Dungeon. These are hard to place, and fail often.
+*   `'iceberg'`: Iceberg. Generate at sea level.
+*   `'iceberg_blue'`: Blue ice iceberg.
+*   `'lake'`
+*   `'lava_lake'`
+*   `'end_island'`
+*   `'chorus'`: Chorus plant. Require endstone to place.
+*   `'sea_grass'`: a patch of sea grass. Require water.
+*   `'sea_grass_river'`: a variant.
+*   `'kelp'`
+*   `'coral_tree'`, `'coral_mushroom'`, `'coral_claw'`: various coral types, random color.
+*   `'coral'`: random coral structure. Require water to spawn.
+*   `'sea_pickle'`
+*   `'boulder'`: A rocky, mossy formation from a giant taiga biome. Doesn't update client properly, needs relogging.
+*   `'crimson_fungus'` (1.16)
+*   `'warped_fungus'` (1.16)
+*   `'nether_sprouts'` (1.16)
+*   `'crimson_roots'` (1.16)
+*   `'warped_roots'`  (1.16)
+*   `'weeping_vines'` (1.16)
+*   `'twisting_vines'` (1.16)
+*   `'basalt_pillar'` (1.16)
+
+### Standard Structures (1.16.2+)
+
+`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'endcity'`, `'fortress'`, `'igloo'`, 
+`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'monument'`, `'nether_fossil'`, `'ocean_ruin'`, 
+`'pillager_outpost'`, `'ruined_portal'`, `'shipwreck'`, `'stronghold'`, `'swamp_hut'`, `'village'`
+
+### Structure Variants (1.16.2+)
+
+`'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'end_city'`, `'fortress'`, `'igloo'`, 
+`'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'mineshaft_mesa'`, `'monument'`, `'nether_fossil'`,
+`'ocean_ruin_cold'`, `'ocean_ruin_warm'`, `'pillager_outpost'`, `'ruined_portal'`, `'ruined_portal_desert'`, 
+`'ruined_portal_jungle'`, `'ruined_portal_mountain'`, `'ruined_portal_nether'`, `'ruined_portal_ocean'`, 
+`'ruined_portal_swamp'`, `'shipwreck'`, `'shipwreck_beached'`, `'stronghold'`, `'swamp_hut'`, 
+`'village_desert'`, `'village_plains'`, `'village_savanna'`, `'village_snovy'`, `'village_taiga'`
+
+### World Generation Features (1.16.2+)
+
+`'acacia'`, `'bamboo'`, `'bamboo_light'`, `'bamboo_vegetation'`, `'basalt_blobs'`, `'basalt_pillar'`, 
+`'birch'`, `'birch_bees_0002'`, `'birch_bees_002'`, `'birch_bees_005'`, `'birch_other'`, `'birch_tall'`, 
+`'blackstone_blobs'`, `'blue_ice'`, `'bonus_chest'`, `'brown_mushroom_giant'`, `'brown_mushroom_nether'`,
+`'brown_mushroom_normal'`, `'brown_mushroom_swamp'`, `'brown_mushroom_taiga'`, `'chorus_plant'`, 
+`'crimson_forest_vegetation'`, `'crimson_fungi'`, `'crimson_fungi_planted'`, `'dark_forest_vegetation_brown'`, 
+`'dark_forest_vegetation_red'`, `'dark_oak'`, `'delta'`, `'desert_well'`, `'disk_clay'`, `'disk_gravel'`, 
+`'disk_sand'`, `'end_gateway'`, `'end_gateway_delayed'`, `'end_island'`, `'end_island_decorated'`, `'end_spike'`, 
+`'fancy_oak'`, `'fancy_oak_bees_0002'`, `'fancy_oak_bees_002'`, `'fancy_oak_bees_005'`, `'flower_default'`, 
+`'flower_forest'`, `'flower_plain'`, `'flower_plain_decorated'`, `'flower_swamp'`, `'flower_warm'`, 
+`'forest_flower_trees'`, `'forest_flower_vegetation'`, `'forest_flower_vegetation_common'`, `'forest_rock'`, 
+`'fossil'`, `'freeze_top_layer'`, `'glowstone'`, `'glowstone_extra'`, `'huge_brown_mushroom'`, 
+`'huge_red_mushroom'`, `'ice_patch'`, `'ice_spike'`, `'iceberg_blue'`, `'iceberg_packed'`, `'jungle_bush'`,
+`'jungle_tree'`, `'jungle_tree_no_vine'`, `'kelp_cold'`, `'kelp_warm'`, `'lake_lava'`, `'lake_water'`, 
+`'large_basalt_columns'`, `'mega_jungle_tree'`, `'mega_pine'`, `'mega_spruce'`, `'monster_room'`, 
+`'mushroom_field_vegetation'`, `'nether_sprouts'`, `'nope'`, `'oak'`, `'oak_badlands'`, `'oak_bees_0002'`, 
+`'oak_bees_002'`, `'oak_bees_005'`, `'ore_andesite'`, `'ore_blackstone'`, `'ore_coal'`, `'ore_debris_large'`,
+`'ore_debris_small'`, `'ore_diamond'`, `'ore_diorite'`, `'ore_dirt'`, `'ore_emerald'`, `'ore_gold'`, 
+`'ore_gold_deltas'`, `'ore_gold_extra'`, `'ore_gold_nether'`, `'ore_granite'`, `'ore_gravel'`, 
+`'ore_gravel_nether'`, `'ore_infested'`, `'ore_iron'`, `'ore_lapis'`, `'ore_magma'`, `'ore_quartz_deltas'`, 
+`'ore_quartz_nether'`, `'ore_redstone'`, `'ore_soul_sand'`, `'patch_berry_bush'`, `'patch_berry_decorated'`, 
+`'patch_berry_sparse'`, `'patch_brown_mushroom'`, `'patch_cactus'`, `'patch_cactus_decorated'`, 
+`'patch_cactus_desert'`, `'patch_crimson_roots'`, `'patch_dead_bush'`, `'patch_dead_bush_2'`, 
+`'patch_dead_bush_badlands'`, `'patch_fire'`, `'patch_grass_badlands'`, `'patch_grass_forest'`, 
+`'patch_grass_jungle'`, `'patch_grass_normal'`, `'patch_grass_plain'`, `'patch_grass_savanna'`, 
+`'patch_grass_taiga'`, `'patch_grass_taiga_2'`, `'patch_large_fern'`, `'patch_melon'`, `'patch_pumpkin'`, 
+`'patch_red_mushroom'`, `'patch_soul_fire'`, `'patch_sugar_cane'`, `'patch_sugar_cane_badlands'`, 
+`'patch_sugar_cane_desert'`, `'patch_sugar_cane_swamp'`, `'patch_sunflower'`, `'patch_taiga_grass'`, 
+`'patch_tall_grass'`, `'patch_tall_grass_2'`, `'patch_waterlilly'`, `'pile_hay'`, `'pile_ice'`, 
+`'pile_melon'`, `'pile_pumpkin'`, `'pile_snow'`, `'pine'`, `'plain_vegetation'`, `'red_mushroom_giant'`,
+`'red_mushroom_nether'`, `'red_mushroom_normal'`, `'red_mushroom_swamp'`, `'red_mushroom_taiga'`, 
+`'sea_pickle'`, `'seagrass_cold'`, `'seagrass_deep'`, `'seagrass_deep_cold'`, `'seagrass_deep_warm'`, 
+`'seagrass_normal'`, `'seagrass_river'`, `'seagrass_simple'`, `'seagrass_swamp'`, `'seagrass_warm'`, 
+`'small_basalt_columns'`, `'spring_closed'`, `'spring_closed_double'`, `'spring_delta'`, `'spring_lava'`, 
+`'spring_lava_double'`, `'spring_open'`, `'spring_water'`, `'spruce'`, `'spruce_snovy'`, `'super_birch_bees_0002'`, 
+`'swamp_tree'`, `'taiga_vegetation'`, `'trees_giant'`, `'trees_giant_spruce'`, `'trees_jungle'`, 
+`'trees_jungle_edge'`, `'trees_mountain'`, `'trees_mountain_edge'`, `'trees_savanna'`, `'trees_shattered_savanna'`, 
+`'trees_water'`, `'twisting_vines'`, `'vines'`, `'void_start_platform'`, `'warm_ocean_vegetation'`, 
+`'warped_forest_vegetation'`, `'warped_fungi'`, `'warped_fungi_planted'`, `'weeping_vines'`
+
+### Custom Scarpet Features (1.16.2+)
+
+* `'bastion_remnant_bridge'` - Bridge version of a bastion remnant
+* `'bastion_remnant_hoglin_stable'` - Hoglin stables version of a bastion remnant
+* `'bastion_remnant_treasure'` - Treasure version of a bastion remnant
+* `'bastion_remnant_units'` - Housing units version of a bastion remnant
+* `'birch_bees'` - birch tree that always generates with a beehive unlike standard that generate with probability
+* `'coral'` - random standalone coral feature, typically part of `'warm_ocean_vegetation'`
+* `'coral_claw'` - claw coral feature 
+* `'coral_mushroom'` - mushroom coral feature
+* `'coral_tree'` - tree coral feature
+* `'fancy_oak_bees'` - large oak tree variant with a mandatory beehive unlike standard that generate with probability
+* `'oak_bees'` - normal oak tree with a manatory beehive unlike standard that generate with probability
+
+
+### `structure_eligibility(pos, ?structure, ?size_needed)`
+
+Checks wordgen eligibility for a structure in a given chunk. Requires a `Standard Structure` name (see above).
+If no structure is given, or `null`, then it will check
+for all structures. If bounding box of the structures is also requested, it will compute size of potential
+structures. This function, unlike other in the `structure*` category is not using world data nor accesses chunks
+making it preferred for scoping ungenerated terrain, but it takes some compute resources to calculate the structure.
+  
+Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
+the actual structure from forming.
+  
+If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
+a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
+list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
+
+If structure is not specified, it will return a set of structure names that are eligible, or a map with structures
+as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
+should be generated there.
+
+
+### `structures(pos), structures(pos, structure_name)`
+
+Returns structure information for a given block position. Note that structure information is the same for all the 
+blocks from the same chunk. `structures` function can be called with a block, or a block and a structure name. In 
+the first case it returns a map of structures at a given position, keyed by structure name, with values indicating 
+the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
+name, returns a map with two values, `'box'` for bounding box of the structure, and `'pieces'` for a list of 
+components for that structure, with their name, direction and two sets of coordinates 
+indicating the bounding box of the structure piece.
+
+Requires a `Standard Structure` name (see above).
+
+### `structure_references(pos), structure_references(pos, structure_name)`
+
+Returns structure information that a chunk with a given block position is part of. `structure_references` function 
+can be called with a block, or a block and a structure name. In the first case it returns a list of structure names 
+that give chunk belongs to. When called with an extra structure name, returns list of positions pointing to the 
+lowest block position in chunks that hold structure starts for these structures. You can query that chunk structures 
+then to get its bounding boxes.
+
+Requires a `Standard Structure` name (see above).
+
+### `set_structure(pos, structure_name), set_structure(pos, structure_name, null)`
+
+Creates or removes structure information of a structure associated with a chunk of `pos`. Unlike `plop`, blocks are 
+not placed in the world, only structure information is set. For the game this is a fully functional structure even 
+if blocks are not set. To remove the structure a given point is in, use `structure_references` to find where current 
+structure starts.
+
+Requires a `Structure Variant` or `Standard Structure` name (see above). If standard name is used, the variant of the 
+structure may depend on the biome, otherwise the default structure for this type will be generated.
+
+### `plop(pos, what)`
+
+Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
+To `what` gets plopped and exactly where it often depends on the feature or structure itself. 
+
+Requires a `Structure Variant`,  `Standard Structure`, `World Generation Feature` or `Custom Scarpet Feature` name (see
+above). If standard name is used, the variant of the structure may depend on the biome, otherwise the default 
+structure for this type will be generated.
+
+All structures are chunk aligned, and often span multiple chunks. Repeated calls to plop a structure in the same chunk 
+would result either in the same structure generated on top of each other, or with different state, but same position. 
+Most structures generate at specific altitudes, which are hardcoded, or with certain blocks around them. API will 
+cancel all extra position / biome / random requirements for structure / feature placement, but some hardcoded 
+limitations may still cause some of structures/features not to place. Some features require special blocks to be
+present, like coral -> water or ice spikes -> snow block, and for some features, like fossils, placement is all sorts 
+of messed up. This can be partially avoided for structures by setting their structure information via `set_structure`, 
+which sets it without looking into world blocks, and then use `plop` to fill it with blocks. This may, or may not work.
+
+All generated structures will retain their properties, like mob spawning, however in many cases the world / dimension 
+itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
+because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
+
+# Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
@@ -3399,11 +3397,21 @@ Available shapes:
      * `height` - height of the cyllinder, defaults to `0`, so flat disk. Can be negative.
      * `level` - level of details, see `'sphere'`.
 
-### `create_marker(text, pos, rotation?, block?)`
+### `create_marker(text, pos, rotation?, block?, interactive?)`
 
 Spawns a (permanent) marker entity with text or block at position. Returns that entity for further manipulations. 
 Unloading the app that spawned them will cause all the markers from the loaded portion of the world to be removed. 
-Also, if the game loads that marker in the future and the app is not loaded, it will be removed as well.
+Also, if the game loads that marker in the future and the app is not loaded, it will be removed as well. 
+
+If `interactive` (`true` by default) is `false`, the armorstand will be a marker and would not be interactive in any
+gamemode. But blocks can be placed inside markers and will not catch any interaction events. 
+
+Y Position of a marker text or block will be adjusted to make blocks or text appear at the specified position. 
+This makes so that actual armorstand position may be offset on Y axis. You would need to adjust your entity
+locations if you plan to move the armorstand around after the fact. If both text and block are specified - one of them
+will be aligned (armorstand type markers text shows up at their feet, while for regular armorstands - above the head,
+while block on the head always render in the same position regardless if its a marker or not).
+
 
 ### `remove_all_markers()`
 

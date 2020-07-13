@@ -65,5 +65,4 @@ public interface CarpetExtension
 
     default Map<String, String> canHasTranslations(String lang) { return null;}
 
-
 }

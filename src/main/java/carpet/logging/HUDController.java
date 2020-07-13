@@ -1,10 +1,13 @@
-package carpet.utils;
+package carpet.logging;
 
+import carpet.CarpetServer;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.PacketCounter;
 import carpet.mixins.PlayerListHeaderS2CPacketMixin;
+import carpet.utils.Messenger;
+import carpet.utils.SpawnReporter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
@@ -22,9 +25,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class HUDController
 {
+    private static List<Consumer<MinecraftServer>> HUDListeners = new ArrayList<>();
+
+    /**
+     * Adds listener to be called when HUD is updated for logging information
+     * @param listener - a method to be called when new HUD inforation are collected
+     */
+    public void register(Consumer<MinecraftServer> listener)
+    {
+        HUDListeners.add(listener);
+    }
+
     public static Map<PlayerEntity, List<BaseText>> player_huds = new HashMap<>();
 
     public static void addMessage(PlayerEntity player, BaseText hudMessage)
@@ -81,6 +96,9 @@ public class HUDController
 
         if (LoggerRegistry.__packets)
             LoggerRegistry.getLogger("packets").log(()-> packetCounter());
+
+        // extensions have time to pitch in.
+        HUDListeners.forEach(l -> l.accept(server));
 
         for (PlayerEntity player: player_huds.keySet())
         {
