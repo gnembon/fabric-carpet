@@ -2905,9 +2905,30 @@ public class CarpetExpression
             }
 
             ArmorStandEntity armorstand = new ArmorStandEntity(EntityType.ARMOR_STAND, cc.s.getWorld());
+            double yoffset;
+            if (targetBlock == null && name.isEmpty())
+            {
+                yoffset = 0.0;
+            }
+            else if (!interactable && targetBlock == null)
+            {
+                yoffset = -0.41;
+            }
+            else
+            {
+                if (targetBlock==null)
+                {
+                    yoffset = -armorstand.getHeight()-0.41;
+                }
+                else
+                {
+                    yoffset = -armorstand.getHeight()+0.3;
+                }
+            }
             armorstand.refreshPositionAndAngles(
                     pointLocator.vec.x,
-                    pointLocator.vec.y - ((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3)),
+                    //pointLocator.vec.y - ((!interactable && targetBlock == null)?0.41f:((targetBlock==null)?(armorstand.getHeight()+0.41):(armorstand.getHeight()-0.3))),
+                    pointLocator.vec.y + yoffset,
                     pointLocator.vec.z,
                     (float)pointLocator.yaw,
                     (float) pointLocator.pitch
