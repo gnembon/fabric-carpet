@@ -2060,7 +2060,7 @@ public class CarpetExpression
             return (_c, _t ) -> retval;
         });
 
-        this.expr.addLazyFunction("entity_area", 7, (c, t, lv) -> {
+        this.expr.addLazyFunction("entity_area", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 1);
             BlockPos pos1 = pos1Locator.block.getPos();
