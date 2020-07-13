@@ -1,6 +1,5 @@
 package carpet.logging;
 
-import carpet.utils.HUDController;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 

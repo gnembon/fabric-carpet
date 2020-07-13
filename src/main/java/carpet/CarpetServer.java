@@ -11,7 +11,7 @@ import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
 import carpet.settings.SettingsManager;
-import carpet.utils.HUDController;
+import carpet.logging.HUDController;
 import carpet.utils.MobAI;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.loader.api.FabricLoader;
