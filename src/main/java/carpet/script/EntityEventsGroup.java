@@ -22,12 +22,14 @@ import java.util.stream.Collectors;
 public class EntityEventsGroup
 {
     private final Map<EntityEventType, Map<String, CarpetEventServer.ScheduledCall>> actions;
-    public EntityEventsGroup()
+    private Entity entity;
+    public EntityEventsGroup(Entity e)
     {
         actions = new EnumMap<>(EntityEventType.class);
+        entity = e;
     }
 
-    public void onEvent(EntityEventType type, Entity entity, Object ... args)
+    public void onEvent(EntityEventType type, Object... args)
     {
         if (actions.isEmpty()) return; // most of the cases, trying to be nice
         Map<String, CarpetEventServer.ScheduledCall> actionSet = actions.get(type);
@@ -116,7 +118,7 @@ public class EntityEventsGroup
         public void call(CarpetEventServer.ScheduledCall tickCall, Entity entity, Object ... args)
         {
             assert args.length == argcount-1;
-            tickCall.execute(makeArgs(entity, args));
+            tickCall.execute(entity.getCommandSource(), makeArgs(entity, args));
         }
         protected List<Value> makeArgs(Entity entity, Object ... args)
         {
