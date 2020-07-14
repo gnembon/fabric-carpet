@@ -68,7 +68,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     @Inject(method = "onDeath", at = @At("HEAD"))
     private void onDeathEvent(DamageSource source, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DEATH, this, source.name);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DEATH, source.name);
         if (PLAYER_DIES.isNeeded())
         {
             PLAYER_DIES.onPlayerEvent((ServerPlayerEntity) (Object)this);

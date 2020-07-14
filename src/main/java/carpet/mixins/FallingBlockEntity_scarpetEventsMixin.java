@@ -23,6 +23,6 @@ public abstract class FallingBlockEntity_scarpetEventsMixin extends Entity
     private void onTickCall(CallbackInfo ci)
     {
         // calling extra on_tick because falling blocks do not fall back to super tick call
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_TICK, this);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_TICK);
     }
 }

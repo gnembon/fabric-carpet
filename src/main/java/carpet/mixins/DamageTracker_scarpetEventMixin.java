@@ -24,7 +24,7 @@ public abstract class DamageTracker_scarpetEventMixin
     @Inject(method = "onDamage", at = @At("HEAD"))
     private void onDamageTaken(DamageSource damageSource_1, float float_1, float float_2, CallbackInfo ci)
     {
-        ((EntityInterface)entity).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DAMAGE, entity, float_2, damageSource_1);
+        ((EntityInterface)entity).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DAMAGE, float_2, damageSource_1);
         if (entity instanceof ServerPlayerEntity && PLAYER_TAKES_DAMAGE.isNeeded())
         {
             PLAYER_TAKES_DAMAGE.onDamage(entity, float_2, damageSource_1);

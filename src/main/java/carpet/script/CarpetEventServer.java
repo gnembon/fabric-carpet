@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
@@ -86,21 +87,33 @@ public class CarpetEventServer
             this.dueTime = dueTime;
         }
 
+        /**
+         * used in scheduled calls
+         */
         public void execute()
         {
             CarpetServer.scriptServer.runas(ctx.origin, ctx.s, host, function, lazify(args));
         }
 
-        public void execute(List<Value> args)
+        /**
+         * Used in entity events
+         * @param asSource - entity command source
+         * @param args = options
+         */
+        public void execute(ServerCommandSource asSource, List<Value> args)
         {
             if (this.args == null || this.args.isEmpty())
-                CarpetServer.scriptServer.runas(ctx.origin, ctx.s, host, function, lazify(args));
+                CarpetServer.scriptServer.runas(
+                        ctx.origin, asSource.withLevel(CarpetSettings.runPermissionLevel),
+                        host, function, lazify(args));
             else
             {
                 List<Value> combinedArgs = new ArrayList<>();
                 combinedArgs.addAll(args);
                 combinedArgs.addAll(this.args);
-                CarpetServer.scriptServer.runas(ctx.origin, ctx.s, host, function, lazify(combinedArgs));
+                CarpetServer.scriptServer.runas(
+                        ctx.origin, asSource.withLevel(CarpetSettings.runPermissionLevel),
+                        host, function, lazify(combinedArgs));
             }
         }
         private List<LazyValue> lazify(List<Value> args)

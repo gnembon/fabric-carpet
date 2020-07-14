@@ -17,7 +17,7 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Shadow protected int netherPortalTime;
     private boolean permanentVehicle;
 
-    private final EntityEventsGroup events = new EntityEventsGroup();
+    private final EntityEventsGroup events = new EntityEventsGroup((Entity) (Object)this);
 
     @Override
     public EntityEventsGroup getEventContainer()
@@ -52,14 +52,14 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Inject(method = "tick", at = @At("HEAD"))
     private void onTickCall(CallbackInfo ci)
     {
-        events.onEvent(EntityEventsGroup.EntityEventType.ON_TICK, (Entity) (Object) this);
+        events.onEvent(EntityEventsGroup.EntityEventType.ON_TICK);
     }
 
 
     @Inject(method = "remove", at = @At("HEAD"))
     private void onRemove(CallbackInfo ci)
     {
-        if (!removed) events.onEvent(EntityEventsGroup.EntityEventType.ON_REMOVED, (Entity) (Object) this);
+        if (!removed) events.onEvent(EntityEventsGroup.EntityEventType.ON_REMOVED);
     }
 
 
