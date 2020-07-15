@@ -436,6 +436,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 return false;
             }
         }
+        if (modifiedTag) dirty();
         return modifiedTag;
     }
 
@@ -582,13 +583,23 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
     }
 
+    private void dirty()
+    {
+        nbtString = null;
+    }
+
     @Override
     public boolean delete(Value where)
     {
         NbtPathArgumentType.NbtPath path = cachePath(where.getString());
         ensureOwnership();
         int removed = path.remove(getTag());
-        return removed > 0;
+        if (removed > 0)
+        {
+            dirty();
+            return true;
+        }
+        return false;
     }
 
     public static class InventoryLocator
