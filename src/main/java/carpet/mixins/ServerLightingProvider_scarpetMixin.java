@@ -38,14 +38,14 @@ public abstract class ServerLightingProvider_scarpetMixin extends LightingProvid
                 //ChunkPos pos = new ChunkPos(x, z);
                 int j;
                 for(j = -1; j < 17; ++j) {                                                                 // skip some recomp
-                    super.queueData(LightType.BLOCK, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
-                    super.queueData(LightType.SKY, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
+                    super.enqueueSectionData(LightType.BLOCK, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
+                    super.enqueueSectionData(LightType.SKY, ChunkSectionPos.from(pos, j), new ChunkNibbleArray(), false);
                 }
                 for(j = 0; j < 16; ++j) {
-                    super.updateSectionStatus(ChunkSectionPos.from(pos, j), true);
+                    super.setSectionStatus(ChunkSectionPos.from(pos, j), true);
                 }
 
-                super.setLightEnabled(pos, true);
+                super.setColumnEnabled(pos, true);
 
                     chunk.getLightSourcesStream().forEach((blockPos) -> {
                         super.addLightSource(blockPos, chunk.getLuminance(blockPos));

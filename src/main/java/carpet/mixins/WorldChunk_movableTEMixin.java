@@ -101,7 +101,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
             boolean boolean_3 = chunkSection.isEmpty();
             if (boolean_2 != boolean_3)
             {
-                this.world.getChunkManager().getLightingProvider().updateSectionStatus(blockPos_1, boolean_3);
+                this.world.getChunkManager().getLightingProvider().setSectionStatus(blockPos_1, boolean_3);
             }
             
             if (!this.world.isClient)

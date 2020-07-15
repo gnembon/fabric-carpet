@@ -1088,7 +1088,7 @@ public class CarpetExpression
             BlockPos pos = locator.block.getPos();
             Biome biome = world.getBiome(pos);
             // in locatebiome
-            Identifier biomeId = cc.s.getMinecraftServer().method_30611().method_30530(Registry.BIOME_KEY).getId(biome);
+            Identifier biomeId = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
             Value res = new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             return (_c, _t) -> res;
         });
@@ -1101,7 +1101,7 @@ public class CarpetExpression
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
             // from locatebiome command code
-            Biome biome = cc.s.getMinecraftServer().method_30611().method_30530(Registry.BIOME_KEY).get(new Identifier(biomeName));
+            Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(biomeName));
             if (biome == null)
                 throw new InternalExpressionException("Unknown biome: "+biomeName);
             boolean doImmediateUpdate = true;

@@ -135,7 +135,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
         StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,worldIn.getSeed());
         if (config == null)
             config = new DefaultFeatureConfig();
-        structurestart1.init(worldIn.method_30349(), generator, worldIn.getStructureManager() , chunkpos.x, chunkpos.z, biome_1, config);
+        structurestart1.init(worldIn.getRegistryManager(), generator, worldIn.getStructureManager() , chunkpos.x, chunkpos.z, biome_1, config);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;
 
         if (structurestart.hasChildren())

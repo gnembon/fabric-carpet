@@ -167,7 +167,7 @@ public class FeatureGenerator
             if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
             StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, seed);
-            structureStart3.init(world.method_30349(), generator, manager, chunkPos.x, chunkPos.z, biome, (T) configuredFeature.config);
+            structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos.x, chunkPos.z, biome, (T) configuredFeature.config);
             if (!structureStart3.hasChildren()) return null;
             return structureStart3;
         }

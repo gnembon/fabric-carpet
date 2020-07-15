@@ -31,6 +31,6 @@ public abstract class ChunkLightProvider_scarpetChunkCreationMixin implements Li
     }
 
     @Override
-    @Invoker("getCurrentLevelFromArray")
-    public abstract int callGetCurrentLevelFromArray(ChunkNibbleArray array, long blockPos);
+    @Invoker("getCurrentLevelFromSection")
+    public abstract int callGetCurrentLevelFromSection(ChunkNibbleArray array, long blockPos);
 }

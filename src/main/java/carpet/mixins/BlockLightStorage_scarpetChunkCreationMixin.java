@@ -31,14 +31,14 @@ public abstract class BlockLightStorage_scarpetChunkCreationMixin extends LightS
         for (int y = -1; y < 17; ++y)
         {
             final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.getX(cPos), y, ChunkSectionPos.getZ(cPos));
-            final long pos = BlockPos.asLong(ChunkSectionPos.getWorldCoord(ChunkSectionPos.getX(sectionPos)), ChunkSectionPos.getWorldCoord(y), ChunkSectionPos.getWorldCoord(ChunkSectionPos.getZ(sectionPos)));
+            final long pos = BlockPos.asLong(ChunkSectionPos.getBlockCoord(ChunkSectionPos.getX(sectionPos)), ChunkSectionPos.getBlockCoord(y), ChunkSectionPos.getBlockCoord(ChunkSectionPos.getZ(sectionPos)));
 
-            if (!this.hasLight(sectionPos))
+            if (!this.hasSection(sectionPos))
                 continue;
 
             for (final Direction dir : Direction.Type.HORIZONTAL)
             {
-                final ChunkNibbleArray neighborLightArray = this.getLightArray(ChunkSectionPos.offset(sectionPos, dir));
+                final ChunkNibbleArray neighborLightArray = this.getLightSection(ChunkSectionPos.offset(sectionPos, dir));
 
                 if (neighborLightArray == null)
                     continue;
@@ -55,7 +55,7 @@ public abstract class BlockLightStorage_scarpetChunkCreationMixin extends LightS
                         final long dst = BlockPos.add(pos, ox + t * dx, dy, oz + t * dz);
                         final long src = BlockPos.offset(dst, dir);
 
-                        final int srcLevel = ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromArray(neighborLightArray, src);
+                        final int srcLevel = ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborLightArray, src);
 
                         levelPropagator.invokeUpdateLevel(src, dst, levelPropagator.callGetPropagatedLevel(src, dst, srcLevel), true);
                     }
