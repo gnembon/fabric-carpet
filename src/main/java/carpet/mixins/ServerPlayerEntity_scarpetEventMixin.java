@@ -33,9 +33,9 @@ import static carpet.script.CarpetEventServer.Event.STATISTICS;
 public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
 {
 
-    public ServerPlayerEntity_scarpetEventMixin(World world, BlockPos blockPos, GameProfile gameProfile)
+    public ServerPlayerEntity_scarpetEventMixin(World world, BlockPos blockPos, float f, GameProfile gameProfile)
     {
-        super(world, blockPos, gameProfile);
+        super(world, blockPos, f, gameProfile);
     }
 
     @Shadow protected abstract void consumeItem();
