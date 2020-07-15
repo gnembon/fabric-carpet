@@ -157,7 +157,7 @@
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
-    "DamageTracker_scarpetEventMixin",
+    "PlayerEntity_scarpetEventsMixin",
     "ServerPlayerEntity_scarpetEventMixin",
     "FallingBlockEntity_scarpetEventsMixin",
     "BlockItem_scarpetEventMixin",
