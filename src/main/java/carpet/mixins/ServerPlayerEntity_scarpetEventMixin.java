@@ -52,9 +52,9 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
         {
             Hand hand = getActiveHand();
             ItemStack stack = getActiveItem().copy();
+            PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayerEntity) (Object)this, hand, stack);
             // do vanilla
             super.consumeItem();
-            PLAYER_FINISHED_USING_ITEM.onItemAction((ServerPlayerEntity) (Object)this, hand, stack);
         }
         else
         {

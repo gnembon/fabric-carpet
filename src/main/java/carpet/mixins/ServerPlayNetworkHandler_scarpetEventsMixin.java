@@ -225,13 +225,13 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
         PLAYER_ATTACKS_ENTITY.onEntityAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), null);
     }
 
-    @Inject(method = "onButtonClick", at = @At("HEAD"))
+    @Inject(method = "onButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"))
     private void onItemBeingPickedFromInventory(ButtonClickC2SPacket packet, CallbackInfo ci)
     {
         // crafts not int the crafting window
         //CarpetSettings.LOG.error("Player clicks button "+packet.getButtonId());
     }
-    @Inject(method = "onCraftRequest", at = @At("HEAD"))
+    @Inject(method = "onCraftRequest", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"))
     private void onRecipeSelectedInRecipeManager(CraftRequestC2SPacket packet, CallbackInfo ci)
     {
         if (PLAYER_CHOOSES_RECIPE.isNeeded())
@@ -243,7 +243,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     @Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"))
     private void onUpdatedSelectedSLot(UpdateSelectedSlotC2SPacket packet, CallbackInfo ci)
     {
-        if (PLAYER_SWITCHES_SLOT.isNeeded())
+        if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isOnThread())
         {
             PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.inventory.selectedSlot, packet.getSelectedSlot());
         }
