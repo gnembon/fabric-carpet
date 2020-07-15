@@ -1,12 +1,12 @@
 package carpet.mixins;
 
+import carpet.fakes.BrainInterface;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityInteraction;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Activity;
+import net.minecraft.entity.ai.brain.Memory;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.passive.AbstractTraderEntity;
@@ -62,13 +62,15 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
         if (MobAI.isTracking(this, MobAI.TrackingType.IRON_GOLEM_SPAWNING))
         {
             long time;
-            Optional<Boolean> optional_1 = this.brain.getOptionalMemory(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
-            if (!optional_1.isPresent()) {
+            Optional<? extends Memory<?>> last_seen = ((BrainInterface)this.brain).getMobMemories().get(MemoryModuleType.GOLEM_DETECTED_RECENTLY);
+            if (!last_seen.isPresent())
+            {
                 time = 0;
-            } else {
-                //Long long_2 = optional_1.get(); #TODO fixme need last seen golem time.
-                //time = long_2+600 - getEntityWorld().getTime();
-                time = 600;
+            }
+            else
+            {
+                String serialized = last_seen.get().toString();
+                time = Integer.parseInt(serialized.substring(11, serialized.length()-1));
             }
             boolean recentlySeen = time > 0;
             Optional<Long> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);

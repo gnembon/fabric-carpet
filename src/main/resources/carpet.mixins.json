@@ -55,6 +55,7 @@
     "EntityTrackerEntry_leashFixMixin",
 
     "VillagerEntity_aiMixin",
+    "Brain_Mixin",
 
     "ServerWorld_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
