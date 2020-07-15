@@ -28,12 +28,12 @@ public class ServerPlayerInteractionManager_scarpetEventsMixin
 {
     @Shadow public ServerPlayerEntity player;
 
-    @Inject(method = "tryBreakBlock", locals = LocalCapture.CAPTURE_FAILEXCEPTION, at = @At(
+    @Inject(method = "tryBreakBlock", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/block/Block;onBroken(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)V",
+            target = "Lnet/minecraft/block/Block;onBreak(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/entity/player/PlayerEntity;)V",
             shift = At.Shift.BEFORE
     ))
-    private void onBlockBroken(BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, BlockEntity be, Block b, boolean boolean_1)
+    private void onBlockBroken(BlockPos blockPos_1, CallbackInfoReturnable<Boolean> cir, BlockState blockState_1, BlockEntity be, Block b)
     {
         PLAYER_BREAK_BLOCK.onBlockBroken(player, blockPos_1, blockState_1);
     }
