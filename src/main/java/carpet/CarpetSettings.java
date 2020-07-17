@@ -268,6 +268,9 @@ public class CarpetSettings
     @Rule( desc = "Silverfish drop a gravel item when breaking out of a block", category = FEATURE )
     public static boolean silverFishDropGravel = false;
 
+    @Rule( desc = "Phantoms will not spawn when the hostile mobcap is full.", category = {FEATURE, SURVIVAL} )
+    public static boolean phantomsRespectMobCap = false;
+
     @Rule( desc = "summoning a lightning bolt has all the side effects of natural lightning", category = CREATIVE )
     public static boolean summonNaturalLightning = false;
 
