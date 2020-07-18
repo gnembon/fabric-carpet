@@ -9,7 +9,8 @@ Returns the deep copy of the expression. Can be used to copy mutable objects, li
 ### `type(expr)`
 
 Returns the string value indicating type of the expression. Possible outcomes 
-are `null, number, string, list, iterator`, as well as minecraft related concepts like `block, entity, nbt`
+are `null`, `number`, `string`, `list`, `map`, `iterator`, `function`, `task`,
+as well as minecraft related concepts like `block`, `entity`, `nbt`, `text`. 
 
 ### `bool(expr)`
 

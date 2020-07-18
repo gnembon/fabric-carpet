@@ -4,12 +4,16 @@ import carpet.CarpetSettings;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.util.math.Matrix4f;
+import net.minecraft.client.util.math.Rotation3;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.util.math.Direction;
@@ -35,6 +39,7 @@ public class ShapesRenderer
         put("box", RenderedBox::new);
         put("sphere", RenderedSphere::new);
         put("cylinder", RenderedCylinder::new);
+        put("label", RenderedText::new);
     }};
 
     public ShapesRenderer(MinecraftClient minecraftClient)
@@ -63,6 +68,8 @@ public class ShapesRenderer
         RenderSystem.disableCull();
         RenderSystem.disableLighting();
         RenderSystem.depthMask(false);
+        // causes water to vanish
+        //RenderSystem.depthMask(true);
         //RenderSystem.polygonOffset(-3f, -3f);
         //RenderSystem.enablePolygonOffset();
         //Entity entity = this.client.gameRenderer.getCamera().getFocusedEntity();
@@ -182,6 +189,80 @@ public class ShapesRenderer
             if (client.world.getRegistryKey() != dim) return false;
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
+        }
+    }
+
+    public static class RenderedText extends RenderedShape<ShapeDispatcher.Text>
+    {
+
+        protected RenderedText(MinecraftClient client, ShapeDispatcher.ExpiringShape shape)
+        {
+            super(client, (ShapeDispatcher.Text)shape);
+        }
+
+        @Override
+        public void renderLines(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick)
+        {
+            if (shape.a == 0.0) return;
+            Vec3d v1 = shape.relativiseRender(client.world, shape.pos, partialTick);
+            Camera camera1 = client.gameRenderer.getCamera();
+            TextRenderer textRenderer = client.textRenderer;
+            double d = camera1.getPos().x;
+            double e = camera1.getPos().y;
+            double f = camera1.getPos().z;
+            RenderSystem.pushMatrix();
+            RenderSystem.translatef((float)(v1.x - d), (float)(v1.y - e), (float)(v1.z - f));
+            RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
+
+            if (shape.facing == null)
+            {
+                RenderSystem.multMatrix(new Matrix4f(camera1.getRotation()));
+            }
+            else
+            {
+                switch (shape.facing)
+                {
+                    case NORTH:
+                        break;
+                    case SOUTH:
+                        RenderSystem.rotatef(180.0f, 0.0f, 1.0f, 0.0f);
+                        break;
+                    case EAST:
+                        RenderSystem.rotatef(270.0f, 0.0f, 1.0f, 0.0f);
+                        break;
+                    case WEST:
+                        RenderSystem.rotatef(90.0f, 0.0f, 1.0f, 0.0f);
+                        break;
+                    case UP:
+                        RenderSystem.rotatef(90.0f, 1.0f, 0.0f, 0.0f);
+                        break;
+                    case DOWN:
+                        RenderSystem.rotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+                        break;
+                }
+            }
+            RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
+            if (shape.tilt!=0.0f)
+            {
+                RenderSystem.rotatef(shape.tilt, 0.0f, 0.0f, 1.0f);
+            }
+            RenderSystem.translatef(-10*shape.indent, -10*shape.height, (float) (-10*renderEpsilon)-10*shape.raise);
+            //if (visibleThroughWalls) RenderSystem.disableDepthTest();
+            RenderSystem.scalef(-1.0F, 1.0F, 1.0F);
+
+            float text_x = 0;
+            if (shape.align == 0)
+            {
+                text_x = (float)(-textRenderer.getStringWidth(shape.value)) / 2.0F;
+            }
+            else if (shape.align == 1)
+            {
+                text_x = (float)(-textRenderer.getStringWidth(shape.value));
+            }
+            VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
+            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, Rotation3.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
+            immediate.draw();
+            RenderSystem.popMatrix();
         }
     }
 

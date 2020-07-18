@@ -7,8 +7,8 @@ import net.minecraft.text.Text;
 
 public class FormattedTextValue extends StringValue
 {
-    BaseText text;
-    public FormattedTextValue(BaseText text)
+    Text text;
+    public FormattedTextValue(Text text)
     {
         super(null);
         this.text = text;
@@ -36,7 +36,7 @@ public class FormattedTextValue extends StringValue
         return "text";
     }
 
-    public BaseText getText()
+    public Text getText()
     {
         return text;
     }
@@ -47,4 +47,14 @@ public class FormattedTextValue extends StringValue
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return StringTag.of(Text.Serializer.toJson(text));
     }
+
+    public String serialize()
+    {
+        return Text.Serializer.toJson(text);
+    }
+    public static FormattedTextValue deserialize(String serialized)
+    {
+        return new FormattedTextValue(Text.Serializer.fromJson(serialized));
+    }
+
 }

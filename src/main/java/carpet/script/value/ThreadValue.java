@@ -151,4 +151,10 @@ public class ThreadValue extends Value
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return getValue().toTag(true);
     }
+
+    @Override
+    public String getTypeString()
+    {
+        return "task";
+    }
 }
