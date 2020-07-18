@@ -20,6 +20,7 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.arguments.ParticleArgumentType;
 import net.minecraft.entity.Entity;
+import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.FloatTag;
@@ -403,6 +404,7 @@ public class ShapeDispatcher
                 put("align", new StringValue("center")).
                 put("size", new NumericValue(10)).
                 put("value", Value.NULL).
+                put("doublesided", new NumericValue(0)).
                 build();
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
@@ -423,6 +425,7 @@ public class ShapeDispatcher
         int align;
         float height;
         String value;
+        boolean doublesided;
 
         @Override
         protected void init(Map<String, Value> options)
@@ -456,6 +459,11 @@ public class ShapeDispatcher
                     align = 1;
                 else
                     align = -1;
+            }
+            doublesided = false;
+            if (options.containsKey("doublesided"))
+            {
+                doublesided = options.get("doublesided").getBoolean();
             }
 
             raise = NumericValue.asNumber(options.getOrDefault("raise", optional.get("raise"))).getFloat();
@@ -496,6 +504,7 @@ public class ShapeDispatcher
             hash ^= Float.hashCode(height); hash *= 1099511628211L;
             hash ^= Float.hashCode(size); hash *= 1099511628211L;
             hash ^= Integer.hashCode(align); hash *= 1099511628211L;
+            hash ^= Boolean.hashCode(doublesided); hash *= 1099511628211L;
 
             return hash;
         }
@@ -842,6 +851,7 @@ public class ShapeDispatcher
             put("raise", new FloatParam("raise"));
             put("tilt", new FloatParam("tilt"));
             put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
+            put("doublesided", new BoolParam("doublesided"));
 
         }};
         protected String id;
@@ -946,6 +956,25 @@ public class ShapeDispatcher
             if (!(value instanceof NumericValue))
                 throw new InternalExpressionException("'" + id + "' needs to be a number");
             return value;
+        }
+    }
+    public static class BoolParam extends NumericParam
+    {
+        protected BoolParam(String id)
+        {
+            super(id);
+        }
+
+        @Override
+        public Tag toTag(Value value)
+        {
+            return ByteTag.of(value.getBoolean());
+        }
+
+        @Override
+        public Value decode(Tag tag)
+        {
+            return new NumericValue(((ByteTag) tag).getByte() > 0);
         }
     }
     public static class FloatParam extends NumericParam
