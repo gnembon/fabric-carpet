@@ -30,6 +30,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -37,9 +39,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.util.registry.RegistryKey;
-import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -48,7 +48,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -236,7 +235,7 @@ public class ShapeDispatcher
             put("box", creator(Box::new));
             put("sphere", creator(Sphere::new));
             put("cylinder", creator(Cylinder::new));
-            put("label", creator(Text::new));
+            put("label", creator(DisplayedText::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -393,7 +392,7 @@ public class ShapeDispatcher
         }
     }
 
-    public static class Text extends ExpiringShape
+    public static class DisplayedText extends ExpiringShape
     {
         private final Set<String> required = ImmutableSet.of("pos", "text");
         private final Map<String, Value> optional = ImmutableMap.<String, Value>builder().
@@ -410,7 +409,7 @@ public class ShapeDispatcher
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
         protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
-        public Text() { }
+        public DisplayedText() { }
 
         Vec3d pos;
         String text;
@@ -424,18 +423,18 @@ public class ShapeDispatcher
         float indent;
         int align;
         float height;
-        String value;
+        Text value;
 
         @Override
         protected void init(Map<String, Value> options)
         {
             super.init(options);
             pos = vecFromValue(options.get("pos"));
-            text = options.get("text").getString();
-            value = text;
+            value = ((FormattedTextValue)options.get("text")).getText();
+            text = value.getString();
             if (options.containsKey("value"))
             {
-                value = options.get("value").getString();
+                value = ((FormattedTextValue)options.get("value")).getText();
             }
             textcolor = rgba2argb(color);
             textbck = rgba2argb(fillColor);
@@ -887,9 +886,23 @@ public class ShapeDispatcher
         @Override
         public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
-            if (value instanceof FormattedTextValue)
-                return new StringValue(((FormattedTextValue) value).getText().asFormattedString());
+            if (!(value instanceof FormattedTextValue))
+                value = new FormattedTextValue(new LiteralText(value.getString()));
             return value;
+        }
+
+        @Override
+        public Tag toTag(Value value)
+        {
+            if (!(value instanceof FormattedTextValue))
+                value = new FormattedTextValue(new LiteralText(value.getString()));
+            return StringTag.of(((FormattedTextValue)value).serialize());
+        }
+
+        @Override
+        public Value decode(Tag tag)
+        {
+            return FormattedTextValue.deserialize(tag.asString());
         }
     }
 

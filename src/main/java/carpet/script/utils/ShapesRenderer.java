@@ -9,15 +9,14 @@ import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.AffineTransformation;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.util.math.Matrix4f;
-import net.minecraft.client.util.math.Rotation3;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
@@ -192,12 +191,12 @@ public class ShapesRenderer
         }
     }
 
-    public static class RenderedText extends RenderedShape<ShapeDispatcher.Text>
+    public static class RenderedText extends RenderedShape<ShapeDispatcher.DisplayedText>
     {
 
         protected RenderedText(MinecraftClient client, ShapeDispatcher.ExpiringShape shape)
         {
-            super(client, (ShapeDispatcher.Text)shape);
+            super(client, (ShapeDispatcher.DisplayedText)shape);
         }
 
         @Override
@@ -253,14 +252,14 @@ public class ShapesRenderer
             float text_x = 0;
             if (shape.align == 0)
             {
-                text_x = (float)(-textRenderer.getStringWidth(shape.value)) / 2.0F;
+                text_x = (float)(-textRenderer.getWidth(shape.value.getString())) / 2.0F;
             }
             else if (shape.align == 1)
             {
-                text_x = (float)(-textRenderer.getStringWidth(shape.value));
+                text_x = (float)(-textRenderer.getWidth(shape.value.getString()));
             }
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, Rotation3.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
+            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, AffineTransformation.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
             immediate.draw();
             RenderSystem.popMatrix();
         }
