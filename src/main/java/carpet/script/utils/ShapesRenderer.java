@@ -209,6 +209,10 @@ public class ShapesRenderer
             double d = camera1.getPos().x;
             double e = camera1.getPos().y;
             double f = camera1.getPos().z;
+            if (shape.doublesided)
+                RenderSystem.disableCull();
+            else
+                RenderSystem.enableCull();
             RenderSystem.pushMatrix();
             RenderSystem.translatef((float)(v1.x - d), (float)(v1.y - e), (float)(v1.z - f));
             RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
@@ -262,6 +266,8 @@ public class ShapesRenderer
             textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, AffineTransformation.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
             immediate.draw();
             RenderSystem.popMatrix();
+            if (shape.doublesided)
+                RenderSystem.enableCull();
         }
     }
 
