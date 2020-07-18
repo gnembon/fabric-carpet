@@ -96,7 +96,7 @@ Available shapes:
      * `size` - float. Default font size is 10.
      * `facing` - text direction, where its facing. Possible options are: `player` (default, text
      always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
-     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false`
+     * `doublesided` - if `true` it will make the text visible from the back as well. Default is `false` (1.16+)
      * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
      centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
      indicates the end of text).
