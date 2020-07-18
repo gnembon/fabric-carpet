@@ -674,7 +674,7 @@ Returns the deep copy of the expression. Can be used to copy mutable objects, li
 
 Returns the string value indicating type of the expression. Possible outcomes 
 are `null`, `number`, `string`, `list`, `map`, `iterator`, `function`, `task`,
-as well as minecraft related concepts like `block`, `entity`, `nbt`, `text` 
+as well as minecraft related concepts like `block`, `entity`, `nbt`, `text`. 
 
 ### `bool(expr)`
 
@@ -3371,10 +3371,31 @@ Optional shared shape attributes:
    instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate.
 
 Available shapes:
- * `'line'` - draws a straight line between two points
+ * `'line'` - draws a straight line between two points.
    * Required attributes:
      * `from` - triple coordinates, entity, or block value indicating one end of the line
      * `to` - other end of the line, same format as `from`
+     
+ * `'label'` - draws a text in the world. Default `line` attribute controls main font color.
+      `fill` controls the color of the background. 
+   * Required attributes:
+     * `pos` - position
+     * `text` - string or formatted text to display
+   * Optional attributes
+     * `value` - string or formatted text to display instead of the main `text`. `value` unlike `text`
+     is not used to determine uniqueness of the drawn text so can be used to 
+     display smoothly dynamic elements where value of an element is constantly
+     changing and updates to it are being sent from the server.
+     * `size` - float. Default font size is 10.
+     * `facing` - text direction, where its facing. Possible options are: `player` (default, text
+     always rotates to face the player), `north`, `south`, `east`, `west`, `up`, `down`
+     * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
+     centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
+     indicates the end of text).
+     * `tilt` - additional rotation of the text on the canvas
+     * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
+     with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
+     can be used to display multiple lines of text bound to the same `pos` 
      
  * `'box'` - draws a box with corners in specified points
    * Required attributes:

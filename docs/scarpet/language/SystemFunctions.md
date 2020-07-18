@@ -10,7 +10,7 @@ Returns the deep copy of the expression. Can be used to copy mutable objects, li
 
 Returns the string value indicating type of the expression. Possible outcomes 
 are `null`, `number`, `string`, `list`, `map`, `iterator`, `function`, `task`,
-as well as minecraft related concepts like `block`, `entity`, `nbt`, `text` 
+as well as minecraft related concepts like `block`, `entity`, `nbt`, `text`. 
 
 ### `bool(expr)`
 

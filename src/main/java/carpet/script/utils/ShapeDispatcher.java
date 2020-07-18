@@ -7,6 +7,7 @@ import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
@@ -233,6 +234,7 @@ public class ShapeDispatcher
             put("box", creator(Box::new));
             put("sphere", creator(Sphere::new));
             put("cylinder", creator(Cylinder::new));
+            put("label", creator(Text::new));
         }};
         private static Function<Map<String, Value>,ExpiringShape> creator(Supplier<ExpiringShape> shapeFactory)
         {
@@ -388,6 +390,117 @@ public class ShapeDispatcher
             return requiredParams().contains(param) || optionalParams().contains(param);
         }
     }
+
+    public static class Text extends ExpiringShape
+    {
+        private final Set<String> required = ImmutableSet.of("pos", "text");
+        private final Map<String, Value> optional = ImmutableMap.<String, Value>builder().
+                put("facing", new StringValue("player")).
+                put("raise", new NumericValue(0)).
+                put("tilt", new NumericValue(0)).
+                put("indent", new NumericValue(0)).
+                put("height", new NumericValue(0)).
+                put("align", new StringValue("center")).
+                put("size", new NumericValue(10)).
+                put("value", Value.NULL).
+                build();
+        @Override
+        protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
+        @Override
+        protected Set<String> optionalParams() { return Sets.union(super.optionalParams(), optional.keySet()); }
+        public Text() { }
+
+        Vec3d pos;
+        String text;
+        int textcolor;
+        int textbck;
+
+        Direction facing;
+        float raise;
+        float tilt;
+        float size;
+        float indent;
+        int align;
+        float height;
+        String value;
+
+        @Override
+        protected void init(Map<String, Value> options)
+        {
+            super.init(options);
+            pos = vecFromValue(options.get("pos"));
+            text = options.get("text").getString();
+            value = text;
+            if (options.containsKey("value"))
+            {
+                value = options.get("value").getString();
+            }
+            textcolor = rgba2argb(color);
+            textbck = rgba2argb(fillColor);
+            String dir = options.getOrDefault("facing", optional.get("facing")).getString();
+            facing = null;
+            switch (dir)
+            {
+                case "north": facing = Direction.NORTH; break;
+                case "south": facing = Direction.SOUTH; break;
+                case "east": facing = Direction.EAST; break;
+                case "west": facing = Direction.WEST; break;
+                case "up":  facing = Direction.UP; break;
+                case "down":  facing = Direction.DOWN; break;
+            }
+            align = 0;
+            if (options.containsKey("align"))
+            {
+                String alignStr = options.get("align").getString();
+                if ("right".equalsIgnoreCase(alignStr))
+                    align = 1;
+                else
+                    align = -1;
+            }
+
+            raise = NumericValue.asNumber(options.getOrDefault("raise", optional.get("raise"))).getFloat();
+            tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
+            indent = NumericValue.asNumber(options.getOrDefault("indent", optional.get("indent"))).getFloat();
+            height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
+
+            size = NumericValue.asNumber(options.getOrDefault("size", optional.get("size"))).getFloat();
+        }
+
+        private int rgba2argb(int color)
+        {
+            int r = Math.max(1, color >> 24 & 0xFF);
+            int g = Math.max(1, color >> 16 & 0xFF);
+            int b = Math.max(1, color >>  8 & 0xFF);
+            int a = color & 0xFF;
+            return (a << 24) + (r << 16) + (g << 8) + b;
+        }
+
+
+        @Override
+        public Consumer<ServerPlayerEntity> alternative()
+        {
+            return s -> {};
+        }
+
+        @Override
+        public long calcKey()
+        {
+            long hash = super.calcKey();
+            hash ^= 5;                  hash *= 1099511628211L;
+            hash ^= pos.hashCode();     hash *= 1099511628211L;
+            hash ^= text.hashCode();    hash *= 1099511628211L;
+            if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
+            hash ^= Float.hashCode(raise); hash *= 1099511628211L;
+            hash ^= Float.hashCode(tilt); hash *= 1099511628211L;
+            hash ^= Float.hashCode(indent); hash *= 1099511628211L;
+            hash ^= Float.hashCode(height); hash *= 1099511628211L;
+            hash ^= Float.hashCode(size); hash *= 1099511628211L;
+            hash ^= Integer.hashCode(align); hash *= 1099511628211L;
+
+            return hash;
+        }
+    }
+
 
     public static class Box extends ExpiringShape
     {
@@ -689,7 +802,7 @@ public class ShapeDispatcher
         public long calcKey()
         {
             long hash = super.calcKey();
-            hash ^= 3;                        hash *= 1099511628211L;
+            hash ^= 4;                        hash *= 1099511628211L;
             hash ^= center.hashCode();        hash *= 1099511628211L;
             hash ^= Double.hashCode(radius);  hash *= 1099511628211L;
             hash ^= Double.hashCode(height);  hash *= 1099511628211L;
@@ -714,11 +827,22 @@ public class ShapeDispatcher
             put("from", new Vec3Param("from", false));
             put("to", new Vec3Param("to", true));
             put("center", new Vec3Param("center", false));
+            put("pos", new Vec3Param("pos", false));
             put("radius", new PositiveFloatParam("radius"));
             put("level", new PositiveIntParam("level"));
             put("height", new FloatParam("height"));
             put("axis", new StringChoiceParam("axis", "x", "y", "z"));
             put("points", new PointsParam("points"));
+            put("text", new FormattedTextParam("text"));
+            put("value", new FormattedTextParam("value"));
+            put("size", new PositiveIntParam("size"));
+            put("align", new StringChoiceParam("align", "center", "left", "right"));
+
+            put("indent", new FloatParam("indent"));
+            put("raise", new FloatParam("raise"));
+            put("tilt", new FloatParam("tilt"));
+            put("facing", new StringChoiceParam("axis", "player", "north", "south", "east", "west", "up", "down"));
+
         }};
         protected String id;
         protected Param(String id)
@@ -739,6 +863,34 @@ public class ShapeDispatcher
         public Tag toTag(Value value) { return StringTag.of(value.getString()); }
         public Value decode(Tag tag) { return new StringValue(tag.asString()); }
     }
+    public static class TextParam extends StringParam
+    {
+        protected TextParam(String id)
+        {
+            super(id);
+        }
+        @Override
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        {
+            return value;
+        }
+    }
+    public static class FormattedTextParam extends StringParam
+    {
+
+        protected FormattedTextParam(String id)
+        {
+            super(id);
+        }
+        @Override
+        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        {
+            if (value instanceof FormattedTextValue)
+                return new StringValue(((FormattedTextValue) value).getText().asFormattedString());
+            return value;
+        }
+    }
+
 
     public static class StringChoiceParam extends StringParam
     {
