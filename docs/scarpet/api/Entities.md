@@ -240,6 +240,11 @@ Returns mob's attack target or null if none or not applicable.
 
 Returns creature's home position or null if none or not applicable.
 
+### `query(e, 'path')`
+
+Returns path of the entity if present, `null` otherwise. The path comprises of list of nodes, each is a list
+of block value, node type, penalty, and a boolean indicated if the node has been visited.
+
 ### `query(e, 'pose')`
 
 Returns a pose of an entity, one of the following options
@@ -358,6 +363,18 @@ entities and blocks, blocks will take over the priority even if transparent or n
 
 Regardless of the options selected, the result could be `null` if nothing is in reach, entity, if look targets an
 entity, and block value if block is in reach.
+
+### `query(e, 'brain', memory)`
+
+Retrieves brain memory for entity. Possible memory units highly depend on the game version. Brain is availalble
+for villagers (1.15+) and Piglins (1.16+). If memory is not present or not available for the entity, `null` is returned.
+
+Available retrievable memories for 1.15:
+* `home`, `job_site`, `meeting_point`, `secondary_job_site`, `mobs`, `visible_mobs`, `visible_villager_babies`,
+`nearest_players`, `nearest_visible_player`, `walk_target`, `look_target`, `interaction_target`,
+`breed_target`, `path`, `interactable_doors`, `opened_doors`, `nearest_bed`, `hurt_by`, `hurt_by_entity`,
+`nearest_hostile`, `hiding_place`, `heard_bell_time`, `cant_reach_walk_target_since`,
+`golem_last_seen_time`, `last_slept`, `last_woken`, `last_worked_at_poi`
 
 ### `query(e, 'nbt', path?)`
 
