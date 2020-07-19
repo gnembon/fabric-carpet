@@ -256,6 +256,7 @@ public class ShapeDispatcher
         protected int followEntity;
         protected String snapTo;
         protected boolean snapX, snapY, snapZ;
+        protected boolean discreteX, discreteY, discreteZ;
         public DimensionType shapeDimension;
 
 
@@ -318,15 +319,18 @@ public class ShapeDispatcher
                 snapX = snapTo.contains("x");
                 snapY = snapTo.contains("y");
                 snapZ = snapTo.contains("z");
+                discreteX = snapTo.contains("dx");
+                discreteY = snapTo.contains("dy");
+                discreteZ = snapTo.contains("dz");
             }
         }
         public int getExpiry() { return duration; }
         public Vec3d toAbsolute(Entity e, Vec3d vec, float partialTick)
         {
             return vec.add(
-                    snapX?MathHelper.lerp(partialTick, e.prevX, e.getX()):0.0,
-                    snapY?MathHelper.lerp(partialTick, e.prevY, e.getY()):0.0,
-                    snapZ?MathHelper.lerp(partialTick, e.prevZ, e.getZ()):0.0
+                    snapX?(discreteX ?MathHelper.floor(e.getX()):MathHelper.lerp(partialTick, e.prevX, e.getX())):0.0,
+                    snapY?(discreteY ?MathHelper.floor(e.getY()):MathHelper.lerp(partialTick, e.prevY, e.getY())):0.0,
+                    snapZ?(discreteZ ?MathHelper.floor(e.getZ()):MathHelper.lerp(partialTick, e.prevZ, e.getZ())):0.0
             );
         }
         public Vec3d relativiseRender(World world, Vec3d vec, float partialTick)
@@ -369,6 +373,10 @@ public class ShapeDispatcher
             hash ^= shapeDimension.hashCode(); hash *= 1099511628211L;
             hash ^= color;                     hash *= 1099511628211L;
             hash ^= followEntity;              hash *= 1099511628211L;
+            if (followEntity >= 0)
+            {
+                hash ^= snapTo.hashCode();     hash *= 1099511628211L;
+            }
             hash ^= Float.hashCode(lineWidth); hash *= 1099511628211L;
             if (fa != 0.0) { hash = 31*hash + fillColor; hash *= 1099511628211L; }
             return hash;
@@ -829,7 +837,12 @@ public class ShapeDispatcher
             put("duration", new NonNegativeIntParam("duration"));
             put("color", new ColorParam("color"));
             put("follow", new EntityParam("follow"));
-            put("snap", new StringChoiceParam("snap", "xyz", "xz", "yz", "xy", "x", "y", "z"));
+            put("snap", new StringChoiceParam("snap",
+                    "xyz", "xz", "yz", "xy", "x", "y", "z",
+                    "dxdydz", "dxdz", "dydz", "dxdy", "dx", "dy", "dz",
+                    "xdz", "dxz", "ydz", "dyz", "xdy", "dxy",
+                    "xydz", "xdyz", "xdydz", "dxyz", "dxydz", "dxdyz"
+                    ));
             put("line", new PositiveFloatParam("line"));
             put("fill", new ColorParam("fill"));
 
