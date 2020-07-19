@@ -13,6 +13,8 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
@@ -60,6 +62,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -200,7 +203,14 @@ public class EntityValue extends Value
     {
         if (!(featureAccessors.containsKey(what)))
             throw new InternalExpressionException("Unknown entity feature: "+what);
-        return featureAccessors.get(what).apply(entity, arg);
+        try
+        {
+            return featureAccessors.get(what).apply(entity, arg);
+        }
+        catch (NullPointerException npe)
+        {
+            throw new InternalExpressionException("Cannot fetch '"+what+"' with these arguments");
+        }
     }
     private static final Map<String, EquipmentSlot> inventorySlots = new HashMap<String, EquipmentSlot>(){{
         put("mainhand", EquipmentSlot.MAINHAND);
@@ -210,6 +220,7 @@ public class EntityValue extends Value
         put("legs", EquipmentSlot.LEGS);
         put("feet", EquipmentSlot.FEET);
     }};
+
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
         put("removed", (entity, arg) -> new NumericValue(entity.removed));
@@ -318,6 +329,30 @@ public class EntityValue extends Value
             if (e instanceof  ServerPlayerEntity)
             {
                 return new StringValue(((ServerPlayerEntity) e).interactionManager.getGameMode().getName());
+            }
+            return Value.NULL;
+        });
+
+        put("path", (e, a) -> {
+            if (e instanceof MobEntity)
+            {
+                Path path = ((MobEntity)e).getNavigation().getCurrentPath();
+                if (path == null) return Value.NULL;
+                return ValueConversions.fromPath((ServerWorld)e.getEntityWorld(), path);
+            }
+            return Value.NULL;
+        });
+
+        put("brain", (e, a) -> {
+            String module = a.getString();
+            MemoryModuleType<?> moduleType = Registry.MEMORY_MODULE_TYPE.get(new Identifier(module));
+            if (moduleType == MemoryModuleType.DUMMY) return Value.NULL;
+            if (e instanceof LivingEntity)
+            {
+                LivingEntity livingEntity = (LivingEntity)e;
+                Optional<?> memory = livingEntity.getBrain().getOptionalMemory(moduleType);
+                if (memory==null || !memory.isPresent()) return Value.NULL;
+                return ValueConversions.fromEntityMemory(e, memory.get());
             }
             return Value.NULL;
         });
