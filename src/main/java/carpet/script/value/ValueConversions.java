@@ -7,17 +7,19 @@ import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.ai.pathing.PathNode;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.GlobalPos;
+
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Timestamp;
+
+import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ValueConversions
@@ -29,12 +31,12 @@ public class ValueConversions
 
     public static Value dimName(ServerWorld world)
     {
-        return ofId(Registry.DIMENSION_TYPE.getId(world.getDimension().getType()));
+        return ofId(world.getRegistryKey().getValue());
     }
 
-    public static Value dimName(DimensionType dim)
+    public static Value dimName(RegistryKey<World> dim)
     {
-        return ofId(Registry.DIMENSION_TYPE.getId(dim));
+        return ofId(dim.getValue());
     }
 
     public static Value ofId(Identifier id)
@@ -83,13 +85,17 @@ public class ValueConversions
         {
             return new BlockValue(null, (ServerWorld) e.getEntityWorld(), (BlockPos) v);
         };
-        if (v instanceof Timestamp)
+        if (v instanceof Number)
         {
-            return new NumericValue(((Timestamp) v).getTime());
+            return new NumericValue(((Number) v).doubleValue());
         }
-        if (v instanceof Long)
+        if (v instanceof Boolean)
         {
-            return  new NumericValue((Long)v);
+            return new NumericValue((Boolean) v);
+        }
+        if (v instanceof UUID)
+        {
+            return ofUUID( (ServerWorld) e.getEntityWorld(), (UUID)v);
         }
         if (v instanceof DamageSource)
         {
@@ -134,5 +140,14 @@ public class ValueConversions
             }
         }
         return Value.NULL;
+    }
+
+    private static Value ofUUID(ServerWorld entityWorld, UUID uuid)
+    {
+        Entity current = entityWorld.getEntity(uuid);
+        return ListValue.of(
+                current == null?Value.NULL:new EntityValue(current),
+                new StringValue(uuid.toString())
+        );
     }
 }

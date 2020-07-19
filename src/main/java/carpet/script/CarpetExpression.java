@@ -39,6 +39,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import carpet.utils.BlockInfo;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
@@ -3230,7 +3231,7 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = new StringValue(NBTSerializableValue.nameFromRegistryId(s.getWorld().getRegistryKey().getValue())); // getDImensionType
+            Value retval = ValueConversions.dimName(s.getWorld());
             return (cc, tt) -> retval;
         });
 
