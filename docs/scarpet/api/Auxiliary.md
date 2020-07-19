@@ -75,7 +75,8 @@ Optional shared shape attributes:
  * `snap` - if `follow` is present, indicated on which axis the snapping to entity coordinates occurs, and which axis
    will be treated statically, i.e. the coordinate passed in a coord triple is the actual value in the world. Default
    value is `'xyz'`, meaning the shape will be drawn relatively to the entity in all three directions. Using `xz` for 
-   instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate.
+   instance makes so that the shape follows the entity, but stays at the same, absolute Y coordinate. Preceeding an axis
+   with `d`, like `dxdydz` would make so that entity position is treated discretely (rounded down).
 
 Available shapes:
  * `'line'` - draws a straight line between two points.
