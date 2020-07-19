@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.BrainInterface;
+import carpet.fakes.MemoryInterface;
 import carpet.helpers.ParticleDisplay;
 import carpet.utils.Messenger;
 import carpet.utils.MobAI;
@@ -69,8 +70,7 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
             }
             else
             {
-                String serialized = last_seen.get().toString();
-                time = Integer.parseInt(serialized.substring(11, serialized.length()-1));
+                time = ((MemoryInterface)last_seen.get()).getScarpetExpiry();
             }
             boolean recentlySeen = time > 0;
             Optional<Long> optional_11 = this.brain.getOptionalMemory(MemoryModuleType.LAST_SLEPT);

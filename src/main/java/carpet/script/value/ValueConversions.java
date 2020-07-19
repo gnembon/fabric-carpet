@@ -70,7 +70,14 @@ public class ValueConversions
         return ListValue.wrap(nodes);
     }
 
-    public static Value fromEntityMemory(Entity e, Object v)
+    public static Value fromTimedMemory(Entity e, long expiry, Object v)
+    {
+        Value ret = fromEntityMemory(e, v);
+        if (ret == Value.NULL || expiry == Long.MAX_VALUE) return ret;
+        return ListValue.of(ret, new NumericValue(expiry));
+    }
+
+    private static Value fromEntityMemory(Entity e, Object v)
     {
         if (v instanceof GlobalPos)
         {

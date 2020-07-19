@@ -1,8 +1,10 @@
 package carpet.script.value;
 
+import carpet.fakes.BrainInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
+import carpet.fakes.MemoryInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.fakes.HungerManagerInterface;
 import carpet.helpers.Tracer;
@@ -13,6 +15,8 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.entity.ai.brain.Brain;
+import net.minecraft.entity.ai.brain.Memory;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.nbt.StringTag;
@@ -350,9 +354,12 @@ public class EntityValue extends Value
             if (e instanceof LivingEntity)
             {
                 LivingEntity livingEntity = (LivingEntity)e;
-                Optional<?> memory = livingEntity.getBrain().getOptionalMemory(moduleType);
-                if (memory==null || !memory.isPresent()) return Value.NULL;
-                return ValueConversions.fromEntityMemory(e, memory.get());
+                Brain<?> brain = livingEntity.getBrain();
+                Map<MemoryModuleType<?>, Optional<? extends Memory<?>>> memories = ((BrainInterface)brain).getMobMemories();
+                Optional<? extends Memory<?>> optmemory = memories.get(moduleType);
+                if (optmemory==null || !optmemory.isPresent()) return Value.NULL;
+                Memory<?> memory = optmemory.get();
+                return ValueConversions.fromTimedMemory(e, ((MemoryInterface)memory).getScarpetExpiry(), memory.getValue());
             }
             return Value.NULL;
         });
