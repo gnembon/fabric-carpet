@@ -86,10 +86,11 @@ public class ShapesRenderer
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
+
             shapes.get(dimensionType).values().forEach(
                     s ->
                     {
-                        if ( s.shouldRender(dimensionType))
+                        if ( !s.lastCall() && s.shouldRender(dimensionType))
                             s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
@@ -97,10 +98,20 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(
 
                     s -> {
-                        if ( s.shouldRender(dimensionType))
+                        if (  !s.lastCall() && s.shouldRender(dimensionType))
                             s.renderLines(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
+            //texts
+            // maybe we can move it laster to lines and makes sure we don't overpass and don't have blinky transparency problems
+            shapes.get(dimensionType).values().forEach(
+                    s ->
+                    {
+                        if ( s.lastCall() && s.shouldRender(dimensionType))
+                            s.renderLines(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                    }
+            );
+
         }
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
@@ -189,6 +200,10 @@ public class ShapesRenderer
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
         }
+        public boolean lastCall()
+        {
+            return false;
+        }
     }
 
     public static class RenderedText extends RenderedShape<ShapeDispatcher.DisplayedText>
@@ -267,10 +282,16 @@ public class ShapesRenderer
             immediate.draw();
             RenderSystem.popMatrix();
             RenderSystem.enableCull();
-            RenderSystem.enableDepthTest();
-            RenderSystem.depthFunc(515);
-            RenderSystem.enableAlphaTest();
-            RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
+            //RenderSystem.enableDepthTest();
+            //RenderSystem.depthFunc(515);
+            //RenderSystem.enableAlphaTest();
+            //RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
+        }
+
+        @Override
+        public boolean lastCall()
+        {
+            return true;
         }
     }
 
