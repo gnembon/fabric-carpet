@@ -381,6 +381,14 @@ public class ShapeDispatcher
             if (fa != 0.0) { hash = 31*hash + fillColor; hash *= 1099511628211L; }
             return hash;
         }
+        private static final double xdif = new Random().nextDouble();
+        private static final double ydif = new Random().nextDouble();
+        private static final double zdif = new Random().nextDouble();
+        int vec3dhash(Vec3d vec)
+        {
+            return vec.add(xdif, ydif, zdif).hashCode();
+        }
+
         // list of params that need to be there
         private final Set<String> required = ImmutableSet.of("duration", "shape", "dim");
         private final Map<String, Value> optional = ImmutableMap.of(
@@ -503,7 +511,7 @@ public class ShapeDispatcher
         {
             long hash = super.calcKey();
             hash ^= 5;                  hash *= 1099511628211L;
-            hash ^= pos.hashCode();     hash *= 1099511628211L;
+            hash ^= vec3dhash(pos);     hash *= 1099511628211L;
             hash ^= text.hashCode();    hash *= 1099511628211L;
             if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
             hash ^= Float.hashCode(raise); hash *= 1099511628211L;
@@ -566,8 +574,8 @@ public class ShapeDispatcher
         {
             long hash = super.calcKey();
             hash ^= 1;                     hash *= 1099511628211L;
-            hash ^= from.hashCode();       hash *= 1099511628211L;
-            hash ^= to.hashCode();         hash *= 1099511628211L;
+            hash ^= vec3dhash(from);       hash *= 1099511628211L;
+            hash ^= vec3dhash(to);         hash *= 1099511628211L;
             return hash;
         }
 
@@ -646,8 +654,8 @@ public class ShapeDispatcher
         {
             long hash = super.calcKey();
             hash ^= 2;                     hash *= 1099511628211L;
-            hash ^= from.hashCode();       hash *= 1099511628211L;
-            hash ^= to.hashCode();         hash *= 1099511628211L;
+            hash ^= vec3dhash(from);       hash *= 1099511628211L;
+            hash ^= vec3dhash(to);         hash *= 1099511628211L;
             return hash;
         }
     }
@@ -718,7 +726,7 @@ public class ShapeDispatcher
         {
             long hash = super.calcKey();
             hash ^= 3;                        hash *= 1099511628211L;
-            hash ^= center.hashCode();        hash *= 1099511628211L;
+            hash ^= vec3dhash(center);        hash *= 1099511628211L;
             hash ^= Double.hashCode(radius);  hash *= 1099511628211L;
             hash ^= level;                    hash *= 1099511628211L;
             return hash;
@@ -820,7 +828,7 @@ public class ShapeDispatcher
         {
             long hash = super.calcKey();
             hash ^= 4;                        hash *= 1099511628211L;
-            hash ^= center.hashCode();        hash *= 1099511628211L;
+            hash ^= vec3dhash(center);        hash *= 1099511628211L;
             hash ^= Double.hashCode(radius);  hash *= 1099511628211L;
             hash ^= Double.hashCode(height);  hash *= 1099511628211L;
             hash ^= level;                    hash *= 1099511628211L;
