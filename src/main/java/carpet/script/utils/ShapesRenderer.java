@@ -269,6 +269,8 @@ public class ShapesRenderer
             RenderSystem.enableCull();
             RenderSystem.enableDepthTest();
             RenderSystem.depthFunc(515);
+            RenderSystem.enableAlphaTest();
+            RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
         }
     }
 
