@@ -266,8 +266,9 @@ public class ShapesRenderer
             textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, AffineTransformation.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
             immediate.draw();
             RenderSystem.popMatrix();
-            if (shape.doublesided)
-                RenderSystem.enableCull();
+            RenderSystem.enableCull();
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthFunc(515);
         }
     }
 
