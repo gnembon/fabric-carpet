@@ -2062,6 +2062,10 @@ public class CarpetExpression
 
         this.expr.addLazyFunction("entity_area", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
+
+            if(lv.size()!=3||lv.size()!=5||lv.size()!=7)
+                throw new InternalExpressionException("Incorrect number of arguments, entity_area requires 3, 5 or 7 arguments");
+
             BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 1);
             BlockPos startpos = centerLocator.block.getPos();
             BlockPos corner = BlockArgument.findIn(cc, lv, centerLocator.offset).block.getPos();
