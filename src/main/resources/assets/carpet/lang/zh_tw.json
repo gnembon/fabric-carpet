@@ -201,6 +201,46 @@
   "rule.portalCreativeDelay.name": "創造模式玩家地獄門傳送延遲",
   "rule.portalCreativeDelay.desc": "創造模式下使用地獄傳送門將同生存時產生延遲",
 
+  "rule.commandProfile.name": "遊戲性能監視器",
+  "rule.commandProfile.desc": "啟用/profile命令以監視遊戲性能",
+  "rule.commandProfile.extra.0": "/tick命令功能的部分增強版",
+
+  "rule.commandScriptACE.name": "地毯腳本使用權限",
+  "rule.commandScriptACE.desc": "限制無權限的玩家執行地毯腳本",
+  "rule.commandScriptACE.extra.0": "無此權限的玩家無法執行/script run指令或者加載腳本",
+
+  "rule.creativeFlyDrag.name": "創造飛行阻力系數",
+  "rule.creativeFlyDrag.desc": "允許使用本功能更改創造模式下飛行時的空氣阻力系數",
+  "rule.creativeFlyDrag.extra.0": "阻力增加會降低您的飛行速度,\n所以需要相應地調整速度,\n使用 1.0 阻力系數的時候,使用 11 的速度系數似乎與原版速度相匹配.\n本功能僅在游戏端也安裝地毯MOD（版本>=伺服器安裝版本）的情況下生效",
+
+  "rule.creativeFlySpeed.name": "創造飛行速度系數",
+  "rule.creativeFlySpeed.desc": "允許使用本功能更改創造模式下飛行速度系數",
+  "rule.creativeFlySpeed.extra.0": "本功能僅在游戏端也安裝地毯MOD（版本>=服務器安裝版本）的情況下生效",
+
+  "rule.creativeNoClip.name": "創造玩家無碰撞檢測",
+  "rule.creativeNoClip.desc": "創造玩家可以穿過方塊",
+  "rule.creativeNoClip.extra.0": "這個選項需要伺服器和游戏端同時支持才生效.\n僅在伺服器設置是無效的，而僅在游戏端設置的情況下\n妳可以利用壹些和活板門有關的技巧來穿墻",
+
+  "rule.fogOff.name": "關閉霧氣",
+  "rule.fogOff.desc": "啟用本功能以關閉地獄與末地的霧氣",
+  "rule.fogOff.extra.0": "提高了可見度，但看起來很奇怪",
+
+  "rule.forceloadLimit.name": "永加載區塊上限更改",
+  "rule.forceloadLimit.desc": "允許使用本功能更改/forceload命令標記的永久加載區塊上限",
+
+  "rule.interactionUpdates.name": "放置方塊產生更新",
+  "rule.interactionUpdates.desc": "放置方塊是否產生更新的開關，設為false以避免產生更新",
+
+  "rule.language.name": "語言",
+  "rule.language.desc": "為地毯Mod設置所需語言",
+
+  "rule.portalSurvivalDelay.name": "生存模式地獄門傳送延遲",
+  "rule.portalSurvivalDelay.desc": "設置生存模式下地獄門傳送的延遲（單位:tick）",
+
+  "rule.spawnChunksSize.name": "出生點永加載區塊半徑",
+  "rule.spawnChunksSize.desc": "更改出生點永加載區塊半徑",
+  "rule.spawnChunksSize.extra.0": "定義新半徑\n設為0以禁用出生點區塊加載",
+
 
   "category.bugfix": "BUG修復",
   "category.survival": "生存用",

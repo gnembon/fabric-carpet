@@ -37,6 +37,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_STARTS_SNEAKING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STARTS_SPRINTING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SNEAKING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SPRINTING;
+import static carpet.script.CarpetEventServer.Event.PLAYER_SWAPS_HANDS;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
@@ -65,6 +66,17 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     private void onQItem(PlayerActionC2SPacket playerActionC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_DROPS_ITEM.onPlayerEvent(player);
+    }
+
+    @Inject(method = "onPlayerAction", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;",
+            ordinal = 0,
+            shift = At.Shift.BEFORE
+    ))
+    private void onHandSwap(PlayerActionC2SPacket playerActionC2SPacket_1, CallbackInfo ci)
+    {
+        PLAYER_SWAPS_HANDS.onPlayerEvent(player);
     }
 
     @Inject(method = "onPlayerAction", at = @At(

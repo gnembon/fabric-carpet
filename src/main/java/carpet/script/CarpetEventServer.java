@@ -538,6 +538,14 @@ public class CarpetEventServer
                 }, player::getCommandSource);
             }
         },
+        PLAYER_SWAPS_HANDS("player_swaps_hands", 1, false)
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(((c, t) -> new EntityValue(player))), player::getCommandSource);
+            }
+        },
         PLAYER_TAKES_DAMAGE("player_takes_damage", 4, false)
         {
             @Override
