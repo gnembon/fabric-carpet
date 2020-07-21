@@ -44,7 +44,7 @@ public class MobAI
         aiTrackers.remove(etype);
         for(ServerWorld world : CarpetServer.minecraft_server.getWorlds() )
         {
-            for (Entity e: world.getEntities(etype, Entity::hasCustomName))
+            for (Entity e: world.getEntitiesByType(etype, Entity::hasCustomName))
             {
                 e.setCustomNameVisible(false);
                 e.setCustomName(null);

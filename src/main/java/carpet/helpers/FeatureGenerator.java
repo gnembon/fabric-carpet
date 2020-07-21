@@ -22,7 +22,7 @@ import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.StructureConfig;
-import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
+import net.minecraft.world.gen.tree.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.ConfiguredFeatures;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
@@ -175,9 +175,9 @@ public class FeatureGenerator
     }
 
     private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
-        put("oak_bees", simpleTree(ConfiguredFeatures.OAK.method_30381().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
-        put("fancy_oak_bees", simpleTree(ConfiguredFeatures.FANCY_OAK.method_30381().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
-        put("birch_bees", simpleTree(ConfiguredFeatures.BIRCH.method_30381().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
+        put("oak_bees", simpleTree(ConfiguredFeatures.OAK.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
+        put("fancy_oak_bees", simpleTree(ConfiguredFeatures.FANCY_OAK.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
+        put("birch_bees", simpleTree(ConfiguredFeatures.BIRCH.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
         put("coral_tree", simplePlop(Feature.CORAL_TREE.configure(FeatureConfig.DEFAULT)));
         put("coral_claw", simplePlop(Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT)));
         put("coral_mushroom", simplePlop(Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT)));

@@ -349,7 +349,7 @@ public class CarpetScriptHost extends ScriptHost
         String markerName = CarpetExpression.MARKER_STRING+"_"+((getName()==null)?"":getName());
         for (ServerWorld world : scriptServer.server.getWorlds())
         {
-            for (Entity e : world.getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
+            for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {
                 e.remove();
             }

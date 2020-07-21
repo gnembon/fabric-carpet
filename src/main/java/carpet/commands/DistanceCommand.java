@@ -6,7 +6,7 @@ import carpet.utils.DistanceCalculator;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.command.arguments.Vec3ArgumentType;
+import net.minecraft.command.argument.Vec3ArgumentType;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;

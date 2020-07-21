@@ -272,7 +272,7 @@ public class SpawnReporter
     {
         List<BaseText> lst = new ArrayList<>();
         lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
-        for (Entity entity : ((ServerWorld)worldIn).getEntities(null, (e) -> e.getType().getSpawnGroup()==cat))
+        for (Entity entity : ((ServerWorld)worldIn).getEntitiesByType(null, (e) -> e.getType().getSpawnGroup()==cat))
         {
             boolean persistent = entity instanceof MobEntity && ( ((MobEntity) entity).isPersistent() || ((MobEntity) entity).cannotDespawn());
             if (!all && persistent)
@@ -406,7 +406,7 @@ public class SpawnReporter
         }
         if (entity instanceof OcelotEntity)
         {
-            for (Entity e: entity.getEntityWorld().getEntities(entity, entity.getBoundingBox()))
+            for (Entity e: entity.getEntityWorld().getOtherEntities(entity, entity.getBoundingBox()))
             {
                 e.remove();
             }

@@ -2,7 +2,7 @@ package carpet.helpers;
 
 import carpet.fakes.ServerPlayerEntityInterface;
 import net.minecraft.block.BlockState;
-import net.minecraft.command.arguments.EntityAnchorArgumentType;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -167,12 +167,12 @@ public class EntityPlayerActionPack
         List<Entity> entities;
         if (onlyRideables)
         {
-            entities = player.world.getEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D),
+            entities = player.world.getOtherEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D),
                     e -> e instanceof MinecartEntity || e instanceof BoatEntity || e instanceof HorseBaseEntity);
         }
             else
         {
-            entities = player.world.getEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D));
+            entities = player.world.getOtherEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D));
         }
         if (entities.size()==0)
             return this;

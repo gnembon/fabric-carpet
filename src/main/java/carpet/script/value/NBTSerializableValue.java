@@ -11,9 +11,9 @@ import net.minecraft.block.ChestBlock;
 import net.minecraft.block.InventoryProvider;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.command.arguments.ItemStackArgument;
-import net.minecraft.command.arguments.ItemStringReader;
-import net.minecraft.command.arguments.NbtPathArgumentType;
+import net.minecraft.command.argument.ItemStackArgument;
+import net.minecraft.command.argument.ItemStringReader;
+import net.minecraft.command.argument.NbtPathArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -156,8 +156,8 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
 
         if (inventory == null) {
-            List<Entity> list = world.getEntities(
-                    (Entity)null,
+            List<Entity> list = world.getOtherEntities(
+                    null,
                     new Box(
                             blockPos.getX() - 0.5D, blockPos.getY() - 0.5D, blockPos.getZ() - 0.5D,
                             blockPos.getX() + 0.5D, blockPos.getY() + 0.5D, blockPos.getZ() + 0.5D),

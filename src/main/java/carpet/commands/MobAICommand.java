@@ -6,7 +6,7 @@ import carpet.utils.MobAI;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.command.arguments.EntitySummonArgumentType;
+import net.minecraft.command.argument.EntitySummonArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.registry.Registry;
 

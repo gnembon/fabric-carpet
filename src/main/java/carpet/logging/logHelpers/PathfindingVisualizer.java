@@ -4,7 +4,7 @@ import carpet.helpers.ParticleDisplay;
 import carpet.logging.LoggerRegistry;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.arguments.ParticleArgumentType;
+import net.minecraft.command.argument.ParticleArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;

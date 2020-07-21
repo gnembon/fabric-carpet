@@ -48,7 +48,7 @@ public class Tracer
         double targetDistance = maxSqDistance;
         Entity target = null;
         Vec3d targetHitPos = null;
-        for (Entity current : world.getEntities(source, box, predicate))
+        for (Entity current : world.getOtherEntities(source, box, predicate))
         {
             Box currentBox = current.getBoundingBox().expand(current.getTargetingMargin());
             Optional<Vec3d> currentHit = currentBox.rayTrace(start, end);

@@ -102,8 +102,7 @@ public class OptimizedExplosion
         if (vec3dmem == null || !vec3dmem.equals(vec3d) || tickmem != eAccess.getWorld().getTime()) {
             vec3dmem = vec3d;
             tickmem = eAccess.getWorld().getTime();
-            entitylist = eAccess.getWorld().getEntities((Entity)null,
-                    new Box((double) k1, (double) i2, (double) j2, (double) l1, (double) i1, (double) j1));
+            entitylist = eAccess.getWorld().getOtherEntities(null, new Box(k1, i2, j2, l1, i1, j1));
             explosionSound = 0;
         }
 

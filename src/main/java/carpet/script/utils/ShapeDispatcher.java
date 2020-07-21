@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.arguments.ParticleArgumentType;
+import net.minecraft.command.argument.ParticleArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;

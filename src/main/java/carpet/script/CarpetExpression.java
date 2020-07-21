@@ -70,7 +70,7 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
-import net.minecraft.command.arguments.ItemStackArgument;
+import net.minecraft.command.argument.ItemStackArgument;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -2074,7 +2074,7 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Unknown entity selection criterion: "+who);
             }
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntities(pair.getKey(), pair.getValue());
+            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(pair.getKey(), pair.getValue());
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
@@ -2096,7 +2096,7 @@ public class CarpetExpression
             {
                 throw new InternalExpressionException("Unknown entity selection criterion: "+who);
             }
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntities((EntityType<Entity>) pair.getKey(), area, pair.getValue());
+            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType((EntityType<Entity>) pair.getKey(), area, pair.getValue());
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
@@ -2975,7 +2975,7 @@ public class CarpetExpression
             CarpetContext cc = (CarpetContext)c;
             int total = 0;
             String markerName = MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName());
-            for (Entity e : cc.s.getWorld().getEntities(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
+            for (Entity e : cc.s.getWorld().getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {
                 total ++;
                 e.remove();
