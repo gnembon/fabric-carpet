@@ -35,10 +35,9 @@ selectors are available:
 *   `players`
 *   `!players`
 
-### `entity_area(type, cx, cy, cz, dx, dy, dz)`
+### `entity_area(type, center, distance_vec)`
 
-Returns entities of a specified type in an area centered on `cx, cy, cz` and at most `dx, dy, dz` blocks away from 
-the center point. Uses the same selectors as `entities_list`.
+Returns entities of a specified type in an area centered on `center = [cx, cy, cz`] and at most `distance = [dx, dy, dz]` blocks away from the center point. Uses the same selectors as `entities_list`.
 
 ### `entity_selector(selector)`
 
