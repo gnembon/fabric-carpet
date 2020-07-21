@@ -5,6 +5,7 @@ import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.fakes.HungerManagerInterface;
+import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
@@ -464,8 +465,31 @@ public class EntityValue extends Value
         put("selected_slot", (e, a) -> {
            if (e instanceof PlayerEntity)
                return new NumericValue(((PlayerEntity) e).inventory.selectedSlot);
-           return null;
+           return Value.NULL;
         });
+
+        put("active_block", (e, a) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
+                BlockPos pos = manager.getCurrentBreakingBlock();
+                if (pos == null) return Value.NULL;
+                return new BlockValue(null, ((ServerPlayerEntity) e).getServerWorld(), pos);
+            }
+            return Value.NULL;
+        });
+
+        put("breaking_progress", (e, a) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
+                int progress = manager.getCurrentBlockBreakingProgress();
+                if (progress < 0) return Value.NULL;
+                return new NumericValue(progress);
+            }
+            return Value.NULL;
+        });
+
 
         put("facing", (e, a) -> {
             int index = 0;
@@ -1031,6 +1055,15 @@ public class EntityValue extends Value
 
         put("saturation", (e, v)-> {
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
+        });
+
+        put("breaking_progress", (e, a) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                int progress = (a == null || a == Value.NULL)?-1:NumericValue.asNumber(a).getInt();
+                ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
+                manager.setBlockBreakingProgress(progress);
+            }
         });
 
         put("nbt", (e, v) -> {

@@ -2781,6 +2781,53 @@ If `slot` is not specified, it defaults to the main hand.
 
 Number indicating the selected slot of entity's inventory. Currently only applicable to players.
 
+### `query(e, 'active_block')`
+
+Returns currently mined block by the player, as registered by the game server.
+
+### `query(e, 'breaking_progress')`
+
+Returns current breaking progress of a current player mining block, or `null`, if no block is mined.
+Breaking progress, it not null, is any number 0 or above, while 10 means that the block should already be 
+broken by the client. This value may tick above 10, if the client / connection is lagging
+
+Example:
+
+The following program provides custom breaking times, including nice block breaking animations, including instamine, for
+blocks that otherwise would take longer to mine.
+
+[Video demo](https://youtu.be/zvEEuGxgCio)
+```py
+global_blocks = {
+  'oak_planks' -> 0,
+  'obsidian' -> 1,
+  'end_portal_frame' -> 5,
+  'bedrock' -> 10
+};
+  
+__on_player_clicks_block(player, block, face) ->
+(
+   step = global_blocks:str(block);
+   if (step == 0,
+      destroy(block, -1); // instamine
+   , step != null,
+      schedule(0, '_break', player, pos(block), str(block), step, 0);
+   )
+);
+
+_break(player, pos, name, step, lvl) ->
+(
+   current = player~'active_block';
+   if (current != name || pos(current) != pos, 
+      modify(player, 'breaking_progress', null);
+   ,
+      modify(player, 'breaking_progress', lvl);
+      if (lvl >= 10, destroy(pos, -1));
+      schedule(step, '_break', player, pos, name, step, lvl+1)
+   );
+)
+```
+
 ### `query(e, 'facing', order?)`
 
 Returns where the entity is facing. optional order (number from 0 to 5, and negative), indicating primary directions 
@@ -3012,6 +3059,12 @@ Modifies directly player raw hunger components. Has no effect on non-players
 
 adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
 to manipulate how much 'food' some action cost.
+
+### `modify(e, 'breaking_progress', value)` 
+
+Modifies a breaking progress of a player currently mined block. Value of `null`, `-1` make it reset. 
+Values `0` to `10` will show respective animation of a breaking block. Check `query(e, 'breaking_progress')` for 
+examples.
 
 ### `modify(e, 'nbt_merge', partial_tag)`
 
