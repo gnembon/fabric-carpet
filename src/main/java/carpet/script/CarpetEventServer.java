@@ -195,7 +195,7 @@ public class CarpetEventServer
 
         public void removeEventCall(String hostName, String funName)
         {
-            callList.removeIf((c)->  c.function.getString().equals(funName) && ( hostName == null || c.host.equalsIgnoreCase(hostName) ) );
+            callList.removeIf((c)->  c.function.getString().equals(funName) && ( hostName == c.host || (c.host != null && c.host.equalsIgnoreCase(hostName) )) );
         }
 
         public void removeAllCalls(String hostName)
