@@ -264,3 +264,9 @@ __on_player_switches_slot(player, from, to) ->
     print('  - from: '+ from);
     print('  - to: '+ to);
 );
+
+__on_player_swaps_hands(player) -> (
+    print('');
+    print('__on_player_swaps_hands(player)');
+    print(' Player '+player+' swaps hands.')
+);

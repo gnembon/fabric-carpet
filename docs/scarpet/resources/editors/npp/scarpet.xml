@@ -106,6 +106,7 @@
                 __on_player_stops_sneaking
                 __on_player_stops_sprinting
                 __on_player_switches_slot
+                __on_player_swaps_hands
                 __on_player_uses_item
                 __on_player_wakes_up
                 __on_statistic
