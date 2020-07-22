@@ -20,7 +20,15 @@ public class PathfindingVisualizer
         {
             if (!(player instanceof ServerPlayerEntity))
                 return null;
-            int minDuration = Integer.parseInt(option);
+            int minDuration;
+            try
+            {
+                minDuration = Integer.parseInt(option);
+            }
+            catch (NumberFormatException ignored)
+            {
+                return  null;
+            }
             if (miliseconds < minDuration)
                 return null;
             if (player.squaredDistanceTo(entity) > 1000 && player.squaredDistanceTo(target) > 1000)
