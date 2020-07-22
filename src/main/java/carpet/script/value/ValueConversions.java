@@ -68,8 +68,10 @@ public class ValueConversions
     public static Value fromPath(ServerWorld world,  Path path)
     {
         List<Value> nodes = new ArrayList<>();
-        for (PathNode node: path.getNodes())
+        //for (PathNode node: path.getNodes())
+        for (int i = 0, len = path.getLength(); i < len; i++)
         {
+            PathNode node = path.getNode(i);
             nodes.add( ListValue.of(
                     new BlockValue(null, world, node.getPos()),
                     new StringValue(node.type.name().toLowerCase(Locale.ROOT)),

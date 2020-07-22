@@ -2368,7 +2368,7 @@ public class CarpetExpression
             ServerWorld world = ((CarpetContext) c).s.getWorld();
 
             List<Value> neighbours = new ArrayList<>();
-            neighbours.add(new BlockValue(null, world, center.up()));
+            neighbours.add(new BlockValue(null, world, center.method_30931()));
             neighbours.add(new BlockValue(null, world, center.down()));
             neighbours.add(new BlockValue(null, world, center.north()));
             neighbours.add(new BlockValue(null, world, center.south()));

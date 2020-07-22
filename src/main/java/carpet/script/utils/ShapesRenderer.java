@@ -278,7 +278,7 @@ public class ShapesRenderer
                 text_x = (float)(-textRenderer.getWidth(shape.value.getString()));
             }
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, AffineTransformation.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
+            textRenderer.method_30882(shape.value, text_x, 0.0F, shape.textcolor, false, AffineTransformation.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
             immediate.draw();
             RenderSystem.popMatrix();
             RenderSystem.enableCull();

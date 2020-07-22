@@ -153,9 +153,9 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
+            target = "Lnet/minecraft/server/world/ServerWorld;method_30771(Lnet/minecraft/entity/Entity;)V"//"Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
     ))
-    private static boolean spawnEntity(ServerWorld world, Entity entity_1)
+    private static void spawnEntity(ServerWorld world, Entity entity_1)
     {
         if (CarpetSettings.lagFreeSpawning)
             // we used the mob - next time we will create a new one when needed
@@ -170,8 +170,8 @@ public class SpawnHelperMixin
                     entity_1.getBlockPos());
         }
         if (!SpawnReporter.mock_spawns)
-            return world.spawnEntity(entity_1);
-        return false;
+            world.method_30771(entity_1);
+            //world.spawnEntity(entity_1);
     }
 
     @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(

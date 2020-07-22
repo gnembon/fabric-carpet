@@ -111,7 +111,7 @@ public class PerimeterDiagnostics
 
                     BlockState iblockstate = worldserver.getBlockState(pos);
                     BlockState iblockstate_down = worldserver.getBlockState(pos.down());
-                    BlockState iblockstate_up = worldserver.getBlockState(pos.up());
+                    BlockState iblockstate_up = worldserver.getBlockState(pos.method_30931());
 
                     if ( iblockstate.getMaterial() == Material.WATER && iblockstate_down.getMaterial() == Material.WATER && !iblockstate_up.isSolidBlock(worldserver, pos)) // isSimpleFUllBLock
                     {
@@ -131,7 +131,7 @@ public class PerimeterDiagnostics
                         {
                             Block block = iblockstate_down.getBlock();
                             boolean flag = block != Blocks.BEDROCK && block != Blocks.BARRIER;
-                            if( flag && SpawnHelper.isClearForSpawn(worldserver, pos, iblockstate, iblockstate.getFluidState(), type) && SpawnHelper.isClearForSpawn(worldserver, pos.up(), iblockstate_up, iblockstate_up.getFluidState(), type))
+                            if( flag && SpawnHelper.isClearForSpawn(worldserver, pos, iblockstate, iblockstate.getFluidState(), type) && SpawnHelper.isClearForSpawn(worldserver, pos.method_30931(), iblockstate_up, iblockstate_up.getFluidState(), type))
                             {
                                 result.ground ++;
                                 if (add_ground && diagnostic.check_entity_spawn(pos))

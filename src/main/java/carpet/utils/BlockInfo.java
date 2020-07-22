@@ -194,8 +194,8 @@ public class BlockInfo
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Light in: %d, above: %d",
                 Math.max(world.getLightLevel(LightType.BLOCK, pos),world.getLightLevel(LightType.SKY, pos)) ,
-                Math.max(world.getLightLevel(LightType.BLOCK, pos.up()),world.getLightLevel(LightType.SKY, pos.up())))));
-        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.up()))));
+                Math.max(world.getLightLevel(LightType.BLOCK, pos.method_30931()),world.getLightLevel(LightType.SKY, pos.method_30931())))));
+        lst.add(Messenger.s(String.format(" - Brightness in: %.2f, above: %.2f", world.getBrightness(pos), world.getBrightness(pos.method_30931()))));
         lst.add(Messenger.s(String.format(" - Is opaque: %s", material.isSolid() )));
         //lst.add(Messenger.s(String.format(" - Light opacity: %d", state.getOpacity(world,pos))));
         lst.add(Messenger.s(String.format(" - Blocks light: %s", state.getMaterial().blocksLight())));
@@ -216,7 +216,7 @@ public class BlockInfo
         lst.add(Messenger.s(String.format(" - Strong power level: %d", world.getReceivedStrongRedstonePower(pos))));
         lst.add(Messenger.s(String.format(" - Redstone power level: %d", world.getReceivedRedstonePower(pos))));
         lst.add(Messenger.s(""));
-        lst.add(wander_chances(pos.up(), world));
+        lst.add(wander_chances(pos.method_30931(), world));
 
         return lst;
     }
