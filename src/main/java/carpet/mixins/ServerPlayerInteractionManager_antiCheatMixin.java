@@ -35,7 +35,7 @@ public class ServerPlayerInteractionManager_antiCheatMixin
                          BlockPos pos, PlayerActionC2SPacket.Action action, Direction direction, int worldHeight)
     {
         if (CarpetSettings.antiCheatDisabled &&
-                player.getPos().add(-0.5, 1.0, -0.5).squaredDistanceTo(new Vec3d(pos)) < 1024
+                player.getPos().add(0, 1.5, 0).squaredDistanceTo(Vec3d.ofCenter(pos)) < 1024
         ) return pos.getX()+0.5;
         return player.getX();
     }
@@ -48,7 +48,7 @@ public class ServerPlayerInteractionManager_antiCheatMixin
                          BlockPos pos, PlayerActionC2SPacket.Action action, Direction direction, int worldHeight)
     {
         if (CarpetSettings.antiCheatDisabled &&
-                player.getPos().add(-0.5, 1.0, -0.5).squaredDistanceTo(new Vec3d(pos)) < 1024
+                player.getPos().add(0, 1.5, 0).squaredDistanceTo(Vec3d.ofCenter(pos)) < 1024
         ) return pos.getY()-1.0;
         return player.getY();
     }
@@ -61,7 +61,7 @@ public class ServerPlayerInteractionManager_antiCheatMixin
                          BlockPos pos, PlayerActionC2SPacket.Action action, Direction direction, int worldHeight)
     {
         if (CarpetSettings.antiCheatDisabled &&
-                player.getPos().add(-0.5, 1.0, -0.5).squaredDistanceTo(new Vec3d(pos)) < 1024
+                player.getPos().add(0, 1.5, 0).squaredDistanceTo(Vec3d.ofCenter(pos)) < 1024
         ) return pos.getZ()+0.5;
         return player.getZ();
     }
