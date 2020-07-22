@@ -2068,13 +2068,24 @@ public class CarpetExpression
 
             BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 1);
             BlockPos startpos = centerLocator.block.getPos();
+            Vector3Argument cornerLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
             BlockPos corner = BlockArgument.findIn(cc, lv, centerLocator.offset).block.getPos();
 
-            Box area = new Box(startpos).expand(
-                    corner.getX(),
-                    corner.getY(),
-                    corner.getZ()
-            );
+            Box area;
+
+            if(cornerLocator.fromBlock){
+                area = new Box(startpos).expand(
+                        cornerLocator.vec.x - startpos.getX(),
+                        cornerLocator.vec.y - startpos.getY(),
+                        cornerLocator.vec.z - startpos.getZ()
+                );
+            } else {
+                area = new Box(startpos).expand(
+                        corner.getX(),
+                        corner.getY(),
+                        corner.getZ()
+                );
+            }
             String who = lv.get(0).evalValue(c).getString();
             Pair<EntityType<?>, Predicate<? super Entity>> pair = EntityValue.getPredicate(who);
             if (pair == null)
