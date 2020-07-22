@@ -2080,12 +2080,12 @@ public class CarpetExpression
         });
 
         this.expr.addLazyFunction("entity_area", 7, (c, t, lv) -> {
-            BlockPos center = new BlockPos(
+            Vec3d center = new Vec3d(
                     NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(2).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(3).evalValue(c)).getDouble()
             );
-            Box area = new Box(center).expand(
+            Box area = new Box(center, center).expand(
                     NumericValue.asNumber(lv.get(4).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(5).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(6).evalValue(c)).getDouble()
