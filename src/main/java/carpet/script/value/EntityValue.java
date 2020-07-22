@@ -17,13 +17,13 @@ import carpet.script.exception.InternalExpressionException;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.Memory;
-import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.projectile.Projectile;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
@@ -218,8 +218,8 @@ public class EntityValue extends Value
         put("living", Pair.of(null, (e) -> e instanceof LivingEntity && e.isAlive()));
         put("!living", Pair.of(null, (e) -> !(e instanceof LivingEntity) && e.isAlive()));
 
-        put("projectile", Pair.of(null, (e) -> e instanceof Projectile && e.isAlive()));
-        put("!projectile", Pair.of(null, (e) -> !(e instanceof Projectile) && e.isAlive()));
+        put("projectile", Pair.of(null, (e) -> e instanceof ProjectileEntity && e.isAlive()));
+        put("!projectile", Pair.of(null, (e) -> !(e instanceof ProjectileEntity) && e.isAlive()));
 
         for (String groupStr : entityGroupMap.keySet())
         {
@@ -234,11 +234,11 @@ public class EntityValue extends Value
             put(    mobType, Pair.of(type, EntityPredicates.VALID_ENTITY));
             put("!"+mobType, Pair.of(null, (e) -> e.getType() != type  && e.isAlive()));
         }
-        for (EntityCategory catId : EntityCategory.values())
+        for (SpawnGroup catId : SpawnGroup.values())
         {
             String catStr = catId.getName();
-            put(    catStr, Pair.of(null, e -> (e.getType().getCategory() == catId) && e.isAlive()));
-            put("!"+catStr, Pair.of(null, e -> (e.getType().getCategory() != catId) && e.isAlive()));
+            put(    catStr, Pair.of(null, e -> (e.getType().getSpawnGroup() == catId) && e.isAlive()));
+            put("!"+catStr, Pair.of(null, e -> (e.getType().getSpawnGroup() != catId) && e.isAlive()));
         }
     }};
     public Value get(String what, Value arg)

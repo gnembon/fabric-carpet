@@ -3357,6 +3357,7 @@ public class CarpetExpression
             //CarpetSettings.LOG.error("Custom:");
             //CarpetSettings.LOG.error(FeatureGenerator.featureMap.keySet().stream().map(i -> "`'"+i+"'`").sorted().collect(Collectors.joining(", ")));
 
+            //CarpetSettings.LOG.error(Registry.ENTITY_TYPE.getIds().stream().sorted().map(ValueConversions::simplify).collect(Collectors.joining("`, `")));
             Value res = lv.get(0).evalValue(c);
             CarpetSettings.LOG.error(res.getString());
             return (_c, _t) -> res; // pass through for variables
