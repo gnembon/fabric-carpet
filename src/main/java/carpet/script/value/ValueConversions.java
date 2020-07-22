@@ -47,6 +47,16 @@ public class ValueConversions
             return new StringValue(id.getPath());
         return new StringValue(id.toString());
     }
+
+    public static String simplify(Identifier id)
+    {
+        if (id == null) // should be Value.NULL
+            return "";
+        if (id.getNamespace().equals("minecraft"))
+            return id.getPath();
+        return id.toString();
+    }
+
     public static Value ofGlobalPos(GlobalPos pos)
     {
         return ListValue.of(

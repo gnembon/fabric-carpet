@@ -14,12 +14,16 @@ import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.Memory;
+import net.minecraft.entity.EntityCategory;
+import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
+import net.minecraft.entity.projectile.Projectile;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
@@ -195,14 +199,47 @@ public class EntityValue extends Value
         return res; //TODO add more here like search by tags, or type
         //if (who.startsWith('tag:'))
     }
+
+    private static Map<String, EntityGroup> entityGroupMap = ImmutableMap.of(
+            "undead", EntityGroup.UNDEAD,
+            "arthropod", EntityGroup.ARTHROPOD,
+            "aquatic", EntityGroup.AQUATIC,
+            "regular", EntityGroup.DEFAULT,
+            "illager", EntityGroup.ILLAGER
+    );
+
     private static final Map<String, Pair<EntityType<?>, Predicate<? super Entity>>> entityPredicates =
             new HashMap<String, Pair<EntityType<?>, Predicate<? super Entity>>>()
     {{
-        put("*", Pair.of(null, EntityPredicates.VALID_ENTITY));
+        put("*", Pair.of(null, e -> true));
+        put("valid", Pair.of(null, EntityPredicates.VALID_ENTITY));
+        put("!valid", Pair.of(null, e -> !e.isAlive()));
+
         put("living", Pair.of(null, (e) -> e instanceof LivingEntity && e.isAlive()));
-        put("items", Pair.of(EntityType.ITEM, EntityPredicates.VALID_ENTITY));
-        put("players", Pair.of(EntityType.PLAYER, EntityPredicates.VALID_ENTITY));
-        put("!players", Pair.of(null, (e) -> !(e instanceof PlayerEntity) ));
+        put("!living", Pair.of(null, (e) -> !(e instanceof LivingEntity) && e.isAlive()));
+
+        put("projectile", Pair.of(null, (e) -> e instanceof Projectile && e.isAlive()));
+        put("!projectile", Pair.of(null, (e) -> !(e instanceof Projectile) && e.isAlive()));
+
+        for (String groupStr : entityGroupMap.keySet())
+        {
+            EntityGroup group = entityGroupMap.get(groupStr);
+            put(    groupStr, Pair.of(null,  e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == group && e.isAlive())));
+            put("!"+groupStr, Pair.of(null,  e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != group && e.isAlive())));
+        }
+        for (Identifier typeId : Registry.ENTITY_TYPE.getIds())
+        {
+            EntityType type  = Registry.ENTITY_TYPE.get(typeId);
+            String mobType = ValueConversions.simplify(typeId);
+            put(    mobType, Pair.of(type, EntityPredicates.VALID_ENTITY));
+            put("!"+mobType, Pair.of(null, (e) -> e.getType() != type  && e.isAlive()));
+        }
+        for (EntityCategory catId : EntityCategory.values())
+        {
+            String catStr = catId.getName();
+            put(    catStr, Pair.of(null, e -> (e.getType().getCategory() == catId) && e.isAlive()));
+            put("!"+catStr, Pair.of(null, e -> (e.getType().getCategory() != catId) && e.isAlive()));
+        }
     }};
     public Value get(String what, Value arg)
     {
