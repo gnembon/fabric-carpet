@@ -35,9 +35,15 @@ selectors are available:
 *   `players`
 *   `!players`
 
-### `entity_area(type, center, distance_vec)`
+### `entity_area(type, center, distance_vec), entity_area(type, pos1, pos2)`
 
-Returns entities of a specified type in an area centered on `center = [cx, cy, cz`] and at most `distance = [dx, dy, dz]` blocks away from the center point. Uses the same selectors as `entities_list`.
+Returns entities of a specified type in an area centered on `center = [cx, cy, cz]` and at most `distance = [dx, dy, dz]` blocks away from the center point. Uses the same selectors as `entities_list`.
+
+You can also use specific block positions to define corners, but not triples of block positions as they will try to expand by that area. Use `pos()` to wrap triple of coords.
+```
+entity_area('*',[10,10,10],[1,1,1]) //Getting all entities from 10,10,10 to 11,11,11
+entity_area('*',pos(10,10,10),pos(1,1,1)) //Getting all entities from 10,10,10 to 1,1,1
+```
 
 ### `entity_selector(selector)`
 
