@@ -2463,21 +2463,47 @@ but obviously using UUIDs takes more memory and compute.
 Returns global lists of entities in the current dimension of a specified type. Currently the following 
 selectors are available:
 
-*   `*`: all entites
-*   `living`
-*   `items`
-*   `players`
-*   `!players`
+*  `*`: all entities, even `!valid`
+*  `valid` - all entities that are not dead (health > 0). All main categories below also return only 
+entities in the `valid` category.
+*  `living` - all entities that resemble a creature of any sort
+*  `projectile` - all entities that are not living that can be throw or projected
+*  `undead`, `arthropod`, `aquatic`, `regular`, `illager` - all entities that belong to any of these groups. Every 
+living entity belongs to one and only one of these.
+*  `monster`, `creature`, `ambient`, `water_creature`, `water_ambient`, `misc` - another categorization of 
+living entities based on their spawn group.
+*  Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
+`area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
+`chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
+`egg`, `elder_guardian`, `end_crystal`, `ender_dragon`, `ender_pearl`, `enderman`, `endermite`, `evoker`, 
+`evoker_fangs`, `experience_bottle`, `experience_orb`, `eye_of_ender`, `falling_block`, `fireball`, `firework_rocket`, 
+`fishing_bobber`, `fox`, `furnace_minecart`, `ghast`, `giant`, `guardian`, `hoglin`, `hopper_minecart`, `horse`, 
+`husk`, `illusioner`, `iron_golem`, `item`, `item_frame`, `leash_knot`, `lightning_bolt`, `llama`, `llama_spit`, 
+`magma_cube`, `minecart`, `mooshroom`, `mule`, `ocelot`, `painting`, `panda`, `parrot`, `phantom`, `pig`, `piglin`, 
+`piglin_brute`, `pillager`, `player`, `polar_bear`, `potion`, `pufferfish`, `rabbit`, `ravager`, `salmon`, `sheep`, 
+`shulker`, `shulker_bullet`, `silverfish`, `skeleton`, `skeleton_horse`, `slime`, `small_fireball`, `snow_golem`, 
+`snowball`, `spawner_minecart`, `spectral_arrow`, `spider`, `squid`, `stray`, `strider`, `tnt`, `tnt_minecart`, 
+`trader_llama`, `trident`, `tropical_fish`, `turtle`, `vex`, `villager`, `vindicator`, `wandering_trader`, `witch`, 
+`wither`, `wither_skeleton`, `wither_skull`, `wolf`, `zoglin`, `zombie`, `zombie_horse`, `zombie_villager`, 
+`zombified_piglin`
+
+All categories can be preceded with `'!'` which will fetch all entities that are valid (health > 0) but not 
+belonging to that group. Calls to `entity_list` always fetch entities from the current world that the script executes. 
 
 ### `entity_area(type, cx, cy, cz, dx, dy, dz)`
 
 Returns entities of a specified type in an area centered on `cx, cy, cz` and at most `dx, dy, dz` blocks away from 
 the center point. Uses the same selectors as `entities_list`.
 
+entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
+cuboid search area.
+
 ### `entity_selector(selector)`
 
 Returns entities satisifying given vanilla entity selector. Most complex among all the methods of selecting entities, 
-but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities.
+but the most capable. Selectors are cached so it should be as fast as other methods of selecting entities. Unlike other
+entities fetching / filtering method, this one doesn't guarantee to return entities from current dimension, since
+selectors can return any loaded entity in the world.
 
 ### `spawn(name, pos, nbt?)`
 
