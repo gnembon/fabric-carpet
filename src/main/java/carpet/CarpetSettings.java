@@ -270,20 +270,21 @@ public class CarpetSettings
     @Rule( desc = "summoning a lightning bolt has all the side effects of natural lightning", category = CREATIVE )
     public static boolean summonNaturalLightning = false;
 
-    @Rule(desc = "Enables /spawn command for spawn tracking", category = COMMAND)
+    @Rule(desc = "Enables /spawn command for spawn tracking", category = COMMAND, options = {"true", "false", "ops"})
     public static String commandSpawn = "true";
 
-    @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND)
+    @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND, options = {"true", "false", "ops"})
     public static String commandTick = "true";
 
     @Rule(
             desc = "Enables /profile command to monitor game performance",
             extra = "subset of /tick command capabilities",
-            category = COMMAND
+            category = COMMAND,
+            options = {"true", "false", "ops"}
     )
     public static String commandProfile = "true";
 
-    @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
+    @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND, options = {"true", "false", "ops"})
     public static String commandLog = "true";
 
     @Rule(
@@ -298,7 +299,8 @@ public class CarpetSettings
     @Rule(
             desc = "Enables /distance command to measure in game distance between points",
             extra = "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
-            category = COMMAND
+            category = COMMAND,
+            options = {"true", "false", "ops"}
     )
     public static String commandDistance = "true";
 
@@ -308,7 +310,8 @@ public class CarpetSettings
                     "Also enables gray carpet placement action",
                     "if 'carpets' rule is turned on as well"
             },
-            category = COMMAND
+            category = COMMAND,
+            options = {"true", "false", "ops"}
     )
     public static String commandInfo = "true";
 
@@ -322,17 +325,24 @@ public class CarpetSettings
     @Rule(
             desc = "Enables /perimeterinfo command",
             extra = "... that scans the area around the block for potential spawnable spots",
-            category = COMMAND
+            category = COMMAND,
+            options = {"true", "false", "ops"}
     )
     public static String commandPerimeterInfo = "true";
 
-    @Rule(desc = "Enables /draw commands", extra = {"... allows for drawing simple shapes or","other shapes which are sorta difficult to do normally"}, category = COMMAND)
+    @Rule(
+            desc = "Enables /draw commands",
+            extra = {"... allows for drawing simple shapes or","other shapes which are sorta difficult to do normally"},
+            category = COMMAND,
+            options = {"true", "false", "ops"}
+    )
     public static String commandDraw = "true";
 
     @Rule(
             desc = "Enables /script command",
             extra = "An in-game scripting API for Scarpet programming language",
-            category = {COMMAND, SCARPET}
+            category = {COMMAND, SCARPET},
+            options = {"true", "false", "ops"}
     )
     public static String commandScript = "true";
 
@@ -351,7 +361,8 @@ public class CarpetSettings
                     "won't be able to load apps or /script run"
             },
             category = {COMMAND, SCARPET},
-            validate = ModulePermissionLevel.class
+            validate = ModulePermissionLevel.class,
+            options = {"true", "false", "ops"}
     )
     public static String commandScriptACE = "ops";
 
@@ -362,10 +373,10 @@ public class CarpetSettings
     )
     public static boolean scriptsAutoload = false;
 
-    @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
+    @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND, options = {"true", "false", "ops"})
     public static String commandPlayer = "true";
 
-    @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND)
+    @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND, options = {"true", "false", "ops"})
     public static String commandTrackAI = "true";
 
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
