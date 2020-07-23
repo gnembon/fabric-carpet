@@ -63,7 +63,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
         else if (this.type == boolean.class || (this.type == String.class && categories.contains(RuleCategory.COMMAND)))
         {
-            this.options = ImmutableList.of("true", "false");
+            this.options = ImmutableList.of("true", "false", "ops");
         }
         else if (this.type.isEnum())
         {
