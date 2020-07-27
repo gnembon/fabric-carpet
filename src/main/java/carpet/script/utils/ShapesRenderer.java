@@ -305,7 +305,7 @@ public class ShapesRenderer
             super.promoteWith(rshape);
             try
             {
-                this.shape.value = ((ShapeDispatcher.Text) rshape.shape).value;
+                this.shape.value = ((ShapeDispatcher.DisplayedText) rshape.shape).value;
             }
             catch (ClassCastException ignored)
             {
