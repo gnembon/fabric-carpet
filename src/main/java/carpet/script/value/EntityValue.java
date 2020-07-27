@@ -281,7 +281,7 @@ public class EntityValue extends Value
         put("motion_x", (e, a) -> new NumericValue(e.getVelocity().x));
         put("motion_y", (e, a) -> new NumericValue(e.getVelocity().y));
         put("motion_z", (e, a) -> new NumericValue(e.getVelocity().z));
-        put("on_ground", (e, a) -> new NumericValue(e.onGround));
+        put("on_ground", (e, a) -> new NumericValue(e.isOnGround()));
         put("name", (e, a) -> new StringValue(e.getName().getString()));
         put("display_name", (e, a) -> new StringValue(e.getDisplayName().getString()));
         put("command_name", (e, a) -> new StringValue(e.getEntityName()));
