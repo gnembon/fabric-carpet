@@ -367,7 +367,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             return put(where, value, false, true);
         if (condition.equalsIgnoreCase("replace"))
             return put(where, value, true, false);
-        throw new  InternalExpressionException("List 'put' modifier could be either 'insert', or 'replace'");
+        throw new  InternalExpressionException("List 'put' modifier could be either 'insert', 'replace', or extend");
     }
 
     @Override
