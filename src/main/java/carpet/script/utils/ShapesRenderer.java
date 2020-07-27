@@ -150,7 +150,7 @@ public class ShapesRenderer
                 RenderedShape<?> existing = shapes.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
                 if (existing != null)
                 {   // promoting previous shape
-                    existing.expiryTick = rshape.expiryTick;
+                    existing.promoteWith(rshape);
                 }
                 else
                 {
@@ -203,6 +203,11 @@ public class ShapesRenderer
         public boolean lastCall()
         {
             return false;
+        }
+
+        public void promoteWith(RenderedShape<?> rshape)
+        {
+            expiryTick = rshape.expiryTick;
         }
     }
 
@@ -292,6 +297,20 @@ public class ShapesRenderer
         public boolean lastCall()
         {
             return true;
+        }
+
+        @Override
+        public void promoteWith(RenderedShape<?> rshape)
+        {
+            super.promoteWith(rshape);
+            try
+            {
+                this.shape.value = ((ShapeDispatcher.Text) rshape.shape).value;
+            }
+            catch (ClassCastException ignored)
+            {
+                CarpetSettings.LOG.error("shape "+rshape.shape.getClass()+" cannot cast to a Label");
+            }
         }
     }
 
