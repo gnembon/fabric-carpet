@@ -133,11 +133,17 @@ Returns a 3d vector where the entity is looking.
 
 ### `query(e, 'motion')`
 
-Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`
+Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`. Motion represents the velocity from all the forces
+that exert on the given entity. Things that are not 'forces' like voluntary movement, or reaction from the ground are
+not part of said forces.
 
 ### `query(e, 'motion_x'), query(e, 'motion_y'), query(e, 'motion_z')`
 
 Respective component of the entity's motion vector
+
+### `query(e, 'on_ground')`
+
+Returns `true` if en entity is standing on firm ground and falling down due to that.
 
 ### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
