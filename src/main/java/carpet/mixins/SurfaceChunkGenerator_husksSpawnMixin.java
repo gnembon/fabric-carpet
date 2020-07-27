@@ -7,8 +7,8 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 import net.minecraft.world.gen.chunk.StructuresConfig;
-import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
 //import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.StructureFeature;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,7 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
-@Mixin(SurfaceChunkGenerator.class)
+@Mixin(NoiseChunkGenerator.class)
+// todo rename mixin after 1.15 is gone
 public abstract class SurfaceChunkGenerator_husksSpawnMixin extends ChunkGenerator
 {
     public SurfaceChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructuresConfig structuresConfig)
