@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,7 +108,7 @@ public abstract class ScriptHost
 
     public void importModule(Context c, String moduleName)
     {
-        if (modules.containsKey(moduleName)) return;  // aready imported
+        if (modules.containsKey(moduleName.toLowerCase(Locale.ROOT))) return;  // aready imported
         Module module = getModuleOrLibraryByName(moduleName);
         if (modules.containsKey(module.getName())) return;  // aready imported, once again, in case some discrepancies in names?
         modules.put(module.getName(), module);
