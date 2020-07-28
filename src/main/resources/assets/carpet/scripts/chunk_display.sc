@@ -1,3 +1,4 @@
+global_update_interval = 100;
 global_chunk_colors = m(
     // loaded ticking
 	l(3,                   l(0xAAdd0000,  0x66990000)), // lime, green
@@ -126,6 +127,9 @@ __chunk_visualizer_tick(p) ->
 	if (!global_running, return());
 	show_activity = (p~'holds':0 == 'redstone_torch');
 	yval = setup:'plot_center':1+16;
+	base_update = global_update_interval;
+	random_component = ceil(0.4*base_update);
+	duration_max = ceil(1.5*base_update);
 	in_dimension( setup:'plot_dimension',
 		l(sx, sy, sz) = setup:'source_center';
 		l(px, py, pz) = setup:'plot_center';
@@ -160,10 +164,10 @@ __chunk_visualizer_tick(p) ->
 				l(cached_status, expiry) = global_status_cache:source_pos;
 				changed = (status != cached_status);
 				if ( changed || (expiry < now),
-                    global_status_cache:source_pos = l(status, now+100+floor(rand(40)));
+                    global_status_cache:source_pos = l(status, now+base_update+floor(rand(random_component)));
 					bpos = l(dx/2, yval, dz/2);
 					bcol = global_chunk_colors:status:((dx+dz)%2);
-					shapes += l('box', 150, 'from', bpos, 'to', bpos + l(0.5,0,0.5),
+					shapes += l('box', duration_max, 'from', bpos, 'to', bpos + l(0.5,0,0.5),
 					    'color', 0xffffff00, 'fill', bcol+128, 'follow', p, 'snap', 'xz');
 					if (changed,
 					    pbcol = global_chunk_colors:cached_status:((dx+dz)%2);

@@ -546,14 +546,13 @@ public class ShapeDispatcher
             super.init(options);
             from = vecFromValue(options.get("from"));
             to = vecFromValue(options.get("to"));
-            if (from.equals(to)) throw new InternalExpressionException("Box dimensions are invalid - cannot draw a zero-size boxes");
         }
 
         @Override
         public Consumer<ServerPlayerEntity> alternative()
         {
             ParticleEffect particle = replacementParticle();
-            double density = Math.max(2.0, from.distanceTo(to) /50) / (a+0.1);
+            double density = Math.max(2.0, from.distanceTo(to) /50/ (a+0.1)) ;
             return p ->
             {
                 if (p.dimension == shapeDimension)
@@ -629,7 +628,6 @@ public class ShapeDispatcher
             super.init(options);
             from = vecFromValue(options.get("from"));
             to = vecFromValue(options.get("to"));
-            if (from.equals(to)) throw new InternalExpressionException("Line dimensions are invalid - cannot draw a zero-length lines");
         }
 
         @Override
@@ -1276,13 +1274,33 @@ public class ShapeDispatcher
 
     public static int drawParticleLine(List<ServerPlayerEntity> players, ParticleEffect particle, Vec3d from, Vec3d to, double density)
     {
-        if (isStraight(from, to, density)) return drawOptimizedParticleLine(players, particle, from, to, density);
-        double lineLengthSq = from.squaredDistanceTo(to);
-        if (lineLengthSq == 0) return 0;
-        Vec3d incvec = to.subtract(from).multiply(2*density/MathHelper.sqrt(lineLengthSq));
+        double distance = from.squaredDistanceTo(to);
+        if (distance == 0) return 0;
         int pcount = 0;
+        if (distance < 100)
+        {
+            Random rand = players.get(0).getServerWorld().random;
+            int particles = (int)(distance/density)+1;
+            Vec3d towards = to.subtract(from);
+            for (int i = 0; i < particles; i++)
+            {
+                Vec3d at = from.add(towards.multiply( rand.nextDouble()));
+                for (ServerPlayerEntity player : players)
+                {
+                    player.getServerWorld().spawnParticles(player, particle, true,
+                            at.x, at.y, at.z, 1,
+                            0.0, 0.0, 0.0, 0.0);
+                    pcount ++;
+                }
+            }
+            return pcount;
+        }
+
+        if (isStraight(from, to, density)) return drawOptimizedParticleLine(players, particle, from, to, density);
+        Vec3d incvec = to.subtract(from).multiply(2*density/MathHelper.sqrt(distance));
+
         for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
-             delta.lengthSquared()<lineLengthSq;
+             delta.lengthSquared()<distance;
              delta = delta.add(incvec.multiply(Expression.randomizer.nextFloat())))
         {
             for (ServerPlayerEntity player : players)
