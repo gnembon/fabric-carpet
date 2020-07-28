@@ -473,7 +473,7 @@ public class ShapeDispatcher
                 String alignStr = options.get("align").getString();
                 if ("right".equalsIgnoreCase(alignStr))
                     align = 1;
-                else
+                else if ("left".equalsIgnoreCase(alignStr))
                     align = -1;
             }
             doublesided = false;
