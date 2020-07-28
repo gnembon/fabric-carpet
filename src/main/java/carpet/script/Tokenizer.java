@@ -370,12 +370,14 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
                 token.type == Token.TokenType.HEX_LITERAL ||
                 token.type == Token.TokenType.VARIABLE ||
                 token.type == Token.TokenType.STRINGPARAM ||
+              ( token.type == Token.TokenType.MARKER && ( previousToken.surface.equalsIgnoreCase("{") || previousToken.surface.equalsIgnoreCase("["))) ||
                 token.type == Token.TokenType.FUNCTION
             ) &&(
                 previousToken.type == Token.TokenType.VARIABLE ||
                 previousToken.type == Token.TokenType.FUNCTION ||
                 previousToken.type == Token.TokenType.LITERAL ||
                 previousToken.type == Token.TokenType.CLOSE_PAREN ||
+              ( previousToken.type == Token.TokenType.MARKER && ( previousToken.surface.equalsIgnoreCase("}") || previousToken.surface.equalsIgnoreCase("]"))) ||
                 previousToken.type == Token.TokenType.HEX_LITERAL ||
                 previousToken.type == Token.TokenType.STRINGPARAM
             )

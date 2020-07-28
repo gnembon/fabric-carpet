@@ -321,7 +321,6 @@ public class Expression
 
     public void addUnaryFunction(String name, Function<Value, Value> fun)
     {
-        name = name.toLowerCase(Locale.ROOT);
         functions.put(name,  new AbstractFunction(1)
         {
             @Override
@@ -334,7 +333,6 @@ public class Expression
 
     public void addBinaryFunction(String name, BiFunction<Value, Value, Value> fun)
     {
-        name = name.toLowerCase(Locale.ROOT);
         functions.put(name, new AbstractFunction(2)
         {
             @Override
@@ -350,7 +348,6 @@ public class Expression
 
     public void addFunction(String name, Function<List<Value>, Value> fun)
     {
-        name = name.toLowerCase(Locale.ROOT);
         functions.put(name, new AbstractFunction(-1)
         {
             @Override
@@ -377,7 +374,6 @@ public class Expression
 
     public void addLazyFunction(String name, int num_params, TriFunction<Context, Integer, List<LazyValue>, LazyValue> fun)
     {
-        name = name.toLowerCase(Locale.ROOT);
         functions.put(name, new AbstractLazyFunction(num_params)
         {
             @Override
@@ -396,7 +392,6 @@ public class Expression
     }
     public FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> outers, LazyValue code)
     {
-        name = name.toLowerCase(Locale.ROOT);
         if (functions.containsKey(name))
             throw new ExpressionException(context, expr, token, "Function "+name+" would mask a built-in function");
         Map<String, LazyValue> contextValues = new HashMap<>();
@@ -434,6 +429,7 @@ public class Expression
             if (lv.size() < 1) throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
             String moduleName = lv.get(0).evalValue(c).getString();
             c.host.importModule(c, moduleName);
+            moduleName = moduleName.toLowerCase(Locale.ROOT);
             if (lv.size() > 1)
                 c.host.importNames(c, module, moduleName, lv.subList(1, lv.size()).stream().map((l) -> l.evalValue(c).getString()).collect(Collectors.toList()));
             if (t == Context.VOID)
@@ -2289,7 +2285,7 @@ public class Expression
                     stack.push((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c));
                     break;
                 case FUNCTION:
-                    String name = token.surface.toLowerCase(Locale.ROOT);
+                    String name = token.surface;
                     ILazyFunction f;
                     ArrayList<LazyValue> p;
                     boolean isKnown = functions.containsKey(name); // globals will be evaluated lazily, not at compile time via .
@@ -2376,7 +2372,7 @@ public class Expression
                 case OPERATOR:
                     if (stack.peek() < 2)
                     {
-                        if (token.surface.equalsIgnoreCase(";"))
+                        if (token.surface.equals(";"))
                         {
                             throw new ExpressionException(c, this, token, "Unnecessary semicolon");
                         }
@@ -2386,7 +2382,7 @@ public class Expression
                     stack.set(stack.size() - 1, stack.peek() - 2 + 1);
                     break;
                 case FUNCTION:
-                    ILazyFunction f = functions.get(token.surface.toLowerCase(Locale.ROOT));// don't validate global - userdef functions
+                    ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
                     int numParams = stack.pop();
                     if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
                     {
