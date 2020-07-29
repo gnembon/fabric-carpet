@@ -116,7 +116,7 @@ public class CarpetSettings
             validate = Validator.WIP.class
     )
     public static boolean growingUpWallJump = false;
-    
+
     @Rule(
             desc = "Won't let mobs glitch into blocks when reloaded.",
             extra = "Can cause slight differences in mobs behaviour",
@@ -455,7 +455,7 @@ public class CarpetSettings
     public static int maxEntityCollisions = 0;
 
     /*
-    
+
     @Rule(
             desc = "fixes water performance issues",
             category = OPTIMIZATION,
@@ -580,7 +580,7 @@ public class CarpetSettings
             category = BUGFIX
     )// needs checkfix for 1.15
     public static boolean leadFix = false;
-    
+
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
 
