@@ -583,7 +583,7 @@ public class CarpetSettings
 
     @Rule(desc = "Spawning requires much less CPU and Memory", category = OPTIMIZATION)
     public static boolean lagFreeSpawning = false;
-
+    
     @Rule(
             desc = "Allows structure mobs to spawn in flat worlds",
             category = {EXPERIMENTAL, CREATIVE}
