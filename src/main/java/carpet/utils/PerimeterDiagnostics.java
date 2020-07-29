@@ -17,6 +17,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.SpawnSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ public class PerimeterDiagnostics
             samples = new ArrayList<>();
         }
     }
-    private Biome.SpawnEntry sle;
+    private SpawnSettings.SpawnEntry sle;
     private ServerWorld worldServer;
     private SpawnGroup ctype;
     private MobEntity el;
@@ -161,7 +162,7 @@ public class PerimeterDiagnostics
         if (sle == null || !worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), ctype, pos).contains(sle))
         {
             sle = null;
-            for (Biome.SpawnEntry sle: worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), ctype, pos))
+            for (SpawnSettings.SpawnEntry sle: worldServer.getChunkManager().getChunkGenerator().getEntitySpawnList(worldServer.getBiome(pos), worldServer.getStructureAccessor(), ctype, pos))
             {
                 if (el.getType() == sle.type)
                 {

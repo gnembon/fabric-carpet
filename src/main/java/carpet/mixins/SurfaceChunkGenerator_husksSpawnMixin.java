@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -28,7 +29,7 @@ public abstract class SurfaceChunkGenerator_husksSpawnMixin extends ChunkGenerat
     }
 
     @Inject(method = "getEntitySpawnList", at = @At("HEAD"), cancellable = true)
-    private void isInsidePyramid(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos, CallbackInfoReturnable<List<Biome.SpawnEntry>> cir)
+    private void isInsidePyramid(Biome biome, StructureAccessor accessor, SpawnGroup group, BlockPos pos, CallbackInfoReturnable<List<SpawnSettings.SpawnEntry>> cir)
     {
         if (CarpetSettings.huskSpawningInTemples && group == SpawnGroup.MONSTER)
         {

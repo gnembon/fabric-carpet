@@ -7,6 +7,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.entity.EntityType;
 import net.minecraft.world.biome.Biome;
 //import net.minecraft.world.gen.feature.AbstractTempleFeature;
+import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.gen.feature.DefaultFeatureConfig;
 import net.minecraft.world.gen.feature.DesertPyramidFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
@@ -19,11 +20,11 @@ import java.util.List;
 @Mixin(DesertPyramidFeature.class)
 public abstract class DesertPyramidFeatureMixin extends StructureFeature<DefaultFeatureConfig>
 {
-    private static final List<Biome.SpawnEntry> MONSTER_SPAWNS;
+    private static final List<SpawnSettings.SpawnEntry> MONSTER_SPAWNS;
     
     static
     {
-        MONSTER_SPAWNS = Lists.newArrayList(new Biome.SpawnEntry(EntityType.HUSK, 1, 1, 1));
+        MONSTER_SPAWNS = Lists.newArrayList(new SpawnSettings.SpawnEntry(EntityType.HUSK, 1, 1, 1));
     }
 
     public DesertPyramidFeatureMixin(Codec<DefaultFeatureConfig> codec)
@@ -33,7 +34,7 @@ public abstract class DesertPyramidFeatureMixin extends StructureFeature<Default
 
 
     @Override
-    public List<Biome.SpawnEntry> getMonsterSpawns()
+    public List<SpawnSettings.SpawnEntry> getMonsterSpawns()
     {
         if (CarpetSettings.huskSpawningInTemples)
         {
