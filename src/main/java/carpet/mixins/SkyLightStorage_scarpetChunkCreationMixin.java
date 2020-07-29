@@ -47,7 +47,7 @@ public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightSto
     {
         for (int y = -1; y < 17; ++y)
         {
-            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.getX(cPos), y, ChunkSectionPos.getZ(cPos));
+            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
 
             this.sectionsToUpdate.remove(sectionPos);
             this.sectionsToRemove.remove(sectionPos);
@@ -63,8 +63,8 @@ public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightSto
 
         for (int y = -1; y < 17; ++y)
         {
-            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.getX(cPos), y, ChunkSectionPos.getZ(cPos));
-            final long pos = BlockPos.asLong(ChunkSectionPos.getBlockCoord(ChunkSectionPos.getX(sectionPos)), ChunkSectionPos.getBlockCoord(y), ChunkSectionPos.getBlockCoord(ChunkSectionPos.getZ(sectionPos)));
+            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
+            final long pos = BlockPos.asLong(ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackX(sectionPos)), ChunkSectionPos.getBlockCoord(y), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackZ(sectionPos)));
 
             if (!this.hasSection(sectionPos))
                 continue;
@@ -95,11 +95,11 @@ public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightSto
                         long src = BlockPos.offset(dst, dir);
 
                         if (neighborLightArray == null)
-                            src = BlockPos.asLong(BlockPos.unpackLongX(src), ChunkSectionPos.getBlockCoord(ChunkSectionPos.getY(neighborCeilingSectionPos)), BlockPos.unpackLongZ(src));
+                            src = BlockPos.asLong(BlockPos.unpackLongX(src), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackY(neighborCeilingSectionPos)), BlockPos.unpackLongZ(src));
 
                         final int srcLevel = neighborCeilingLightArray != null ?
                             ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, src)
-                            : this.isSectionEnabled(ChunkSectionPos.withZeroZ(neighborCeilingSectionPos)) ? 0 : 15;
+                            : this.isSectionEnabled(ChunkSectionPos.withZeroY(neighborCeilingSectionPos)) ? 0 : 15;
 
                         levelPropagator.invokeUpdateLevel(src, dst, levelPropagator.callGetPropagatedLevel(src, dst, srcLevel), true);
                     }

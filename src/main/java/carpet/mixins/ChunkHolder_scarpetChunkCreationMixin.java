@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 @Mixin(ChunkHolder.class)
 public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHolderInterface
 {
-    @Shadow protected abstract void updateFuture(CompletableFuture<? extends Either<? extends Chunk, ChunkHolder.Unloaded>> newChunkFuture);
+    @Shadow protected abstract void combineSavingFuture(CompletableFuture<? extends Either<? extends Chunk, ChunkHolder.Unloaded>> newChunkFuture);
 
     @Shadow @Final private AtomicReferenceArray<CompletableFuture<Either<Chunk, ChunkHolder.Unloaded>>> futuresByStatus;
 
@@ -31,7 +31,7 @@ public abstract class ChunkHolder_scarpetChunkCreationMixin implements ChunkHold
                 () -> Either.left(new ProtoChunk(chpos, UpgradeData.NO_UPGRADE_DATA)),
                 executor
         );
-        updateFuture(completableFuture2);
+        combineSavingFuture(completableFuture2);
         futuresByStatus.set(i, completableFuture2);
         return completableFuture2;
     }

@@ -93,7 +93,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     protected abstract boolean updateHolderMap();
 
     @Shadow
-    protected abstract CompletableFuture<Either<List<Chunk>, Unloaded>> createChunkRegionFuture(final ChunkPos centerChunk, final int margin, final IntFunction<ChunkStatus> distanceToStatus);
+    protected abstract CompletableFuture<Either<List<Chunk>, Unloaded>> getRegion (final ChunkPos centerChunk, final int margin, final IntFunction<ChunkStatus> distanceToStatus);
 
     //in method_20617
     //method_19534(Lnet/minecraft/server/world/ChunkHolder;Lnet/minecraft/world/chunk/Chunk;)Ljava/util/concurrent/CompletableFuture;
@@ -114,7 +114,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     @Unique
     private void addTicket(final ChunkPos pos, final ChunkStatus status)
     {  // UNKNOWN
-        this.ticketManager.addTicketWithLevel(ChunkTicketType.field_14032, pos, 33 + ChunkStatus.getTargetGenerationRadius(status), pos);
+        this.ticketManager.addTicketWithLevel(ChunkTicketType.field_14032, pos, 33 + ChunkStatus.getDistanceFromFull(status), pos);
     }
 
     @Unique
@@ -162,7 +162,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     {
         final Set<ChunkPos> existingChunks = this.getExistingChunks(requestedChunks);
         for (final ChunkPos pos : existingChunks)
-            this.currentChunkHolders.get(pos.toLong()).createFuture(ChunkStatus.EMPTY, (ThreadedAnvilChunkStorage) (Object) this);
+            this.currentChunkHolders.get(pos.toLong()).getChunkAt(ChunkStatus.EMPTY, (ThreadedAnvilChunkStorage) (Object) this);
 
         return existingChunks;
     }
@@ -184,7 +184,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         // Fetch all currently loaded chunks
 
         final Set<ChunkPos> loadedChunks = requestedChunks.stream().filter(
-            pos -> this.currentChunkHolders.get(pos.toLong()).getCompletedChunk() != null // all relevant ChunkHolders exist
+            pos -> this.currentChunkHolders.get(pos.toLong()).getCurrentChunk() != null // all relevant ChunkHolders exist
         ).collect(Collectors.toSet());
 
         if (report != null)
@@ -223,7 +223,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     @Unique
     private Chunk getCurrentChunk(final ChunkPos pos)
     {
-        final CompletableFuture<Chunk> future = this.currentChunkHolders.get(pos.toLong()).getFuture();
+        final CompletableFuture<Chunk> future = this.currentChunkHolders.get(pos.toLong()).getSavingFuture();
         this.waitFor(future);
 
         return future.join();
@@ -234,14 +234,14 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     {
         this.addTicket(pos);
         this.tickTicketManager();
-        if (this.currentChunkHolders.get(pos.toLong()).getCompletedChunk() == null) // chunk unloaded
+        if (this.currentChunkHolders.get(pos.toLong()).getCurrentChunk() == null) // chunk unloaded
             if (WorldTools.canHasChunk(this.world, pos, null, true))
-                this.currentChunkHolders.get(pos.toLong()).createFuture(ChunkStatus.EMPTY, (ThreadedAnvilChunkStorage) (Object) this);
+                this.currentChunkHolders.get(pos.toLong()).getChunkAt(ChunkStatus.EMPTY, (ThreadedAnvilChunkStorage) (Object) this);
         final Chunk chunk = this.getCurrentChunk(pos);
         if (!(chunk.getStatus().isAtLeast(ChunkStatus.LIGHT.getPrevious()))) return;
         ((ServerLightingProviderInterface) this.serverLightingProvider).removeLightData(chunk);
         this.addRelightTicket(pos);
-        final CompletableFuture<?> lightFuture = this.createChunkRegionFuture(pos, 1, (pos_) -> ChunkStatus.LIGHT)
+        final CompletableFuture<?> lightFuture = this.getRegion (pos, 1, (pos_) -> ChunkStatus.LIGHT)
                 .thenCompose(
                     either -> either.map(
                             list -> ((ServerLightingProviderInterface) this.serverLightingProvider).relight(chunk),
@@ -360,7 +360,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         {
             final ChunkPos pos = chunk.getPos();
 
-            lightFutures.add(this.createChunkRegionFuture(pos, 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
+            lightFutures.add(this.getRegion (pos, 1, (pos_) -> ChunkStatus.LIGHT).thenCompose(
                 either -> either.map(
                     list -> ((ServerLightingProviderInterface) this.serverLightingProvider).relight(chunk),
                     unloaded -> {
@@ -389,7 +389,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         for (final Entry<ChunkPos, ChunkStatus> entry : targetGenerationStatus.entrySet())
             targetGenerationFutures.add(Pair.of(
                 entry.getValue(),
-                this.currentChunkHolders.get(entry.getKey().toLong()).createFuture(entry.getValue(), (ThreadedAnvilChunkStorage) (Object) this)
+                this.currentChunkHolders.get(entry.getKey().toLong()).getChunkAt(entry.getValue(), (ThreadedAnvilChunkStorage) (Object) this)
             ));
 
         final Map<ChunkStatus, List<CompletableFuture<?>>> targetGenerationFuturesGrouped = targetGenerationFutures.stream().collect(

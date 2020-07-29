@@ -6,7 +6,6 @@ import carpet.utils.SpawnReporter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FenceGateBlock;
-import net.minecraft.class_5425;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.EntityData;
@@ -23,13 +22,12 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.SpawnHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.dimension.DimensionType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -153,7 +151,7 @@ public class SpawnHelperMixin
 
     @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;method_30771(Lnet/minecraft/entity/Entity;)V"//"Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
+            target = "Lnet/minecraft/server/world/ServerWorld;spawnEntityAndPassengers(Lnet/minecraft/entity/Entity;)V"//"Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z"
     ))
     private static void spawnEntity(ServerWorld world, Entity entity_1)
     {
@@ -170,18 +168,18 @@ public class SpawnHelperMixin
                     entity_1.getBlockPos());
         }
         if (!SpawnReporter.mock_spawns)
-            world.method_30771(entity_1);
+            world.spawnEntityAndPassengers(entity_1);
             //world.spawnEntity(entity_1);
     }
 
     @Redirect(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/class_5425;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
+            target = "Lnet/minecraft/entity/mob/MobEntity;initialize(Lnet/minecraft/world/ServerWorldAccess;Lnet/minecraft/world/LocalDifficulty;Lnet/minecraft/entity/SpawnReason;Lnet/minecraft/entity/EntityData;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/entity/EntityData;"
     ))
-    private static EntityData spawnEntity(MobEntity mobEntity, class_5425 foo, LocalDifficulty localDifficulty_1, SpawnReason spawnType_1, EntityData entityData_1, CompoundTag compoundTag_1)
+    private static EntityData spawnEntity(MobEntity mobEntity, ServerWorldAccess serverWorldAccess, LocalDifficulty difficulty, SpawnReason spawnReason, EntityData entityData, CompoundTag entityTag)
     {
         if (!SpawnReporter.mock_spawns) // WorldAccess
-            return mobEntity.initialize(foo, localDifficulty_1, spawnType_1, entityData_1, compoundTag_1);
+            return mobEntity.initialize(serverWorldAccess, difficulty, spawnReason, entityData, entityTag);
         return null;
     }
 

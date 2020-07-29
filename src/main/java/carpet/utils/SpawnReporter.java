@@ -416,7 +416,7 @@ public class SpawnReporter
 
     // yeeted from SpawnHelper - temporary fix
     private static List<Biome.SpawnEntry> method_29950(ServerWorld serverWorld, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, SpawnGroup spawnGroup, BlockPos blockPos, /*@Nullable*/ Biome biome) {
-        return spawnGroup == SpawnGroup.MONSTER && serverWorld.getBlockState(blockPos.down()).getBlock() == Blocks.NETHER_BRICKS && structureAccessor.method_28388(blockPos, false, StructureFeature.FORTRESS).hasChildren() ? StructureFeature.FORTRESS.getMonsterSpawns() : chunkGenerator.getEntitySpawnList(biome != null ? biome : serverWorld.getBiome(blockPos), structureAccessor, spawnGroup, blockPos);
+        return spawnGroup == SpawnGroup.MONSTER && serverWorld.getBlockState(blockPos.down()).getBlock() == Blocks.NETHER_BRICKS && structureAccessor.getStructureAt(blockPos, false, StructureFeature.FORTRESS).hasChildren() ? StructureFeature.FORTRESS.getMonsterSpawns() : chunkGenerator.getEntitySpawnList(biome != null ? biome : serverWorld.getBiome(blockPos), structureAccessor, spawnGroup, blockPos);
     }
 
     public static List<BaseText> report(BlockPos pos, ServerWorld worldIn)

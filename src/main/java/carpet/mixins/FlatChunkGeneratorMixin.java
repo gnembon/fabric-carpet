@@ -33,7 +33,7 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
     {
         if (CarpetSettings.flatWorldStructureSpawning)
         {
-            if (accessor.method_28388(pos, true, StructureFeature.SWAMP_HUT).hasChildren())
+            if (accessor.getStructureAt(pos, true, StructureFeature.SWAMP_HUT).hasChildren())
             {  //swamp hut
                 if (group == SpawnGroup.MONSTER)
                 {
@@ -48,32 +48,32 @@ public abstract class FlatChunkGeneratorMixin extends ChunkGenerator
 
             if (group == SpawnGroup.MONSTER)
             {
-                if (accessor.method_28388(pos, false, StructureFeature.PILLAGER_OUTPOST).hasChildren())
+                if (accessor.getStructureAt(pos, false, StructureFeature.PILLAGER_OUTPOST).hasChildren())
                 {
                     return StructureFeature.PILLAGER_OUTPOST.getMonsterSpawns();
                 }
 
                 if (CarpetSettings.huskSpawningInTemples)
                 {
-                    if (accessor.method_28388(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
+                    if (accessor.getStructureAt(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
                     {
                         return StructureFeature.DESERT_PYRAMID.getMonsterSpawns();
                     }
                 }
 
-                if (accessor.method_28388(pos, false, StructureFeature.MONUMENT).hasChildren())
+                if (accessor.getStructureAt(pos, false, StructureFeature.MONUMENT).hasChildren())
                 {
                     return StructureFeature.MONUMENT.getMonsterSpawns();
                 }
 
-                if (accessor.method_28388(pos, true, StructureFeature.FORTRESS).hasChildren())
+                if (accessor.getStructureAt(pos, true, StructureFeature.FORTRESS).hasChildren())
                 {
                     return StructureFeature.FORTRESS.getMonsterSpawns();
                 }
 
                 if (CarpetSettings.shulkerSpawningInEndCities)
                 {
-                    if (accessor.method_28388(pos, true, StructureFeature.END_CITY).hasChildren())
+                    if (accessor.getStructureAt(pos, true, StructureFeature.END_CITY).hasChildren())
                     {
                         return StructureFeature.END_CITY.getMonsterSpawns();
                     }

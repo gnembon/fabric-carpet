@@ -32,14 +32,14 @@ public abstract class SurfaceChunkGenerator_husksSpawnMixin extends ChunkGenerat
     {
         if (CarpetSettings.huskSpawningInTemples && group == SpawnGroup.MONSTER)
         {
-            if (accessor.method_28388(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
+            if (accessor.getStructureAt(pos, true, StructureFeature.DESERT_PYRAMID).hasChildren())
             {
                 cir.setReturnValue(StructureFeature.DESERT_PYRAMID.getMonsterSpawns());
             }
         }
         if (CarpetSettings.shulkerSpawningInEndCities && SpawnGroup.MONSTER == group)
         {
-            if (accessor.method_28388(pos, true, StructureFeature.END_CITY).hasChildren())
+            if (accessor.getStructureAt(pos, true, StructureFeature.END_CITY).hasChildren())
             {
                 cir.setReturnValue(StructureFeature.END_CITY.getMonsterSpawns());
             }

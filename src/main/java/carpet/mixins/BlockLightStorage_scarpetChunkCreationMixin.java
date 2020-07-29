@@ -30,8 +30,8 @@ public abstract class BlockLightStorage_scarpetChunkCreationMixin extends LightS
 
         for (int y = -1; y < 17; ++y)
         {
-            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.getX(cPos), y, ChunkSectionPos.getZ(cPos));
-            final long pos = BlockPos.asLong(ChunkSectionPos.getBlockCoord(ChunkSectionPos.getX(sectionPos)), ChunkSectionPos.getBlockCoord(y), ChunkSectionPos.getBlockCoord(ChunkSectionPos.getZ(sectionPos)));
+            final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
+            final long pos = BlockPos.asLong(ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackX(sectionPos)), ChunkSectionPos.getBlockCoord(y), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackZ(sectionPos)));
 
             if (!this.hasSection(sectionPos))
                 continue;

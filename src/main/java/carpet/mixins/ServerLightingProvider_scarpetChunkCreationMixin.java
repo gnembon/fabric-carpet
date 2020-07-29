@@ -48,7 +48,7 @@ public abstract class ServerLightingProvider_scarpetChunkCreationMixin extends L
 
         this.enqueue(pos.x, pos.z, () -> 0, ServerLightingProvider.Stage.PRE_UPDATE, Util.debugRunnable(() -> {
                 super.setColumnEnabled(pos, false);
-                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(ChunkSectionPos.withZeroZ(ChunkSectionPos.asLong(pos.x, 0, pos.z)));
+                ((Lighting_scarpetChunkCreationInterface) this).removeLightData(ChunkSectionPos.withZeroY(ChunkSectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Remove light data " + pos
         ));
@@ -66,7 +66,7 @@ public abstract class ServerLightingProvider_scarpetChunkCreationMixin extends L
                     blockPos -> super.addLightSource(blockPos, chunk.getLuminance(blockPos))
                 );
 
-                ((Lighting_scarpetChunkCreationInterface) this).relight(ChunkSectionPos.withZeroZ(ChunkSectionPos.asLong(pos.x, 0, pos.z)));
+                ((Lighting_scarpetChunkCreationInterface) this).relight(ChunkSectionPos.withZeroY(ChunkSectionPos.asLong(pos.x, 0, pos.z)));
             },
             () -> "Relight chunk " + pos
         ));

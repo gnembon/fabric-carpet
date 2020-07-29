@@ -75,7 +75,7 @@ public abstract class LightStorage_scarpetChunkCreationMixin implements LightSto
         {
             for (int y = -1; y < 17; ++y)
             {
-                final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.getX(cPos), y, ChunkSectionPos.getZ(cPos));
+                final long sectionPos = ChunkSectionPos.asLong(ChunkSectionPos.unpackX(cPos), y, ChunkSectionPos.unpackZ(cPos));
 
                 this.queuedSections.remove(sectionPos);
 
