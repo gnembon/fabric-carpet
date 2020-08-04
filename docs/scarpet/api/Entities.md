@@ -155,12 +155,12 @@ query(e,'custom_name')  => null
 query(e,'type')  => villager
 </pre>
 
-## `query(e, 'command_name')`
+### `query(e, 'command_name')`
 
 Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
 player, where its their name.
 
-## `query(e, 'persistence')`
+### `query(e, 'persistence')`
 
 Returns if a mob has a persistence tag or not. Returns `null` for non-mob entities.
 

@@ -49,7 +49,7 @@ for(range(1000000,1100000),check_prime(_))  => 7216
 
 From which we can learn that there is 7216 primes between 1M and 1.1M
 
-### `while(cond, limit)`
+### `while(cond, limit, expr)`
 
 Evaluates expression `expr` repeatedly until condition `cond` becomes false, but not more than `limit` times. 
 Returns the result of the last `expr` evaluation, or `null` if nothing was successful. Both `expr` and `cond` will 
