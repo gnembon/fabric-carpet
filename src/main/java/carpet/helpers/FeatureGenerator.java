@@ -140,7 +140,7 @@ public class FeatureGenerator
 
     private static ConfiguredStructureFeature<?, ?> getDefaultFeature(StructureFeature<?> structure, ServerWorld world, BlockPos pos, boolean tryHard)
     {
-        ConfiguredStructureFeature<?, ?> configuredFeature = world.getBiome(pos).method_30970().method_30978(structure.configure(null));
+        ConfiguredStructureFeature<?, ?> configuredFeature = world.getBiome(pos).getGenerationSettings().method_30978(structure.configure(null));
         if (configuredFeature.config != null || !tryHard) return configuredFeature;
         return BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.getEntries().stream().
                 filter(cS -> cS.getValue().feature == structure).
@@ -159,7 +159,7 @@ public class FeatureGenerator
         ChunkRandom chunkRandom = new ChunkRandom();
         ChunkPos chunkPos = new ChunkPos(pos);
         Biome biome = biomeAccess.getBiome(new BlockPos(chunkPos.getStartX() + 9, 0, chunkPos.getStartZ() + 9));
-        ConfiguredStructureFeature<?, ?> configuredFeature = biome.method_30970().method_30978(structure.configure(null));
+        ConfiguredStructureFeature<?, ?> configuredFeature = biome.getGenerationSettings().method_30978(structure.configure(null));
         if (configuredFeature == null || configuredFeature.config == null) return null;
         ChunkPos chunkPos2 = structure.getStartChunk(params, seed, chunkRandom, chunkPos.x, chunkPos.z); //find some chunk I guess
         if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos.x, chunkPos.z, biome, chunkPos, configuredFeature.config)) // should start at
