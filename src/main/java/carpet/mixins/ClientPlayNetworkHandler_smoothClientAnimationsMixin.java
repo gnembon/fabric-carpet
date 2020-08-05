@@ -32,7 +32,8 @@ public class ClientPlayNetworkHandler_smoothClientAnimationsMixin
             shift = At.Shift.AFTER
     ))
     private void recreateMovingPistons(ChunkDataS2CPacket packet, CallbackInfo ci,
-                                       int i, int j, BiomeArray biomeArray, WorldChunk worldChunk, Iterator var5, CompoundTag tag, BlockPos blockPos)
+                                       //int i, int j, BiomeArray biomeArray, WorldChunk worldChunk,
+                                       Iterator var5, CompoundTag tag, BlockPos blockPos)
     {
         if (CarpetSettings.smoothClientAnimations)
         {

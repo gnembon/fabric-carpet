@@ -254,7 +254,7 @@ public class OptimizedExplosion
 
                         LootContext.Builder lootBuilder = (new LootContext.Builder((ServerWorld)eAccess.getWorld()))
                                 .random(eAccess.getWorld().random)
-                                .parameter(LootContextParameters.POSITION, blockpos)
+                                .parameter(LootContextParameters.ORIGIN, Vec3d.ofCenter(blockpos))
                                 .parameter(LootContextParameters.TOOL, ItemStack.EMPTY)
                                 .optionalParameter(LootContextParameters.BLOCK_ENTITY, blockEntity)
                                 .optionalParameter(LootContextParameters.THIS_ENTITY, eAccess.getEntity());

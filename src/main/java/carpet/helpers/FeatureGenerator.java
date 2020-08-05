@@ -16,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.biome.source.BiomeAccess;
@@ -52,7 +53,7 @@ public class FeatureGenerator
         {
             return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
                     world, pos, world.getChunkManager().getChunkGenerator(),
-                    false, Biomes.PLAINS, structureFeature.config);
+                    false, world.getRegistryManager().get(Registry.BIOME_KEY).method_31140(Biomes.PLAINS), structureFeature.config);
 
         }
 
@@ -89,7 +90,7 @@ public class FeatureGenerator
     {
         return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
                     world, pos, world.getChunkManager().getChunkGenerator(),
-                    true, Biomes.PLAINS, structureFeature.config);
+                    true, world.getRegistryManager().get(Registry.BIOME_KEY).method_31140(Biomes.PLAINS), structureFeature.config);
     }
 
     @FunctionalInterface
@@ -118,17 +119,17 @@ public class FeatureGenerator
         return simplePlop(Feature.TREE.configure(config));
     }
 
-    private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
+    private static Thing spawnCustomStructure(StructureFeature structure, FeatureConfig conf, RegistryKey<Biome> biome)
     {
         return setupCustomStructure(structure, conf, biome, false);
     }
-    private static Thing gridCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome)
+    private static Thing gridCustomStructure(StructureFeature structure, FeatureConfig conf, RegistryKey<Biome> biome)
     {
         return setupCustomStructure(structure, conf, biome, true);
     }
-    private static Thing setupCustomStructure(StructureFeature structure, FeatureConfig conf, Biome biome, boolean wireOnly)
+    private static Thing setupCustomStructure(StructureFeature structure, FeatureConfig conf, RegistryKey<Biome> biome, boolean wireOnly)
         {
-        return (w, p) -> ((StructureFeatureInterface)structure).plopAnywhere(w, p, w.getChunkManager().getChunkGenerator(), wireOnly, biome, conf);
+        return (w, p) -> ((StructureFeatureInterface)structure).plopAnywhere(w, p, w.getChunkManager().getChunkGenerator(), wireOnly, w.getRegistryManager().get(Registry.BIOME_KEY).method_31140(biome), conf);
     }
 
     public static Boolean spawn(String name, ServerWorld world, BlockPos pos)

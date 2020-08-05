@@ -284,6 +284,8 @@ public class CarpetExpression
     {
         Chunk chunk = world.getChunk(pos);
         chunk.setShouldSave(true);
+
+        /*
         for (int i = 0; i<16; i++)
         {
             BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
@@ -291,7 +293,7 @@ public class CarpetExpression
             world.getChunkManager().markForUpdate(section.east());
             world.getChunkManager().markForUpdate(section.west());
             world.getChunkManager().markForUpdate(section.north());
-        }
+        }*/
     }
 
     private boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
