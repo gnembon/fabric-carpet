@@ -68,6 +68,7 @@ import net.minecraft.item.MiningToolItem;
 import net.minecraft.item.ShearsItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
+import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.command.argument.ItemStackArgument;
@@ -279,21 +280,21 @@ public class CarpetExpression
         return bs;
     }
 
-
     private static void forceChunkUpdate(BlockPos pos, ServerWorld world)
     {
-        Chunk chunk = world.getChunk(pos);
-        chunk.setShouldSave(true);
-
-        /*
-        for (int i = 0; i<16; i++)
+        WorldChunk worldChunk = world.getChunkManager().getWorldChunk(pos.getX()>>4, pos.getZ()>>4, false);
+        if (worldChunk != null)
         {
-            BlockPos section = new BlockPos((pos.getX()>>4 <<4)+8, 16*i, (pos.getZ()>>4 <<4)+8);
-            world.getChunkManager().markForUpdate(section);
-            world.getChunkManager().markForUpdate(section.east());
-            world.getChunkManager().markForUpdate(section.west());
-            world.getChunkManager().markForUpdate(section.north());
-        }*/
+            int vd = world.getServer().getPlayerManager().getViewDistance() * 16;
+            int vvd = vd * vd;
+            List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
+            if (!nearbyPlayers.isEmpty())
+            {
+                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, 65535);
+                ChunkPos chpos = new ChunkPos(pos);
+                nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
+            }
+        }
     }
 
     private boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
