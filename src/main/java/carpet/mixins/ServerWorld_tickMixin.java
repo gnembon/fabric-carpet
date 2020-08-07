@@ -25,14 +25,15 @@ import java.util.function.Supplier;
 @Mixin(ServerWorld.class)
 public abstract class ServerWorld_tickMixin extends World
 {
+    protected ServerWorld_tickMixin(MutableWorldProperties properties, RegistryKey<World> registryKey, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
+    {
+        super(properties, registryKey, dimensionType, supplier, bl, bl2, l);
+    }
+
     @Shadow protected abstract void processSyncedBlockEvents();
     //@Shadow protected abstract void sendBlockActions();
 
     @Shadow protected abstract void tickTime();
-    protected ServerWorld_tickMixin(MutableWorldProperties mutableWorldProperties, RegistryKey<World> registryKey, RegistryKey<DimensionType> registryKey2, DimensionType dimensionType, Supplier<Profiler> supplier, boolean bl, boolean bl2, long l)
-    {
-        super(mutableWorldProperties, registryKey, registryKey2, dimensionType, supplier, bl, bl2, l);
-    }
 
     private CarpetProfiler.ProfilerToken currentSection;
 
