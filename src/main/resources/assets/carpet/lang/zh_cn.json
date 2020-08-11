@@ -155,8 +155,8 @@
   "rule.shulkerSpawningInEndCities.name": "潜影贝重生",
   "rule.shulkerSpawningInEndCities.desc": "潜影贝将会在末地城中重生",
   
-  "rule.silverFishDropGravel.name": "蠹虫掉落沙砾",
-  "rule.silverFishDropGravel.desc": "蠹虫被击杀时会掉落沙砾",
+  "rule.silverFishDropGravel.name": "蠹虫钻出方块掉落沙砾",
+  "rule.silverFishDropGravel.desc": "蠹虫钻出方块时会掉落沙砾",
   
   "rule.smoothClientAnimations.name": "平滑客户端动画",
   "rule.smoothClientAnimations.desc": "低TPS设置时可以使客户端动画更加平滑",
