@@ -3,13 +3,13 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 
 import com.google.common.collect.Lists;
-import com.mojang.serialization.Codec;
-import net.minecraft.class_5434;
+import com.mojang.serialization.Codec;;
 import net.minecraft.entity.EntityType;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.gen.feature.BastionRemnantFeature;
 
+import net.minecraft.world.gen.feature.JigsawFeature;
 import net.minecraft.world.gen.feature.StructurePoolFeatureConfig;
 import org.spongepowered.asm.mixin.Mixin;
 
@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Mixin(BastionRemnantFeature.class)
-public abstract class BastionRemnantFeatureMixin extends class_5434
+public abstract class BastionRemnantFeatureMixin extends JigsawFeature
 {
     private static final List<SpawnSettings.SpawnEntry> spawnList = Lists.newArrayList(
             new SpawnSettings.SpawnEntry(EntityType.PIGLIN_BRUTE, 5, 1, 2),

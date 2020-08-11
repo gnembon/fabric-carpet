@@ -19,6 +19,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
+import net.minecraft.world.biome.BuiltInBiomes;
 import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -53,7 +54,7 @@ public class FeatureGenerator
         {
             return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
                     world, pos, world.getChunkManager().getChunkGenerator(),
-                    false, world.getRegistryManager().get(Registry.BIOME_KEY).method_31140(Biomes.PLAINS), structureFeature.config);
+                    false, world.getRegistryManager().get(Registry.BIOME_KEY).method_31140(BuiltInBiomes.PLAINS), structureFeature.config);
 
         }
 
@@ -90,7 +91,7 @@ public class FeatureGenerator
     {
         return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
                     world, pos, world.getChunkManager().getChunkGenerator(),
-                    true, world.getRegistryManager().get(Registry.BIOME_KEY).method_31140(Biomes.PLAINS), structureFeature.config);
+                    true, Biomes.PLAINS, structureFeature.config);
     }
 
     @FunctionalInterface
@@ -197,7 +198,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                Biomes.NETHER_WASTES
+                BuiltInBiomes.NETHER_WASTES
         ));
         put("bastion_remnant_hoglin_stable", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
@@ -209,7 +210,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                Biomes.NETHER_WASTES
+                BuiltInBiomes.NETHER_WASTES
         ));
         put("bastion_remnant_treasure", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
@@ -221,7 +222,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                Biomes.NETHER_WASTES
+                BuiltInBiomes.NETHER_WASTES
         ));
         put("bastion_remnant_bridge", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
@@ -233,7 +234,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                Biomes.NETHER_WASTES
+                BuiltInBiomes.NETHER_WASTES
         ));
     }};
 
