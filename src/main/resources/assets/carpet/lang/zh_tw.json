@@ -159,8 +159,8 @@
   "rule.shulkerSpawningInEndCities.name": "可重生界伏蚌",
   "rule.shulkerSpawningInEndCities.desc": "界伏蚌將會在終界城市中重生",
 
-  "rule.silverFishDropGravel.name": "蠹魚掉落礫石",
-  "rule.silverFishDropGravel.desc": "蠹魚死亡時會掉落礫石",
+  "rule.silverFishDropGravel.name": "蠹魚鑽出方塊掉落礫石",
+  "rule.silverFishDropGravel.desc": "蠹魚在鑽出方塊時會掉落礫石",
 
   "rule.smoothClientAnimations.name": "更平暢玩家端動畫",
   "rule.smoothClientAnimations.desc": "降低TPS設置時可以使玩家端動畫更加平暢",
