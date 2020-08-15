@@ -247,7 +247,7 @@ public class ScriptCommand
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(),bb)).
                         executes((cc) ->
                         {
-                            boolean success =CarpetServer.scriptServer.removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"));
+                            boolean success =CarpetServer.scriptServer.removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), true);
                             return success?1:0;
                         }));
 

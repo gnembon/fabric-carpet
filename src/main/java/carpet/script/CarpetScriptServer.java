@@ -153,6 +153,12 @@ public class CarpetScriptServer
     {
         //TODO add per player modules to support player actions better on a server
         name = name.toLowerCase(Locale.ROOT);
+        boolean reload = false;
+        if (modules.containsKey(name))
+        {
+            removeScriptHost(source, name, false);
+            reload = true;
+        }
         Module module = getModule(name, false);
         if (module == null)
         {
@@ -182,29 +188,30 @@ public class CarpetScriptServer
 
         if (autoload && !newHost.persistenceRequired)
         {
-            removeScriptHost(source, name);
+            removeScriptHost(source, name, false);
             return false;
         }
         //addEvents(source, name);
-        addCommand(source, name);
+        addCommand(source, name, reload);
         return true;
     }
 
-    private void addCommand(ServerCommandSource source, String hostName)
+    private void addCommand(ServerCommandSource source, String hostName, boolean isReload)
     {
         ScriptHost host = modules.get(hostName);
+        String loaded = isReload?"reloaded":"loaded";
         if (host == null)
         {
             return;
         }
         if (host.getFunction("__command") == null)
         {
-            Messenger.m(source, "gi "+hostName+" app loaded.");
+            Messenger.m(source, "gi "+hostName+" app "+loaded+".");
             return;
         }
         if (holyMoly.contains(hostName))
         {
-            Messenger.m(source, "gi "+hostName+" app loaded with no command.");
+            Messenger.m(source, "gi "+hostName+" app "+loaded+" with no command.");
             Messenger.m(source, "gi Tried to mask vanilla command.");
             return;
         }
@@ -238,17 +245,17 @@ public class CarpetScriptServer
                                         return 1;
                                     })));
         }
-        Messenger.m(source, "gi "+hostName+" app loaded with /"+hostName+" command");
+        Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
 
-    public boolean removeScriptHost(ServerCommandSource source, String name)
+    public boolean removeScriptHost(ServerCommandSource source, String name, boolean notifySource)
     {
         name = name.toLowerCase(Locale.ROOT);
         if (!modules.containsKey(name))
         {
-            Messenger.m(source, "r No such app found: ", "wb  " + name);
+            if (notifySource) Messenger.m(source, "r No such app found: ", "wb  " + name);
             return false;
         }
         // stop all events associated with name
@@ -256,7 +263,7 @@ public class CarpetScriptServer
         modules.get(name).onClose();
         modules.remove(name);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
-        Messenger.m(source, "gi Removed "+name+" app");
+        if (notifySource) Messenger.m(source, "gi Removed "+name+" app");
         return true;
     }
 
@@ -303,7 +310,7 @@ public class CarpetScriptServer
     {
         Map<String, Boolean> apps = new HashMap<>();
         modules.forEach((s, h) -> apps.put(s, h.perUser));
-        apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s));
+        apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false));
         events.clearAll();
         init();
         apps.forEach((s, pp) -> addScriptHost(server.getCommandSource(), s, pp, false));
