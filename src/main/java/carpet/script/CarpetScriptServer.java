@@ -59,6 +59,7 @@ public class CarpetScriptServer
         registerBuiltInScript(BundledModule.carpetNative("stats_test", false));
         registerBuiltInScript(BundledModule.carpetNative("math", true));
         registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
+        registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
