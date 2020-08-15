@@ -18,8 +18,8 @@ import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.Biomes;
-import net.minecraft.world.biome.BuiltInBiomes;
+import net.minecraft.world.biome.BiomeKeys;
+import net.minecraft.world.biome.BuiltinBiomes;
 import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -54,7 +54,7 @@ public class FeatureGenerator
         {
             return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
                     world, pos, world.getChunkManager().getChunkGenerator(),
-                    false, world.getRegistryManager().get(Registry.BIOME_KEY).method_31140(BuiltInBiomes.PLAINS), structureFeature.config);
+                    false, world.getRegistryManager().get(Registry.BIOME_KEY).get(BiomeKeys.PLAINS), structureFeature.config);
 
         }
 
@@ -91,7 +91,7 @@ public class FeatureGenerator
     {
         return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
                     world, pos, world.getChunkManager().getChunkGenerator(),
-                    true, Biomes.PLAINS, structureFeature.config);
+                    true, BuiltinBiomes.PLAINS, structureFeature.config);
     }
 
     @FunctionalInterface
@@ -130,7 +130,7 @@ public class FeatureGenerator
     }
     private static Thing setupCustomStructure(StructureFeature structure, FeatureConfig conf, RegistryKey<Biome> biome, boolean wireOnly)
         {
-        return (w, p) -> ((StructureFeatureInterface)structure).plopAnywhere(w, p, w.getChunkManager().getChunkGenerator(), wireOnly, w.getRegistryManager().get(Registry.BIOME_KEY).method_31140(biome), conf);
+        return (w, p) -> ((StructureFeatureInterface)structure).plopAnywhere(w, p, w.getChunkManager().getChunkGenerator(), wireOnly, w.getRegistryManager().get(Registry.BIOME_KEY).get(biome), conf);
     }
 
     public static Boolean spawn(String name, ServerWorld world, BlockPos pos)
@@ -154,7 +154,7 @@ public class FeatureGenerator
     {
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
-        StructureConfig params = generator.getConfig().getForType(structure);
+        StructureConfig params = generator.getStructuresConfig().getForType(structure);
         if (!generator.getBiomeSource().hasStructureFeature(structure))
             return null;
         BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
@@ -198,7 +198,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                BuiltInBiomes.NETHER_WASTES
+                BiomeKeys.NETHER_WASTES
         ));
         put("bastion_remnant_hoglin_stable", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
@@ -210,7 +210,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                BuiltInBiomes.NETHER_WASTES
+                BiomeKeys.NETHER_WASTES
         ));
         put("bastion_remnant_treasure", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
@@ -222,7 +222,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                BuiltInBiomes.NETHER_WASTES
+                BiomeKeys.NETHER_WASTES
         ));
         put("bastion_remnant_bridge", spawnCustomStructure(
                 StructureFeature.BASTION_REMNANT,
@@ -234,7 +234,7 @@ public class FeatureGenerator
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
-                BuiltInBiomes.NETHER_WASTES
+                BiomeKeys.NETHER_WASTES
         ));
     }};
 
