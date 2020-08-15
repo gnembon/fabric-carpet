@@ -159,8 +159,8 @@
   "rule.shulkerSpawningInEndCities.name": "可重生界伏蚌",
   "rule.shulkerSpawningInEndCities.desc": "界伏蚌將會在終界城市中重生",
 
-  "rule.silverFishDropGravel.name": "蠹魚鑽出放塊掉落礫石",
-  "rule.silverFishDropGravel.desc": "蠹魚鑽出放塊時會掉落礫石",
+  "rule.silverFishDropGravel.name": "蠹魚鑽出方塊掉落礫石",
+  "rule.silverFishDropGravel.desc": "蠹魚在鑽出方塊時會掉落礫石",
 
   "rule.smoothClientAnimations.name": "更平暢玩家端動畫",
   "rule.smoothClientAnimations.desc": "降低TPS設置時可以使玩家端動畫更加平暢",
@@ -222,7 +222,7 @@
   "rule.creativeNoClip.extra.0": "這個選項需要伺服器和游戏端同時支持才生效.\n僅在伺服器設置是無效的，而僅在游戏端設置的情況下\n妳可以利用壹些和活板門有關的技巧來穿墻",
 
   "rule.fogOff.name": "關閉霧氣",
-  "rule.fogOff.desc": "啟用本功能以關閉地獄與末地的霧氣",
+  "rule.fogOff.desc": "啟用本功能以關閉地獄與終界的霧氣",
   "rule.fogOff.extra.0": "提高了可見度，但看起來很奇怪",
 
   "rule.forceloadLimit.name": "永加載區塊上限更改",
