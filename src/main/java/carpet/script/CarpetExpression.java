@@ -26,6 +26,7 @@ import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.ShapeDispatcher;
+import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -1291,6 +1292,33 @@ public class CarpetExpression
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
             return (_c, _t) -> ret;
         });
+
+        this.expr.addLazyFunction("custom_dimension", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0) throw new InternalExpressionException("'custom_dimension' requires at least one argument");
+            CarpetContext cc = (CarpetContext)c;
+            String worldKey = lv.get(0).evalValue(c).getString();
+
+            Long seed = null;
+            if (lv.size() > 1)
+            {
+                String seedKey = lv.get(1).evalValue(c).getString();
+                try
+                {
+                    seed = Long.parseLong(seedKey);
+                }
+                catch (NumberFormatException ignored)
+                {
+                    throw new InternalExpressionException("Incorrect number format for seed: " + seedKey);
+                }
+            }
+
+            boolean success = WorldTools.createWorld(cc.s.getMinecraftServer(), worldKey, seed);
+            if (!success) return LazyValue.FALSE;
+            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            return LazyValue.TRUE;
+        });
+
 
         this.expr.addLazyFunction("reset_chunk", -1, (c, t, lv) ->
         {

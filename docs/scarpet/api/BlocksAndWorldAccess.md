@@ -730,3 +730,25 @@ All generated structures will retain their properties, like mob spawning, howeve
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
 
+### `custom_dimension(name, seed?)`
+
+Ensures the dimension with the given `'name'` is available and configured with the given seed. It merely sets the world
+generator settings to the overworld, and the optional custom seed (or using current world seed, if not provided). 
+
+If the dimension with this name already exists, returns `false` and does nothing.
+
+Created dimension with `custom_dimension` only exist till the game restart (same with the datapacks, if removed), but
+all the world data should be saved. If custom dimension is re-created next time the app is loaded it will be using
+the existing world content. This means that it is up to the programmer to make sure the custom dimensions settings
+are stored in app data and restored when app reloads and wants to use previous worlds. Since vanilla game only keeps
+track of world data, not the world settings, if the dimension hasn't been yet configured via `custom_dimension` and
+the app hasn't yet initalized their dimension, the players will be positioned in the overworld at the same coordinates.
+
+List of custom dimensions (to be used in the likes of `/execute in <dim>`) is only send to the clients when joining the 
+game, meaning custom worlds created after a player has joined will not be suggested in vanilla commands, but running
+vanilla commands on them will be successful. Its due to the fact that datapacks with dimensions are always loaded
+with the game and assumed not changing.
+
+`custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
+the future.
+

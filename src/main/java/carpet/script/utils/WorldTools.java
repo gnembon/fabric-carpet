@@ -1,15 +1,36 @@
 package carpet.script.utils;
 
 import carpet.fakes.MinecraftServerInterface;
+import com.google.common.collect.ImmutableList;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.WorldGenerationProgressListener;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.util.registry.SimpleRegistry;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.source.BiomeAccess;
+import net.minecraft.world.border.WorldBorderListener;
 import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.dimension.DimensionOptions;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.gen.GeneratorOptions;
+import net.minecraft.world.gen.Spawner;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.level.ServerWorldProperties;
+import net.minecraft.world.level.UnmodifiableLevelProperties;
 import net.minecraft.world.storage.RegionFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 public class WorldTools
 {
@@ -43,4 +64,68 @@ public class WorldTools
         catch (IOException ignored) { }
         return true;
     }
+
+    public static boolean createWorld(MinecraftServer server, String worldKey, Long seed)
+    {
+        Identifier worldId = new Identifier(worldKey);
+        ServerWorld overWorld = server.getOverworld();
+
+        Set<RegistryKey<World>> worldKeys = server.getWorldRegistryKeys();
+        for (RegistryKey<World> worldRegistryKey : worldKeys)
+        {
+            if (worldRegistryKey.getValue().equals(worldId))
+            {
+                // world with this id already exists
+                return false;
+            }
+        }
+        ServerWorldProperties serverWorldProperties = server.getSaveProperties().getMainWorldProperties();
+        GeneratorOptions generatorOptions = server.getSaveProperties().getGeneratorOptions();
+        boolean bl = generatorOptions.isDebugWorld();
+        long l = generatorOptions.getSeed();
+        long m = BiomeAccess.hashSeed(l);
+        List<Spawner> list = ImmutableList.of();
+        SimpleRegistry<DimensionOptions> simpleRegistry = generatorOptions.getDimensions();
+        DimensionOptions dimensionOptions = simpleRegistry.get(DimensionOptions.OVERWORLD);
+        ChunkGenerator chunkGenerator2;
+        DimensionType dimensionType2;
+        if (dimensionOptions == null) {
+            dimensionType2 = (DimensionType)server.getRegistryManager().getDimensionTypes().getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
+            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (new Random()).nextLong());
+        } else {
+            dimensionType2 = dimensionOptions.getDimensionType();
+            chunkGenerator2 = dimensionOptions.getChunkGenerator();
+        }
+
+        RegistryKey<World> customWorld = RegistryKey.of(Registry.DIMENSION, worldId);
+
+        chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
+
+        ServerWorld serverWorld = new ServerWorld(
+                server,
+                Util.getMainWorkerExecutor(),
+                ((MinecraftServerInterface) server).getCMSession(),
+                new UnmodifiableLevelProperties(server.getSaveProperties(), serverWorldProperties),
+                customWorld,
+                dimensionType2,
+                NOOP_LISTENER,
+                chunkGenerator2,
+                bl,
+                (seed==null)?l:seed,
+                list,
+                false);
+        overWorld.getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld.getWorldBorder()));
+        ((MinecraftServerInterface) server).getCMWorlds().put(customWorld, serverWorld);
+        return true;
+    }
+
+
+    private static class NoopWorldGenerationProgressListener implements WorldGenerationProgressListener
+    {
+        @Override public void start(ChunkPos spawnPos) { }
+        @Override public void setChunkStatus(ChunkPos pos, ChunkStatus status) { }
+        @Override public void stop() { }
+    }
+
+    private static final WorldGenerationProgressListener NOOP_LISTENER = new NoopWorldGenerationProgressListener();
 }
