@@ -53,7 +53,6 @@ public class OptimizedExplosion
     private static List<Entity> entitylist;
     private static Vec3d vec3dmem;
     private static long tickmem;
-    private static Vec3d vec3dZero = new Vec3d(0, 0, 0);
     // For disabling the explosion particles and sound
     public static int explosionSound = 0;
 
@@ -223,28 +222,6 @@ public class OptimizedExplosion
             {
                 BlockState state = world.getBlockState(blockpos);
                 Block block = state.getBlock();
-
-                /*if (spawnParticles)
-                {
-                    double d0 = (double)((float)blockpos.getX() + world.random.nextFloat());
-                    double d1 = (double)((float)blockpos.getY() + world.random.nextFloat());
-                    double d2 = (double)((float)blockpos.getZ() + world.random.nextFloat());
-                    double d3 = d0 - posX;
-                    double d4 = d1 - posY;
-                    double d5 = d2 - posZ;
-                    double d6 = (double)MathHelper.sqrt(d3 * d3 + d4 * d4 + d5 * d5);
-                    d3 = d3 / d6;
-                    d4 = d4 / d6;
-                    d5 = d5 / d6;
-                    double d7 = 0.5D / (d6 / (double) eAccess.getPower() + 0.1D);
-                    d7 = d7 * (double)(world.random.nextFloat() * world.random.nextFloat() + 0.3F);
-                    d3 = d3 * d7;
-                    d4 = d4 * d7;
-                    d5 = d5 * d7;
-                    world.addParticle(ParticleTypes.POOF,
-                            (d0 + posX) / 2.0D, (d1 + posY) / 2.0D, (d2 + posZ) / 2.0D, d3, d4, d5);
-                    world.addParticle(ParticleTypes.SMOKE, d0, d1, d2, d3, d4, d5);
-                }*/
 
                 if (state.getMaterial() != Material.AIR)
                 {

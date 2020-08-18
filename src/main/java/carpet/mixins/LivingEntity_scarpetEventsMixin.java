@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.script.EntityEventsGroup;
@@ -18,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import static carpet.script.CarpetEventServer.Event.PLAYER_DEALS_DAMAGE;
-import static carpet.script.CarpetEventServer.Event.PLAYER_TAKES_DAMAGE;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntity_scarpetEventsMixin extends Entity implements LivingEntityInterface

@@ -15,6 +15,7 @@ chunk_tickets
 crafting_remaining_item
 create_marker
 current_dimension
+custom_dimension
 day_time
 destroy
 diamond

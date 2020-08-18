@@ -1,7 +1,6 @@
 package carpet.fakes;
 
-public interface TntEntityInterface {
-
+public interface TntEntityInterface
+{
     int getMergedTNT();
-
 }

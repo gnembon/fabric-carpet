@@ -82,9 +82,6 @@ public class FeatureGenerator
         StructureFeature<?> structureFeature = Registry.STRUCTURE_FEATURE.get(id);
         if (structureFeature == null) return null;
         return getDefaultFeature(structureFeature, world, pos, true);
-
-        // optionally fish out
-
     }
 
     synchronized public static Boolean plopGrid(ConfiguredStructureFeature<?, ?> structureFeature, ServerWorld world, BlockPos pos)
@@ -124,10 +121,6 @@ public class FeatureGenerator
     {
         return setupCustomStructure(structure, conf, biome, false);
     }
-    private static Thing gridCustomStructure(StructureFeature structure, FeatureConfig conf, RegistryKey<Biome> biome)
-    {
-        return setupCustomStructure(structure, conf, biome, true);
-    }
     private static Thing setupCustomStructure(StructureFeature structure, FeatureConfig conf, RegistryKey<Biome> biome, boolean wireOnly)
         {
         return (w, p) -> ((StructureFeatureInterface)structure).plopAnywhere(w, p, w.getChunkManager().getChunkGenerator(), wireOnly, w.getRegistryManager().get(Registry.BIOME_KEY).get(biome), conf);
@@ -148,7 +141,6 @@ public class FeatureGenerator
                 filter(cS -> cS.getValue().feature == structure).
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
-
 
     public static <T extends FeatureConfig> StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<T> structure, boolean computeBox)
     {

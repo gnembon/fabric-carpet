@@ -1,8 +1,14 @@
 package carpet.commands;
 
 import carpet.CarpetServer;
-import carpet.script.*;
 import carpet.CarpetSettings;
+import carpet.script.CarpetEventServer;
+import carpet.script.CarpetExpression;
+import carpet.script.CarpetScriptHost;
+import carpet.script.Expression;
+import carpet.script.LazyValue;
+import carpet.script.ScriptHost;
+import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.settings.SettingsManager;
@@ -27,7 +33,13 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -55,13 +67,14 @@ public class ScriptCommand
         if (quoteCount % 2 == 1)
             return Collections.emptyList();
         int maxLen = prefix.length()<3 ? (prefix.length()*2+1) : 1234;
+        String eventPrefix = prefix.startsWith("__on_")?prefix.substring(5):null;
         List<String> scarpetMatches = scarpetFunctions.stream().
                 filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList());
         scarpetMatches.addAll(APIFunctions.stream().
                 filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList()));
         // not that useful in commandline, more so in external scripts, so skipping here
-        //scarpetMatches.addAll(CarpetServer.scriptServer.events.eventHandlers.keySet().stream().
-        //        filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> "__"+s+"(").collect(Collectors.toList()));
+        if (eventPrefix != null) scarpetMatches.addAll(CarpetEventServer.Event.byName.keySet().stream().
+                filter(s -> s.startsWith(eventPrefix)).map(s -> "__on_"+s+"(").collect(Collectors.toList()));
         scarpetMatches.addAll(host.globaFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
         scarpetMatches.addAll(host.globaVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
         return scarpetMatches;

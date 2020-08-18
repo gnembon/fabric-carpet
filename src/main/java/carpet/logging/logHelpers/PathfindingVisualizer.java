@@ -2,13 +2,8 @@ package carpet.logging.logHelpers;
 
 import carpet.helpers.ParticleDisplay;
 import carpet.logging.LoggerRegistry;
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.ParticleArgumentType;
 import net.minecraft.entity.Entity;
-import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
 
 public class PathfindingVisualizer

@@ -84,7 +84,6 @@
     "FluidBlock_renewableBlackstoneMixin",
     "StructureFeatureMixin",
     "World_scarpetPlopMixin",
-    "Biome_scarpetMixin",
     "ChunkRegion_scarpetPlopMixin",
     "StructurePiece_scarpetPlopMixin",
 
@@ -94,7 +93,7 @@
     "SaplingBlockMixin",
     "EntityMixin",
     "FlatChunkGeneratorMixin",
-    "ChunkGeneratorMixin",
+    "ChunkGenerator_scarpetMixin",
 
     "BiomeArray_getBiomeArrayMixin",
 
@@ -102,7 +101,7 @@
     "DesertPyramidFeatureMixin",
     "HuskEntityMixin",
 
-    "SurfaceChunkGenerator_husksSpawnMixin",
+    "NoiseChunkGenerator_husksSpawnMixin",
 
     "ServerChunkManagerMixin",
     "SpawnHelperMixin",
@@ -116,9 +115,6 @@
 
     "ServerPlayNetworkHandler_antiCheatDisabledMixin",
     "PlayerEntity_antiCheatDisabled",
-
-    "Entity_portalSuffocationMixin",
-    "PortalForcer_portalSuffocationMixin",
 
     "ServerPlayerInteractionManager_antiCheatMixin",
 
@@ -147,7 +143,6 @@
     "DispenserBlock_qcMixin",
 
     "PickaxeItem_missingToolsMixin",
-    "ShearsItem_missingToolsMixin",
 
     "ItemDispenserBehaviour_extremeBehavioursMixin",
     "ItemScatterer_extremeMixin",
@@ -157,8 +152,6 @@
     "BlazeEntity_extremeMixin",
     "BlazeEntityShootFireballGoal_extremeMixin",
     "MobEntity_extremeMixin",
-    "ExplosiveProjectileEntity_extremeMixin",
-    "LlamaSpitEntity_extremeMixin",
     "ProjectileEntity_extremeMixin",
     "Projectile_extremeMixin",
 
@@ -196,7 +189,6 @@
     "MinecraftClientMixin",
     "MinecraftClient_pausedShakeMixin",
     "WorldRenderer_pausedShakeMixin",
-    "IntegratedServerMixin",
     "InGameHudMixin",
     "PlayerListHudMixin",
     "PistonBlockEntityRenderer_movableTEMixin",
@@ -209,7 +201,6 @@
     "WorldRenderer_scarpetRenderMixin"
   ],
   "server": [
-    "MinecraftDedicatedServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

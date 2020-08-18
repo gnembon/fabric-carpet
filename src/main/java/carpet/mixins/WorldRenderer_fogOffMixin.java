@@ -13,12 +13,12 @@ public class WorldRenderer_fogOffMixin
 {
     @Redirect(method = "render", require = 0, expect = 0, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/SkyProperties;useThickFog(II)Z"  //method_28110  isFogThick
+            target = "Lnet/minecraft/client/render/SkyProperties;useThickFog(II)Z"
     ))
     private boolean isReallyThick(SkyProperties skyProperties, int x, int z)
     {
         if (CarpetSettings.fogOff) return false;
-        return skyProperties.useThickFog(x, z); //isFogThick
+        return skyProperties.useThickFog(x, z);
     }
 
 }

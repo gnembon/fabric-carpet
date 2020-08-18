@@ -31,7 +31,6 @@ public abstract class ServerWorld_tickMixin extends World
     }
 
     @Shadow protected abstract void processSyncedBlockEvents();
-    //@Shadow protected abstract void sendBlockActions();
 
     @Shadow protected abstract void tickTime();
 
@@ -167,15 +166,6 @@ public abstract class ServerWorld_tickMixin extends World
     {
         if (TickSpeed.process_entities) raidManager.tick();
     }
-
-    /*@Redirect(method = "tick", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/WanderingTraderManager;tick()V"
-    ))
-    private void tickConditionally(WanderingTraderManager wanderingTraderManager)
-    {
-        if (TickSpeed.process_entities) wanderingTraderManager.tick();
-    }*/
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",

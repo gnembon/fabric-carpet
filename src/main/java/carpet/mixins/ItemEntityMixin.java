@@ -53,7 +53,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
     }
 
     @Redirect(
-            method = "canMerge",
+            method = "canMerge()Z",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/item/ItemStack;getMaxCount()I"

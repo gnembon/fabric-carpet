@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
 import net.minecraft.entity.EntityType;

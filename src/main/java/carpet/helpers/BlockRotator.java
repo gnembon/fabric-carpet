@@ -293,7 +293,7 @@ public class BlockRotator
         }
         else if ((block instanceof ObserverBlock) || (block instanceof EndRodBlock))
         {
-            newState = state.with(FacingBlock.FACING, (Direction) state.get(FacingBlock.FACING).getOpposite());
+            newState = state.with(FacingBlock.FACING, state.get(FacingBlock.FACING).getOpposite());
         }
         else if (block instanceof DispenserBlock)
         {
@@ -313,7 +313,7 @@ public class BlockRotator
         }
         else if (block instanceof HopperBlock)
         {
-            if ((Direction)state.get(HopperBlock.FACING) != Direction.DOWN)
+            if (state.get(HopperBlock.FACING) != Direction.DOWN)
             {
                 newState =  state.with(HopperBlock.FACING, state.get(HopperBlock.FACING).rotateYClockwise());
             }

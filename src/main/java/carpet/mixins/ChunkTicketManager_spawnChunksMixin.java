@@ -17,12 +17,7 @@ import java.util.Iterator;
 @Mixin(ChunkTicketManager.class)
 public abstract class ChunkTicketManager_spawnChunksMixin implements ChunkTicketManagerInterface
 {
-
-    @Shadow protected abstract SortedArraySet<ChunkTicket<?>> getTicketSet(long position);
-
     @Shadow @Final private Long2ObjectOpenHashMap<SortedArraySet<ChunkTicket<?>>> ticketsByPosition;
-
-    @Shadow public abstract <T> void removeTicket(ChunkTicketType<T> type, ChunkPos pos, int radius, T argument);
 
     @Shadow protected abstract void removeTicket(long pos, ChunkTicket<?> ticket);
 

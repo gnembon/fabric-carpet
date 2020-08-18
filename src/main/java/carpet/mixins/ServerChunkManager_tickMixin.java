@@ -22,57 +22,6 @@ public abstract class ServerChunkManager_tickMixin
 
     CarpetProfiler.ProfilerToken currentSection;
 
-    /* Replaced with ThreadedAnvilCHunkStorage_Mixin path and separately isolated spawning and random ticks here
-       ticket manager is not worth its own section at this point - will fall into rest, until its fixed.
-
-    @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(
-            value = "CONSTANT",
-            args = "stringValue=purge"
-    ))
-    private void startTicketSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
-    {
-        currentSection = CarpetProfiler.start_section(world, "Ticket Manager", CarpetProfiler.TYPE.GENERAL);
-    }
-
-    @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(
-            value = "CONSTANT",
-            args = "stringValue=chunks"
-    ))
-    private void stopTicketStartSpawningSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
-    {
-        if (currentSection != null)
-        {
-            CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section(world, "Spawning and Random Ticks", CarpetProfiler.TYPE.GENERAL);
-        }
-    }
-
-    @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(
-            value = "CONSTANT",
-            args = "stringValue=unload"
-    ))
-    private void stopSpawningStartUnloadSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
-    {
-        if (currentSection != null)
-        {
-            CarpetProfiler.end_current_section(currentSection);
-            currentSection = CarpetProfiler.start_section(world, "Unloading", CarpetProfiler.TYPE.GENERAL);
-        }
-    }
-
-    @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At("TAIL"))
-    private void stopUnloadSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
-    {
-        if (currentSection != null)
-        {
-            CarpetProfiler.end_current_section(currentSection);
-        }
-    }
-    */
-
-
-
-
     @Inject(method = "tickChunks", at = @At("HEAD"))
     private void startSpawningSection(CallbackInfo ci)
     {
@@ -91,9 +40,7 @@ public abstract class ServerChunkManager_tickMixin
     //// Tick freeze
     @Redirect(method = "tickChunks", at = @At(
             value = "INVOKE",
-            //target = "Lnet/minecraft/world/level/LevelProperties;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
-            //target = "Lnet/minecraft/class_5217;getGeneratorType()Lnet/minecraft/world/level/LevelGeneratorType;"
-            target = "Lnet/minecraft/server/world/ServerWorld;isDebugWorld()Z" // idDebug
+            target = "Lnet/minecraft/server/world/ServerWorld;isDebugWorld()Z"
     ))
     private boolean skipChunkTicking(ServerWorld serverWorld)
     {

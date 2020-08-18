@@ -25,9 +25,6 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
     @Shadow
     @Final
     public boolean isClient;
-    @Shadow
-    @Final
-    protected MutableWorldProperties properties; //LevelProperties
 
     @Shadow
     public abstract WorldChunk getWorldChunk(BlockPos blockPos_1);

@@ -21,9 +21,9 @@ import java.util.List;
 
 @Mixin(NoiseChunkGenerator.class)
 // todo rename mixin after 1.15 is gone
-public abstract class SurfaceChunkGenerator_husksSpawnMixin extends ChunkGenerator
+public abstract class NoiseChunkGenerator_husksSpawnMixin extends ChunkGenerator
 {
-    public SurfaceChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructuresConfig structuresConfig)
+    public NoiseChunkGenerator_husksSpawnMixin(BiomeSource biomeSource, StructuresConfig structuresConfig)
     {
         super(biomeSource, structuresConfig);
     }

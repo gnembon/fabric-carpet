@@ -1,6 +1,5 @@
 package carpet.mixins;
 
-import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;

@@ -41,15 +41,9 @@ import java.util.stream.Collectors;
 @Mixin(VillagerEntity.class)
 public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
 {
-    //@Shadow protected abstract boolean hasSeenGolemRecently(long long_1);
-
     @Shadow protected abstract void sayNo();
 
     @Shadow protected abstract int getAvailableFood();
-
-    //@Shadow protected abstract void depleteFood(int int_1);
-
-    //@Shadow protected abstract boolean lacksFood();
 
     @Shadow public abstract void eatForBreeding();
 

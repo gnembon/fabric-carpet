@@ -35,11 +35,6 @@ public class ParticleDisplay
         return particleCache.get(name);
     }
 
-    public static void drawParticleLine(ServerPlayerEntity player, Vec3d from, Vec3d to,String main)
-    {
-        drawParticleLine(player, from, to, main, null, 1, 0.0);
-    }
-
     public static void drawParticleLine(ServerPlayerEntity player, Vec3d from, Vec3d to, String main, String accent, int count, double spread)
     {
         ParticleEffect accentParticle = getEffect(accent);

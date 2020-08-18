@@ -17,10 +17,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntity_creativeNoClipMixin extends LivingEntity
 {
-    @Shadow public abstract boolean isCreative();
-
-    @Shadow @Final public PlayerAbilities abilities;
-
     protected PlayerEntity_creativeNoClipMixin(EntityType<? extends LivingEntity> type, World world)
     {
         super(type, world);

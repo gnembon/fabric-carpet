@@ -24,28 +24,11 @@ import java.util.Random;
 @Mixin(StructureFeature.class)
 public abstract class StructureFeatureMixin<C extends FeatureConfig> implements StructureFeatureInterface<C>
 {
-    //problem is that is seems that now chunks deal with its portion of the strucuture
-    //on its own.
-
-    //@Shadow public abstract int getRadius();
-
     @Shadow public abstract String getName();
 
     @Shadow public abstract StructureFeature.StructureStartFactory getStructureStartFactory();
 
     @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, int i, int j, Biome biome, ChunkPos chunkPos, C featureConfig);
-
-    @Override
-    public boolean plopAnywhere(ServerWorld world, BlockPos pos)
-    {
-        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), false, null, null);
-    }
-
-    @Override
-    public boolean gridAnywhere(ServerWorld world, BlockPos pos)
-    {
-        return plopAnywhere(world, pos, world.getChunkManager().getChunkGenerator(), true, null, null);
-    }
 
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly, Biome biome, FeatureConfig config)
@@ -64,21 +47,12 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
             {
                 return false;
             }
-            //generator.ge   getStructurePositionToReferenceMap(this).computeIfAbsent(chId,
-            //    (x) -> new LongOpenHashSet()).add(chId);
-            world.getChunk(j, k).addStructureReference((StructureFeature) (Object)this, chId);  //, ChunkStatus.STRUCTURE_STARTS
+            world.getChunk(j, k).addStructureReference((StructureFeature) (Object)this, chId);
 
             BlockBox box = structurestart.getBoundingBox();
             if (!wireOnly)
             {
-                structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand,box,
-                    /*new BlockBox(
-                                pos.getX() - this.getRadius() * 16,
-                                pos.getZ() - this.getRadius() * 16,
-                                pos.getX() + (this.getRadius() + 1) * 16,
-                                pos.getZ() + (1 + this.getRadius()) * 16),*/
-                        new ChunkPos(j, k)
-                );
+                structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand,box, new ChunkPos(j, k));
             }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
             int i = Math.max(box.getBlockCountX(),box.getBlockCountZ())/16+1;  //size
@@ -92,9 +66,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
                     long nbchkid = ChunkPos.toLong(k1, l1);
                     if (box.intersectsXZ(k1<<4, l1<<4, (k1<<4) + 15, (l1<<4) + 15))
                     {
-                        //generator.getStructurePositionToReferenceMap(this).computeIfAbsent(nbchkid, (__) -> new LongOpenHashSet()).add(chId);
-                        world.getChunk(k1, l1).addStructureReference((StructureFeature) (Object)this, chId); //, ChunkStatus.STRUCTURE_STARTS
-                        //structurestart.  notifyPostProcessAt(new ChunkPos(k1, l1));
+                        world.getChunk(k1, l1).addStructureReference((StructureFeature) (Object)this, chId);
                     }
                 }
             }

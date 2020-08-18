@@ -47,16 +47,10 @@ public class ServerPlayNetworkHandler_tickMixin
         // corrective tick
         if (movedBy < 0.0009 && lastMoved > 0.0009 && Math.abs(player.getServer().getTicks()-lastMovedTick-20)<2)
         {
-            //CarpetSettings.LOG.error("Corrective movement packet");
             return;
         }
         if (movedBy > 0.0D)
         {
-            //CarpetSettings.LOG.error(String.format(
-            //        "moved by %.6f at %d",
-            //        player.getPos().squaredDistanceTo(lastTickX, lastTickY, lastTickZ),
-            //        player.getServer().getTicks()-lastMovedTick
-            //));
             lastMoved = movedBy;
             lastMovedTick = player.getServer().getTicks();
             TickSpeed.reset_player_active_timeout();

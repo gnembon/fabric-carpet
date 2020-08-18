@@ -16,10 +16,6 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(ServerLightingProvider.class)
 public abstract class ServerLightingProvider_scarpetMixin extends LightingProvider implements ServerLightingProviderInterface
 {
-
-    @Shadow protected abstract void updateChunkStatus(ChunkPos pos);
-
-
     @Shadow public abstract void checkBlock(BlockPos pos);
 
     public ServerLightingProvider_scarpetMixin(ChunkProvider chunkProvider, boolean hasBlockLight, boolean hasSkyLight)

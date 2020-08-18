@@ -22,13 +22,10 @@ public class LoggerRegistry
     public static boolean __tnt;
     public static boolean __projectiles;
     public static boolean __fallingBlocks;
-    public static boolean __kills;
     public static boolean __tps;
     public static boolean __counter;
     public static boolean __mobcaps;
-    public static boolean __damage;
     public static boolean __packets;
-    public static boolean __weather;
     public static boolean __pathfinding;
     public static boolean __explosions;
 
@@ -44,11 +41,7 @@ public class LoggerRegistry
         registerLogger("tnt", Logger.stardardLogger( "tnt", "brief", new String[]{"brief", "full"}));
         registerLogger("projectiles", Logger.stardardLogger("projectiles", "brief",  new String[]{"brief", "full"}));
         registerLogger("fallingBlocks",Logger.stardardLogger("fallingBlocks", "brief", new String[]{"brief", "full"}));
-        //registerLogger("kills", new Logger("kills", null, null));
-        //registerLogger("damage", new Logger("damage", "all", new String[]{"all","players","me"}));
-        //registerLogger("weather", new Logger("weather", null, null));
         registerLogger( "pathfinding", Logger.stardardLogger("pathfinding", "20", new String[]{"2", "5", "10"}));
-
         registerLogger("tps", HUDLogger.stardardHUDLogger("tps", null, null));
         registerLogger("packets", HUDLogger.stardardHUDLogger("packets", null, null));
         registerLogger("counter",HUDLogger.stardardHUDLogger("counter","white", Arrays.stream(DyeColor.values()).map(Object::toString).toArray(String[]::new)));
