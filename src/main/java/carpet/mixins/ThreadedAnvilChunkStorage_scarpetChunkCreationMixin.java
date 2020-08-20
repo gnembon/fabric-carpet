@@ -95,6 +95,9 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     @Shadow
     protected abstract CompletableFuture<Either<List<Chunk>, Unloaded>> getRegion (final ChunkPos centerChunk, final int margin, final IntFunction<ChunkStatus> distanceToStatus);
 
+    @Shadow
+    protected abstract Iterable<ChunkHolder> entryIterator();
+
     //in method_20617
     //method_19534(Lnet/minecraft/server/world/ChunkHolder;Lnet/minecraft/world/chunk/Chunk;)Ljava/util/concurrent/CompletableFuture;
     // incmopatibility with optifine makes this mixin fail.
@@ -425,5 +428,10 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         report.put("relight_time", (int) (System.currentTimeMillis() - relightStart));
 
         return report;
+    }
+
+    @Override
+    public Iterable<ChunkHolder> getChunks() {
+        return entryIterator();
     }
 }
