@@ -425,7 +425,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public Value get(Value value)
     {
-        long index = NumericValue.asNumber(value).getLong();
+        long index = NumericValue.asNumber(value, "'address' to a list index").getLong();
         int numitems = items.size();
         long range = abs(index)/numitems;
         index += (range+2)*numitems;
@@ -436,7 +436,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public boolean has(Value where)
     {
-        long index = NumericValue.asNumber(where).getLong();
+        long index = NumericValue.asNumber(where, "'address' to a list index").getLong();
         return index >= 0 && index < items.size();
     }
 
