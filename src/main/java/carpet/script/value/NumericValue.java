@@ -15,6 +15,7 @@ import static java.lang.Math.abs;
 public class NumericValue extends Value
 {
     private Double value;
+    private Long longValue;
     final static double epsilon = 1024*Double.MIN_VALUE;
 
     public static NumericValue asNumber(Value v1, String id)
@@ -35,6 +36,10 @@ public class NumericValue extends Value
     @Override
     public String getString()
     {
+        if (longValue != null)
+        {
+            return Long.toString(getLong());
+        }
         try
         {
             return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
@@ -48,7 +53,8 @@ public class NumericValue extends Value
     @Override
     public String getPrettyString()
     {
-        if (getDouble() == (double)getLong())
+
+        if (longValue!= null ||  getDouble() == (double)getLong())
         {
             return Long.toString(getLong());
         }
@@ -72,13 +78,14 @@ public class NumericValue extends Value
         return value.floatValue();
     }
 
-    public static long floor(double double_1) {
+    private static long floor(double double_1) {
         long int_1 = (long)double_1;
         return double_1 < (double)int_1 ? int_1 - 1 : int_1;
     }
 
     public long getLong()
     {
+        if (longValue != null) return longValue;
         return floor((value+epsilon));
     }
 
@@ -119,12 +126,10 @@ public class NumericValue extends Value
         return super.divide(v);
     }
 
-
-
     @Override
     public Value clone()
     {
-        return new NumericValue(value);
+        return new NumericValue(value, longValue);
     }
 
     @Override
@@ -158,12 +163,28 @@ public class NumericValue extends Value
     {
         this.value = value;
     }
+    private NumericValue(double value, Long longValue)
+    {
+        this.value = value;
+        this.longValue = longValue;
+    }
+
     public NumericValue(String value)
     {
-        this(new BigDecimal(value).doubleValue());
+        BigDecimal decimal = new BigDecimal(value);
+        if (decimal.stripTrailingZeros().scale() <= 0)
+        {
+            try
+            {
+                longValue = decimal.longValueExact();
+            }
+            catch (ArithmeticException ignored) {}
+        }
+        this.value = decimal.doubleValue();
     }
     public NumericValue(long value)
     {
+        this.longValue = value;
         this.value = (double)value;
     }
     public NumericValue(boolean boolval)
@@ -178,7 +199,7 @@ public class NumericValue extends Value
     }
 
     @Override
-    public double readNumber()
+    public double readDoubleNumber()
     {
         return value;
     }
@@ -212,6 +233,8 @@ public class NumericValue extends Value
     @Override
     public Tag toTag(boolean force)
     {
+        if (longValue != null)
+            return LongTag.of(longValue);
         long longValue = getLong();
         if (value == (double)longValue)
         {

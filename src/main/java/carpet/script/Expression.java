@@ -1546,11 +1546,17 @@ public class Expression
         });
         addUnaryFunction("number", v -> {
             if (v instanceof NumericValue)
+            {
                 return v;
-            double res = v.readNumber();
-            if (Double.isNaN(res))
+            }
+            try
+            {
+                return new NumericValue(v.getString());
+            }
+            catch (NumberFormatException format)
+            {
                 return Value.NULL;
-            return new NumericValue(v.readNumber());
+            }
         });
         addFunction("str", lv ->
         {
@@ -1593,7 +1599,7 @@ public class Expression
                     {
                         if (argIndex >= lv.size())
                             throw new InternalExpressionException("Not enough arguments for "+m.group(0));
-                        args.add(lv.get(argIndex).readNumber());
+                        args.add(lv.get(argIndex).readDoubleNumber());
                         argIndex++;
                     }
                     else if (fmt == 'b')

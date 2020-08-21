@@ -202,7 +202,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public double readNumber()
+    public double readDoubleNumber()
     {
         return (double)map.size();
     }

@@ -308,8 +308,11 @@ block positions. All variables starting with `_` are read-only, and cannot be de
 ## Literals
 
 `scarpet` accepts numeric and string liters constants. Numbers look like `1, 2.5, -3e-7, 0xff,` and are internally 
-represented as Java's `double` but `scarpet` will try to trim trailing zeros as much as possible so if you need to 
-use them as intergers, you can. Strings use single quoting, for multiple reasons, but primarily to allow for 
+represented primarily as Java's `double` but `scarpet` will try to trim trailing zeros as much as possible so if you
+need to use them as integers or even longs - you can. However any operation on a number even if it can be properly
+represented as long, but not a double type, will make them round up to be doubles.
+
+Strings use single quoting, for multiple reasons, but primarily to allow for 
 easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 
 for example), or when typing in jsons inside scarpet (to feed back into a `/data merge` command for example). 
 Strings also use backslashes `\` for quoting special characters, in both plain strings and regular expressions
@@ -1109,7 +1112,7 @@ for(range(1000000,1100000),check_prime(_))  => 7216
 
 From which we can learn that there is 7216 primes between 1M and 1.1M
 
-### `while(cond, limit,expr)`
+### `while(cond, limit, expr)`
 
 Evaluates expression `expr` repeatedly until condition `cond` becomes false, but not more than `limit` times. 
 Returns the result of the last `expr` evaluation, or `null` if nothing was successful. Both `expr` and `cond` will 
@@ -1205,7 +1208,8 @@ it will be used from now on as a new value for the accumulator.
 <pre>
 reduce([1,2,3,4],_a+_,0)  => 10
 reduce([1,2,3,4],_a*_,1)  => 24
-</pre># User-defined functions and program control flow
+</pre>
+# User-defined functions and program control flow
 
 ## Writing programs with more than 1 line
 
@@ -1801,6 +1805,11 @@ markers for scarpet apps. `meeting` is the only one with increased max occupancy
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
 on the clients. Biome changes can only be send to clients with the entire data from the chunk.
 
+Setting a biome is now (as of 1.16) dimension specific. In the overworld and the end changing the biome
+is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
+specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
+noise).
+
 ### `update(pos)`
 
 Causes a block update at position.
@@ -2380,6 +2389,28 @@ All generated structures will retain their properties, like mob spawning, howeve
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
 
+### `custom_dimension(name, seed?)`
+
+Ensures the dimension with the given `'name'` is available and configured with the given seed. It merely sets the world
+generator settings to the overworld, and the optional custom seed (or using current world seed, if not provided). 
+
+If the dimension with this name already exists, returns `false` and does nothing.
+
+Created dimension with `custom_dimension` only exist till the game restart (same with the datapacks, if removed), but
+all the world data should be saved. If custom dimension is re-created next time the app is loaded it will be using
+the existing world content. This means that it is up to the programmer to make sure the custom dimensions settings
+are stored in app data and restored when app reloads and wants to use previous worlds. Since vanilla game only keeps
+track of world data, not the world settings, if the dimension hasn't been yet configured via `custom_dimension` and
+the app hasn't yet initalized their dimension, the players will be positioned in the overworld at the same coordinates.
+
+List of custom dimensions (to be used in the likes of `/execute in <dim>`) is only send to the clients when joining the 
+game, meaning custom worlds created after a player has joined will not be suggested in vanilla commands, but running
+vanilla commands on them will be successful. Its due to the fact that datapacks with dimensions are always loaded
+with the game and assumed not changing.
+
+`custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
+the future.
+
 # Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
@@ -2589,12 +2620,12 @@ query(e,'custom_name')  => null
 query(e,'type')  => villager
 </pre>
 
-## `query(e, 'command_name')`
+### `query(e, 'command_name')`
 
 Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
 player, where its their name.
 
-## `query(e, 'persistence')`
+### `query(e, 'persistence')`
 
 Returns if a mob has a persistence tag or not. Returns `null` for non-mob entities.
 

@@ -352,7 +352,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public double readNumber()
+    public double readDoubleNumber()
     {
         return (double)items.size();
     }

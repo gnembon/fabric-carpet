@@ -161,7 +161,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
             return new StringValue(value.substring((int)from, (int)to));
         return new StringValue(value.substring((int)from));
     }
-    public double readNumber()
+    public double readDoubleNumber()
     {
         String s = getString();
         try
@@ -176,7 +176,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public long readInteger()
     {
-        return (long)readNumber();
+        return (long) readDoubleNumber();
     }
 
     public String getTypeString()
