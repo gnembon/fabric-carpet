@@ -1,6 +1,8 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.LongTag;
@@ -235,16 +237,32 @@ public class NumericValue extends Value
     {
         if (longValue != null)
             return LongTag.of(longValue);
-        long longValue = getLong();
-        if (value == (double)longValue)
+        long lv = getLong();
+        if (value == (double)lv)
         {
             if (abs(value) < Integer.MAX_VALUE-2)
-                return IntTag.of((int)longValue);
+                return IntTag.of((int)lv);
             return LongTag.of(getLong());
         }
         else
         {
             return DoubleTag.of(value);
+        }
+    }
+
+    @Override
+    public JsonElement toJson()
+    {
+        if (longValue != null)
+            return new JsonPrimitive(longValue);
+        long lv = getLong();
+        if (value == (double)lv)
+        {
+            return new JsonPrimitive(getLong());
+        }
+        else
+        {
+            return new JsonPrimitive(value);
         }
     }
 }

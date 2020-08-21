@@ -1,5 +1,7 @@
 package carpet.script.value;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
@@ -59,5 +61,11 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return StringTag.of("null");
+    }
+
+    @Override
+    public JsonElement toJson()
+    {
+        return JsonNull.INSTANCE;
     }
 }

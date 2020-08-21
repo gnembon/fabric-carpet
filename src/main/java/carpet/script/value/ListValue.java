@@ -2,6 +2,8 @@ package carpet.script.value;
 
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
@@ -524,5 +526,14 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             tags.forEach(t -> tag.add(LongTag.of(((AbstractNumberTag)t).getLong())));
         }
         return tag;
+    }
+
+    @Override
+    public JsonElement toJson()
+    {
+        JsonArray array = new JsonArray();
+        for (Value el: items)
+            array.add(el.toJson());
+        return array;
     }
 }

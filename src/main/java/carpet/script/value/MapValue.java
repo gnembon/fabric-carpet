@@ -1,6 +1,8 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
@@ -255,5 +257,13 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
             tag.put(k.getString(), v.toTag(force));
         });
         return tag;
+    }
+
+    @Override
+    public JsonElement toJson()
+    {
+        JsonObject jsonMap = new JsonObject();
+        map.forEach((k, v) -> jsonMap.add(k.getString(), v.toJson()));
+        return jsonMap;
     }
 }
