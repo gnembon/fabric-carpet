@@ -3,9 +3,8 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 
 import com.google.common.collect.Lists;
-import com.mojang.serialization.Codec;;
+import com.mojang.serialization.Codec;
 import net.minecraft.entity.EntityType;
-import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.SpawnSettings;
 import net.minecraft.world.gen.feature.BastionRemnantFeature;
 
