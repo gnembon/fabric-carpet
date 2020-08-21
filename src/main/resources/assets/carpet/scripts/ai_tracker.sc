@@ -10,6 +10,8 @@ Current supported actions
  - current selected paths for all living entities
  - movement speeds per block and coordinate
  - item pickup range
+ - portal cooldown timers
+ - health
  - buddy villager detection for villagers
  - hostile detection for villagers
  - iron golem spawning for villagers
@@ -45,6 +47,8 @@ velocity() -> __toggle('velocity', null);
 villager_breeding() -> __toggle('villager_breeding', null);
 villager_buddy_detection() -> __toggle('villager_buddy_detection', null);
 item_pickup() -> __toggle('item_pickup', null);
+portal_cooldown() -> __toggle('portal_cooldown', null);
+health() -> __toggle('health', null);
 
 
 toggle_boxes() ->
@@ -272,9 +276,12 @@ global_functions = {
                ppos = global_entity_positions:id;
                dpos = ppos-cpos;
                dpos = dpos*20/global_interval;
-               labels += ['xvel', 'x speed:', str('%.3f',dpos:0)];
-               labels += ['yvel', 'y speed:', str('%.3f',dpos:1)];
-               labels += ['zvel', 'z speed:', str('%.3f',dpos:2)];
+               if (dpos != [0, 0, 0],
+                  labels += ['speed', 'speed: ', str('%.3f',sqrt(reduce(dpos, _a+_*_, 0)))];
+                  labels += ['xvel', 'x speed:', str('%.3f',dpos:0)];
+                  labels += ['yvel', 'y speed:', str('%.3f',dpos:1)];
+                  labels += ['zvel', 'z speed:', str('%.3f',dpos:2)];
+               )
             );
             global_entity_positions:id = pos(e);
             path = e ~ 'path';
@@ -286,6 +293,31 @@ global_functions = {
          null
       ]
    },
+
+   'portal_cooldown' -> {
+      '*' -> [
+         _(arg) -> _(e) -> (
+            portal_timer = e~'portal_timer';
+            if (portal_timer,
+               [[], [],  [['portal', 'portal cooldown:', portal_timer]]]
+            ,
+               [[], [], []]
+            )
+         ),
+      ,
+         null
+      ]
+   },
+
+   'health' -> {
+         '*' -> [
+            _(arg) -> _(e) -> (
+               [[], [],  [['health', 'health:', e~'health']]]
+            ),
+         ,
+            null
+         ]
+      },
 
    'pathfinding' -> {
       '*' -> [
@@ -464,14 +496,21 @@ __handle_entity(e) ->
    if (labels_to_add,
       base_pos = [0.5, e~'height'+0.4, 0.5];
       base_height = 0;
+      snap = if(e~'type'=='player', 'xyz', 'dxydz');
       for (labels_to_add,
          if (length(_) == 2,
             [label, text] = _;
-            shapes_to_display += ['label', global_duration, 'text', label, 'value', text, 'pos', base_pos, 'follow', e, 'height', base_height, 'snap', 'dxydz'];
+            shapes_to_display += [
+                'label', global_duration, 'text', label, 'value', text,
+                'pos', base_pos, 'follow', e, 'height', base_height, 'snap', snap];
          ,
             [label, annot, value] = _;
-            shapes_to_display += ['label', global_duration, 'text', format('gi '+annot), 'pos', base_pos, 'follow', e, 'height', base_height, 'align', 'right', 'indent', -0.2, 'snap', 'dxydz'];
-            shapes_to_display += ['label', global_duration, 'text', label,'value', value, 'pos', base_pos, 'follow', e, 'height', base_height, 'align', 'left', 'snap', 'dxydz'];
+            shapes_to_display += [
+                'label', global_duration, 'text', format('gi '+annot), 'pos', base_pos,
+                'follow', e, 'height', base_height, 'align', 'right', 'indent', -0.2, 'snap', snap];
+            shapes_to_display += [
+                'label', global_duration, 'text', label,'value', value,
+                'pos', base_pos, 'follow', e, 'height', base_height, 'align', 'left', 'snap', snap];
          );
          base_height += 1;
       );

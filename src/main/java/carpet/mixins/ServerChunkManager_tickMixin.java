@@ -60,7 +60,10 @@ public abstract class ServerChunkManager_tickMixin
     private boolean skipChunkTicking(ServerWorld serverWorld)
     {
         boolean debug = serverWorld.isDebugWorld();
-        if (!TickSpeed.process_entities) {
+        if (!TickSpeed.process_entities)
+        {
+            // simplified chunk tick iteration assuming world is frozen otherwise as suggested by Hadron67
+            // to be kept in sync with the original injection source
             if (!debug){
                 List<ChunkHolder> holders = Lists.newArrayList(((ThreadedAnvilChunkStorageInterface)threadedAnvilChunkStorage).getChunks());
                 Collections.shuffle(holders);
