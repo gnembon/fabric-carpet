@@ -1,9 +1,14 @@
 package carpet.mixins;
 
+import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
+import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.world.ThreadedAnvilChunkStorage;
+import net.minecraft.world.chunk.WorldChunk;
+
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,13 +17,23 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
+
+import com.google.common.collect.Lists;
 
 @Mixin(ServerChunkManager.class)
 public abstract class ServerChunkManager_tickMixin
 {
 
     @Shadow @Final private ServerWorld world;
+
+    @Shadow @Final
+    public ThreadedAnvilChunkStorage threadedAnvilChunkStorage;
 
     CarpetProfiler.ProfilerToken currentSection;
 
@@ -44,8 +59,21 @@ public abstract class ServerChunkManager_tickMixin
     ))
     private boolean skipChunkTicking(ServerWorld serverWorld)
     {
-        if (!TickSpeed.process_entities) return true;
-        return serverWorld.isDebugWorld();
+        boolean debug = serverWorld.isDebugWorld();
+        if (!TickSpeed.process_entities) {
+            if (!debug){
+                List<ChunkHolder> holders = Lists.newArrayList(((ThreadedAnvilChunkStorageInterface)threadedAnvilChunkStorage).getChunks());
+                Collections.shuffle(holders);
+                for (ChunkHolder holder: holders){
+                    Optional<WorldChunk> optional = holder.getTickingFuture().getNow(ChunkHolder.UNLOADED_WORLD_CHUNK).left();
+                    if (optional.isPresent()){
+                        holder.flushUpdates(optional.get());
+                    }
+                }
+            }
+            return true;
+        }
+        return debug;
     }
 
 }
