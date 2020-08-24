@@ -245,7 +245,7 @@ global_functions = {
             [visuals, abnoxious_visuals, [
                ['hasbed', 'bed: ', format(if(bed, 'be has home', 'br no home'))], // ☖  ☽  ♨  ♡
                ['hasfood', 'food: ', format(if(food, 'be '+portions+' portions', 'br 0 portions'))],
-               ['breeding', 'timer: ',format(if(breeding_age, 'be ', 'br ')+breeding_age)],
+               ['breeding', 'timer: ',format(if(!breeding_age, 'be ', 'br ')+breeding_age)],
 
             ]];
          ),
