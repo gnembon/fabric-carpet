@@ -198,7 +198,10 @@
     "WorldRenderer_creativeNoClipMixin",
     "ClientPlayNetworkHandlerMixin",
     "DebugRenderer_scarpetRenderMixin",
-    "WorldRenderer_scarpetRenderMixin"
+    "WorldRenderer_scarpetRenderMixin",
+
+    "SoundEngineInt_cleanLogsMixin",
+    "SoundSystem_cleanLogsMixin"
   ],
   "server": [
   ],

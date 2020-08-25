@@ -656,4 +656,14 @@ public class CarpetSettings
             validate = Validator.PROBABILITY.class
     )
     public static double creativeFlyDrag = 0.09;
+
+    @Rule(
+            desc = "Removes abnoxious messages from the logs",
+            extra = {
+                    "Doesn't display 'Maximum sound pool size 247 reached'",
+                    "Which is normal with decent farms and contraptions"
+            },
+            category = {SURVIVAL, CLIENT}
+    )
+    public static boolean cleanLogs = false;
 }

@@ -494,9 +494,8 @@ __handle_entity(e) ->
    put(shapes_to_display, null, abnoxious_to_display, 'extend');
 
    if (labels_to_add,
-      base_pos = [0.5, e~'height'+0.4, 0.5];
       base_height = 0;
-      snap = if(e~'type'=='player', 'xyz', 'dxydz');
+      [snap, base_pos] = if(e~'type'=='player', ['xyz', [0, e~'height', 0]], ['dxydz', [0.5, e~'height'+0.4, 0.5]]);
       for (labels_to_add,
          if (length(_) == 2,
             [label, text] = _;
