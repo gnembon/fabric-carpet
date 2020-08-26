@@ -160,6 +160,10 @@ query(e,'type')  => villager
 Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
 player, where its their name.
 
+<pre>
+run('/kill ' + e~'command_name');
+</pre>
+
 ### `query(e, 'persistence')`
 
 Returns if a mob has a persistence tag or not. Returns `null` for non-mob entities.
@@ -493,10 +497,6 @@ Removes (not kills) entity from the game.
 ### `modify(e, 'kill')`
 
 Kills the entity.
-
-<pre>
-run('/kill ' + e~'command_name');
-</pre>
 
 ### `modify(e, 'pos', x, y, z), modify(e, 'pos', l(x,y,z) )`
 
