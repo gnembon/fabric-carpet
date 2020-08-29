@@ -15,6 +15,7 @@
     "CloneCommandMixin",
     "SetBlockCommandMixin",
     "ForceLoadCommand_forceLoadLimitMixin",
+    "BlockStateArgument_fillUpdatesMixin",
     "World_fillUpdatesMixin",
     "WorldChunk_fillUpdatesMixin",
     "StructureBlockBlockEntity_fillUpdatesMixin",
