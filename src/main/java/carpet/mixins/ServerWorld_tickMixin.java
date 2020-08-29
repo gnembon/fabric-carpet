@@ -31,6 +31,7 @@ public abstract class ServerWorld_tickMixin extends World
     }
 
     @Shadow protected abstract void processSyncedBlockEvents();
+    //@Shadow protected abstract void sendBlockActions();
 
     @Shadow protected abstract void tickTime();
 
@@ -38,7 +39,7 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=world border"
+            args = "stringValue=weather"
     ))
     private void startWeatherSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
@@ -46,7 +47,7 @@ public abstract class ServerWorld_tickMixin extends World
     }
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=world border"
+            args = "stringValue=chunkSource"
     ))
     private void stopWeatherStartChunkSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
@@ -84,7 +85,7 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=tickPending"
+            args = "stringValue=blockEvents"
     ))
     private void stopVillageStartBlockAgainSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
@@ -166,6 +167,15 @@ public abstract class ServerWorld_tickMixin extends World
     {
         if (TickSpeed.process_entities) raidManager.tick();
     }
+
+    /*@Redirect(method = "tick", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/WanderingTraderManager;tick()V"
+    ))
+    private void tickConditionally(WanderingTraderManager wanderingTraderManager)
+    {
+        if (TickSpeed.process_entities) wanderingTraderManager.tick();
+    }*/
 
     @Redirect(method = "tick", at = @At(
             value = "INVOKE",
