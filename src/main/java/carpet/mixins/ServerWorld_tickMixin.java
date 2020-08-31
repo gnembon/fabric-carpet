@@ -38,7 +38,7 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=world border"
+            args = "stringValue=weather"
     ))
     private void startWeatherSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
@@ -46,7 +46,7 @@ public abstract class ServerWorld_tickMixin extends World
     }
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=world border"
+            args = "stringValue=chunkSource"
     ))
     private void stopWeatherStartChunkSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
@@ -84,7 +84,7 @@ public abstract class ServerWorld_tickMixin extends World
 
     @Inject(method = "tick", at = @At(
             value = "CONSTANT",
-            args = "stringValue=tickPending"
+            args = "stringValue=blockEvents"
     ))
     private void stopVillageStartBlockAgainSection(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
