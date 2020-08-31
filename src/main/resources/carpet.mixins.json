@@ -51,7 +51,6 @@
     "ServerWorld_spawnChunksMixin",
 
     "MobEntityMixin",
-    "ServerWorld_unloadedEntityMixin",
     "EntityTrackerEntry_leashFixMixin",
 
     "VillagerEntity_aiMixin",

@@ -214,9 +214,6 @@ public class CarpetSettings
     )
     public static boolean piglinsSpawningInBastions = false;
 
-    @Rule(desc = "Entities pushed or moved into unloaded chunks no longer disappear", category = {EXPERIMENTAL, BUGFIX})
-    public static boolean unloadedEntityFix = false;
-
     @Rule( desc = "TNT doesn't update when placed against a power source", category = {CREATIVE, TNT} )
     public static boolean tntDoNotUpdate = false;
 
