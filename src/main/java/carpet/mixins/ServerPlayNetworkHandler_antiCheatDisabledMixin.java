@@ -42,7 +42,8 @@ public abstract class ServerPlayNetworkHandler_antiCheatDisabledMixin
         return isHost() || CarpetSettings.antiCheatDisabled;
     }
 
-    @Redirect(method = "onPlayerMove", at = @At(
+    @Redirect(method = "onPlayerMove", require = 0, // don't crash with immersive portals,
+             at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerPlayerEntity;isInTeleportationState()Z"))
     private boolean relaxMoveRestrictions(ServerPlayerEntity serverPlayerEntity)
