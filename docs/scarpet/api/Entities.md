@@ -160,13 +160,13 @@ query(e,'type')  => villager
 Returns a valid string to be used in commands to address an entity. Its UUID for all entities except
 player, where its their name.
 
-### `query(e, 'persistence')`
-
-Returns if a mob has a persistence tag or not. Returns `null` for non-mob entities.
-
 <pre>
 run('/kill ' + e~'command_name');
 </pre>
+
+### `query(e, 'persistence')`
+
+Returns if a mob has a persistence tag or not. Returns `null` for non-mob entities.
 
 ### `query(e, 'is_riding')`
 
@@ -234,7 +234,7 @@ Age of the entity in ticks, i.e. how long it existed.
 
 ### `query(e, 'breeding_age')`
 
-Breeding age of passive entity, in ticks. If negative, time to adulthood, if positive, breeding cooldown
+Breeding age of passive entity, in ticks. If negative, time to adulthood, if positive, breeding cooldown.
 
 ### `query(e, 'despawn_timer')`
 
@@ -250,15 +250,15 @@ Number of ticks an entity sits in a portal.
 
 ### `query(e, 'item')`
 
-The item triple (name, count, nbt) if its an item entity, `null` otherwise
+The item triple (name, count, nbt) if its an item entity, `null` otherwise.
 
 ### `query(e, 'count')`
 
-Number of items in a stack from item entity, `null` otherwise
+Number of items in a stack from item entity, `null` otherwise.
 
 ### `query(e, 'pickup_delay')`
 
-Retrieves pickup delay timeout for an item entity, `null` otherwise
+Retrieves pickup delay timeout for an item entity, `null` otherwise.
 
 ### `query(e, 'is_baby')`
 
@@ -279,7 +279,7 @@ of block value, node type, penalty, and a boolean indicated if the node has been
 
 ### `query(e, 'pose')`
 
-Returns a pose of an entity, one of the following options
+Returns a pose of an entity, one of the following options:
  * `'standing'`
  * `'fall_flying'`
  * `'sleeping'`
@@ -325,7 +325,7 @@ Returns `null` if the argument is not a player, otherwise:
 *   `realms`: ?
 
 ### `query(e, 'category')`
-Returns a lowercase string containing the category of the entity (hostile, passive, water, ambient, misc)
+Returns a lowercase string containing the category of the entity (hostile, passive, water, ambient, misc).
 
 ### `query(e, 'team')`
 
@@ -361,7 +361,6 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 Retrieves player hunger related information. For non-players, returns `null`.
 
-
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
@@ -386,8 +385,8 @@ Returns currently mined block by the player, as registered by the game server.
 ### `query(e, 'breaking_progress')`
 
 Returns current breaking progress of a current player mining block, or `null`, if no block is mined.
-Breaking progress, it not null, is any number 0 or above, while 10 means that the block should already be 
-broken by the client. This value may tick above 10, if the client / connection is lagging
+Breaking progress, if not null, is any number 0 or above, while 10 means that the block should already be 
+broken by the client. This value may tick above 10, if the client / connection is lagging.
 
 Example:
 
@@ -429,7 +428,7 @@ _break(player, pos, name, step, lvl) ->
 ### `query(e, 'facing', order?)`
 
 Returns where the entity is facing. optional order (number from 0 to 5, and negative), indicating primary directions 
-where entity is looking at. From most prominent (order 0) to opposite (order 5, or -1)
+where entity is looking at. From most prominent (order 0) to opposite (order 5, or -1).
 
 ### `query(e, 'trace', reach?, options?...)`
 
@@ -489,7 +488,7 @@ type objects via `get, put, has, delete`, so try to use API calls first for that
 Like with entity querying, entity modifications happen through one function. Most position and movements modifications 
 don't work currently on players as their position is controlled by clients.
 
-Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`
+Currently there is no ability to modify NBT directly, but you could always use `run('data modify entity ...')`.
 
 ### `modify(e, 'remove')`
 
@@ -509,7 +508,7 @@ Changes full location vector all at once.
 
 ### `modify(e, 'x', x), modify(e, 'y', y), modify(e, 'z', z)`
 
-Moves the entity in one direction.
+Changes entity's location in the specified direction.
 
 ### `modify(e, 'pitch', pitch), modify(e, 'yaw', yaw)`
 
@@ -631,7 +630,7 @@ a permanent effect. Use `'jump'` to make an entity jump once for sure.
 
 Requires a living entity as an argument.
 
-### `modify(e, 'jump'))`
+### `modify(e, 'jump')`
 
 Will make the entity jump once.
 
@@ -651,27 +650,27 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
 
-Modifies directly player raw hunger components. Has no effect on non-players
+Modifies player raw hunger components. Has no effect on non-players.
 
 ### `modify(e, 'add_exhaustion', value)`
 
-adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
-to manipulate how much 'food' some action cost.
+Adds exhaustion value to the current player exhaustion level - that's the method you probably want to use
+to manipulate how much 'food' an action costs.
 
 ### `modify(e, 'breaking_progress', value)` 
 
-Modifies a breaking progress of a player currently mined block. Value of `null`, `-1` make it reset. 
+Modifies the breaking progress of a player currently mined block. Value of `null`, `-1` makes it reset. 
 Values `0` to `10` will show respective animation of a breaking block. Check `query(e, 'breaking_progress')` for 
 examples.
 
 ### `modify(e, 'nbt_merge', partial_tag)`
 
-Merges a partial tag into the entity data and reloads the entity from its updated tag. Cannot be applied to players
+Merges a partial tag into the entity data and reloads the entity from its updated tag. Cannot be applied to players.
 
 ### `modify(e, 'nbt', tag)`
 
-Reloads the entity from a supplied tag. Better get a valid entity tag, what can go wrong. Wonder what would happen if
-transplant rabbit's brain into a villager. Cannot be applied to players.
+Reloads the entity from a supplied tag. Better use a valid entity tag, what can go wrong? Wonder what would happen if you
+transplant rabbit's brain into a villager? Cannot be applied to players.
 
 ## Entity Events
 
@@ -679,18 +678,18 @@ There is a number of events that happen to entities that you can attach your own
 The event handler is any function that runs in your package that accepts certain expected parameters, which you can 
 expand with your own arguments. When it comes to the moment when the given command needs to be executed, it does so 
 providing that number of arguments it accepts is equal number of event arguments, and extra arguments passed when 
-defining the callback with `entity_event`
+defining the callback with `entity_event`.
 
-The following events can be handled by entities.
+The following events can be handled by entities:
 
 *   `'on_tick'`: executes every tick right before the entity is ticked in the game. Required arguments: `entity`
 *   `'on_death'`: executes once when a living entity dies. Required arguments: `entity, reason`
 *   `'on_removed'`: execute once when an entity is removed. Required arguments: `entity`
-*   `'on_damaged'`: executed every time a living entity is about to receive damage. 
+*   `'on_damaged'`: executed every time a living entity is about to receive damage.
 Required arguments: `entity, amount, source, attacking_entity`
 
 It doesn't mean that all entity types will have a chance to execute a given event, but entities will not error 
-when you attach inapplicable event to it.
+when you attach an inapplicable event to it.
 
 ### `entity_event(e, event, call_name, args...)`
 
@@ -714,5 +713,5 @@ __on_player_interacts_with_entity(player, entity, hand) ->
 )
 </pre>
 
-In this case this will protect a villager from entity damage (zombies, etc.) except players by granting all the 
+In this case this will protect a villager from entity damage (zombies, etc.) except from players by granting all the 
 health back to the villager after being harmed.
