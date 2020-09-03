@@ -470,8 +470,10 @@ __tick_tracker() ->
    );
    p = player();
    [px, py, pz] = pos(p);
-   for (entity_area('living', px, py, pz, global_range, global_range, global_range),
-      __handle_entity(_)
+   in_dimension(p,
+      for (entity_area('living', px, py, pz, global_range, global_range, global_range),
+         __handle_entity(_)
+      )
    );
    schedule(global_interval, '__tick_tracker');
 );
