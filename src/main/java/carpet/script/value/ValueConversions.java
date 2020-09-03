@@ -12,6 +12,7 @@ import net.minecraft.util.Identifier;
 
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 
@@ -27,6 +28,11 @@ public class ValueConversions
     public static Value fromPos(BlockPos pos)
     {
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
+    }
+
+    public static Value fromVec(Vec3d vec)
+    {
+        return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
     }
 
     public static Value dimName(ServerWorld world)

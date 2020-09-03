@@ -552,6 +552,7 @@ public class EntityValue extends Value
             boolean entities = true;
             boolean liquids = false;
             boolean blocks = true;
+            boolean exact = false;
 
             if (a!=null)
             {
@@ -578,6 +579,9 @@ public class EntityValue extends Value
                                 blocks = true;
                             else if (what.equalsIgnoreCase("liquids"))
                                 liquids = true;
+                            else if (what.equalsIgnoreCase("exact"))
+                                exact = true;
+
                             else throw new InternalExpressionException("Incorrect tracing: "+what);
                         }
                     }
@@ -597,6 +601,7 @@ public class EntityValue extends Value
                 hitres = Tracer.rayTraceBlocks(e, 1, reach, liquids);
 
             if (hitres == null) return Value.NULL;
+            if (exact && hitres.getType() != HitResult.Type.MISS) return ValueConversions.fromVec(hitres.getPos());
             switch (hitres.getType())
             {
                 case MISS: return Value.NULL;
