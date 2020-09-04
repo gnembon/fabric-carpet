@@ -15,7 +15,7 @@ public class WorldRenderer_pausedShakeMixin
 {
     @Shadow @Final private MinecraftClient client;
 
-    float initial = 0.0f;
+    float initial = -1234.0f;
 
     // require 0 is for optifine being a bitch as it usually is.
     @ModifyVariable(method = "render", argsOnly = true, require = 0, ordinal = 0, at = @At(
@@ -37,7 +37,8 @@ public class WorldRenderer_pausedShakeMixin
     ))
     private float changeTickPhaseBack(float previous)
     {
-        return initial;
+        // this may not set with optifine bitch
+        return initial==-1234.0f?previous:initial;
     }
 
 }
