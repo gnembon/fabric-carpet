@@ -343,6 +343,7 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
+        put("air", (e, a) -> return new NumericValue(e.getAir()));
         put("persistence", (e, a) -> {
             if (e instanceof MobEntity) return new NumericValue(((MobEntity) e).isPersistent());
             return Value.NULL;
@@ -1106,6 +1107,8 @@ public class EntityValue extends Value
         put("saturation", (e, v)-> {
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
         });
+
+        put("air", (e, v) -> e.setAir(NumericValue.asNumber(v).getLong()));
 
         put("breaking_progress", (e, a) -> {
             if (e instanceof ServerPlayerEntity)
