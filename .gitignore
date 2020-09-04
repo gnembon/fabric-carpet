@@ -20,6 +20,7 @@ publish/
 bin/
 .classpath
 .project
+*.code-workspace
 
 # fabric
 
