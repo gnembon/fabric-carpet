@@ -3394,7 +3394,7 @@ public class CarpetExpression
 
             if(lv.size()==1){
                 res = lv.get(0).evalValue(c);
-                CarpetSettings.LOG.error(res.getString());
+                CarpetSettings.LOG.info(res.getString());
             }
             else if(lv.size()==2){
                 String level = lv.get(0).evalValue(c).toString();
