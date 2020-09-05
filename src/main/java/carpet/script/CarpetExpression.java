@@ -3653,10 +3653,10 @@ public class CarpetExpression
         }
     }
 
-    public String scriptRunCommand(ScriptHost host, BlockPos pos)
+    public Value scriptRunCommand(ScriptHost host, BlockPos pos)
     {
         if (CarpetServer.scriptServer.stopAll)
-            return "SCRIPTING PAUSED";
+            throw new CarpetExpressionException("SCRIPTING PAUSED", null);
         try
         {
             Context context = new CarpetContext(host, source, origin).
@@ -3674,7 +3674,7 @@ public class CarpetExpression
                 Value playerValue = new EntityValue(e).bindTo("p");
                 context.with("p", (cc, tt) -> playerValue);
             }
-            return this.expr.eval(context).getString();
+            return this.expr.eval(context);
         }
         catch (ExpressionException e)
         {

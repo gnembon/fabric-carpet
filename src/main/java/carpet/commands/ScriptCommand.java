@@ -11,6 +11,7 @@ import carpet.script.ScriptHost;
 import carpet.script.Tokenizer;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
+import carpet.script.value.Value;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
@@ -390,13 +391,13 @@ public class ScriptCommand
         return 1;
     }
 
-    public static void handleCall(ServerCommandSource source, CarpetScriptHost host, Supplier<String> call)
+    public static int handleCall(ServerCommandSource source, CarpetScriptHost host, Supplier<Value> call)
     {
         try
         {
             host.setChatErrorSnooper(source);
             long start = System.nanoTime();
-            String result = call.get();
+            Value result = call.get();
             long time = ((System.nanoTime()-start)/1000);
             String metric = "\u00B5s";
             if (time > 5000)
@@ -409,12 +410,18 @@ public class ScriptCommand
                 time /= 1000;
                 metric = "s";
             }
-            Messenger.m(source, "wi  = ", "wb "+result, "gi  ("+time+metric+")");
+            Messenger.m(source, "wi  = ", "wb "+result.getString(), "gi  ("+time+metric+")");
+            return (int)result.readInteger();
         }
         catch (CarpetExpressionException e)
         {
             host.handleErrorWithStack("Error while evaluating expression", e);
         }
+        catch (ArithmeticException ae)
+        {
+            host.handleErrorWithStack("Math doesn't compute", ae);
+        }
+        return 0;
         //host.resetErrorSnooper();  // lets say no need to reset the snooper in case something happens on the way
     }
 
@@ -442,8 +449,7 @@ public class ScriptCommand
         }
         //if (!(args.trim().isEmpty()))
         //    arguments.addAll(Arrays.asList(args.trim().split("\\s+")));
-        handleCall(source, host, () ->  host.call(source, call, positions, args));
-        return 1;
+        return handleCall(source, host, () ->  host.call(source, call, positions, args));
     }
 
 
@@ -451,11 +457,10 @@ public class ScriptCommand
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
-        handleCall(source, host, () -> {
+        return handleCall(source, host, () -> {
             CarpetExpression ex = new CarpetExpression(host.main, expr, source, new BlockPos(0, 0, 0));
             return ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
         });
-        return 1;
     }
 
     private static int scriptScan(CommandContext<ServerCommandSource> context, BlockPos origin, BlockPos a, BlockPos b, String expr)

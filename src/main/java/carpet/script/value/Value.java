@@ -213,4 +213,6 @@ public abstract class Value implements Comparable<Value>, Cloneable
     {
         return new JsonPrimitive(getString());
     }
+
+    public boolean isNull() { return false; }
 }

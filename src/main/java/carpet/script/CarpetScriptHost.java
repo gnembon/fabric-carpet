@@ -82,6 +82,11 @@ public class CarpetScriptHost extends ScriptHost
                 host.resetErrorSnooper();
                 return null;
             }
+            catch (ArithmeticException ae)
+            {
+                host.handleErrorWithStack("Math doesn't compute", ae);
+                return null;
+            }
         }
         return host;
     }
@@ -180,7 +185,7 @@ public class CarpetScriptHost extends ScriptHost
         return host;
     }
 
-    public String handleCommand(ServerCommandSource source, String call, List<Integer> coords, String arg)
+    public Value handleCommand(ServerCommandSource source, String call, List<Integer> coords, String arg)
     {
         try
         {
@@ -189,17 +194,22 @@ public class CarpetScriptHost extends ScriptHost
         catch (CarpetExpressionException exc)
         {
             handleErrorWithStack("Error while running custom command", exc);
-            return "";
+            return Value.NULL;
+        }
+        catch (ArithmeticException ae)
+        {
+            handleErrorWithStack("Math doesn't compute", ae);
+            return Value.NULL;
         }
     }
 
-    public String call(ServerCommandSource source, String call, List<Integer> coords, String arg)
+    public Value call(ServerCommandSource source, String call, List<Integer> coords, String arg)
     {
         if (CarpetServer.scriptServer.stopAll)
-            return "SCARPET PAUSED";
+            throw new CarpetExpressionException("SCARPET PAUSED", null);
         FunctionValue function = getFunction(call);
         if (function == null)
-            return "UNDEFINED";
+            throw new CarpetExpressionException("UNDEFINED", null);
         List<LazyValue> argv = new ArrayList<>();
         if (coords != null)
             for (Integer i: coords)
@@ -230,7 +240,8 @@ public class CarpetScriptHost extends ScriptHost
                     }
                     catch (NumberFormatException exception)
                     {
-                        return "Fail: "+sign+tok.surface+" seems like a number but it is not a number. Use quotes to ensure its a string";
+                        throw new CarpetExpressionException("Fail: "+sign+tok.surface+" seems like a number but it is" +
+                                " not a number. Use quotes to ensure its a string", null);
                     }
                     break;
                 case HEX_LITERAL:
@@ -242,7 +253,8 @@ public class CarpetScriptHost extends ScriptHost
                     }
                     catch (NumberFormatException exception)
                     {
-                        return "Fail: "+sign+tok.surface+" seems like a number but it is not a number. Use quotes to ensure its a string";
+                        throw new CarpetExpressionException("Fail: "+sign+tok.surface+" seems like a number but it is" +
+                                " not a number. Use quotes to ensure its a string", null);
                     }
                     break;
                 case OPERATOR:
@@ -253,16 +265,18 @@ public class CarpetScriptHost extends ScriptHost
                     }
                     else
                     {
-                        return "Fail: operators, like " + tok.surface + " are not allowed in invoke";
+                        throw new CarpetExpressionException("Fail: operators, like " + tok.surface + " are not " +
+                                "allowed in invoke", null);
                     }
                     break;
                 case FUNCTION:
-                    return "Fail: passing functions like "+tok.surface+"() to invoke is not allowed";
+                    throw new CarpetExpressionException("Fail: passing functions like "+tok.surface+"() to invoke is " +
+                            "not allowed", null);
                 case OPEN_PAREN:
                 case COMMA:
                 case CLOSE_PAREN:
                 case MARKER:
-                    return "Fail: "+tok.surface+" is not allowed in invoke";
+                    throw new CarpetExpressionException("Fail: "+tok.surface+" is not allowed in invoke", null);
             }
         }
         List<String> args = function.getArguments();
@@ -273,7 +287,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).evalValue(null).getString():"??")+"\n";
             }
-            return error;
+            throw new CarpetExpressionException(error, null);
         }
         try
         {
@@ -283,7 +297,7 @@ public class CarpetScriptHost extends ScriptHost
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
-            ).getString();
+            );
         }
         catch (ExpressionException e)
         {
@@ -491,11 +505,11 @@ public class CarpetScriptHost extends ScriptHost
         super.resetErrorSnooper();
     }
 
-    public void handleErrorWithStack(String intro, CarpetExpressionException exception)
+    public void handleErrorWithStack(String intro, Exception exception)
     {
         if (responsibleSource != null)
         {
-            exception.printStack(responsibleSource);
+            if (exception instanceof CarpetExpressionException) ((CarpetExpressionException) exception).printStack(responsibleSource);
             String message = exception.getMessage();
             Messenger.m(responsibleSource, "r "+intro+(message.isEmpty()?"":": "+message));
         }

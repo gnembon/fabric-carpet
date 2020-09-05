@@ -44,11 +44,13 @@ public class NumericValue extends Value
         }
         try
         {
+            if (value.isInfinite()) return "INFINITY";
+            if (value.isNaN()) return "NaN";
             return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
         }
         catch (NumberFormatException exc)
         {
-            throw new ArithmeticException("Incorrect number format for "+value);
+            throw new InternalExpressionException("Incorrect number format for "+value);
         }
     }
 
@@ -121,6 +123,7 @@ public class NumericValue extends Value
     }
     public Value divide(Value v)
     {
+        //if (1+2==3) throw new ArithmeticException("Booyah");
         if (v instanceof NumericValue)
         {
             return new NumericValue(getDouble() / ((NumericValue) v).getDouble() );

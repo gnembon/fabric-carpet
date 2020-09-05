@@ -68,4 +68,9 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         return JsonNull.INSTANCE;
     }
+
+    @Override
+    public boolean isNull() {
+        return true;
+    }
 }

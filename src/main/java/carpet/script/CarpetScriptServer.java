@@ -221,10 +221,10 @@ public class CarpetScriptServer
                 requires((player) -> modules.containsKey(hostName)).
                 executes( (c) ->
                 {
-                    String response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
                             handleCommand(c.getSource(),"__command", null, "");
-                    if (!response.isEmpty()) Messenger.m(c.getSource(), "gi "+response);
-                    return 1;
+                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                    return (int)response.readInteger();
                 });
 
         for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
@@ -233,17 +233,17 @@ public class CarpetScriptServer
                     then(literal(function).
                             requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
                             executes( (c) -> {
-                                String response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
                                         handleCommand(c.getSource(), function,null,"");
-                                if (!response.isEmpty()) Messenger.m(c.getSource(),"gi "+response);
-                                return 1;
+                                if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
+                                return (int)response.readInteger();
                             }).
                             then(argument("args...", StringArgumentType.greedyString()).
                                     executes( (c) -> {
-                                        String response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                        Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
                                                 handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
-                                        if (!response.isEmpty()) Messenger.m(c.getSource(), "gi "+response);
-                                        return 1;
+                                        if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                                        return (int)response.readInteger();
                                     })));
         }
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
