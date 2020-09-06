@@ -2826,6 +2826,9 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 Retrieves player hunger related information. For non-players, returns `null`.
 
+### `query(e, 'air')`
+
+Number indicating remaining entity health, or `null` if not applicable.
 
 ### `query(e, 'holds', slot?)`
 
