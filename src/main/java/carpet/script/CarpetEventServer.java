@@ -795,6 +795,7 @@ public class CarpetEventServer
     public void removeAllHostEvents(String hostName)
     {
         Event.byName.values().forEach((e) -> e.handler.removeAllCalls(hostName));
+        scheduledCalls.removeIf(sc -> sc.host != null && sc.host.equals(hostName));
     }
 
     public void clearAll()
