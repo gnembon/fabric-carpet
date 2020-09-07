@@ -2826,6 +2826,9 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 Retrieves player hunger related information. For non-players, returns `null`.
 
+### `query(e, 'air')`
+
+Number indicating remaining entity health, or `null` if not applicable.
 
 ### `query(e, 'holds', slot?)`
 
@@ -3117,6 +3120,10 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 ### `modify(e, 'exhaustion', value)`
 
 Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'air', ticks)`
+
+Modifies entity air
 
 ### `modify(e, 'add_exhaustion', value)`
 
@@ -3692,13 +3699,18 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `logger(expr)`
+### `logger(msg), logger(type, msg)`
 
-Prints the message to system logs, and not to chat.
+Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
 
-### read_file(resource, type)
-### delete_file(resource, type)
-### write_file(resource, type, data, ...)
+Available output types:
+
+`'debug'`, `'warn'`, `'fatal'`, `'info'` and `'error'`
+
+
+### `read_file(resource, type)`
+### `delete_file(resource, type)`
+### `write_file(resource, type, data, ...)`
 
 With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
  content, or deletes the resource.

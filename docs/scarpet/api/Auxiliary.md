@@ -245,13 +245,18 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `logger(expr)`
+### `logger(msg), logger(type, msg)`
 
-Prints the message to system logs, and not to chat.
+Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
 
-### read_file(resource, type)
-### delete_file(resource, type)
-### write_file(resource, type, data, ...)
+Available output types:
+
+`'debug'`, `'warn'`, `'fatal'`, `'info'` and `'error'`
+
+
+### `read_file(resource, type)`
+### `delete_file(resource, type)`
+### `write_file(resource, type, data, ...)`
 
 With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
  content, or deletes the resource.

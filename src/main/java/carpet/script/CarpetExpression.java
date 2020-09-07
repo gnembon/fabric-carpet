@@ -3382,7 +3382,7 @@ public class CarpetExpression
             return (c_, t_) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("logger", 1, (c, t, lv) ->
+        this.expr.addLazyFunction("logger", -1, (c, t, lv) ->
         {
             //CarpetSettings.LOG.error("Standard Structures:");
             //CarpetSettings.LOG.error(Registry.STRUCTURE_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted(). collect(Collectors.joining(", ")));
@@ -3400,8 +3400,29 @@ public class CarpetExpression
             //CarpetSettings.LOG.error(FeatureGenerator.featureMap.keySet().stream().map(i -> "`'"+i+"'`").sorted().collect(Collectors.joining(", ")));
 
             //CarpetSettings.LOG.error(Registry.ENTITY_TYPE.getIds().stream().sorted().map(ValueConversions::simplify).collect(Collectors.joining("`, `")));
-            Value res = lv.get(0).evalValue(c);
-            CarpetSettings.LOG.error(res.getString());
+            
+            Value res;
+
+            if(lv.size()==1){
+                res = lv.get(0).evalValue(c);
+                CarpetSettings.LOG.info(res.getString());
+            }
+            else if(lv.size()==2){
+                String level = lv.get(0).evalValue(c).toString();
+                res = lv.get(1).evalValue(c);
+
+                switch(level){
+                    case "error":CarpetSettings.LOG.error(res.getString()); break;
+                    case "warn":CarpetSettings.LOG.warn(res.getString()); break;
+                    case "debug":CarpetSettings.LOG.debug(res.getString()); break;
+                    case "fatal":CarpetSettings.LOG.fatal(res.getString()); break;
+                    case "info":CarpetSettings.LOG.info(res.getString()); break;
+                    default: throw new InternalExpressionException("Unknown error type: "+level);
+                }
+            }
+
+            else throw new InternalExpressionException("logger only takes 1 or 2 arguments");           
+            
             return (_c, _t) -> res; // pass through for variables
         });
 
