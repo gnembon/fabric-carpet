@@ -55,7 +55,7 @@ __command() ->
    print('    After CPU spikes jump to where you should be');
 
    print('');
-   ''
+   null
 );
 
 global_points = null;
@@ -241,7 +241,7 @@ move() ->
     );
     global_points:global_selected_point:0 = new_position;
     __update();
-    '';
+    null;
 );
 
 // chenges duration of the current selected segment to X seconds
@@ -473,7 +473,7 @@ show() ->
        global_markers = null;
        global_showing_path = false;
    ));
-   '';
+   null;
 );
 
 // hides path display
@@ -482,8 +482,6 @@ hide() ->
    if (global_showing_path,
       global_showing_path = false;
       'Stopped showing path';
-   ,
-       ''
    );
 );
 
@@ -540,7 +538,7 @@ play() ->
        global_playing_path = false;
        if (showing_path, show());
    ));
-   '';
+   null;
 );
 
 // moves player to a selected camera position

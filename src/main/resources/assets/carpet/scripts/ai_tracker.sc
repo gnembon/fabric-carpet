@@ -54,7 +54,7 @@ health() -> __toggle('health', null);
 toggle_boxes() ->
 (
    global_display_boxes = !global_display_boxes;
-   '';
+   null;
 );
 
 update_frequency(ticks) ->
@@ -62,14 +62,14 @@ update_frequency(ticks) ->
    if (type(ticks) != 'number' || ticks <=0 || ticks > 100, exit('Ticks needs to be a positive number from 1 to 100'));
    global_interval = ticks;
    global_duration = ticks + 2;
-   '';
+   null;
 );
 
 transparency(alpha) ->
 (
    if (type(alpha) != 'number' || alpha <=0 || alpha > 255, exit('Ticks needs to be a number from 0 to 255'));
    global_opacity = floor(alpha);
-   '';
+   null;
 );
 
 
@@ -78,7 +78,7 @@ villager_hostile_detection(hostile) ->
 (
    if (!has(global_hostile_to_villager:hostile),
       print(player(), 'Unknown hostile that affects villagers, possible options are: '+keys(global_hostile_to_villager));
-      exit('');
+      exit(null);
    );
    __toggle('villager_hostile_detection', hostile);
 );
@@ -426,7 +426,7 @@ __toggle(feature, arg) ->
       )
    );
    __reset_interaction_types();
-   '';
+   null;
 );
 
 global_interaction_types = {};
@@ -457,7 +457,7 @@ clear() ->
 (
    global_active_functions = [];
    global_feature_switches = {};
-   ''
+   null
 );
 
 
