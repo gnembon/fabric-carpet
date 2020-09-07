@@ -261,15 +261,20 @@ used to match specific information from it, or use it to copy to another block
 <pre>    block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
 </pre>
 
-### `poi(pos), poi(pos, radius), poi(pos, radius, status)`
+### `poi(pos), poi(pos, radius?, type?, status?, column?)`
 
 Queries a POI (Point of Interest) at a given position, returning `null` if none is found, or tuple of poi type and its 
-occupancy load. With optional `radius` and `status`, returns a list of POIs around `pos` within a given `radius`. 
-If `status` is specified (either 'available', or 'occupied') returns only POIs with that status. The return format is 
-again, poi type, occupancy load, and extra tripple of coordinates.
+occupancy load. With optional `type`, `radius` and `status`, returns a list of POIs around `pos` within a 
+given `radius`. If the `type` is specified, returns only poi types of that types, or everything if omitted or `'any'`.
+If `status` is specified (either `'any'`, `'available'`, or `'occupied'`) returns only POIs with that status. 
+With `column` set to `true`, it will return all POIs in a cuboid with `radius` blocks away on x and z, in the entire
+block column from 0 to 255. Default (`false`) returns POIs within a spherical area centered on `pos` and with `radius`
+radius. 
 
-Querying for POIs using the radius is intended use of POI mechanics and ability of accessing individual POIs 
-via `poi(pos)` in only provided for completness.
+The return format of the results is a list of poi type, occupancy load, and extra triple of coordinates.
+
+Querying for POIs using the radius is the intended use of POI mechanics, and the ability of accessing individual POIs 
+via `poi(pos)` in only provided for completeness.
 
 <pre>
 poi(x,y,z) => null  // nothing set at position

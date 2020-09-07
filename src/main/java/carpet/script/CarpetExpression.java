@@ -164,6 +164,7 @@ import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static carpet.script.utils.WorldTools.canHasChunk;
 import static java.lang.Math.abs;
@@ -401,7 +402,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        // poi_get(pos, radius?, type?, occupation?)
+        // poi_get(pos, radius?, type?, occupation?, column_mode?)
         this.expr.addLazyFunction("poi", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
@@ -431,9 +432,11 @@ public class CarpetExpression
                 );
                 return (_c, _t) -> ret;
             }
-            long radius = NumericValue.asNumber(lv.get(locator.offset+0).evalValue(c)).getLong();
+            int radius = NumericValue.asNumber(lv.get(locator.offset+0).evalValue(c)).getInt();
             if (radius < 0) return ListValue.lazyEmpty();
             Predicate<PointOfInterestType> condition = PointOfInterestType.ALWAYS_TRUE;
+            PointOfInterestStorage.OccupationStatus status = PointOfInterestStorage.OccupationStatus.ANY;
+            boolean inColumn = false;
             if (locator.offset + 1 < lv.size())
             {
                 String poiType = lv.get(locator.offset+1).evalValue(c).getString().toLowerCase(Locale.ROOT);
@@ -443,20 +446,27 @@ public class CarpetExpression
                     if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiType)) return LazyValue.NULL;
                     condition = (tt) -> tt == type;
                 }
+                if (locator.offset + 2 < lv.size())
+                {
+                    String statusString = lv.get(locator.offset+2).evalValue(c).getString().toLowerCase(Locale.ROOT);
+                    if ("occupied".equals(statusString))
+                        status = PointOfInterestStorage.OccupationStatus.IS_OCCUPIED;
+                    else if ("available".equals(statusString))
+                        status = PointOfInterestStorage.OccupationStatus.HAS_SPACE;
+                    else if (!("any".equals(statusString)))
+                        throw new InternalExpressionException(
+                                "Incorrect POI occupation status "+status+ " use `any`, " + "`occupied` or `available`"
+                        );
+                    if (locator.offset + 3 < lv.size())
+                    {
+                        inColumn = lv.get(locator.offset+3).evalValue(c, Context.BOOLEAN).getBoolean();
+                    }
+                }
             }
-            PointOfInterestStorage.OccupationStatus status = PointOfInterestStorage.OccupationStatus.ANY;
-            if (locator.offset + 2 < lv.size())
-            {
-                String statusString = lv.get(locator.offset+2).evalValue(c).getString().toLowerCase(Locale.ROOT);
-                if ("occupied".equals(statusString))
-                    status = PointOfInterestStorage.OccupationStatus.IS_OCCUPIED;
-                else if ("available".equals(statusString))
-                    status = PointOfInterestStorage.OccupationStatus.HAS_SPACE;
-                else
-                    return LazyValue.NULL;
-            }
-
-            Value ret = ListValue.wrap(store.getInCircle(condition, pos, (int)radius, status).sorted(Comparator.comparingDouble(p -> p.getPos().getSquaredDistance(pos))).map(p ->
+            Stream<PointOfInterest> pois = inColumn?
+                    store.getInSquare(condition, pos, radius, status):
+                    store.getInCircle(condition, pos, radius, status);
+            Value ret = ListValue.wrap(pois.sorted(Comparator.comparingDouble(p -> p.getPos().getSquaredDistance(pos))).map(p ->
                     ListValue.of(
                             new StringValue(p.getType().toString()),
                             new NumericValue(p.getType().getTicketCount() - ((PointOfInterest_scarpetMixin)p).getFreeTickets()),
