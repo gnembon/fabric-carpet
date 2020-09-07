@@ -361,6 +361,10 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 Retrieves player hunger related information. For non-players, returns `null`.
 
+### `query(e, 'air')`
+
+Number indicating remaining entity health, or `null` if not applicable.
+
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
@@ -654,7 +658,11 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
 
-Modifies player raw hunger components. Has no effect on non-players.
+Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'air', ticks)`
+
+Modifies entity air
 
 ### `modify(e, 'add_exhaustion', value)`
 
