@@ -3121,6 +3121,10 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
 Modifies directly player raw hunger components. Has no effect on non-players
 
+### `modify(e, 'air', ticks)`
+
+Modifies entity air
+
 ### `modify(e, 'add_exhaustion', value)`
 
 adds exhaustion value to the current player exhaustion level - that's the method you probably want to use

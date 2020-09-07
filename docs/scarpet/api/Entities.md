@@ -658,7 +658,11 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 ### `modify(e, 'saturation', value)`
 ### `modify(e, 'exhaustion', value)`
 
-Modifies player raw hunger components. Has no effect on non-players.
+Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'air', ticks)`
+
+Modifies entity air
 
 ### `modify(e, 'add_exhaustion', value)`
 
