@@ -3705,15 +3705,7 @@ Prints the message to system logs, and not to chat. By default prints an info, u
 
 Available output types:
 
-`'debug'`: white
-
-`'warn'`: yellow
-
-`'fatal'`: red
-
-`'info'`: grey
-
-`'error'`: orange
+`'debug'`, `'warn'`, `'fatal'`, `'info'` and `'error'`
 
 
 ### `read_file(resource, type)`
