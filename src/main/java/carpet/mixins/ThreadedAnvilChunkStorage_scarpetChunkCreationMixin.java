@@ -117,7 +117,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
     @Unique
     private void addTicket(final ChunkPos pos, final ChunkStatus status)
     {  // UNKNOWN
-        this.ticketManager.addTicketWithLevel(ChunkTicketType.field_14032, pos, 33 + ChunkStatus.getDistanceFromFull(status), pos);
+        this.ticketManager.addTicketWithLevel(ChunkTicketType.UNKNOWN, pos, 33 + ChunkStatus.getDistanceFromFull(status), pos);
     }
 
     @Unique

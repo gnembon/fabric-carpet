@@ -467,7 +467,7 @@ public class SpawnReporter
                             float f = (float)x + 0.5F;
                             float f1 = (float)z + 0.5F;
                             mob.refreshPositionAndAngles((double)f, (double)y, (double)f1, worldIn.random.nextFloat() * 360.0F, 0.0F);
-                            fits1 = worldIn.doesNotCollide(mob);
+                            fits1 = worldIn.isSpaceEmpty(mob);
                             EntityType etype = mob.getType();
 
                             for (int i = 0; i < 20; ++i)
@@ -483,7 +483,7 @@ public class SpawnReporter
                             }
                             mob.initialize(worldIn, worldIn.getLocalDifficulty(mob.getBlockPos()), SpawnReason.NATURAL, null, null);
                             // the code invokes onInitialSpawn after getCanSpawHere
-                            fits = fits1 && worldIn.doesNotCollide(mob);
+                            fits = fits1 && worldIn.isSpaceEmpty(mob);
                             if (fits)
                             {
                                 fits_true = true;

@@ -1290,7 +1290,8 @@ public class CarpetExpression
                         {
                             ChunkPos chpos = new ChunkPos(chx, chz);
                             // getting a chunk will convert it to full, allowing to modify references
-                            Map<StructureFeature<?>, LongSet> references = world.getChunk(chpos.getCenterBlockPos()).getStructureReferences();
+                            Map<StructureFeature<?>, LongSet> references =
+                                    world.getChunk(chpos.getStartPos()).getStructureReferences();
                             if (references.containsKey(structure) && references.get(structure) != null)
                                 references.get(structure).remove(structureChunkPos.toLong());
                         }
@@ -1390,7 +1391,7 @@ public class CarpetExpression
                 {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
                     {
-                        forceChunkUpdate(chpos.getCenterBlockPos(), world);
+                        forceChunkUpdate(chpos.getStartPos(), world);
                     }
                 }
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
@@ -1440,21 +1441,21 @@ public class CarpetExpression
             if (radius < 1 || radius > 32) throw new InternalExpressionException("Ticket radius should be between 1 and 32 chunks");
             // due to types we will wing it:
             ChunkPos target = new ChunkPos(pos);
-            if (ticket == ChunkTicketType.field_19280) // portal
-                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.field_19280, target, radius, pos);
-            else if (ticket == ChunkTicketType.field_19347) // post teleport
-                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.field_19347, target, radius, 1);
+            if (ticket == ChunkTicketType.PORTAL) // portal
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.PORTAL, target, radius, pos);
+            else if (ticket == ChunkTicketType.POST_TELEPORT) // post teleport
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.POST_TELEPORT, target, radius, 1);
             else
-                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.field_14032, target, radius, target);
+                cc.s.getWorld().getChunkManager().addTicket(ChunkTicketType.UNKNOWN, target, radius, target);
             Value ret = new NumericValue(ticket.getExpiryTicks());
             return (_c, _t) -> ret;
         });
 
     }
     private Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
-        put("portal", ChunkTicketType.field_19280);
-        put("teleport", ChunkTicketType.field_19347);
-        put("unknown", ChunkTicketType.field_14032);  // unknown
+        put("portal", ChunkTicketType.PORTAL);
+        put("teleport", ChunkTicketType.POST_TELEPORT);
+        put("unknown", ChunkTicketType.UNKNOWN);  // unknown
     }};
 
     private static String getScoreboardKeyFromValue(Value keyValue)
@@ -3585,7 +3586,7 @@ public class CarpetExpression
             else
             {
                 String catString = lv.get(0).evalValue(c).getString();
-                SpawnGroup cat = SpawnGroup.method_28307(catString.toLowerCase(Locale.ROOT));
+                SpawnGroup cat = SpawnGroup.byName(catString.toLowerCase(Locale.ROOT));
                 if (cat == null) throw new InternalExpressionException("Unreconized mob category: "+catString);
                 retVal = ListValue.of(
                         new NumericValue(mobcounts.getInt(cat)),

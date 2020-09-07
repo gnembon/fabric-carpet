@@ -48,7 +48,7 @@ public class SpawnHelperMixin
 
     @Redirect(method = "canSpawn(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/gen/chunk/ChunkGenerator;Lnet/minecraft/world/biome/SpawnSettings$SpawnEntry;Lnet/minecraft/util/math/BlockPos$Mutable;D)Z", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerWorld;doesNotCollide(Lnet/minecraft/util/math/Box;)Z"
+            target = "Lnet/minecraft/server/world/ServerWorld;isSpaceEmpty(Lnet/minecraft/util/math/Box;)Z"
     ))
     private static boolean doesNotCollide(ServerWorld world, Box bb)
     {
@@ -58,7 +58,7 @@ public class SpawnHelperMixin
         // in case something more complex happens - we default to full block collision check
         if (!CarpetSettings.lagFreeSpawning)
         {
-            return world.doesNotCollide(bb);
+            return world.isSpaceEmpty(bb);
         }
         int minX = MathHelper.floor(bb.minX);
         int minY = MathHelper.floor(bb.minY);
@@ -79,7 +79,7 @@ public class SpawnHelperMixin
                     }
                     else
                     {
-                        return world.doesNotCollide(bb);
+                        return world.isSpaceEmpty(bb);
                     }
                 }
             }
@@ -102,7 +102,7 @@ public class SpawnHelperMixin
                         }
                         else
                         {
-                            return world.doesNotCollide(bb);
+                            return world.isSpaceEmpty(bb);
                         }
                     }
                 }
@@ -122,7 +122,7 @@ public class SpawnHelperMixin
                         ((block instanceof FenceGateBlock) && !state.get(FenceGateBlock.OPEN))
                 )
                 {
-                    if (x == minX || x == maxX || z == minZ || z == maxZ) return world.doesNotCollide(bb);
+                    if (x == minX || x == maxX || z == minZ || z == maxZ) return world.isSpaceEmpty(bb);
                     return false;
                 }
             }

@@ -183,7 +183,7 @@ public class PerimeterDiagnostics
             el.refreshPositionAndAngles((float)pos.getX() + 0.5F, (float)pos.getY(), (float)pos.getZ()+0.5F, 0.0F, 0.0F);
             return el.canSpawn(worldServer) && el.canSpawn(worldServer, SpawnReason.NATURAL) &&
                     SpawnRestriction.canSpawn(el.getType(),(ServerWorld)el.getEntityWorld(), SpawnReason.NATURAL, el.getBlockPos(), el.getEntityWorld().random) &&
-                    worldServer.doesNotCollide(el); // check collision rules once they stop fiddling with them after 1.14.1
+                    worldServer.isSpaceEmpty(el); // check collision rules once they stop fiddling with them after 1.14.1
         }
         return false;
     }
