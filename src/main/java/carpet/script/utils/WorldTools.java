@@ -13,6 +13,7 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.source.BiomeAccess;
+import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
 import net.minecraft.world.border.WorldBorderListener;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.dimension.DimensionOptions;
@@ -20,6 +21,8 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.Spawner;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
+import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.level.UnmodifiableLevelProperties;
 import net.minecraft.world.storage.RegionFile;
@@ -99,7 +102,13 @@ public class WorldTools
 
         RegistryKey<World> customWorld = RegistryKey.of(Registry.DIMENSION, worldId);
 
-        chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
+        //chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
+
+        chunkGenerator2 = new NoiseChunkGenerator(
+                new VanillaLayeredBiomeSource((seed==null)?l:seed, false, false, server.getRegistryManager().get(Registry.BIOME_KEY)),
+                (seed==null)?l:seed,
+                () -> server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN).getOrThrow(ChunkGeneratorSettings.OVERWORLD)
+        );
 
         ServerWorld serverWorld = new ServerWorld(
                 server,
