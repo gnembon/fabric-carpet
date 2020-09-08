@@ -19,7 +19,6 @@ import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.LeverBlock;
 import net.minecraft.block.ObserverBlock;
 import net.minecraft.block.PistonBlock;
-import net.minecraft.block.RailBlock;
 import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.StairsBlock;
