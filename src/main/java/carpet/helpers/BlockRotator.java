@@ -2,6 +2,7 @@ package carpet.helpers;
 
 import carpet.fakes.PistonBlockInterface;
 import carpet.CarpetSettings;
+import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.AbstractRedstoneGateBlock;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;
@@ -286,7 +287,7 @@ public class BlockRotator
         Vec3d hitVec = hit.getPos().subtract(pos.getX(), pos.getY(), pos.getZ());
         Direction facing = hit.getSide();
         BlockState newState = null;
-        if ( (block instanceof GlazedTerracottaBlock) || (block instanceof AbstractRedstoneGateBlock) || (block instanceof RailBlock) ||
+        if ( (block instanceof GlazedTerracottaBlock) || (block instanceof AbstractRedstoneGateBlock) || (block instanceof AbstractRailBlock) ||
              (block instanceof TrapdoorBlock)         || (block instanceof LeverBlock)         || (block instanceof FenceGateBlock))
         {
             newState = state.rotate(BlockRotation.CLOCKWISE_90);
