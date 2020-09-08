@@ -153,7 +153,8 @@ public class SpawnHelperMixin
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerWorld;spawnEntityAndPassengers(Lnet/minecraft/entity/Entity;)V"
     ))
-    private static void spawnEntity(ServerWorld world, Entity entity_1)
+    private static void spawnEntity(ServerWorld world, Entity entity_1,
+                                    SpawnGroup group, ServerWorld world2, Chunk chunk, BlockPos pos, SpawnHelper.Checker checker, SpawnHelper.Runner runner)
     {
         if (CarpetSettings.lagFreeSpawning)
             // we used the mob - next time we will create a new one when needed
@@ -164,7 +165,7 @@ public class SpawnHelperMixin
             SpawnReporter.registerSpawn(
                     //world.method_27983(), // getDimensionType //dimension.getType(), // getDimensionType
                     (MobEntity) entity_1,
-                    entity_1.getType().getSpawnGroup(),
+                    group, //entity_1.getType().getSpawnGroup(),
                     entity_1.getBlockPos());
         }
         if (!SpawnReporter.mock_spawns)

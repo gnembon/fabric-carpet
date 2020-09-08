@@ -5,6 +5,7 @@ import carpet.mixins.WeightedPickerEntryMixin;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SpawnGroup;
@@ -15,6 +16,7 @@ import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.OcelotEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.text.BaseText;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
@@ -368,8 +370,8 @@ public class SpawnReporter
                 {
                     there_are_mobs_to_list = true;
                     double hours = overall_spawn_ticks.get(code)/72000.0;
-                    report.add(Messenger.s(String.format(" > %s (%.1f min), %.1f m/t, {%.1f%%F / %.1f%%- / %.1f%%+}; %.2f s/att",
-                        getWorldCode(dim),
+                    report.add(Messenger.s(String.format(" > %s%s (%.1f min), %.1f m/t, %%{%.1fF %.1f- %.1f+}; %.2f s/att",
+                        enumcreaturetype.getName().substring(0,3), getWorldCode(dim),
                         60*hours,
                         (1.0D*spawn_cap_count.get(code))/ spawn_attempts.get(code),
                         (100.0D*spawn_ticks_full.get(code))/ spawn_attempts.get(code),
@@ -475,9 +477,17 @@ public class SpawnReporter
                                 if (
                                         SpawnRestriction.canSpawn(etype,worldIn, SpawnReason.NATURAL, pos, worldIn.random) &&
                                         SpawnHelper.canSpawn(SpawnRestriction.getLocation(etype), worldIn, pos, etype) &&
-                                        mob.canSpawn(worldIn, SpawnReason.NATURAL) // && mob.canSpawn(worldIn) // entity collisions
+                                        mob.canSpawn(worldIn, SpawnReason.NATURAL)
+                                    // && mob.canSpawn(worldIn) // entity collisions // mostly - except ocelots
                                 )
                                 {
+                                    if (etype == EntityType.OCELOT)
+                                    {
+                                        BlockState blockState = worldIn.getBlockState(pos.down());
+                                        if ((pos.getY() < worldIn.getSeaLevel()) || !(blockState.isOf(Blocks.GRASS_BLOCK) || blockState.isIn(BlockTags.LEAVES))) {
+                                           continue;
+                                        }
+                                    }
                                     will_spawn += 1;
                                 }
                             }
