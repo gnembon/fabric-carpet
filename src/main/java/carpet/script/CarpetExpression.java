@@ -177,13 +177,15 @@ public class CarpetExpression
     private final ServerCommandSource source;
     private final BlockPos origin;
     private final Expression expr;
+    // these are for extensions
     public Expression getExpr() {return expr;}
+    public ServerCommandSource getSource() {return source;}
+    public BlockPos getOrigin() {return origin;}
+
     private static long tickStart = 0L;
     // dummy entity for dummy requirements in the loot tables (see snowball)
     private static FallingBlockEntity DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
     public static final String MARKER_STRING = "__scarpet_marker";
-
-    private static boolean stopAll = false;
 
     private static final Map<String, Direction> DIRECTION_MAP = Arrays.stream(Direction.values()).collect(Collectors.toMap(Direction::getName, (direction) -> direction));
 
@@ -3640,7 +3642,6 @@ public class CarpetExpression
         this.expr = new Expression(expression);
         this.expr.asAModule(module);
 
-
         API_BlockManipulation();
         API_EntityManipulation();
         API_InventoryManipulation();
@@ -3649,6 +3650,7 @@ public class CarpetExpression
         API_Scoreboard();
         API_Interapperability();
         API_GaemMonitoring();
+        CarpetServer.extensions.forEach(e -> e.scarpetApi(this));
     }
 
     public boolean fillAndScanCommand(ScriptHost host, int x, int y, int z)

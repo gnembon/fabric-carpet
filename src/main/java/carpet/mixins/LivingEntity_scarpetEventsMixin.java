@@ -34,7 +34,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     @Inject(method = "onDeath", at = @At("HEAD"))
     private void onDeathCall(DamageSource damageSource_1, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DEATH, damageSource_1.name);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, damageSource_1.name);
     }
 
     @Inject(method = "applyDamage", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
@@ -44,7 +44,7 @@ public abstract class LivingEntity_scarpetEventsMixin extends Entity implements 
     ))
     private void entityTakingDamage(DamageSource source, float amount, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DAMAGE, amount, source);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         // this is not applicable since its not a playr for sure
         //if (entity instanceof ServerPlayerEntity && PLAYER_TAKES_DAMAGE.isNeeded())
         //{

@@ -1,5 +1,6 @@
 package carpet;
 
+import carpet.script.CarpetExpression;
 import carpet.settings.SettingsManager;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.MinecraftServer;
@@ -64,5 +65,22 @@ public interface CarpetExtension
     default void registerLoggers() {}
 
     default Map<String, String> canHasTranslations(String lang) { return null;}
+
+    /**
+     * Handles each call that creates / parses the scarpet expression.
+     * Extensions can add their own built-in functions here.
+     *
+     * Events such as generic events or entity events, can be added statically
+     * by creating new events as
+     *
+     * CarpetEventServer.Event class: to handle `__on_foo()` type of call definitions
+     *
+     * or
+     *
+     * EntityEventsGroup.Event class: to handle `entity_event('foo', ...)` type of events
+     *
+     * @param expression: Passed CarpetExpression to add built-in functions to
+     */
+    default void scarpetApi(CarpetExpression expression) {}
 
 }

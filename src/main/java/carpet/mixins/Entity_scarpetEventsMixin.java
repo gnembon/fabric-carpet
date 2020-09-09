@@ -65,14 +65,14 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Inject(method = "tick", at = @At("HEAD"))
     private void onTickCall(CallbackInfo ci)
     {
-        events.onEvent(EntityEventsGroup.EntityEventType.ON_TICK);
+        events.onEvent(EntityEventsGroup.Event.ON_TICK);
     }
 
 
     @Inject(method = "remove", at = @At("HEAD"))
     private void onRemove(CallbackInfo ci)
     {
-        if (!removed) events.onEvent(EntityEventsGroup.EntityEventType.ON_REMOVED);
+        if (!removed) events.onEvent(EntityEventsGroup.Event.ON_REMOVED);
     }
 
 

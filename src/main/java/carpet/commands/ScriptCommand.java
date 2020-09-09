@@ -335,7 +335,7 @@ public class ScriptCommand
     private static int listEvents(ServerCommandSource source)
     {
         Messenger.m(source, "w Lists ALL event handlers:");
-        for (CarpetEventServer.Event event: CarpetEventServer.Event.values())
+        for (CarpetEventServer.Event event: CarpetEventServer.Event.byName.values())
         {
             boolean shownEvent = false;
             for (CarpetEventServer.Callback c: event.handler.callList)

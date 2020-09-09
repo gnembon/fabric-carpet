@@ -1154,7 +1154,7 @@ public class EntityValue extends Value
 
     public void setEvent(CarpetContext cc, String eventName, FunctionValue fun, List<Value> args)
     {
-        EntityEventsGroup.EntityEventType event = EntityEventsGroup.EntityEventType.byName.get(eventName);
+        EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
         if (event == null)
             throw new InternalExpressionException("Unknown entity event: " + eventName);
         ((EntityInterface)entity).getEventContainer().addEvent(event, cc, fun, args);

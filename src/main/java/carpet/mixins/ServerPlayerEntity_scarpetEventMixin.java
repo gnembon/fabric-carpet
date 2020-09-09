@@ -15,7 +15,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -72,7 +71,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
     @Inject(method = "onDeath", at = @At("HEAD"))
     private void onDeathEvent(DamageSource source, CallbackInfo ci)
     {
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DEATH, source.name);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DEATH, source.name);
         if (PLAYER_DIES.isNeeded())
         {
             PLAYER_DIES.onPlayerEvent((ServerPlayerEntity) (Object)this);

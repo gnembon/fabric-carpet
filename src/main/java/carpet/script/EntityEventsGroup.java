@@ -12,24 +12,22 @@ import net.minecraft.entity.damage.DamageSource;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class EntityEventsGroup
 {
-    private final Map<EntityEventType, Map<String, CarpetEventServer.ScheduledCall>> actions;
-    private Entity entity;
+    private final Map<Event, Map<String, CarpetEventServer.ScheduledCall>> actions;
+    private final Entity entity;
     public EntityEventsGroup(Entity e)
     {
-        actions = new EnumMap<>(EntityEventType.class);
+        actions = new HashMap<>();
         entity = e;
     }
 
-    public void onEvent(EntityEventType type, Object... args)
+    public void onEvent(Event type, Object... args)
     {
         if (actions.isEmpty()) return; // most of the cases, trying to be nice
         Map<String, CarpetEventServer.ScheduledCall> actionSet = actions.get(type);
@@ -49,7 +47,7 @@ public class EntityEventsGroup
         if (actionSet.isEmpty()) actions.remove(type);
     }
 
-    public void addEvent(EntityEventType type, CarpetContext cc, FunctionValue fun, List<Value> extraargs)
+    public void addEvent(Event type, CarpetContext cc, FunctionValue fun, List<Value> extraargs)
     {
         if (fun != null)
         {
@@ -67,9 +65,10 @@ public class EntityEventsGroup
     }
 
 
-    public enum EntityEventType
+    public static class Event
     {
-        ON_DEATH("on_death", 1)
+        public static final Map<String, Event> byName = new HashMap<>();
+        public static final Event ON_DEATH = new Event("on_death", 1)
         {
             @Override
             public List<Value> makeArgs(Entity entity, Object... providedArgs)
@@ -79,10 +78,10 @@ public class EntityEventsGroup
                         new StringValue((String)providedArgs[0])
                 );
             }
-        },
-        ON_REMOVED("on_removed", 0),
-        ON_TICK("on_tick", 0),
-        ON_DAMAGE("on_damaged", 3)
+        };
+        public static final Event ON_REMOVED = new Event("on_removed", 0);
+        public static final Event ON_TICK = new Event("on_tick", 0);
+        public static final Event ON_DAMAGE = new Event("on_damaged", 3)
         {
             @Override
             public List<Value> makeArgs(Entity entity, Object... providedArgs)
@@ -98,14 +97,13 @@ public class EntityEventsGroup
             }
         };
 
-        public static final Map<String, EntityEventType> byName = Arrays.stream(EntityEventType.values()).collect(Collectors.toMap(ev -> ev.id, ev -> ev));
-
         public final int argcount;
         public final String id;
-        EntityEventType(String identifier, int args)
+        Event(String identifier, int args)
         {
             id = identifier;
             argcount = args+1; // entity is not extra
+            byName.put(identifier, this);
         }
         public CarpetEventServer.ScheduledCall create(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
         {

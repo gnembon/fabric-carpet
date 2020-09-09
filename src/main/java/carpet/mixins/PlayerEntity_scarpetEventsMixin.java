@@ -32,7 +32,7 @@ public abstract class PlayerEntity_scarpetEventsMixin extends LivingEntity
     private void playerTakingDamage(DamageSource source, float amount, CallbackInfo ci)
     {
         // version of LivingEntity_scarpetEventsMixin::entityTakingDamage
-        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.EntityEventType.ON_DAMAGE, amount, source);
+        ((EntityInterface)this).getEventContainer().onEvent(EntityEventsGroup.Event.ON_DAMAGE, amount, source);
         if (PLAYER_TAKES_DAMAGE.isNeeded())
         {
             PLAYER_TAKES_DAMAGE.onDamage(this, amount, source);
