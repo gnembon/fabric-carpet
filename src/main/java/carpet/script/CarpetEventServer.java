@@ -675,7 +675,7 @@ public class CarpetEventServer
 
         public final CallbackList handler;
         public final boolean globalOnly;
-        Event(String name, int reqArgs, boolean isGlobalOnly)
+        public Event(String name, int reqArgs, boolean isGlobalOnly)
         {
             this.name = name;
             this.handler = new CallbackList(reqArgs);
