@@ -24,12 +24,12 @@ public class Context
 
     public final ScriptHost host;
 
-    Context(ScriptHost host)
+    public Context(ScriptHost host)
     {
         this.host = host;
     }
 
-    LazyValue getVariable(String name)
+    public LazyValue getVariable(String name)
     {
         return variables.get(name);
     }
@@ -39,7 +39,7 @@ public class Context
         variables.put(name, lv);
     }
 
-    void delVariable(String variable)
+    public void delVariable(String variable)
     {
         variables.remove(variable);
     }

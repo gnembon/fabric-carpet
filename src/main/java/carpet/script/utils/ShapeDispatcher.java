@@ -3,8 +3,8 @@ package carpet.script.utils;
 import carpet.CarpetSettings;
 import carpet.network.ServerNetworkHandler;
 import carpet.script.CarpetContext;
-import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.language.Sys;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -1310,7 +1310,7 @@ public class ShapeDispatcher
 
         for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
              delta.lengthSquared()<distance;
-             delta = delta.add(incvec.multiply(Expression.randomizer.nextFloat())))
+             delta = delta.add(incvec.multiply(Sys.randomizer.nextFloat())))
         {
             for (ServerPlayerEntity player : players)
             {

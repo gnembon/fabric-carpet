@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.language.Arithmetic;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -20,7 +21,7 @@ import java.util.stream.Stream;
 public abstract class ScriptHost
 {
     public static Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
-    private static Map<Long, Random> randomizers = new Long2ObjectOpenHashMap<>();
+    private static final Map<Long, Random> randomizers = new Long2ObjectOpenHashMap<>();
 
     public Random getRandom(long aLong)
     {
@@ -99,8 +100,8 @@ public abstract class ScriptHost
 
     void initializeModuleGlobals(ModuleData md)
     {
-        md.globalVariables.put("euler", (c, t) -> Expression.euler);
-        md.globalVariables.put("pi", (c, t) -> Expression.PI);
+        md.globalVariables.put("euler", (c, t) -> Arithmetic.euler);
+        md.globalVariables.put("pi", (c, t) -> Arithmetic.PI);
         md.globalVariables.put("null", (c, t) -> Value.NULL);
         md.globalVariables.put("true", (c, t) -> Value.TRUE);
         md.globalVariables.put("false", (c, t) -> Value.FALSE);

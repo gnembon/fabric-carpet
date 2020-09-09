@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.script.api.Auxiliary;
 import carpet.script.bundled.Module;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
@@ -26,7 +27,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static java.lang.Math.max;
@@ -360,7 +360,7 @@ public class CarpetScriptHost extends ScriptHost
             }
         });
 
-        String markerName = CarpetExpression.MARKER_STRING+"_"+((getName()==null)?"":getName());
+        String markerName = Auxiliary.MARKER_STRING+"_"+((getName()==null)?"":getName());
         for (ServerWorld world : scriptServer.server.getWorlds())
         {
             for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
