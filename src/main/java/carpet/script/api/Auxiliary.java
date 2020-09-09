@@ -15,9 +15,9 @@ import carpet.script.argument.BlockArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
-import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.ShapeDispatcher;
+import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -26,7 +26,6 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
-import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
@@ -66,7 +65,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
@@ -459,60 +457,6 @@ public class Auxiliary {
             return (cc, tt) -> ret;
         });
 
-        //"overidden" native call to cancel if on main thread
-        expression.addLazyFunction("task_join", 1, (c, t, lv) -> {
-            if (((CarpetContext)c).s.getMinecraftServer().isOnThread())
-                throw new InternalExpressionException("'task_join' cannot be called from main thread to avoid deadlocks");
-            Value v = lv.get(0).evalValue(c);
-            if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'task_join' could only be used with a task value");
-            Value ret =  ((ThreadValue) v).join();
-            return (_c, _t) -> ret;
-        });
-
-        expression.addLazyFunctionWithDelegation("task_dock", 1, (c, t, expr, tok, lv) -> {
-            CarpetContext cc = (CarpetContext)c;
-            MinecraftServer server = cc.s.getMinecraftServer();
-            if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks
-            Value[] result = new Value[]{Value.NULL};
-            RuntimeException[] internal = new RuntimeException[]{null};
-            try
-            {
-                ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
-                {
-                    try
-                    {
-                        result[0] = lv.get(0).evalValue(c, t);
-                    }
-                    catch (ExpressionException exc)
-                    {
-                        internal[0] = exc;
-                    }
-                    catch (InternalExpressionException exc)
-                    {
-                        internal[0] = new ExpressionException(c, expr, tok, exc.getMessage(), exc.stack);
-                    }
-
-                    catch (ArithmeticException exc)
-                    {
-                        internal[0] = new ExpressionException(c, expr, tok, "Your math is wrong, "+exc.getMessage());
-                    }
-                });
-            }
-            catch (CompletionException exc)
-            {
-                throw new InternalExpressionException("Error while executing docked task section, internal stack trace is gone");
-            }
-            if (internal[0] != null)
-            {
-                throw internal[0];
-            }
-            Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later
-            return (_c, _t) -> ret;
-            // pass through placeholder
-            // implmenetation should dock the task on the main thread.
-        });
-
         expression.addLazyFunction("run", 1, (c, t, lv) -> {
             BlockPos target = ((CarpetContext)c).origin;
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
@@ -616,7 +560,7 @@ public class Auxiliary {
             BlockPos pos = locator.block.getPos();
             ServerWorld world = cc.s.getWorld();
             ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).relightChunk(new ChunkPos(pos));
-            WorldAccess.forceChunkUpdate(pos, world);
+            WorldTools.forceChunkUpdate(pos, world);
             return LazyValue.TRUE;
         });
 
@@ -708,7 +652,7 @@ public class Auxiliary {
                 if (res == null)
                     return;
                 if (what.equalsIgnoreCase("boulder"))  // there might be more of those
-                    WorldAccess.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
+                    WorldTools.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
                 result[0] = new NumericValue(res);
             });
             Value ret = result[0]; // preventing from lazy evaluating of the result in case a future completes later

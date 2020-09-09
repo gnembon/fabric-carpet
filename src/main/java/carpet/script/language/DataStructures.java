@@ -51,13 +51,15 @@ public class DataStructures {
             return new StringValue(toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter)));
         });
 
-        expression.addBinaryFunction("split", (d, v) -> {
+        expression.addBinaryFunction("split", (d, v) ->
+        {
             String delimiter = d.getString();
             String hwat = v.getString();
             return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
         });
 
-        expression.addFunction("slice", (lv) -> {
+        expression.addFunction("slice", (lv) ->
+        {
 
             if (lv.size() != 2 && lv.size() != 3)
                 throw new InternalExpressionException("'slice' takes 2 or 3 arguments");
@@ -144,19 +146,22 @@ public class DataStructures {
             return (cc, tt) -> ret;
         });
 
-        expression.addUnaryFunction("keys", v -> {
+        expression.addUnaryFunction("keys", v ->
+        {
             if (v instanceof MapValue)
                 return new ListValue(((MapValue) v).getMap().keySet());
             return Value.NULL;
         });
 
-        expression.addUnaryFunction("values", v -> {
+        expression.addUnaryFunction("values", v ->
+        {
             if (v instanceof MapValue)
                 return new ListValue(((MapValue) v).getMap().values());
             return Value.NULL;
         });
 
-        expression.addUnaryFunction("pairs", v -> {
+        expression.addUnaryFunction("pairs", v ->
+        {
             if (v instanceof MapValue)
                 return ListValue.wrap(((MapValue) v).getMap().entrySet().stream().map(
                         (p) -> ListValue.of(p.getKey(), p.getValue())

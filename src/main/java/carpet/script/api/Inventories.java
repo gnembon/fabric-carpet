@@ -309,7 +309,8 @@ public class Inventories {
         });
 
         //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
-        expression.addLazyFunction("inventory_remove", -1, (c, t, lv) -> {
+        expression.addLazyFunction("inventory_remove", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)

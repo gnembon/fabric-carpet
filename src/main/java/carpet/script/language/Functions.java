@@ -36,7 +36,8 @@ public class Functions {
             return (cc, tt) -> list;
         });
 
-        expression.addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
+        expression.addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) ->
+        { // adjust based on c
             if (lv.size() == 0)
                 throw new InternalExpressionException("'call' expects at least function name to call");
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
@@ -70,6 +71,7 @@ public class Functions {
             Value retval = new FunctionSignatureValue(name, args, globals);
             return (cc, tt) -> retval;
         });
+
         expression.addLazyFunction("outer", 1, (c, t, lv) -> {
             if (t != Context.LOCALIZATION)
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures");
@@ -93,6 +95,5 @@ public class Functions {
         });
 
         expression.addFunction("return", (lv) -> { throw new ReturnStatement(lv.size()==0?Value.NULL:lv.get(0));} );
-
     }
 }

@@ -74,7 +74,8 @@ public class Scoreboards {
             return (_c, _t) -> retval;
         });
 
-        expression.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
+        expression.addLazyFunction("scoreboard_remove", -1, (c, t, lv)->
+        {
             if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
@@ -98,7 +99,8 @@ public class Scoreboards {
         // objective_add('lvl','level')
         // objective_add('counter')
 
-        expression.addLazyFunction("scoreboard_add", -1, (c, t, lv)-> {
+        expression.addLazyFunction("scoreboard_add", -1, (c, t, lv)->
+        {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");

@@ -28,6 +28,7 @@ import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import carpet.utils.BlockInfo;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -56,7 +57,6 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ChunkTicketType;
@@ -65,7 +65,6 @@ import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
-import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
@@ -117,23 +116,6 @@ public class WorldAccess {
     }};
     // dummy entity for dummy requirements in the loot tables (see snowball)
     private static FallingBlockEntity DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
-
-    public static void forceChunkUpdate(BlockPos pos, ServerWorld world)
-    {
-        WorldChunk worldChunk = world.getChunkManager().getWorldChunk(pos.getX()>>4, pos.getZ()>>4, false);
-        if (worldChunk != null)
-        {
-            int vd = world.getServer().getPlayerManager().getViewDistance() * 16;
-            int vvd = vd * vd;
-            List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
-            if (!nearbyPlayers.isEmpty())
-            {
-                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, 65535);
-                ChunkPos chpos = new ChunkPos(pos);
-                nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
-            }
-        }
-    }
 
     private static LazyValue booleanStateTest(
             Context c,
@@ -268,30 +250,6 @@ public class WorldAccess {
                 }
             }
         }
-    }
-
-    private static Value structureToValue(StructureStart<?> structure)
-    {
-        if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
-        List<Value> pieces = new ArrayList<>();
-        for (StructurePiece piece : structure.getChildren())
-        {
-            BlockBox box = piece.getBoundingBox();
-            pieces.add(ListValue.of(
-                    new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
-                    (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
-                    ListValue.fromTriple(box.minX, box.minY, box.minZ),
-                    ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
-            ));
-        };
-        BlockBox boundingBox = structure.getBoundingBox();
-        Map<Value, Value> ret = new HashMap<>();
-        ret.put(new StringValue("box"), ListValue.of(
-                ListValue.fromTriple(boundingBox.minX, boundingBox.minY, boundingBox.minZ),
-                ListValue.fromTriple(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ)
-        ));
-        ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
-        return MapValue.wrap(ret);
     }
 
     private static void BooYah(ChunkGenerator generator)
@@ -1058,7 +1016,7 @@ public class WorldAccess {
             BlockPos pos = locator.block.getPos();
             Chunk chunk = world.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.BIOMES);
             ((BiomeArrayInterface)chunk.getBiomeArray()).setBiomeAtIndex(pos, world,  biome);
-            if (doImmediateUpdate) forceChunkUpdate(pos, world);
+            if (doImmediateUpdate) WorldTools.forceChunkUpdate(pos, world);
             return LazyValue.TRUE;
         });
 
@@ -1066,7 +1024,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
             ServerWorld world = cc.s.getWorld();
-            cc.s.getMinecraftServer().submitAndJoin( () -> forceChunkUpdate(pos, world));
+            cc.s.getMinecraftServer().submitAndJoin( () -> WorldTools.forceChunkUpdate(pos, world));
             return LazyValue.TRUE;
         });
 
@@ -1130,7 +1088,7 @@ public class WorldAccess {
                 StructureStart<?> start = FeatureGenerator.shouldStructureStartAt(world, pos, structure, needSize);
                 if (start == null) return LazyValue.NULL;
                 if (!needSize) return LazyValue.TRUE;
-                Value ret = structureToValue(start);
+                Value ret = ValueConversions.fromStructure(start);
                 return (_c, _t) -> ret;
             }
             Map<Value, Value> ret = new HashMap<>();
@@ -1140,7 +1098,7 @@ public class WorldAccess {
                 if (start == null) continue;
 
                 Value key = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(str)));
-                ret.put(key, (!needSize)?Value.NULL:structureToValue(start));
+                ret.put(key, (!needSize)?Value.NULL: ValueConversions.fromStructure(start));
             }
             Value retMap = MapValue.wrap(ret);
             return (_c, _t) -> retMap;
@@ -1172,7 +1130,7 @@ public class WorldAccess {
             }
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             StructureStart start = structures.get(Registry.STRUCTURE_FEATURE.get(new Identifier(structureName)));
-            Value ret = structureToValue(start);
+            Value ret = ValueConversions.fromStructure(start);
             return (_c, _t) -> ret;
         });
 
@@ -1321,7 +1279,7 @@ public class WorldAccess {
                 {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
                     {
-                        forceChunkUpdate(chpos.getStartPos(), world);
+                        WorldTools.forceChunkUpdate(chpos.getStartPos(), world);
                     }
                 }
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(

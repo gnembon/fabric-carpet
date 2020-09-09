@@ -26,6 +26,7 @@ import carpet.script.language.Functions;
 import carpet.script.language.Loops;
 import carpet.script.language.Operators;
 import carpet.script.language.Sys;
+import carpet.script.language.Threading;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -407,6 +408,7 @@ public class Expression
         Functions.apply(this);
         Arithmetic.apply(this);
         Sys.apply(this);
+        Threading.apply(this);
         Loops.apply(this);
         DataStructures.apply(this);
     }

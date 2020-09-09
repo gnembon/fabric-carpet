@@ -4,7 +4,6 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.ScriptHost;
-import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.PerlinNoiseSampler;
 import carpet.script.utils.SimplexNoiseSampler;
@@ -13,7 +12,6 @@ import carpet.script.value.ListValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
-import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import org.apache.commons.lang3.text.WordUtils;
 
@@ -38,7 +36,8 @@ public class Sys {
 
         expression.addUnaryFunction("copy", Value::deepcopy);
 
-        expression.addLazyFunction("bool", 1, (c, t, lv) -> {
+        expression.addLazyFunction("bool", 1, (c, t, lv) ->
+        {
             Value v = lv.get(0).evalValue(c, Context.BOOLEAN);
             if (v instanceof StringValue)
             {
@@ -51,7 +50,9 @@ public class Sys {
             Value retval = new NumericValue(v.getBoolean());
             return (cc, tt) -> retval;
         });
-        expression.addUnaryFunction("number", v -> {
+
+        expression.addUnaryFunction("number", v ->
+        {
             if (v instanceof NumericValue)
             {
                 return v;
@@ -65,6 +66,7 @@ public class Sys {
                 return Value.NULL;
             }
         });
+
         expression.addFunction("str", lv ->
         {
             if (lv.size() == 0)
@@ -174,9 +176,9 @@ public class Sys {
         });
 
         expression.addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
-
         expression.addUnaryFunction("length", v -> new NumericValue(v.length()));
-        expression.addLazyFunction("rand", -1, (c, t, lv) -> {
+        expression.addLazyFunction("rand", -1, (c, t, lv) ->
+        {
             int argsize = lv.size();
             Random randomizer = Sys.randomizer;
             if (argsize != 1 && argsize != 2)
@@ -199,7 +201,8 @@ public class Sys {
             return (cc, tt) -> retval;
         });
 
-        expression.addLazyFunction("perlin", -1, (c, t, lv) -> {
+        expression.addLazyFunction("perlin", -1, (c, t, lv) ->
+        {
             PerlinNoiseSampler sampler;
             Value x, y, z;
 
@@ -242,7 +245,8 @@ public class Sys {
             return (cc, tt) -> ret;
         });
 
-        expression.addLazyFunction("simplex", -1, (c, t, lv) -> {
+        expression.addLazyFunction("simplex", -1, (c, t, lv) ->
+        {
             SimplexNoiseSampler sampler;
             Value x, y, z;
 
@@ -373,7 +377,8 @@ public class Sys {
             return (cc, tt) -> res;
         });
 
-        expression.addLazyFunction("var", 1, (c, t, lv) -> {
+        expression.addLazyFunction("var", 1, (c, t, lv) ->
+        {
             String varname = lv.get(0).evalValue(c).getString();
             return expression.getOrSetAnyVariable(c, varname);
         });
@@ -418,7 +423,8 @@ public class Sys {
         });
 
         //deprecate
-        expression.addLazyFunction("vars", 1, (c, t, lv) -> {
+        expression.addLazyFunction("vars", 1, (c, t, lv) ->
+        {
             String prefix = lv.get(0).evalValue(c).getString();
             List<Value> values = new ArrayList<>();
             if (prefix.startsWith("global"))
@@ -431,67 +437,6 @@ public class Sys {
             }
             Value retval = ListValue.wrap(values);
             return (cc, tt) -> retval;
-        });
-
-        expression.addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
-            if (lv.size() == 0)
-                throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, true, false);
-            Value queue = Value.NULL;
-            if (lv.size() > functionArgument.offset) queue = lv.get(functionArgument.offset).evalValue(c);
-            ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.args);
-            Thread.yield();
-            return (cc, tt) -> thread;
-        });
-
-        expression.addFunction("task_count", (lv) ->
-        {
-            if (lv.size() > 0)
-            {
-                return new NumericValue(ThreadValue.taskCount(lv.get(0)));
-            }
-            return new NumericValue(ThreadValue.taskCount());
-        });
-
-        expression.addUnaryFunction("task_value", (v) -> {
-            if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'task_value' could only be used with a task value");
-            return ((ThreadValue) v).getValue();
-        });
-
-        expression.addUnaryFunction("task_join", (v) -> {
-            if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'task_join' could only be used with a task value");
-            return ((ThreadValue) v).join();
-        });
-
-        expression.addLazyFunction("task_dock", 1, (c, t, lv) -> {
-            // pass through placeholder
-            // implmenetation should dock the task on the main thread.
-            return lv.get(0);
-        });
-
-        expression.addUnaryFunction("task_completed", (v) -> {
-            if (!(v instanceof ThreadValue))
-                throw new InternalExpressionException("'task_completed' could only be used with a task value");
-            return new NumericValue(((ThreadValue) v).isFinished());
-        });
-
-        expression.addLazyFunction("synchronize", -1, (c, t, lv) ->
-        {
-            if (lv.size() == 0) throw new InternalExpressionException("'synchronize' require at least an expression to synchronize");
-            Value lockValue = Value.NULL;
-            int ind = 0;
-            if (lv.size() == 2)
-            {
-                lockValue = lv.get(0).evalValue(c);
-                ind = 1;
-            }
-            synchronized (ThreadValue.getLock(lockValue))
-            {
-                Value ret = lv.get(ind).evalValue(c, t);
-                return (_c, _t) -> ret;
-            }
         });
 
         expression.addLazyFunction("system_variable_get", -1, (c, t, lv) ->
@@ -515,7 +460,5 @@ public class Sys {
             if (res!=null) return (cc, tt) -> res;
             return (cc, tt) -> Value.NULL;
         });
-
-
     }
 }

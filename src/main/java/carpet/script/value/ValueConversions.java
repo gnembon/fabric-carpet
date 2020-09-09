@@ -8,17 +8,23 @@ import net.minecraft.entity.ai.pathing.PathNode;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.world.ServerWorld;
 
+import net.minecraft.structure.StructurePiece;
+import net.minecraft.structure.StructureStart;
 import net.minecraft.util.Identifier;
 
 import net.minecraft.util.dynamic.GlobalPos;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -101,15 +107,15 @@ public class ValueConversions
         {
             GlobalPos pos = (GlobalPos)v;
             return ofGlobalPos(pos);
-        };
+        }
         if (v instanceof Entity)
         {
             return new EntityValue((Entity)v);
-        };
+        }
         if (v instanceof BlockPos)
         {
             return new BlockValue(null, (ServerWorld) e.getEntityWorld(), (BlockPos) v);
-        };
+        }
         if (v instanceof Number)
         {
             return new NumericValue(((Number) v).doubleValue());
@@ -141,7 +147,7 @@ public class ValueConversions
         if (v instanceof WalkTarget)
         {
             return ListValue.of(
-                    new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((LookTarget)v).getBlockPos()),
+                    new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((WalkTarget)v).getLookTarget().getBlockPos()),
                     new NumericValue(((WalkTarget) v).getSpeed()),
                     new NumericValue(((WalkTarget) v).getCompletionRange())
             );
@@ -174,5 +180,29 @@ public class ValueConversions
                 current == null?Value.NULL:new EntityValue(current),
                 new StringValue(uuid.toString())
         );
+    }
+
+    public static Value fromStructure(StructureStart<?> structure)
+    {
+        if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
+        List<Value> pieces = new ArrayList<>();
+        for (StructurePiece piece : structure.getChildren())
+        {
+            BlockBox box = piece.getBoundingBox();
+            pieces.add(ListValue.of(
+                    new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
+                    (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
+                    ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                    ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+            ));
+        }
+        BlockBox boundingBox = structure.getBoundingBox();
+        Map<Value, Value> ret = new HashMap<>();
+        ret.put(new StringValue("box"), ListValue.of(
+                ListValue.fromTriple(boundingBox.minX, boundingBox.minY, boundingBox.minZ),
+                ListValue.fromTriple(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ)
+        ));
+        ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
+        return MapValue.wrap(ret);
     }
 }

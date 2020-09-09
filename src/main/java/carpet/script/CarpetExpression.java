@@ -8,6 +8,7 @@ import carpet.script.api.Entities;
 import carpet.script.api.Inventories;
 import carpet.script.api.Monitoring;
 import carpet.script.api.Scoreboards;
+import carpet.script.api.Threading;
 import carpet.script.api.WorldAccess;
 import carpet.script.bundled.Module;
 import carpet.script.exception.CarpetExpressionException;
@@ -42,6 +43,7 @@ public class CarpetExpression
         Inventories.apply(this.expr);
         BlockIterators.apply(this.expr);
         Auxiliary.apply(this.expr);
+        Threading.apply(this.expr);
         Scoreboards.apply(this.expr);
         Apps.apply(this.expr);
         Monitoring.apply(this.expr);

@@ -39,7 +39,8 @@ import java.util.stream.Collectors;
 public class Entities {
     public static void apply(Expression expression)
     {
-        expression.addLazyFunction("player", -1, (c, t, lv) -> {
+        expression.addLazyFunction("player", -1, (c, t, lv) ->
+        {
             if (lv.size() ==0)
             {
 
@@ -106,7 +107,8 @@ public class Entities {
             return (cc, tt) -> finalVar;
         });
 
-        expression.addLazyFunction("spawn", -1, (c, t, lv) -> {
+        expression.addLazyFunction("spawn", -1, (c, t, lv) ->
+        {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 2)
                 throw new InternalExpressionException("'spawn' function takes mob name, and position to spawn");
@@ -176,7 +178,8 @@ public class Entities {
             return (cc, tt) -> new EntityValue(e);
         });
 
-        expression.addLazyFunction("entity_list", 1, (c, t, lv) -> {
+        expression.addLazyFunction("entity_list", 1, (c, t, lv) ->
+        {
             String who = lv.get(0).evalValue(c).getString();
             Pair<EntityType<?>, Predicate<? super Entity>> pair = EntityValue.getPredicate(who);
             if (pair == null)
@@ -188,7 +191,8 @@ public class Entities {
             return (_c, _t ) -> retval;
         });
 
-        expression.addLazyFunction("entity_area", 7, (c, t, lv) -> {
+        expression.addLazyFunction("entity_area", 7, (c, t, lv) ->
+        {
             Vec3d center = new Vec3d(
                     NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(2).evalValue(c)).getDouble(),
@@ -221,7 +225,8 @@ public class Entities {
             return (c_, t_) -> ListValue.wrap(retlist);
         });
 
-        expression.addLazyFunction("query", -1, (c, t, lv) -> {
+        expression.addLazyFunction("query", -1, (c, t, lv) ->
+        {
             if (lv.size()<2)
             {
                 throw new InternalExpressionException("'query' takes entity as a first argument, and queried feature as a second");
@@ -241,7 +246,8 @@ public class Entities {
         });
 
         // or update
-        expression.addLazyFunction("modify", -1, (c, t, lv) -> {
+        expression.addLazyFunction("modify", -1, (c, t, lv) ->
+        {
             if (lv.size()<2)
             {
                 throw new InternalExpressionException("'modify' takes entity as a first argument, and queried feature as a second");

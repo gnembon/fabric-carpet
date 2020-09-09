@@ -2,11 +2,14 @@ package carpet.script.utils;
 
 import carpet.fakes.MinecraftServerInterface;
 import com.google.common.collect.ImmutableList;
+import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldGenerationProgressListener;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
@@ -16,6 +19,7 @@ import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
 import net.minecraft.world.border.WorldBorderListener;
 import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.dimension.DimensionOptions;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.GeneratorOptions;
@@ -126,6 +130,23 @@ public class WorldTools
         overWorld.getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld.getWorldBorder()));
         ((MinecraftServerInterface) server).getCMWorlds().put(customWorld, serverWorld);
         return true;
+    }
+
+    public static void forceChunkUpdate(BlockPos pos, ServerWorld world)
+    {
+        WorldChunk worldChunk = world.getChunkManager().getWorldChunk(pos.getX()>>4, pos.getZ()>>4, false);
+        if (worldChunk != null)
+        {
+            int vd = world.getServer().getPlayerManager().getViewDistance() * 16;
+            int vvd = vd * vd;
+            List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
+            if (!nearbyPlayers.isEmpty())
+            {
+                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, 65535);
+                ChunkPos chpos = new ChunkPos(pos);
+                nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
+            }
+        }
     }
 
 

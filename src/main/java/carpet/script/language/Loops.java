@@ -21,13 +21,15 @@ public class Loops {
         // condition and expression will get a bound '_i'
         // returns last successful expression or false
         // while(cond, limit, expr) => ??
-        expression.addFunction("break", lv -> {
+        expression.addFunction("break", lv ->
+        {
             if (lv.size()==0) throw new BreakStatement(null);
             if (lv.size()==1) throw new BreakStatement(lv.get(0));
             throw new InternalExpressionException("'break' can only be called with zero or one argument");
         });
 
-        expression.addFunction("continue", lv -> {
+        expression.addFunction("continue", lv ->
+        {
             if (lv.size()==0) throw new ContinueStatement(null);
             if (lv.size()==1) throw new ContinueStatement(lv.get(0));
             throw new InternalExpressionException("'continue' can only be called with zero or one argument");
@@ -273,7 +275,8 @@ public class Loops {
         });
 
         // runs traditional for(init, condition, increment, body) tri-argument for loop with body in between
-        expression.addLazyFunction("c_for", 4, (c, t, lv) -> {
+        expression.addLazyFunction("c_for", 4, (c, t, lv) ->
+        {
             LazyValue initial = lv.get(0);
             LazyValue condition = lv.get(1);
             LazyValue increment = lv.get(2);
