@@ -99,7 +99,7 @@ public class EntityEventsGroup
 
         public final int argcount;
         public final String id;
-        Event(String identifier, int args)
+        public Event(String identifier, int args)
         {
             id = identifier;
             argcount = args+1; // entity is not extra
