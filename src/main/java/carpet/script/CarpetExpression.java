@@ -189,7 +189,7 @@ public class CarpetExpression
 
     private static final Map<String, Direction> DIRECTION_MAP = Arrays.stream(Direction.values()).collect(Collectors.toMap(Direction::getName, (direction) -> direction));
 
-    private LazyValue booleanStateTest(
+    private static LazyValue booleanStateTest(
             Context c,
             String name,
             List<LazyValue> params,
@@ -212,7 +212,7 @@ public class CarpetExpression
         return (c_, t_) -> retval;
     }
 
-    private LazyValue stateStringQuery(
+    private static LazyValue stateStringQuery(
             Context c,
             String name,
             List<LazyValue> params,
@@ -238,7 +238,7 @@ public class CarpetExpression
         return (c_, t_) -> retval;
     }
 
-    private LazyValue genericStateTest(
+    private static LazyValue genericStateTest(
             Context c,
             String name,
             List<LazyValue> params,
@@ -268,7 +268,7 @@ public class CarpetExpression
         return (c_, t_) -> retval;
     }
 
-    private <T extends Comparable<T>> BlockState setProperty(Property<T> property, String name, String value,
+    private static <T extends Comparable<T>> BlockState setProperty(Property<T> property, String name, String value,
                                                               BlockState bs)
     {
         Optional<T> optional = property.parse(value);
@@ -301,11 +301,11 @@ public class CarpetExpression
         }
     }
 
-    private boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
+    private static boolean tryBreakBlock_copy_from_ServerPlayerInteractionManager(ServerPlayerEntity player, BlockPos blockPos_1)
     {
         //this could be done little better, by hooking up event handling not in try_break_block but wherever its called
         // so we can safely call it here
-        // but that woudl do for now.
+        // but that would do for now.
         BlockState blockState_1 = player.world.getBlockState(blockPos_1);
         if (!player.getMainHandStack().getItem().canMine(blockState_1, player.world, blockPos_1, player)) {
             return false;
@@ -367,16 +367,16 @@ public class CarpetExpression
         return MapValue.wrap(ret);
     }
 
-    private void BooYah(ChunkGenerator generator)
+    private static void BooYah(ChunkGenerator generator)
     {
         synchronized (generator)
         {
             ((ChunkGeneratorInterface)generator).initStrongholds();
         }
     }
-    private void API_BlockManipulation()
+    private static void API_BlockManipulation(Expression expression)
     {
-        this.expr.addLazyFunction("block", -1, (c, t, lv) ->
+        expression.addLazyFunction("block", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0)
@@ -390,7 +390,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("block_data", -1, (c, t, lv) ->
+        expression.addLazyFunction("block_data", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0)
@@ -405,7 +405,7 @@ public class CarpetExpression
         });
 
         // poi_get(pos, radius?, type?, occupation?, column_mode?)
-        this.expr.addLazyFunction("poi", -1, (c, t, lv) ->
+        expression.addLazyFunction("poi", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0) throw new InternalExpressionException("'poi' requires at least one parameter");
@@ -480,7 +480,7 @@ public class CarpetExpression
         });
 
         //poi_set(pos, null) poi_set(pos, type, occupied?,
-        this.expr.addLazyFunction("set_poi", -1, (c, t, lv) ->
+        expression.addLazyFunction("set_poi", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             if (lv.size() == 0) throw new InternalExpressionException("'set_poi' requires at least one parameter");
@@ -524,7 +524,7 @@ public class CarpetExpression
         });
 
 
-        this.expr.addLazyFunction("pos", 1, (c, t, lv) ->
+        expression.addLazyFunction("pos", 1, (c, t, lv) ->
         {
             Value arg = lv.get(0).evalValue(c);
             if (arg instanceof BlockValue)
@@ -549,7 +549,7 @@ public class CarpetExpression
             }
         });
 
-        this.expr.addLazyFunction("pos_offset", -1, (c, t, lv) ->
+        expression.addLazyFunction("pos_offset", -1, (c, t, lv) ->
         {
             BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             BlockPos pos = locator.block.getPos();
@@ -567,19 +567,19 @@ public class CarpetExpression
             return (cc, tt) -> ret;
         });
 
-        this.expr.addLazyFunction("solid", -1, (c, t, lv) ->
+        expression.addLazyFunction("solid", -1, (c, t, lv) ->
                 genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.isSolidBlock(w, p)))); // isSimpleFullBlock
 
-        this.expr.addLazyFunction("air", -1, (c, t, lv) ->
+        expression.addLazyFunction("air", -1, (c, t, lv) ->
                 booleanStateTest(c, "air", lv, (s, p) -> s.isAir()));
 
-        this.expr.addLazyFunction("liquid", -1, (c, t, lv) ->
+        expression.addLazyFunction("liquid", -1, (c, t, lv) ->
                 booleanStateTest(c, "liquid", lv, (s, p) -> !s.getFluidState().isEmpty()));
 
-        this.expr.addLazyFunction("flammable", -1, (c, t, lv) ->
+        expression.addLazyFunction("flammable", -1, (c, t, lv) ->
                 booleanStateTest(c, "flammable", lv, (s, p) -> s.getMaterial().isBurnable()));
 
-        this.expr.addLazyFunction("transparent", -1, (c, t, lv) ->
+        expression.addLazyFunction("transparent", -1, (c, t, lv) ->
                 booleanStateTest(c, "transparent", lv, (s, p) -> !s.getMaterial().isSolid()));
 
         /*this.expr.addLazyFunction("opacity", -1, (c, t, lv) ->
@@ -588,31 +588,31 @@ public class CarpetExpression
         this.expr.addLazyFunction("blocks_daylight", -1, (c, t, lv) ->
                 genericStateTest(c, "blocks_daylight", lv, (s, p, w) -> new NumericValue(s.propagatesSkylightDown(w, p))));*/ // investigate
 
-        this.expr.addLazyFunction("emitted_light", -1, (c, t, lv) ->
+        expression.addLazyFunction("emitted_light", -1, (c, t, lv) ->
                 genericStateTest(c, "emitted_light", lv, (s, p, w) -> new NumericValue(s.getLuminance())));
 
-        this.expr.addLazyFunction("light", -1, (c, t, lv) ->
+        expression.addLazyFunction("light", -1, (c, t, lv) ->
                 genericStateTest(c, "light", lv, (s, p, w) -> new NumericValue(Math.max(w.getLightLevel(LightType.BLOCK, p), w.getLightLevel(LightType.SKY, p)))));
 
-        this.expr.addLazyFunction("block_light", -1, (c, t, lv) ->
+        expression.addLazyFunction("block_light", -1, (c, t, lv) ->
                 genericStateTest(c, "block_light", lv, (s, p, w) -> new NumericValue(w.getLightLevel(LightType.BLOCK, p))));
 
-        this.expr.addLazyFunction("sky_light", -1, (c, t, lv) ->
+        expression.addLazyFunction("sky_light", -1, (c, t, lv) ->
                 genericStateTest(c, "sky_light", lv, (s, p, w) -> new NumericValue(w.getLightLevel(LightType.SKY, p))));
 
-        this.expr.addLazyFunction("see_sky", -1, (c, t, lv) ->
+        expression.addLazyFunction("see_sky", -1, (c, t, lv) ->
                 genericStateTest(c, "see_sky", lv, (s, p, w) -> new NumericValue(w.isSkyVisible(p))));
 
-        this.expr.addLazyFunction("brightness", -1, (c, t, lv) ->
+        expression.addLazyFunction("brightness", -1, (c, t, lv) ->
                 genericStateTest(c, "brightness", lv, (s, p, w) -> new NumericValue(w.getBrightness(p))));
 
-        this.expr.addLazyFunction("hardness", -1, (c, t, lv) ->
+        expression.addLazyFunction("hardness", -1, (c, t, lv) ->
                 genericStateTest(c, "hardness", lv, (s, p, w) -> new NumericValue(s.getHardness(w, p))));
 
-        this.expr.addLazyFunction("blast_resistance", -1, (c, t, lv) ->
+        expression.addLazyFunction("blast_resistance", -1, (c, t, lv) ->
                 genericStateTest(c, "blast_resistance", lv, (s, p, w) -> new NumericValue(s.getBlock().getBlastResistance())));
 
-        this.expr.addLazyFunction("in_slime_chunk", -1, (c, t, lv) ->
+        expression.addLazyFunction("in_slime_chunk", -1, (c, t, lv) ->
         {
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             ChunkPos chunkPos = new ChunkPos(pos);
@@ -625,7 +625,7 @@ public class CarpetExpression
         });
 
 
-        this.expr.addLazyFunction("top", -1, (c, t, lv) ->
+        expression.addLazyFunction("top", -1, (c, t, lv) ->
         {
             String type = lv.get(0).evalValue(c).getString().toLowerCase(Locale.ROOT);
             Heightmap.Type htype;
@@ -648,21 +648,21 @@ public class CarpetExpression
             //return new BlockValue(source.getWorld().getBlockState(pos), pos);
         });
 
-        this.expr.addLazyFunction("loaded", -1, (c, t, lv) ->
+        expression.addLazyFunction("loaded", -1, (c, t, lv) ->
         {
             Value retval = ((CarpetContext) c).s.getWorld().isChunkLoaded(BlockArgument.findIn((CarpetContext) c, lv, 0).block.getPos()) ? Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         });
 
         // Deprecated, use loaded_status as more indicative
-        this.expr.addLazyFunction("loaded_ep", -1, (c, t, lv) ->
+        expression.addLazyFunction("loaded_ep", -1, (c, t, lv) ->
         {
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             Value retval = ((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos))?Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("loaded_status", -1, (c, t, lv) ->
+        expression.addLazyFunction("loaded_status", -1, (c, t, lv) ->
         {
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             WorldChunk chunk = ((CarpetContext)c).s.getWorld().getChunkManager().getWorldChunk(pos.getX()>>4, pos.getZ()>>4, false);
@@ -672,7 +672,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("is_chunk_generated", -1, (c, t, lv) ->
+        expression.addLazyFunction("is_chunk_generated", -1, (c, t, lv) ->
         {
             BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             BlockPos pos = locator.block.getPos();
@@ -683,7 +683,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("generation_status", -1, (c, t, lv) ->
+        expression.addLazyFunction("generation_status", -1, (c, t, lv) ->
         {
             BlockArgument blockArgument = BlockArgument.findIn((CarpetContext)c, lv, 0);
             BlockPos pos = blockArgument.block.getPos();
@@ -697,7 +697,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("chunk_tickets", -1, (c, t, lv) ->
+        expression.addLazyFunction("chunk_tickets", -1, (c, t, lv) ->
         {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
             Long2ObjectOpenHashMap<SortedArraySet<ChunkTicket<?>>> levelTickets = (
@@ -742,23 +742,23 @@ public class CarpetExpression
             return (_c, _t) -> returnValue;
         });
 
-        this.expr.addLazyFunction("suffocates", -1, (c, t, lv) ->
+        expression.addLazyFunction("suffocates", -1, (c, t, lv) ->
                 genericStateTest(c, "suffocates", lv, (s, p, w) -> new NumericValue(s.shouldSuffocate(w, p)))); // canSuffocate
 
-        this.expr.addLazyFunction("power", -1, (c, t, lv) ->
+        expression.addLazyFunction("power", -1, (c, t, lv) ->
                 genericStateTest(c, "power", lv, (s, p, w) -> new NumericValue(w.getReceivedRedstonePower(p))));
 
-        this.expr.addLazyFunction("ticks_randomly", -1, (c, t, lv) ->
+        expression.addLazyFunction("ticks_randomly", -1, (c, t, lv) ->
                 booleanStateTest(c, "ticks_randomly", lv, (s, p) -> s.hasRandomTicks()));
 
-        this.expr.addLazyFunction("update", -1, (c, t, lv) ->
+        expression.addLazyFunction("update", -1, (c, t, lv) ->
                 booleanStateTest(c, "update", lv, (s, p) ->
                 {
                     ((CarpetContext) c).s.getWorld().updateNeighbor(p, s.getBlock(), p);
                     return true;
                 }));
 
-        this.expr.addLazyFunction("block_tick", -1, (c, t, lv) ->
+        expression.addLazyFunction("block_tick", -1, (c, t, lv) ->
                 booleanStateTest(c, "block_tick", lv, (s, p) ->
                 {
                     ServerWorld w = ((CarpetContext)c).s.getWorld();
@@ -766,7 +766,7 @@ public class CarpetExpression
                     return true;
                 }));
 
-        this.expr.addLazyFunction("random_tick", -1, (c, t, lv) ->
+        expression.addLazyFunction("random_tick", -1, (c, t, lv) ->
                 booleanStateTest(c, "random_tick", lv, (s, p) ->
                 {
                     ServerWorld w = ((CarpetContext)c).s.getWorld();
@@ -775,7 +775,7 @@ public class CarpetExpression
                     return true;
                 }));
 
-        this.expr.addLazyFunction("without_updates", 1, (c, t, lv) ->
+        expression.addLazyFunction("without_updates", 1, (c, t, lv) ->
         {
             boolean previous = CarpetSettings.impendingFillSkipUpdates;
             if (previous) return lv.get(0);
@@ -795,7 +795,7 @@ public class CarpetExpression
             return (cc, tt) -> result[0];
         });
 
-        this.expr.addLazyFunction("set", -1, (c, t, lv) ->
+        expression.addLazyFunction("set", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
@@ -875,7 +875,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("destroy", -1, (c, t, lv) ->
+        expression.addLazyFunction("destroy", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
@@ -976,7 +976,7 @@ public class CarpetExpression
 
         });
 
-        this.expr.addLazyFunction("harvest", -1, (c, t, lv) ->
+        expression.addLazyFunction("harvest", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
                 throw new InternalExpressionException("'harvest' takes at least 2 parameters: entity and block, or position, to harvest");
@@ -1002,7 +1002,7 @@ public class CarpetExpression
         });
 
         // TODO rename to use_item
-        this.expr.addLazyFunction("place_item", -1, (c, t, lv) ->
+        expression.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
                 throw new InternalExpressionException("'place_item' takes at least 2 parameters: item and block, or position, to place onto");
@@ -1056,23 +1056,23 @@ public class CarpetExpression
             return (_c, _t) -> Value.FALSE;
         });
 
-        this.expr.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
+        expression.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
                         !s.canPathfindThrough(((CarpetContext) c).s.getWorld(), p, NavigationType.LAND)));
 
-        this.expr.addLazyFunction("block_sound", -1, (c, t, lv) ->
+        expression.addLazyFunction("block_sound", -1, (c, t, lv) ->
                 stateStringQuery(c, "block_sound", lv, (s, p) ->
                         BlockInfo.soundName.get(s.getSoundGroup())));
 
-        this.expr.addLazyFunction("material", -1, (c, t, lv) ->
+        expression.addLazyFunction("material", -1, (c, t, lv) ->
                 stateStringQuery(c, "material", lv, (s, p) ->
                         BlockInfo.materialName.get(s.getMaterial())));
 
-        this.expr.addLazyFunction("map_colour", -1, (c, t, lv) ->
+        expression.addLazyFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
                         BlockInfo.mapColourName.get(s.getTopMaterialColor(((CarpetContext)c).s.getWorld(), p))));
 
-        this.expr.addLazyFunction("property", -1, (c, t, lv) ->
+        expression.addLazyFunction("property", -1, (c, t, lv) ->
         {
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
@@ -1087,7 +1087,7 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
-        this.expr.addLazyFunction("block_properties", -1, (c, t, lv) ->
+        expression.addLazyFunction("block_properties", -1, (c, t, lv) ->
         {
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
@@ -1098,7 +1098,7 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("biome", -1, (c, t, lv) -> {
+        expression.addLazyFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             ServerWorld world = cc.s.getWorld();
@@ -1110,7 +1110,7 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("set_biome", -1, (c, t, lv) ->
+        expression.addLazyFunction("set_biome", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
@@ -1134,7 +1134,7 @@ public class CarpetExpression
             return LazyValue.TRUE;
         });
 
-        this.expr.addLazyFunction("reload_chunk", -1, (c, t, lv) -> {
+        expression.addLazyFunction("reload_chunk", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
             ServerWorld world = cc.s.getWorld();
@@ -1142,7 +1142,7 @@ public class CarpetExpression
             return LazyValue.TRUE;
         });
 
-        this.expr.addLazyFunction("structure_references", -1, (c, t, lv) -> {
+        expression.addLazyFunction("structure_references", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
             ServerWorld world = cc.s.getWorld();
@@ -1170,7 +1170,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("structure_eligibility", -1, (c, t, lv) ->
+        expression.addLazyFunction("structure_eligibility", -1, (c, t, lv) ->
         {// TODO rename structureName to class
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
@@ -1218,7 +1218,7 @@ public class CarpetExpression
             return (_c, _t) -> retMap;
         });
 
-        this.expr.addLazyFunction("structures", -1, (c, t, lv) -> {
+        expression.addLazyFunction("structures", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
 
@@ -1248,7 +1248,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("set_structure", -1, (c, t, lv) ->
+        expression.addLazyFunction("set_structure", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
@@ -1306,7 +1306,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("custom_dimension", -1, (c, t, lv) ->
+        expression.addLazyFunction("custom_dimension", -1, (c, t, lv) ->
         {
             if (lv.size() == 0) throw new InternalExpressionException("'custom_dimension' requires at least one argument");
             CarpetContext cc = (CarpetContext)c;
@@ -1333,7 +1333,7 @@ public class CarpetExpression
         });
 
 
-        this.expr.addLazyFunction("reset_chunk", -1, (c, t, lv) ->
+        expression.addLazyFunction("reset_chunk", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             List<ChunkPos> requestedChunks = new ArrayList<>();
@@ -1404,7 +1404,7 @@ public class CarpetExpression
             return (_c, _t) -> result[0];
         });
 
-        this.expr.addLazyFunction("inhabited_time", -1, (c, t, lv) ->
+        expression.addLazyFunction("inhabited_time", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
@@ -1413,7 +1413,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("spawn_potential", -1, (c, t, lv) ->
+        expression.addLazyFunction("spawn_potential", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
@@ -1430,7 +1430,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("add_chunk_ticket", -1, (c, t, lv) ->
+        expression.addLazyFunction("add_chunk_ticket", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
@@ -1454,7 +1454,7 @@ public class CarpetExpression
         });
 
     }
-    private Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
+    private final static Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
         put("portal", ChunkTicketType.PORTAL);
         put("teleport", ChunkTicketType.POST_TELEPORT);
         put("unknown", ChunkTicketType.UNKNOWN);  // unknown
@@ -1480,11 +1480,11 @@ public class CarpetExpression
         }
     }
 
-    private void API_Scoreboard()
+    private static void API_Scoreboard(Expression expression)
     {
         // scoreboard(player,'objective')
         // scoreboard(player, objective, newValue)
-        this.expr.addLazyFunction("scoreboard", -1, (c, t, lv) ->
+        expression.addLazyFunction("scoreboard", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
@@ -1513,7 +1513,7 @@ public class CarpetExpression
             return (_c, _t) -> retval;
         });
 
-        this.expr.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
+        expression.addLazyFunction("scoreboard_remove", -1, (c, t, lv)-> {
             if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
@@ -1537,7 +1537,7 @@ public class CarpetExpression
         // objective_add('lvl','level')
         // objective_add('counter')
 
-        this.expr.addLazyFunction("scoreboard_add", -1, (c, t, lv)-> {
+        expression.addLazyFunction("scoreboard_add", -1, (c, t, lv)-> {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
@@ -1565,7 +1565,7 @@ public class CarpetExpression
             return LazyValue.TRUE;
         });
 
-        this.expr.addLazyFunction("scoreboard_display", 2, (c, t, lv) ->
+        expression.addLazyFunction("scoreboard_display", 2, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
@@ -1586,23 +1586,23 @@ public class CarpetExpression
         });
     }
 
-    private void API_InventoryManipulation()
+    private static void API_InventoryManipulation(Expression expression)
     {
-        this.expr.addLazyFunction("stack_limit", 1, (c, t, lv) ->
+        expression.addLazyFunction("stack_limit", 1, (c, t, lv) ->
         {
             ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
             Value res = new NumericValue(item.getItem().getMaxCount());
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("item_category", 1, (c, t, lv) ->
+        expression.addLazyFunction("item_category", 1, (c, t, lv) ->
         {
             ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
             Value res = new StringValue(item.getItem().getGroup().getName());
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("recipe_data", -1, (c, t, lv) ->
+        expression.addLazyFunction("recipe_data", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 1) throw new InternalExpressionException("'recipe_data' requires at least one argument");
@@ -1695,7 +1695,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("crafting_remaining_item", 1, (c, t, lv) ->
+        expression.addLazyFunction("crafting_remaining_item", 1, (c, t, lv) ->
         {
             String itemStr = lv.get(0).evalValue(c).getString();
             Item item;
@@ -1716,7 +1716,7 @@ public class CarpetExpression
         });
 
 
-        this.expr.addLazyFunction("inventory_size", -1, (c, t, lv) ->
+        expression.addLazyFunction("inventory_size", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -1726,7 +1726,7 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
 
-        this.expr.addLazyFunction("inventory_has_items", -1, (c, t, lv) ->
+        expression.addLazyFunction("inventory_has_items", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -1737,7 +1737,7 @@ public class CarpetExpression
         });
 
         //inventory_get(<b, e>, <n>) -> item_triple
-        this.expr.addLazyFunction("inventory_get", -1, (c, t, lv) ->
+        expression.addLazyFunction("inventory_get", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -1762,7 +1762,7 @@ public class CarpetExpression
         });
 
         //inventory_set(<b,e>, <n>, <count>, <item>, <nbt>)
-        this.expr.addLazyFunction("inventory_set", -1, (c, t, lv) ->
+        expression.addLazyFunction("inventory_set", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -1822,7 +1822,7 @@ public class CarpetExpression
         });
 
         //inventory_find(<b, e>, <item> or null (first empty slot), <start_from=0> ) -> <N> or null
-        this.expr.addLazyFunction("inventory_find", -1, (c, t, lv) ->
+        expression.addLazyFunction("inventory_find", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -1853,11 +1853,8 @@ public class CarpetExpression
             return (_c, _t) -> Value.NULL;
         });
 
-
-
         //inventory_remove(<b, e>, <item>, <amount=1>) -> bool
-
-        this.expr.addLazyFunction("inventory_remove", -1, (c, t, lv) -> {
+        expression.addLazyFunction("inventory_remove", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null)
@@ -1904,7 +1901,7 @@ public class CarpetExpression
         });
 
         //inventory_drop(<b, e>, <n>, <amount=1, 0-whatever's there>) -> entity_item (and sets slot) or null if cannot
-        this.expr.addLazyFunction("drop_item", -1, (c, t, lv) ->
+        expression.addLazyFunction("drop_item", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
@@ -1959,7 +1956,7 @@ public class CarpetExpression
             return (_c, _t) -> res;
         });
     }
-    private void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
+    private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
     {
         if (inventory.owner instanceof ServerPlayerEntity && !inventory.isEnder)
         {
@@ -1972,9 +1969,9 @@ public class CarpetExpression
         }
     }
 
-    private void API_EntityManipulation()
+    private static void API_EntityManipulation(Expression expression)
     {
-        this.expr.addLazyFunction("player", -1, (c, t, lv) -> {
+        expression.addLazyFunction("player", -1, (c, t, lv) -> {
             if (lv.size() ==0)
             {
 
@@ -2041,7 +2038,7 @@ public class CarpetExpression
             return (cc, tt) -> finalVar;
         });
 
-        this.expr.addLazyFunction("spawn", -1, (c, t, lv) -> {
+        expression.addLazyFunction("spawn", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 2)
                 throw new InternalExpressionException("'spawn' function takes mob name, and position to spawn");
@@ -2092,7 +2089,7 @@ public class CarpetExpression
             }
         });
 
-        this.expr.addLazyFunction("entity_id", 1, (c, t, lv) ->
+        expression.addLazyFunction("entity_id", 1, (c, t, lv) ->
         {
             Value who = lv.get(0).evalValue(c);
             Entity e;
@@ -2111,7 +2108,7 @@ public class CarpetExpression
             return (cc, tt) -> new EntityValue(e);
         });
 
-        this.expr.addLazyFunction("entity_list", 1, (c, t, lv) -> {
+        expression.addLazyFunction("entity_list", 1, (c, t, lv) -> {
             String who = lv.get(0).evalValue(c).getString();
             Pair<EntityType<?>, Predicate<? super Entity>> pair = EntityValue.getPredicate(who);
             if (pair == null)
@@ -2123,7 +2120,7 @@ public class CarpetExpression
             return (_c, _t ) -> retval;
         });
 
-        this.expr.addLazyFunction("entity_area", 7, (c, t, lv) -> {
+        expression.addLazyFunction("entity_area", 7, (c, t, lv) -> {
             Vec3d center = new Vec3d(
                     NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble(),
                     NumericValue.asNumber(lv.get(2).evalValue(c)).getDouble(),
@@ -2145,7 +2142,7 @@ public class CarpetExpression
             return (_c, _t ) -> retval;
         });
 
-        this.expr.addLazyFunction("entity_selector", -1, (c, t, lv) ->
+        expression.addLazyFunction("entity_selector", -1, (c, t, lv) ->
         {
             String selector = lv.get(0).evalValue(c).getString();
             List<Value> retlist = new ArrayList<>();
@@ -2156,7 +2153,7 @@ public class CarpetExpression
             return (c_, t_) -> ListValue.wrap(retlist);
         });
 
-        this.expr.addLazyFunction("query", -1, (c, t, lv) -> {
+        expression.addLazyFunction("query", -1, (c, t, lv) -> {
             if (lv.size()<2)
             {
                 throw new InternalExpressionException("'query' takes entity as a first argument, and queried feature as a second");
@@ -2176,7 +2173,7 @@ public class CarpetExpression
         });
 
         // or update
-        this.expr.addLazyFunction("modify", -1, (c, t, lv) -> {
+        expression.addLazyFunction("modify", -1, (c, t, lv) -> {
             if (lv.size()<2)
             {
                 throw new InternalExpressionException("'modify' takes entity as a first argument, and queried feature as a second");
@@ -2195,7 +2192,7 @@ public class CarpetExpression
         });
 
         // or update
-        this.expr.addLazyFunction("entity_event", -1, (c, t, lv) ->
+        expression.addLazyFunction("entity_event", -1, (c, t, lv) ->
         {
             if (lv.size()<3)
                 throw new InternalExpressionException("'entity_event' requires at least 3 arguments, entity, event to be handled, and function name, with optional arguments");
@@ -2209,7 +2206,7 @@ public class CarpetExpression
             else if (!(functionValue instanceof FunctionValue))
             {
                 String name = functionValue.getString();
-                functionValue = c.host.getAssertFunction(this.expr.module, name);
+                functionValue = c.host.getAssertFunction(expression.module, name);
             }
             FunctionValue function = (FunctionValue)functionValue;
             List<Value> args = null;
@@ -2226,9 +2223,9 @@ public class CarpetExpression
         });
     }
 
-    private void API_IteratingOverAreasOfBlocks()
+    private static void API_IteratingOverAreasOfBlocks(Expression expression)
     {
-        this.expr.addLazyFunction("scan", -1, (c, t, lv) ->
+        expression.addLazyFunction("scan", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 0);
@@ -2333,7 +2330,7 @@ public class CarpetExpression
             return (c_, t_) -> new NumericValue(finalSCount);
         });
 
-        this.expr.addLazyFunction("volume", -1, (c, t, lv) ->
+        expression.addLazyFunction("volume", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
 
@@ -2405,7 +2402,7 @@ public class CarpetExpression
             return (c_, t_) -> new NumericValue(finalSCount);
         });
 
-        this.expr.addLazyFunction("neighbours", -1, (c, t, lv)->
+        expression.addLazyFunction("neighbours", -1, (c, t, lv)->
         {
 
             BlockPos center = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
@@ -2422,7 +2419,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("rect", -1, (c, t, lv)->
+        expression.addLazyFunction("rect", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext) c;
             int cx, cy, cz;
@@ -2546,7 +2543,7 @@ public class CarpetExpression
             };
         });
 
-        this.expr.addLazyFunction("diamond", -1, (c, t, lv)->
+        expression.addLazyFunction("diamond", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
 
@@ -2709,19 +2706,19 @@ public class CarpetExpression
         });
     }
 
-    private static Map<String,SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
+    private static final Map<String,SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
 
-    private void API_Interapperability()
+    private static void API_Interapperability(Expression expression)
     {
         //todo doc and test all
-        this.expr.addLazyFunction("loaded_apps", 0, (c, t, lv) ->
+        expression.addLazyFunction("loaded_apps", 0, (c, t, lv) ->
         {
             // return a set of all loaded apps
             Value ret = new MapValue(((CarpetScriptHost) c.host).getScriptServer().modules.keySet().stream().map(StringValue::new).collect(Collectors.toSet()));
             return (cc, tt) -> ret;
         });
 
-        this.expr.addLazyFunction("is_app_loaded", 1, (c, t, lv) ->
+        expression.addLazyFunction("is_app_loaded", 1, (c, t, lv) ->
         {
             Value ret = new NumericValue(((CarpetScriptHost) c.host).getScriptServer().modules.containsKey(lv.get(0).evalValue(c).getString()));
             return (cc, tt) -> ret;
@@ -2741,9 +2738,9 @@ public class CarpetExpression
         return file;
     }
 
-    private void API_AuxiliaryAspects()
+    private static void API_AuxiliaryAspects(Expression expression)
     {
-        this.expr.addLazyFunction("sound", -1, (c, t, lv) -> {
+        expression.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
@@ -2778,7 +2775,7 @@ public class CarpetExpression
             return (_c, _t) -> new NumericValue(totalPlayed);
         });
 
-        this.expr.addLazyFunction("particle", -1, (c, t, lv) ->
+        expression.addLazyFunction("particle", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer ms = cc.s.getMinecraftServer();
@@ -2825,7 +2822,7 @@ public class CarpetExpression
             return (c_, t_) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("particle_line", -1, (c, t, lv) ->
+        expression.addLazyFunction("particle_line", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
@@ -2865,7 +2862,7 @@ public class CarpetExpression
             return (c_, t_) -> retval;
         });
 
-        this.expr.addLazyFunction("particle_box", -1, (c, t, lv) ->
+        expression.addLazyFunction("particle_box", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
@@ -2909,10 +2906,10 @@ public class CarpetExpression
             return (c_, t_) -> new NumericValue(particleCount);
         });
         // deprecated
-        this.expr.alias("particle_rect", "particle_box");
+        expression.alias("particle_rect", "particle_box");
 
 
-        this.expr.addLazyFunction("draw_shape", -1, (c, t, lv) ->
+        expression.addLazyFunction("draw_shape", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerPlayerEntity player[] = {null};
@@ -2941,7 +2938,7 @@ public class CarpetExpression
             return LazyValue.TRUE;
         });
 
-        this.expr.addLazyFunction("create_marker", -1, (c, t, lv) ->{
+        expression.addLazyFunction("create_marker", -1, (c, t, lv) ->{
             CarpetContext cc = (CarpetContext)c;
             BlockState targetBlock = null;
             Vector3Argument pointLocator;
@@ -3015,7 +3012,7 @@ public class CarpetExpression
             return (_c, _t) -> result;
         });
 
-        this.expr.addLazyFunction("remove_all_markers", 0, (c, t, lv) -> {
+        expression.addLazyFunction("remove_all_markers", 0, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             int total = 0;
             String markerName = MARKER_STRING+"_"+((cc.host.getName()==null)?"":cc.host.getName());
@@ -3028,19 +3025,19 @@ public class CarpetExpression
             return (_cc, _tt) -> new NumericValue(finalTotal);
         });
 
-        this.expr.addLazyFunction("nbt", 1, (c, t, lv) -> {
+        expression.addLazyFunction("nbt", 1, (c, t, lv) -> {
             Value ret = NBTSerializableValue.fromValue(lv.get(0).evalValue(c));
             return (cc, tt) -> ret;
         });
 
-        this.expr.addLazyFunction("escape_nbt", 1, (c, t, lv) -> {
+        expression.addLazyFunction("escape_nbt", 1, (c, t, lv) -> {
             Value v = lv.get(0).evalValue(c);
             String string = v.getString();
             Value ret = new StringValue(StringTag.escape(string));
             return (cc, tt) -> ret;
         });
 
-        this.expr.addLazyFunction("parse_nbt", 1, (c, t, lv) -> {
+        expression.addLazyFunction("parse_nbt", 1, (c, t, lv) -> {
             Value v = lv.get(0).evalValue(c);
             if (v instanceof NBTSerializableValue)
             {
@@ -3054,7 +3051,7 @@ public class CarpetExpression
             return (cc, tt) -> parsed;
         });
 
-        this.expr.addLazyFunction("encode_nbt", -1, (c, t, lv) -> {
+        expression.addLazyFunction("encode_nbt", -1, (c, t, lv) -> {
             int argSize = lv.size();
             if (argSize==0 || argSize > 2) throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
             Value v = lv.get(0).evalValue(c);
@@ -3073,7 +3070,7 @@ public class CarpetExpression
         });
 
         //"overridden" native call that prints to stderr
-        this.expr.addLazyFunction("print", -1, (c, t, lv) ->
+        expression.addLazyFunction("print", -1, (c, t, lv) ->
         {
             if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
@@ -3103,7 +3100,7 @@ public class CarpetExpression
             return (_c, _t) -> finalRes; // pass through for variables
         });
 
-        this.expr.addLazyFunction("format", -1, (c, t, lv) -> {
+        expression.addLazyFunction("format", -1, (c, t, lv) -> {
             if (lv.size() == 0 ) throw new InternalExpressionException("'format' requires at least one component");
             List<Value> values = lv.stream().map(lazy -> lazy.evalValue(c)).collect(Collectors.toList());
             if (values.get(0) instanceof ListValue && values.size()==1)
@@ -3113,7 +3110,7 @@ public class CarpetExpression
         });
 
         //"overidden" native call to cancel if on main thread
-        this.expr.addLazyFunction("task_join", 1, (c, t, lv) -> {
+        expression.addLazyFunction("task_join", 1, (c, t, lv) -> {
             if (((CarpetContext)c).s.getMinecraftServer().isOnThread())
                 throw new InternalExpressionException("'task_join' cannot be called from main thread to avoid deadlocks");
             Value v = lv.get(0).evalValue(c);
@@ -3123,7 +3120,7 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunctionWithDelegation("task_dock", 1, (c, t, expr, tok, lv) -> {
+        expression.addLazyFunctionWithDelegation("task_dock", 1, (c, t, expr, tok, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer server = cc.s.getMinecraftServer();
             if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks
@@ -3166,7 +3163,7 @@ public class CarpetExpression
             // implmenetation should dock the task on the main thread.
         });
 
-        this.expr.addLazyFunction("run", 1, (c, t, lv) -> {
+        expression.addLazyFunction("run", 1, (c, t, lv) -> {
             BlockPos target = ((CarpetContext)c).origin;
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
             ServerCommandSource s = ((CarpetContext)c).s;
@@ -3180,7 +3177,7 @@ public class CarpetExpression
             return LazyValue.NULL;
         });
 
-        this.expr.addLazyFunction("save", 0, (c, t, lv) -> {
+        expression.addLazyFunction("save", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             s.getMinecraftServer().getPlayerManager().saveAllPlayerData();
             s.getMinecraftServer().save(true,true,true);
@@ -3189,19 +3186,19 @@ public class CarpetExpression
             return (cc, tt) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("tick_time", 0, (c, t, lv) ->
+        expression.addLazyFunction("tick_time", 0, (c, t, lv) ->
         {
             Value time = new NumericValue(((CarpetContext) c).s.getMinecraftServer().getTicks());
             return (cc, tt) -> time;
         });
 
-        this.expr.addLazyFunction("world_time", 0, (c, t, lv) ->
+        expression.addLazyFunction("world_time", 0, (c, t, lv) ->
         {
             Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTime());
             return (cc, tt) -> time;
         });
 
-        this.expr.addLazyFunction("day_time", -1, (c, t, lv) ->
+        expression.addLazyFunction("day_time", -1, (c, t, lv) ->
         {
             Value time = new NumericValue(((CarpetContext) c).s.getWorld().getTimeOfDay());
             if (lv.size() > 0)
@@ -3213,7 +3210,7 @@ public class CarpetExpression
             return (cc, tt) -> time;
         });
 
-        this.expr.addLazyFunction("last_tick_times", -1, (c, t, lv) ->
+        expression.addLazyFunction("last_tick_times", -1, (c, t, lv) ->
         {
             //assuming we are in the tick world section
             // might be off one tick when run in the off tasks or asynchronously.
@@ -3229,7 +3226,7 @@ public class CarpetExpression
         });
 
 
-        this.expr.addLazyFunction("game_tick", -1, (c, t, lv) -> {
+        expression.addLazyFunction("game_tick", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
             ((MinecraftServerInterface)s.getMinecraftServer()).forceTick( () -> System.nanoTime()- CarpetServer.scriptServer.tickStart<50000000L);
@@ -3256,13 +3253,13 @@ public class CarpetExpression
             return (cc, tt) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("seed", -1, (c, t, lv) -> {
+        expression.addLazyFunction("seed", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value ret = new NumericValue(s.getWorld().getSeed());
             return (cc, tt) -> ret;
         });
 
-        this.expr.addLazyFunction("relight", -1, (c, t, lv) ->
+        expression.addLazyFunction("relight", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext) c;
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
@@ -3273,19 +3270,19 @@ public class CarpetExpression
             return LazyValue.TRUE;
         });
 
-        this.expr.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
+        expression.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = ValueConversions.dimName(s.getWorld());
             return (cc, tt) -> retval;
         });
 
-        this.expr.addLazyFunction("view_distance", 0, (c, t, lv) -> {
+        expression.addLazyFunction("view_distance", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
             Value retval = new NumericValue(s.getMinecraftServer().getPlayerManager().getViewDistance());
             return (cc, tt) -> retval;
         });
 
-        this.expr.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
+        expression.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
             ServerCommandSource outerSource = ((CarpetContext)c).s;
             Value dimensionValue = lv.get(0).evalValue(c);
             ServerCommandSource innerSource = outerSource;
@@ -3347,7 +3344,7 @@ public class CarpetExpression
             return (cc, tt) -> retval;
         });
 
-        this.expr.addLazyFunction("plop", 4, (c, t, lv) ->{
+        expression.addLazyFunction("plop", 4, (c, t, lv) ->{
             BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
@@ -3368,12 +3365,12 @@ public class CarpetExpression
             return (_c, _t) -> ret;
         });
 
-        this.expr.addLazyFunction("schedule", -1, (c, t, lv) -> {
+        expression.addLazyFunction("schedule", -1, (c, t, lv) -> {
             if (lv.size()<2)
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, this.expr.module, lv, 1, true, true);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, true, true);
 
             CarpetServer.scriptServer.events.scheduleCall(
                     (CarpetContext) c,
@@ -3384,7 +3381,7 @@ public class CarpetExpression
             return (c_, t_) -> Value.TRUE;
         });
 
-        this.expr.addLazyFunction("logger", -1, (c, t, lv) ->
+        expression.addLazyFunction("logger", -1, (c, t, lv) ->
         {
             //CarpetSettings.LOG.error("Standard Structures:");
             //CarpetSettings.LOG.error(Registry.STRUCTURE_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted(). collect(Collectors.joining(", ")));
@@ -3428,7 +3425,7 @@ public class CarpetExpression
             return (_c, _t) -> res; // pass through for variables
         });
 
-        this.expr.addLazyFunction("read_file", 2, (c, t, lv) -> {
+        expression.addLazyFunction("read_file", 2, (c, t, lv) -> {
             String resource = recognizeResource(lv.get(0).evalValue(c));
             String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
             boolean shared = origtype.startsWith("shared_");
@@ -3451,7 +3448,7 @@ public class CarpetExpression
             return (cc, tt) -> retVal;
         });
 
-        this.expr.addLazyFunction("delete_file", 2, (c, t, lv) -> {
+        expression.addLazyFunction("delete_file", 2, (c, t, lv) -> {
             String resource = recognizeResource(lv.get(0).evalValue(c));
             String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
             boolean shared = origtype.startsWith("shared_");
@@ -3462,7 +3459,7 @@ public class CarpetExpression
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
-        this.expr.addLazyFunction("write_file", -1, (c, t, lv) -> {
+        expression.addLazyFunction("write_file", -1, (c, t, lv) -> {
             if (lv.size() < 3) throw new InternalExpressionException("'write_file' requires three or more arguments");
             String resource = recognizeResource(lv.get(0).evalValue(c));
             String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
@@ -3510,7 +3507,7 @@ public class CarpetExpression
 
         //write_file
 
-        this.expr.addLazyFunction("load_app_data", -1, (c, t, lv) ->
+        expression.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
             String file = null;
             boolean shared = false;
@@ -3529,7 +3526,7 @@ public class CarpetExpression
             return (cc, tt) -> retVal;
         });
 
-        this.expr.addLazyFunction("store_app_data", -1, (c, t, lv) ->
+        expression.addLazyFunction("store_app_data", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
@@ -3552,7 +3549,7 @@ public class CarpetExpression
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
-        this.expr.addLazyFunction("statistic", 3, (c, t, lv) ->
+        expression.addLazyFunction("statistic", 3, (c, t, lv) ->
         {
             Value playerValue = lv.get(0).evalValue(c);
             CarpetContext cc = (CarpetContext)c;
@@ -3579,10 +3576,10 @@ public class CarpetExpression
         });
     }
 
-    private void API_GaemMonitoring()
+    private static void API_GaemMonitoring(Expression expression)
     {
         // game processed snooper functions
-        this.expr.addLazyFunction("get_mob_counts", -1, (c, t, lv) ->
+        expression.addLazyFunction("get_mob_counts", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
@@ -3620,7 +3617,7 @@ public class CarpetExpression
         });
     }
 
-    private <T> Stat<T> getStat(StatType<T> type, Identifier id)
+    private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {
         T key = type.getRegistry().get(id);
         if (key == null || !((StatTypeInterface)type).hasStatCreated(key))
@@ -3642,14 +3639,14 @@ public class CarpetExpression
         this.expr = new Expression(expression);
         this.expr.asAModule(module);
 
-        API_BlockManipulation();
-        API_EntityManipulation();
-        API_InventoryManipulation();
-        API_IteratingOverAreasOfBlocks();
-        API_AuxiliaryAspects();
-        API_Scoreboard();
-        API_Interapperability();
-        API_GaemMonitoring();
+        API_BlockManipulation(this.expr);
+        API_EntityManipulation(this.expr);
+        API_InventoryManipulation(this.expr);
+        API_IteratingOverAreasOfBlocks(this.expr);
+        API_AuxiliaryAspects(this.expr);
+        API_Scoreboard(this.expr);
+        API_Interapperability(this.expr);
+        API_GaemMonitoring(this.expr);
         CarpetServer.extensions.forEach(e -> e.scarpetApi(this));
     }
 

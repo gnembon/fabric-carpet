@@ -133,17 +133,10 @@ public class Expression
     public List<String> getExpressionSnippet(Tokenizer.Token token)
     {
         String code = this.getCodeString();
-        List<String> output = new ArrayList<>();
-        for (String line: getExpressionSnippetLeftContext(token, code, 1))
-        {
-            output.add(line);
-        }
+        List<String> output = new ArrayList<>(getExpressionSnippetLeftContext(token, code, 1));
         List<String> context = getExpressionSnippetContext(token, code);
         output.add(context.get(0)+" HERE>> "+context.get(1));
-        for (String line: getExpressionSnippetRightContext(token, code, 1))
-        {
-            output.add(line);
-        }
+        output.addAll(getExpressionSnippetRightContext(token, code, 1));
         return output;
     }
 
@@ -421,30 +414,30 @@ public class Expression
     }
 
 
-    private void UserDefinedFunctionsAndControlFlow() // public just to get the javadoc right
+    private static void UserDefinedFunctionsAndControlFlow(Expression expression) // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
-        addLazyFunction("import", -1, (c, t, lv) ->
+        expression.addLazyFunction("import", -1, (c, t, lv) ->
         {
             if (lv.size() < 1) throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
             String moduleName = lv.get(0).evalValue(c).getString();
             c.host.importModule(c, moduleName);
             moduleName = moduleName.toLowerCase(Locale.ROOT);
             if (lv.size() > 1)
-                c.host.importNames(c, module, moduleName, lv.subList(1, lv.size()).stream().map((l) -> l.evalValue(c).getString()).collect(Collectors.toList()));
+                c.host.importNames(c, expression.module, moduleName, lv.subList(1, lv.size()).stream().map((l) -> l.evalValue(c).getString()).collect(Collectors.toList()));
             if (t == Context.VOID)
                 return LazyValue.NULL;
             ListValue list = ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new).collect(Collectors.toList()));
             return (cc, tt) -> list;
         });
 
-        addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
+        expression.addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) -> { // adjust based on c
             if (lv.size() == 0)
                 throw new InternalExpressionException("'call' expects at least function name to call");
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
-                FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, false, true);
+                FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
                 FunctionValue fun = functionArgument.function;
                 Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
                 return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
@@ -472,13 +465,13 @@ public class Expression
             Value retval = new FunctionSignatureValue(name, args, globals);
             return (cc, tt) -> retval;
         });
-        addLazyFunction("outer", 1, (c, t, lv) -> {
+        expression.addLazyFunction("outer", 1, (c, t, lv) -> {
             if (t != Context.LOCALIZATION)
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures");
             return (cc, tt) -> new GlobalValue(lv.get(0).evalValue(c));
         });
 
-        addLazyBinaryOperator(";",precedence.get("nextop;"), true, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator(";",precedence.get("nextop;"), true, (c, t, lv1, lv2) ->
         {
             lv1.evalValue(c, Context.VOID);
             Value v2 = lv2.evalValue(c, t);
@@ -486,7 +479,7 @@ public class Expression
         });
 
         //assigns const procedure to the lhs, returning its previous value
-        addLazyBinaryOperatorWithDelegation("->", precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
+        expression.addLazyBinaryOperatorWithDelegation("->", precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
         {
             if (type == Context.MAPDEF)
             {
@@ -497,15 +490,15 @@ public class Expression
             if (!(v1 instanceof FunctionSignatureValue))
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
             FunctionSignatureValue sign = (FunctionSignatureValue) v1;
-            Value result = addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getGlobals(), lv2);
+            Value result = expression.addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getGlobals(), lv2);
             return (cc, tt) -> result;
         });
 
-        addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
-        addFunction("return", (lv) -> { throw new ReturnStatement(lv.size()==0?Value.NULL:lv.get(0));} );
-        addFunction("throw", (lv)-> {throw new ThrowStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        expression.addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        expression.addFunction("return", (lv) -> { throw new ReturnStatement(lv.size()==0?Value.NULL:lv.get(0));} );
+        expression.addFunction("throw", (lv)-> {throw new ThrowStatement(lv.size()==0?Value.NULL:lv.get(0)); });
 
-        addLazyFunction("try", -1, (c, t, lv) ->
+        expression.addLazyFunction("try", -1, (c, t, lv) ->
         {
             if (lv.size()==0)
                 throw new InternalExpressionException("'try' needs at least an expression block");
@@ -527,7 +520,7 @@ public class Expression
         });
 
         // if(cond1, expr1, cond2, expr2, ..., ?default) => value
-        addLazyFunction("if", -1, (c, t, lv) ->
+        expression.addLazyFunction("if", -1, (c, t, lv) ->
         {
             if ( lv.size() < 2 )
                 throw new InternalExpressionException("'if' statement needs to have at least one condition and one case");
@@ -549,47 +542,47 @@ public class Expression
         });
     }
 
-    private void Operators()
+    private static void Operators(Expression expression)
     {
-        addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
-        addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
-        addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
-        addBinaryOperator("/", precedence.get("multiplication*/%"), true, Value::divide);
-        addBinaryOperator("%", precedence.get("multiplication*/%"), true, (v1, v2) ->
+        expression.addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
+        expression.addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
+        expression.addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
+        expression.addBinaryOperator("/", precedence.get("multiplication*/%"), true, Value::divide);
+        expression.addBinaryOperator("%", precedence.get("multiplication*/%"), true, (v1, v2) ->
                 new NumericValue(NumericValue.asNumber(v1).getDouble() % NumericValue.asNumber(v2).getDouble()));
-        addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
+        expression.addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
                 new NumericValue(Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
 
-        addLazyBinaryOperator("&&", precedence.get("and&&"), false, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (!v1.getBoolean()) return (cc, tt) -> v1;
             return lv2;
         });
 
-        addLazyBinaryOperator("||", precedence.get("or||"), false, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("||", precedence.get("or||"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (v1.getBoolean()) return (cc, tt) -> v1;
             return lv2;
         });
 
-        addBinaryOperator("~", precedence.get("attribute~:"), true, Value::in);
+        expression.addBinaryOperator("~", precedence.get("attribute~:"), true, Value::in);
 
-        addBinaryOperator(">", precedence.get("compare>=><=<"), false, (v1, v2) ->
+        expression.addBinaryOperator(">", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 v1.compareTo(v2) > 0 ? Value.TRUE : Value.FALSE);
-        addBinaryOperator(">=", precedence.get("compare>=><=<"), false, (v1, v2) ->
+        expression.addBinaryOperator(">=", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 v1.compareTo(v2) >= 0 ? Value.TRUE : Value.FALSE);
-        addBinaryOperator("<", precedence.get("compare>=><=<"), false, (v1, v2) ->
+        expression.addBinaryOperator("<", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 v1.compareTo(v2) < 0 ? Value.TRUE : Value.FALSE);
-        addBinaryOperator("<=", precedence.get("compare>=><=<"), false, (v1, v2) ->
+        expression.addBinaryOperator("<=", precedence.get("compare>=><=<"), false, (v1, v2) ->
                 v1.compareTo(v2) <= 0 ? Value.TRUE : Value.FALSE);
-        addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
+        expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.TRUE : Value.FALSE);
-        addBinaryOperator("!=", precedence.get("equal==!="), false, (v1, v2) ->
+        expression.addBinaryOperator("!=", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.FALSE : Value.TRUE);
 
-        addLazyBinaryOperator("=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
@@ -606,7 +599,7 @@ public class Expression
                 {
                     String lname = li.next().getVariable();
                     Value vval = ri.next().reboundedTo(lname);
-                    setAnyVariable(c, lname, (cc, tt) -> vval);
+                    expression.setAnyVariable(c, lname, (cc, tt) -> vval);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
@@ -623,11 +616,11 @@ public class Expression
             String varname = v1.getVariable();
             Value copy = v2.reboundedTo(varname);
             LazyValue boundedLHS = (cc, tt) -> copy;
-            setAnyVariable(c, varname, boundedLHS);
+            expression.setAnyVariable(c, varname, boundedLHS);
             return boundedLHS;
         });
 
-        addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
@@ -645,7 +638,7 @@ public class Expression
                     Value lval = li.next();
                     String lname = lval.getVariable();
                     Value result = lval.add(ri.next()).bindTo(lname);
-                    setAnyVariable(c, lname, (cc, tt) -> result);
+                    expression.setAnyVariable(c, lname, (cc, tt) -> result);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
@@ -683,11 +676,11 @@ public class Expression
                 Value result = v1.add(v2).bindTo(varname);
                 boundedLHS = (cc, tt) -> result;
             }
-            setAnyVariable(c, varname, boundedLHS);
+            expression.setAnyVariable(c, varname, boundedLHS);
             return boundedLHS;
         });
 
-        addLazyBinaryOperator("<>", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator("<>", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c);
             Value v2 = lv2.evalValue(c);
@@ -709,8 +702,8 @@ public class Expression
                     String rname = rval.getVariable();
                     lval.reboundedTo(rname);
                     rval.reboundedTo(lname);
-                    setAnyVariable(c, lname, (cc, tt) -> rval);
-                    setAnyVariable(c, rname, (cc, tt) -> lval);
+                    expression.setAnyVariable(c, lname, (cc, tt) -> rval);
+                    expression.setAnyVariable(c, rname, (cc, tt) -> lval);
                 }
                 return (cc, tt) -> Value.TRUE;
             }
@@ -720,24 +713,24 @@ public class Expression
             String rvalvar = v2.getVariable();
             Value lval = v2.reboundedTo(lvalvar);
             Value rval = v1.reboundedTo(rvalvar);
-            setAnyVariable(c, lvalvar, (cc, tt) -> lval);
-            setAnyVariable(c, rvalvar, (cc, tt) -> rval);
+            expression.setAnyVariable(c, lvalvar, (cc, tt) -> lval);
+            expression.setAnyVariable(c, rvalvar, (cc, tt) -> rval);
             return (cc, tt) -> lval;
         });
 
-        addUnaryOperator("-",  false, (v) -> new NumericValue(-NumericValue.asNumber(v).getDouble()));
+        expression.addUnaryOperator("-",  false, (v) -> new NumericValue(-NumericValue.asNumber(v).getDouble()));
 
-        addUnaryOperator("+", false, (v) -> new NumericValue(NumericValue.asNumber(v).getDouble()));
+        expression.addUnaryOperator("+", false, (v) -> new NumericValue(NumericValue.asNumber(v).getDouble()));
 
-        addLazyUnaryOperator("!", precedence.get("unary+-!"), false, (c, t, lv)-> lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE); // might need context boolean
+        expression.addLazyUnaryOperator("!", precedence.get("unary+-!"), false, (c, t, lv)-> lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE); // might need context boolean
 
     }
 
-    private void ArithmeticOperations()
+    private static void ArithmeticOperations(Expression expression)
     {
-        addLazyFunction("not", 1, (c, t, lv) -> lv.get(0).evalValue(c, Context.BOOLEAN).getBoolean() ? ((cc, tt) -> Value.FALSE) : ((cc, tt) -> Value.TRUE));
+        expression.addLazyFunction("not", 1, (c, t, lv) -> lv.get(0).evalValue(c, Context.BOOLEAN).getBoolean() ? ((cc, tt) -> Value.FALSE) : ((cc, tt) -> Value.TRUE));
 
-        addUnaryFunction("fact", (v) ->
+        expression.addUnaryFunction("fact", (v) ->
         {
             long number = NumericValue.asNumber(v).getLong();
             long factorial = 1;
@@ -747,45 +740,45 @@ public class Expression
             }
             return new NumericValue(factorial);
         });
-        addMathematicalUnaryFunction("sin",    (d) -> Math.sin(Math.toRadians(d)));
-        addMathematicalUnaryFunction("cos",    (d) -> Math.cos(Math.toRadians(d)));
-        addMathematicalUnaryFunction("tan",    (d) -> Math.tan(Math.toRadians(d)));
-        addMathematicalUnaryFunction("asin",   (d) -> Math.toDegrees(Math.asin(d)));
-        addMathematicalUnaryFunction("acos",   (d) -> Math.toDegrees(Math.acos(d)));
-        addMathematicalUnaryFunction("atan",   (d) -> Math.toDegrees(Math.atan(d)));
-        addMathematicalBinaryFunction("atan2", (d, d2) -> Math.toDegrees(Math.atan2(d, d2)) );
-        addMathematicalUnaryFunction("sinh",   Math::sinh );
-        addMathematicalUnaryFunction("cosh",   Math::cosh  );
-        addMathematicalUnaryFunction("tanh",   Math::tanh );
-        addMathematicalUnaryFunction("sec",    (d) ->  1.0 / Math.cos(Math.toRadians(d)) ); // Formula: sec(x) = 1 / cos(x)
-        addMathematicalUnaryFunction("csc",    (d) ->  1.0 / Math.sin(Math.toRadians(d)) ); // Formula: csc(x) = 1 / sin(x)
-        addMathematicalUnaryFunction("sech",   (d) ->  1.0 / Math.cosh(d) );                // Formula: sech(x) = 1 / cosh(x)
-        addMathematicalUnaryFunction("csch",   (d) -> 1.0 / Math.sinh(d)  );                // Formula: csch(x) = 1 / sinh(x)
-        addMathematicalUnaryFunction("cot",    (d) -> 1.0 / Math.tan(Math.toRadians(d))  ); // Formula: cot(x) = cos(x) / sin(x) = 1 / tan(x)
-        addMathematicalUnaryFunction("acot",   (d) ->  Math.toDegrees(Math.atan(1.0 / d)) );// Formula: acot(x) = atan(1/x)
-        addMathematicalUnaryFunction("coth",   (d) ->  1.0 / Math.tanh(d) );                // Formula: coth(x) = 1 / tanh(x)
-        addMathematicalUnaryFunction("asinh",  (d) ->  Math.log(d + (Math.sqrt(Math.pow(d, 2) + 1))));  // Formula: asinh(x) = ln(x + sqrt(x^2 + 1))
-        addMathematicalUnaryFunction("acosh",  (d) ->  Math.log(d + (Math.sqrt(Math.pow(d, 2) - 1))));  // Formula: acosh(x) = ln(x + sqrt(x^2 - 1))
-        addMathematicalUnaryFunction("atanh",  (d) ->                                       // Formula: atanh(x) = 0.5*ln((1 + x)/(1 - x))
+        expression.addMathematicalUnaryFunction("sin",    (d) -> Math.sin(Math.toRadians(d)));
+        expression.addMathematicalUnaryFunction("cos",    (d) -> Math.cos(Math.toRadians(d)));
+        expression.addMathematicalUnaryFunction("tan",    (d) -> Math.tan(Math.toRadians(d)));
+        expression.addMathematicalUnaryFunction("asin",   (d) -> Math.toDegrees(Math.asin(d)));
+        expression.addMathematicalUnaryFunction("acos",   (d) -> Math.toDegrees(Math.acos(d)));
+        expression.addMathematicalUnaryFunction("atan",   (d) -> Math.toDegrees(Math.atan(d)));
+        expression.addMathematicalBinaryFunction("atan2", (d, d2) -> Math.toDegrees(Math.atan2(d, d2)) );
+        expression.addMathematicalUnaryFunction("sinh",   Math::sinh );
+        expression.addMathematicalUnaryFunction("cosh",   Math::cosh  );
+        expression.addMathematicalUnaryFunction("tanh",   Math::tanh );
+        expression.addMathematicalUnaryFunction("sec",    (d) ->  1.0 / Math.cos(Math.toRadians(d)) ); // Formula: sec(x) = 1 / cos(x)
+        expression.addMathematicalUnaryFunction("csc",    (d) ->  1.0 / Math.sin(Math.toRadians(d)) ); // Formula: csc(x) = 1 / sin(x)
+        expression.addMathematicalUnaryFunction("sech",   (d) ->  1.0 / Math.cosh(d) );                // Formula: sech(x) = 1 / cosh(x)
+        expression.addMathematicalUnaryFunction("csch",   (d) -> 1.0 / Math.sinh(d)  );                // Formula: csch(x) = 1 / sinh(x)
+        expression.addMathematicalUnaryFunction("cot",    (d) -> 1.0 / Math.tan(Math.toRadians(d))  ); // Formula: cot(x) = cos(x) / sin(x) = 1 / tan(x)
+        expression.addMathematicalUnaryFunction("acot",   (d) ->  Math.toDegrees(Math.atan(1.0 / d)) );// Formula: acot(x) = atan(1/x)
+        expression.addMathematicalUnaryFunction("coth",   (d) ->  1.0 / Math.tanh(d) );                // Formula: coth(x) = 1 / tanh(x)
+        expression.addMathematicalUnaryFunction("asinh",  (d) ->  Math.log(d + (Math.sqrt(Math.pow(d, 2) + 1))));  // Formula: asinh(x) = ln(x + sqrt(x^2 + 1))
+        expression.addMathematicalUnaryFunction("acosh",  (d) ->  Math.log(d + (Math.sqrt(Math.pow(d, 2) - 1))));  // Formula: acosh(x) = ln(x + sqrt(x^2 - 1))
+        expression.addMathematicalUnaryFunction("atanh",  (d) ->                                       // Formula: atanh(x) = 0.5*ln((1 + x)/(1 - x))
         {
             if (Math.abs(d) > 1 || Math.abs(d) == 1)
                 throw new InternalExpressionException("Number must be |x| < 1");
             return 0.5 * Math.log((1 + d) / (1 - d));
         });
-        addMathematicalUnaryFunction("rad",  Math::toRadians);
-        addMathematicalUnaryFunction("deg", Math::toDegrees);
-        addMathematicalUnaryFunction("ln", Math::log);
-        addMathematicalUnaryFunction("ln1p", Math::log1p);
-        addMathematicalUnaryFunction("log10", Math::log10);
-        addMathematicalUnaryFunction("log", a -> Math.log(a)/Math.log(2));
-        addMathematicalUnaryFunction("log1p", x -> Math.log1p(x)/Math.log(2));
-        addMathematicalUnaryFunction("sqrt", Math::sqrt);
-        addMathematicalUnaryFunction("abs", Math::abs);
-        addMathematicalUnaryFunction("round", (d) -> (double)Math.round(d));
-        addMathematicalUnaryFunction("floor", Math::floor);
-        addMathematicalUnaryFunction("ceil", Math::ceil);
+        expression.addMathematicalUnaryFunction("rad",  Math::toRadians);
+        expression.addMathematicalUnaryFunction("deg", Math::toDegrees);
+        expression.addMathematicalUnaryFunction("ln", Math::log);
+        expression.addMathematicalUnaryFunction("ln1p", Math::log1p);
+        expression.addMathematicalUnaryFunction("log10", Math::log10);
+        expression.addMathematicalUnaryFunction("log", a -> Math.log(a)/Math.log(2));
+        expression.addMathematicalUnaryFunction("log1p", x -> Math.log1p(x)/Math.log(2));
+        expression.addMathematicalUnaryFunction("sqrt", Math::sqrt);
+        expression.addMathematicalUnaryFunction("abs", Math::abs);
+        expression.addMathematicalUnaryFunction("round", (d) -> (double)Math.round(d));
+        expression.addMathematicalUnaryFunction("floor", Math::floor);
+        expression.addMathematicalUnaryFunction("ceil", Math::ceil);
 
-        addLazyFunction("mandelbrot", 3, (c, t, lv) -> {
+        expression.addLazyFunction("mandelbrot", 3, (c, t, lv) -> {
             double a0 = NumericValue.asNumber(lv.get(0).evalValue(c)).getDouble();
             double b0 = NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble();
             long maxiter = NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
@@ -803,7 +796,7 @@ public class Expression
             return (cc, tt) -> new NumericValue(iFinal);
         });
 
-        addFunction("max", (lv) ->
+        expression.addFunction("max", (lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'max' requires at least one parameter");
@@ -817,7 +810,7 @@ public class Expression
             return max;
         });
 
-        addFunction("min", (lv) ->
+        expression.addFunction("min", (lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'min' requires at least one parameter");
@@ -831,27 +824,27 @@ public class Expression
             return min;
         });
 
-        addUnaryFunction("relu", (v) -> v.compareTo(Value.ZERO) < 0 ? Value.ZERO : v);
+        expression.addUnaryFunction("relu", (v) -> v.compareTo(Value.ZERO) < 0 ? Value.ZERO : v);
     }
 
-    private void LoopsAndHigherOrderFunctions()
+    private static void LoopsAndHigherOrderFunctions(Expression expression)
     {
         // condition and expression will get a bound '_i'
         // returns last successful expression or false
         // while(cond, limit, expr) => ??
-        addFunction("break", lv -> {
+        expression.addFunction("break", lv -> {
             if (lv.size()==0) throw new BreakStatement(null);
             if (lv.size()==1) throw new BreakStatement(lv.get(0));
             throw new InternalExpressionException("'break' can only be called with zero or one argument");
         });
 
-        addFunction("continue", lv -> {
+        expression.addFunction("continue", lv -> {
             if (lv.size()==0) throw new ContinueStatement(null);
             if (lv.size()==1) throw new ContinueStatement(lv.get(0));
             throw new InternalExpressionException("'continue' can only be called with zero or one argument");
         });
 
-        addLazyFunction("while", 3, (c, t, lv) ->
+        expression.addLazyFunction("while", 3, (c, t, lv) ->
         {
             long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();
             LazyValue condition = lv.get(0);
@@ -884,7 +877,7 @@ public class Expression
 
         // loop(Num, expr) => last_value
         // expr receives bounded variable '_' indicating iteration
-        addLazyFunction("loop", 2, (c, t, lv) ->
+        expression.addLazyFunction("loop", 2, (c, t, lv) ->
         {
             long limit = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             Value lastOne = Value.NULL;
@@ -913,7 +906,7 @@ public class Expression
 
         // map(list or Num, expr) => list_results
         // receives bounded variable '_' with the expression
-        addLazyFunction("map", 2, (c, t, lv) ->
+        expression.addLazyFunction("map", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
@@ -958,7 +951,7 @@ public class Expression
         // grep(list or num, expr) => list
         // receives bounded variable '_' with the expression, and "_i" with index
         // produces list of values for which the expression is true
-        addLazyFunction("filter", 2, (c, t, lv) ->
+        expression.addLazyFunction("filter", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
@@ -1004,7 +997,7 @@ public class Expression
         // first(list, expr) => elem or null
         // receives bounded variable '_' with the expression, and "_i" with index
         // returns first element on the list for which the expr is true
-        addLazyFunction("first", 2, (c, t, lv) ->
+        expression.addLazyFunction("first", 2, (c, t, lv) ->
         {
 
             Value rval= lv.get(0).evalValue(c);
@@ -1056,7 +1049,7 @@ public class Expression
         // all(list, expr) => boolean
         // receives bounded variable '_' with the expression, and "_i" with index
         // returns true if expr is true for all items
-        addLazyFunction("all", 2, (c, t, lv) ->
+        expression.addLazyFunction("all", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
@@ -1091,7 +1084,7 @@ public class Expression
         });
 
         // runs traditional for(init, condition, increment, body) tri-argument for loop with body in between
-        addLazyFunction("c_for", 4, (c, t, lv) -> {
+        expression.addLazyFunction("c_for", 4, (c, t, lv) -> {
             LazyValue initial = lv.get(0);
             LazyValue condition = lv.get(1);
             LazyValue increment = lv.get(2);
@@ -1119,7 +1112,7 @@ public class Expression
         // similar to map, but returns total number of successes
         // for(list, expr) => success_count
         // can be substituted for first and all, but first is more efficient and all doesn't require knowing list size
-        addLazyFunction("for", 2, (c, t, lv) ->
+        expression.addLazyFunction("for", 2, (c, t, lv) ->
         {
             Value rval= lv.get(0).evalValue(c);
             if (!(rval instanceof AbstractListValue))
@@ -1169,7 +1162,7 @@ public class Expression
         // reduces values in the list with expression that gets accumulator
         // each iteration expr receives acc - accumulator, and '_' - current list value
         // returned value is substituted to the accumulator
-        addLazyFunction("reduce", 3, (c, t, lv) ->
+        expression.addLazyFunction("reduce", 3, (c, t, lv) ->
         {
             LazyValue expr = lv.get(1);
 
@@ -1226,16 +1219,16 @@ public class Expression
         });
     }
 
-    private void BasicDataStructures()
+    private static void BasicDataStructures(Expression expression)
     {
-        addFunction("l", lv ->
+        expression.addFunction("l", lv ->
         {
             if (lv.size() == 1 && lv.get(0) instanceof LazyListValue)
                 return ListValue.wrap(((LazyListValue) lv.get(0)).unroll());
             return new ListValue.ListConstructorValue(lv);
         });
 
-        addFunction("join", (lv) ->
+        expression.addFunction("join", (lv) ->
         {
             if (lv.size() < 2)
                 throw new InternalExpressionException("'join' takes at least 2 arguments");
@@ -1257,13 +1250,13 @@ public class Expression
             return new StringValue(toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter)));
         });
 
-        addBinaryFunction("split", (d, v) -> {
+        expression.addBinaryFunction("split", (d, v) -> {
             String delimiter = d.getString();
             String hwat = v.getString();
             return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
         });
 
-        addFunction("slice", (lv) -> {
+        expression.addFunction("slice", (lv) -> {
 
             if (lv.size() != 2 && lv.size() != 3)
                 throw new InternalExpressionException("'slice' takes 2 or 3 arguments");
@@ -1275,7 +1268,7 @@ public class Expression
             return hwat.slice(from, to);
         });
 
-        addFunction("sort", (lv) ->
+        expression.addFunction("sort", (lv) ->
         {
             List<Value> toSort = lv;
             if (lv.size()==1 && lv.get(0) instanceof ListValue)
@@ -1286,7 +1279,7 @@ public class Expression
             return ListValue.wrap(toSort);
         });
 
-        addLazyFunction("sort_key", -1, (c, t, lv) ->  //get working with iterators
+        expression.addLazyFunction("sort_key", -1, (c, t, lv) ->  //get working with iterators
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("First argument for 'sort_key' should be a List");
@@ -1315,7 +1308,7 @@ public class Expression
             return (cc, tt) -> ListValue.wrap(toSort);
         });
 
-        addFunction("range", (lv) ->
+        expression.addFunction("range", (lv) ->
         {
             long from = 0;
             long to = 0;
@@ -1336,7 +1329,7 @@ public class Expression
             return LazyListValue.range(from, to, step);
         });
 
-        addLazyFunction("m", -1, (c, t, llv) ->
+        expression.addLazyFunction("m", -1, (c, t, llv) ->
         {
             List<Value> lv = new ArrayList<>();
             for (LazyValue lazyParam : llv) {
@@ -1350,19 +1343,19 @@ public class Expression
             return (cc, tt) -> ret;
         });
 
-        addUnaryFunction("keys", v -> {
+        expression.addUnaryFunction("keys", v -> {
             if (v instanceof MapValue)
                 return new ListValue(((MapValue) v).getMap().keySet());
             return Value.NULL;
         });
 
-        addUnaryFunction("values", v -> {
+        expression.addUnaryFunction("values", v -> {
             if (v instanceof MapValue)
                 return new ListValue(((MapValue) v).getMap().values());
             return Value.NULL;
         });
 
-        addUnaryFunction("pairs", v -> {
+        expression.addUnaryFunction("pairs", v -> {
             if (v instanceof MapValue)
                 return ListValue.wrap(((MapValue) v).getMap().entrySet().stream().map(
                         (p) -> ListValue.of(p.getKey(), p.getValue())
@@ -1370,7 +1363,7 @@ public class Expression
             return Value.NULL;
         });
 
-        addLazyBinaryOperator(":", precedence.get("attribute~:"),true, (c, t, container_lv, key_lv) ->
+        expression.addLazyBinaryOperator(":", precedence.get("attribute~:"),true, (c, t, container_lv, key_lv) ->
         {
             Value container = container_lv.evalValue(c);
             if (container instanceof LContainerValue)
@@ -1405,7 +1398,7 @@ public class Expression
             return (cc, ct) -> retVal;
         });
 
-        addLazyFunction("get", -1, (c, t, lv) ->
+        expression.addLazyFunction("get", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'get' requires parameters");
@@ -1432,7 +1425,7 @@ public class Expression
             return (cc, tt) -> finalContainer;
         });
 
-        addLazyFunction("has", -1, (c, t, lv) ->
+        expression.addLazyFunction("has", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'has' requires parameters");
@@ -1459,7 +1452,7 @@ public class Expression
             return (cc, tt) -> ret;
         });
 
-        addLazyFunction("put", -1, (c, t, lv) ->
+        expression.addLazyFunction("put", -1, (c, t, lv) ->
         {
             if(lv.size()<2)
             {
@@ -1497,7 +1490,7 @@ public class Expression
             return (cc, tt) -> retVal;
         });
 
-        addLazyFunction("delete", -1, (c, t, lv) ->
+        expression.addLazyFunction("delete", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'delete' requires parameters");
@@ -1525,13 +1518,13 @@ public class Expression
         });
     }
 
-    private void SystemFunctions()
+    private static void SystemFunctions(Expression expression)
     {
-        addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
+        expression.addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
 
-        addUnaryFunction("copy", Value::deepcopy);
+        expression.addUnaryFunction("copy", Value::deepcopy);
 
-        addLazyFunction("bool", 1, (c, t, lv) -> {
+        expression.addLazyFunction("bool", 1, (c, t, lv) -> {
             Value v = lv.get(0).evalValue(c, Context.BOOLEAN);
             if (v instanceof StringValue)
             {
@@ -1544,7 +1537,7 @@ public class Expression
             Value retval = new NumericValue(v.getBoolean());
             return (cc, tt) -> retval;
         });
-        addUnaryFunction("number", v -> {
+        expression.addUnaryFunction("number", v -> {
             if (v instanceof NumericValue)
             {
                 return v;
@@ -1558,7 +1551,7 @@ public class Expression
                 return Value.NULL;
             }
         });
-        addFunction("str", lv ->
+        expression.addFunction("str", lv ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'str' requires at least one argument");
@@ -1636,13 +1629,13 @@ public class Expression
             }
         });
 
-        addUnaryFunction("lower", v -> new StringValue(v.getString().toLowerCase(Locale.ROOT)));
+        expression.addUnaryFunction("lower", v -> new StringValue(v.getString().toLowerCase(Locale.ROOT)));
 
-        addUnaryFunction("upper", v -> new StringValue(v.getString().toUpperCase(Locale.ROOT)));
+        expression.addUnaryFunction("upper", v -> new StringValue(v.getString().toUpperCase(Locale.ROOT)));
 
-        addUnaryFunction("title", v -> new StringValue(WordUtils.capitalizeFully(v.getString())));
+        expression.addUnaryFunction("title", v -> new StringValue(WordUtils.capitalizeFully(v.getString())));
 
-        addFunction("replace", (lv) ->
+        expression.addFunction("replace", (lv) ->
         {
             if (lv.size() != 3 && lv.size() !=2)
                 throw new InternalExpressionException("'replace' expects string to read, pattern regex, and optional replacement string");
@@ -1654,7 +1647,7 @@ public class Expression
             return new StringValue(data.replaceAll(regex, replacement));
         });
 
-        addFunction("replace_first", (lv) ->
+        expression.addFunction("replace_first", (lv) ->
         {
             if (lv.size() != 3 && lv.size() !=2)
                 throw new InternalExpressionException("'replace_first' expects string to read, pattern regex, and optional replacement string");
@@ -1666,10 +1659,10 @@ public class Expression
             return new StringValue(data.replaceFirst(regex, replacement));
         });
 
-        addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
+        expression.addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
 
-        addUnaryFunction("length", v -> new NumericValue(v.length()));
-        addLazyFunction("rand", -1, (c, t, lv) -> {
+        expression.addUnaryFunction("length", v -> new NumericValue(v.length()));
+        expression.addLazyFunction("rand", -1, (c, t, lv) -> {
             int argsize = lv.size();
             Random randomizer = Expression.randomizer;
             if (argsize != 1 && argsize != 2)
@@ -1692,7 +1685,7 @@ public class Expression
             return (cc, tt) -> retval;
         });
 
-        addLazyFunction("perlin", -1, (c, t, lv) -> {
+        expression.addLazyFunction("perlin", -1, (c, t, lv) -> {
             PerlinNoiseSampler sampler;
             Value x, y, z;
 
@@ -1735,7 +1728,7 @@ public class Expression
             return (cc, tt) -> ret;
         });
 
-        addLazyFunction("simplex", -1, (c, t, lv) -> {
+        expression.addLazyFunction("simplex", -1, (c, t, lv) -> {
             SimplexNoiseSampler sampler;
             Value x, y, z;
 
@@ -1770,12 +1763,12 @@ public class Expression
             return (cc, tt) -> ret;
         });
 
-        addUnaryFunction("print", (v) ->
+        expression.addUnaryFunction("print", (v) ->
         {
             System.out.println(v.getString());
             return v; // pass through for variables
         });
-        addUnaryFunction("sleep", (v) ->
+        expression.addUnaryFunction("sleep", (v) ->
         {
             long time = NumericValue.asNumber(v).getLong();
             try
@@ -1786,19 +1779,19 @@ public class Expression
             catch (InterruptedException ignored) { }
             return v; // pass through for variables
         });
-        addLazyFunction("time", 0, (c, t, lv) ->
+        expression.addLazyFunction("time", 0, (c, t, lv) ->
         {
             Value time = new NumericValue((System.nanoTime() / 1000) / 1000.0);
             return (cc, tt) -> time;
         });
 
-        addLazyFunction("unix_time", 0, (c, t, lv) ->
+        expression.addLazyFunction("unix_time", 0, (c, t, lv) ->
         {
             Value time = new NumericValue(System.currentTimeMillis());
             return (cc, tt) -> time;
         });
 
-        addFunction("convert_date", lv ->
+        expression.addFunction("convert_date", lv ->
         {
             int argsize = lv.size();
             if (lv.size() == 0) throw new InternalExpressionException("'convert_date' requires at least one parameter");
@@ -1852,7 +1845,7 @@ public class Expression
             return new NumericValue(cal.getTimeInMillis());
         });
 
-        addLazyFunction("profile_expr", 1, (c, t, lv) ->
+        expression.addLazyFunction("profile_expr", 1, (c, t, lv) ->
         {
             LazyValue lazy = lv.get(0);
             long end = System.nanoTime()+50000000L;
@@ -1866,17 +1859,17 @@ public class Expression
             return (cc, tt) -> res;
         });
 
-        addLazyFunction("var", 1, (c, t, lv) -> {
+        expression.addLazyFunction("var", 1, (c, t, lv) -> {
             String varname = lv.get(0).evalValue(c).getString();
-            return getOrSetAnyVariable(c, varname);
+            return expression.getOrSetAnyVariable(c, varname);
         });
 
-        addLazyFunction("undef", 1, (c, t, lv) ->
+        expression.addLazyFunction("undef", 1, (c, t, lv) ->
         {
             Value remove = lv.get(0).evalValue(c);
             if (remove instanceof FunctionValue)
             {
-                c.host.delFunction(module, remove.getString());
+                c.host.delFunction(expression.module, remove.getString());
                 return (cc, tt) -> Value.NULL;
             }
             String varname = remove.getString();
@@ -1885,10 +1878,10 @@ public class Expression
                 varname = varname.replaceAll("\\*+$", "");
             if (isPrefix)
             {
-                c.host.delFunctionWithPrefix(module, varname);
+                c.host.delFunctionWithPrefix(expression.module, varname);
                 if (varname.startsWith("global_"))
                 {
-                    c.host.delGlobalVariableWithPrefix(module, varname);
+                    c.host.delGlobalVariableWithPrefix(expression.module, varname);
                 }
                 else if (!varname.startsWith("_"))
                 {
@@ -1897,10 +1890,10 @@ public class Expression
             }
             else
             {
-                c.host.delFunction(module, varname);
+                c.host.delFunction(expression.module, varname);
                 if (varname.startsWith("global_"))
                 {
-                    c.host.delGlobalVariable(module, varname);
+                    c.host.delGlobalVariable(expression.module, varname);
                 }
                 else if (!varname.startsWith("_"))
                 {
@@ -1911,12 +1904,12 @@ public class Expression
         });
 
         //deprecate
-        addLazyFunction("vars", 1, (c, t, lv) -> {
+        expression.addLazyFunction("vars", 1, (c, t, lv) -> {
             String prefix = lv.get(0).evalValue(c).getString();
             List<Value> values = new ArrayList<>();
             if (prefix.startsWith("global"))
             {
-                c.host.globaVariableNames(module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
+                c.host.globaVariableNames(expression.module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
             }
             else
             {
@@ -1926,10 +1919,10 @@ public class Expression
             return (cc, tt) -> retval;
         });
 
-        addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
+        expression.addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) -> {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, module, lv, 0, true, false);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, true, false);
             Value queue = Value.NULL;
             if (lv.size() > functionArgument.offset) queue = lv.get(functionArgument.offset).evalValue(c);
             ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.args);
@@ -1937,7 +1930,7 @@ public class Expression
             return (cc, tt) -> thread;
         });
 
-        addFunction("task_count", (lv) ->
+        expression.addFunction("task_count", (lv) ->
         {
             if (lv.size() > 0)
             {
@@ -1946,31 +1939,31 @@ public class Expression
             return new NumericValue(ThreadValue.taskCount());
         });
 
-        addUnaryFunction("task_value", (v) -> {
+        expression.addUnaryFunction("task_value", (v) -> {
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'task_value' could only be used with a task value");
             return ((ThreadValue) v).getValue();
         });
 
-        addUnaryFunction("task_join", (v) -> {
+        expression.addUnaryFunction("task_join", (v) -> {
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'task_join' could only be used with a task value");
             return ((ThreadValue) v).join();
         });
 
-        addLazyFunction("task_dock", 1, (c, t, lv) -> {
+        expression.addLazyFunction("task_dock", 1, (c, t, lv) -> {
             // pass through placeholder
             // implmenetation should dock the task on the main thread.
             return lv.get(0);
         });
 
-        addUnaryFunction("task_completed", (v) -> {
+        expression.addUnaryFunction("task_completed", (v) -> {
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'task_completed' could only be used with a task value");
             return new NumericValue(((ThreadValue) v).isFinished());
         });
 
-        addLazyFunction("synchronize", -1, (c, t, lv) ->
+        expression.addLazyFunction("synchronize", -1, (c, t, lv) ->
         {
             if (lv.size() == 0) throw new InternalExpressionException("'synchronize' require at least an expression to synchronize");
             Value lockValue = Value.NULL;
@@ -1987,7 +1980,7 @@ public class Expression
             }
         });
 
-        addLazyFunction("system_variable_get", -1, (c, t, lv) ->
+        expression.addLazyFunction("system_variable_get", -1, (c, t, lv) ->
         {
             if (lv.size() == 0) throw new InternalExpressionException("'system_variable_get' expects at least a key to be fetched");
             Value key = lv.get(0).evalValue(c);
@@ -2000,7 +1993,7 @@ public class Expression
             return (cc, tt) -> Value.NULL;
         });
 
-        addLazyFunction("system_variable_set", 2, (c, t, lv) ->
+        expression.addLazyFunction("system_variable_set", 2, (c, t, lv) ->
         {
             Value key = lv.get(0).evalValue(c);
             Value value = lv.get(1).evalValue(c);
@@ -2012,7 +2005,7 @@ public class Expression
 
     }
 
-    private void setAnyVariable(Context c, String name, LazyValue lv)
+    public void setAnyVariable(Context c, String name, LazyValue lv)
     {
         if (name.startsWith("global_"))
         {
@@ -2046,12 +2039,12 @@ public class Expression
     public Expression(String expression)
     {
         this.expression = expression.trim().replaceAll("\\r\\n?", "\n").replaceAll("\\t","   ");
-        UserDefinedFunctionsAndControlFlow();
-        Operators();
-        ArithmeticOperations();
-        SystemFunctions();
-        LoopsAndHigherOrderFunctions();
-        BasicDataStructures();
+        UserDefinedFunctionsAndControlFlow(this);
+        Operators(this);
+        ArithmeticOperations(this);
+        SystemFunctions(this);
+        LoopsAndHigherOrderFunctions(this);
+        BasicDataStructures(this);
     }
 
 
