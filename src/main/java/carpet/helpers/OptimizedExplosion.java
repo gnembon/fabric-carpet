@@ -467,9 +467,10 @@ public class OptimizedExplosion
                 size -= (resistance + 0.3F) * 0.3F;
             }
 
-            if (size > 0.0F && (eAccess.getEntity() == null || eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), posMutable, state, size)))
+            if (size > 0.0F)
             {
-                affectedBlockPositionsSet.add(posImmutable != null ? posImmutable : posMutable.toImmutable());
+                if ((eAccess.getEntity() == null || eAccess.getEntity().canExplosionDestroyBlock(e, eAccess.getWorld(), posMutable, state, size)))
+                    affectedBlockPositionsSet.add(posImmutable != null ? posImmutable : posMutable.toImmutable());
             }
             else if (firstRay)
             {
@@ -541,7 +542,7 @@ public class OptimizedExplosion
             }
         }
 
-        showTNTblastChance(e);
+        //showTNTblastChance(e);
     }
 
     private static void showTNTblastChance(Explosion e){
