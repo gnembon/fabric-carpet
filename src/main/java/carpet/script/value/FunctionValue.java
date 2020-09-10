@@ -122,7 +122,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     public double readDoubleNumber()
     {
-        throw new InternalExpressionException("Function value has no numeric value");
+        return getNumParams();
     }
 
     @Override
