@@ -408,21 +408,12 @@ public class SettingsManager
     {
         PlayerEntity player;
         String displayName = rule.translatedName();
-        try
-        {
-            player = source.getPlayer();
-        }
-        catch (CommandSyntaxException e)
-        {
-            Messenger.m(source, "w "+ displayName +" "+ tr( "ui.is_set_to","is set to")+": ","wb "+rule.getAsString());
-            return 1;
-        }
 
-        Messenger.m(player, "");
-        Messenger.m(player, "wb "+ displayName ,"!/"+identifier+" "+rule.name,"^g refresh");
-        Messenger.m(player, "w "+ rule.translatedDescription());
+        Messenger.m(source, "");
+        Messenger.m(source, "wb "+ displayName ,"!/"+identifier+" "+rule.name,"^g refresh");
+        Messenger.m(source, "w "+ rule.translatedDescription());
 
-        rule.translatedExtras().forEach(s -> Messenger.m(player, "g  "+s));
+        rule.translatedExtras().forEach(s -> Messenger.m(source, "g  "+s));
 
         List<BaseText> tags = new ArrayList<>();
         tags.add(Messenger.c("w "+ tr("ui.tags", "Tags")+": "));
@@ -433,9 +424,9 @@ public class SettingsManager
             tags.add(Messenger.c("w , "));
         }
         tags.remove(tags.size()-1);
-        Messenger.m(player, tags.toArray(new Object[0]));
+        Messenger.m(source, tags.toArray(new Object[0]));
 
-        Messenger.m(player, "w "+ tr("ui.current_value", "Current value")+": ",String.format("%s %s (%s value)",rule.getBoolValue()?"lb":"nb", rule.getAsString(),rule.isDefault()?"default":"modified"));
+        Messenger.m(source, "w "+ tr("ui.current_value", "Current value")+": ",String.format("%s %s (%s value)",rule.getBoolValue()?"lb":"nb", rule.getAsString(),rule.isDefault()?"default":"modified"));
         List<BaseText> options = new ArrayList<>();
         options.add(Messenger.c("w Options: ", "y [ "));
         for (String o: rule.options)
@@ -445,7 +436,7 @@ public class SettingsManager
         }
         options.remove(options.size()-1);
         options.add(Messenger.c("y  ]"));
-        Messenger.m(player, options.toArray(new Object[0]));
+        Messenger.m(source, options.toArray(new Object[0]));
 
         return 1;
     }
@@ -525,50 +516,34 @@ public class SettingsManager
 
     private int listSettings(ServerCommandSource source, String title, Collection<ParsedRule<?>> settings_list)
     {
-        try
-        {
-            PlayerEntity player = source.getPlayer();
-            Messenger.m(player,String.format("wb %s:",title));
-            settings_list.forEach(e -> Messenger.m(player,displayInteractiveSetting(e)));
 
-        }
-        catch (CommandSyntaxException e)
-        {
-            Messenger.m(source, "w s:"+title);
-            settings_list.forEach(r -> Messenger.m(source, "w  - "+ r.toString()));
-        }
-        return 1;
+        Messenger.m(source,String.format("wb %s:",title));
+        settings_list.forEach(e -> Messenger.m(source,displayInteractiveSetting(e)));
+        return settings_list.size();
     }
     private int listAllSettings(ServerCommandSource source)
     {
-        //listSettings(source, "Current "+fancyName+" Settings", getNonDefault());
-        listSettings(source, String.format(tr("ui.current_%(mod)s_settings","Current %s Settings"), fancyName), getNonDefault());
+        int count = listSettings(source, String.format(tr("ui.current_%(mod)s_settings","Current %s Settings"), fancyName), getNonDefault());
 
         if (version != null)
-            //Messenger.m(source, "g "+fancyName+" version: "+ version);
             Messenger.m(source, "g "+fancyName+" "+ tr("ui.version",  "version") + ": "+ version);
-        try
+
+        List<Object> tags = new ArrayList<>();
+        tags.add("w " + tr("ui.browse_categories", "Browse Categories")  + ":\n");
+        for (String t : getCategories())
         {
-            PlayerEntity player = source.getPlayer();
-            List<Object> tags = new ArrayList<>();
-            //tags.add("w Browse Categories:\n");
-            tags.add("w " + tr("ui.browse_categories", "Browse Categories")  + ":\n");
-            for (String t : getCategories())
-            {
-                String catKey = "category." + t;
-                String translated = tr(catKey, t);
-                String translatedPlus = Translations.hasTranslation(catKey) ? String.format("%s (%s)",tr(catKey, t), t) : t;
-                tags.add("c [" + translated +"]");
-                //tags.add("^g list all " + translated + " settings");
-                tags.add("^g " + String.format(tr("ui.list_all_%(cat)s_settings","list all %s settings"), translatedPlus));
-                tags.add("!/"+identifier+" list " + t);
-                tags.add("w  ");
-            }
-            tags.remove(tags.size() - 1);
-            Messenger.m(player, tags.toArray(new Object[0]));
+            String catKey = "category." + t;
+            String translated = tr(catKey, t);
+            String translatedPlus = Translations.hasTranslation(catKey) ? String.format("%s (%s)",tr(catKey, t), t) : t;
+            tags.add("c [" + translated +"]");
+            tags.add("^g " + String.format(tr("ui.list_all_%(cat)s_settings","list all %s settings"), translatedPlus));
+            tags.add("!/"+identifier+" list " + t);
+            tags.add("w  ");
         }
-        catch (CommandSyntaxException ignored) { }
-        return 1;
+        tags.remove(tags.size() - 1);
+        Messenger.m(source, tags.toArray(new Object[0]));
+
+        return count;
     }
 
     public void inspectClientsideCommand(ServerCommandSource source, String string)
