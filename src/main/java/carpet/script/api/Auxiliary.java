@@ -30,6 +30,7 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -41,6 +42,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -48,11 +50,13 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.EulerAngle;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
@@ -463,12 +467,35 @@ public class Auxiliary {
             ServerCommandSource s = ((CarpetContext)c).s;
             try
             {
+                Value[] error = {Value.NULL};
+                List<Value> output = new ArrayList<>();
                 Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                        s.withPosition(posf).withSilent().withLevel(CarpetSettings.runPermissionLevel), lv.get(0).evalValue(c).getString()));
-                return (c_, t_) -> retval;
+                        new ServerCommandSource(
+                                CommandOutput.DUMMY, posf, Vec2f.ZERO, s.getWorld(), CarpetSettings.runPermissionLevel,
+                                s.getName(), s.getDisplayName(), s.getMinecraftServer(), s.getPlayer(), true,
+                                (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET)
+                        {
+                            @Override
+                            public void sendError(Text message)
+                            {
+                                error[0] = new FormattedTextValue(message);
+                            }
+                            @Override
+                            public void sendFeedback(Text message, boolean broadcastToOps)
+                            {
+                                output.add(new FormattedTextValue(message));
+                            }
+                        },
+                        lv.get(0).evalValue(c).getString())
+                );
+                Value ret = ListValue.of(retval, ListValue.wrap(output), error[0]);
+                return (c_, t_) -> ret;
             }
-            catch (Exception ignored) {}
-            return LazyValue.NULL;
+            catch (Exception exc)
+            {
+                Value ret = ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(new LiteralText(exc.getMessage())));
+                return (c_, t_) -> ret;
+            }
         });
 
         expression.addLazyFunction("save", 0, (c, t, lv) -> {
