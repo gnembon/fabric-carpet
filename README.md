@@ -13,11 +13,11 @@ Carpet Mod is a mod for vanilla Minecraft that allows you to take full control o
 
 # Carpet mod ecosystem
 
-For core carpet functionality, this is the right place. Check available downwloads on the [release page](https://github.com/gnembon/fabric-carpet/releases)
+For core carpet functionality, this is the right place. Check available downloads on the [release page](https://github.com/gnembon/fabric-carpet/releases)
 
 ## carpet-extra
 
-Check [carpet-extra](https://github.com/gnembon/carpet-extra/) add-on mod for more whacy and crazy features, including autocrafting, block-placing dispensers, and even chicken-shearing!
+Check [carpet-extra](https://github.com/gnembon/carpet-extra/) add-on mod for more whacky and crazy features, including autocrafting, block-placing dispensers, and even chicken-shearing!
 
 ## auto crafting table
 
