@@ -6,6 +6,7 @@ import carpet.utils.Messenger;
 import com.google.common.collect.Lists;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
@@ -42,15 +43,12 @@ public class DrawCommand
                 then(literal("sphere").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawSphere(c, false)))))).
-                then(literal("ball").
-                        then(argument("center", BlockPosArgumentType.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawSphere(c, true)))))).
+                                        then(argument("hollow", BoolArgumentType.bool()).
+                                            then(drawShape(DrawCommand::drawSphere)))))).
                 then(literal("diamond").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(drawShape(c -> DrawCommand.drawDiamond(c, true)))))).
+                                            then(drawShape(DrawCommand::drawDiamond))))).
                 then(literal("pyramid").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
@@ -69,14 +67,16 @@ public class DrawCommand
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
-                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
-                                                                .then(drawShape(c -> DrawCommand.drawPrism(c, "circle")))))))).
+                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b)).
+                                                                then(argument("hollow", BoolArgumentType.bool()).
+                                                                    then(drawShape(c -> DrawCommand.drawPrism(c, "circle"))))))))).
                 then(literal("cuboid").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
-                                                        .then(drawShape(c -> DrawCommand.drawPrism(c, "square"))))))));
+                                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b)).
+                                                        then(argument("hollow", BoolArgumentType.bool()).
+                                                            then(drawShape(c -> DrawCommand.drawPrism(c, "square")))))))));
         dispatcher.register(command);
     }
 
@@ -155,16 +155,18 @@ public class DrawCommand
         return success;
     }
 
-    private static int drawSphere(CommandContext<ServerCommandSource> ctx, boolean solid) throws CommandSyntaxException
+    private static int drawSphere(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException
     {
         BlockPos pos;
         int radius;
         BlockStateArgument block;
+        boolean solid;
         Predicate<CachedBlockPosition> replacement;
         try
         {
             pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius");
+            solid = !getArg(ctx, BoolArgumentType::getBool, "hollow");
             block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
             replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
         }
@@ -250,12 +252,13 @@ public class DrawCommand
         return affected;
     }
 
-    private static int drawDiamond(CommandContext<ServerCommandSource> ctx, boolean solid) throws CommandSyntaxException
+    private static int drawDiamond(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException
     {
         BlockPos pos;
         int radius;
         BlockStateArgument block;
         Predicate<CachedBlockPosition> replacement;
+
         try
         {
             pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
@@ -347,6 +350,46 @@ public class DrawCommand
         return 0;
     }
 
+    private static int hollowFillFlat(
+            ServerWorld world, BlockPos pos, int offset, double dr, boolean rectangle, String orientation,
+            BlockStateArgument block, Predicate<CachedBlockPosition> replacement,
+            List<BlockPos> list, BlockPos.Mutable mbpos
+    )
+    {
+        int successes=0;
+        int r = MathHelper.floor(dr);
+        double drsq = dr*dr;
+        for(int a=-r; a<=r; ++a) {
+            for(int b=-r; b<=r; ++b) {
+                if((rectangle && (Math.abs(a) == r || Math.abs(b) ==r)) || (!rectangle && (a*a + b*b <= drsq && Math.pow(Math.abs(a)+1, 2) + Math.pow(Math.abs(b)+1, 2) >= drsq)))
+                {
+                    int x = pos.getX();
+                    int y = pos.getY();
+                    int z = pos.getZ();
+                    switch (orientation.toLowerCase()){
+                        case "x":
+                            x += offset;
+                            y += a;
+                            z += b;
+                            break;
+                        case "y":
+                            x += a;
+                            y += offset;
+                            z += b;
+                            break;
+                        case "z":
+                            x += b;
+                            y += a;
+                            z += offset;
+                            break;
+                    }
+                    successes += setBlock(world, mbpos, x, y, z, block, replacement, list);
+                }
+            }
+        }
+        return successes;
+    }
+
     private static int drawPyramid(CommandContext<ServerCommandSource> ctx, String base, boolean solid) throws CommandSyntaxException
     {
         BlockPos pos;
@@ -407,6 +450,7 @@ public class DrawCommand
         double radius;
         int height;
         String orientation;
+        boolean solid;
         BlockStateArgument block;
         Predicate<CachedBlockPosition> replacement;
         try
@@ -415,6 +459,7 @@ public class DrawCommand
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius")+0.5D;
             height = getArg(ctx, IntegerArgumentType::getInteger, "height");
             orientation = getArg(ctx, StringArgumentType::getString,"orientation");
+            solid = !getArg(ctx, BoolArgumentType::getBool, "hollow");
             block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
             replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
         }
@@ -435,7 +480,11 @@ public class DrawCommand
 
         for(int i =0; i<height;++i)
         {
-            affected+= fillFlat(world, pos, i, radius, isSquare, orientation, block, replacement, list, mbpos);
+            if(solid){
+                affected+= fillFlat(world, pos, i, radius, isSquare, orientation, block, replacement, list, mbpos);
+            } else {
+                affected+= hollowFillFlat(world, pos, i, radius, isSquare, orientation, block, replacement, list, mbpos);
+            }
         }
 
         CarpetSettings.impendingFillSkipUpdates = false;
