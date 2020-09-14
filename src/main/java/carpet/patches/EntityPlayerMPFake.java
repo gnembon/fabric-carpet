@@ -8,6 +8,8 @@ import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.NetworkSide;
+import net.minecraft.scoreboard.ServerScoreboard;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -53,6 +55,13 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), dimensionId);//instance.dimension);
         instance.getServerWorld().getChunkManager().updateCameraPosition(instance);
         instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
+
+        ServerScoreboard scoreboard = instance.server.getScoreboard();
+        Team team = scoreboard.getTeam("fake_players");
+        if (team != null) {
+            scoreboard.addPlayerToTeam(username, team);
+        }
+
         return instance;
     }
 
@@ -90,6 +99,12 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     @Override
     public void kill()
     {
+        ServerScoreboard scoreboard = this.server.getScoreboard();
+        Team team = scoreboard.getTeam("fake_players");
+        if (team != null) {
+            scoreboard.removePlayerFromTeam(this.getEntityName(), team);
+        }
+
         this.server.send(new ServerTask(this.server.getTicks(), () -> {
             this.networkHandler.onDisconnected(Messenger.s("Killed"));
         }));

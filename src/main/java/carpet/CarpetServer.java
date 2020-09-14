@@ -16,9 +16,12 @@ import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Formatting;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -49,8 +52,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(CarpetExtension::onGameStarted);
     }
 
-    public static void onServerLoaded(MinecraftServer server)
-    {
+    public static void onServerLoaded(MinecraftServer server) {
         CarpetServer.minecraft_server = server;
         // shoudl not be needed - that bit needs refactoring, but not now.
         SpawnReporter.reset_spawn_stats(server, true);
@@ -71,6 +73,12 @@ public class CarpetServer // static for now - easier to handle all around the co
     {
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         scriptServer.loadAllWorldScripts();
+
+        ServerScoreboard scoreboard = minecraft_server.getScoreboard();
+        if (scoreboard.getTeam("fake_players") == null) {
+            scoreboard.addTeam("fake_players");
+            scoreboard.getTeam("fake_players").setColor(Formatting.DARK_GREEN);
+        }
     }
 
     public static void tick(MinecraftServer server)
