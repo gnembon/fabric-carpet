@@ -1,27 +1,26 @@
 package carpet;
 
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
 import carpet.commands.*;
-import carpet.network.ServerNetworkHandler;
 import carpet.helpers.TickSpeed;
+import carpet.logging.HUDController;
 import carpet.logging.LoggerRegistry;
+import carpet.network.ServerNetworkHandler;
 import carpet.script.CarpetScriptServer;
 import carpet.settings.SettingsManager;
-import carpet.logging.HUDController;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ServerScoreboard;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Formatting;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
@@ -52,7 +51,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(CarpetExtension::onGameStarted);
     }
 
-    public static void onServerLoaded(MinecraftServer server) {
+    public static void onServerLoaded(MinecraftServer server)
+    {
         CarpetServer.minecraft_server = server;
         // shoudl not be needed - that bit needs refactoring, but not now.
         SpawnReporter.reset_spawn_stats(server, true);

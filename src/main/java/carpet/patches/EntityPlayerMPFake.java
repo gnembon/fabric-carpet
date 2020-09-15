@@ -1,31 +1,28 @@
 package carpet.patches;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.utils.Messenger;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
-import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
-import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.NetworkSide;
+import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.scoreboard.Team;
-import net.minecraft.stat.Stat;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.stat.Stat;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
-import carpet.fakes.ServerPlayerEntityInterface;
-import carpet.utils.Messenger;
-
-import java.util.Objects;
 
 @SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayerEntity
@@ -140,7 +137,8 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     }
 
     @Override
-    public void increaseStat(Stat<?> stat, int amount) {
+    public void increaseStat(Stat<?> stat, int amount)
+    {
         if (CarpetSettings.fakePlayersStats) super.increaseStat(stat, amount);
     }
 }
