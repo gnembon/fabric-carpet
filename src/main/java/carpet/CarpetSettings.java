@@ -674,4 +674,15 @@ public class CarpetSettings
             category = {CREATIVE}
     )
     public static boolean fakePlayersTeam = false;
+
+    @Rule(
+            desc = "If false, prevents fake players from getting stats",
+            extra = {
+                    "Useful when you don't want certain scoreboards",
+                    "to get filled by bots",
+                    "by samipourquoi"
+            },
+            category = {CREATIVE}
+    )
+    public static boolean fakePlayersStats = true;
 }

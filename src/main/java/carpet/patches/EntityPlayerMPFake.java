@@ -11,6 +11,7 @@ import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.NetworkSide;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.stat.Stat;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -136,5 +137,10 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         setHealth(20);
         this.hungerManager = new HungerManager();
         kill();
+    }
+
+    @Override
+    public void increaseStat(Stat<?> stat, int amount) {
+        if (CarpetSettings.fakePlayersStats) super.increaseStat(stat, amount);
     }
 }
