@@ -663,4 +663,15 @@ public class CarpetSettings
             category = {SURVIVAL, CLIENT}
     )
     public static boolean cleanLogs = false;
+
+    @Rule(
+            desc = "Adds a team that will be given to any fake players",
+            extra = {
+                    "The team is named 'fake_players'",
+                    "You can't delete the 'fake_players' team",
+                    "by samipourquoi"
+            },
+            category = {CREATIVE}
+    )
+    public static boolean fakePlayersTeam = false;
 }

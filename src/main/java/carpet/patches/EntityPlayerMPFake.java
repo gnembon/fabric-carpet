@@ -1,5 +1,6 @@
 package carpet.patches;
 
+import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
@@ -22,6 +23,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.utils.Messenger;
+
+import java.util.Objects;
 
 @SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayerEntity
@@ -58,7 +61,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
         ServerScoreboard scoreboard = instance.server.getScoreboard();
         Team team = scoreboard.getTeam("fake_players");
-        if (team != null) {
+        if (team != null && CarpetSettings.fakePlayersTeam) {
             scoreboard.addPlayerToTeam(username, team);
         }
 
@@ -101,7 +104,8 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     {
         ServerScoreboard scoreboard = this.server.getScoreboard();
         Team team = scoreboard.getTeam("fake_players");
-        if (team != null) {
+        boolean inTeam = (scoreboard.getPlayerTeam(this.getEntityName()) != null);
+        if (team != null && inTeam) {
             scoreboard.removePlayerFromTeam(this.getEntityName(), team);
         }
 
