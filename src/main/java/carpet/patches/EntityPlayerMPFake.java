@@ -61,7 +61,8 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
         ServerScoreboard scoreboard = instance.server.getScoreboard();
         Team team = scoreboard.getTeam("fake_players");
-        if (team != null && CarpetSettings.fakePlayersTeam) {
+        if (team != null && CarpetSettings.fakePlayersTeam)
+        {
             scoreboard.addPlayerToTeam(username, team);
         }
 
@@ -105,7 +106,8 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         ServerScoreboard scoreboard = this.server.getScoreboard();
         Team team = scoreboard.getTeam("fake_players");
         boolean inTeam = (scoreboard.getPlayerTeam(this.getEntityName()) != null);
-        if (team != null && inTeam) {
+        if (team != null && inTeam)
+        {
             scoreboard.removePlayerFromTeam(this.getEntityName(), team);
         }
 

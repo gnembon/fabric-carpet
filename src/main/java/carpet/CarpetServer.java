@@ -75,7 +75,8 @@ public class CarpetServer // static for now - easier to handle all around the co
         scriptServer.loadAllWorldScripts();
 
         ServerScoreboard scoreboard = minecraft_server.getScoreboard();
-        if (scoreboard.getTeam("fake_players") == null) {
+        if (scoreboard.getTeam("fake_players") == null)
+        {
             scoreboard.addTeam("fake_players");
             scoreboard.getTeam("fake_players").setColor(Formatting.DARK_GREEN);
         }
