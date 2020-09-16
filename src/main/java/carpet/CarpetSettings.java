@@ -368,9 +368,6 @@ public class CarpetSettings
     )
     public static String commandPerimeterInfo = "true";
 
-    @Rule(desc = "Enables /draw commands", extra = {"... allows for drawing simple shapes or","other shapes which are sorta difficult to do normally"}, category = COMMAND)
-    public static String commandDraw = "true";
-
     @Rule(
             desc = "Enables /script command",
             extra = "An in-game scripting API for Scarpet programming language",
