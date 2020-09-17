@@ -16,26 +16,26 @@ diamond_shape(cx,cy,cz,radius,block)->(
         y=r-radius+1;
         c_for (x = -r, x <= r, x+=1,
             z=r-abs(x);
-            affected+= __setBlock(pos:0+x, pos:1-y, pos:2+z, block);
-            affected+= __setBlock(pos:0+x, pos:1-y, pos:2-z, block);
-            affected+= __setBlock(pos:0+x, pos:1+y, pos:2+z, block);
-            affected+= __setBlock(pos:0+x, pos:1+y, pos:2-z, block);
+            affected+= __setBlock([pos:0+x, pos:1-y, pos:2+z], block);
+            affected+= __setBlock([pos:0+x, pos:1-y, pos:2-z], block);
+            affected+= __setBlock([pos:0+x, pos:1+y, pos:2+z], block);
+            affected+= __setBlock([pos:0+x, pos:1+y, pos:2-z], block);
         )
     );
     print(player(), str(' Filled %s blocks',affected));
 );
 
-cone(cx, cy, cz, radius, height, pointup, orientation, block)->
-    __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, 'circle');
+cone(cx, cy, cz, radius, height, pointup, orientation, block, hollow)->
+    __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, 'circle', hollow);
 
-pyramid(cx, cy, cz, radius, height, pointup, orientation, block)->
-    __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, 'square');
+pyramid(cx, cy, cz, radius, height, pointup, orientation, block, hollow)->
+    __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, 'square', hollow);
 
-cylinder(cx, cy, cz, radius, height, orientation, block)->
-    __drawPrism(cx, cy, cz, radius, height, orientation, block, 'circle');
+cylinder(cx, cy, cz, radius, height, orientation, block, hollow)->
+    __drawPrism(cx, cy, cz, radius, height, orientation, block, 'circle', hollow);
 
-cuboid(cx, cy, cz, radius, height, orientation, block)->
-    __drawPrism(cx, cy, cz, radius, height, orientation, block, 'square');
+cuboid(cx, cy, cz, radius, height, orientation, block, hollow)->
+    __drawPrism(cx, cy, cz, radius, height, orientation, block, 'square', hollow);
 
 sphere(cx, cy, cz, radius, block)->
     __drawSphere(cx, cy, cz, radius, block, false);
@@ -64,7 +64,40 @@ __setBlock(pos,block)->(
 __lengthSq(x, y, z)-> return ((x * x) + (y * y) + (z * z));
 
 
-__fillFlat(pos, offset, radius, rectangle, orientation, block)->(
+//__hollowFillFlat(pos, offset, radius, rectangle, orientation, block)->(    
+//    successes=0;
+//    r = floor(radius);
+//    drsq = radius*radius;
+//    c_for(a=-r, a<=r, a+=1,
+//        c_for(b=-r, b<=r, b+=1,
+//            if((rectangle && (abs(a) == r || abs(b) ==r)) || (!rectangle && (a*a + b*b <= drsq && power(abs(a)+1, 2) + power(abs(b)+1, 2) >= drsq)),
+//                [x, y, z]= pos;
+//                switch (orientation.toLowerCase()){
+//                    case "x":
+//                        x += offset;
+//                        y += a;
+//                        z += b;
+//                        break;
+//                    case "y":
+//                        x += a;
+//                        y += offset;
+//                        z += b;
+//                        break;
+//                    case "z":
+//                        x += b;
+//                        y += a;
+//                        z += offset;
+//                        break;
+//                }
+//                successes += setBlock(world, mbpos, x, y, z, block, replacement, list);
+//            )
+//        )
+//    );
+//    return(successes)
+//);
+
+
+__fillFlat(pos, offset, radius, rectangle, orientation, block, hollow)->(
 
 
     successes=0;
@@ -73,24 +106,24 @@ __fillFlat(pos, offset, radius, rectangle, orientation, block)->(
     if (orientation=='x',
         c_for(a=-r, a<=r, a+=1,
             c_for(b=-r, b<=r, b+=1, 
-                if(rectangle || a*a + b*b <= drsq,
-                    successes += __setBlock(pos:0+offset, pos:1+a, pos:2+b, block)
+                if(rectangle && (!hollow || (abs(a) == r || abs(b) ==r)) || !rectangle && (a*a + b*b <= drsq && (!hollow || (abs(a)+1)*(abs(a)+1) + (abs(b)+1)*(abs(b)+1) >= drsq)),
+                    successes += __setBlock([pos:0+offset, pos:1+a, pos:2+b], block)
                 )
             )   
         ),
         orientation=='y',
         c_for(a=-r, a<=r, a+=1,
             c_for(b=-r, b<=r, b+=1, 
-                if(rectangle || a*a + b*b <= drsq,
-                    successes += __setBlock(pos:0+a, pos:1+offset, pos:2+b, block)
+                if(rectangle && (!hollow || (abs(a) == r || abs(b) ==r)) || !rectangle && (a*a + b*b <= drsq && (!hollow || (abs(a)+1)*(abs(a)+1) + (abs(b)+1)*(abs(b)+1) >= drsq)),
+                    successes += __setBlock([pos:0+a, pos:1+offset, pos:2+b], block)
                 )
             )   
         ),
         orientation=='z',
         c_for(a=-r, a<=r, a+=1,
-            c_for(b=-r, b<=r, b+=1, 
+                if(rectangle && (!hollow || (abs(a) == r || abs(b) ==r)) || !rectangle && (a*a + b*b <= drsq && (!hollow || (abs(a)+1)*(abs(a)+1) + (abs(b)+1)*(abs(b)+1) >= drsq)), 
                 if(rectangle || a*a + b*b <= drsq,
-                    successes += __setBlock(pos:0+b, pos:1+a, pos:2+offset, block)
+                    successes += __setBlock([pos:0+b, pos:1+a, pos:2+offset], block)
                 )
             )   
         )
@@ -98,7 +131,7 @@ __fillFlat(pos, offset, radius, rectangle, orientation, block)->(
     return (successes);
 );
 
-__drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, base)->(
+__drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, base, hollow)->(
 
     pos = __get_pos_arg(cx,cy,cz);
 
@@ -109,14 +142,14 @@ __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, base)->(
     c_for(i=0, i<height,i+=1,
 
         r = if(pointup, radius - radius * i / height - 1, radius * i / height);
-        affected+= __fillFlat(pos , i, r, isSquare, str(orientation), block)
+        affected+= __fillFlat(pos , i, r, isSquare, str(orientation), block, if(i!=0,hollow))
 
     );
     
     print(player(), 'Filled ' + affected + ' blocks')
 );
 
-__drawPrism(cx, cy, cz, radius, height, orientation, block, base)->(
+__drawPrism(cx, cy, cz, radius, height, orientation, block, base, hollow)->(
         
     pos = __get_pos_arg(cx,cy,cz);
 
@@ -125,7 +158,7 @@ __drawPrism(cx, cy, cz, radius, height, orientation, block, base)->(
     isSquare = if(base=='square',true,false);
 
     c_for(i=0, i<height,i+=1,
-        affected+= __fillFlat(pos , i, radius, isSquare, str(orientation), block)
+        affected+= __fillFlat(pos , i, radius, isSquare, str(orientation), block, if(i!=0&&i!=height-1,hollow))
     );
     
     print(player(), 'Filled ' + affected + ' blocks')
