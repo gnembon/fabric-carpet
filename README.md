@@ -33,7 +33,7 @@ Have problems with the recent snapshot or someone is slacking with releasing the
 
 ## carpet-extension mod
 
-If you want to add your own carpet features or extend scarpet language with some new API, you can create your own carpet extension using this [carpet extension mod template](https://github.com/gnembon/fabric-carpet-extension-example-mod).
+If you want to add your own carpet features or extend scarpet language with some new API, you can create your own carpet extension using this [carpet extension mod template](https://github.com/gnembon/fabric-carpet-extension-example-mod). Here is a [list of Carpet extensions](https://github.com/gnembon/fabric-carpet/wiki/List-of-Carpet-extensions).
 
 # How? Hwat?
 
