@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(WorldChunk.class)
 public class WorldChunk_fillUpdatesMixin
 {
+    // todo onStateReplaced needs a bit more love since it removes be which is needed
     @Redirect(method = "setBlockState", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/BlockState;onBlockAdded(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Z)V"

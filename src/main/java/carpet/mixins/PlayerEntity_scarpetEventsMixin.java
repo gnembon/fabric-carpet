@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
 import carpet.script.EntityEventsGroup;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import static carpet.script.CarpetEventServer.Event.PLAYER_DEALS_DAMAGE;
 import static carpet.script.CarpetEventServer.Event.PLAYER_TAKES_DAMAGE;
+import static carpet.script.CarpetEventServer.Event.PLAYER_COLLIDES_WITH_ENTITY;
 
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntity_scarpetEventsMixin extends LivingEntity
@@ -40,6 +42,15 @@ public abstract class PlayerEntity_scarpetEventsMixin extends LivingEntity
         if (source.getAttacker() instanceof ServerPlayerEntity && PLAYER_DEALS_DAMAGE.isNeeded())
         {
             PLAYER_DEALS_DAMAGE.onDamage(this, amount, source);
+        }
+    }
+
+    @Inject(method = "collideWithEntity", at = @At("HEAD"))
+    private void onEntityCollision(Entity entity, CallbackInfo ci)
+    {
+        if (PLAYER_COLLIDES_WITH_ENTITY.isNeeded() && !world.isClient)
+        {
+            PLAYER_COLLIDES_WITH_ENTITY.onEntityAction((ServerPlayerEntity)(Object)this, entity, null);
         }
     }
 }

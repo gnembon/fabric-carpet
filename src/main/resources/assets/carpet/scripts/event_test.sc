@@ -270,3 +270,10 @@ __on_player_swaps_hands(player) -> (
     print('__on_player_swaps_hands(player)');
     print(' Player '+player+' swaps hands.')
 );
+
+__on_player_collides_with_entity(player, entity) ->
+(
+    print('');
+    print('__on_player_collides_with_entity(player, entity)');
+    print(' Player '+player+' collides with '+entity);
+)

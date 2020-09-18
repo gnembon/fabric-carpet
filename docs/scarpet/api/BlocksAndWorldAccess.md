@@ -496,13 +496,13 @@ structures and features. List of available options and names that you can use de
 with minecraft 1.16.1 and below or 1.16.2 and above since in 1.16.2 Mojang has added JSON support for worldgen features
 meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet
 
-### Previous Structure Names, including variants (MC 1.16.1 and below)
+### Previous Structure Names, including variants (as of MC 1.16.3)
 *   `'monument'`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
 *   `'fortress'`: Nether Fortress. Altitude varies, but its bounded by the code.
 *   `'mansion'`: Woodland Mansion
 *   `'jungle_temple'`: Jungle Temple
 *   `'desert_temple'`: Desert Temple. Generates at fixed Y altitude.
-*   `'end_city'`: End City with Shulkers
+*   `'endcity'`: End City with Shulkers (in 1.16.1- as `'end_city`)
 *   `'igloo'`: Igloo
 *   `'shipwreck'`: Shipwreck
 *   `'shipwreck2'`: Shipwreck, beached
@@ -526,7 +526,7 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 *   `'bastion_remnant_treasure'`: Treasure room version of a piglin bastion (1.16)
 *   `'bastion_remnant_bridge'` : Bridge version of a piglin bastion (1.16)
 
-### Feature Names (mc1.16.1-) 
+### Feature Names (as of mc1.16.1) 
 
 *   `'oak'`
 *   `'oak_beehive'`: oak with a hive (1.15+).
@@ -590,13 +590,13 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 *   `'twisting_vines'` (1.16)
 *   `'basalt_pillar'` (1.16)
 
-### Standard Structures (1.16.2+)
+### Standard Structures (as of 1.16.2+)
 
 `'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'endcity'`, `'fortress'`, `'igloo'`, 
 `'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'monument'`, `'nether_fossil'`, `'ocean_ruin'`, 
 `'pillager_outpost'`, `'ruined_portal'`, `'shipwreck'`, `'stronghold'`, `'swamp_hut'`, `'village'`
 
-### Structure Variants (1.16.2+)
+### Structure Variants (as of 1.16.2+)
 
 `'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'end_city'`, `'fortress'`, `'igloo'`, 
 `'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'mineshaft_mesa'`, `'monument'`, `'nether_fossil'`,
@@ -605,7 +605,7 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 `'ruined_portal_swamp'`, `'shipwreck'`, `'shipwreck_beached'`, `'stronghold'`, `'swamp_hut'`, 
 `'village_desert'`, `'village_plains'`, `'village_savanna'`, `'village_snovy'`, `'village_taiga'`
 
-### World Generation Features (1.16.2+)
+### World Generation Features (as of 1.16.2+)
 
 `'acacia'`, `'bamboo'`, `'bamboo_light'`, `'bamboo_vegetation'`, `'basalt_blobs'`, `'basalt_pillar'`, 
 `'birch'`, `'birch_bees_0002'`, `'birch_bees_002'`, `'birch_bees_005'`, `'birch_other'`, `'birch_tall'`, 
