@@ -5,16 +5,20 @@ import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
+import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
-import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
+
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
@@ -22,6 +26,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -60,6 +65,8 @@ public class CarpetScriptServer
         registerBuiltInScript(BundledModule.carpetNative("math", true));
         registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
         registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
+        registerBuiltInScript(BundledModule.carpetNative("draw", false));
+        registerBuiltInScript(BundledModule.carpetNative("distance", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
@@ -227,6 +234,78 @@ public class CarpetScriptServer
                     return (int)response.readInteger();
                 });
 
+        
+        List<LazyValue> argv = new ArrayList<LazyValue>();
+        
+        Value retval = Value.NULL;
+
+        try {
+            retval = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("__command"), argv);
+        } catch (InvalidCallbackException e) {}
+     
+        if(retval instanceof MapValue){
+            MapValue comMapVal = (MapValue) retval;
+            
+            Map<Value, Value> comMap = comMapVal.getMap();
+
+            for(Value com : comMap.keySet()) {
+
+                String argStr=com.getString();
+                Messenger.m(source,"w "+argStr);
+                String funName = comMap.get(com).getString();
+                
+                Messenger.m(source,"c "+funName);
+                List<String> argList = Arrays.asList(argStr.split(" "));
+
+                Messenger.m(source,"c "+argList);
+                
+                List<List<String>> argMap = new ArrayList<>();
+                Messenger.m(source,"c "+argMap);
+
+                
+                String subName = argList.remove(0);
+                Messenger.m(source,"w Works?");
+                
+                LiteralArgumentBuilder<ServerCommandSource> arg = literal(subName);//.requires((player) -> modules.containsKey(hostName))
+
+                Messenger.m(source,"w This: "+argStr);
+                Messenger.m(source,"w Corresponds to: "+funName);
+
+                if(modules.get(hostName).getFunction(funName) != null){
+                    for(String argName: argList){
+
+                        int gtIndex = argList.indexOf(argName);
+
+                        if(gtIndex+1==argList.size()){
+                            if(!(argList.get(argList.size()-1).startsWith("<")))
+                                throw new ExpressionException(null, null, "Cannot end command with a literal");
+                            continue;
+                        }
+
+                        switch (argList.get(gtIndex+1)){
+                            case "<int>":{
+                                arg=arg.then(argument(argName,IntegerArgumentType.integer(0)));
+                                argMap.add(Arrays.asList(argName,"intarg"));
+                                break;
+                            }
+                            case "<string>":{
+                                arg=arg.then(argument(argName,StringArgumentType.word()));
+                                argMap.add(Arrays.asList(argName,"strarg"));
+                                break;
+                            }
+                            default:
+                                arg=arg.literal(argName);
+                        }
+                    }
+                }else{
+                    throw new ExpressionException(null, modules.get(hostName).getFunction(funName).getExpression(), "No function found: "+funName);
+                }
+
+            }
+
+        }
+
+        /*
         for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
             command = command.
@@ -246,6 +325,7 @@ public class CarpetScriptServer
                                         return (int)response.readInteger();
                                     })));
         }
+        */
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
