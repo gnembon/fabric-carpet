@@ -183,7 +183,7 @@ __portal_renderer(player_name) ->
                z = ow_z + 8*dz;
                nx = x / 8;
                nz = z / 8;
-               shapes += ['line', shape_duration, 'from', [x,0,z], 'to', [x,255,z], 'line', 5];
+               shapes += ['line', shape_duration, 'from', [x,0,z], 'to', [x,255,z], 'line', 2];
                shapes += ['box', shape_duration, 'from', [x,0,z], 'to', [x+8,255,z+8], 'color', 0x00000000, 'fill', 0xffffff05];
                shapes += ['label', shape_duration, 'pos', [x+4, 1,z+4], 'text', [nx, floor(py), nz], 'follow', p, 'snap', 'y'];
             )
