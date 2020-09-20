@@ -53,7 +53,13 @@ public class Inventories {
         expression.addLazyFunction("item_category", 1, (c, t, lv) ->
         {
             ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
-            Value res = new StringValue(item.getItem().getGroup().getName());
+            Value res;
+            try {
+                res = new StringValue(item.getItem().getGroup().getName());
+            } catch (NullPointerException n) {
+                return LazyValue.NULL;
+            }
+            
             return (_c, _t) -> res;
         });
 
