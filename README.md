@@ -31,9 +31,11 @@ If you want to browse or contribute to the scarpet app store check available app
 
 Have problems with the recent snapshot or someone is slacking with releasing the base carpet mod, but you need some basic carpet functionality, check the minimal build of [quick-carpet](https://github.com/gnembon/quick-carpet/releases). It hopefully works just fine. You will not be able to add any extensions or use scarpet apps on this one though.
 
-## carpet-extension mod
+## Other community-based extensions to carpet
 
-If you want to add your own carpet features or extend scarpet language with some new API, you can create your own carpet extension using this [carpet extension mod template](https://github.com/gnembon/fabric-carpet-extension-example-mod).
+Here is a [list of other carpet extensions](https://github.com/gnembon/fabric-carpet/wiki/List-of-Carpet-extensions) created by the community.
+
+Everybody can create your own carpet features or extend scarpet language with some new API, by creating a carpet extension using this [carpet extension mod template](https://github.com/gnembon/fabric-carpet-extension-example-mod). 
 
 # How? Hwat?
 
