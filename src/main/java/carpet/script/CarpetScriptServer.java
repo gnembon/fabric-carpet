@@ -6,9 +6,11 @@ import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
@@ -23,6 +25,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
+import org.lwjgl.system.CallbackI;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -235,97 +238,52 @@ public class CarpetScriptServer
                 });
 
         
-        List<LazyValue> argv = new ArrayList<LazyValue>();
-        
-        Value retval = Value.NULL;
+        for (String funcName : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        {
+            FunctionValue funcVal = host.getFunction(funcName);
+            List<String> args = funcVal.getArguments();
 
-        try {
-            retval = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("__command"), argv);
-        } catch (InvalidCallbackException e) {}
-     
-        if(retval instanceof MapValue){
-            MapValue comMapVal = (MapValue) retval;
-            
-            Map<Value, Value> comMap = comMapVal.getMap();
+            Value defFuncRetVal;
+            try {
+                defFuncRetVal = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("___"+funcName), new ArrayList<LazyValue>());
+            } catch (InvalidCallbackException e) {continue;}//If doesnt exist then it's not meant to be a command
 
-            for(Value com : comMap.keySet()) {
+            if(!(defFuncRetVal instanceof MapValue))
+                throw new InternalExpressionException("A function starting with '___' should return a map and be linked to a command");
 
-                String argStr=com.getString();
-                Messenger.m(source,"w "+argStr);
-                String funName = comMap.get(com).getString();
-                
-                Messenger.m(source,"c "+funName);
-                List<String> argList = Arrays.asList(argStr.split(" "));
+            Map<Value, Value> argMap = ((MapValue) defFuncRetVal).getMap();
 
-                Messenger.m(source,"c "+argList);
-                
-                List<List<String>> argMap = new ArrayList<>();
-                Messenger.m(source,"c "+argMap);
+            LiteralArgumentBuilder<ServerCommandSource> commandArgs = literal(funcName);
 
-                
-                String subName = argList.remove(0);
-                Messenger.m(source,"w Works?");
-                
-                LiteralArgumentBuilder<ServerCommandSource> arg = literal(subName);//.requires((player) -> modules.containsKey(hostName))
+            commandArgs = commandArgs.then(literal("test").executes((c)-> {
+                Messenger.m(source, "ci test ");
+                return 0;
+            }));
 
-                Messenger.m(source,"w This: "+argStr);
-                Messenger.m(source,"w Corresponds to: "+funName);
-
-                if(modules.get(hostName).getFunction(funName) != null){
-                    for(String argName: argList){
-
-                        int gtIndex = argList.indexOf(argName);
-
-                        if(gtIndex+1==argList.size()){
-                            if(!(argList.get(argList.size()-1).startsWith("<")))
-                                throw new ExpressionException(null, null, "Cannot end command with a literal");
-                            continue;
-                        }
-
-                        switch (argList.get(gtIndex+1)){
-                            case "<int>":{
-                                arg=arg.then(argument(argName,IntegerArgumentType.integer(0)));
-                                argMap.add(Arrays.asList(argName,"intarg"));
-                                break;
-                            }
-                            case "<string>":{
-                                arg=arg.then(argument(argName,StringArgumentType.word()));
-                                argMap.add(Arrays.asList(argName,"strarg"));
-                                break;
-                            }
-                            default:
-                                arg=arg.literal(argName);
-                        }
-                    }
-                }else{
-                    throw new ExpressionException(null, modules.get(hostName).getFunction(funName).getExpression(), "No function found: "+funName);
-                }
-
+            for (String arg:args) {
+                StringValue argType=(StringValue) argMap.getOrDefault(new StringValue(arg),new StringValue("string"));
+                Messenger.m(source,"ci "+arg+": "+argType.getString());
             }
 
-        }
-
-        /*
-        for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
-        {
             command = command.
-                    then(literal(function).
-                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
+                    then(literal(funcName).
+                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null).
                             executes( (c) -> {
                                 Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                        handleCommand(c.getSource(), function,null,"");
+                                        handleCommand(c.getSource(), funcName,null,"");
                                 if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
                                 return (int)response.readInteger();
-                            }).
+                            }).then(commandArgs).
                             then(argument("args...", StringArgumentType.greedyString()).
                                     executes( (c) -> {
                                         Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                                handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                                handleCommand(c.getSource(), funcName,null, StringArgumentType.getString(c, "args..."));
                                         if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
                                         return (int)response.readInteger();
                                     })));
+
         }
-        */
+        
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
