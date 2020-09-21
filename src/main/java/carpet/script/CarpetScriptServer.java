@@ -246,42 +246,73 @@ public class CarpetScriptServer
             Value defFuncRetVal;
             try {
                 defFuncRetVal = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("___"+funcName), new ArrayList<LazyValue>());
-            } catch (InvalidCallbackException e) {continue;}//If doesnt exist then it's not meant to be a command
+            } catch(Exception e){
+                defFuncRetVal = new MapValue();
+            }//I wanted to make it so if doesnt exist then it's not meant to be a command, but then it's not backwards compatible...
 
             if(!(defFuncRetVal instanceof MapValue))
-                throw new InternalExpressionException("A function starting with '___' should return a map and be linked to a command");
-
+                throw new InternalExpressionException("Function ___"+funcName+" should return a map and be tied to the function "+funcName+" to properly define the command");
+            
             Map<Value, Value> argMap = ((MapValue) defFuncRetVal).getMap();
-
-            LiteralArgumentBuilder<ServerCommandSource> commandArgs = literal(funcName);
-
-            commandArgs = commandArgs.then(literal("test").executes((c)-> {
-                Messenger.m(source, "ci test ");
-                return 0;
-            }));
-
+            
+            LiteralArgumentBuilder<ServerCommandSource> commandArgs = literal("test");
+            
             for (String arg:args) {
-                StringValue argType=(StringValue) argMap.getOrDefault(new StringValue(arg),new StringValue("string"));
-                Messenger.m(source,"ci "+arg+": "+argType.getString());
-            }
+                String argType= argMap.getOrDefault(new StringValue(arg),new StringValue("string")).getString(); 
+                Messenger.m(source,"ci "+arg+": "+argType);
+                
+                switch (argType) {
+                    case "number":
+                        commandArgs.then(argument(funcName,IntegerArgumentType.integer(1)))
+                        break;
 
+                    default://do a string argument if not recognised
+                        commandArgs.then(argument(funcName,StringArgumentType.word()))
+                        break;
+                }
+            }
+            
             command = command.
-                    then(literal(funcName).
-                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null).
-                            executes( (c) -> {
+                    then(literal(funcName)
+                            .requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null)
+                            .executes( (c) -> {
                                 Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
                                         handleCommand(c.getSource(), funcName,null,"");
                                 if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
                                 return (int)response.readInteger();
-                            }).then(commandArgs).
-                            then(argument("args...", StringArgumentType.greedyString()).
-                                    executes( (c) -> {
-                                        Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                                handleCommand(c.getSource(), funcName,null, StringArgumentType.getString(c, "args..."));
-                                        if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                                        return (int)response.readInteger();
-                                    })));
+                            })
+                            .then(commandArgs)
+                                .executes( (c) -> {
+                                    String fullArg = "";
+                                    for(String arg:args){
+                                        
+                                        String argType= argMap.getOrDefault(new StringValue(arg),new StringValue("string")).getString(); 
+                                        
+                                        switch (argType) {
+                                            case "number":
+                                                fullArg = fullArg + IntegerArgumentType.getInteger(c, funcName)+" ";
+                                                break;
 
+                                            default://Getting string
+                                                fullArg = fullArg + StringArgumentType.getString(c, funcName)+" ";
+                                                break;
+                                        }
+                                    }
+
+                                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                            handleCommand(c.getSource(), function,null, fullArg);
+                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                                    return (int)response.readInteger();
+                                })
+                            .then(argument("args...", StringArgumentType.greedyString())
+                                .executes( (c) -> {
+                                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                            handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                                    return (int)response.readInteger();
+                                })
+                            )
+            );
         }
         
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
