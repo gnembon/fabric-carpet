@@ -21,10 +21,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 
+import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import org.lwjgl.system.CallbackI;
 
 import java.io.File;
@@ -255,64 +257,63 @@ public class CarpetScriptServer
             
             Map<Value, Value> argMap = ((MapValue) defFuncRetVal).getMap();
             
-            LiteralArgumentBuilder<ServerCommandSource> commandArgs = literal("test");
+            command.then(literal(funcName)
+                .requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null)
+                .executes( (c) -> {
+                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                            handleCommand(c.getSource(), funcName,null,"");
+                    if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
+                    return (int)response.readInteger();
+                }));
             
             for (String arg:args) {
                 String argType= argMap.getOrDefault(new StringValue(arg),new StringValue("string")).getString(); 
                 Messenger.m(source,"ci "+arg+": "+argType);
-                
+
                 switch (argType) {
                     case "number":
-                        commandArgs.then(argument(funcName,IntegerArgumentType.integer(1)));
+                        command.then(argument(arg,IntegerArgumentType.integer(1)));
+                        break;
+
+                    case "pos":
+                        command.then(argument(arg, Vec3ArgumentType.vec3(true)));
                         break;
 
                     default://do a string argument if not recognised
-                        commandArgs.then(argument(funcName,StringArgumentType.word()));
+                        command.then(argument(arg,StringArgumentType.word()));
                         break;
                 }
             }
             
-            command = command.
-                    then(literal(funcName)
-                            .requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null)
-                            .executes( (c) -> {
-                                Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                        handleCommand(c.getSource(), funcName,null,"");
-                                if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
-                                return (int)response.readInteger();
-                            })
-                            .then(commandArgs)
-                                .executes( (c) -> {
+            command = command.executes((c) -> {
+                                    Messenger.m(source,"ci executed");
                                     String fullArg = "";
                                     for(String arg:args){
                                         
                                         String argType= argMap.getOrDefault(new StringValue(arg),new StringValue("string")).getString(); 
+                                        Messenger.m(source,"ci "+arg+": "+argType); 
                                         
                                         switch (argType) {
                                             case "number":
-                                                fullArg = fullArg + IntegerArgumentType.getInteger(c, funcName)+" ";
+                                                fullArg = fullArg + IntegerArgumentType.getInteger(c, arg)+" ";
+                                                break;
+
+                                            case "pos":
+                                                Vec3d pos = Vec3ArgumentType.getVec3(c, arg);
+                                                fullArg = fullArg + pos.x+ " " + pos.y + " " + pos.z+ " ";
                                                 break;
 
                                             default://Getting string
-                                                fullArg = fullArg + StringArgumentType.getString(c, funcName)+" ";
+                                                fullArg = fullArg + StringArgumentType.getString(c, arg)+" ";
                                                 break;
                                         }
                                     }
 
                                     Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                            handleCommand(c.getSource(), function,null, fullArg);
+                                            handleCommand(c.getSource(), funcName,null, fullArg);
                                     if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
                                     return (int)response.readInteger();
-                                })
-                            .then(argument("args...", StringArgumentType.greedyString())
-                                .executes( (c) -> {
-                                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                            handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
-                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                                    return (int)response.readInteger();
-                                })
-                            )
-            );
+                                });
         }
         
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
