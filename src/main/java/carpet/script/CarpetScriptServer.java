@@ -263,11 +263,11 @@ public class CarpetScriptServer
                 
                 switch (argType) {
                     case "number":
-                        commandArgs.then(argument(funcName,IntegerArgumentType.integer(1)))
+                        commandArgs.then(argument(funcName,IntegerArgumentType.integer(1)));
                         break;
 
                     default://do a string argument if not recognised
-                        commandArgs.then(argument(funcName,StringArgumentType.word()))
+                        commandArgs.then(argument(funcName,StringArgumentType.word()));
                         break;
                 }
             }
