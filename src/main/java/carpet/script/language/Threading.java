@@ -15,13 +15,23 @@ public class Threading
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, true, false);
-            Value queue = Value.NULL;
-            if (lv.size() > functionArgument.offset) queue = lv.get(functionArgument.offset).evalValue(c);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, true, true);
+            ThreadValue thread = new ThreadValue(Value.NULL, functionArgument.function, expr, tok, c, functionArgument.args);
+            Thread.yield();
+            return (cc, tt) -> thread;
+        });
+
+        expression.addLazyFunctionWithDelegation("task_thread", -1, (c, t, expr, tok, lv) ->
+        {
+            if (lv.size() < 2)
+                throw new InternalExpressionException("'task' requires at least function to call as a parameter");
+            Value queue = lv.get(0).evalValue(c);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, true, true);
             ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.args);
             Thread.yield();
             return (cc, tt) -> thread;
         });
+
 
         expression.addFunction("task_count", (lv) ->
         {

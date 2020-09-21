@@ -100,22 +100,21 @@ from other threads, just because the only possibility of a deadlock in this case
 bad code, not the internal world access behaviour. Some things tough like player or entity manipulation, can be 
 effectively parallelized.
 
-### `task(function, ?args...., ?executor)`
+### `task(function, ... args)`, `task_thread(executor, function, ... args)`
 
 Creates and runs a parallel task, returning the handle to the task object. Task will return the return value of the 
 function when its completed, or will return `null` immediately if task is still in progress, so grabbing a value of 
 a task object is non-blocking. Function can be either function value, or function lambda, or a name of an existing 
 defined function. In case function needs arguments to be called with, they should be supplied after the function 
-name, or value. Optional `executor` identifier is to place the task in a specific queue identified by this value. 
-The default thread value is the `null` thread. There is no limits on number of parallel tasks for any executor, 
-so using different queues is solely for synchronization purposes. Also, since `task` function knows how many extra 
-arguments it requires, the use of tailing optional parameter for the custom executor thread pool is not ambiguous.
+name, or value. `executor` identifier in `task_thread`, places the task in a specific queue identified by this value. 
+The default thread value is the `null` thread. There are no limits on number of parallel tasks for any executor, 
+so using different queues is solely for synchronization purposes.
 
 <pre>
 task( _() -> print('Hello Other World') )  => Runs print command on a separate thread
 foo(a, b) -> print(a+b); task('foo',2,2)  => Uses existing function definition to start a task
-task('foo',3,5,'temp');  => runs function foo with a different thread executor, identified as 'temp'
-a = 3; task( _(outer(a), b) -> foo(a,b), 5, 'temp')  
+task_thread('temp', 'foo',3,5);  => runs function foo with a different thread executor, identified as 'temp'
+a = 3; task_thread('temp', _(outer(a), b) -> foo(a,b), 5)  
     => Another example of running the same thing passing arguments using closure over anonymous function as well as passing a parameter.
 </pre>
 
