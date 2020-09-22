@@ -8,7 +8,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.value.FunctionSignatureValue;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.GlobalValue;
+import carpet.script.value.FunctionAnnotationValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
@@ -43,7 +43,7 @@ public class Functions {
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
-                FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
+                FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false);
                 FunctionValue fun = functionArgument.function;
                 Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
                 return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
@@ -52,6 +52,7 @@ public class Functions {
             String name = lv.get(0).evalValue(c).getString();
             List<String> args = new ArrayList<>();
             List<String> globals = new ArrayList<>();
+            String varArgs = null;
             for (int i = 1; i < lv.size(); i++)
             {
                 Value v = lv.get(i).evalValue(c, Context.LOCALIZATION);
@@ -59,27 +60,44 @@ public class Functions {
                 {
                     throw new InternalExpressionException("Only variables can be used in function signature, not  " + v.getString());
                 }
-                if (v instanceof GlobalValue)
+                if (v instanceof FunctionAnnotationValue)
                 {
-                    globals.add(v.boundVariable);
+                    if (((FunctionAnnotationValue) v).type == 0)
+                    {
+                        globals.add(v.boundVariable);
+                    }
+                    else
+                    {
+                        if (varArgs != null)
+                            throw new InternalExpressionException("Variable argument identifier is already defined as "+varArgs+", trying to overwrite with "+v.boundVariable);
+                        varArgs = v.boundVariable;
+                    }
                 }
                 else
                 {
                     args.add(v.boundVariable);
                 }
             }
-            Value retval = new FunctionSignatureValue(name, args, globals);
+            Value retval = new FunctionSignatureValue(name, args, varArgs, globals);
             return (cc, tt) -> retval;
         });
 
-        expression.addLazyFunction("outer", 1, (c, t, lv) -> {
+        expression.addLazyFunction("outer", 1, (c, t, lv) ->
+        {
             if (t != Context.LOCALIZATION)
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures");
-            return (cc, tt) -> new GlobalValue(lv.get(0).evalValue(c));
+            return (cc, tt) -> new FunctionAnnotationValue(lv.get(0).evalValue(c), 0);
+        });
+
+        expression.addLazyUnaryOperator("...", Operators.precedence.get("def->..."), false, (c, t, lv) ->
+        {
+            if (t != Context.LOCALIZATION)
+                throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures");
+            return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), 1);
         });
 
         //assigns const procedure to the lhs, returning its previous value
-        expression.addLazyBinaryOperatorWithDelegation("->", Operators.precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
+        expression.addLazyBinaryOperatorWithDelegation("->", Operators.precedence.get("def->..."), false, (c, type, e, t, lv1, lv2) ->
         {
             if (type == Context.MAPDEF)
             {
@@ -90,7 +108,7 @@ public class Functions {
             if (!(v1 instanceof FunctionSignatureValue))
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
             FunctionSignatureValue sign = (FunctionSignatureValue) v1;
-            Value result = expression.addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getGlobals(), lv2);
+            Value result = expression.addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getVarArgs(), sign.getGlobals(), lv2);
             return (cc, tt) -> result;
         });
 

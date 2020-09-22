@@ -29,7 +29,7 @@ public class Operators {
         put("and&&", 5);
         put("or||", 4);
         put("assign=<>", 3);
-        put("def->", 2);
+        put("def->...", 2);
         put("nextop;", 1);
     }};
 

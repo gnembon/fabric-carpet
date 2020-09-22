@@ -8,7 +8,6 @@ import carpet.script.Tokenizer;
 import carpet.script.bundled.Module;
 import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
-import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
@@ -20,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class FunctionValue extends Value implements Fluff.ILazyFunction
@@ -30,27 +30,30 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     private LazyValue body;
     private Map<String, LazyValue> outerState;
     private List<String> args;
+    private String varArgs;
     private static long variantCounter = 1;
     private long variant;
 
-    private FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args)
+    private FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs)
     {
         this.expression = expression;
         this.token = token;
         this.name = name;
         this.body = body;
         this.args = args;
+        this.varArgs = varArgs;
         this.outerState = null;
         variant = 0L;
     }
 
-    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, Map<String, LazyValue> outerState)
+    public FunctionValue(Expression expression, Tokenizer.Token token, String name, LazyValue body, List<String> args, String varArgs, Map<String, LazyValue> outerState)
     {
         this.expression = expression;
         this.token = token;
         this.name = name;
         this.body = body;
         this.args = args;
+        this.varArgs = varArgs;
         this.outerState = outerState;
         variant = variantCounter++;
     }
@@ -84,7 +87,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     protected Value clone()
     {
-        FunctionValue ret = new FunctionValue(expression, token, name, body, args);
+        FunctionValue ret = new FunctionValue(expression, token, name, body, args, varArgs);
         ret.outerState = this.outerState;
         ret.variant = this.variant;
         return ret;
@@ -146,7 +149,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     public boolean numParamsVaries()
     {
-        return false;
+        return varArgs != null;
     }
 
     public LazyValue callInContext(Expression callingExpression, Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
@@ -175,22 +178,43 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
     {
-        if (args.size() != lazyParams.size()) // something that might be subject to change in the future
-                                              // in case we add variable arguments
-        {
-            throw new ExpressionException(c, e, t,
-                    "Incorrect number of arguments for function "+name+
-                            ". Should be "+args.size()+", not "+lazyParams.size()+" like "+args
-            );
-        }
+        assertArgsOk(lazyParams.size(), (fixedArgs) ->{
+            if (fixedArgs)  // wrong number of args for fixed args
+            {
+                throw new ExpressionException(c, e, t,
+                        "Incorrect number of arguments for function "+name+
+                                ". Should be "+args.size()+", not "+lazyParams.size()+" like "+args
+                );
+            }
+            else  // too few args for varargs
+            {
+                List<String> argList = new ArrayList<>(args);
+                argList.add("... "+varArgs);
+                throw new ExpressionException(c, e, t,
+                        "Incorrect number of arguments for function "+name+
+                                ". Should be at least "+args.size()+", not "+lazyParams.size()+" like "+argList
+                );
+            }
+        });
         Context newFrame = c.recreate();
 
         if (outerState != null) outerState.forEach(newFrame::setVariable);
         for (int i=0; i<args.size(); i++)
         {
             String arg = args.get(i);
-            Value val = lazyParams.get(i).evalValue(c).reboundedTo(arg);
+            Value val = lazyParams.get(i).evalValue(c).reboundedTo(arg); // todo check if we need to copy that
             newFrame.setVariable(arg, (cc, tt) -> val);
+        }
+        if (varArgs != null)
+        {
+            List<Value> extraParams = new ArrayList<>();
+            for (int i = args.size(), mx = lazyParams.size(); i < mx; i++)
+            {
+                extraParams.add(lazyParams.get(i).evalValue(c).reboundedTo(null)); // copy by value I guess
+            }
+            Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
+            newFrame.setVariable(varArgs, (cc, tt) -> rest);
+
         }
         Value retVal;
         boolean rethrow = false;
@@ -211,10 +235,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             retVal = throwStatement.retval;
             rethrow = true;
         }
-        //catch (ArithmeticException | ExitStatement | ExpressionException | InternalExpressionException exc )
-        //{
-        //    throw exc; // rethrow so could be contextualized if needed
-        //}
         if (rethrow)
         {
             throw new ThrowStatement(retVal);
@@ -235,11 +255,25 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     {
         return args;
     }
+    public String getVarArgs() {return varArgs; }
 
     @Override
     public Tag toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return StringTag.of(getString());
+    }
+
+    public void assertArgsOk(int size, Consumer<Boolean> feedback)
+    {
+        if (varArgs == null &&  args.size() != size) // wrong number of args for fixed args
+        {
+            feedback.accept(true);
+
+        }
+        else if (varArgs != null &&  args.size() > size) // too few args for varargs
+        {
+            feedback.accept(false);
+        }
     }
 }

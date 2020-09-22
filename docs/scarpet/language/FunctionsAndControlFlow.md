@@ -63,10 +63,11 @@ call creates new scope for variables inside `expr`, so all non-global variables 
 scope. All parameters are passed by value to the new scope, including lists and other containers, however their 
 copy will be shallow.
 
-The function returns its name as a string, which means it can be used to call it later with the `call` function
+The function returns itself as a first class object, which means it can be used to call it later with the `call` function
 
 Using `_` as the function name creates anonymous function, so each time `_` function is defined, it will be given 
-a unique name, which you can pass somewhere else to get this function `call`ed.
+a unique name, which you can pass somewhere else to get this function `call`ed. Anonymous functions can only be called
+by their value and `call` method.
 
 <pre>
 a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
@@ -83,7 +84,7 @@ arguments to a tuple which is used by map constructor as a key-value pair:
 </pre>
 
 This means that it is not possible to define literally a set of inline function, however a set of functions can still
-be created by adding elements to an empty set, and building it this way.
+be created by adding elements to an empty set, and building it this way. That's a tradeoff for having a cool map initializer.
 
 ### `outer(arg)`
 
@@ -107,6 +108,23 @@ a(lst) -> lst+=1; list = l(1,2,3); list=a(list); list=a(list); list  // => [1,2,
 
 Ability to combine more statements into one expression, with functions, passing parameters, and global and outer 
 scoping allow to organize even larger scripts
+
+### `Operator ...`
+
+Defines a function argument to represent a variable length argument list of whatever arguments are left
+from the argument call list, also known as a varargs. There can be only one defined vararg argument in a function signature.
+Technically, it doesn't matter where is it, but it looks best at the butt side of it.
+
+<pre>
+foo(a, b, c) -> ...  # fixed argument function, call foo(1, 2, 3)
+foo(a, b, ... c) -> ... # c is now representing the variable argument part
+    foo(1, 2)  # a:1, b:2, c:[]
+    foo(1, 2, 3)  # a:1, b:2, c:[3]
+    foo(1, 2, 3, 4)  # a:1, b:2, c:[3, 4] 
+foo(... x) -> ...  # all arguments for foo are included in the list
+
+    
+</pre>
 
 ### `import(module_name, symbols ...)`
 

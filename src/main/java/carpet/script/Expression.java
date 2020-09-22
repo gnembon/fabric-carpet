@@ -339,7 +339,7 @@ public class Expression
             }
         });
     }
-    public FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, List<String> outers, LazyValue code)
+    public FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, String varArgs, List<String> outers, LazyValue code)
     {
         if (functions.containsKey(name))
             throw new ExpressionException(context, expr, token, "Function "+name+" would mask a built-in function");
@@ -358,7 +358,7 @@ public class Expression
         }
         if (contextValues.isEmpty()) contextValues = null;
 
-        FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, contextValues);
+        FunctionValue result =  new FunctionValue(expr, token, name, code, arguments, varArgs, contextValues);
         // do not store lambda definitions
         if (!name.equals("_")) context.host.addUserDefinedFunction(context, module, name, result);
         return result;

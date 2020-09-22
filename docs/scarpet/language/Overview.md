@@ -146,7 +146,7 @@ around built-in function `outer`. It adds the specified value to the function ca
 like capturing lambdas in Java, but unlike java captured variables don't need to be final. Scarpet will just 
 attach their new values at the time of the function definition, even if they change later. Most value will be 
 copied, but mutable values, like maps or lists, allow to keep the 'state' with the function, allowing them to 
-have memory and act like objects so to speak. . Check `outer(var)` for details.
+have memory and act like objects so to speak. Check `outer(var)` for details.
 
 ## Code delivery, line indicators
 

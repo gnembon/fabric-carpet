@@ -146,7 +146,7 @@ around built-in function `outer`. It adds the specified value to the function ca
 like capturing lambdas in Java, but unlike java captured variables don't need to be final. Scarpet will just 
 attach their new values at the time of the function definition, even if they change later. Most value will be 
 copied, but mutable values, like maps or lists, allow to keep the 'state' with the function, allowing them to 
-have memory and act like objects so to speak. . Check `outer(var)` for details.
+have memory and act like objects so to speak. Check `outer(var)` for details.
 
 ## Code delivery, line indicators
 
@@ -767,22 +767,21 @@ from other threads, just because the only possibility of a deadlock in this case
 bad code, not the internal world access behaviour. Some things tough like player or entity manipulation, can be 
 effectively parallelized.
 
-### `task(function, ?args...., ?executor)`
+### `task(function, ... args)`, `task_thread(executor, function, ... args)`
 
 Creates and runs a parallel task, returning the handle to the task object. Task will return the return value of the 
 function when its completed, or will return `null` immediately if task is still in progress, so grabbing a value of 
 a task object is non-blocking. Function can be either function value, or function lambda, or a name of an existing 
 defined function. In case function needs arguments to be called with, they should be supplied after the function 
-name, or value. Optional `executor` identifier is to place the task in a specific queue identified by this value. 
-The default thread value is the `null` thread. There is no limits on number of parallel tasks for any executor, 
-so using different queues is solely for synchronization purposes. Also, since `task` function knows how many extra 
-arguments it requires, the use of tailing optional parameter for the custom executor thread pool is not ambiguous.
+name, or value. `executor` identifier in `task_thread`, places the task in a specific queue identified by this value. 
+The default thread value is the `null` thread. There are no limits on number of parallel tasks for any executor, 
+so using different queues is solely for synchronization purposes.
 
 <pre>
 task( _() -> print('Hello Other World') )  => Runs print command on a separate thread
 foo(a, b) -> print(a+b); task('foo',2,2)  => Uses existing function definition to start a task
-task('foo',3,5,'temp');  => runs function foo with a different thread executor, identified as 'temp'
-a = 3; task( _(outer(a), b) -> foo(a,b), 5, 'temp')  
+task_thread('temp', 'foo',3,5);  => runs function foo with a different thread executor, identified as 'temp'
+a = 3; task_thread('temp', _(outer(a), b) -> foo(a,b), 5)  
     => Another example of running the same thing passing arguments using closure over anonymous function as well as passing a parameter.
 </pre>
 
@@ -1274,10 +1273,11 @@ call creates new scope for variables inside `expr`, so all non-global variables 
 scope. All parameters are passed by value to the new scope, including lists and other containers, however their 
 copy will be shallow.
 
-The function returns its name as a string, which means it can be used to call it later with the `call` function
+The function returns itself as a first class object, which means it can be used to call it later with the `call` function
 
 Using `_` as the function name creates anonymous function, so each time `_` function is defined, it will be given 
-a unique name, which you can pass somewhere else to get this function `call`ed.
+a unique name, which you can pass somewhere else to get this function `call`ed. Anonymous functions can only be called
+by their value and `call` method.
 
 <pre>
 a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
@@ -1294,7 +1294,7 @@ arguments to a tuple which is used by map constructor as a key-value pair:
 </pre>
 
 This means that it is not possible to define literally a set of inline function, however a set of functions can still
-be created by adding elements to an empty set, and building it this way.
+be created by adding elements to an empty set, and building it this way. That's a tradeoff for having a cool map initializer.
 
 ### `outer(arg)`
 
@@ -1318,6 +1318,23 @@ a(lst) -> lst+=1; list = l(1,2,3); list=a(list); list=a(list); list  // => [1,2,
 
 Ability to combine more statements into one expression, with functions, passing parameters, and global and outer 
 scoping allow to organize even larger scripts
+
+### `Operator ...`
+
+Defines a function argument to represent a variable length argument list of whatever arguments are left
+from the argument call list, also known as a varargs. There can be only one defined vararg argument in a function signature.
+Technically, it doesn't matter where is it, but it looks best at the butt side of it.
+
+<pre>
+foo(a, b, c) -> ...  # fixed argument function, call foo(1, 2, 3)
+foo(a, b, ... c) -> ... # c is now representing the variable argument part
+    foo(1, 2)  # a:1, b:2, c:[]
+    foo(1, 2, 3)  # a:1, b:2, c:[3]
+    foo(1, 2, 3, 4)  # a:1, b:2, c:[3, 4] 
+foo(... x) -> ...  # all arguments for foo are included in the list
+
+    
+</pre>
 
 ### `import(module_name, symbols ...)`
 
@@ -2155,13 +2172,13 @@ structures and features. List of available options and names that you can use de
 with minecraft 1.16.1 and below or 1.16.2 and above since in 1.16.2 Mojang has added JSON support for worldgen features
 meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet
 
-### Previous Structure Names, including variants (MC 1.16.1 and below)
+### Previous Structure Names, including variants (as of MC 1.16.3)
 *   `'monument'`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
 *   `'fortress'`: Nether Fortress. Altitude varies, but its bounded by the code.
 *   `'mansion'`: Woodland Mansion
 *   `'jungle_temple'`: Jungle Temple
 *   `'desert_temple'`: Desert Temple. Generates at fixed Y altitude.
-*   `'end_city'`: End City with Shulkers
+*   `'endcity'`: End City with Shulkers (in 1.16.1- as `'end_city`)
 *   `'igloo'`: Igloo
 *   `'shipwreck'`: Shipwreck
 *   `'shipwreck2'`: Shipwreck, beached
@@ -2185,7 +2202,7 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 *   `'bastion_remnant_treasure'`: Treasure room version of a piglin bastion (1.16)
 *   `'bastion_remnant_bridge'` : Bridge version of a piglin bastion (1.16)
 
-### Feature Names (mc1.16.1-) 
+### Feature Names (as of mc1.16.1) 
 
 *   `'oak'`
 *   `'oak_beehive'`: oak with a hive (1.15+).
@@ -2249,13 +2266,13 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 *   `'twisting_vines'` (1.16)
 *   `'basalt_pillar'` (1.16)
 
-### Standard Structures (1.16.2+)
+### Standard Structures (as of 1.16.2+)
 
 `'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'endcity'`, `'fortress'`, `'igloo'`, 
 `'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'monument'`, `'nether_fossil'`, `'ocean_ruin'`, 
 `'pillager_outpost'`, `'ruined_portal'`, `'shipwreck'`, `'stronghold'`, `'swamp_hut'`, `'village'`
 
-### Structure Variants (1.16.2+)
+### Structure Variants (as of 1.16.2+)
 
 `'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'end_city'`, `'fortress'`, `'igloo'`, 
 `'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'mineshaft_mesa'`, `'monument'`, `'nether_fossil'`,
@@ -2264,7 +2281,7 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 `'ruined_portal_swamp'`, `'shipwreck'`, `'shipwreck_beached'`, `'stronghold'`, `'swamp_hut'`, 
 `'village_desert'`, `'village_plains'`, `'village_savanna'`, `'village_snovy'`, `'village_taiga'`
 
-### World Generation Features (1.16.2+)
+### World Generation Features (as of 1.16.2+)
 
 `'acacia'`, `'bamboo'`, `'bamboo_light'`, `'bamboo_vegetation'`, `'basalt_blobs'`, `'basalt_pillar'`, 
 `'birch'`, `'birch_bees_0002'`, `'birch_bees_002'`, `'birch_bees_005'`, `'birch_other'`, `'birch_tall'`, 
@@ -3397,6 +3414,7 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec)  /
 __on_player_interacts_with_block(player, hand, block, face, hitvec)  //right click on a block resulted in activation of said block
 __on_player_places_block(player, item_tuple, hand, block) // player have just placed the block.
 __on_player_interacts_with_entity(player, entity, hand)
+__on_player_collides_with_entity(player, entity)
 __on_player_chooses_recipe(player, recipe, full_stack)
 __on_player_switches_slot(player, from, to)
 __on_player_swaps_hands(player)

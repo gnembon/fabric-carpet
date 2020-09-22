@@ -87,6 +87,7 @@ task_completed
 task_count
 task_dock
 task_join
+task_thread
 task_value
 throw
 time

@@ -1,6 +1,5 @@
 package carpet.script.argument;
 
-import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.LazyValue;
 import carpet.script.bundled.Module;
@@ -22,7 +21,7 @@ public class FunctionArgument extends Argument
         this.function = function;
         this.args = args;
     }
-    public static FunctionArgument findIn(Context c, Module module, List<LazyValue> params, int offset, boolean prematureEvaluation, boolean strict)
+    public static FunctionArgument findIn(Context c, Module module, List<LazyValue> params, int offset, boolean prematureEvaluation)
     {
         Value functionValue = params.get(offset).evalValue(c);
         if (!(functionValue instanceof FunctionValue))
@@ -33,20 +32,22 @@ public class FunctionArgument extends Argument
         FunctionValue fun = (FunctionValue)functionValue;
         int argsize = fun.getArguments().size();
         int extraargs = params.size() - argsize - offset - 1;
-        if (extraargs < 0 || (extraargs > 0 && strict))
+        if (extraargs < 0)
+            throw new InternalExpressionException("Function "+fun.getPrettyString()+" requires at least "+fun.getArguments().size()+" arguments");
+        if (extraargs > 0 && fun.getVarArgs()==null)
             throw new InternalExpressionException("Function "+fun.getPrettyString()+" requires "+fun.getArguments().size()+" arguments");
         List<LazyValue> lvargs = new ArrayList<>();
         if (prematureEvaluation)
         {
-            for (int i = 0; i < argsize; i++)
+            for (int i = offset+1, mx = params.size(); i < mx; i++)
             {
-                Value arg = params.get(offset + 1 + i).evalValue(c);
+                Value arg = params.get(i).evalValue(c);
                 lvargs.add((cc, tt) -> arg);
             }
         }
         else
         {
-            for (int i = 0; i < argsize; i++) lvargs.add(params.get(offset + 1 + i));
+            for (int i = offset+1, mx = params.size(); i < mx; i++) lvargs.add(params.get(i));
         }
         return new FunctionArgument(fun, offset+1+argsize, lvargs);
     }

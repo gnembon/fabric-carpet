@@ -7,11 +7,13 @@ public class FunctionSignatureValue extends FrameworkValue
     private String identifier;
     private List<String> arguments;
     private List<String> globals;
+    private String varArgs;
 
-    public FunctionSignatureValue(String name, List<String> args, List<String> globals)
+    public FunctionSignatureValue(String name, List<String> args, String varArgs, List<String> globals)
     {
         this.identifier = name;
         this.arguments = args;
+        this.varArgs = varArgs;
         this.globals = globals;
     }
     public String getName()
@@ -25,6 +27,5 @@ public class FunctionSignatureValue extends FrameworkValue
     public List<String> getGlobals() {return globals;}
 
 
-
-
+    public String getVarArgs() { return varArgs;}
 }

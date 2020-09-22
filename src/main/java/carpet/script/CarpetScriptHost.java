@@ -309,7 +309,12 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (CarpetServer.scriptServer.stopAll)
             return Value.NULL;
-        if (argv.size() != fun.getArguments().size())
+        try { // cause we can't throw checked exceptions in lambda. Left if be until need to handle these more gracefully
+            fun.assertArgsOk(argv.size(), (b) -> {
+                throw new InternalExpressionException("");
+            });
+        }
+        catch (InternalExpressionException ignored)
         {
             throw new InvalidCallbackException();
         }
