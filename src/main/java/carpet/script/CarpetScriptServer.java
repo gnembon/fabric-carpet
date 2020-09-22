@@ -250,7 +250,7 @@ public class CarpetScriptServer
                 defFuncRetVal = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("___"+funcName), new ArrayList<LazyValue>());
             } catch(Exception e){
                 continue;
-            }//I wanted to make it so if doesnt exist then it's not meant to be a command, but then it's not backwards compatible...
+            }//If doesnt exist then it's not meant to be a command. todo make it backwards compatible later, but this makes it more user friendly
 
             if(!(defFuncRetVal instanceof MapValue))
                 throw new InternalExpressionException("Function ___"+funcName+" should return a map and be tied to the function "+funcName+" to properly define the command");
