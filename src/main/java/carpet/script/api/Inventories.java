@@ -54,11 +54,12 @@ public class Inventories {
         {
             ItemStackArgument item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString());
             Value res;
-            try {
-                res = new StringValue(item.getItem().getGroup().getName());
-            } catch (NullPointerException n) {
+
+            if(item.getItem().getGroup().getName()==null)
                 return LazyValue.NULL;
-            }
+
+            res = new StringValue(item.getItem().getGroup().getName());
+
             
             return (_c, _t) -> res;
         });
