@@ -6,11 +6,11 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 import net.minecraft.world.chunk.light.LevelPropagator;
 
 @Mixin(LevelPropagator.class)
-public interface LevelPropagatorInterface
+public interface LevelPropagator_resetChunkInterface
 {
     @Invoker("updateLevel")
-    void invokeUpdateLevel(long sourceId, long id, int level, boolean decrease);
+    void cmInvokeUpdateLevel(long sourceId, long id, int level, boolean decrease);
 
     @Invoker("getPropagatedLevel")
-    int callGetPropagatedLevel(long sourceId, long targetId, int level);
+    int cmCallGetPropagatedLevel(long sourceId, long targetId, int level);
 }

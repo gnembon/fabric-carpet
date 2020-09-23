@@ -59,7 +59,7 @@ public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightSto
     @Override
     public void processRelight(final ChunkLightProvider<?, ?> lightProvider, final long cPos)
     {
-        final LevelPropagatorInterface levelPropagator = (LevelPropagatorInterface) lightProvider;
+        final LevelPropagator_resetChunkInterface levelPropagator = (LevelPropagator_resetChunkInterface) lightProvider;
 
         for (int y = -1; y < 17; ++y)
         {
@@ -101,7 +101,7 @@ public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightSto
                             ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, src)
                             : this.isSectionEnabled(ChunkSectionPos.withZeroY(neighborCeilingSectionPos)) ? 0 : 15;
 
-                        levelPropagator.invokeUpdateLevel(src, dst, levelPropagator.callGetPropagatedLevel(src, dst, srcLevel), true);
+                        levelPropagator.cmInvokeUpdateLevel(src, dst, levelPropagator.cmCallGetPropagatedLevel(src, dst, srcLevel), true);
                     }
             }
         }

@@ -36,7 +36,7 @@
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
     "ServerLightingProvider_scarpetMixin",
-	"LevelPropagatorInterface",
+    "LevelPropagator_resetChunkInterface",
 	"ChunkTicketManager_scarpetChunkCreationMixin",
 	"LightingProvider_scarpetChunkCreationMixin",
 	"ChunkLightProvider_scarpetChunkCreationMixin",
