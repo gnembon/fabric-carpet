@@ -416,7 +416,21 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         };
-        // todo PlayerInventory.insertStack... for definite item inventory pickup, when result protocol has be set
+        public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, false)
+        {
+            @Override
+            public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) {
+                handler.call( () ->
+                {
+                    //ItemStack itemstack = player.getStackInHand(enumhand);
+                    return Arrays.asList(
+                            ((c, t) -> new EntityValue(player)),
+                            ((c, t) -> ListValue.fromItemStack(itemstack))
+                    );
+                }, player::getCommandSource);
+            }
+        };
+
         public static final Event PLAYER_ATTACKS_ENTITY = new Event("player_attacks_entity", 2, false)
         {
             @Override

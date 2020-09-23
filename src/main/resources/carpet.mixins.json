@@ -163,6 +163,7 @@
     "FallingBlockEntity_scarpetEventsMixin",
     "BlockItem_scarpetEventMixin",
     "PlayerManager_scarpetEventsMixin",
+    "PlayerInventory_scarpetEventMixin",
 
     "ChunkTicketManager_scarpetMixin",
     "StatType_scarpetMixin",

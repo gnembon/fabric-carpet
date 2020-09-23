@@ -90,6 +90,7 @@
                 __on_player_clicks_block
                 __on_player_changes_dimension
                 __on_player_chooses_recipe
+                __on_player_collides_with_entity
                 __on_player_deploys_elytra
                 __on_player_drops_item
                 __on_player_drops_stack
@@ -97,6 +98,7 @@
                 __on_player_interacts_with_block
                 __on_player_interacts_with_entity
                 __on_player_jumps
+                __on_player_picks_up_item
                 __on_player_places_block
                 __on_player_releases_item
                 __on_player_rides

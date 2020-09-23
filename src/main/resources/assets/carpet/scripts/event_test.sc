@@ -14,7 +14,7 @@ __on_player_deploys_elytra(player) -> (
 __on_player_wakes_up(player) -> (
     print('');
     print('__on_player_wakes_up(player)');
-    print('Player '+player+' wakes up. Lemme know when this starts working')
+    print('Player '+player+' wakes up')
 );
 
 __on_player_rides(player, forward, strafe, jumping, sneaking) ->
@@ -271,9 +271,18 @@ __on_player_swaps_hands(player) -> (
     print(' Player '+player+' swaps hands.')
 );
 
-__on_player_collides_with_entity(player, entity) ->
+// too much spam
+//__on_player_collides_with_entity(player, entity) ->
+//(
+//    print('');
+//    print('__on_player_collides_with_entity(player, entity)');
+//    print(' Player '+player+' collides with '+entity);
+//);
+
+__on_player_picks_up_item(player, item) ->
 (
     print('');
-    print('__on_player_collides_with_entity(player, entity)');
-    print(' Player '+player+' collides with '+entity);
-)
+    print('__on_player_picks_up_item(player, item)');
+    print(' Player '+player+' injects '+item);
+);
+
