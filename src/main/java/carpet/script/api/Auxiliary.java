@@ -472,7 +472,7 @@ public class Auxiliary {
                 Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
                         new ServerCommandSource(
                                 CommandOutput.DUMMY, posf, Vec2f.ZERO, s.getWorld(), CarpetSettings.runPermissionLevel,
-                                s.getName(), s.getDisplayName(), s.getMinecraftServer(), s.getPlayer(), true,
+                                s.getName(), s.getDisplayName(), s.getMinecraftServer(), s.getEntity(), true,
                                 (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET)
                         {
                             @Override
