@@ -29,7 +29,7 @@ public abstract class PlayerInventory_scarpetEventMixin
         Item item = stack.getItem();
         int count = stack.getCount();
         boolean res = playerInventory.insertStack(-1, stack);
-        if (res)
+        if (count != stack.getCount()) // res returns false for larger item adding to a almost full ineventory
         {
             ItemStack diffStack = new ItemStack(item, count - stack.getCount());
             diffStack.setTag(stack.getTag());

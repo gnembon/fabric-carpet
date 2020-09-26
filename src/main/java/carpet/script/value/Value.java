@@ -5,6 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.nbt.Tag;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -145,7 +147,16 @@ public abstract class Value implements Comparable<Value>, Cloneable
     {
         final Pattern p = Pattern.compile(value1.getString());
         final Matcher m = p.matcher(this.getString());
-        return m.find()?new StringValue(m.group()):Value.NULL;
+        if (!m.find()) return Value.NULL;
+        int gc = m.groupCount();
+        if (gc == 0) return new StringValue(m.group());
+        if (gc == 1) return new StringValue(m.group(1));
+        List<Value> groups = new ArrayList<>(gc);
+        for (int i = 1; i <= gc; i++)
+        {
+            groups.add(new StringValue(m.group(i)));
+        }
+        return ListValue.wrap(groups);
     }
     public int length()
     {

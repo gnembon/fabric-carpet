@@ -383,7 +383,12 @@ TODO: add more information about l-value behaviour.
 ### `Matching Operator ~`
 
 This operator should be understood as 'matches', 'contains', 'is_in', or 'find me some stuff about something else. 
-For strings it matches the right operand as a regular expression to the left, returning the first match. 
+For strings it matches the right operand as a regular expression to the left, returning:
+ - `null` if there is no match
+ - matched phrase if no grouping is applied
+ - matched element if one group is applied
+ - list of matches if more than one grouping is applied
+ 
 This can be used to extract information from unparsed nbt's in a more convoluted way (use `get(...)` for 
 more appropriate way of doing it). For lists it checks if an element is in the list, and returns the 
 index of that element, or `null` if no such element was found, especially that the use of `first(...)` 
@@ -397,7 +402,14 @@ any extra arguments.
 <pre>
 l(1,2,3) ~ 2  => 1
 l(1,2,3) ~ 4  => null
+
+'foobar' ~ 'baz'  => null
 'foobar' ~ '.b'  => 'ob'
+'foobar' ~ '(.)b'  => 'o'
+'foobar' ~ '((.)b)'  => ['ob', 'o']
+'foobar' ~ '((.)(b))'  => ['ob', 'o', 'b']
+'foobar' ~ '(?:(.)(?:b))'  => 'o'
+
 player('*') ~ 'gnembon'  // null unless player gnembon is logged in (better to use player('gnembon') instead
 p ~ 'sneaking' // if p is an entity returns whether p is sneaking
 </pre>
