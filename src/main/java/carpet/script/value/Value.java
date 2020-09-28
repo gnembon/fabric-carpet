@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
@@ -145,7 +146,15 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public Value in(Value value1)
     {
-        final Pattern p = Pattern.compile(value1.getString());
+        final Pattern p;
+        try
+        {
+            p = Pattern.compile(value1.getString());
+        }
+        catch (PatternSyntaxException pse)
+        {
+            throw new InternalExpressionException("Incorrect matching pattern: "+pse.getMessage());
+        }
         final Matcher m = p.matcher(this.getString());
         if (!m.find()) return Value.NULL;
         int gc = m.groupCount();
