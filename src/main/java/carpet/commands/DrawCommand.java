@@ -43,7 +43,7 @@ public class DrawCommand
                 then(literal("sphere").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(argument("hollow", BoolArgumentType.bool()).
+                                        then(argument("solid", BoolArgumentType.bool()).
                                             then(drawShape(DrawCommand::drawSphere)))))).
                 then(literal("diamond").
                         then(argument("center", BlockPosArgumentType.blockPos()).
@@ -68,14 +68,14 @@ public class DrawCommand
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
                                                         then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b)).
-                                                                then(argument("hollow", BoolArgumentType.bool()).
+                                                                then(argument("solid", BoolArgumentType.bool()).
                                                                     then(drawShape(c -> DrawCommand.drawPrism(c, "circle"))))))))).
                 then(literal("cuboid").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
                                                 then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b)).
-                                                        then(argument("hollow", BoolArgumentType.bool()).
+                                                        then(argument("solid", BoolArgumentType.bool()).
                                                             then(drawShape(c -> DrawCommand.drawPrism(c, "square")))))))));
         dispatcher.register(command);
     }
@@ -160,13 +160,14 @@ public class DrawCommand
         BlockPos pos;
         int radius;
         BlockStateArgument block;
-        boolean solid;
+        Boolean solid;
         Predicate<CachedBlockPosition> replacement;
         try
         {
             pos = getArg(ctx, BlockPosArgumentType::getBlockPos, "center");
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius");
-            solid = !getArg(ctx, BoolArgumentType::getBool, "hollow");
+            solid = getArg(ctx, BoolArgumentType::getBool, "solid", true);
+            solid = solid == null ? false : solid;
             block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
             replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
         }
@@ -450,7 +451,7 @@ public class DrawCommand
         double radius;
         int height;
         String orientation;
-        boolean solid;
+        Boolean solid;
         BlockStateArgument block;
         Predicate<CachedBlockPosition> replacement;
         try
@@ -459,7 +460,8 @@ public class DrawCommand
             radius = getArg(ctx, IntegerArgumentType::getInteger, "radius")+0.5D;
             height = getArg(ctx, IntegerArgumentType::getInteger, "height");
             orientation = getArg(ctx, StringArgumentType::getString,"orientation");
-            solid = !getArg(ctx, BoolArgumentType::getBool, "hollow");
+            solid = getArg(ctx, BoolArgumentType::getBool, "solid", true);
+            solid = solid == null ? false : solid;
             block = getArg(ctx, BlockStateArgumentType::getBlockState, "block");
             replacement = getArg(ctx, BlockPredicateArgumentType::getBlockPredicate, "filter", true);
         }
