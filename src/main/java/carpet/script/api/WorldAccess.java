@@ -375,7 +375,7 @@ public class WorldAccess {
             if (lv.size() < locator.offset) throw new InternalExpressionException("'set_poi' requires the new poi type or null, after position argument");
             Value poi = lv.get(locator.offset+0).evalValue(c);
             PointOfInterestStorage store = cc.s.getWorld().getPointOfInterestStorage();
-            if (poi == Value.NULL)
+            if (poi.isNull())
             {   // clear poi information
                 if (store.getType(pos).isPresent())
                 {

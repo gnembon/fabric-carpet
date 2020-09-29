@@ -97,7 +97,7 @@ public class ValueConversions
     public static Value fromTimedMemory(Entity e, long expiry, Object v)
     {
         Value ret = fromEntityMemory(e, v);
-        if (ret == Value.NULL || expiry == Long.MAX_VALUE) return ret;
+        if (ret.isNull() || expiry == Long.MAX_VALUE) return ret;
         return ListValue.of(ret, new NumericValue(expiry));
     }
 

@@ -380,7 +380,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
     private boolean put(Value ind, Value value, boolean replace, boolean extend)
     {
-        if (ind == Value.NULL)
+        if (ind.isNull())
         {
             if (extend && value instanceof AbstractListValue)
             {
@@ -390,7 +390,6 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             {
                 items.add(value);
             }
-            return true;
         }
         else
         {
@@ -420,8 +419,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
                 return true;
             }
             items.add(index, value);
-            return true;
         }
+        return true;
     }
 
     @Override

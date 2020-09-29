@@ -1113,7 +1113,7 @@ public class EntityValue extends Value
         put("breaking_progress", (e, a) -> {
             if (e instanceof ServerPlayerEntity)
             {
-                int progress = (a == null || a == Value.NULL)?-1:NumericValue.asNumber(a).getInt();
+                int progress = (a == null || a.isNull())?-1:NumericValue.asNumber(a).getInt();
                 ServerPlayerInteractionManagerInterface manager = (ServerPlayerInteractionManagerInterface) (((ServerPlayerEntity) e).interactionManager);
                 manager.setBlockBreakingProgress(progress);
             }
