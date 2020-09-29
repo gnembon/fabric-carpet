@@ -415,7 +415,7 @@ public class CarpetSettings
 
     private static class FillLimitLimits extends Validator<Integer> {
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue>0 && newValue < 20000000) ? newValue : null;
+            return (newValue>0 && newValue <= 20000000) ? newValue : null;
         }
         @Override
         public String description() { return "You must choose a value from 1 to 20M";}
