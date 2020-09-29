@@ -112,7 +112,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
            throw new InternalExpressionException("Incorrect NBT tag: nbtString");
         }
         NBTSerializableValue value = new NBTSerializableValue(tag);
-        value.nbtString = nbtString;
+        value.nbtString = null;
         return value;
     }
 
