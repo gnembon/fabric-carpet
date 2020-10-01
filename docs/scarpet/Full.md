@@ -2555,10 +2555,14 @@ living entities based on their spawn group.
 All categories can be preceded with `'!'` which will fetch all entities that are valid (health > 0) but not 
 belonging to that group. Calls to `entity_list` always fetch entities from the current world that the script executes. 
 
-### `entity_area(type, cx, cy, cz, dx, dy, dz)`
+### `entity_area(type, center, distance)`
 
-Returns entities of a specified type in an area centered on `cx, cy, cz` and at most `dx, dy, dz` blocks away from 
-the center point. Uses the same selectors as `entities_list`.
+ 
+Returns entities of a specified type in an area centered on `center` and at most `distance` blocks away from 
+the center point. Uses the same `type` selectors as `entities_list`.
+
+`center` and `distance` can either be a triple of coordinates or three consecutive arguments for `entity_area`. `center` can 
+also be represented as a block, in this case the search box will be centered on the middle of the block.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.

@@ -161,21 +161,55 @@ global_functions = {
    'item_pickup' -> {
       '*' -> [
          _(arg) -> _(e) -> (
-            if (e~'type' == 'player', return([[],[],[]]));
             visuals = [];
             abnoxious_visuals = [];
-            half_width = e~'width'/2;
-            height = e~'height';
-            __create_box(abnoxious_visuals, e,
-                  [-1-half_width,0,-1-half_width],
-                  [1+half_width, height,1+half_width],
-                  0xffff0000, 'item range', false
+            e_half_width = e~'width'/2;
+            e_height = e~'height';
+            [box_from, box_to, color] = if (e~'type' == 'player',
+
+               if ((ride = e~'mount') != null,
+                  rpos = pos(ride)-pos(e);
+                  r_half_width = ride~'width'/2;
+                  r_height = ride~'height';
+                  [ [
+                    -1+min(-e_half_width, rpos:0-r_half_width),
+                    min(0, rpos:1),
+                    -1+min(-e_half_width, rpos:2-r_half_width)
+                  ], [
+                     1+max(e_half_width, rpos:0+r_half_width),
+                     max(e_height, rpos:1+r_height),
+                     1+max(e_half_width, rpos:2+r_half_width)
+                  ], 0xffaa0000
+                  ]
+               ,
+                  [
+                     [ -1-e_half_width, -0.5, -1-e_half_width ],
+                     [ 1+e_half_width, e_height+0.5, 1+e_half_width ],
+                     0xffaa0000
+                  ]
+               )
+            ,
+
+               [
+                  [ -1-e_half_width, 0, -1-e_half_width ],
+                  [ 1+e_half_width, e_height, 1+e_half_width ],
+                  0xffff0000
+               ]
             );
-            [x,y,z] = pos(e);
-            for (filter(entity_area('item', x, y+height/2, z, 1+half_width, height/2, 1+half_width), pos(_) != pos(e)),
+            box_ctr = (box_from+box_to)/2;
+            box_range = box_ctr-box_from;
+
+            __create_box(abnoxious_visuals, e,
+                  box_from,
+                  box_to,
+                  color, 'item range', false
+            );
+            for (filter(entity_area('item', pos(e)+box_ctr, box_range), pos(_) != pos(e)),
                visuals+=['line', global_duration, 'from', pos(e)+[0,1,0], 'to', pos(_)+[0,0,0], 'color', 0xffff00ff]
             );
-            [visuals, abnoxious_visuals, []];
+
+
+            [visuals, abnoxious_visuals, []]
          ),
       ,
          null

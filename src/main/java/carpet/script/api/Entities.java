@@ -191,19 +191,20 @@ public class Entities {
             return (_c, _t ) -> retval;
         });
 
-        expression.addLazyFunction("entity_area", 7, (c, t, lv) ->
+        expression.addLazyFunction("entity_area", -1, (c, t, lv) ->
         {
-            Vec3d center = new Vec3d(
-                    NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(2).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(3).evalValue(c)).getDouble()
-            );
-            Box area = new Box(center, center).expand(
-                    NumericValue.asNumber(lv.get(4).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(5).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(lv.get(6).evalValue(c)).getDouble()
-            );
+            if (lv.size()<3) throw new InternalExpressionException("'entity_area' requires entity type, center and range arguments");
             String who = lv.get(0).evalValue(c).getString();
+            CarpetContext cc = (CarpetContext)c;
+            Vector3Argument centerLocator = Vector3Argument.findIn(cc, lv, 1);
+            Vec3d center = centerLocator.vec;
+            if (centerLocator.fromBlock) center.add(0.5, 0.5, 0.5);
+            Vector3Argument rangeLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
+            if (rangeLocator.fromBlock)
+                throw new InternalExpressionException("Range of 'entity_area' cannot come from a block argument");
+            Vec3d range = rangeLocator.vec;
+            Box area = new Box(center, center).expand(range.x, range.y, range.z);
+
             Pair<EntityType<?>, Predicate<? super Entity>> pair = EntityValue.getPredicate(who);
             if (pair == null)
             {
