@@ -10,7 +10,7 @@ import net.minecraft.entity.ai.brain.Activity;
 import net.minecraft.entity.ai.brain.Memory;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.entity.passive.AbstractTraderEntity;
+import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BedItem;
@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Mixin(VillagerEntity.class)
-public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
+public abstract class VillagerEntity_aiMixin extends MerchantEntity
 {
     @Shadow protected abstract void sayNo();
 
@@ -50,6 +50,11 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
     int totalFood;
     boolean hasBed;
     int displayAge;
+
+    public VillagerEntity_aiMixin(EntityType<? extends MerchantEntity> entityType_1, World world_1)
+    {
+        super(entityType_1, world_1);
+    }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void ontick(CallbackInfo ci)
@@ -182,8 +187,5 @@ public abstract class VillagerEntity_aiMixin extends AbstractTraderEntity
         }
     }
 
-    public VillagerEntity_aiMixin(EntityType<? extends AbstractTraderEntity> entityType_1, World world_1)
-    {
-        super(entityType_1, world_1);
-    }
+
 }

@@ -48,12 +48,12 @@ import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.server.command.CommandSource.suggestMatching;
+import static net.minecraft.command.CommandSource.suggestMatching;
 
 public class ScriptCommand
 {
-    private static TreeSet<String> scarpetFunctions;
-    private static TreeSet<String> APIFunctions;
+    private static final TreeSet<String> scarpetFunctions;
+    private static final TreeSet<String> APIFunctions;
     static
     {
         Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
