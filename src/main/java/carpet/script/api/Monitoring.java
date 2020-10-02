@@ -1,5 +1,6 @@
 package carpet.script.api;
 
+import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
@@ -30,7 +31,7 @@ public class Monitoring {
             SpawnHelper.Info info = world.getChunkManager().getSpawnInfo();
             if (info == null) return LazyValue.NULL;
             Object2IntMap<SpawnGroup> mobcounts = info.getGroupToCount();
-            int chunks = info.getSpawningChunkCount();
+            int chunks = ((SpawnHelperInnerInterface)info).cmGetChunkCount();
             Value retVal;
             if (lv.size() == 0)
             {

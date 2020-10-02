@@ -163,7 +163,7 @@ Consult section about container operations in `Expression` to learn about possib
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
 
-### parse_nbt(tag)
+### `parse_nbt(tag)`
 
 Converts NBT tag to a scarpet value, which you can navigate through much better.
 
@@ -173,7 +173,7 @@ Converts:
  - Numbers (Ints, Floats, Doubles, Longs) into a number
  - Rest is converted to strings.
  
-### encode_nbt(expr, force?)
+### `encode_nbt(expr, force?)`
 
 Encodes value of the expression as an NBT tag. By default (or when `force` is false), it will only allow
 to encode values that are guaranteed to return the same value when applied the resulting tag to `parse_nbt()`.
@@ -418,11 +418,11 @@ world-localized block, so not `block('stone')`, or a string representing a dimen
 ### `view_distance()`
 Returns the view distance of the server.
 
-### `mob_counts()`, `mob_counts(category)` 1.16+
+### `get_mob_counts()`, `get_mob_counts(category)` 1.16+
 
 Returns either a map of mob categories with its respective counts and capacities (a.k.a. mobcaps) or just a tuple
 of count and limit for a specific category. If a category was not spawning for whatever reason it may not be
-returned from `mob_counts()`, but could be retrieved for `mob_counts(category)`. Returned counts is what spawning
+returned from `get_mob_counts()`, but could be retrieved for `get_mob_counts(category)`. Returned counts is what spawning
 algorithm has taken in to account last time mobs spawned. 
 
 ### `schedule(delay, function, args...)`
