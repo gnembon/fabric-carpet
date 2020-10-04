@@ -3,7 +3,6 @@ on:
   push:
     paths:
     - "docs"
-    - "!docs/scarpet/Full.md"
     paths-ignore:
     - "docs/scarpet/Full.md"
 jobs:
