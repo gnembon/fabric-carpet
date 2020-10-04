@@ -13,7 +13,8 @@ jobs:
         run: ./mergedoc.sh
       - name: Commit merged docs
         run: |
-          git config --global user.name 'Doc Merger'
-          git config --global user.email 'bot@example.com'
+          # https://github.community/t/github-actions-bot-email-address/17204
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -am "Merge docs"
           git push
