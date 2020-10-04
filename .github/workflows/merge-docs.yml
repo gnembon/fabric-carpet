@@ -2,7 +2,7 @@ name: Merge docs
 on:
   push:
     paths:
-    - "docs"
+    - "docs/**"
     - "!docs/scarpet/Full.md"
 jobs:
   report:
