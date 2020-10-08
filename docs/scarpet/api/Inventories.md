@@ -124,7 +124,7 @@ stack at slot. Returns previous stack in that slot.
 <pre>
 inventory_set(player(), 0, 0) => ['stone', 64, {}] // player had a stack of stone in first hotbar slot
 inventory_set(player(), 0, 6) => ['diamond', 64, {}] // changed stack of diamonds in player slot to 6
-inventory_set(player(), 0, 1, 'diamond_axe','{Damage:5}') => null //added slightly damaged pick to first player slot
+inventory_set(player(), 0, 1, 'diamond_axe','{Damage:5}') => null //added slightly damaged diamond axe to first player slot
 </pre>
 
 ### `inventory_find(inventory, item, start_slot?, ), inventory_find(inventory, null, start_slot?)`
