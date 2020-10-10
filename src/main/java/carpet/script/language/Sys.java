@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class Sys {
     public static final Random randomizer = new Random();
@@ -160,7 +161,14 @@ public class Sys {
             String replacement = "";
             if (lv.size() == 3)
                 replacement = lv.get(2).getString();
-            return new StringValue(data.replaceAll(regex, replacement));
+            try
+            {
+                return new StringValue(data.replaceAll(regex, replacement));
+            }
+            catch (PatternSyntaxException pse)
+            {
+                throw new InternalExpressionException("Incorrect pattern for replace: "+pse.getMessage());
+            }
         });
 
         expression.addFunction("replace_first", (lv) ->
