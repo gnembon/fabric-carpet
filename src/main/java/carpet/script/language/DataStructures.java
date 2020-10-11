@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public class DataStructures {
@@ -55,7 +56,14 @@ public class DataStructures {
         {
             String delimiter = d.getString();
             String hwat = v.getString();
-            return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
+            try
+            {
+                return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
+            }
+            catch (PatternSyntaxException pse)
+            {
+                throw new InternalExpressionException("Incorrect pattern for 'split': "+pse.getMessage());
+            }
         });
 
         expression.addFunction("slice", (lv) ->

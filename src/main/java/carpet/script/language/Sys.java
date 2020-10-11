@@ -167,7 +167,7 @@ public class Sys {
             }
             catch (PatternSyntaxException pse)
             {
-                throw new InternalExpressionException("Incorrect pattern for replace: "+pse.getMessage());
+                throw new InternalExpressionException("Incorrect pattern for 'replace': "+pse.getMessage());
             }
         });
 
