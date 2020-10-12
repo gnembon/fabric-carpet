@@ -16,5 +16,5 @@ jobs:
           # https://github.community/t/github-actions-bot-email-address/17204
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git commit -am "Merge docs"
+          git commit -am "Merge docs for '${{ github.event.head_commit.message }}'"
           git push
