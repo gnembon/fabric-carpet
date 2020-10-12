@@ -18,7 +18,11 @@
 
   "environment": "*",
   "entrypoints": {
-    "main": [
+    "client": [
+      "carpet.CarpetServer"
+    ],
+    "server": [
+      "carpet.CarpetServer"
     ]
   },
   "mixins": [
