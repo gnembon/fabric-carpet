@@ -28,6 +28,12 @@ public class StringValue extends Value
         this.str = str;
     }
 
+    public static Value of(String value)
+    {
+        if (value == null) return Value.NULL;
+        return new StringValue(value);
+    }
+
     @Override
     public String getTypeString()
     {

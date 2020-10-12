@@ -108,7 +108,7 @@ public class Functions {
             if (!(v1 instanceof FunctionSignatureValue))
                 throw new InternalExpressionException("'->' operator requires a function signature on the LHS");
             FunctionSignatureValue sign = (FunctionSignatureValue) v1;
-            Value result = expression.addContextFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getVarArgs(), sign.getGlobals(), lv2);
+            Value result = expression.createUserDefinedFunction(c, sign.getName(), e, t, sign.getArgs(), sign.getVarArgs(), sign.getGlobals(), lv2);
             return (cc, tt) -> result;
         });
 

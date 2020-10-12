@@ -71,7 +71,7 @@ public class NumericValue extends Value
     @Override
     public boolean getBoolean()
     {
-        return value != null && abs(value) > epsilon;
+        return abs(value) > epsilon;
     }
     public double getDouble()
     {
@@ -98,14 +98,24 @@ public class NumericValue extends Value
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
         if (v instanceof NumericValue)
         {
-            return new NumericValue(getDouble() + ((NumericValue) v).getDouble() );
+            NumericValue nv = (NumericValue)v;
+            if (longValue != null && nv.longValue != null)
+            {
+                return new NumericValue(longValue+nv.longValue);
+            }
+            return new NumericValue(value + nv.value);
         }
         return super.add(v);
     }
     public Value subtract(Value v) {  // TODO test if definintn add(NumericVlaue) woud solve the casting
         if (v instanceof NumericValue)
         {
-            return new NumericValue(getDouble() - (((NumericValue) v).getDouble()));
+            NumericValue nv = (NumericValue)v;
+            if (longValue != null && nv.longValue != null)
+            {
+                return new NumericValue(longValue-nv.longValue);
+            }
+            return new NumericValue(value - nv.value);
         }
         return super.subtract(v);
     }
@@ -113,7 +123,12 @@ public class NumericValue extends Value
     {
         if (v instanceof NumericValue)
         {
-            return new NumericValue(getDouble() * ((NumericValue) v).getDouble() );
+            NumericValue nv = (NumericValue)v;
+            if (longValue != null && nv.longValue != null)
+            {
+                return new NumericValue(longValue*nv.longValue);
+            }
+            return new NumericValue(value * nv.value);
         }
         if (v instanceof ListValue)
         {
@@ -146,7 +161,10 @@ public class NumericValue extends Value
         }
         if (o instanceof NumericValue)
         {
-            return value.compareTo(((NumericValue) o).getDouble());
+            NumericValue no = (NumericValue)o;
+            if (longValue != null && no.longValue != null)
+                return longValue.compareTo(no.longValue);
+            return value.compareTo(no.value);
         }
         return getString().compareTo(o.getString());
     }
@@ -159,7 +177,10 @@ public class NumericValue extends Value
         }
         if (o instanceof NumericValue)
         {
-            return !this.subtract((Value) o).getBoolean();
+            NumericValue no = (NumericValue)o;
+            if (longValue != null && no.longValue != null)
+                return longValue.equals(no.longValue);
+            return !this.subtract(no).getBoolean();
         }
         return super.equals(o);
     }
@@ -200,7 +221,7 @@ public class NumericValue extends Value
     @Override
     public int length()
     {
-        return Integer.toString(value.intValue()).length();
+        return Long.toString(getLong()).length();
     }
 
     @Override
@@ -224,7 +245,7 @@ public class NumericValue extends Value
     @Override
     public int hashCode()
     {
-        if (Math.abs(Math.floor(value + 0.5D)-value) < epsilon) // is sufficiently close to the integer value
+        if (longValue!= null || Math.abs(Math.floor(value + 0.5D)-value) < epsilon) // is sufficiently close to the integer value
             return Long.hashCode(getLong());
         return Double.hashCode(value);
     }
@@ -267,5 +288,10 @@ public class NumericValue extends Value
         {
             return new JsonPrimitive(value);
         }
+    }
+
+    public NumericValue opposite() {
+        if (longValue != null) return new NumericValue(-longValue);
+        return new NumericValue(-value);
     }
 }

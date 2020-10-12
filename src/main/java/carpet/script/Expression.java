@@ -339,7 +339,7 @@ public class Expression
             }
         });
     }
-    public FunctionValue addContextFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, String varArgs, List<String> outers, LazyValue code)
+    public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, String varArgs, List<String> outers, LazyValue code)
     {
         if (functions.containsKey(name))
             throw new ExpressionException(context, expr, token, "Function "+name+" would mask a built-in function");

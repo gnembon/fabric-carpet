@@ -17,8 +17,10 @@ block positions. All variables starting with `_` are read-only, and cannot be de
 
 `scarpet` accepts numeric and string liters constants. Numbers look like `1, 2.5, -3e-7, 0xff,` and are internally 
 represented primarily as Java's `double` but `scarpet` will try to trim trailing zeros as much as possible so if you
-need to use them as integers or even longs - you can. However any operation on a number even if it can be properly
-represented as long, but not a double type, will make them round up to be doubles.
+need to use them as integers or even longs - you can. Long values will also not loose their long precision in addition, 
+subtraction, negation and multiplication, however any other operation that is not guaranteed to return a long value
+(like division) on a number even if it can be properly
+represented as long, will make them convert to doubles.
 
 Strings use single quoting, for multiple reasons, but primarily to allow for 
 easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 

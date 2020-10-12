@@ -209,9 +209,9 @@ public class Operators {
             return (cc, tt) -> lval;
         });
 
-        expression.addUnaryOperator("-",  false, (v) -> new NumericValue(-NumericValue.asNumber(v).getDouble()));
+        expression.addUnaryOperator("-",  false, v -> NumericValue.asNumber(v).opposite());
 
-        expression.addUnaryOperator("+", false, (v) -> new NumericValue(NumericValue.asNumber(v).getDouble()));
+        expression.addUnaryOperator("+", false, NumericValue::asNumber);
 
         expression.addLazyUnaryOperator("!", precedence.get("unary+-!"), false, (c, t, lv)-> lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE); // might need context boolean
 
