@@ -13,7 +13,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      SHA8: ${GITHUB_SHA::7}
+      SHA7: ${GITHUB_SHA::7}
 
     steps:
     - uses: actions/checkout@v2
