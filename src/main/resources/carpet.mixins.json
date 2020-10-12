@@ -4,7 +4,6 @@
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "CrashReport_coreMixin",
     "SpawnHelperInnerMixin",
     "CommandManagerMixin",
 
