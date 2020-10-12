@@ -31,5 +31,5 @@ jobs:
       run: ./gradlew build
     - uses: actions/upload-artifact@v2
       with:
-        name: Compiled artifacts for Pull Request \#${{github.event.issue.number}}
+        name: "Compiled artifacts for Pull Request #${{github.event.issue.number}}"
         path: build/libs
