@@ -13,7 +13,6 @@ jobs:
         run: ./mergedoc.sh
       - name: Commit merged docs
         run: |
-          # https://github.community/t/github-actions-bot-email-address/17204
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git commit -am "Merge docs for '${{ github.event.head_commit.message }}'"
