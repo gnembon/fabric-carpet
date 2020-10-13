@@ -401,9 +401,10 @@ loop(1000,game_tick())  // runs the game as fast as it can for 1000 ticks
 loop(1000,game_tick(100)) // runs the game twice as slow for 1000 ticks
 </pre>
 
-### `seed()`
 
-Returns current world seed.
+### `seed()` deprecated
+
+Returns current world seed. Function is deprecated, use `system_info('world_seed')` insteads.
 
 ### `current_dimension()`
 
@@ -450,3 +451,50 @@ The call will return `null` if the statistics options are incorrect, or player d
 If the player encountered the statistic, or game created for him empty one, it will return a number. 
 Scarpet will not affect the entries of the statistics, even if it is just creating empty ones. With `null` response 
 it could either mean your input is wrong, or statistic effectively has a value of `0`.
+
+
+### `system_info()`, `system_info(property)`
+Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
+fetch various information, mostly not changing, or only available via low level
+system calls. In all cirumstances, these are only provided as read-only.
+
+Available options in the scarpet app space:
+  * `app_name` - current app name or `null` if its a default app
+  * `app_list` - list of all loaded apps excluding default commandline app
+  * `app_scope` - scope of the global variables and function. Available options is `player` and `global`
+  * `app_player` - returns a player list that have app run under them. For `global` apps, the list is always empty
+ 
+ Relevant world related properties
+  * `world_name` - name of the world
+  * `world_seed` - a numeric seed of the world
+  * `world_path` - full path to the world saves folder
+  * `world_folder` - name of the direct folder in the saves that holds world files
+ 
+ Relevant gameplay related properties
+  * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
+  * `game_hardcore` - boolean whether the game is in hardcore mode
+  * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
+  * `game_default_gamemode` - default gamemode for new players
+  * `game_max_players` - max allowed players when joining the world
+  * `game_view_distance` - the view distance
+  * `game_mod_name` - the name of the base mod. Expect `'fabric'`
+  * `game_version` - base version of the game
+  
+ Server related properties
+
+ * `server_motd` - the motd of the server visible when joining
+ * `server_ip` - IP adress of the game hosted
+ * `server_whitelisted` - boolean indicating whether the access to the server is only for whitelisted players
+ * `server_whitelist` - list of players allowed to log in
+ * `server_banned_players` - list of banned player names
+ * `server_banned_ips` - list of banned IP addresses
+ 
+ System related properties
+ * `java_max_memory` - maximum allowed memory accessible by JVM
+ * `java_allocated_memory` - currently allocated memory by JVM
+ * `java_used_memory` - currently used memory by JVM
+ * `java_cpu_count` - number of processors
+ * `java_version` - version of Java
+ * `java_bits` - number indicating how many bits the Java has, 32 or 64
+ * `java_system_cpu_load` - current percentage of CPU used by the system
+ * `java_process_cpu_load` - current percentage of CPU used by JVM

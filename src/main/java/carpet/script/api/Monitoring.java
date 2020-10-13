@@ -5,6 +5,7 @@ import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.SystemInfo;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
@@ -21,8 +22,24 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Monitoring {
+
     public static void apply(Expression expression)
     {
+        expression.addLazyFunction("system_info", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0)
+            {
+                Value ret = SystemInfo.getAll((CarpetContext) c);
+                return (cc, tt) -> ret;
+            }
+            if (lv.size() == 1) {
+                String what = lv.get(0).evalValue(c).getString();
+                Value res = SystemInfo.get(what, (CarpetContext) c);
+                if (res == null) throw new InternalExpressionException("Unknown option for 'system_info': " + what);
+                return (cc, tt) -> res;
+            }
+            throw new InternalExpressionException("'system_info' requires one or no parameters");
+        });
         // game processed snooper functions
         expression.addLazyFunction("get_mob_counts", -1, (c, t, lv) ->
         {

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -330,6 +331,14 @@ public abstract class ScriptHost
     {
         perUser = isPerUser;
     }
+
+    public boolean isPerUser() {return perUser;}
+
+    public Set<String> getUserList()
+    {
+        return userHosts.keySet();
+    }
+
 
     public void resetErrorSnooper()
     {

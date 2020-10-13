@@ -83,7 +83,6 @@ scoreboard_add
 scoreboard_remove
 scoreboard_display
 see_sky
-seed
 set
 set_biome
 set_poi
@@ -100,6 +99,7 @@ structures
 structure_eligibility
 structure_references
 suffocates
+system_info
 tick_time
 ticks_randomly
 top
