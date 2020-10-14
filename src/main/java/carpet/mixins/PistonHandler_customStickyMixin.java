@@ -6,6 +6,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.ChainBlock;
 import net.minecraft.block.ChestBlock;
+import net.minecraft.block.EndRodBlock;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.block.piston.PistonHandler;
 import net.minecraft.util.math.BlockPos;
@@ -113,6 +114,7 @@ public abstract class PistonHandler_customStickyMixin
             if (previousState.getBlock() == Blocks.CHAIN && isChainOnAxis(previousState, motionDirection))
             {
                 if ( (currentState.getBlock() == Blocks.CHAIN && isChainOnAxis(currentState, motionDirection))
+                        || isEndRodOnAxis(currentState, motionDirection.getAxis())
                         || Block.sideCoversSmallSquare(world, currentPos, motionDirection.getOpposite()))
                 {
                     return true;
@@ -125,7 +127,7 @@ public abstract class PistonHandler_customStickyMixin
 
     /**
      * Handles blocks besides the slimeblock that are sticky. Currently only supports blocks that are sticky on one side.
-     * This never seems to run
+     * This runs in U style structures with something in the middle on retraction.
      * @author 2No2Name
      */
     @Inject(method = "tryMove", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true, at = @At(
@@ -213,7 +215,8 @@ public abstract class PistonHandler_customStickyMixin
     {
         if (CarpetSettings.chainStone)
         {
-            if (world.getBlockState(blockPos3).getBlock() == Blocks.CHAIN && !canMoveAdjacentBlock(blockPos3))
+            BlockState chainState = world.getBlockState(blockPos3);
+            if (chainState.getBlock() == Blocks.CHAIN && !isChainOnAxis(chainState, motionDirection) && !canMoveAdjacentBlock(blockPos3))
             {
                 cir.setReturnValue(false);
             }
@@ -237,6 +240,7 @@ public abstract class PistonHandler_customStickyMixin
             if (blockState.getBlock() == Blocks.CHAIN && isChainOnAxis(blockState, direction))
             {
                 if ((blockState2.getBlock() == Blocks.CHAIN && (blockState.get(ChainBlock.AXIS) == blockState2.get(ChainBlock.AXIS)))
+                        || isEndRodOnAxis(blockState2, blockState.get(ChainBlock.AXIS))
                         || Block.sideCoversSmallSquare(world, blockPos, direction.getOpposite()))
                 {
                     if (!tryMove(blockPos, direction))
@@ -291,5 +295,15 @@ public abstract class PistonHandler_customStickyMixin
             axis = state.get(ChainBlock.AXIS);
         }catch(IllegalArgumentException e){return false;}
         return stickDirection.getAxis() == axis;
+    }
+
+    private boolean isEndRodOnAxis(BlockState state, Direction.Axis stickAxis)
+    {
+        if (state.getBlock() != Blocks.END_ROD) return false;
+        Direction facing;
+        try {
+            facing = state.get(EndRodBlock.FACING);
+        }catch(IllegalArgumentException e){return false;}
+        return stickAxis == facing.getAxis();
     }
 }
