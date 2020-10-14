@@ -259,6 +259,13 @@ public class CarpetSettings
     @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
     public static boolean movableBlockEntities = false;
 
+    @Rule(
+            desc = "Chains will stick to each other on the long end",
+            extra = "and stick to other blocks that connect to them at the ends",
+            category = {EXPERIMENTAL, FEATURE}
+    )
+    public static boolean chainStone = false;
+
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;
 
