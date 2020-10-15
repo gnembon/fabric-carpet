@@ -16,9 +16,10 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Locale;
 
 import static carpet.settings.RuleCategory.BUGFIX;
 import static carpet.settings.RuleCategory.COMMAND;
@@ -35,13 +36,15 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.12+v201001";
+    public static final String carpetVersion = "1.4.13+v201015";
     public static final Logger LOG = LogManager.getLogger();
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
     public static Box currentTelepotingEntityBox = null;
     public static Vec3d fixedPosition = null;
     public static int runPermissionLevel = 2;
+    public static boolean doChainStone = false;
+    public static boolean chainStoneStickToAll = false;
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
@@ -259,12 +262,23 @@ public class CarpetSettings
     @Rule( desc = "Pistons can push block entities, like hoppers, chests etc.", category = {EXPERIMENTAL, FEATURE} )
     public static boolean movableBlockEntities = false;
 
+
+    private static class ChainStoneSetting extends Validator<String> {
+        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            CarpetSettings.doChainStone = !newValue.toLowerCase(Locale.ROOT).equals("false");
+            CarpetSettings.chainStoneStickToAll = newValue.toLowerCase(Locale.ROOT).equals("all");
+
+            return newValue;
+        }
+    }
     @Rule(
             desc = "Chains will stick to each other on the long end",
             extra = "and stick to other blocks that connect to them at the ends",
-            category = {EXPERIMENTAL, FEATURE}
+            category = {EXPERIMENTAL, FEATURE},
+            options = {"true", "false", "all"},
+            validate = ChainStoneSetting.class
     )
-    public static boolean chainStone = false;
+    public static String chainStone = "false";
 
     @Rule( desc = "Saplings turn into dead shrubs in hot climates and no water access", category = FEATURE )
     public static boolean desertShrubs = false;

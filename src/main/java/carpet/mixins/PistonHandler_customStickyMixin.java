@@ -90,7 +90,7 @@ public abstract class PistonHandler_customStickyMixin
             //if(block == Blocks.STICKY_PISTON)
             //    return blockState.get(FacingBlock.FACING) == motionDirection;
         }
-        if (CarpetSettings.chainStone && blockState.getBlock() == Blocks.CHAIN)
+        if (CarpetSettings.doChainStone && blockState.getBlock() == Blocks.CHAIN)
         {
             return isChainOnAxis(currentState, motionDirection);
         }
@@ -111,11 +111,12 @@ public abstract class PistonHandler_customStickyMixin
     )
     private boolean isDraggingPreviousBlockBehind(Block previous, Block next)
     {
-        if (CarpetSettings.chainStone)
+        if (CarpetSettings.doChainStone)
         {
             if (previousState.getBlock() == Blocks.CHAIN && isChainOnAxis(previousState, motionDirection))
             {
                 if ( (currentState.getBlock() == Blocks.CHAIN && isChainOnAxis(currentState, motionDirection))
+                        || CarpetSettings.chainStoneStickToAll
                         || isEndRodOnAxis(currentState, motionDirection.getAxis())
                         || Block.sideCoversSmallSquare(world, currentPos, motionDirection))
                 {
@@ -164,7 +165,7 @@ public abstract class PistonHandler_customStickyMixin
             }
         }
 
-        if (CarpetSettings.chainStone)
+        if (CarpetSettings.doChainStone)
         {
             BlockPos pos = this.movedBlocks.get(int_1);
             BlockState chainState = world.getBlockState(pos);
@@ -215,7 +216,7 @@ public abstract class PistonHandler_customStickyMixin
     private void redirectIsStickyBlock(BlockPos pos, Direction dir, CallbackInfoReturnable<Boolean> cir,
                                        BlockState blockState, Block block, int i, int j, int l, BlockPos blockPos2, int m, int n, BlockPos blockPos3)
     {
-        if (CarpetSettings.chainStone)
+        if (CarpetSettings.doChainStone)
         {
             BlockState chainState = world.getBlockState(blockPos3);
             if (chainState.getBlock() == Blocks.CHAIN && !isChainOnAxis(chainState, motionDirection) && !canMoveAdjacentBlock(blockPos3))
@@ -237,12 +238,13 @@ public abstract class PistonHandler_customStickyMixin
     private void otherSideStickyCases(BlockPos pos, CallbackInfoReturnable<Boolean> cir,
                                       BlockState blockState, Direction var3[], int var4, int var5, Direction direction, BlockPos blockPos, BlockState blockState2)
     {
-        if (CarpetSettings.chainStone)
+        if (CarpetSettings.doChainStone)
         {
             if (blockState.getBlock() == Blocks.CHAIN && isChainOnAxis(blockState, direction) && !blockState2.isAir())
             {
                 Block otherBlock = blockState2.getBlock();
                 if ((otherBlock == Blocks.CHAIN && (blockState.get(ChainBlock.AXIS) == blockState2.get(ChainBlock.AXIS)))
+                        || CarpetSettings.chainStoneStickToAll
                         || isEndRodOnAxis(blockState2, blockState.get(ChainBlock.AXIS))
                         || otherBlock == Blocks.HONEY_BLOCK
                         || Block.sideCoversSmallSquare(world, blockPos, direction.getOpposite()))
