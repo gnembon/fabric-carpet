@@ -115,7 +115,7 @@ public abstract class PistonHandler_customStickyMixin
             {
                 if ( (currentState.getBlock() == Blocks.CHAIN && isChainOnAxis(currentState, motionDirection))
                         || isEndRodOnAxis(currentState, motionDirection.getAxis())
-                        || Block.sideCoversSmallSquare(world, currentPos, motionDirection.getOpposite()))
+                        || Block.sideCoversSmallSquare(world, currentPos, motionDirection))
                 {
                     return true;
                 }
@@ -237,10 +237,12 @@ public abstract class PistonHandler_customStickyMixin
     {
         if (CarpetSettings.chainStone)
         {
-            if (blockState.getBlock() == Blocks.CHAIN && isChainOnAxis(blockState, direction))
+            if (blockState.getBlock() == Blocks.CHAIN && isChainOnAxis(blockState, direction) && !blockState2.isAir())
             {
-                if ((blockState2.getBlock() == Blocks.CHAIN && (blockState.get(ChainBlock.AXIS) == blockState2.get(ChainBlock.AXIS)))
+                Block otherBlock = blockState2.getBlock();
+                if ((otherBlock == Blocks.CHAIN && (blockState.get(ChainBlock.AXIS) == blockState2.get(ChainBlock.AXIS)))
                         || isEndRodOnAxis(blockState2, blockState.get(ChainBlock.AXIS))
+                        || otherBlock == Blocks.HONEY_BLOCK
                         || Block.sideCoversSmallSquare(world, blockPos, direction.getOpposite()))
                 {
                     if (!tryMove(blockPos, direction))
