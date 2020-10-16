@@ -3,7 +3,7 @@ __config() ->
 __on_chunk_generated(x,z) -> 
 __on_close() -> 
 __on_player_attacks_entity(player, entity) -> 
-__on_player_breaks_block(player,block) ->
+__on_player_breaks_block(player,block) -> 
 __on_player_clicks_block(player,block, face) ->
 __on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension) -> 
 __on_player_chooses_recipe(player, recipe, full_stack) -> 
