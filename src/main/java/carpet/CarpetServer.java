@@ -15,12 +15,15 @@ import carpet.logging.HUDController;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
+
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-public class CarpetServer // static for now - easier to handle all around the code, its one anyways
+public class CarpetServer implements ClientModInitializer,DedicatedServerModInitializer // static for now - easier to handle all around the code, its one anyways
 {
     public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
@@ -29,6 +32,17 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static SettingsManager settingsManager;
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
+    @Override
+    public void onInitializeClient()
+    {
+    	CarpetServer.onGameStarted();
+    }
+    @Override
+    public void onInitializeServer()
+    {
+    	CarpetServer.onGameStarted();
+    }
+    
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     public static void manageExtension(CarpetExtension extension)
     {
