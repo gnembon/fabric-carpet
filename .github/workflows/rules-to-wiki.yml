@@ -54,12 +54,6 @@ jobs:
             }
            }' > fabric.mod.json
           cd ../../../
-      - name: Remove problematic mixins #This fails to run else, not sure why
-        run: |
-          cd src/main/java/carpet/mixins
-          rm CommandManagerMixin.java
-          rm ThreadedAnvilChunkStorage_scarpetChunkCreationMixin.java
-          cd ../../../../../
       - name: Run solution
         run: |
           chmod +x gradlew
