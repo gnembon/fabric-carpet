@@ -52,10 +52,24 @@ public class DataStructures {
             return new StringValue(toJoin.stream().map(Value::getString).collect(Collectors.joining(delimiter)));
         });
 
-        expression.addBinaryFunction("split", (d, v) ->
+        expression.addFunction("split", (lv) ->
         {
-            String delimiter = d.getString();
-            String hwat = v.getString();
+            String delimiter;
+            String hwat;
+            if (lv.size() == 1)
+            {
+                hwat = lv.get(0).getString();
+                delimiter = "";
+            }
+            else if (lv.size() == 2)
+            {
+                delimiter = lv.get(0).getString();
+                hwat = lv.get(1).getString();
+            }
+            else
+            {
+                throw new InternalExpressionException("'split' takes 1 or 2 arguments");
+            }
             try
             {
                 return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));

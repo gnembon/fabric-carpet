@@ -155,12 +155,14 @@ join('-','foo')  => foo
 join('-', 'foo', 'bar')  => foo-bar
 </pre>
 
-### `split(delim, expr)`
+### `split(delim?, expr)`
 
-Splits a string undr `expr` by `delim` which can be a regular expression
+Splits a string under `expr` by `delim` which can be a regular expression. If no delimiter is specified, it splits
+by characters.
 
 <pre>
-split('',foo)  => [f, o, o]
+split('foo') => [f, o, o]
+split('','foo')  => [f, o, o]
 split('.','foo.bar')  => []
 split('\\.','foo.bar')  => [foo, bar]
 </pre>
