@@ -12,8 +12,6 @@ jobs:
   Build:
 
     runs-on: ubuntu-latest
-    env:
-      SHA7: ${GITHUB_SHA::7}
 
     steps:
     - uses: actions/checkout@v2
