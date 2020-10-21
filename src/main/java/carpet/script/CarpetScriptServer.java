@@ -5,8 +5,6 @@ import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
-import carpet.script.exception.ExpressionException;
-import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
@@ -14,24 +12,16 @@ import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
-
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
-
-import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import org.lwjgl.system.CallbackI;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,8 +60,6 @@ public class CarpetScriptServer
         registerBuiltInScript(BundledModule.carpetNative("math", true));
         registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
         registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
-        registerBuiltInScript(BundledModule.carpetNative("draw", false));
-        registerBuiltInScript(BundledModule.carpetNative("distance", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
@@ -239,83 +227,25 @@ public class CarpetScriptServer
                     return (int)response.readInteger();
                 });
 
-        
-        for (String funcName : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
-            FunctionValue funcVal = host.getFunction(funcName);
-            List<String> args = funcVal.getArguments();
-
-            Value defFuncRetVal;
-            try {
-                defFuncRetVal = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("___"+funcName), new ArrayList<LazyValue>());
-            } catch(Exception e){
-                continue;
-            }//If doesnt exist then it's not meant to be a command. todo make it backwards compatible later, but this makes it more user friendly
-
-            if(!(defFuncRetVal instanceof MapValue))
-                throw new InternalExpressionException("Function ___"+funcName+" should return a map and be tied to the function "+funcName+" to properly define the command");
-            
-            Map<Value, Value> argMap = ((MapValue) defFuncRetVal).getMap();
-            
-            command.then(literal(funcName)
-                .requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null)
-                .executes( (c) -> {
-                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                            handleCommand(c.getSource(), funcName,null,"");
-                    if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
-                    return (int)response.readInteger();
-                }));
-            
-            for (String arg:args) {
-                String argType= argMap.getOrDefault(new StringValue(arg),new StringValue("string")).getString(); 
-                Messenger.m(source,"ci "+arg+": "+argType);
-
-                switch (argType) {
-                    case "number":
-                        command.then(argument(arg,IntegerArgumentType.integer(1)));
-                        break;
-
-                    case "pos":
-                        command.then(argument(arg, Vec3ArgumentType.vec3(true)));
-                        break;
-
-                    default://do a string argument if not recognised
-                        command.then(argument(arg,StringArgumentType.word()));
-                        break;
-                }
-            }
-            
-            command = command.executes((c) -> {
-                                    Messenger.m(source,"ci executed");
-                                    String fullArg = "";
-                                    for(String arg:args){
-                                        
-                                        String argType= argMap.getOrDefault(new StringValue(arg),new StringValue("string")).getString(); 
-                                        Messenger.m(source,"ci "+arg+": "+argType); 
-                                        
-                                        switch (argType) {
-                                            case "number":
-                                                fullArg = fullArg + IntegerArgumentType.getInteger(c, arg)+" ";
-                                                break;
-
-                                            case "pos":
-                                                Vec3d pos = Vec3ArgumentType.getVec3(c, arg);
-                                                fullArg = fullArg + pos.x+ " " + pos.y + " " + pos.z+ " ";
-                                                break;
-
-                                            default://Getting string
-                                                fullArg = fullArg + StringArgumentType.getString(c, arg)+" ";
-                                                break;
-                                        }
-                                    }
-
-                                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                            handleCommand(c.getSource(), funcName,null, fullArg);
-                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                                    return (int)response.readInteger();
-                                });
+            command = command.
+                    then(literal(function).
+                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
+                            executes( (c) -> {
+                                Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                        handleCommand(c.getSource(), function,null,"");
+                                if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
+                                return (int)response.readInteger();
+                            }).
+                            then(argument("args...", StringArgumentType.greedyString()).
+                                    executes( (c) -> {
+                                        Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                                handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                        if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                                        return (int)response.readInteger();
+                                    })));
         }
-        
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
