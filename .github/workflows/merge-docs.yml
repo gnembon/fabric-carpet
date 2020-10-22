@@ -1,0 +1,19 @@
+name: Merge docs
+on:
+  push:
+    paths:
+    - "docs/**"
+    - "!docs/scarpet/Full.md"
+jobs:
+  Scarpet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Merge docs
+        run: ./mergedoc.sh
+      - name: Commit merged docs
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -am "Merge docs for '${{ github.event.head_commit.message }}'"
+          git push
