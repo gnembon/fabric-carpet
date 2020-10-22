@@ -271,11 +271,15 @@ public class CarpetSettings
             return newValue;
         }
     }
+    
     @Rule(
-            desc = "Chains will stick to each other on the long end",
-            extra = "and stick to other blocks that connect to them at the ends",
+            desc = "Chains will stick to each other on the long ends",
+            extra = {
+                    "and will stick to other blocks that connect to them directly.",
+                    "With stick_to_all: it will stick even if not visually connected"
+            },
             category = {EXPERIMENTAL, FEATURE},
-            options = {"true", "false", "all"},
+            options = {"true", "false", "stick_to_all"},
             validate = ChainStoneSetting.class
     )
     public static String chainStone = "false";
