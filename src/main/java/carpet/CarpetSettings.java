@@ -271,7 +271,7 @@ public class CarpetSettings
             return newValue;
         }
     }
-    
+
     @Rule(
             desc = "Chains will stick to each other on the long ends",
             extra = {
