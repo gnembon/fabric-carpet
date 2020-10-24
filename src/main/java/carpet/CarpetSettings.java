@@ -266,7 +266,7 @@ public class CarpetSettings
     private static class ChainStoneSetting extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
             CarpetSettings.doChainStone = !newValue.toLowerCase(Locale.ROOT).equals("false");
-            CarpetSettings.chainStoneStickToAll = newValue.toLowerCase(Locale.ROOT).equals("all");
+            CarpetSettings.chainStoneStickToAll = newValue.toLowerCase(Locale.ROOT).equals("stick_to_all");
 
             return newValue;
         }
