@@ -762,15 +762,15 @@ str('player at: %d %d %d',pos(player())) => 'player at: 567, -2423, 124'
 * * *
 ## Threading and Parallel Execution
 
-Scarpet allows to run threads of execution in parallel to the main script execution thread. In Minecraft, the main 
-thread scripts are executed on the main server thread. Since Minecraft is inherently NOT thread safe, it is not that 
-beneficial to parallel execution in order to access world resources faster. Both `GetBlockState` and `setBlockState` 
+Scarpet allows to run threads of execution in parallel to the main script execution thread. In Minecraft, apps
+are executed on the main server thread. Since Minecraft is inherently NOT thread safe, it is not that 
+beneficial to parallel execution in order to access world resources faster. Both `getBlockState` and `setBlockState` 
 are not thread safe and require the execution to park on the server thread, where these requests can be executed in 
-the off-tick time in between ticks that didn't take 50ms. There are however benefits of running things in parallel, 
+the off-tick time in between ticks that didn't take all 50ms. There are however benefits of running things in parallel, 
 like fine time control not relying on the tick clock, or running things independent on each other. You can still run 
 your actions on tick-by-tick basis, either taking control of the execution using `game_tick()` API function 
-(nasty solution), or scheduling tick using `schedule()` function (much nicer solution), but threading often gives 
-the neatest solution to solve problems in parallel 
+(nasty solution), or scheduling tick using `schedule()` function (preffered solution), but threading gives much more control
+on the timings without impacting the main game and is the only solution to solve problems in parallel 
 (see [scarpet camera](/src/main/resources/assets/carpet/scripts/camera.sc)).
 
 Due to limitations with the game, there are some limits to the threading as well. You cannot for 
@@ -778,8 +778,10 @@ instance `join_task()` at all from the main script and server thread, because an
 function that require any world access, will require to park and join on the main thread to get world access, 
 meaning that calling join on that task would inevitably lead to a typical deadlock. You can still join tasks 
 from other threads, just because the only possibility of a deadlock in this case would come explicitly from your 
-bad code, not the internal world access behaviour. Some things tough like player or entity manipulation, can be 
+bad code, not the internal world access behaviour. Some things tough like players or entities manipulation, can be 
 effectively parallelized.
+
+If the app is shutting down, creating new tasks via `task`
 
 ### `task(function, ... args)`, `task_thread(executor, function, ... args)`
 
@@ -797,6 +799,24 @@ foo(a, b) -> print(a+b); task('foo',2,2)  => Uses existing function definition t
 task_thread('temp', 'foo',3,5);  => runs function foo with a different thread executor, identified as 'temp'
 a = 3; task_thread('temp', _(outer(a), b) -> foo(a,b), 5)  
     => Another example of running the same thing passing arguments using closure over anonymous function as well as passing a parameter.
+</pre>
+
+### `sleep()` `sleep(timeout)`, `sleep(timeout, close_call, ... args)`
+
+
+Halts the execution of the thread (or the game itself, if run not as a part of a task) for `expr` milliseconds. 
+It checks for interrupted execution, in that case exits the thread (or the entire program, if not run on a thread) in case the app
+is being stopped/removed. If the closing call is specified, executes the following function when a shutdown signal is triggered.
+If run on the main thread (not as a taks) the call may only be invocated when the entire game shuts down, so close call only 
+makes sense for threads. For programs use `__on_close()` handler.
+
+Since `close_call` is executed after app shutdown is initiated, you won't be able to create new tasks in that block. Threads
+should periodically call `sleep` to ensure all app tasks will finish when the app is closing or right after, but the app engine
+will not forcefully remove your running tasks so the tasks themselves need to properly react to the closing request.
+
+<pre>
+sleep(50)  # wait for 50 milliseconds
+sleep(1000, _() -> print('Interrupted')) # waits for 1 second, outputs a message when thread is shut down.
 </pre>
 
 ### `task_count(executor?)`
@@ -934,15 +954,6 @@ a = 1; print(a = 5) => results in 5, prints: 5
 a = 1; print(a) = 5 => results in 5, prints: 1
 print('pi = '+pi) => prints: pi = 3.141592653589793
 print(str('pi = %.2f',pi)) => prints: pi = 3.14
-</pre>
-
-### `sleep(expr)`
-
-Halts the execution of the program (and the game itself) for `expr` milliseconds. All in all, its better to 
-use `game_tick(expr)` to let the game do its job while the program waits
-
-<pre>
-sleep(50)
 </pre>
 
 ### `time()`
