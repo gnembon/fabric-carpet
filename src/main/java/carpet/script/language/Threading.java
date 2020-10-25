@@ -2,7 +2,9 @@ package carpet.script.language;
 
 import carpet.script.Expression;
 import carpet.script.argument.FunctionArgument;
+import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
@@ -33,13 +35,12 @@ public class Threading
         });
 
 
-        expression.addFunction("task_count", (lv) ->
+        expression.addLazyFunction("task_count", -1, (c, t, lv) ->
         {
-            if (lv.size() > 0)
-            {
-                return new NumericValue(ThreadValue.taskCount(lv.get(0)));
-            }
-            return new NumericValue(ThreadValue.taskCount());
+            Value ret = (lv.size() > 0)?
+                    new NumericValue(c.host.taskCount(lv.get(0).evalValue(c))):
+                    new NumericValue(c.host.taskCount());
+            return (cc, tt) -> ret;
         });
 
         expression.addUnaryFunction("task_value", (v) ->
@@ -80,11 +81,39 @@ public class Threading
                 lockValue = lv.get(0).evalValue(c);
                 ind = 1;
             }
-            synchronized (ThreadValue.getLock(lockValue))
+            synchronized (c.host.getLock(lockValue))
             {
                 Value ret = lv.get(ind).evalValue(c, t);
                 return (_c, _t) -> ret;
             }
+        });
+
+        expression.addLazyFunctionWithDelegation("sleep", -1, (c, t, expr, tok, lv) ->
+        {
+            long time = lv.isEmpty()?0L:NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+            boolean interrupted = false;
+            try
+            {
+                if (Thread.interrupted()) interrupted = true;
+                if (time > 0) Thread.sleep(time);
+                Thread.yield();
+            }
+            catch (InterruptedException ignored)
+            {
+                interrupted = true;
+            }
+            if (interrupted)
+            {
+                Value exceptionally = Value.NULL;
+                if (lv.size() > 1)
+                {
+                    FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false);
+                    FunctionValue fun = functionArgument.function;
+                    exceptionally = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
+                }
+                throw new ExitStatement(exceptionally);
+            }
+            return (cc, tt) -> new NumericValue(time); // pass through for variables
         });
     }
 }

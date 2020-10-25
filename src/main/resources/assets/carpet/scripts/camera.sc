@@ -458,6 +458,12 @@ show() ->
 
    task( _() -> (
        global_markers = __create_markers();
+       on_close = ( _() -> (
+          for(global_markers, modify(_,'remove'));
+          global_markers = null;
+          global_showing_path = false;
+       ));
+
        loop(7200,
            if(!global_showing_path, break());
            __get_player();
@@ -467,11 +473,9 @@ show() ->
                global_markers = __create_markers();
            );
            __show_path_tick();
-           sleep(100);
+           sleep(100, on_close);
        );
-       for(global_markers, modify(_,'remove'));
-       global_markers = null;
-       global_showing_path = false;
+       call(on_close);
    ));
    null;
 );
@@ -523,6 +527,7 @@ play() ->
                    modify(p, 'location', v);
                    point += 1;
                    end_time = time();
+                   sleep();
                    if (global_prefer_sync,
                        should_be = very_start + mspt*point;
                        if (end_time < should_be, sleep(should_be-end_time) )

@@ -337,6 +337,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     public void onClose()
     {
+        inTermination = true;
         FunctionValue closing = getFunction("__on_close");
         if (closing != null)
         {

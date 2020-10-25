@@ -304,7 +304,6 @@ public class CarpetScriptServer
         {
             host.onClose();
         }
-        ThreadValue.shutdown();
     }
 
     public void reload(MinecraftServer server)

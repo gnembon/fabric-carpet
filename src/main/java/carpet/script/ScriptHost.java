@@ -9,14 +9,20 @@ import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class ScriptHost
@@ -24,13 +30,16 @@ public abstract class ScriptHost
     public static Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
     private static final Map<Long, Random> randomizers = new Long2ObjectOpenHashMap<>();
 
+    private final Map<Value, ThreadPoolExecutor> executorServices = new HashMap<>();
+    private final Map<Value, Object> locks = new ConcurrentHashMap<>();
+    protected boolean inTermination = false;
+
     public Random getRandom(long aLong)
     {
         if (randomizers.size() > 1024)
             randomizers.clear();
         return randomizers.computeIfAbsent(aLong, Random::new);
     }
-
 
     public static class ModuleData
     {
@@ -325,7 +334,46 @@ public abstract class ScriptHost
 
     protected abstract ScriptHost duplicate();
 
-    public void onClose() { }
+    public Object getLock(Value name)
+    {
+        return locks.computeIfAbsent(name, (n) -> new Object());
+    }
+
+    public ThreadPoolExecutor getExecutor(Value pool)
+    {
+        if (inTermination) return null;
+        return executorServices.computeIfAbsent(pool, (v) -> (ThreadPoolExecutor) Executors.newCachedThreadPool());
+    }
+
+    public int taskCount()
+    {
+        return executorServices.values().stream().map(ThreadPoolExecutor::getActiveCount).reduce(0, Integer::sum);
+    }
+    public int taskCount(Value pool)
+    {
+        if (executorServices.containsKey(pool))
+        {
+            return executorServices.get(pool).getActiveCount();
+        }
+        return 0;
+    }
+
+    public void onClose()
+    {
+        inTermination = true;
+        List<ExecutorService> toStop = new ArrayList<>(executorServices.values());
+        for (ScriptHost uh : userHosts.values()) toStop.addAll(uh.executorServices.values());
+        if (!toStop.isEmpty())
+        {
+            ThreadPoolExecutor shutdownService = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+            List<CompletableFuture<?>> terminators = toStop.stream().map(exec ->
+                    CompletableFuture.supplyAsync(() -> { exec.shutdown(); exec.shutdownNow(); return null; }, shutdownService)).collect(Collectors.toList()
+            );
+            terminators.forEach(CompletableFuture::join);
+            shutdownService.shutdown();
+            shutdownService.shutdownNow();
+        }
+    }
 
     public void setPerPlayer(boolean isPerUser)
     {

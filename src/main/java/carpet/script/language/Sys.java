@@ -294,17 +294,7 @@ public class Sys {
             System.out.println(v.getString());
             return v; // pass through for variables
         });
-        expression.addUnaryFunction("sleep", (v) ->
-        {
-            long time = NumericValue.asNumber(v).getLong();
-            try
-            {
-                Thread.sleep(time);
-                Thread.yield();
-            }
-            catch (InterruptedException ignored) { }
-            return v; // pass through for variables
-        });
+
         expression.addLazyFunction("time", 0, (c, t, lv) ->
         {
             Value time = new NumericValue((System.nanoTime() / 1000) / 1000.0);
