@@ -227,21 +227,32 @@ public class CarpetScriptServer
                     return (int)response.readInteger();
                 });
 
-        for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        for (String funcName : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
+            FunctionValue funcVal = host.getFunction(funcName);
+            List<String> args = funcVal.getArguments();
+
+            Value defFuncRetVal;
+            try {
+                defFuncRetVal = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("___"+funcName), new ArrayList<LazyValue>());
+            } catch(Exception e){
+                continue;
+            }//If doesnt exist then it's not meant to be a command. todo make it backwards compatible later, but this makes it more user friendly
+
+
             command = command.
-                    then(literal(function).
-                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
+                    then(literal(funcName).
+                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null).
                             executes( (c) -> {
                                 Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                        handleCommand(c.getSource(), function,null,"");
+                                        handleCommand(c.getSource(), funcName,null,"");
                                 if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
                                 return (int)response.readInteger();
                             }).
                             then(argument("args...", StringArgumentType.greedyString()).
                                     executes( (c) -> {
                                         Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                                handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                                handleCommand(c.getSource(), funcName,null, StringArgumentType.getString(c, "args..."));
                                         if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
                                         return (int)response.readInteger();
                                     })));
