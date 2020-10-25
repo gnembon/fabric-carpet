@@ -180,7 +180,7 @@
     "WorldChunk_movableTEMixin",
     "PistonHandler_customStickyMixin",
     "PlayerEntity_creativeNoClipMixin",
-    "PistonBlockEntity_creativeNoClipMixin",
+    "PistonBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin"
 
