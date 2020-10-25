@@ -90,6 +90,7 @@ public abstract class ScriptHost
 
     protected ScriptHost parent;
     protected boolean perUser;
+    protected String user;
 
     public String getName() {return main ==null?null: main.getName();}
 
@@ -102,6 +103,7 @@ public abstract class ScriptHost
         this.parent = parent;
         this.main = code;
         this.perUser = perUser;
+        this.user = null;
         ModuleData moduleData = new ModuleData(code);
         initializeModuleGlobals(moduleData);
         this.moduleData.put(code, moduleData);
@@ -313,15 +315,10 @@ public abstract class ScriptHost
         if (oldUserHost != null) return oldUserHost;
         ScriptHost userHost = this.duplicate();
         userHost.modules.putAll(this.modules);
-        for (Map.Entry<Module, ScriptHost.ModuleData> e : this.moduleData.entrySet())
-        {
-            userHost.moduleData.put(e.getKey(), new ModuleData(e.getKey(), e.getValue()));
-        }
+        this.moduleData.forEach((key, value) -> userHost.moduleData.put(key, new ModuleData(key, value)));
         // fixing imports
-        userHost.moduleData.forEach((module, data) ->
-        {
-            data.setImportsBasedOn(userHost, this.moduleData.get(data.parent));
-        });
+        userHost.moduleData.forEach((module, data) -> data.setImportsBasedOn(userHost, this.moduleData.get(data.parent)));
+        userHost.user = user;
         userHosts.put(user, userHost);
         return userHost;
     }
@@ -361,18 +358,8 @@ public abstract class ScriptHost
     public void onClose()
     {
         inTermination = true;
-        List<ExecutorService> toStop = new ArrayList<>(executorServices.values());
-        for (ScriptHost uh : userHosts.values()) toStop.addAll(uh.executorServices.values());
-        if (!toStop.isEmpty())
-        {
-            ThreadPoolExecutor shutdownService = (ThreadPoolExecutor) Executors.newCachedThreadPool();
-            List<CompletableFuture<?>> terminators = toStop.stream().map(exec ->
-                    CompletableFuture.supplyAsync(() -> { exec.shutdown(); exec.shutdownNow(); return null; }, shutdownService)).collect(Collectors.toList()
-            );
-            terminators.forEach(CompletableFuture::join);
-            shutdownService.shutdown();
-            shutdownService.shutdownNow();
-        }
+        for (ScriptHost uh : userHosts.values()) uh.onClose();
+        executorServices.values().forEach(e -> {e.shutdown(); e.shutdownNow();});
     }
 
     public void setPerPlayer(boolean isPerUser)

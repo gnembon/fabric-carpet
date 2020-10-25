@@ -337,46 +337,34 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     public void onClose()
     {
-        inTermination = true;
+        super.onClose();
         FunctionValue closing = getFunction("__on_close");
         if (closing != null)
         {
+            ServerPlayerEntity player = (user==null)?null:scriptServer.server.getPlayerManager().getPlayer(user);
+            ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
             try
             {
-                callUDF(BlockPos.ORIGIN, scriptServer.server.getCommandSource(), closing, Collections.emptyList());
+                callUDF(BlockPos.ORIGIN, source, closing, Collections.emptyList());
             }
             catch (InvalidCallbackException ignored)
             {
             }
         }
-        userHosts.forEach((key, value) ->
+        if (user == null)
         {
-            FunctionValue userClosing = value.getFunction("__on_close");
-            if (userClosing != null)
-            {
-                ServerPlayerEntity player = scriptServer.server.getPlayerManager().getPlayer(key);
-                ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
-                try
-                {
-                    ((CarpetScriptHost) value).callUDF(BlockPos.ORIGIN, source, userClosing, Collections.emptyList());
-                }
-                catch (InvalidCallbackException ignored)
-                {
-                }
-            }
-        });
 
-        String markerName = Auxiliary.MARKER_STRING+"_"+((getName()==null)?"":getName());
-        for (ServerWorld world : scriptServer.server.getWorlds())
-        {
-            for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
+            String markerName = Auxiliary.MARKER_STRING + "_" + ((getName() == null) ? "" : getName());
+            for (ServerWorld world : scriptServer.server.getWorlds())
             {
-                e.remove();
+                for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
+                {
+                    e.remove();
+                }
             }
+            if (this.saveTimeout > 0)
+                dumpState();
         }
-        if (this.saveTimeout > 0)
-            dumpState();
-        super.onClose();
     }
 
     private void dumpState()
