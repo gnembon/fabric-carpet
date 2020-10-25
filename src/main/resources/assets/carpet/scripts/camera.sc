@@ -473,7 +473,7 @@ show() ->
                global_markers = __create_markers();
            );
            __show_path_tick();
-           sleep(100, on_close);
+           sleep(100, call(on_close));
        );
        call(on_close);
    ));

@@ -88,7 +88,7 @@ public class Threading
             }
         });
 
-        expression.addLazyFunctionWithDelegation("sleep", -1, (c, t, expr, tok, lv) ->
+        expression.addLazyFunction("sleep", -1, (c, t, lv) ->
         {
             long time = lv.isEmpty()?0L:NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
             boolean interrupted = false;
@@ -107,9 +107,7 @@ public class Threading
                 Value exceptionally = Value.NULL;
                 if (lv.size() > 1)
                 {
-                    FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false);
-                    FunctionValue fun = functionArgument.function;
-                    exceptionally = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
+                    exceptionally = lv.get(1).evalValue(c);
                 }
                 throw new ExitStatement(exceptionally);
             }
