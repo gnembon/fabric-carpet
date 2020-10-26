@@ -8,6 +8,7 @@ import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.ChainBlock;
 import net.minecraft.block.ComparatorBlock;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.block.EndRodBlock;
@@ -18,6 +19,7 @@ import net.minecraft.block.HopperBlock;
 import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.LeverBlock;
 import net.minecraft.block.ObserverBlock;
+import net.minecraft.block.PillarBlock;
 import net.minecraft.block.PistonBlock;
 import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.SlabBlock;
@@ -356,6 +358,20 @@ public class BlockRotator
                 {
                     newState = state.rotate(BlockRotation.CLOCKWISE_90);
                 }
+            }
+        }
+        else if (block instanceof ChainBlock) 
+        {
+            switch((Direction.Axis)state.get(PillarBlock.AXIS)) {
+                case X:
+                    newState = (BlockState)state.with(PillarBlock.AXIS, Direction.Axis.Z);
+                    break;
+                case Z:
+                    newState = (BlockState)state.with(PillarBlock.AXIS, Direction.Axis.Y);
+                    break;
+                case Y:
+                    newState = (BlockState)state.with(PillarBlock.AXIS, Direction.Axis.X);
+                    break;
             }
         }
         else
