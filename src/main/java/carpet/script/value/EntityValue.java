@@ -295,6 +295,21 @@ public class EntityValue extends Value
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
         put("yaw", (e, a)-> new NumericValue(e.yaw));
+        put("head_yaw", (e, a)-> {
+            if (e instanceof LivingEntity)
+            {
+                return  new NumericValue(e.getHeadYaw());
+            }
+            return Value.NULL;
+        });
+        put("body_yaw", (e, a)-> {
+            if (e instanceof LivingEntity)
+            {
+                return  new NumericValue(((LivingEntity) e).bodyYaw);
+            }
+            return Value.NULL;
+        });
+
         put("pitch", (e, a)-> new NumericValue(e.pitch));
         put("look", (e, a) -> {
             Vec3d look = e.getRotationVector();
@@ -661,9 +676,22 @@ public class EntityValue extends Value
         else
         {
             e.refreshPositionAndAngles(x, y, z, yaw, pitch);
-            ((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
+            // we were sending to players for not-living entites, that were untracked. Living entities should be tracked.
+            //((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityS2CPacket.(e));
+            if (e instanceof LivingEntity)
+            {
+                LivingEntity le = (LivingEntity)e;
+                le.prevBodyYaw = le.prevYaw = yaw;
+                le.prevHeadYaw = le.headYaw = yaw;
+                // seems universal for:
+                //e.setHeadYaw(yaw);
+                //e.setYaw(yaw);
+            }
+            else
+            {
+                ((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityPositionS2CPacket(e));
+            }
         }
-
     }
 
     private static void updateVelocity(Entity e)
@@ -753,6 +781,21 @@ public class EntityValue extends Value
         {
             updatePosition(e, e.getX(), e.getY(), e.getZ(), ((float)NumericValue.asNumber(v).getDouble()) % 360, e.pitch);
         });
+        put("head_yaw", (e, v) ->
+        {
+            if (e instanceof LivingEntity)
+            {
+                e.setHeadYaw((float)NumericValue.asNumber(v).getDouble() % 360);
+            }
+        });
+        put("body_yaw", (e, v) ->
+        {
+            if (e instanceof LivingEntity)
+            {
+                e.setYaw((float)NumericValue.asNumber(v).getDouble() % 360);
+            }
+        });
+
         put("pitch", (e, v) ->
         {
             updatePosition(e, e.getX(), e.getY(), e.getZ(), e.yaw, MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
