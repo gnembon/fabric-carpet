@@ -2643,9 +2643,13 @@ Quin-tuple of the entity's position (x, y, and z coords), and rotation (yaw, pit
 
 Respective component of entity's coordinates
 
-### `query(e, 'pitch'), query(e, 'yaw')`
+### `query(e, 'pitch')`, `query(e, 'yaw')`
 
 Pitch and Yaw or where entity is looking.
+
+### `query(e, 'head_yaw')`, `query(e, 'body_yaw')`
+
+Applies to living entites. Sets their individual head and body facing angle.
 
 ### `query(e, 'look')`
 
@@ -3038,9 +3042,13 @@ Changes full location vector all at once.
 
 Changes entity's location in the specified direction.
 
-### `modify(e, 'pitch', pitch), modify(e, 'yaw', yaw)`
+### `modify(e, 'pitch', angle), modify(e, 'yaw', angle)`
 
-Changes entity's pitch or yaw.
+Changes entity's pitch or yaw angle.
+
+### `modify(e, 'head_yaw', angle)`, `modify(e, 'body_yaw', angle)`
+
+For living entities, controls their head and body yaw angle.
 
 ### `modify(e, 'move', x, y, z), modify(e, 'move', l(x,y,z) )`
 
