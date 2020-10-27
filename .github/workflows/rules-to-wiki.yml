@@ -64,7 +64,15 @@ jobs:
           repository: ${{github.repository}}.wiki
           path: wiki
       - name: Proccess Gradle log into a pretty wiki page
-        run: from1="# Carpet"; to2="BUILD SUCCESSFUL"; a="$(cat settings-toProccess.txt)"; a="$(echo "${a#*"$from1"}")"; echo "$from1${a%%"$to2"*}" > wiki/Current-Available-Settings.md
+        run: |
+          from1="# Carpet";
+          File=settings-toProccess.txt
+          if grep -q "Deprecated Gradle features" "$File"; then # Happens after update to Gradle 6
+            to2="Deprecated Gradle features";
+          else
+            to2="BUILD SUCCESSFUL"
+          fi
+          a="$(cat settings-toProccess.txt)"; a="$(echo "${a#*"$from1"}")"; echo "$from1${a%%"$to2"*}" > wiki/Current-Available-Settings.md
       - name: Commit updated wiki page
         continue-on-error: true
         run: |
