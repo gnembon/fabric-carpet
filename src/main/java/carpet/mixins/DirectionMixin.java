@@ -24,20 +24,11 @@ public abstract class DirectionMixin
         {
             yaw = ((EntityInterface) entity).getMainYaw(float_1);
         }
-        if (BlockRotator.flippinEligibility(entity))
-        {
-            yaw += 180f;
-        }
         return yaw;
     }
     @Redirect(method = "getEntityFacingOrder", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getPitch(F)F"))
     private static float getPitch(Entity entity, float float_1)
     {
-        float pitch = entity.getPitch(float_1);
-        if (BlockRotator.flippinEligibility(entity))
-        {
-            pitch = -pitch;
-        }
-        return pitch;
+        return entity.getPitch(float_1);
     }
 }

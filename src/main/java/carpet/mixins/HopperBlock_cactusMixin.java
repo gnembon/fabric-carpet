@@ -17,10 +17,6 @@ public class HopperBlock_cactusMixin
     ))
     private Direction getOppositeOpposite(ItemPlacementContext context)
     {
-        if (BlockRotator.flippinEligibility(context.getPlayer()))
-        {
-            return context.getSide().getOpposite();
-        }
         return context.getSide();
     }
 }

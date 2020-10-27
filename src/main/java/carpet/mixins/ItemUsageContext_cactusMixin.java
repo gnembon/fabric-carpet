@@ -17,11 +17,6 @@ public class ItemUsageContext_cactusMixin
     ))
     private Direction getPlayerFacing(PlayerEntity playerEntity)
     {
-        Direction dir = playerEntity.getHorizontalFacing();
-        if (BlockRotator.flippinEligibility(playerEntity))
-        {
-            dir = dir.getOpposite();
-        }
-        return dir;
+        return playerEntity.getHorizontalFacing();
     }
 }

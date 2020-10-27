@@ -48,18 +48,6 @@ import net.minecraft.world.World;
 
 public class BlockRotator
 {
-    public static boolean flipBlockWithCactus(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
-    {
-        if (!player.abilities.allowModifyWorld || !CarpetSettings.flippinCactus || !player_holds_cactus_mainhand(player))
-        {
-            return false;
-        }
-        CarpetSettings.impendingFillSkipUpdates = true;
-        boolean retval = flip_block(state, world, player, hand, hit);
-        CarpetSettings.impendingFillSkipUpdates = false;
-        return retval;
-    }
-
     public static BlockState alternativeBlockPlacement(Block block,  ItemPlacementContext context)//World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         //actual alternative block placement code
@@ -383,23 +371,6 @@ public class BlockRotator
             world.setBlockState(pos, newState, 2 | 1024);
             world.scheduleBlockRerenderIfNeeded(pos, state, newState);
             return true;
-        }
-        return false;
-    }
-    private static boolean player_holds_cactus_mainhand(PlayerEntity playerIn)
-    {
-        return (!playerIn.getMainHandStack().isEmpty()
-                && playerIn.getMainHandStack().getItem() instanceof BlockItem &&
-                ((BlockItem) (playerIn.getMainHandStack().getItem())).getBlock() == Blocks.CACTUS);
-    }
-    public static boolean flippinEligibility(Entity entity)
-    {
-        if (CarpetSettings.flippinCactus && (entity instanceof PlayerEntity))
-        {
-            PlayerEntity player = (PlayerEntity)entity;
-            return (!player.getOffHandStack().isEmpty()
-                    && player.getOffHandStack().getItem() instanceof BlockItem &&
-                    ((BlockItem) (player.getOffHandStack().getItem())).getBlock() == Blocks.CACTUS);
         }
         return false;
     }

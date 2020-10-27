@@ -126,9 +126,6 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
-    @Rule( desc = "XP orbs combine with other into bigger orbs", category = FEATURE )
-    public static boolean combineXPOrbs = false;
-
     @Rule(
             desc = "Empty shulker boxes can stack to 64 when dropped on the ground",
             extra = "To move them around between inventories, use shift click to move entire stacks",
@@ -233,15 +230,6 @@ public class CarpetSettings
     @Rule(desc = "Pistons, droppers and dispensers react if block above them is powered", category = CREATIVE)
     public static boolean quasiConnectivity = true;
 
-    @Rule(
-            desc = "Players can flip and rotate blocks when holding cactus",
-            extra = {
-                    "Doesn't cause block updates when rotated/flipped",
-                    "Applies to pistons, observers, droppers, repeaters, stairs, glazed terracotta etc..."
-            },
-            category = {CREATIVE, SURVIVAL, FEATURE}
-    )
-    public static boolean flippinCactus = false;
 
     @Rule(
             desc = "hoppers pointing to wool will count items passing through them",

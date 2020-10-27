@@ -107,7 +107,6 @@
     "SpawnHelperMixin",
 
     "DirectionMixin",
-    "ServerPlayerInteractionManager_cactusMixin",
     "HopperBlock_cactusMixin",
     "ItemUsageContext_cactusMixin",
     "DispenserBlock_cactusMixin",
