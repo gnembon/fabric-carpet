@@ -8,7 +8,6 @@ import net.minecraft.block.BedBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.ChainBlock;
 import net.minecraft.block.ComparatorBlock;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.block.EndRodBlock;
@@ -360,7 +359,7 @@ public class BlockRotator
                 }
             }
         }
-        else if (block instanceof ChainBlock) 
+        else if (block instanceof PillarBlock) 
         {
             switch((Direction.Axis)state.get(PillarBlock.AXIS)) {
                 case X:
