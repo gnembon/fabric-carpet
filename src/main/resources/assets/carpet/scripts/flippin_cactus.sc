@@ -50,8 +50,8 @@ global_rotate_anti_clockwise={//when you shift
 __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->(
 
     if(item_tuple:0!='cactus' ||hand!='mainhand',return());//cos offhand means reverse placement (todo)
-    //slabs
 
+    //Dealing with slabs
     if(block~'slab'&&property(block,'type')!='double',//cos double slabs can't flip.
         properties=[];
         for(filter(block_properties(block),_!='type'),
@@ -63,8 +63,20 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->
         set(block,block,properties)
     );
 
+    //Dealing with chains/other blocks with axes
+    if(block=='chain',//can't replace with property(block,'axis')!=null cos its meant to be limited
+        properties=[];
+        for(filter(block_properties(block),_!='axis'),
+            put(properties,null,_);
+            put(properties,null,property(block,_))
+        );//doing long method for blocks which have other properties, like chains being waterlogged
+        put(properties,null,'axis');
+        put(properties,null,if((old_axis=property(block,'axis'))=='x','y',old_axis=='y','z','x'));
+        set(block,block,properties)
+    );
 
-    if(!for(block_properties(block),_=='facing'),return());//Checking if holding cactus and if it has a 'facing' property
+
+    if(!for(block_properties(block),_=='facing'),return());//Checking if it has a 'facing' property, so dont need to call return on slabs/chains
 
     properties =[];
 
@@ -72,8 +84,6 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->
         put(properties,null,_);
         put(properties,null,property(block,_))
     );
-
-    //todo dealing with stairs and maybe chains and other stuff here
 
     if(block~'stairs',//dealing with stairs here cos they're more complicated
         if((face=='up' && hitvec:1==1)||(face=='down' && hitvec:1==0),
