@@ -32,7 +32,7 @@ public class FileModule extends Module
         try
         {
             name = sourceFile.getName().replaceFirst("\\.scl?","").toLowerCase(Locale.ROOT);
-            code = new String(Files.readAllBytes(sourceFile.toPath()));
+            code = new String(Files.readAllBytes(sourceFile.toPath()), StandardCharsets.UTF_8);
         }
         catch ( IOException e)
         {
