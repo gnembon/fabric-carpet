@@ -2794,7 +2794,12 @@ Returns mob's attack target or null if none or not applicable.
 
 ### `query(e, 'home')`
 
-Returns creature's home position or null if none or not applicable.
+Returns creature's home position (as per mob's AI, leash etc) or null if none or not applicable.
+
+### `query(e, 'spawn_point')`
+
+Returns position tuple, dimension, spawn angle, and whether spawn is forced, assuming the player has a spawn position. 
+Returns `false` if spawn position is not set, and `null` if `e` is not a player.
 
 ### `query(e, 'path')`
 
@@ -3149,6 +3154,13 @@ it clears all effects.
 Sets AI to stay around the home position, within `distance` blocks from it. `distance` defaults to 16 blocks. 
 `null` removes it. _May_ not work fully with mobs that have this AI built in, like Villagers.
 
+
+### `modify(e, 'spawn_point')`, `modify(e, 'spawn_point', null)`, `modify(e, 'spawn_point', pos, dimension?, angle?, forced?)`
+
+Changes player respawn position to given position, optional dimension (defaults to current player dimension), angle (defaults to 
+current player facing) and spawn forced/fixed (defaults to `false`). If `none` or nothing is passed, the respawn point
+will be reset (as removed) instead.
+  
 ### `modify(e, 'gamemode', gamemode?), modify(e, 'gamemode', gamemode_id?)`
 
 Modifies gamemode of player to whatever string (case-insensitive) or number you put in.
