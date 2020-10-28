@@ -1,11 +1,13 @@
 package carpet.script.value;
 
+import carpet.script.exception.InternalExpressionException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.brain.LookTarget;
 import net.minecraft.entity.ai.brain.WalkTarget;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.ai.pathing.PathNode;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 
 import net.minecraft.structure.StructurePiece;
@@ -36,6 +38,12 @@ public class ValueConversions
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
     }
 
+    public static Value fromPosOptional(BlockPos pos)
+    {
+        if (pos == null) return Value.NULL;
+        return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
+    }
+
     public static Value fromVec(Vec3d vec)
     {
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
@@ -44,6 +52,57 @@ public class ValueConversions
     public static Value dimName(ServerWorld world)
     {
         return ofId(world.getRegistryKey().getValue());
+    }
+
+    public static World dimFromValue(Value dimensionValue, MinecraftServer server)
+    {
+        if (dimensionValue instanceof EntityValue)
+        {
+            return ((EntityValue)dimensionValue).getEntity().getEntityWorld();
+        }
+        else if (dimensionValue instanceof BlockValue)
+        {
+            BlockValue bv = (BlockValue)dimensionValue;
+            if (bv.getWorld() != null)
+            {
+                return bv.getWorld();
+            }
+            else
+            {
+                throw new InternalExpressionException("dimension argument accepts only world-localized block arguments");
+            }
+        }
+        else
+        {
+            String dimString = dimensionValue.getString().toLowerCase(Locale.ROOT);
+            switch (dimString)
+            {
+                case "nether":
+                case "the_nether":
+                    return server.getWorld(World.NETHER);
+                case "end":
+                case "the_end":
+                    return server.getWorld(World.END);
+                case "overworld":
+                case "over_world":
+                    return server.getWorld(World.OVERWORLD);
+                default:
+                    RegistryKey<World> dim = null;
+                    Identifier id = new Identifier(dimString);
+                    // not using RegistryKey.of since that one creates on check
+                    for (RegistryKey<World> world : (server.getWorldRegistryKeys()))
+                    {
+                        if (id.equals(world.getValue()))
+                        {
+                            dim = world;
+                            break;
+                        }
+                    }
+                    if (dim == null)
+                        throw new InternalExpressionException("Incorrect dimension string: "+dimString);
+                    return server.getWorld(dim);
+            }
+        }
     }
 
     public static Value dimName(RegistryKey<World> dim)

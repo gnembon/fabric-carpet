@@ -18,7 +18,6 @@ import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
-import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
@@ -59,7 +58,6 @@ import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -606,58 +604,9 @@ public class Auxiliary {
         expression.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
             ServerCommandSource outerSource = ((CarpetContext)c).s;
             Value dimensionValue = lv.get(0).evalValue(c);
-            ServerCommandSource innerSource = outerSource;
-            if (dimensionValue instanceof EntityValue)
-            {
-                innerSource = outerSource.withWorld((ServerWorld) ((EntityValue)dimensionValue).getEntity().getEntityWorld());
-            }
-            else if (dimensionValue instanceof BlockValue)
-            {
-                BlockValue bv = (BlockValue)dimensionValue;
-                if (bv.getWorld() != null)
-                {
-                    innerSource = outerSource.withWorld(bv.getWorld());
-                }
-                else
-                {
-                    throw new InternalExpressionException("'in_dimension' accepts only world-localized block arguments");
-                }
-            }
-            else
-            {
-                String dimString = dimensionValue.getString().toLowerCase(Locale.ROOT);
-                switch (dimString)
-                {
-                    case "nether":
-                    case "the_nether":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.NETHER)); //nether
-                        break;
-                    case "end":
-                    case "the_end":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.END)); //end
-                        break;
-                    case "overworld":
-                    case "over_world":
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(World.OVERWORLD));  //ow
-                        break;
-                    default:
-                        RegistryKey<World> dim = null;
-                        Identifier id = new Identifier(dimString);
-                        // not using RegistryKey.of since that one creates on check
-                        for (RegistryKey<World> world : (outerSource.getMinecraftServer().getWorldRegistryKeys()))
-                        {
-                            if (id.equals(world.getValue()))
-                            {
-                                dim = world;
-                                break;
-                            }
-                        }
-                        if (dim == null)
-                            throw new InternalExpressionException("Incorrect dimension string: "+dimString);
-                        innerSource = outerSource.withWorld(outerSource.getMinecraftServer().getWorld(dim));
-                }
-            };
-            if (innerSource.getWorld() == outerSource.getWorld()) return lv.get(1);
+            World world = ValueConversions.dimFromValue(dimensionValue, outerSource.getMinecraftServer());
+            if (world == outerSource.getWorld()) return lv.get(1);
+            ServerCommandSource innerSource = outerSource.withWorld((ServerWorld)world);
             Context newCtx = c.recreate();
             ((CarpetContext) newCtx).s = innerSource;
             newCtx.variables = c.variables;

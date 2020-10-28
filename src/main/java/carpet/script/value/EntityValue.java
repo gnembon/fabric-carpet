@@ -61,7 +61,9 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -351,6 +353,20 @@ public class EntityValue extends Value
             if (e instanceof MobEntity)
             {
                 return (((MobEntity) e).getPositionTargetRange () > 0)?new BlockValue(null, (ServerWorld) e.getEntityWorld(), ((PathAwareEntity) e).getPositionTarget()):Value.FALSE;
+            }
+            return Value.NULL;
+        });
+        put("spawn_point", (e, a) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                ServerPlayerEntity spe = (ServerPlayerEntity)e;
+                if (spe.getSpawnPointPosition() == null) return Value.FALSE;
+                return ListValue.of(
+                        ValueConversions.fromPos(spe.getSpawnPointPosition()),
+                        ValueConversions.dimName(spe.getSpawnPointDimension()),
+                        new NumericValue(spe.getSpawnAngle()),
+                        new NumericValue(spe.isSpawnPointSet()) // true if forced spawn point
+                        );
             }
             return Value.NULL;
         });
@@ -1003,6 +1019,54 @@ public class EntityValue extends Value
                 ((MobEntityInterface)ec).getAI(false).add(10, task);
             }
         }); //requires mixing
+
+        put("spawn_point", (e, a) -> {
+            if (!(e instanceof ServerPlayerEntity)) return;
+            ServerPlayerEntity spe = (ServerPlayerEntity)e;
+            if (a == null)
+            {
+                spe.setSpawnPoint(null, null, 0, false, false);
+            }
+            else if (a instanceof ListValue)
+            {
+                List<Value> params= ((ListValue) a).getItems();
+                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false);
+                BlockPos pos = new BlockPos(blockLocator.vec);
+                RegistryKey<World> world = spe.getEntityWorld().getRegistryKey();
+                float angle = spe.getHeadYaw();
+                boolean forced = false;
+                if (params.size() > blockLocator.offset)
+                {
+                    Value worldValue = params.get(blockLocator.offset+0);
+                    world = ValueConversions.dimFromValue(worldValue, spe.getServer()).getRegistryKey();
+                    if (params.size() > blockLocator.offset+1)
+                    {
+                        angle = NumericValue.asNumber(params.get(blockLocator.offset+1), "angle").getFloat();
+                        if (params.size() > blockLocator.offset+2)
+                        {
+                            forced = params.get(blockLocator.offset+2).getBoolean();
+                        }
+                    }
+                }
+                spe.setSpawnPoint(world, pos, angle, forced, false);
+            }
+            else if (a instanceof BlockValue)
+            {
+                BlockValue bv= (BlockValue)a;
+                if (bv.getPos()==null || bv.getWorld() == null)
+                    throw new InternalExpressionException("block for spawn modification should be localised in the world");
+                spe.setSpawnPoint(bv.getWorld().getRegistryKey(), bv.getPos(), e.yaw, true, false);
+            }
+            else if (a.isNull())
+            {
+                spe.setSpawnPoint(null, null, 0, false, false);
+            }
+            else
+            {
+                throw new InternalExpressionException("modifying player respawn point requires a block position, optional world, optional angle, and optional force");
+
+            }
+        });
 
         put("pickup_delay", (e, v) ->
         {
