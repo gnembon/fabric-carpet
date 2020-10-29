@@ -25,23 +25,95 @@ diamond_shape(cx,cy,cz,radius,block)->(
     print(player(), str(' Filled %s blocks',affected));
 );
 
+___diamond_shape()->{
+    'cx'->'number',
+    'cy'->'number',
+    'cz'->'number',
+    'radius'->'number',
+    'block'->'block'
+};
+
 cone(cx, cy, cz, radius, height, pointup, orientation, block, hollow)->
     __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, 'circle', hollow);
+
+___cone()->{
+    'cx'->'number',
+    'cy'->'number',
+    'cz'->'number',
+    'radius'->'number',
+    'height'->'number',
+    'pointup'->'bool',
+    'orientation'->'string',
+    'block'->'block',
+    'hollow'->'bool'
+};
 
 pyramid(cx, cy, cz, radius, height, pointup, orientation, block, hollow)->
     __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, 'square', hollow);
 
+___pyramid()->{
+    'cx'->'number',
+    'cy'->'number',
+    'cz'->'number',
+    'radius'->'number',
+    'height'->'number',
+    'pointup'->'bool',
+    'orientation'->'string',
+    'block'->'block',
+    'hollow'->'bool'
+};
+
 cylinder(cx, cy, cz, radius, height, orientation, block, hollow)->
     __drawPrism(cx, cy, cz, radius, height, orientation, block, 'circle', hollow);
+
+___cylinder()->{
+    'cx'->'number',
+    'cy'->'number',
+    'cz'->'number',
+    'radius'->'number',
+    'height'->'number',
+    'orientation'->'string',
+    'block'->'block',
+    'hollow'->'bool'
+};
 
 cuboid(cx, cy, cz, radius, height, orientation, block, hollow)->
     __drawPrism(cx, cy, cz, radius, height, orientation, block, 'square', hollow);
 
+___cuboid()->{
+    'cx'->'number',
+    'cy'->'number',
+    'cz'->'number',
+    'radius'->'number',
+    'height'->'number',
+    'orientation'->'string',
+    'block'->'block',
+    'hollow'->'bool'
+};
+
 sphere(cx, cy, cz, radius, block)->
     __drawSphere(cx, cy, cz, radius, block, false);
 
+___sphere()->{
+    'cx'->'number',
+    'cy'->'number',
+    'cz'->'number',
+    'radius'->'number',
+    'block'->'block',
+    'hollow'->'bool'
+};
+
 ball(cx, cy, cz, radius, block)->
     __drawSphere(cx, cy, cz, radius, block, true);
+
+___ball()->{
+    'cx'->'number',
+    'cy'->'number',
+    'cz'->'number',
+    'radius'->'number',
+    'block'->'block',
+    'hollow'->'bool'
+};
 
 //Extra funcs
 
@@ -62,40 +134,6 @@ __setBlock(pos,block)->(
 );
 
 __lengthSq(x, y, z)-> return ((x * x) + (y * y) + (z * z));
-
-
-//__hollowFillFlat(pos, offset, radius, rectangle, orientation, block)->(    
-//    successes=0;
-//    r = floor(radius);
-//    drsq = radius*radius;
-//    c_for(a=-r, a<=r, a+=1,
-//        c_for(b=-r, b<=r, b+=1,
-//            if((rectangle && (abs(a) == r || abs(b) ==r)) || (!rectangle && (a*a + b*b <= drsq && power(abs(a)+1, 2) + power(abs(b)+1, 2) >= drsq)),
-//                [x, y, z]= pos;
-//                switch (orientation.toLowerCase()){
-//                    case "x":
-//                        x += offset;
-//                        y += a;
-//                        z += b;
-//                        break;
-//                    case "y":
-//                        x += a;
-//                        y += offset;
-//                        z += b;
-//                        break;
-//                    case "z":
-//                        x += b;
-//                        y += a;
-//                        z += offset;
-//                        break;
-//                }
-//                successes += setBlock(world, mbpos, x, y, z, block, replacement, list);
-//            )
-//        )
-//    );
-//    return(successes)
-//);
-
 
 __fillFlat(pos, offset, radius, rectangle, orientation, block, hollow)->(
 
