@@ -9,7 +9,7 @@ __command()->(
 
 diamond_shape(cx,cy,cz,radius,block)->(
 
-    pos = __get_pos_arg(cx,cy,cz);
+    pos = [cx, cy, cz];
 
     c_for(r = 0, r < radius, r+=1,
     
@@ -117,14 +117,6 @@ ___ball()->{
 
 //Extra funcs
 
-__get_pos_arg(x, y, z)->(
-    retx=if(x=='x',player()~'x'+0.5,number(x));
-    rety=if(y=='y',player()~'y'+0.5,number(y));
-    retz=if(z=='z',player()~'z'+0.5,number(z));
-
-    return([round(retx),round(rety),round(retz)]);
-);
-
 __setBlock(pos,block)->(
     if(block(pos)!=block,
         set(pos,block);
@@ -171,7 +163,7 @@ __fillFlat(pos, offset, radius, rectangle, orientation, block, hollow)->(
 
 __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, base, hollow)->(
 
-    pos = __get_pos_arg(cx,cy,cz);
+    pos = [cx, cy, cz];
 
     affected = 0;
     
@@ -189,7 +181,7 @@ __drawPyramid(cx, cy, cz, radius, height, pointup, orientation, block, base, hol
 
 __drawPrism(cx, cy, cz, radius, height, orientation, block, base, hollow)->(
         
-    pos = __get_pos_arg(cx,cy,cz);
+    pos = [cx, cy, cz];
 
     affected = 0;
     
@@ -203,7 +195,7 @@ __drawPrism(cx, cy, cz, radius, height, orientation, block, base, hollow)->(
 );
 
 __drawSphere(cx, cy, cz, radius, block, solid)->(
-    pos = __get_pos_arg(cx, cy, cz);
+    pos = [cx, cy, cz];
 
     affected = 0;
     
