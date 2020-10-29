@@ -52,7 +52,7 @@ public abstract class World_tickMixin implements WorldInterface
     ))
     private void startTileEntitySection(CallbackInfo ci, Profiler profiler_1, Iterator i, BlockEntity blockEntity_2)
     {
-        entitySection = CarpetProfiler.start_entity_section((World)(Object)this, blockEntity_2, CarpetProfiler.TYPE.TILEENTITY);
+        entitySection = CarpetProfiler.start_block_entity_section((World)(Object)this, blockEntity_2, CarpetProfiler.TYPE.TILEENTITY);
     }
 
     @Redirect(method = "tickBlockEntities", at = @At(
