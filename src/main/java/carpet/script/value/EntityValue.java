@@ -15,6 +15,7 @@ import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.SpawnGroup;
@@ -70,15 +71,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static carpet.utils.MobAI.genericJump;
@@ -209,6 +213,61 @@ public class EntityValue extends Value
             "regular", EntityGroup.DEFAULT,
             "illager", EntityGroup.ILLAGER
     );
+
+    public static class EntityClassDescriptor
+    {
+        public EntityType<?> directType;
+        public Predicate<? super Entity> filteringPredicate;
+        public List<EntityType<?>> typeList;
+        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
+        {
+            directType = type;
+            filteringPredicate = predicate;
+            typeList = types.collect(Collectors.toList());
+        }
+
+        public Map<String, EntityClassDescriptor> byName = new HashMap<String, EntityClassDescriptor>() {{
+            Stream<EntityType<?>> allTypes = Registry.ENTITY_TYPE.stream();
+            Set<EntityType<?>> projectiles = Sets.newHashSet(
+                    EntityType.ARROW, EntityType.DRAGON_FIREBALL
+            );
+            Set<EntityType<?>> deads = Sets.newHashSet(
+                    EntityType.AREA_EFFECT_CLOUD, EntityType.BOAT,
+            )
+
+            put("*", new EntityClassDescriptor(null, e -> true, allTypes) );
+            put("valid", new EntityClassDescriptor(null, EntityPredicates.VALID_ENTITY, allTypes));
+            put("!valid", new EntityClassDescriptor(null, e -> !e.isAlive(), allTypes));
+
+            put("living", Pair.of(null, (e) -> e instanceof LivingEntity && e.isAlive(), allTypes.filter(et -> et.)));
+            put("!living", Pair.of(null, (e) -> !(e instanceof LivingEntity) && e.isAlive()));
+
+            put("projectile", Pair.of(null, (e) -> e instanceof ProjectileEntity && e.isAlive()));
+            put("!projectile", Pair.of(null, (e) -> !(e instanceof ProjectileEntity) && e.isAlive()));
+
+            for (String groupStr : entityGroupMap.keySet())
+            {
+                EntityGroup group = entityGroupMap.get(groupStr);
+                put(    groupStr, Pair.of(null,  e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == group && e.isAlive())));
+                put("!"+groupStr, Pair.of(null,  e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != group && e.isAlive())));
+            }
+            for (Identifier typeId : Registry.ENTITY_TYPE.getIds())
+            {
+                EntityType type  = Registry.ENTITY_TYPE.get(typeId);
+                String mobType = ValueConversions.simplify(typeId);
+                put(    mobType, Pair.of(type, EntityPredicates.VALID_ENTITY));
+                put("!"+mobType, Pair.of(null, (e) -> e.getType() != type  && e.isAlive()));
+            }
+            for (SpawnGroup catId : SpawnGroup.values())
+            {
+                String catStr = catId.getName();
+                put(    catStr, Pair.of(null, e -> (e.getType().getSpawnGroup() == catId) && e.isAlive()));
+                put("!"+catStr, Pair.of(null, e -> (e.getType().getSpawnGroup() != catId) && e.isAlive()));
+            }
+        }}
+
+    }
+
 
     private static final Map<String, Pair<EntityType<?>, Predicate<? super Entity>>> entityPredicates =
             new HashMap<String, Pair<EntityType<?>, Predicate<? super Entity>>>()

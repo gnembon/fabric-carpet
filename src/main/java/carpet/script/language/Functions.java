@@ -43,7 +43,7 @@ public class Functions {
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
-                FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false);
+                FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, false);
                 FunctionValue fun = functionArgument.function;
                 Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
                 return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)

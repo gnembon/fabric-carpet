@@ -13,6 +13,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -211,6 +212,11 @@ public class CarpetEventServer
     public static class Event
     {
         public static final Map<String, Event> byName = new HashMap<>();
+        public static List<String> publicEvents()
+        {
+            return byName.entrySet().stream().filter(e -> e.getValue().isPublic).map(Map.Entry::getKey).collect(Collectors.toList());
+        }
+
         public static final Event TICK = new Event("tick", 0, true)
         {
             @Override
@@ -407,7 +413,7 @@ public class CarpetEventServer
         public static final Event PLAYER_INTERACTS_WITH_ENTITY = new Event("player_interacts_with_entity", 3, false)
         {
             @Override
-            public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
+            public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
             {
                 handler.call( () -> Arrays.asList(
                         ((c, t) -> new EntityValue(player)),
@@ -434,7 +440,7 @@ public class CarpetEventServer
         public static final Event PLAYER_ATTACKS_ENTITY = new Event("player_attacks_entity", 2, false)
         {
             @Override
-            public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
+            public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand)
             {
                 handler.call( () -> Arrays.asList(
                         ((c, t) -> new EntityValue(player)),
@@ -596,7 +602,7 @@ public class CarpetEventServer
         public static final Event PLAYER_COLLIDES_WITH_ENTITY = new Event("player_collides_with_entity", 2, false)
         {
             @Override
-            public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) {
+            public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand) {
                 handler.call( () -> Arrays.asList(
                         ((c, t) -> new EntityValue(player)),
                         ((c, t) -> new EntityValue(entity))
@@ -695,17 +701,38 @@ public class CarpetEventServer
             }
         };
 
+
+        public static final Map<EntityType<?>, Event> ENTITY_LOAD= new HashMap<EntityType<?>, Event>() {{
+            EntityType.get("zombie");
+            Registry.ENTITY_TYPE.forEach(et -> {
+                put(et, new Event("entity_loaded_" + Registry.ENTITY_TYPE.getId(et), 1, true, false)
+                {
+                    @Override
+                    public void onEntityAction(Entity entity)
+                    {
+                        super.onEntityAction(entity);
+                    }
+                });
+            });
+        }};
+
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 
         public final String name;
 
         public final CallbackList handler;
         public final boolean globalOnly;
+        public final boolean isPublic; // public events can be targetted with __on_<event> defs
         public Event(String name, int reqArgs, boolean isGlobalOnly)
+        {
+            this(name, reqArgs, isGlobalOnly, true);
+        }
+        public Event(String name, int reqArgs, boolean isGlobalOnly, boolean isPublic)
         {
             this.name = name;
             this.handler = new CallbackList(reqArgs);
             this.globalOnly = isGlobalOnly;
+            this.isPublic = isPublic;
             byName.put(name, this);
         }
         public boolean isNeeded()
@@ -724,7 +751,8 @@ public class CarpetEventServer
         public void onBlockHit(ServerPlayerEntity player, Hand enumhand, BlockHitResult hitRes) { }
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
-        public void onEntityAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+        public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+        public void onEntityAction(Entity entity) { }
         public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }
         public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}

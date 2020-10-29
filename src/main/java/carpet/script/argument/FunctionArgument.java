@@ -21,7 +21,7 @@ public class FunctionArgument extends Argument
         this.function = function;
         this.args = args;
     }
-    public static FunctionArgument findIn(Context c, Module module, List<LazyValue> params, int offset, boolean prematureEvaluation)
+    public static FunctionArgument findIn(Context c, Module module, List<LazyValue> params, int offset, boolean prematureEvaluation, boolean allowNone)
     {
         Value functionValue = params.get(offset).evalValue(c);
         if (!(functionValue instanceof FunctionValue))

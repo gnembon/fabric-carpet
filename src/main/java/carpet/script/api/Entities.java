@@ -1,8 +1,10 @@
 package carpet.script.api;
 
 import carpet.script.CarpetContext;
+import carpet.script.CarpetScriptHost;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
+import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
@@ -266,6 +268,16 @@ public class Entities {
             return (cc, tt) -> v;
         });
 
+
+        expression.addLazyFunction("entity_load_handler", -1, (c, t, lv) ->
+        {
+            if (lv.size() < 3) throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
+            String entityString = lv.get(0).evalValue(c).getString();
+
+            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, true);
+            ((CarpetScriptHost)c.host).getScriptServer().events.addEventDirectly(entityString, c.host, funArg.function);
+        };
+
         // or update
         expression.addLazyFunction("entity_event", -1, (c, t, lv) ->
         {
@@ -275,6 +287,7 @@ public class Entities {
             if (!(v instanceof EntityValue))
                 throw new InternalExpressionException("First argument to entity_event should be an entity");
             String what = lv.get(1).evalValue(c).getString();
+
             Value functionValue = lv.get(2).evalValue(c);
             if (functionValue instanceof NullValue)
                 functionValue = null;

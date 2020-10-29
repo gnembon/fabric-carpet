@@ -640,7 +640,7 @@ public class Auxiliary {
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, true);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
 
             CarpetServer.scriptServer.events.scheduleCall(
                     (CarpetContext) c,
