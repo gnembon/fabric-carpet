@@ -51,6 +51,8 @@ public @interface Rule
      * For enums, its always strict, same for booleans - no need to set that for them.
      */
     boolean strict() default true;
+    
+    String scarpet() default "";
 
     /**
      * The class of the validator checked when the rule is changed.
