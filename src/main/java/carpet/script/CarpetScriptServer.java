@@ -45,10 +45,15 @@ public class CarpetScriptServer
     public  CarpetEventServer events;
 
     private static final List<Module> bundledModuleData = new ArrayList<>();
+    private static final List<Module> ruleModuleData = new ArrayList<>();
 
     public static void registerBuiltInScript(BundledModule app)
     {
         bundledModuleData.add(app);
+    }
+    
+    public static void registerRuleScript(BundledModule app) {
+    	ruleModuleData.add(app);
     }
 
     static
@@ -117,6 +122,18 @@ public class CarpetScriptServer
         }
         return null;
     }
+    
+    public Module getRuleModule(String name) 
+    {
+    	for (Module moduleData : ruleModuleData)
+        {
+            if (moduleData.getName().equalsIgnoreCase(name))
+            {
+                return moduleData;
+            }
+        }
+    	return null;
+    }
 
     public List<String> listAvailableModules(boolean includeBuiltIns)
     {
@@ -148,6 +165,22 @@ public class CarpetScriptServer
         if (name == null)
             return globalHost;
         return modules.get(name);
+    }
+
+    public boolean addRuleScriptHost(ServerCommandSource source, String name)
+    {
+    	name = name.toLowerCase(Locale.ROOT);
+        boolean reload = false;
+        if (modules.containsKey(name))
+        {
+            removeScriptHost(source, name, false);
+            reload = true;
+        }
+        Module module = getRuleModule(name);
+        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, false, source);
+        modules.put(name, newHost);
+        addCommand(source, name, reload);
+        return true;
     }
 
     public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload)

@@ -52,7 +52,13 @@ public @interface Rule
      */
     boolean strict() default true;
     
-    String scarpet() default "";
+    
+    /**
+     * If specified, a rule will be connected with the 
+     * builtin Scarpet app with that name.
+     * 
+     */
+    String scarpetApp() default "";
 
     /**
      * The class of the validator checked when the rule is changed.

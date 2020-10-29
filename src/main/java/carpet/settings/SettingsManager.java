@@ -104,6 +104,20 @@ public class SettingsManager
     {
         observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
+        switchScarpetRule(source, rule);
+    }
+    
+    void switchScarpetRule(ServerCommandSource source, ParsedRule<?> rule)
+    {
+    	if(rule.hasScarpet)
+    	{
+    		if(rule.field.equals(true))
+    		{
+    			CarpetServer.scriptServer.addRuleScriptHost(source, rule.scarpetApp);
+    		} else {
+    			CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false);
+    		}
+    	}
     }
 
     public Iterable<String> getCategories()
