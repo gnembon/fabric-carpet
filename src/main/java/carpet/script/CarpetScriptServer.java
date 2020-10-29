@@ -5,6 +5,7 @@ import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
@@ -12,9 +13,11 @@ import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
@@ -234,28 +237,66 @@ public class CarpetScriptServer
 
             Value defFuncRetVal;
             try {
-                defFuncRetVal = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("___"+funcName), new ArrayList<LazyValue>());
+                defFuncRetVal = ((CarpetScriptHost) host).callUDF(null, source, host.getFunction("___"+funcName),
+                        new ArrayList<>());
             } catch(Exception e){
-                continue;
-            }//If doesnt exist then it's not meant to be a command. todo make it backwards compatible later, but this makes it more user friendly
+                defFuncRetVal = MapValue.wrap(new HashMap<>());//empty map, nothing defined, all args are string, like old times
+            }//If doesnt exist then it's not meant to be a command. todo ask gnembon if it should be backwards compatible. If so put `continue` in exception
 
+            if(!(defFuncRetVal instanceof MapValue))
+                throw new InternalExpressionException("Function ___"+funcName+" should return a map and be tied to " +
+                        "the function "+funcName+" to properly define the command");
+
+            Map<Value, Value> valueArgMap = ((MapValue) defFuncRetVal).getMap();
+
+            Map<String, String> argMap = new HashMap<>();
+
+            Messenger.m(source,"gi defFunc: "+defFuncRetVal.getPrettyString());
+            Messenger.m(source,"w args: "+args);
+
+
+            for (String arg: args) {//Ensuring that if arg type is not defined it dont thwow ewwor tantwum
+                Messenger.m(source,"gi Arg: "+arg);
+
+                String argType = valueArgMap.getOrDefault(new StringValue(arg), new StringValue("string")).getString();
+
+                if (argType.equals("block") || argType.equals("pos") || argType.equals("entity") || argType.equals("nbt")){
+                    Messenger.m(source,"w Unfortunately those types are not supported yet. Gonna do string arguments for now");
+                    argType="string";
+                }
+
+                if (!(argType.equals("number")||argType.equals("string")))
+                    throw new InternalExpressionException("'"+argType+"' is not a valid argument type");
+
+
+                argMap.put(arg, argType);
+            }
 
             command = command.
                     then(literal(funcName).
                             requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funcName) != null).
-                            executes( (c) -> {
-                                Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                        handleCommand(c.getSource(), funcName,null,"");
-                                if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
-                                return (int)response.readInteger();
-                            }).
-                            then(argument("args...", StringArgumentType.greedyString()).
-                                    executes( (c) -> {
-                                        Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                                handleCommand(c.getSource(), funcName,null, StringArgumentType.getString(c, "args..."));
-                                        if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                                        return (int)response.readInteger();
-                                    })));
+                            then(argument("a", StringArgumentType.string()).
+                                    then(argument("be", IntegerArgumentType.integer()).
+                                            then(argument("test", BlockPosArgumentType.blockPos()).
+                                                    executes((c)->{
+                                                        String a = StringArgumentType.getString(c,"a");
+                                                        int be = IntegerArgumentType.getInteger(c,"be");
+                                                        BlockPos test = BlockPosArgumentType.getBlockPos(c,"test");
+
+                                                        List<Object> list = new ArrayList<Object>();
+                                                        /*
+                                                        list.add(myInt);
+                                                        list.add(myString);
+                                                        list.add(new MyClass());
+                                                        */
+                                                        Messenger.m(source, String.format("gi %s %s %s",a,be,test));
+
+                                                        Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                                                handleCommand(c.getSource(), funcName,null,String.format(" %s %s %s",a,be,test));
+                                                        if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
+                                                        return (int)response.readInteger();
+                                                    })
+                                            ))));
         }
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
