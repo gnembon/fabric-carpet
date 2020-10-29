@@ -111,7 +111,7 @@ public class SettingsManager
     {
     	if(rule.hasScarpet)
     	{
-    		if(rule.field.equals(true))
+    		if(rule.get().equals(true))
     		{
     			CarpetServer.scriptServer.addRuleScriptHost(source, rule.scarpetApp);
     		} else {
