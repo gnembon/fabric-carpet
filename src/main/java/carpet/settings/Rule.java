@@ -52,11 +52,9 @@ public @interface Rule
      */
     boolean strict() default true;
     
-    
     /**
-     * If specified, a rule will be connected with the 
-     * builtin Scarpet app with that name.
-     * 
+     * If specified, the rule will automatically enable or disable 
+     * a builtin Scarpet Rule App with this name.
      */
     String scarpetApp() default "";
 

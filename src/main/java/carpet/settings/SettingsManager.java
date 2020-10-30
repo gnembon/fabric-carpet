@@ -109,15 +109,24 @@ public class SettingsManager
     
     void switchScarpetRule(ServerCommandSource source, ParsedRule<?> rule)
     {
-    	if(rule.hasScarpet)
+    	if (rule.hasScarpet)
     	{
-    		if(rule.get().equals(true))
+    		if (rule.get().equals(true))
     		{
     			CarpetServer.scriptServer.addRuleScriptHost(source, rule.scarpetApp);
     		} else {
     			CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false);
     		}
     	}
+    }
+    
+    public void initializeScarpetRules(ServerCommandSource source) {
+    	for (ParsedRule<?> rule : rules.values())
+        {
+            if (rule.hasScarpet) {
+                switchScarpetRule(source, rule);
+            }
+        }
     }
 
     public Iterable<String> getCategories()

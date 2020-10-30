@@ -43,6 +43,7 @@ public class CarpetScriptServer
     public boolean stopAll;
     private  Set<String> holyMoly;
     public  CarpetEventServer events;
+    private boolean worldInitialized = false;
 
     private static final List<Module> bundledModuleData = new ArrayList<>();
     private static final List<Module> ruleModuleData = new ArrayList<>();
@@ -84,8 +85,10 @@ public class CarpetScriptServer
         globalHost = CarpetScriptHost.create(this, null, false, null);
     }
 
-    public void loadAllWorldScripts()
+    public void initializeForWorld()
     {
+    	worldInitialized = true;
+    	CarpetServer.settingsManager.initializeScarpetRules(server.getCommandSource());
         if (CarpetSettings.scriptsAutoload)
         {
             Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
@@ -169,6 +172,8 @@ public class CarpetScriptServer
 
     public boolean addRuleScriptHost(ServerCommandSource source, String name)
     {
+    	if (!worldInitialized)
+    		return false;
     	name = name.toLowerCase(Locale.ROOT);
         boolean reload = false;
         if (modules.containsKey(name))
