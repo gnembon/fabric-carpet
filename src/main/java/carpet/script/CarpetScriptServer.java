@@ -184,7 +184,7 @@ public class CarpetScriptServer
         Module module = getRuleModule(name);
         CarpetScriptHost newHost = CarpetScriptHost.create(this, module, false, source);
         modules.put(name, newHost);
-        addCommand(source, name, reload);
+        addCommand(source, name, reload, false);
         return true;
     }
 
@@ -231,11 +231,11 @@ public class CarpetScriptServer
             return false;
         }
         //addEvents(source, name);
-        addCommand(source, name, reload);
+        addCommand(source, name, reload, false);
         return true;
     }
 
-    private void addCommand(ServerCommandSource source, String hostName, boolean isReload)
+    private void addCommand(ServerCommandSource source, String hostName, boolean isReload, boolean notifySource)
     {
         ScriptHost host = modules.get(hostName);
         String loaded = isReload?"reloaded":"loaded";
@@ -245,7 +245,7 @@ public class CarpetScriptServer
         }
         if (host.getFunction("__command") == null)
         {
-            Messenger.m(source, "gi "+hostName+" app "+loaded+".");
+            if (notifySource) Messenger.m(source, "gi "+hostName+" app "+loaded+".");
             return;
         }
         if (holyMoly.contains(hostName))
@@ -284,7 +284,7 @@ public class CarpetScriptServer
                                         return (int)response.readInteger();
                                     })));
         }
-        Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
+        if (notifySource) Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
