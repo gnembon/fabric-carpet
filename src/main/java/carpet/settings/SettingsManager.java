@@ -111,7 +111,7 @@ public class SettingsManager
     {
     	if (rule.hasScarpet)
     	{
-    		if (rule.get().equals(true))
+    		if (rule.getBoolValue() || (rule.field.getType() == String.class && !rule.get().equals("false")))
     		{
     			CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, true);
     		} else {

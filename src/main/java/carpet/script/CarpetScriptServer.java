@@ -183,7 +183,7 @@ public class CarpetScriptServer
             reload = true;
         }
         Module module = null;
-        if (isRuleApp) 
+        if (!isRuleApp) 
         {
         	module = getModule(name, false);
         } else {
