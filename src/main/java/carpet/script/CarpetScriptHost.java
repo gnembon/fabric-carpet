@@ -320,7 +320,7 @@ public class CarpetScriptHost extends ScriptHost
                 case OPEN_PAREN:
                 case COMMA:
                 case CLOSE_PAREN:
-                case MARKER:
+                //case MARKER: basically just square and curly braces, dealth with all instances so I can have custom handling in commands (for pos and nbt)
                     throw new CarpetExpressionException("Fail: "+tok.surface+" is not allowed in invoke", null);
             }
         }
