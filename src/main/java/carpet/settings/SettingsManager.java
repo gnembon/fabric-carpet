@@ -113,7 +113,7 @@ public class SettingsManager
     	{
     		if (rule.get().equals(true))
     		{
-    			CarpetServer.scriptServer.addRuleScriptHost(source, rule.scarpetApp);
+    			CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, true);
     		} else {
     			CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false);
     		}
