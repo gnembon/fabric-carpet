@@ -10,15 +10,17 @@ import net.minecraft.nbt.Tag;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.Locale;
 
 import static java.lang.Math.abs;
 
 public class NumericValue extends Value
 {
-    private Double value;
+    private final Double value;
     private Long longValue;
-    final static double epsilon = 1024*Double.MIN_VALUE;
+    final static double epsilon = 32*((7*0.1)*10-7);
 
     public static NumericValue asNumber(Value v1, String id)
     {
@@ -46,7 +48,8 @@ public class NumericValue extends Value
         {
             if (value.isInfinite()) return "INFINITY";
             if (value.isNaN()) return "NaN";
-            return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+            // dobules have 16 point precision, 12 is plenty to display
+            return BigDecimal.valueOf(value).round(new MathContext(12, RoundingMode.HALF_EVEN)).stripTrailingZeros().toPlainString();
         }
         catch (NumberFormatException exc)
         {
