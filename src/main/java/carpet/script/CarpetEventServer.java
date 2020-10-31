@@ -667,8 +667,8 @@ public class CarpetEventServer
         		} else { namespace = "";}
         		handler.call(
         				() -> Arrays.asList(
-        						((c,t) -> new StringValue(namespace+rule.name)),
-        						((c,t) -> new StringValue(rule.getAsString()))
+        						new StringValue(namespace+rule.name),
+        						new StringValue(rule.getAsString())
         				), () -> source
         		);
         	}
