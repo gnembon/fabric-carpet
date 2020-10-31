@@ -59,14 +59,14 @@ public abstract class Validator<T>
     }
     
     public static class _SCARPET<T> extends Validator<T> {
-    	@Override
+        @Override
         public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string)
         {
             return newValue;
         }
-    	public String description() {
-    		return "It controls an accompanying Scarpet App";
-    	}
+        public String description() {
+            return "It controls an accompanying Scarpet App";
+        }
     }
 
     public static class WIP<T> extends Validator<T>

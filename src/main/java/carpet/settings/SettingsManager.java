@@ -43,7 +43,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static carpet.utils.Translations.tr;
-import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGE;
+import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
 import static net.minecraft.command.CommandSource.suggestMatching;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -73,8 +73,8 @@ public class SettingsManager
     }
 
     public String getIdentifier() {
-		return identifier;
-	}
+        return identifier;
+    }
     
     public void attachServer(MinecraftServer server)
     {
@@ -109,24 +109,24 @@ public class SettingsManager
         observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
         switchScarpetRule(source, rule);
-        CARPET_RULE_CHANGE.onCarpetRuleChange(rule, source);
+        CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
     }
     
     void switchScarpetRule(ServerCommandSource source, ParsedRule<?> rule)
     {
-    	if (rule.hasScarpet)
-    	{
-    		if (rule.getBoolValue() || (rule.type == String.class && !rule.get().equals("false")))
-    		{
-    			CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, true);
-    		} else {
-    			CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
-    		}
-    	}
+        if (rule.hasScarpet)
+        {
+            if (rule.getBoolValue() || (rule.type == String.class && !rule.get().equals("false")))
+            {
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, true);
+            } else {
+                CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
+            }
+        }
     }
     
     public void initializeScarpetRules() {
-    	for (ParsedRule<?> rule : rules.values())
+        for (ParsedRule<?> rule : rules.values())
         {
             if (rule.hasScarpet) {
                 switchScarpetRule(server.getCommandSource(), rule);

@@ -656,22 +656,22 @@ public class CarpetEventServer
         };
         public static final Event CARPET_RULE_CHANGES = new Event("carpet_rule_changes", 2, true)
         {
-        	@Override
-        	public void onCarpetRuleChange(ParsedRule<?> rule, ServerCommandSource source)
-        	{
-        		String identifier = rule.settingsManager.getIdentifier();
-        		final String namespace;
-        		if (!identifier.equals("carpet")) 
-        		{
-        			namespace = identifier+":";
-        		} else { namespace = "";}
-        		handler.call(
-        				() -> Arrays.asList(
-        						new StringValue(namespace+rule.name),
-        						new StringValue(rule.getAsString())
-        				), () -> source
-        		);
-        	}
+            @Override
+            public void onCarpetRuleChanges(ParsedRule<?> rule, ServerCommandSource source)
+            {
+                String identifier = rule.settingsManager.getIdentifier();
+                final String namespace;
+                if (!identifier.equals("carpet")) 
+                {
+                    namespace = identifier+":";
+                } else { namespace = "";}
+                handler.call(
+                        () -> Arrays.asList(
+                                new StringValue(namespace+rule.name),
+                                new StringValue(rule.getAsString())
+                        ), () -> source
+                );
+            }
         };
 
         public static String getLoadEvent(EntityType<? extends Entity> et)
@@ -741,7 +741,7 @@ public class CarpetEventServer
 
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
-        public void onCarpetRuleChange(ParsedRule<?> rule, ServerCommandSource source) { }
+        public void onCarpetRuleChanges(ParsedRule<?> rule, ServerCommandSource source) { }
     }
 
 

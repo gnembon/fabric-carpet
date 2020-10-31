@@ -71,8 +71,8 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
         if (!scarpetApp.isEmpty())
         {
-        	this.hasScarpet = true;
-        	this.validators.add((Validator<T>) callConstructor(Validator._SCARPET.class));
+            this.hasScarpet = true;
+            this.validators.add((Validator<T>) callConstructor(Validator._SCARPET.class));
         }
         this.isClient = categories.contains(RuleCategory.CLIENT);
         if (this.isClient)

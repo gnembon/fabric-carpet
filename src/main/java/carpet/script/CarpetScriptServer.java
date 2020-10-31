@@ -97,13 +97,13 @@ public class CarpetScriptServer
 
     public void initializeForWorld()
     {
-    	worldInitialized = true;
-    	CarpetServer.settingsManager.initializeScarpetRules();
-    	CarpetServer.extensions.forEach(e -> {
-    		if(e.customSettingsManager() != null) {
-    			e.customSettingsManager().initializeScarpetRules();
-    		}
-    	});
+        worldInitialized = true;
+        CarpetServer.settingsManager.initializeScarpetRules();
+        CarpetServer.extensions.forEach(e -> {
+            if (e.customSettingsManager() != null) {
+                e.customSettingsManager().initializeScarpetRules();
+            }
+        });
         if (CarpetSettings.scriptsAutoload)
         {
             Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
@@ -143,14 +143,14 @@ public class CarpetScriptServer
     
     public Module getRuleModule(String name) 
     {
-    	for (Module moduleData : ruleModuleData)
+        for (Module moduleData : ruleModuleData)
         {
             if (moduleData.getName().equalsIgnoreCase(name))
             {
                 return moduleData;
             }
         }
-    	return null;
+        return null;
     }
 
     public List<String> listAvailableModules(boolean includeBuiltIns)
@@ -195,7 +195,7 @@ public class CarpetScriptServer
         if (modules.containsKey(name))
         {
             if (isRuleApp) return false;
-        	removeScriptHost(source, name, false, isRuleApp);
+            removeScriptHost(source, name, false, isRuleApp);
             reload = true;
         }
         Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);
@@ -224,10 +224,7 @@ public class CarpetScriptServer
         }
 
         modules.put(name, newHost);
-        if (!isRuleApp) 
-        {
-        	unloadableModules.add(name);
-        }
+        if (!isRuleApp) unloadableModules.add(name);
 
         if (autoload && !newHost.persistenceRequired)
         {

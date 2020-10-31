@@ -107,21 +107,21 @@ public class SystemInfo {
             return new NumericValue(osBean.getProcessCpuLoad());
         });
         put("world_carpet_rules", c -> {
-        	Collection<ParsedRule<?>> rules = CarpetServer.settingsManager.getRules();
-        	MapValue carpetRules = new MapValue(Collections.emptyList());
-        	rules.forEach(rule -> {
-        		carpetRules.put(new StringValue(rule.name), new StringValue(rule.getAsString()));
-        	});
-        	CarpetServer.extensions.forEach(e -> {
-        		SettingsManager manager = e.customSettingsManager();
-        		if (manager == null) return;
-        		
-        		Collection<ParsedRule<?>> extensionRules = manager.getRules();
-        		extensionRules.forEach(rule -> {
-        			carpetRules.put(new StringValue(manager.getIdentifier()+":"+rule.name), new StringValue(rule.getAsString()));
-        		});
-        	});
-        	return carpetRules;
+            Collection<ParsedRule<?>> rules = CarpetServer.settingsManager.getRules();
+            MapValue carpetRules = new MapValue(Collections.emptyList());
+            rules.forEach(rule -> {
+                carpetRules.put(new StringValue(rule.name), new StringValue(rule.getAsString()));
+            });
+            CarpetServer.extensions.forEach(e -> {
+                SettingsManager manager = e.customSettingsManager();
+                if (manager == null) return;
+                
+                Collection<ParsedRule<?>> extensionRules = manager.getRules();
+                extensionRules.forEach(rule -> {
+                    carpetRules.put(new StringValue(manager.getIdentifier()+":"+rule.name), new StringValue(rule.getAsString()));
+                });
+            });
+            return carpetRules;
         });
 
 
