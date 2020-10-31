@@ -120,7 +120,7 @@ public class SettingsManager
     		{
     			CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, true);
     		} else {
-    			CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false);
+    			CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
     		}
     	}
     }

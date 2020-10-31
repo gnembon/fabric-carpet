@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class CarpetScriptServer
     public final MinecraftServer server;
     public  CarpetScriptHost globalHost;
     public  Map<String, CarpetScriptHost> modules;
+    public  Set<String> unloadableModules;
     public long tickStart;
     public boolean stopAll;
     private  Set<String> holyMoly;
@@ -79,6 +81,7 @@ public class CarpetScriptServer
         ScriptHost.systemGlobals.clear();
         events = new CarpetEventServer(server);
         modules = new HashMap<>();
+        unloadableModules = new HashSet<String>();
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
@@ -184,16 +187,10 @@ public class CarpetScriptServer
         boolean reload = false;
         if (modules.containsKey(name))
         {
-            removeScriptHost(source, name, false);
+            removeScriptHost(source, name, false, isRuleApp);
             reload = true;
         }
-        Module module = null;
-        if (!isRuleApp) 
-        {
-        	module = getModule(name, false);
-        } else {
-        	module = getRuleModule(name);
-        }
+        Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);
         if (module == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -219,10 +216,14 @@ public class CarpetScriptServer
         }
 
         modules.put(name, newHost);
+        if (!isRuleApp) 
+        {
+        	unloadableModules.add(name);
+        }
 
         if (autoload && !newHost.persistenceRequired)
         {
-            removeScriptHost(source, name, false);
+            removeScriptHost(source, name, false, false);
             return false;
         }
         //addEvents(source, name);
@@ -284,10 +285,10 @@ public class CarpetScriptServer
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
 
-    public boolean removeScriptHost(ServerCommandSource source, String name, boolean notifySource)
+    public boolean removeScriptHost(ServerCommandSource source, String name, boolean notifySource, boolean isRuleApp)
     {
         name = name.toLowerCase(Locale.ROOT);
-        if (!modules.containsKey(name))
+        if (!modules.containsKey(name) || (!isRuleApp && !unloadableModules.contains(name)))
         {
             if (notifySource) Messenger.m(source, "r No such app found: ", "wb  " + name);
             return false;
@@ -296,6 +297,7 @@ public class CarpetScriptServer
         events.removeAllHostEvents(name);
         modules.get(name).onClose();
         modules.remove(name);
+        if (!isRuleApp) unloadableModules.remove(name);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");
         return true;
@@ -343,7 +345,7 @@ public class CarpetScriptServer
     {
         Map<String, Boolean> apps = new HashMap<>();
         modules.forEach((s, h) -> apps.put(s, h.perUser));
-        apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false));
+        apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
         events.clearAll();
         init();
         apps.forEach((s, pp) -> addScriptHost(server.getCommandSource(), s, pp, false, false));
