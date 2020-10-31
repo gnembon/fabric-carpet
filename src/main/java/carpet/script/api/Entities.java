@@ -1,6 +1,7 @@
 package carpet.script.api;
 
 import carpet.script.CarpetContext;
+import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
@@ -11,7 +12,6 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.StringReader;
@@ -29,13 +29,13 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Entities {
@@ -119,7 +119,7 @@ public class Entities {
             try
             {
                 entityId = Identifier.fromCommandInput(new StringReader(entityString));
-                EntityType type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
+                EntityType<? extends Entity> type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
                 if (type == null || !type.isSummonable())
                     return LazyValue.NULL;
             }
@@ -183,12 +183,8 @@ public class Entities {
         expression.addLazyFunction("entity_list", 1, (c, t, lv) ->
         {
             String who = lv.get(0).evalValue(c).getString();
-            Pair<EntityType<?>, Predicate<? super Entity>> pair = EntityValue.getPredicate(who);
-            if (pair == null)
-            {
-                throw new InternalExpressionException("Unknown entity selection criterion: "+who);
-            }
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(pair.getKey(), pair.getValue());
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who);
+            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
@@ -206,13 +202,8 @@ public class Entities {
                 throw new InternalExpressionException("Range of 'entity_area' cannot come from a block argument");
             Vec3d range = rangeLocator.vec;
             Box area = new Box(center, center).expand(range.x, range.y, range.z);
-
-            Pair<EntityType<?>, Predicate<? super Entity>> pair = EntityValue.getPredicate(who);
-            if (pair == null)
-            {
-                throw new InternalExpressionException("Unknown entity selection criterion: "+who);
-            }
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType((EntityType<Entity>) pair.getKey(), area, pair.getValue());
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who);
+            List<? extends Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(eDesc.directType, area,eDesc.filteringPredicate);
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
@@ -268,15 +259,36 @@ public class Entities {
             return (cc, tt) -> v;
         });
 
+        expression.addFunction("entity_types", (lv) ->
+        {
+            if (lv.size() > 1) throw new InternalExpressionException("'entity_types' requires one or no arguments");
+            String desc = (lv.size() == 1)?lv.get(0).getString():"*";
+            return EntityValue.getEntityDescriptor(desc).listValue;
+        });
 
         expression.addLazyFunction("entity_load_handler", -1, (c, t, lv) ->
         {
-            if (lv.size() < 3) throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
-            String entityString = lv.get(0).evalValue(c).getString();
-
-            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, true);
-            ((CarpetScriptHost)c.host).getScriptServer().events.addEventDirectly(entityString, c.host, funArg.function);
-        };
+            if (c.host.isPerUser()) throw new InternalExpressionException("'entity_load_handler' can only be called in apps with global scope");
+            if (lv.size() < 2) throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
+            Value entityValue = lv.get(0).evalValue(c);
+            List<String> descriptors = (entityValue instanceof ListValue)
+                    ? ((ListValue) entityValue).getItems().stream().map(Value::getString).collect(Collectors.toList())
+                    : Collections.singletonList(entityValue.getString());
+            Set<EntityType<? extends Entity>> types = new HashSet<>();
+            descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s).typeList));
+            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, false, true, false);
+            CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
+            if (funArg.function == null)
+            {
+                types.forEach(et -> events.removeEventDirectly(CarpetEventServer.Event.getLoadEvent(et), c.host));
+            }
+            else
+            {
+                types.forEach(et -> events.addEventDirectly(CarpetEventServer.Event.getLoadEvent(et), c.host, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t)));
+            }
+            Value ret = new NumericValue(types.size());
+            return (cc, tt) -> ret;
+        });
 
         // or update
         expression.addLazyFunction("entity_event", -1, (c, t, lv) ->
@@ -288,24 +300,9 @@ public class Entities {
                 throw new InternalExpressionException("First argument to entity_event should be an entity");
             String what = lv.get(1).evalValue(c).getString();
 
-            Value functionValue = lv.get(2).evalValue(c);
-            if (functionValue instanceof NullValue)
-                functionValue = null;
-            else if (!(functionValue instanceof FunctionValue))
-            {
-                String name = functionValue.getString();
-                functionValue = c.host.getAssertFunction(expression.module, name);
-            }
-            FunctionValue function = (FunctionValue)functionValue;
-            List<Value> args = null;
-            if (lv.size()==4)
-                args = Collections.singletonList(lv.get(3).evalValue(c));
-            else if (lv.size()>4)
-            {
-                args = lv.subList(3, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList());
-            }
+            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 2, false, true, false);
 
-            ((EntityValue) v).setEvent((CarpetContext)c, what, function, args);
+            ((EntityValue) v).setEvent((CarpetContext)c, what, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t));
 
             return LazyValue.NULL;
         });

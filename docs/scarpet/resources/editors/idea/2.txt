@@ -26,7 +26,9 @@ entity_area
 entity_event
 entity_id
 entity_list
+entity_load_handler
 entity_selector
+entity_types
 escape_nbt
 flammable
 format
