@@ -50,7 +50,7 @@ public abstract class PlayerEntity_scarpetEventsMixin extends LivingEntity
     {
         if (PLAYER_COLLIDES_WITH_ENTITY.isNeeded() && !world.isClient)
         {
-            PLAYER_COLLIDES_WITH_ENTITY.onEntityAction((ServerPlayerEntity)(Object)this, entity, null);
+            PLAYER_COLLIDES_WITH_ENTITY.onEntityHandAction((ServerPlayerEntity)(Object)this, entity, null);
         }
     }
 }

@@ -1,5 +1,8 @@
 package carpet.mixins;
 
+import carpet.CarpetSettings;
+import carpet.script.CarpetEventServer;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -12,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+import static carpet.script.CarpetEventServer.Event.ENTITY_LOAD;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 
 @Mixin(ServerWorld.class)
@@ -28,6 +32,26 @@ public class ServerWorld_scarpetEventMixin
                                     ChunkPos chunkPos, boolean bl, int i, int j, Profiler profiler, BlockPos blockPos, boolean bl2, LightningEntity lightningEntity)
     {
         if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerWorld) (Object)this, blockPos, bl2?1:0);
+    }
+
+    @Inject(method = "loadEntityUnchecked", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/world/ServerChunkManager;loadEntity(Lnet/minecraft/entity/Entity;)V"
+    ))
+            private void onEntityAddedToWorld(Entity entity, CallbackInfo ci)
+    {
+        CarpetEventServer.Event event = ENTITY_LOAD.get(entity.getType());
+        if (event != null)
+        {
+            if (event.isNeeded())
+            {
+                event.onEntityAction(entity);
+            }
+        }
+        else
+        {
+            CarpetSettings.LOG.error("Failed to handle entity "+entity.getType().getTranslationKey());
+        }
     }
 
 }

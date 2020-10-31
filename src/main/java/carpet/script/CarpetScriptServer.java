@@ -310,12 +310,12 @@ public class CarpetScriptServer
         return true;
     }
 
-    public boolean runas(ServerCommandSource source, String hostname, FunctionValue udf, List<LazyValue> argv)
+    public boolean runas(ServerCommandSource source, String hostname, FunctionValue udf, List<Value> argv)
     {
         return runas(BlockPos.ORIGIN, source, hostname, udf, argv);
     }
 
-    public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, FunctionValue udf, List<LazyValue> argv)
+    public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, FunctionValue udf, List<Value> argv)
     {
         CarpetScriptHost host = globalHost;
         try

@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class EntityEventsGroup
 {
-    private final Map<Event, Map<String, CarpetEventServer.ScheduledCall>> actions;
+    private final Map<Event, Map<String, CarpetEventServer.Callback>> actions;
     private final Entity entity;
     public EntityEventsGroup(Entity e)
     {
@@ -30,35 +30,37 @@ public class EntityEventsGroup
     public void onEvent(Event type, Object... args)
     {
         if (actions.isEmpty()) return; // most of the cases, trying to be nice
-        Map<String, CarpetEventServer.ScheduledCall> actionSet = actions.get(type);
+        Map<String, CarpetEventServer.Callback> actionSet = actions.get(type);
         if (actionSet == null) return;
 
-        for (Iterator<Map.Entry<String, CarpetEventServer.ScheduledCall>> iterator = actionSet.entrySet().iterator(); iterator.hasNext(); )
+
+        for (Iterator<Map.Entry<String, CarpetEventServer.Callback>> iterator = actionSet.entrySet().iterator(); iterator.hasNext(); )
         {
-            Map.Entry<String, CarpetEventServer.ScheduledCall> action = iterator.next();
+            Map.Entry<String, CarpetEventServer.Callback> action = iterator.next();
             ScriptHost host = CarpetServer.scriptServer.getHostByName(action.getKey());
             if (host == null)
             {
                 iterator.remove();
                 continue;
             }
-            type.call(action.getValue(), entity, args); // optionally remove when call failing
+            if (!type.call(action.getValue(), entity, args))
+                iterator.remove();
         }
         if (actionSet.isEmpty()) actions.remove(type);
     }
 
-    public void addEvent(Event type, CarpetContext cc, FunctionValue fun, List<Value> extraargs)
+    public void addEvent(Event type, String hostName, FunctionValue fun, List<Value> extraargs)
     {
         if (fun != null)
         {
-            CarpetEventServer.ScheduledCall call = type.create(cc, fun, extraargs);
+            CarpetEventServer.Callback call = type.create(hostName, fun, extraargs);
             if (call == null)
                 throw new InternalExpressionException("wrong number of arguments for callback, required "+type.argcount);
-            actions.computeIfAbsent(type, k -> new HashMap<>()).put(cc.host.getName(), call);
+            actions.computeIfAbsent(type, k -> new HashMap<>()).put(hostName, call);
         }
         else
         {
-            actions.computeIfAbsent(type, k -> new HashMap<>()).remove(cc.host.getName());
+            actions.computeIfAbsent(type, k -> new HashMap<>()).remove(hostName);
             if (actions.get(type).isEmpty())
                 actions.remove(type);
         }
@@ -105,18 +107,18 @@ public class EntityEventsGroup
             argcount = args+1; // entity is not extra
             byName.put(identifier, this);
         }
-        public CarpetEventServer.ScheduledCall create(CarpetContext cc, FunctionValue function, List<Value> extraArgs)
+        public CarpetEventServer.Callback create(String hostName, FunctionValue function, List<Value> extraArgs)
         {
             if ((function.getArguments().size()-(extraArgs == null ? 0 : extraArgs.size())) != argcount)
             {
                 return null;
             }
-            return new CarpetEventServer.ScheduledCall(cc, function, extraArgs, 0);
+            return new CarpetEventServer.Callback(hostName, function, extraArgs);
         }
-        public void call(CarpetEventServer.ScheduledCall tickCall, Entity entity, Object ... args)
+        public boolean call(CarpetEventServer.Callback tickCall, Entity entity, Object ... args)
         {
             assert args.length == argcount-1;
-            tickCall.execute(entity.getCommandSource(), makeArgs(entity, args));
+            return tickCall.execute(entity.getCommandSource(), makeArgs(entity, args));
         }
         protected List<Value> makeArgs(Entity entity, Object ... args)
         {
