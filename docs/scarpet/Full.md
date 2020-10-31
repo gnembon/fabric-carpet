@@ -2542,7 +2542,7 @@ but obviously using UUIDs takes more memory and compute.
 
 ### `entity_list(descriptor)`
 
-Returns global lists of entities in the current dimension matches specified descriptor.
+Returns global lists of entities in the current dimension matching specified descriptor.
 Calls to `entity_list` always fetch entities from the current world that the script executes.
  
 ### `entity_types(descriptor)`
@@ -2558,11 +2558,12 @@ entities in the `valid` category. matches all entity types. `!valid` matches all
 *  `living` - all entities that resemble a creature of some sort
 *  `projectile` - all entities or types that are not living that can be throw or projected, `!projectile` matches all types that
    are not living, but cannot the thrown or projected.
-*  `minecarts` matches all minecart types. `!minecart` matches all types that are not live, but also not minecarts.
+*  `minecarts` matches all minecart types. `!minecarts` matches all types that are not live, but also not minecarts. Using plural
+since `minecart` is a proper entity type on its own.
 *  `undead`, `arthropod`, `aquatic`, `regular`, `illager` - all entities / types that belong to any of these groups. All 
 living entities belong to one and only one of these. Corresponding negative (e.g. `!undead`) corresponds to all mobs that are 
 living but don't belong to that group. Entity groups are used in interaction / battle mechanics like smite for undead, or impaling
-for aquatic. Also certain mobs interact with groups, like bell with illagers. ALl mobs that don't have any of these traits belong
+for aquatic. Also certain mechanics interact with groups, like ringing a bell with illagers. All other mobs that don't have any of these traits belong
 to the `regular` group.
 *  `monster`, `creature`, `ambient`, `water_creature`, `water_ambient`, `misc` - another categorization of 
 living entities based on their spawn group. Negative descriptor resolves to all living types that don't belong to that
@@ -3260,10 +3261,10 @@ when you attach an inapplicable event to it.
 
 Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
 to an entity right when it is loaded to the world without querying them every tick. Callback expects one parameter - the entity.
-If callback is `null` current entity handler, if present is removed. Consecutive calls to `entity_load_handler` will add / subtract
-of the currenty targetted entity types pool.
+If callback is `null`, then the current entity handler, if present, is removed. Consecutive calls to `entity_load_handler` will add / subtract
+of the currently targeted entity types pool.
 
-Like other global events, calls to `entity_load_handler` can only be attached in apps with global scope. Player scope make so
+Like other global events, calls to `entity_load_handler` can only be attached in apps with global scope. Player scope makes so
 that it is not clear which player to use run the load call.
 
 ```
@@ -3274,8 +3275,6 @@ entity_load_handler('zombie', _(e) -> schedule(0, _(outer(e)) -> modify(e, 'remo
 // making all zombies immediately faster and less susceptible to friction of any sort
 entity_load_handler('zombie', _(e) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
 ```
-
-
 
 ### `entity_event(e, event, function)`, `entity_event(e, event, call_name, ... args?)`
 
