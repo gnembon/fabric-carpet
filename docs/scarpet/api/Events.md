@@ -44,7 +44,7 @@ at the same time.
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
-### `__on_carpet_rule_change(rule, new_value)`
+### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a Carpet rule is changed. It includes extension rules, which will be namespaced as `namespace:rule`.
  
 ## Player events

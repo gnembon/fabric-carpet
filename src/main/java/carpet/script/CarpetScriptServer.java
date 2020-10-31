@@ -194,7 +194,8 @@ public class CarpetScriptServer
         boolean reload = false;
         if (modules.containsKey(name))
         {
-            removeScriptHost(source, name, false, isRuleApp);
+            if (isRuleApp) return false;
+        	removeScriptHost(source, name, false, isRuleApp);
             reload = true;
         }
         Module module = isRuleApp ? getRuleModule(name) : getModule(name, false);

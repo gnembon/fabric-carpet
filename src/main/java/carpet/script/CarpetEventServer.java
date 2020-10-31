@@ -654,7 +654,7 @@ public class CarpetEventServer
                 );
             }
         };
-        public static final Event CARPET_RULE_CHANGE = new Event("carpet_rule_change", 2, true)
+        public static final Event CARPET_RULE_CHANGES = new Event("carpet_rule_changes", 2, true)
         {
         	@Override
         	public void onCarpetRuleChange(ParsedRule<?> rule, ServerCommandSource source)
