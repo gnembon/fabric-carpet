@@ -109,7 +109,7 @@ public class CarpetScriptHost extends ScriptHost
                 // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
                 String event = funName.replaceFirst("__on_", "");
                 if (CarpetEventServer.Event.byName.containsKey(event))
-                    scriptServer.events.addEventDirectly(event, this, function);
+                    scriptServer.events.addEventDirectly(event, this, function, null);
             }
             else if (funName.equals("__config"))
             {
@@ -305,12 +305,12 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<LazyValue> argv) throws InvalidCallbackException
+    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException
     {
         if (CarpetServer.scriptServer.stopAll)
             return Value.NULL;
         try { // cause we can't throw checked exceptions in lambda. Left if be until need to handle these more gracefully
-            fun.assertArgsOk(argv.size(), (b) -> {
+            fun.assertArgsOk(argv, (b) -> {
                 throw new InternalExpressionException("");
             });
         }
@@ -323,7 +323,7 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, pos);
             return fun.getExpression().evalValue(
-                    () -> fun.lazyEval(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
+                    () -> fun.lazyEval(context, Context.VOID, fun.getExpression(), fun.getToken(), FunctionValue.lazify(argv)),
                     context,
                     Context.VOID);
         }
@@ -333,6 +333,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         return Value.NULL;
     }
+
 
     @Override
     public void onClose()

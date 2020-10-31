@@ -15,6 +15,7 @@ import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.entity.SpawnGroup;
@@ -24,6 +25,7 @@ import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
@@ -70,15 +72,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static carpet.utils.MobAI.genericJump;
@@ -187,62 +192,139 @@ public class EntityValue extends Value
         return "entity";
     }
 
-
     @Override
     public int hashCode()
     {
         return entity.hashCode();
     }
 
-    public static Pair<EntityType<?>, Predicate<? super Entity>> getPredicate(String who)
+    public static EntityClassDescriptor getEntityDescriptor(String who)
     {
-        Pair<EntityType<?>, Predicate<? super Entity>> res = entityPredicates.get(who);
-        if (res != null) return res;
-        return res; //TODO add more here like search by tags, or type
+        EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
+        if (eDesc == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+        return eDesc;
+        //TODO add more here like search by tags, or type
         //if (who.startsWith('tag:'))
     }
 
-    private static Map<String, EntityGroup> entityGroupMap = ImmutableMap.of(
-            "undead", EntityGroup.UNDEAD,
-            "arthropod", EntityGroup.ARTHROPOD,
-            "aquatic", EntityGroup.AQUATIC,
-            "regular", EntityGroup.DEFAULT,
-            "illager", EntityGroup.ILLAGER
-    );
-
-    private static final Map<String, Pair<EntityType<?>, Predicate<? super Entity>>> entityPredicates =
-            new HashMap<String, Pair<EntityType<?>, Predicate<? super Entity>>>()
-    {{
-        put("*", Pair.of(null, e -> true));
-        put("valid", Pair.of(null, EntityPredicates.VALID_ENTITY));
-        put("!valid", Pair.of(null, e -> !e.isAlive()));
-
-        put("living", Pair.of(null, (e) -> e instanceof LivingEntity && e.isAlive()));
-        put("!living", Pair.of(null, (e) -> !(e instanceof LivingEntity) && e.isAlive()));
-
-        put("projectile", Pair.of(null, (e) -> e instanceof ProjectileEntity && e.isAlive()));
-        put("!projectile", Pair.of(null, (e) -> !(e instanceof ProjectileEntity) && e.isAlive()));
-
-        for (String groupStr : entityGroupMap.keySet())
+    public static class EntityClassDescriptor
+    {
+        public EntityType<? extends Entity> directType;
+        public Predicate<? super Entity> filteringPredicate;
+        public List<EntityType<? extends  Entity>> typeList;
+        public Value listValue;
+        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
         {
-            EntityGroup group = entityGroupMap.get(groupStr);
-            put(    groupStr, Pair.of(null,  e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == group && e.isAlive())));
-            put("!"+groupStr, Pair.of(null,  e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != group && e.isAlive())));
+            directType = type;
+            filteringPredicate = predicate;
+            typeList = types;
+            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getId(et)))).collect(Collectors.toList()));
         }
-        for (Identifier typeId : Registry.ENTITY_TYPE.getIds())
+        EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
-            EntityType type  = Registry.ENTITY_TYPE.get(typeId);
-            String mobType = ValueConversions.simplify(typeId);
-            put(    mobType, Pair.of(type, EntityPredicates.VALID_ENTITY));
-            put("!"+mobType, Pair.of(null, (e) -> e.getType() != type  && e.isAlive()));
+            this(type, predicate, types.collect(Collectors.toList()));
         }
-        for (SpawnGroup catId : SpawnGroup.values())
-        {
-            String catStr = catId.getName();
-            put(    catStr, Pair.of(null, e -> (e.getType().getSpawnGroup() == catId) && e.isAlive()));
-            put("!"+catStr, Pair.of(null, e -> (e.getType().getSpawnGroup() != catId) && e.isAlive()));
-        }
-    }};
+
+        public final static Map<String, EntityClassDescriptor> byName = new HashMap<String, EntityClassDescriptor>() {{
+            List<EntityType<?>> allTypes = Registry.ENTITY_TYPE.stream().collect(Collectors.toList());
+            // nonliving types
+            Set<EntityType<?>> projectiles = Sets.newHashSet(
+                    EntityType.ARROW, EntityType.DRAGON_FIREBALL, EntityType.FIREWORK_ROCKET,
+                    EntityType.FIREBALL, EntityType.LLAMA_SPIT, EntityType.SMALL_FIREBALL,
+                    EntityType.SNOWBALL, EntityType.SPECTRAL_ARROW, EntityType.EGG,
+                    EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.POTION,
+                    EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER
+            );
+            Set<EntityType<?>> deads = Sets.newHashSet(
+                    EntityType.AREA_EFFECT_CLOUD, EntityType.BOAT, EntityType.END_CRYSTAL,
+                    EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
+                    EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME,
+                    EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
+                    EntityType.TNT
+
+            );
+            Set<EntityType<?>> minecarts = Sets.newHashSet(
+                   EntityType.MINECART,  EntityType.CHEST_MINECART, EntityType.COMMAND_BLOCK_MINECART,
+                    EntityType.FURNACE_MINECART, EntityType.HOPPER_MINECART,
+                    EntityType.SPAWNER_MINECART, EntityType.TNT_MINECART
+            );
+            // living mob groups - non-defeault
+            Set<EntityType<?>> undeads = Sets.newHashSet(
+                    EntityType.STRAY, EntityType.SKELETON, EntityType.WITHER_SKELETON,
+                    EntityType.ZOMBIE, EntityType.DROWNED, EntityType.ZOMBIE_VILLAGER,
+                    EntityType.ZOMBIE_HORSE, EntityType.SKELETON_HORSE, EntityType.PHANTOM,
+                    EntityType.WITHER, EntityType.ZOGLIN, EntityType.HUSK, EntityType.ZOMBIFIED_PIGLIN
+
+            );
+            Set<EntityType<?>> arthropods = Sets.newHashSet(
+                    EntityType.BEE, EntityType.ENDERMITE, EntityType.SILVERFISH, EntityType.SPIDER,
+                    EntityType.CAVE_SPIDER
+            );
+            Set<EntityType<?>> aquatique = Sets.newHashSet(
+                    EntityType.GUARDIAN, EntityType.TURTLE, EntityType.COD, EntityType.DOLPHIN, EntityType.PUFFERFISH,
+                    EntityType.SALMON, EntityType.SQUID, EntityType.TROPICAL_FISH
+            );
+            Set<EntityType<?>> illagers = Sets.newHashSet(
+                    EntityType.PILLAGER, EntityType.ILLUSIONER, EntityType.VINDICATOR, EntityType.EVOKER,
+                    EntityType.RAVAGER, EntityType.WITCH
+            );
+
+            Set<EntityType<?>> living = allTypes.stream().filter(et ->
+                    !deads.contains(et) && !projectiles.contains(et) && !minecarts.contains(et)
+            ).collect(Collectors.toSet());
+
+            Set<EntityType<?>> regular = allTypes.stream().filter(et ->
+                    living.contains(et) && !undeads.contains(et) && !arthropods.contains(et) && !aquatique.contains(et) && !illagers.contains(et)
+            ).collect(Collectors.toSet());
+
+
+            put("*", new EntityClassDescriptor(null, e -> true, allTypes) );
+            put("valid", new EntityClassDescriptor(null, EntityPredicates.VALID_ENTITY, allTypes));
+            put("!valid", new EntityClassDescriptor(null, e -> !e.isAlive(), allTypes));
+
+            put("living",  new EntityClassDescriptor(null, (e) -> (e instanceof LivingEntity && e.isAlive()), allTypes.stream().filter(living::contains)));
+            put("!living",  new EntityClassDescriptor(null, (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
+
+            put("projectile", new EntityClassDescriptor(null, (e) -> (e instanceof ProjectileEntity && e.isAlive()), allTypes.stream().filter(projectiles::contains)));
+            put("!projectile", new EntityClassDescriptor(null, (e) -> (!(e instanceof ProjectileEntity) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
+
+            put("minecarts", new EntityClassDescriptor(null, (e) -> (e instanceof AbstractMinecartEntity && e.isAlive()), allTypes.stream().filter(minecarts::contains)));
+            put("!minecarts", new EntityClassDescriptor(null, (e) -> (!(e instanceof AbstractMinecartEntity) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
+
+
+            // combat groups
+
+            put("arthropod", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
+            put("!arthropod", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
+
+            put("undead", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(undeads::contains)));
+            put("!undead", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
+
+            put("aquatic", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
+            put("!aquatic", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
+
+            put("illager", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(illagers::contains)));
+            put("!illager", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
+
+            put("regular", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(regular::contains)));
+            put("!regular", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
+
+            for (Identifier typeId : Registry.ENTITY_TYPE.getIds())
+            {
+                EntityType<?> type  = Registry.ENTITY_TYPE.get(typeId);
+                String mobType = ValueConversions.simplify(typeId);
+                put(    mobType, new EntityClassDescriptor(type, EntityPredicates.VALID_ENTITY, Stream.of(type)));
+                put("!"+mobType, new EntityClassDescriptor(null, (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
+            }
+            for (SpawnGroup catId : SpawnGroup.values())
+            {
+                String catStr = catId.getName();
+                put(    catStr, new EntityClassDescriptor(null, e -> ((e.getType().getSpawnGroup() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() == catId)));
+                put("!"+catStr, new EntityClassDescriptor(null, e -> ((e.getType().getSpawnGroup() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() != catId)));
+            }
+        }};
+    }
+
     public Value get(String what, Value arg)
     {
         if (!(featureAccessors.containsKey(what)))
@@ -1264,7 +1346,7 @@ public class EntityValue extends Value
         EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
         if (event == null)
             throw new InternalExpressionException("Unknown entity event: " + eventName);
-        ((EntityInterface)entity).getEventContainer().addEvent(event, cc, fun, args);
+        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host.getName(), fun, args);
     }
 
     @Override

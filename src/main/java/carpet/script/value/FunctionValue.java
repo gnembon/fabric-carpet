@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 
 public class FunctionValue extends Value implements Fluff.ILazyFunction
 {
-    private Expression expression;
-    private Tokenizer.Token token;
-    private String name;
-    private LazyValue body;
+    private final Expression expression;
+    private final Tokenizer.Token token;
+    private final String name;
+    private final LazyValue body;
     private Map<String, LazyValue> outerState;
-    private List<String> args;
-    private String varArgs;
+    private final List<String> args;
+    private final String varArgs;
     private static long variantCounter = 1;
     private long variant;
 
@@ -98,8 +98,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     {
         return name.hashCode()+(int)variant;
     }
-
-
 
     @Override
     public boolean equals(Object o)
@@ -178,7 +176,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     @Override
     public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
     {
-        assertArgsOk(lazyParams.size(), (fixedArgs) ->{
+        assertArgsOk(lazyParams, (fixedArgs) ->{
             if (fixedArgs)  // wrong number of args for fixed args
             {
                 throw new ExpressionException(c, e, t,
@@ -264,16 +262,30 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return StringTag.of(getString());
     }
 
-    public void assertArgsOk(int size, Consumer<Boolean> feedback)
+    public void assertArgsOk(List<?> list, Consumer<Boolean> feedback)
     {
-        if (varArgs == null &&  args.size() != size) // wrong number of args for fixed args
+        int size = list.size();
+        if (varArgs == null && args.size() != size) // wrong number of args for fixed args
         {
             feedback.accept(true);
 
         }
-        else if (varArgs != null &&  args.size() > size) // too few args for varargs
+        else if (varArgs != null && args.size() > size) // too few args for varargs
         {
             feedback.accept(false);
         }
+    }
+    public static List<Value> resolveArgs(List<LazyValue> lzargs, Context c, Integer t)
+    {
+        List<Value> args = new ArrayList<>(lzargs.size());
+        lzargs.forEach( v -> args.add( v.evalValue(c, t)));
+        return args;
+    }
+
+    public static List<LazyValue> lazify(List<Value> args)
+    {
+        List<LazyValue> lzargs = new ArrayList<>(args.size());
+        args.forEach( v -> lzargs.add( (c, t) -> v));
+        return lzargs;
     }
 }
