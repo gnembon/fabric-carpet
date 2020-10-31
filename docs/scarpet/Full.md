@@ -2540,20 +2540,33 @@ run, or by UUID, obtained via `entity ~ 'uuid'`. It returns null if no such enti
 entities between calls, as missing entities will be returning `null`. Both calls using UUID or numerical ID are `O(1)`, 
 but obviously using UUIDs takes more memory and compute.
 
-### `entity_list(type)`
+### `entity_list(descriptor)`
 
-Returns global lists of entities in the current dimension of a specified type. Currently the following 
-selectors are available:
+Returns global lists of entities in the current dimension matches specified descriptor.
+Calls to `entity_list` always fetch entities from the current world that the script executes.
+ 
+### `entity_types(descriptor)`
 
-*  `*`: all entities, even `!valid`
+Resolves a given descriptor returning list of entity types that match it. The returned list of types is also a valid list
+of descriptors that can be use elsewhere where entity types are required. 
+
+Currently, the following descriptors are available:
+
+*  `*`: all entities, even `!valid`, matches all entity types.
 *  `valid` - all entities that are not dead (health > 0). All main categories below also return only 
-entities in the `valid` category.
-*  `living` - all entities that resemble a creature of any sort
-*  `projectile` - all entities that are not living that can be throw or projected
-*  `undead`, `arthropod`, `aquatic`, `regular`, `illager` - all entities that belong to any of these groups. Every 
-living entity belongs to one and only one of these.
+entities in the `valid` category. matches all entity types. `!valid` matches all entites that are already dead of all types.
+*  `living` - all entities that resemble a creature of some sort
+*  `projectile` - all entities or types that are not living that can be throw or projected, `!projectile` matches all types that
+   are not living, but cannot the thrown or projected.
+*  `minecarts` matches all minecart types. `!minecart` matches all types that are not live, but also not minecarts.
+*  `undead`, `arthropod`, `aquatic`, `regular`, `illager` - all entities / types that belong to any of these groups. All 
+living entities belong to one and only one of these. Corresponding negative (e.g. `!undead`) corresponds to all mobs that are 
+living but don't belong to that group. Entity groups are used in interaction / battle mechanics like smite for undead, or impaling
+for aquatic. Also certain mobs interact with groups, like bell with illagers. ALl mobs that don't have any of these traits belong
+to the `regular` group.
 *  `monster`, `creature`, `ambient`, `water_creature`, `water_ambient`, `misc` - another categorization of 
-living entities based on their spawn group.
+living entities based on their spawn group. Negative descriptor resolves to all living types that don't belong to that
+category.
 *  Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
 `area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
 `chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
@@ -2569,8 +2582,8 @@ living entities based on their spawn group.
 `wither`, `wither_skeleton`, `wither_skull`, `wolf`, `zoglin`, `zombie`, `zombie_horse`, `zombie_villager`, 
 `zombified_piglin`
 
-All categories can be preceded with `'!'` which will fetch all entities that are valid (health > 0) but not 
-belonging to that group. Calls to `entity_list` always fetch entities from the current world that the script executes. 
+All categories can be preceded with `'!'` which will fetch all entities (unless otherwise noted) that are valid (health > 0) but not 
+belonging to that group. 
 
 ### `entity_area(type, center, distance)`
 
@@ -3243,7 +3256,28 @@ Required arguments: `entity, amount, source, attacking_entity`
 It doesn't mean that all entity types will have a chance to execute a given event, but entities will not error 
 when you attach an inapplicable event to it.
 
-### `entity_event(e, event, call_name, args...)`
+### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
+
+Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
+to an entity right when it is loaded to the world without querying them every tick. Callback expects one parameter - the entity.
+If callback is `null` current entity handler, if present is removed. Consecutive calls to `entity_load_handler` will add / subtract
+of the currenty targetted entity types pool.
+
+Like other global events, calls to `entity_load_handler` can only be attached in apps with global scope. Player scope make so
+that it is not clear which player to use run the load call.
+
+```
+// veryfast method of getting rid of all the zombies. Callback is so early, its packets haven't reached yet the clients
+// so to save on log errors, removal of mobs needs to be scheduled for later.
+entity_load_handler('zombie', _(e) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
+
+// making all zombies immediately faster and less susceptible to friction of any sort
+entity_load_handler('zombie', _(e) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
+```
+
+
+
+### `entity_event(e, event, function)`, `entity_event(e, event, call_name, ... args?)`
 
 Attaches specific function from the current package to be called upon the `event`, with extra `args` carried to the 
 original required arguments for the event handler.
