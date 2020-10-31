@@ -1,6 +1,8 @@
 name: Merge docs
 on:
   push:
+    branches: 
+      - master
     paths:
     - "docs/**"
     - "!docs/scarpet/Full.md"
