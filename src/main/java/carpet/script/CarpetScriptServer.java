@@ -55,6 +55,13 @@ public class CarpetScriptServer
         bundledModuleData.add(app);
     }
     
+    /**
+     * Registers a Scarpet App to be used as a Rule App
+     * (to be controlled with the value of a Carpet rule)
+     * 
+     * @param app is the BundledModule of an app. Libraries
+     * should be registered as builtInScripts instead
+     */
     public static void registerRuleScript(BundledModule app) {
     	ruleModuleData.add(app);
     }

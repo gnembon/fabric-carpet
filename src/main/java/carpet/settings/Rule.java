@@ -56,6 +56,7 @@ public @interface Rule
      * If specified, the rule will automatically enable or disable 
      * a builtin Scarpet Rule App with this name.
      * Consider telling the rule name so users can edit globals
+     * (in case there are relevant globals to edit ofc)
      */
     String scarpetApp() default "";
 
