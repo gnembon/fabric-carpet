@@ -88,7 +88,12 @@ public class CarpetScriptServer
     public void initializeForWorld()
     {
     	worldInitialized = true;
-    	CarpetServer.settingsManager.initializeScarpetRules(server.getCommandSource());
+    	CarpetServer.settingsManager.initializeScarpetRules();
+    	CarpetServer.extensions.forEach(e -> {
+    		if(e.customSettingsManager() != null) {
+    			e.customSettingsManager().initializeScarpetRules();
+    		}
+    	});
         if (CarpetSettings.scriptsAutoload)
         {
             Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");

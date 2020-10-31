@@ -125,11 +125,11 @@ public class SettingsManager
     	}
     }
     
-    public void initializeScarpetRules(ServerCommandSource source) {
+    public void initializeScarpetRules() {
     	for (ParsedRule<?> rule : rules.values())
         {
             if (rule.hasScarpet) {
-                switchScarpetRule(source, rule);
+                switchScarpetRule(server.getCommandSource(), rule);
             }
         }
     }
