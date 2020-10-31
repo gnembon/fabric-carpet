@@ -1,5 +1,6 @@
 package carpet.script.utils;
 
+import carpet.CarpetServer;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.value.ListValue;
@@ -7,11 +8,14 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.settings.ParsedRule;
+import carpet.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
 import net.minecraft.util.WorldSavePath;
 
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -101,6 +105,23 @@ public class SystemInfo {
             OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
                     OperatingSystemMXBean.class);
             return new NumericValue(osBean.getProcessCpuLoad());
+        });
+        put("world_carpet_rules", c -> {
+        	Collection<ParsedRule<?>> rules = CarpetServer.settingsManager.getRules();
+        	MapValue carpetRules = new MapValue(Collections.emptyList());
+        	rules.forEach(rule -> {
+        		carpetRules.put(new StringValue(rule.name), new StringValue(rule.getAsString()));
+        	});
+        	CarpetServer.extensions.forEach(e -> {
+        		SettingsManager manager = e.customSettingsManager();
+        		if (manager == null) return;
+        		
+        		Collection<ParsedRule<?>> extensionRules = manager.getRules();
+        		extensionRules.forEach(rule -> {
+        			carpetRules.put(new StringValue(manager.getIdentifier()+":"+rule.name), new StringValue(rule.getAsString()));
+        		});
+        	});
+        	return carpetRules;
         });
 
 

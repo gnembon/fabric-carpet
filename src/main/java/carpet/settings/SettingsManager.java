@@ -71,7 +71,10 @@ public class SettingsManager
         this.fancyName = fancyName;
     }
 
-
+    public String getIdentifier() {
+		return identifier;
+	}
+    
     public void attachServer(MinecraftServer server)
     {
         this.server = server;
