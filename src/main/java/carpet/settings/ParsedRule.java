@@ -10,8 +10,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import static carpet.utils.Translations.tr;
 
@@ -31,6 +34,17 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final T defaultValue;
     public final String defaultAsString;
     public final SettingsManager settingsManager;
+    private static final Set<Class<?>> NUMBER_CLASSES;
+    static {
+        Set<Class<?>> s = new HashSet<>();
+        s.add(byte.class);
+        s.add(short.class);
+        s.add(int.class);
+        s.add(long.class);
+        s.add(float.class);
+        s.add(double.class);
+        NUMBER_CLASSES = Collections.unmodifiableSet(s);
+    }
 
     ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
     {
@@ -197,7 +211,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public boolean getBoolValue()
     {
         if (type == boolean.class) return (Boolean) get();
-        if (type.isAssignableFrom(Number.class)) return ((Number) get()).doubleValue() > 0;
+        if (NUMBER_CLASSES.contains(type)) return ((Number) get()).doubleValue() > 0;
         return false;
     }
 
