@@ -20,7 +20,8 @@ public class NumericValue extends Value
 {
     private final Double value;
     private Long longValue;
-    final static double epsilon = 32*((7*0.1)*10-7);
+    private final static double epsilon = 32*((7*0.1)*10-7);
+    private final static MathContext displayRounding = new MathContext(12, RoundingMode.HALF_EVEN);
 
     public static NumericValue asNumber(Value v1, String id)
     {
@@ -49,7 +50,7 @@ public class NumericValue extends Value
             if (value.isInfinite()) return "INFINITY";
             if (value.isNaN()) return "NaN";
             // dobules have 16 point precision, 12 is plenty to display
-            return BigDecimal.valueOf(value).round(new MathContext(12, RoundingMode.HALF_EVEN)).stripTrailingZeros().toPlainString();
+            return BigDecimal.valueOf(value).round(displayRounding).stripTrailingZeros().toPlainString();
         }
         catch (NumberFormatException exc)
         {

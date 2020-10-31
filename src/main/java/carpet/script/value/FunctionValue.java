@@ -264,13 +264,13 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
 
     public void assertArgsOk(List<?> list, Consumer<Boolean> feedback)
     {
-        int size = list==null?0:list.size();
-        if (varArgs == null &&  args.size() != size) // wrong number of args for fixed args
+        int size = list.size();
+        if (varArgs == null && args.size() != size) // wrong number of args for fixed args
         {
             feedback.accept(true);
 
         }
-        else if (varArgs != null &&  args.size() > size) // too few args for varargs
+        else if (varArgs != null && args.size() > size) // too few args for varargs
         {
             feedback.accept(false);
         }

@@ -56,6 +56,7 @@ public class CarpetEventServer
 {
     public final List<ScheduledCall> scheduledCalls = new LinkedList<>();
     public final MinecraftServer server;
+    private static final List<Value> NOARGS = Collections.emptyList();
 
     public static class Callback
     {
@@ -63,23 +64,22 @@ public class CarpetEventServer
         public final FunctionValue function;
         public final List<Value> parametrizedArgs;
 
+
         public Callback(String host, FunctionValue function, List<Value> parametrizedArgs)
         {
             this.host = host;
             this.function = function;
-            this.parametrizedArgs = parametrizedArgs;
+            this.parametrizedArgs = parametrizedArgs==null?NOARGS:parametrizedArgs;
         }
 
         /**
-         * Used in entity events
+         * Used also in entity events
          * @param asSource - entity command source
          * @param runtimeArgs = options
          */
         public boolean execute(ServerCommandSource asSource, List<Value> runtimeArgs)
         {
-            //!CarpetServer.scriptServer.runas(source, call.host, call.function, argv)
-            //CarpetServer.scriptServer.runas(source, call.host, call.function, argv)
-            if (this.parametrizedArgs == null || this.parametrizedArgs.isEmpty())
+            if (this.parametrizedArgs.isEmpty())
                 return CarpetServer.scriptServer.runas(
                         asSource.withLevel(CarpetSettings.runPermissionLevel),
                         host, function, runtimeArgs);
@@ -181,7 +181,7 @@ public class CarpetEventServer
         }
         public boolean addEventCallInternal(ScriptHost host, FunctionValue function, List<Value> args)
         {
-            if (function == null || (function.getArguments().size() - (args==null?0:args.size())) != reqArgs)
+            if (function == null || (function.getArguments().size() - args.size()) != reqArgs)
             {
                 return false;
             }
@@ -668,7 +668,7 @@ public class CarpetEventServer
                     public void onEntityAction(Entity entity)
                     {
                         handler.call(
-                                () -> Collections.singletonList((new EntityValue(entity))),
+                                () -> Collections.singletonList(new EntityValue(entity)),
                                 () -> CarpetServer.minecraft_server.getCommandSource().withWorld((ServerWorld) entity.world).withLevel(CarpetSettings.runPermissionLevel)
                         );
                     }
@@ -773,7 +773,7 @@ public class CarpetEventServer
         Event ev = Event.byName.get(event);
         if (!canAddEvent(ev, host))
             throw new InternalExpressionException("Global event "+event+" can only be added to apps with global scope");
-        boolean success =  ev.handler.addEventCallInternal(host, function, args);
+        boolean success =  ev.handler.addEventCallInternal(host, function, args==null?NOARGS:args);
         if (!success) throw new InternalExpressionException("Global event "+event+" requires "+ev.handler.reqArgs+", not "+(function.getNumParams()-((args==null)?0:args.size())));
     }
 
