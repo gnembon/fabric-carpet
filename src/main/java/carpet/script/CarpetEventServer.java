@@ -11,6 +11,7 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.settings.ParsedRule;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.damage.DamageSource;
@@ -694,6 +695,25 @@ public class CarpetEventServer
                 );
             }
         };
+        public static final Event CARPET_RULE_CHANGE = new Event("carpet_rule_change", 2, true)
+        {
+        	@Override
+        	public void onCarpetRuleChange(ParsedRule<?> rule, ServerCommandSource source)
+        	{
+        		String identifier = rule.settingsManager.getIdentifier();
+        		final String namespace;
+        		if (!identifier.equals("carpet")) 
+        		{
+        			namespace = identifier+":";
+        		} else { namespace = "";}
+        		handler.call(
+        				() -> Arrays.asList(
+        						((c,t) -> new StringValue(namespace+rule.name)),
+        						((c,t) -> new StringValue(rule.getAsString()))
+        				), () -> source
+        		);
+        	}
+        };
 
         // on projectile thrown (arrow from bows, crossbows, tridents, snoballs, e-pearls
 
@@ -733,6 +753,7 @@ public class CarpetEventServer
 
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
+        public void onCarpetRuleChange(ParsedRule<?> rule, ServerCommandSource source) { }
     }
 
 

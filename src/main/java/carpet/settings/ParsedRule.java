@@ -30,8 +30,9 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final List<Validator<T>> validators;
     public final T defaultValue;
     public final String defaultAsString;
+    public final SettingsManager settingsManager;
 
-    ParsedRule(Field field, Rule rule)
+    ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
     {
         this.field = field;
         this.name = rule.name().isEmpty() ? field.getName() : rule.name();
@@ -41,6 +42,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         this.extraInfo = ImmutableList.copyOf(rule.extra());
         this.categories = ImmutableList.copyOf(rule.category());
         this.scarpetApp = rule.scarpetApp();
+        this.settingsManager = settingsManager;
         this.validators = new ArrayList<>();
         for (Class v : rule.validate())
             this.validators.add((Validator<T>) callConstructor(v));
@@ -113,7 +115,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
 
     public ParsedRule<T> set(ServerCommandSource source, String value)
     {
-        if (CarpetServer.settingsManager != null && CarpetServer.settingsManager.locked)
+        if (settingsManager != null && settingsManager.locked)
             return null;
         if (type == String.class)
         {
@@ -164,7 +166,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
             if (!value.equals(get()) || source == null)
             {
                 this.field.set(null, value);
-                if (source != null) CarpetServer.settingsManager.notifyRuleChanged(source, this, stringValue);
+                if (source != null) settingsManager.notifyRuleChanged(source, this, stringValue);
             }
         }
         catch (IllegalAccessException e)
