@@ -45,7 +45,6 @@ public class CarpetScriptServer
     public boolean stopAll;
     private  Set<String> holyMoly;
     public  CarpetEventServer events;
-    private boolean worldInitialized = false;
 
     private static final List<Module> bundledModuleData = new ArrayList<>();
     private static final List<Module> ruleModuleData = new ArrayList<>();
@@ -97,7 +96,6 @@ public class CarpetScriptServer
 
     public void initializeForWorld()
     {
-        worldInitialized = true;
         CarpetServer.settingsManager.initializeScarpetRules();
         CarpetServer.extensions.forEach(e -> {
             if (e.customSettingsManager() != null) {
@@ -188,8 +186,6 @@ public class CarpetScriptServer
     public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
         //TODO add per player modules to support player actions better on a server
-        if (!worldInitialized) return false;
-        
         name = name.toLowerCase(Locale.ROOT);
         boolean reload = false;
         if (modules.containsKey(name))
