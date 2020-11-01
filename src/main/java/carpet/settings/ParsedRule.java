@@ -4,6 +4,8 @@ import carpet.CarpetServer;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.lang.reflect.Constructor;
@@ -33,17 +35,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final T defaultValue;
     public final String defaultAsString;
     public final SettingsManager settingsManager;
-    private static final Set<Class<?>> NUMBER_CLASSES;
-    static {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(byte.class);
-        s.add(short.class);
-        s.add(int.class);
-        s.add(long.class);
-        s.add(float.class);
-        s.add(double.class);
-        NUMBER_CLASSES = Collections.unmodifiableSet(s);
-    }
+    private static final Set<Class<?>> NUMBER_CLASSES = Sets.newHashSet(byte.class, short.class, int.class, long.class, float.class, double.class);
 
     ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
     {
