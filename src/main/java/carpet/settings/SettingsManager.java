@@ -114,7 +114,7 @@ public class SettingsManager
     
     void switchScarpetRule(ServerCommandSource source, ParsedRule<?> rule)
     {
-        if (rule.hasScarpet)
+        if (!rule.scarpetApp.isEmpty())
         {
             if (rule.getBoolValue() || (rule.type == String.class && !rule.get().equals("false")))
             {
@@ -128,7 +128,7 @@ public class SettingsManager
     public void initializeScarpetRules() {
         for (ParsedRule<?> rule : rules.values())
         {
-            if (rule.hasScarpet) {
+            if (!rule.scarpetApp.isEmpty()) {
                 switchScarpetRule(server.getCommandSource(), rule);
             }
         }

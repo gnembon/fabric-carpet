@@ -28,7 +28,6 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final ImmutableList<String> options;
     public boolean isStrict;
     public boolean isClient;
-    public boolean hasScarpet;
     public final Class<T> type;
     public final List<Validator<T>> validators;
     public final T defaultValue;
@@ -71,7 +70,6 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
         if (!scarpetApp.isEmpty())
         {
-            this.hasScarpet = true;
             this.validators.add((Validator<T>) callConstructor(Validator._SCARPET.class));
         }
         this.isClient = categories.contains(RuleCategory.CLIENT);
