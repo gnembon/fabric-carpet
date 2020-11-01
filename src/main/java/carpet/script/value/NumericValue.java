@@ -20,7 +20,7 @@ public class NumericValue extends Value
 {
     private final Double value;
     private Long longValue;
-    private final static double epsilon = 32*((7*0.1)*10-7);
+    private final static double epsilon = abs(32*((7*0.1)*10-7));
     private final static MathContext displayRounding = new MathContext(12, RoundingMode.HALF_EVEN);
 
     public static NumericValue asNumber(Value v1, String id)
