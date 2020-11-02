@@ -40,9 +40,9 @@ public class CarpetScriptHost extends ScriptHost
     private int saveTimeout;
     public boolean persistenceRequired;
 
-    public Map<Value, Value> appConfig = Collections.emptyMap();
+    public Map<Value, Value> appConfig;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent)
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -57,11 +57,12 @@ public class CarpetScriptHost extends ScriptHost
         {
             persistenceRequired = ((CarpetScriptHost)parent).persistenceRequired;
         }
+        appConfig = config;
     }
 
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source)
     {
-        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null );
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap() );
         // parse code and convert to expression
         if (module != null)
         {
@@ -96,7 +97,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, main, false, this);
+        return new CarpetScriptHost(scriptServer, main, false, this, appConfig);
     }
 
     @Override
@@ -115,18 +116,19 @@ public class CarpetScriptHost extends ScriptHost
             }
             else if (funName.equals("__config"))
             {
-                addAppConfig(ctx, function);
+                // needs to be added as we read the code, cause other events may be affected.
+                if (!readConfig())
+                    throw new InternalExpressionException("Invalid app config (via '__config()' function)");
             }
         }
     }
 
-    private void addAppConfig(Context ctx, FunctionValue function)
+    private boolean readConfig()
     {
         try
         {
-            CarpetContext cctx = (CarpetContext)ctx;
-            Value ret = callUDF(BlockPos.ORIGIN, cctx.s, function, Collections.emptyList());
-            if (!(ret instanceof MapValue)) return;
+            Value ret = callUDF(BlockPos.ORIGIN, scriptServer.server.getCommandSource(), getFunction("__config"), Collections.emptyList());
+            if (!(ret instanceof MapValue)) return false;
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.FALSE).getBoolean();
@@ -134,7 +136,9 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (NullPointerException | InvalidCallbackException ignored)
         {
+            return false;
         }
+        return true;
     }
 
     @Override

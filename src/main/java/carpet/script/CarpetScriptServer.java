@@ -174,6 +174,12 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to add "+name+" app");
             return false;
         }
+        // config needs to be read as we load the app since some events use that info
+        //if (!newHost.readConfig())
+        //{
+        //    Messenger.m(source, "r Failed to add "+name+" app: invalid app config (via '__config()' function)");
+        //    return false;
+        //}
         if (module == null)
         {
             Messenger.m(source, "r Unable to locate the app, but created empty "+name+" app instead");
@@ -195,11 +201,11 @@ public class CarpetScriptServer
             return false;
         }
         //addEvents(source, name);
-        addCommand(source, name, reload);
+        addLegacyCommand(source, name, reload); // this needs to be moved to config reader, only supporting legacy command here
         return true;
     }
 
-    private void addCommand(ServerCommandSource source, String hostName, boolean isReload)
+    private void addLegacyCommand(ServerCommandSource source, String hostName, boolean isReload)
     {
         CarpetScriptHost host = modules.get(hostName);
         String loaded = isReload?"reloaded":"loaded";
