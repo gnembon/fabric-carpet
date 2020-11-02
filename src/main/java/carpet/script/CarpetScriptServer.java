@@ -5,15 +5,17 @@ import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
+import carpet.script.command.CommandArgument;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.MapValue;
 import carpet.script.value.StringValue;
-import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -199,7 +201,7 @@ public class CarpetScriptServer
 
     private void addCommand(ServerCommandSource source, String hostName, boolean isReload)
     {
-        ScriptHost host = modules.get(hostName);
+        CarpetScriptHost host = modules.get(hostName);
         String loaded = isReload?"reloaded":"loaded";
         if (host == null)
         {
@@ -222,34 +224,83 @@ public class CarpetScriptServer
                 executes( (c) ->
                 {
                     Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                            handleCommand(c.getSource(),"__command", null, "");
+                            handleCommandLegacy(c.getSource(),"__command", null, "");
                     if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
                     return (int)response.readInteger();
                 });
 
         for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
-            command = command.
-                    then(literal(function).
-                            requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
-                            executes( (c) -> {
-                                Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                        handleCommand(c.getSource(), function,null,"");
-                                if (!response.isNull()) Messenger.m(c.getSource(),"gi "+response.getString());
-                                return (int)response.readInteger();
-                            }).
-                            then(argument("args...", StringArgumentType.greedyString()).
-                                    executes( (c) -> {
-                                        Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                                handleCommand(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
-                                        if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                                        return (int)response.readInteger();
-                                    })));
+            if (host.appConfig.containsKey(StringValue.of("test_command_type_support"))) // temporary stuff for testing
+            {
+                command = getFancyCommand(command, host, function);
+            }
+            else
+            {
+                command = command.
+                        then(literal(function).
+                                requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
+                                executes((c) -> {
+                                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                            handleCommandLegacy(c.getSource(), function, null, "");
+                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi " + response.getString());
+                                    return (int) response.readInteger();
+                                }).
+                                then(argument("args...", StringArgumentType.greedyString()).
+                                        executes( (c) -> {
+                                            Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
+                                                    handleCommandLegacy(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                            if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                                            return (int)response.readInteger();
+                                        })));
+            }
         }
         Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
+
+    private int execute(CommandContext<ServerCommandSource> ctx, String hostName, String funName) throws CommandSyntaxException
+    {
+        CarpetScriptHost cHost = modules.get(hostName).retrieveForExecution(ctx.getSource());
+        List<String> argNames = cHost.getFunction(funName).getArguments();
+        List<Value> args = new ArrayList<>(argNames.size());
+        for (String s : argNames)
+        {
+            args.add(CommandArgument.getValue(ctx, s));
+        }
+        Value response = cHost.handleCommand(ctx.getSource(), funName, args);
+        if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
+        return (int) response.readInteger();
+    }
+
+    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, ScriptHost host, String funName )
+    {
+        List<String> argNames = host.getFunction(funName).getArguments();
+        String hostName = host.getName();
+        if (argNames.size() == 0)
+        {
+            return command.then(literal(funName).
+                    requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funName) != null).
+                    executes((c) -> execute(c, hostName, funName)));
+        }
+        else
+        {
+            List<String> reversedArgs = new ArrayList<>(argNames);
+            Collections.reverse(reversedArgs);
+            RequiredArgumentBuilder<ServerCommandSource, ?> argChain = CommandArgument.argumentNode(reversedArgs.get(0)).executes(c -> execute(c, hostName, funName));
+            for (int i = 1; i < reversedArgs.size(); i++)
+            {
+                argChain = CommandArgument.argumentNode(reversedArgs.get(i)).then(argChain);
+            }
+            return command.then(literal(funName).
+                    requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funName) != null).
+                    then(argChain)
+            );
+        }
+    }
+
+
 
     public boolean removeScriptHost(ServerCommandSource source, String name, boolean notifySource)
     {

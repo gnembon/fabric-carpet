@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -30,6 +31,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static net.minecraft.server.command.CommandManager.argument;
+
+
 public abstract class CommandArgument
 {
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
@@ -38,20 +42,47 @@ public abstract class CommandArgument
 
     public static final Map<String, CommandArgument> builtIns = baseTypes.stream().collect(Collectors.toMap(CommandArgument::getTypeSuffix, a -> a));
 
+    private static CommandArgument getTypeForArgument(String argument)
+    {
+        String[] components = argument.split("_");
+        String suffix = components[components.length-1].toLowerCase(Locale.ROOT);
+        return builtIns.getOrDefault(suffix, builtIns.get("string"));
+    }
+
+    public static RequiredArgumentBuilder<ServerCommandSource, ?> argumentNode(String param)
+    {
+        CommandArgument arg = getTypeForArgument(param);
+        return arg.needsMatching? argument(param, arg.getArgumentType()).suggests(arg::suggest) : argument(param, arg.getArgumentType());
+    }
+
     private String suffix;
     private final Collection<String> examples;
+    protected boolean needsMatching = false;
 
     protected CommandArgument(
             String suffix,
-            Collection<String> examples)
+            Collection<String> examples,
+            boolean needsMatching)
     {
         this.suffix = suffix;
         this.examples = examples;
+        this.needsMatching = needsMatching;
     }
 
-    public abstract ArgumentType<?> getArgument();
+    public static ArgumentType<?> getArgument(String param)
+    {
+        return getTypeForArgument(param).getArgumentType();
+    }
 
-    public abstract Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException;
+    protected abstract ArgumentType<?> getArgumentType();
+
+
+    public static Value getValue(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+    {
+        return getTypeForArgument(param).getValueFromContext(context, param);
+    }
+
+    protected abstract Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException;
 
 
 
@@ -81,8 +112,7 @@ public abstract class CommandArgument
 
     protected abstract void configure(Map<String, Value> config);
 
-
-    protected CompletableFuture<Suggestions> suggest(
+    public CompletableFuture<Suggestions> suggest(
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
     )
@@ -99,7 +129,10 @@ public abstract class CommandArgument
 
     protected Collection<String> getOptions()
     {
-        return Collections.emptyList();
+        //return Lists.newArrayList("");
+        // better than nothing I guess
+        // nothing is such a bad default.
+        return Collections.singletonList("... "+getTypeSuffix());
     }
 
     protected boolean optionMatchesPrefix(String prefix, String option)
@@ -120,11 +153,11 @@ public abstract class CommandArgument
         boolean caseSensitive = false;
         private WordArgument()
         {
-            super("string", StringArgumentType.StringType.SINGLE_WORD.getExamples());
+            super("string", StringArgumentType.StringType.SINGLE_WORD.getExamples(), true);
         }
 
         @Override
-        public ArgumentType<?> getArgument()
+        public ArgumentType<?> getArgumentType()
         {
             return StringArgumentType.word();
         }
@@ -156,7 +189,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Collection<String> getOptions() { return validOptions; }
+        protected Collection<String> getOptions() { return validOptions.isEmpty()?super.getOptions():validOptions; }
 
         @Override
         protected Supplier<CommandArgument> builder() { return WordArgument::new; }
@@ -168,11 +201,11 @@ public abstract class CommandArgument
 
         private PosArgument()
         {
-            super("pos", BlockPosArgumentType.blockPos().getExamples());
+            super("pos", BlockPosArgumentType.blockPos().getExamples(), false);
         }
 
         @Override
-        public ArgumentType<?> getArgument()
+        public ArgumentType<?> getArgumentType()
         {
             return BlockPosArgumentType.blockPos();
         }
@@ -205,11 +238,11 @@ public abstract class CommandArgument
         private Double max = null;
         private FloatArgument()
         {
-            super("float", DoubleArgumentType.doubleArg().getExamples());
+            super("float", DoubleArgumentType.doubleArg().getExamples(), true);
         }
 
         @Override
-        public ArgumentType<?> getArgument()
+        public ArgumentType<?> getArgumentType()
         {
             if (min != null)
             {
