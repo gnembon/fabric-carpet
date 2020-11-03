@@ -57,6 +57,17 @@ public abstract class Validator<T>
         }
         public String description() { return "Can be limited to 'ops' only, or a custom permission level";}
     }
+    
+    public static class _SCARPET<T> extends Validator<T> {
+        @Override
+        public T validate(ServerCommandSource source, ParsedRule<T> currentRule, T newValue, String string)
+        {
+            return newValue;
+        }
+        public String description() {
+            return "It controls an accompanying Scarpet App";
+        }
+    }
 
     public static class WIP<T> extends Validator<T>
     {

@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.lang.reflect.Constructor;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import static carpet.utils.Translations.tr;
 
@@ -19,6 +21,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final Field field;
     public final String name;
     public final String description;
+    public final String scarpetApp;
     public final ImmutableList<String> extraInfo;
     public final ImmutableList<String> categories;
     public final ImmutableList<String> options;
@@ -28,8 +31,10 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final List<Validator<T>> validators;
     public final T defaultValue;
     public final String defaultAsString;
+    public final SettingsManager settingsManager;
+    private static final Set<Class<?>> NUMBER_CLASSES = Sets.newHashSet(byte.class, short.class, int.class, long.class, float.class, double.class);
 
-    ParsedRule(Field field, Rule rule)
+    ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
     {
         this.field = field;
         this.name = rule.name().isEmpty() ? field.getName() : rule.name();
@@ -38,6 +43,8 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         this.isStrict = rule.strict();
         this.extraInfo = ImmutableList.copyOf(rule.extra());
         this.categories = ImmutableList.copyOf(rule.category());
+        this.scarpetApp = rule.scarpetApp();
+        this.settingsManager = settingsManager;
         this.validators = new ArrayList<>();
         for (Class v : rule.validate())
             this.validators.add((Validator<T>) callConstructor(v));
@@ -49,6 +56,10 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
                 this.isStrict = false;
                 this.validators.add((Validator<T>) callConstructor(Validator._COMMAND_LEVEL_VALIDATOR.class));
             }
+        }
+        if (!scarpetApp.isEmpty())
+        {
+            this.validators.add((Validator<T>) callConstructor(Validator._SCARPET.class));
         }
         this.isClient = categories.contains(RuleCategory.CLIENT);
         if (this.isClient)
@@ -105,7 +116,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
 
     public ParsedRule<T> set(ServerCommandSource source, String value)
     {
-        if (CarpetServer.settingsManager != null && CarpetServer.settingsManager.locked)
+        if (settingsManager != null && settingsManager.locked)
             return null;
         if (type == String.class)
         {
@@ -156,7 +167,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
             if (!value.equals(get()) || source == null)
             {
                 this.field.set(null, value);
-                if (source != null) CarpetServer.settingsManager.notifyRuleChanged(source, this, stringValue);
+                if (source != null) settingsManager.notifyRuleChanged(source, this, stringValue);
             }
         }
         catch (IllegalAccessException e)
@@ -187,7 +198,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public boolean getBoolValue()
     {
         if (type == boolean.class) return (Boolean) get();
-        if (type.isAssignableFrom(Number.class)) return ((Number) get()).doubleValue() > 0;
+        if (NUMBER_CLASSES.contains(type)) return ((Number) get()).doubleValue() > 0;
         return false;
     }
 

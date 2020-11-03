@@ -244,13 +244,13 @@ public class ScriptCommand
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(true),bb)).
                         executes((cc) ->
                         {
-                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), true, false);
+                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), true, false, false);
                             return success?1:0;
                         }).
                         then(literal("global").
                                 executes((cc) ->
                                 {
-                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), false, false);
+                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), false, false, false);
                                     return success?1:0;
                                 }
                                 )
@@ -258,10 +258,10 @@ public class ScriptCommand
                 );
         LiteralArgumentBuilder<ServerCommandSource> f = literal("unload").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
                 then(argument("app", StringArgumentType.word()).
-                        suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(),bb)).
+                        suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.unloadableModules,bb)).
                         executes((cc) ->
                         {
-                            boolean success =CarpetServer.scriptServer.removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), true);
+                            boolean success =CarpetServer.scriptServer.removeScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), true, false);
                             return success?1:0;
                         }));
 

@@ -30,7 +30,7 @@ public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
     @Inject(method = "readCustomDataFromTag", at = @At("HEAD"))
     private void checkScarpetMarkerUnloaded(CallbackInfo ci)
     {
-        if ((CarpetSettings.scriptsAutoload || !CarpetSettings.commandScript.equals("false")) && !world.isClient)
+        if (!world.isClient)
         {
             if (getScoreboardTags().contains(Auxiliary.MARKER_STRING))
             {

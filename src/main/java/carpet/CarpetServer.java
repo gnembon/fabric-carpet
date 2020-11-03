@@ -84,7 +84,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     public static void onServerLoadedWorlds(MinecraftServer minecraftServer)
     {
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
-        scriptServer.loadAllWorldScripts();
+        scriptServer.initializeForWorld();
     }
 
     public static void tick(MinecraftServer server)

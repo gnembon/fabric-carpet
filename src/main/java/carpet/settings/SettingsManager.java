@@ -43,6 +43,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static carpet.utils.Translations.tr;
+import static carpet.script.CarpetEventServer.Event.CARPET_RULE_CHANGES;
 import static net.minecraft.command.CommandSource.suggestMatching;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -71,7 +72,10 @@ public class SettingsManager
         this.fancyName = fancyName;
     }
 
-
+    public String getIdentifier() {
+        return identifier;
+    }
+    
     public void attachServer(MinecraftServer server)
     {
         this.server = server;
@@ -90,7 +94,7 @@ public class SettingsManager
         {
             Rule rule = f.getAnnotation(Rule.class);
             if (rule == null) continue;
-            ParsedRule parsed = new ParsedRule(f, rule);
+            ParsedRule parsed = new ParsedRule(f, rule, this);
             rules.put(parsed.name, parsed);
         }
     }
@@ -104,6 +108,30 @@ public class SettingsManager
     {
         observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
+        switchScarpetRule(source, rule);
+        CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
+    }
+    
+    void switchScarpetRule(ServerCommandSource source, ParsedRule<?> rule)
+    {
+        if (!rule.scarpetApp.isEmpty())
+        {
+            if (rule.getBoolValue() || (rule.type == String.class && !rule.get().equals("false")))
+            {
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, true);
+            } else {
+                CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
+            }
+        }
+    }
+    
+    public void initializeScarpetRules() {
+        for (ParsedRule<?> rule : rules.values())
+        {
+            if (!rule.scarpetApp.isEmpty()) {
+                switchScarpetRule(server.getCommandSource(), rule);
+            }
+        }
     }
 
     public Iterable<String> getCategories()
