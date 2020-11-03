@@ -3511,6 +3511,9 @@ at the same time.
 ### `__on_lightning(block, mode)`
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
+
+### `__on_carpet_rule_changes(rule, new_value)`
+Triggered when a Carpet rule is changed. It includes extension rules, which will be namespaced as `namespace:rule`.
  
 ## Player events
 
@@ -4153,6 +4156,7 @@ Available options in the scarpet app space:
   * `world_seed` - a numeric seed of the world
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
+  * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_change(rule, newValue)` event.
  
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
