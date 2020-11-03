@@ -1,5 +1,6 @@
 package carpet.script.command;
 
+import carpet.script.CarpetScriptHost;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
@@ -42,21 +43,25 @@ public abstract class CommandArgument
 
     public static final Map<String, CommandArgument> builtIns = baseTypes.stream().collect(Collectors.toMap(CommandArgument::getTypeSuffix, a -> a));
 
-    private static CommandArgument getTypeForArgument(String argument)
+    public static final CommandArgument DEFAULT = baseTypes.get(0);
+
+    private static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
     {
         String[] components = argument.split("_");
         String suffix = components[components.length-1].toLowerCase(Locale.ROOT);
-        return builtIns.getOrDefault(suffix, builtIns.get("string"));
+        CommandArgument arg =  host.appArgTypes.get(suffix);
+        if (arg != null) return arg;
+        return builtIns.getOrDefault(suffix, DEFAULT);
     }
 
-    public static RequiredArgumentBuilder<ServerCommandSource, ?> argumentNode(String param)
+    public static RequiredArgumentBuilder<ServerCommandSource, ?> argumentNode(String param, CarpetScriptHost host)
     {
-        CommandArgument arg = getTypeForArgument(param);
+        CommandArgument arg = getTypeForArgument(param, host);
         return arg.needsMatching? argument(param, arg.getArgumentType()).suggests(arg::suggest) : argument(param, arg.getArgumentType());
     }
 
     private String suffix;
-    private final Collection<String> examples;
+    private Collection<String> examples;
     protected boolean needsMatching = false;
 
     protected CommandArgument(
@@ -69,17 +74,17 @@ public abstract class CommandArgument
         this.needsMatching = needsMatching;
     }
 
-    public static ArgumentType<?> getArgument(String param)
+    public static ArgumentType<?> getArgument(String param, CarpetScriptHost host)
     {
-        return getTypeForArgument(param).getArgumentType();
+        return getTypeForArgument(param, host).getArgumentType();
     }
 
     protected abstract ArgumentType<?> getArgumentType();
 
 
-    public static Value getValue(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+    public static Value getValue(CommandContext<ServerCommandSource> context, String param, CarpetScriptHost host) throws CommandSyntaxException
     {
-        return getTypeForArgument(param).getValueFromContext(context, param);
+        return getTypeForArgument(param, host).getValueFromContext(context, param);
     }
 
     protected abstract Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException;
@@ -108,9 +113,20 @@ public abstract class CommandArgument
         variant.configure(config);
         variant.suffix = suffix;
         return variant;
-    };
+    }
 
-    protected abstract void configure(Map<String, Value> config);
+    protected void configure(Map<String, Value> config)
+    {
+        if (config.containsKey("suggest"))
+        {
+            Value suggestionValue = config.get("suggest");
+            if (!(suggestionValue instanceof ListValue)) throw new InternalExpressionException("Argument suggestions needs to be a list");
+            examples = ((ListValue) suggestionValue).getItems().stream()
+                    .map(Value::getString)
+                    .collect(Collectors.toSet());
+            if (!examples.isEmpty()) needsMatching = true;
+        }
+    };
 
     public CompletableFuture<Suggestions> suggest(
             CommandContext<ServerCommandSource> context,
@@ -177,6 +193,7 @@ public abstract class CommandArgument
         @Override
         protected void configure(Map<String, Value> config)
         {
+            super.configure(config);
             caseSensitive = config.getOrDefault("case_sensitive", Value.FALSE).getBoolean();
             if (config.containsKey("options"))
             {
@@ -222,6 +239,7 @@ public abstract class CommandArgument
         @Override
         protected void configure(Map<String, Value> config)
         {
+            super.configure(config);
             mustBeLoaded = config.getOrDefault("loaded", Value.FALSE).getBoolean();
         }
 
@@ -264,6 +282,7 @@ public abstract class CommandArgument
         @Override
         protected void configure(Map<String, Value> config)
         {
+            super.configure(config);
             if (config.containsKey("min"))
             {
                 min = NumericValue.asNumber(config.get("min"), "min").getDouble();

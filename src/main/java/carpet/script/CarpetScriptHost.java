@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.script.api.Auxiliary;
 import carpet.script.bundled.Module;
+import carpet.script.command.CommandArgument;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
@@ -26,8 +27,10 @@ import net.minecraft.util.math.BlockPos;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
 
@@ -41,8 +44,9 @@ public class CarpetScriptHost extends ScriptHost
     public boolean persistenceRequired;
 
     public Map<Value, Value> appConfig;
+    public Map<String, CommandArgument> appArgTypes;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config)
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -58,11 +62,12 @@ public class CarpetScriptHost extends ScriptHost
             persistenceRequired = ((CarpetScriptHost)parent).persistenceRequired;
         }
         appConfig = config;
+        appArgTypes = argTypes;
     }
 
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source)
     {
-        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap() );
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>());
         // parse code and convert to expression
         if (module != null)
         {
@@ -97,7 +102,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, main, false, this, appConfig);
+        return new CarpetScriptHost(scriptServer, main, false, this, appConfig, appArgTypes);
     }
 
     @Override
@@ -132,7 +137,22 @@ public class CarpetScriptHost extends ScriptHost
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.FALSE).getBoolean();
-            this.appConfig = config;
+            // read custom arguments
+            Value arguments = config.get(StringValue.of("arguments"));
+            if (arguments != null)
+            {
+                if (!(arguments instanceof MapValue))
+                    throw new InternalExpressionException("'arguments' element in config should be a map");
+                for (Map.Entry<Value, Value> typeData : ((MapValue)arguments).getMap().entrySet())
+                {
+                    String argument = typeData.getKey().getString();
+                    Value spec = typeData.getValue();
+                    if (!(spec instanceof MapValue)) throw new InternalExpressionException("Spec for '"+argument+"' should be a map");
+                    Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
+                    appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData));
+                }
+            }
+            appConfig = config;
         }
         catch (NullPointerException | InvalidCallbackException ignored)
         {

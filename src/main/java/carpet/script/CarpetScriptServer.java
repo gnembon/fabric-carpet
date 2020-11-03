@@ -315,14 +315,14 @@ public class CarpetScriptServer
         List<Value> args = new ArrayList<>(argNames.size());
         for (String s : paramNames)
         {
-            args.add(CommandArgument.getValue(ctx, s));
+            args.add(CommandArgument.getValue(ctx, s, cHost));
         }
         Value response = cHost.handleCommand(ctx.getSource(), function, args);
         if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
         return (int) response.readInteger();
     }
 
-    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, ScriptHost host, FunctionValue function )
+    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, CarpetScriptHost host, FunctionValue function )
     {
         List<String> argNames = function.getArguments();
         String hostName = host.getName();
@@ -336,10 +336,10 @@ public class CarpetScriptServer
         {
             List<String> reversedArgs = new ArrayList<>(argNames);
             Collections.reverse(reversedArgs);
-            RequiredArgumentBuilder<ServerCommandSource, ?> argChain = CommandArgument.argumentNode(reversedArgs.get(0)).executes(c -> execute(c, hostName, function, argNames));
+            RequiredArgumentBuilder<ServerCommandSource, ?> argChain = CommandArgument.argumentNode(reversedArgs.get(0), host).executes(c -> execute(c, hostName, function, argNames));
             for (int i = 1; i < reversedArgs.size(); i++)
             {
-                argChain = CommandArgument.argumentNode(reversedArgs.get(i)).then(argChain);
+                argChain = CommandArgument.argumentNode(reversedArgs.get(i), host).then(argChain);
             }
             return command.then(literal(function.getString()).
                     requires((player) -> modules.containsKey(hostName)).
