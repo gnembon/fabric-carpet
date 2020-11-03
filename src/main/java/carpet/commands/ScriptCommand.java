@@ -449,7 +449,7 @@ public class ScriptCommand
         }
         //if (!(args.trim().isEmpty()))
         //    arguments.addAll(Arrays.asList(args.trim().split("\\s+")));
-        return handleCall(source, host, () ->  host.call(source, call, positions, args));
+        return handleCall(source, host, () ->  host.callLegacy(source, call, positions, args));
     }
 
 

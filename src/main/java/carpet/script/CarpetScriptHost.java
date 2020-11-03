@@ -40,7 +40,9 @@ public class CarpetScriptHost extends ScriptHost
     private int saveTimeout;
     public boolean persistenceRequired;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent)
+    public Map<Value, Value> appConfig;
+
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -55,11 +57,12 @@ public class CarpetScriptHost extends ScriptHost
         {
             persistenceRequired = ((CarpetScriptHost)parent).persistenceRequired;
         }
+        appConfig = config;
     }
 
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source)
     {
-        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null );
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap() );
         // parse code and convert to expression
         if (module != null)
         {
@@ -94,7 +97,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, main, false, this);
+        return new CarpetScriptHost(scriptServer, main, false, this, appConfig);
     }
 
     @Override
@@ -113,25 +116,29 @@ public class CarpetScriptHost extends ScriptHost
             }
             else if (funName.equals("__config"))
             {
-                addAppConfig(ctx, function);
+                // needs to be added as we read the code, cause other events may be affected.
+                if (!readConfig())
+                    throw new InternalExpressionException("Invalid app config (via '__config()' function)");
             }
         }
     }
 
-    private void addAppConfig(Context ctx, FunctionValue function)
+    private boolean readConfig()
     {
         try
         {
-            CarpetContext cctx = (CarpetContext)ctx;
-            Value ret = callUDF(BlockPos.ORIGIN, cctx.s, function, Collections.emptyList());
-            if (!(ret instanceof MapValue)) return;
+            Value ret = callUDF(BlockPos.ORIGIN, scriptServer.server.getCommandSource(), getFunction("__config"), Collections.emptyList());
+            if (!(ret instanceof MapValue)) return false;
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.FALSE).getBoolean();
+            this.appConfig = config;
         }
         catch (NullPointerException | InvalidCallbackException ignored)
         {
+            return false;
         }
+        return true;
     }
 
     @Override
@@ -185,11 +192,11 @@ public class CarpetScriptHost extends ScriptHost
         return host;
     }
 
-    public Value handleCommand(ServerCommandSource source, String call, List<Integer> coords, String arg)
+    public Value handleCommandLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
     {
         try
         {
-            return call(source, call, coords, arg);
+            return callLegacy(source, call, coords, arg);
         }
         catch (CarpetExpressionException exc)
         {
@@ -203,7 +210,25 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value call(ServerCommandSource source, String call, List<Integer> coords, String arg)
+    public Value handleCommand(ServerCommandSource source, String call, List<Value> args)
+    {
+        try
+        {
+            return call(source, call, args);
+        }
+        catch (CarpetExpressionException exc)
+        {
+            handleErrorWithStack("Error while running custom command", exc);
+            return Value.NULL;
+        }
+        catch (ArithmeticException ae)
+        {
+            handleErrorWithStack("Math doesn't compute", ae);
+            return Value.NULL;
+        }
+    }
+
+    public Value callLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
     {
         if (CarpetServer.scriptServer.stopAll)
             throw new CarpetExpressionException("SCARPET PAUSED", null);
@@ -279,6 +304,42 @@ public class CarpetScriptHost extends ScriptHost
                     throw new CarpetExpressionException("Fail: "+tok.surface+" is not allowed in invoke", null);
             }
         }
+        List<String> args = function.getArguments();
+        if (argv.size() != args.size())
+        {
+            String error = "Fail: stored function "+call+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
+            for (int i = 0; i < max(argv.size(), args.size()); i++)
+            {
+                error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).evalValue(null).getString():"??")+"\n";
+            }
+            throw new CarpetExpressionException(error, null);
+        }
+        try
+        {
+            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
+            return function.getExpression().evalValue(
+                    () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
+                    context,
+                    Context.VOID
+            );
+        }
+        catch (ExpressionException e)
+        {
+            throw new CarpetExpressionException(e.getMessage(), e.stack);
+        }
+    }
+
+    public Value call(ServerCommandSource source, String call, List<Value> suppliedArgs)
+    {
+        if (CarpetServer.scriptServer.stopAll)
+            throw new CarpetExpressionException("SCARPET PAUSED", null);
+        FunctionValue function = getFunction(call);
+        if (function == null)
+            throw new CarpetExpressionException("UNDEFINED", null);
+
+        List<LazyValue> argv = FunctionValue.lazify(suppliedArgs);
+
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
         {
