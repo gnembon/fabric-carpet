@@ -37,7 +37,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 public class CarpetSettings
 {
     public static final String carpetVersion = "1.4.15+v201102";
-    public static final Logger LOG = LogManager.getLogger();
+    public static final Logger LOG = LogManager.getLogger("carpet");
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
     public static Box currentTelepotingEntityBox = null;
@@ -70,6 +70,32 @@ public class CarpetSettings
             validate = LanguageValidator.class
     )
     public static String language = "none";
+
+    @Rule(
+            desc = "Turns on internal camera path tracing app",
+            extra = "Controlled via 'camera' command",
+            category = {COMMAND, SCARPET},
+            appSource = "camera"
+    )
+    public static boolean commandCamera = true;
+
+    @Rule(
+            desc = "Allows to add extra graphical debug information",
+            extra = "Controlled via 'overlay' command",
+            category = {COMMAND, SCARPET},
+            appSource = "overlay"
+    )
+    public static boolean commandOverlay = true;
+
+    @Rule(
+            desc = "Turns on extra information about mobs above and around them",
+            extra = "Controlled via 'ai_tracker' command",
+            category = {COMMAND, SCARPET},
+            appSource = "ai_tracker"
+    )
+    public static boolean commandAITracker = true;
+
+
 
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!", category = EXPERIMENTAL)
     public static boolean superSecretSetting = false;

@@ -16,9 +16,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
 
@@ -63,19 +65,19 @@ public class CarpetScriptServer
      * @param app is the BundledModule of an app. Libraries
      * should be registered as builtInScripts instead
      */
-    public static void registerRuleScript(BundledModule app) {
+    public static void registerSettingsApp(BundledModule app) {
     	ruleModuleData.add(app);
     }
 
     static
     {
-        registerBuiltInScript(BundledModule.carpetNative("camera", false));
-        registerBuiltInScript(BundledModule.carpetNative("overlay", false));
+        registerSettingsApp  (BundledModule.carpetNative("camera", false));
+        registerSettingsApp  (BundledModule.carpetNative("overlay", false));
         registerBuiltInScript(BundledModule.carpetNative("event_test", false));
         registerBuiltInScript(BundledModule.carpetNative("stats_test", false));
         registerBuiltInScript(BundledModule.carpetNative("math", true));
         registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
-        registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
+        registerSettingsApp  (BundledModule.carpetNative("ai_tracker", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
@@ -188,6 +190,7 @@ public class CarpetScriptServer
     public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
         //TODO add per player modules to support player actions better on a server
+        long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
         boolean reload = false;
         if (modules.containsKey(name))
@@ -237,6 +240,8 @@ public class CarpetScriptServer
         }
         //addEvents(source, name);
         addLegacyCommand(source, name, reload, !isRuleApp); // this needs to be moved to config reader, only supporting legacy command here
+        long end = System.nanoTime();
+        CarpetSettings.LOG.info("App "+name+" loaded in "+(end-start)/1000000+" ms");
         return true;
     }
 
@@ -274,7 +279,7 @@ public class CarpetScriptServer
         {
             if (host.appConfig.containsKey(StringValue.of("legacy_command_type_support"))) // temporary stuff for testing
             {
-                command = getFancyCommand(command, host, function);
+                command = getFancyCommand(command, host, host.getFunction(function));
             }
             else
             {
@@ -301,41 +306,43 @@ public class CarpetScriptServer
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
     }
 
-    private int execute(CommandContext<ServerCommandSource> ctx, String hostName, String funName) throws CommandSyntaxException
+    private int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionValue function, List<String> paramNames) throws CommandSyntaxException
     {
         CarpetScriptHost cHost = modules.get(hostName).retrieveForExecution(ctx.getSource());
-        List<String> argNames = cHost.getFunction(funName).getArguments();
+        List<String> argNames = function.getArguments();
+        if (argNames.size() != paramNames.size())
+            throw new SimpleCommandExceptionType(new LiteralText("Target function "+function.getPrettyString()+" as wrong number of arguments, required "+paramNames.size()+", found "+argNames.size())).create();
         List<Value> args = new ArrayList<>(argNames.size());
-        for (String s : argNames)
+        for (String s : paramNames)
         {
             args.add(CommandArgument.getValue(ctx, s));
         }
-        Value response = cHost.handleCommand(ctx.getSource(), funName, args);
+        Value response = cHost.handleCommand(ctx.getSource(), function, args);
         if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
         return (int) response.readInteger();
     }
 
-    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, ScriptHost host, String funName )
+    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, ScriptHost host, FunctionValue function )
     {
-        List<String> argNames = host.getFunction(funName).getArguments();
+        List<String> argNames = function.getArguments();
         String hostName = host.getName();
         if (argNames.size() == 0)
         {
-            return command.then(literal(funName).
-                    requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funName) != null).
-                    executes((c) -> execute(c, hostName, funName)));
+            return command.then(literal(function.getString()).
+                    requires((player) -> modules.containsKey(hostName)).
+                    executes((c) -> execute(c, hostName, function, Collections.emptyList())));
         }
         else
         {
             List<String> reversedArgs = new ArrayList<>(argNames);
             Collections.reverse(reversedArgs);
-            RequiredArgumentBuilder<ServerCommandSource, ?> argChain = CommandArgument.argumentNode(reversedArgs.get(0)).executes(c -> execute(c, hostName, funName));
+            RequiredArgumentBuilder<ServerCommandSource, ?> argChain = CommandArgument.argumentNode(reversedArgs.get(0)).executes(c -> execute(c, hostName, function, argNames));
             for (int i = 1; i < reversedArgs.size(); i++)
             {
                 argChain = CommandArgument.argumentNode(reversedArgs.get(i)).then(argChain);
             }
-            return command.then(literal(funName).
-                    requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(funName) != null).
+            return command.then(literal(function.getString()).
+                    requires((player) -> modules.containsKey(hostName)).
                     then(argChain)
             );
         }

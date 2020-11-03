@@ -57,6 +57,8 @@ public class SettingsManager
     private final String fancyName;
     private MinecraftServer server;
     private List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> observers = new ArrayList<>();
+    private static List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> staticObservers = new ArrayList<>();
+
 
     public SettingsManager(String version, String identifier)
     {
@@ -103,13 +105,19 @@ public class SettingsManager
     {
         observers.add(observer);
     }
+    public static void addGlobalRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
+    {
+        staticObservers.add(observer);
+    }
+
 
     void notifyRuleChanged(ServerCommandSource source, ParsedRule<?> rule, String userTypedValue)
     {
         observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
+        staticObservers.forEach(observer -> observer.accept(source, rule, userTypedValue));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
         switchScarpetRule(source, rule);
-        CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
+        if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
     }
     
     void switchScarpetRule(ServerCommandSource source, ParsedRule<?> rule)

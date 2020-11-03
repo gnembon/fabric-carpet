@@ -210,11 +210,11 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value handleCommand(ServerCommandSource source, String call, List<Value> args)
+    public Value handleCommand(ServerCommandSource source, FunctionValue function, List<Value> args)
     {
         try
         {
-            return call(source, call, args);
+            return call(source, function, args);
         }
         catch (CarpetExpressionException exc)
         {
@@ -330,20 +330,17 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value call(ServerCommandSource source, String call, List<Value> suppliedArgs)
+    public Value call(ServerCommandSource source, FunctionValue function, List<Value> suppliedArgs)
     {
         if (CarpetServer.scriptServer.stopAll)
             throw new CarpetExpressionException("SCARPET PAUSED", null);
-        FunctionValue function = getFunction(call);
-        if (function == null)
-            throw new CarpetExpressionException("UNDEFINED", null);
 
         List<LazyValue> argv = FunctionValue.lazify(suppliedArgs);
 
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
         {
-            String error = "Fail: stored function "+call+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
+            String error = "Fail: stored function "+function.getPrettyString()+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
             for (int i = 0; i < max(argv.size(), args.size()); i++)
             {
                 error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).evalValue(null).getString():"??")+"\n";

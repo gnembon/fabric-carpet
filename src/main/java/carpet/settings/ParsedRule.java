@@ -1,6 +1,5 @@
 package carpet.settings;
 
-import carpet.CarpetServer;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableList;
@@ -43,7 +42,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         this.isStrict = rule.strict();
         this.extraInfo = ImmutableList.copyOf(rule.extra());
         this.categories = ImmutableList.copyOf(rule.category());
-        this.scarpetApp = rule.scarpetApp();
+        this.scarpetApp = rule.appSource();
         this.settingsManager = settingsManager;
         this.validators = new ArrayList<>();
         for (Class v : rule.validate())

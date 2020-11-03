@@ -169,7 +169,7 @@ public abstract class CommandArgument
             if (!caseSensitive) choseValue = choseValue.toLowerCase(Locale.ROOT);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
-                throw new SimpleCommandExceptionType(new LiteralText("")).create();
+                throw new SimpleCommandExceptionType(new LiteralText("Incorrect value for "+param+": "+choseValue)).create();
             }
             return StringValue.of(choseValue);
         }

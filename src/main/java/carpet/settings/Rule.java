@@ -58,7 +58,7 @@ public @interface Rule
      * Consider telling the rule name so users can edit globals
      * (in case there are relevant globals to edit ofc)
      */
-    String scarpetApp() default "";
+    String appSource() default "";
 
     /**
      * The class of the validator checked when the rule is changed.
