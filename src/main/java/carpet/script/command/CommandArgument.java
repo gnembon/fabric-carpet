@@ -10,10 +10,11 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import com.google.common.collect.Lists;
-import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -22,13 +23,14 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.argument.AngleArgumentType;
-import net.minecraft.command.argument.BlockArgumentParser;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.BlockStateArgument;
 import net.minecraft.command.argument.BlockStateArgumentType;
 import net.minecraft.command.argument.ColorArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.SwizzleArgumentType;
+import net.minecraft.command.argument.TimeArgumentType;
+import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
@@ -53,9 +55,11 @@ import static net.minecraft.server.command.CommandManager.argument;
 public abstract class CommandArgument
 {
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
+            // default
             new StringArgument(),
-            // custom arguments
-            new WordArgument(), new GreedyStringArgument(), new BlockPosArgument(), new FloatArgument(),
+            // other customizable string arguments
+            new WordArgument(), new GreedyStringArgument(),
+            new BlockPosArgument(), new FloatArgument(), new IntArgument(),
             // etc...
             // vanilla arguments
             new VanillaUnconfigurableArgument( "bool",
@@ -84,12 +88,30 @@ public abstract class CommandArgument
                         return ListValue.of(StringValue.of(format.getName()), new NumericValue(format.getColorValue()*256+255));
                     },
                     false
-                    ),
-            new VanillaUnconfigurableArgument("swizzle",
-                    SwizzleArgumentType::swizzle,
-                    (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())),
-                    true
             ),
+            // columnpos
+            // component  // raw json
+            // dimension
+            // entity
+            // anchor // entity_anchor
+            // entitytype       // entity_summon
+            // floatrange
+            // function??
+            // player  // game_profile
+            // intrange
+            // enchantment
+            // item_predicate  ?? //same as item but accepts tags, not sure right now
+            // slot // item_slot
+            // item  // no tags item_stack
+            // message ?? isn't it just because you can't do shit with texts in vanilla?
+            // effect // mob_effect
+            // tag // for nbt_compound_tag and nbt_tag
+            // nbtpath
+            // objective
+            // criterion
+            // operation // not sure if we need it, you have scarpet for that
+            // particle
+            // resource ??
             new VanillaUnconfigurableArgument("rotation",
                     RotationArgumentType::rotation,
                     (c, p) -> {
@@ -97,11 +119,25 @@ public abstract class CommandArgument
                         return ListValue.of(new NumericValue(rot.x), new NumericValue(rot.y));
                     },
                     true
-            )
-            //etc...
-
-
-            );
+            ),
+            // scoreholder
+            // scoreboardslot
+            new VanillaUnconfigurableArgument("swizzle",
+                    SwizzleArgumentType::swizzle,
+                    (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())),
+                    true
+            ),
+            // team
+            new VanillaUnconfigurableArgument("time",
+                    TimeArgumentType::time,
+                    (c, p) -> new NumericValue(IntegerArgumentType.getInteger(c, p)),
+                    false
+            ),
+            // uuid
+            // columnlocation // vec2
+            new LocationArgument()
+            // location // vec3
+    );
 
     public static final Map<String, CommandArgument> builtIns = baseTypes.stream().collect(Collectors.toMap(CommandArgument::getTypeSuffix, a -> a));
 
@@ -323,6 +359,41 @@ public abstract class CommandArgument
         }
     }
 
+    private static class LocationArgument extends CommandArgument
+    {
+        boolean blockCentered;
+
+        private LocationArgument()
+        {
+            super("location", Vec3ArgumentType.vec3().getExamples(), false);
+            blockCentered = true;
+        }
+        @Override
+        protected ArgumentType<?> getArgumentType()
+        {
+            return Vec3ArgumentType.vec3(blockCentered);
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            return ValueConversions.fromVec(Vec3ArgumentType.getVec3(context, param));
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config)
+        {
+            super.configure(config);
+            blockCentered = config.getOrDefault("block_centered", Value.TRUE).getBoolean();
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return LocationArgument::new;
+        }
+    }
+
     private static class FloatArgument extends CommandArgument
     {
         private Double min = null;
@@ -363,6 +434,57 @@ public abstract class CommandArgument
             if (config.containsKey("max"))
             {
                 max = NumericValue.asNumber(config.get("max"), "max").getDouble();
+            }
+            if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded");
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return FloatArgument::new;
+        }
+    }
+
+    private static class IntArgument extends CommandArgument
+    {
+        private Long min = null;
+        private Long max = null;
+        private IntArgument()
+        {
+            super("int", LongArgumentType.longArg().getExamples(), true);
+        }
+
+        @Override
+        public ArgumentType<?> getArgumentType()
+        {
+            if (min != null)
+            {
+                if (max != null)
+                {
+                    return LongArgumentType.longArg(min, max);
+                }
+                return LongArgumentType.longArg(min);
+            }
+            return LongArgumentType.longArg();
+        }
+
+        @Override
+        public Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            return new NumericValue(LongArgumentType.getLong(context, param));
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config)
+        {
+            super.configure(config);
+            if (config.containsKey("min"))
+            {
+                min = NumericValue.asNumber(config.get("min"), "min").getLong();
+            }
+            if (config.containsKey("max"))
+            {
+                max = NumericValue.asNumber(config.get("max"), "max").getLong();
             }
             if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded");
         }
