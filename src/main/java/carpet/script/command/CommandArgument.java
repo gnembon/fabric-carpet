@@ -1,14 +1,18 @@
 package carpet.script.command;
 
+import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.BlockValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import com.google.common.collect.Lists;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -17,11 +21,17 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.command.argument.AngleArgumentType;
+import net.minecraft.command.argument.BlockArgumentParser;
 import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.BlockStateArgument;
+import net.minecraft.command.argument.BlockStateArgumentType;
+import net.minecraft.command.argument.ColorArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.SwizzleArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
@@ -43,10 +53,38 @@ import static net.minecraft.server.command.CommandManager.argument;
 public abstract class CommandArgument
 {
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
+            new StringArgument(),
             // custom arguments
-            new WordArgument(), new BlockPosArgument(), new FloatArgument(),
+            new WordArgument(), new GreedyStringArgument(), new BlockPosArgument(), new FloatArgument(),
             // etc...
             // vanilla arguments
+            new VanillaUnconfigurableArgument( "bool",
+                    BoolArgumentType::bool,
+                    (c, p) -> new NumericValue(BoolArgumentType.getBool(c, p)),
+                    false
+            ),
+            new VanillaUnconfigurableArgument( "yaw",  // angle
+                    AngleArgumentType::angle,
+                    (c, p) -> new NumericValue(AngleArgumentType.getAngle(c, p)),
+                    true
+            ),
+            new VanillaUnconfigurableArgument( "block",
+                    BlockStateArgumentType::blockState,
+                    (c, p) -> {
+                        BlockStateArgument result = BlockStateArgumentType.getBlockState(c, p);
+                        return new BlockValue(result.getBlockState(), null, null, ((BlockStateArgumentInterface)result).getCMTag() );
+                    },
+                    false
+            ),
+            // block_predicate todo - not sure about the returned format. Needs to match block tags used in the API (future)
+            new VanillaUnconfigurableArgument("color",
+                    ColorArgumentType::color,
+                    (c, p) -> {
+                        Formatting format = ColorArgumentType.getColor(c, p);
+                        return ListValue.of(StringValue.of(format.getName()), new NumericValue(format.getColorValue()*256+255));
+                    },
+                    false
+                    ),
             new VanillaUnconfigurableArgument("swizzle",
                     SwizzleArgumentType::swizzle,
                     (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())),
@@ -84,8 +122,8 @@ public abstract class CommandArgument
         return arg.needsMatching? argument(param, arg.getArgumentType()).suggests(arg::suggest) : argument(param, arg.getArgumentType());
     }
 
-    private String suffix;
-    private Collection<String> examples;
+    protected String suffix;
+    protected Collection<String> examples;
     protected boolean needsMatching = false;
 
     protected CommandArgument(
@@ -180,19 +218,19 @@ public abstract class CommandArgument
 
     protected abstract Supplier<CommandArgument> builder();
 
-    public static class WordArgument extends CommandArgument
+    private static class StringArgument extends CommandArgument
     {
         Set<String> validOptions = Collections.emptySet();
         boolean caseSensitive = false;
-        private WordArgument()
+        private StringArgument()
         {
-            super("string", StringArgumentType.StringType.SINGLE_WORD.getExamples(), true);
+            super("string", StringArgumentType.StringType.QUOTABLE_PHRASE.getExamples(), true);
         }
 
         @Override
         public ArgumentType<?> getArgumentType()
         {
-            return StringArgumentType.word();
+            return StringArgumentType.string();
         }
 
         @Override
@@ -229,7 +267,25 @@ public abstract class CommandArgument
         protected Supplier<CommandArgument> builder() { return WordArgument::new; }
     }
 
-    public static class BlockPosArgument extends CommandArgument
+    private static class WordArgument extends StringArgument
+    {
+        private WordArgument() { super(); suffix = "term"; examples = StringArgumentType.StringType.SINGLE_WORD.getExamples(); }
+        @Override
+        public ArgumentType<?> getArgumentType() { return StringArgumentType.word(); }
+        @Override
+        protected Supplier<CommandArgument> builder() { return WordArgument::new; }
+    }
+
+    private static class GreedyStringArgument extends StringArgument
+    {
+        private GreedyStringArgument() { super();suffix = "text"; examples = StringArgumentType.StringType.GREEDY_PHRASE.getExamples(); }
+        @Override
+        public ArgumentType<?> getArgumentType() { return StringArgumentType.greedyString(); }
+        @Override
+        protected Supplier<CommandArgument> builder() { return GreedyStringArgument::new; }
+    }
+
+    private static class BlockPosArgument extends CommandArgument
     {
         private boolean mustBeLoaded = false;
 
@@ -267,7 +323,7 @@ public abstract class CommandArgument
         }
     }
 
-    public static class FloatArgument extends CommandArgument
+    private static class FloatArgument extends CommandArgument
     {
         private Double min = null;
         private Double max = null;

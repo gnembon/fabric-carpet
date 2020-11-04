@@ -173,6 +173,7 @@
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
+    "BlockStateArgument_scarpetMixin",
 
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
