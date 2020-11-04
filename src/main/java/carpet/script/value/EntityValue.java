@@ -14,7 +14,6 @@ import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -66,13 +65,11 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -444,8 +441,8 @@ public class EntityValue extends Value
                 ServerPlayerEntity spe = (ServerPlayerEntity)e;
                 if (spe.getSpawnPointPosition() == null) return Value.FALSE;
                 return ListValue.of(
-                        ValueConversions.fromPos(spe.getSpawnPointPosition()),
-                        ValueConversions.dimName(spe.getSpawnPointDimension()),
+                        ValueConversions.of(spe.getSpawnPointPosition()),
+                        ValueConversions.of(spe.getSpawnPointDimension()),
                         new NumericValue(spe.getSpawnAngle()),
                         new NumericValue(spe.isSpawnPointSet()) // true if forced spawn point
                         );
@@ -715,7 +712,7 @@ public class EntityValue extends Value
                 hitres = Tracer.rayTraceBlocks(e, 1, reach, liquids);
 
             if (hitres == null) return Value.NULL;
-            if (exact && hitres.getType() != HitResult.Type.MISS) return ValueConversions.fromVec(hitres.getPos());
+            if (exact && hitres.getType() != HitResult.Type.MISS) return ValueConversions.of(hitres.getPos());
             switch (hitres.getType())
             {
                 case MISS: return Value.NULL;

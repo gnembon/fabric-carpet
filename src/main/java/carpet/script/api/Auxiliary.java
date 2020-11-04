@@ -591,7 +591,7 @@ public class Auxiliary {
 
         expression.addLazyFunction("current_dimension", 0, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
-            Value retval = ValueConversions.dimName(s.getWorld());
+            Value retval = ValueConversions.of(s.getWorld());
             return (cc, tt) -> retval;
         });
 

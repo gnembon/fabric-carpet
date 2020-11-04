@@ -1088,7 +1088,7 @@ public class WorldAccess {
                 StructureStart<?> start = FeatureGenerator.shouldStructureStartAt(world, pos, structure, needSize);
                 if (start == null) return LazyValue.NULL;
                 if (!needSize) return LazyValue.TRUE;
-                Value ret = ValueConversions.fromStructure(start);
+                Value ret = ValueConversions.of(start);
                 return (_c, _t) -> ret;
             }
             Map<Value, Value> ret = new HashMap<>();
@@ -1098,7 +1098,7 @@ public class WorldAccess {
                 if (start == null) continue;
 
                 Value key = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(str)));
-                ret.put(key, (!needSize)?Value.NULL: ValueConversions.fromStructure(start));
+                ret.put(key, (!needSize)?Value.NULL: ValueConversions.of(start));
             }
             Value retMap = MapValue.wrap(ret);
             return (_c, _t) -> retMap;
@@ -1130,7 +1130,7 @@ public class WorldAccess {
             }
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             StructureStart start = structures.get(Registry.STRUCTURE_FEATURE.get(new Identifier(structureName)));
-            Value ret = ValueConversions.fromStructure(start);
+            Value ret = ValueConversions.of(start);
             return (_c, _t) -> ret;
         });
 

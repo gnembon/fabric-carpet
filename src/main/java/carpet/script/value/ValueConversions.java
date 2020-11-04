@@ -17,6 +17,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ColumnPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
@@ -33,25 +34,27 @@ import java.util.stream.Collectors;
 
 public class ValueConversions
 {
-    public static Value fromPos(BlockPos pos)
+    public static Value of(BlockPos pos)
     {
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
     }
 
-    public static Value fromPosOptional(BlockPos pos)
+    public static Value ofOptional(BlockPos pos)
     {
         if (pos == null) return Value.NULL;
         return ListValue.of(new NumericValue(pos.getX()), new NumericValue(pos.getY()), new NumericValue(pos.getZ()));
     }
 
-    public static Value fromVec(Vec3d vec)
+    public static Value of(Vec3d vec)
     {
         return ListValue.of(new NumericValue(vec.x), new NumericValue(vec.y), new NumericValue(vec.z));
     }
 
-    public static Value dimName(ServerWorld world)
+    public static Value of(ColumnPos cpos) { return ListValue.of(new NumericValue(cpos.x), new NumericValue(cpos.z));}
+
+    public static Value of(ServerWorld world)
     {
-        return ofId(world.getRegistryKey().getValue());
+        return of(world.getRegistryKey().getValue());
     }
 
     public static World dimFromValue(Value dimensionValue, MinecraftServer server)
@@ -105,12 +108,12 @@ public class ValueConversions
         }
     }
 
-    public static Value dimName(RegistryKey<World> dim)
+    public static Value of(RegistryKey<World> dim)
     {
-        return ofId(dim.getValue());
+        return of(dim.getValue());
     }
 
-    public static Value ofId(Identifier id)
+    public static Value of(Identifier id)
     {
         if (id == null) // should be Value.NULL
             return Value.NULL;
@@ -128,11 +131,11 @@ public class ValueConversions
         return id.toString();
     }
 
-    public static Value ofGlobalPos(GlobalPos pos)
+    public static Value of(GlobalPos pos)
     {
         return ListValue.of(
-                ValueConversions.dimName(pos.getDimension()),
-                ValueConversions.fromPos(pos.getPos())
+                ValueConversions.of(pos.getDimension()),
+                ValueConversions.of(pos.getPos())
         );
     }
 
@@ -165,7 +168,7 @@ public class ValueConversions
         if (v instanceof GlobalPos)
         {
             GlobalPos pos = (GlobalPos)v;
-            return ofGlobalPos(pos);
+            return of(pos);
         }
         if (v instanceof Entity)
         {
@@ -226,7 +229,7 @@ public class ValueConversions
             }
             if (el instanceof GlobalPos)
             {
-                return ListValue.wrap((List<Value>) l.stream().map(o ->  ofGlobalPos((GlobalPos) o)).collect(Collectors.toList()));
+                return ListValue.wrap((List<Value>) l.stream().map(o ->  of((GlobalPos) o)).collect(Collectors.toList()));
             }
         }
         return Value.NULL;
@@ -241,7 +244,7 @@ public class ValueConversions
         );
     }
 
-    public static Value fromStructure(StructureStart<?> structure)
+    public static Value of(StructureStart<?> structure)
     {
         if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
         List<Value> pieces = new ArrayList<>();

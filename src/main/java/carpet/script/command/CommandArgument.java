@@ -4,6 +4,7 @@ import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
+import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -27,10 +28,14 @@ import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.BlockStateArgument;
 import net.minecraft.command.argument.BlockStateArgumentType;
 import net.minecraft.command.argument.ColorArgumentType;
+import net.minecraft.command.argument.ColumnPosArgumentType;
+import net.minecraft.command.argument.DimensionArgumentType;
+import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.SwizzleArgumentType;
 import net.minecraft.command.argument.TimeArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
+import net.minecraft.entity.Entity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
@@ -45,7 +50,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -57,21 +61,17 @@ public abstract class CommandArgument
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
             // default
             new StringArgument(),
-            // other customizable string arguments
-            new WordArgument(), new GreedyStringArgument(),
-            new BlockPosArgument(), new FloatArgument(), new IntArgument(),
-            // etc...
-            // vanilla arguments
+            // vanilla arguments as per https://minecraft.gamepedia.com/Argument_types
             new VanillaUnconfigurableArgument( "bool",
-                    BoolArgumentType::bool,
-                    (c, p) -> new NumericValue(BoolArgumentType.getBool(c, p)),
-                    false
+                    BoolArgumentType::bool, (c, p) -> new NumericValue(BoolArgumentType.getBool(c, p)), false
             ),
+            new FloatArgument(),
+            new IntArgument(),
+            new WordArgument(), new GreedyStringArgument(),
             new VanillaUnconfigurableArgument( "yaw",  // angle
-                    AngleArgumentType::angle,
-                    (c, p) -> new NumericValue(AngleArgumentType.getAngle(c, p)),
-                    true
+                    AngleArgumentType::angle, (c, p) -> new NumericValue(AngleArgumentType.getAngle(c, p)), true
             ),
+            new BlockPosArgument(),
             new VanillaUnconfigurableArgument( "block",
                     BlockStateArgumentType::blockState,
                     (c, p) -> {
@@ -89,9 +89,14 @@ public abstract class CommandArgument
                     },
                     false
             ),
-            // columnpos
+            new VanillaUnconfigurableArgument("columnpos",
+                    ColumnPosArgumentType::columnPos, (c, p) -> ValueConversions.of(ColumnPosArgumentType.getColumnPos(c, p)), false
+            ),
             // component  // raw json
-            // dimension
+            new VanillaUnconfigurableArgument("dimension",
+                    DimensionArgumentType::dimension, (c, p) -> ValueConversions.of(DimensionArgumentType.getDimensionArgument(c, p)), false
+            ),
+            new EntityArgument(),
             // entity
             // anchor // entity_anchor
             // entitytype       // entity_summon
@@ -123,15 +128,11 @@ public abstract class CommandArgument
             // scoreholder
             // scoreboardslot
             new VanillaUnconfigurableArgument("swizzle",
-                    SwizzleArgumentType::swizzle,
-                    (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())),
-                    true
+                    SwizzleArgumentType::swizzle, (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())), true
             ),
             // team
             new VanillaUnconfigurableArgument("time",
-                    TimeArgumentType::time,
-                    (c, p) -> new NumericValue(IntegerArgumentType.getInteger(c, p)),
-                    false
+                    TimeArgumentType::time, (c, p) -> new NumericValue(IntegerArgumentType.getInteger(c, p)), false
             ),
             // uuid
             // columnlocation // vec2
@@ -342,7 +343,7 @@ public abstract class CommandArgument
             BlockPos pos = mustBeLoaded
                     ? BlockPosArgumentType.getLoadedBlockPos(context, param)
                     : BlockPosArgumentType.getBlockPos(context, param);
-            return ValueConversions.fromPos(pos);
+            return ValueConversions.of(pos);
         }
 
         @Override
@@ -377,7 +378,7 @@ public abstract class CommandArgument
         @Override
         protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
         {
-            return ValueConversions.fromVec(Vec3ArgumentType.getVec3(context, param));
+            return ValueConversions.of(Vec3ArgumentType.getVec3(context, param));
         }
 
         @Override
@@ -391,6 +392,59 @@ public abstract class CommandArgument
         protected Supplier<CommandArgument> builder()
         {
             return LocationArgument::new;
+        }
+    }
+
+    private static class EntityArgument extends CommandArgument
+    {
+        boolean onlyFans;
+        boolean single;
+
+        private EntityArgument()
+        {
+            super("entity", EntityArgumentType.entities().getExamples(), false);
+            onlyFans = false;
+            single = false;
+        }
+        @Override
+        protected ArgumentType<?> getArgumentType()
+        {
+            if (onlyFans)
+            {
+                return single?EntityArgumentType.player():EntityArgumentType.players();
+            }
+            else
+            {
+                return single?EntityArgumentType.entity():EntityArgumentType.entities();
+            }
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            List<? extends Entity> founds = (List)EntityArgumentType.getOptionalEntities(context, param);
+            if (single)
+            {
+                return founds.isEmpty()?Value.NULL:new EntityValue(founds.get(0));
+            }
+            else
+            {
+                return ListValue.wrap(founds.stream().map(EntityValue::new).collect(Collectors.toList()));
+            }
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config)
+        {
+            super.configure(config);
+            onlyFans = config.getOrDefault("players", Value.FALSE).getBoolean();
+            single = config.getOrDefault("single", Value.FALSE).getBoolean();
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return EntityArgument::new;
         }
     }
 
@@ -496,15 +550,21 @@ public abstract class CommandArgument
         }
     }
 
+    @FunctionalInterface
+    private interface ValueExtractor
+    {
+        Value apply(CommandContext<ServerCommandSource> ctx, String param) throws CommandSyntaxException;
+    }
+
     public static class VanillaUnconfigurableArgument extends  CommandArgument
     {
         private Supplier<ArgumentType<?>> argumentTypeSupplier;
-        private BiFunction<CommandContext<ServerCommandSource>, String, Value> valueExtractor;
+        private ValueExtractor valueExtractor;
         private boolean providesExamples;
         public VanillaUnconfigurableArgument(
                 String suffix,
                 Supplier<ArgumentType<?>> argumentTypeSupplier,
-                BiFunction<CommandContext<ServerCommandSource>, String, Value>  valueExtractor,
+                ValueExtractor  valueExtractor,
                 boolean providesExamples
                 )
         {
