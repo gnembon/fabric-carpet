@@ -18,9 +18,13 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.RotationArgumentType;
+import net.minecraft.command.argument.SwizzleArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec2f;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -38,8 +43,27 @@ import static net.minecraft.server.command.CommandManager.argument;
 public abstract class CommandArgument
 {
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
-            new WordArgument(), new PosArgument(), new FloatArgument()
-    );
+            // custom arguments
+            new WordArgument(), new BlockPosArgument(), new FloatArgument(),
+            // etc...
+            // vanilla arguments
+            new VanillaUnconfigurableArgument("swizzle",
+                    SwizzleArgumentType::swizzle,
+                    (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())),
+                    true
+            ),
+            new VanillaUnconfigurableArgument("rotation",
+                    RotationArgumentType::rotation,
+                    (c, p) -> {
+                        Vec2f rot = RotationArgumentType.getRotation(c, p).toAbsoluteRotation(c.getSource());
+                        return ListValue.of(new NumericValue(rot.x), new NumericValue(rot.y));
+                    },
+                    true
+            )
+            //etc...
+
+
+            );
 
     public static final Map<String, CommandArgument> builtIns = baseTypes.stream().collect(Collectors.toMap(CommandArgument::getTypeSuffix, a -> a));
 
@@ -89,18 +113,10 @@ public abstract class CommandArgument
 
     protected abstract Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException;
 
-
-
     public String getTypeSuffix()
     {
         return suffix;
     }
-
-    public Collection<String> getExamples()
-    {
-        return examples;
-    }
-
 
     public static CommandArgument buildFromConfig(String suffix, Map<String, Value> config)
     {
@@ -148,6 +164,7 @@ public abstract class CommandArgument
         //return Lists.newArrayList("");
         // better than nothing I guess
         // nothing is such a bad default.
+        if (needsMatching) return examples;
         return Collections.singletonList("... "+getTypeSuffix());
     }
 
@@ -212,11 +229,11 @@ public abstract class CommandArgument
         protected Supplier<CommandArgument> builder() { return WordArgument::new; }
     }
 
-    public static class PosArgument extends CommandArgument
+    public static class BlockPosArgument extends CommandArgument
     {
         private boolean mustBeLoaded = false;
 
-        private PosArgument()
+        private BlockPosArgument()
         {
             super("pos", BlockPosArgumentType.blockPos().getExamples(), false);
         }
@@ -246,7 +263,7 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> builder()
         {
-            return PosArgument::new;
+            return BlockPosArgument::new;
         }
     }
 
@@ -298,6 +315,43 @@ public abstract class CommandArgument
         protected Supplier<CommandArgument> builder()
         {
             return FloatArgument::new;
+        }
+    }
+
+    public static class VanillaUnconfigurableArgument extends  CommandArgument
+    {
+        private Supplier<ArgumentType<?>> argumentTypeSupplier;
+        private BiFunction<CommandContext<ServerCommandSource>, String, Value> valueExtractor;
+        private boolean providesExamples;
+        public VanillaUnconfigurableArgument(
+                String suffix,
+                Supplier<ArgumentType<?>> argumentTypeSupplier,
+                BiFunction<CommandContext<ServerCommandSource>, String, Value>  valueExtractor,
+                boolean providesExamples
+                )
+        {
+            super(suffix, argumentTypeSupplier.get().getExamples(), providesExamples);
+            this.providesExamples = providesExamples;
+            this.argumentTypeSupplier = argumentTypeSupplier;
+            this.valueExtractor = valueExtractor;
+        }
+
+        @Override
+        protected ArgumentType<?> getArgumentType()
+        {
+            return argumentTypeSupplier.get();
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            return valueExtractor.apply(context, param);
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
         }
     }
 }
