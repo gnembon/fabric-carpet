@@ -71,6 +71,9 @@ public class CarpetSettings
     )
     public static String language = "none";
 
+    /*
+    These will be turned when events can be added / removed in code
+
     @Rule(
             desc = "Turns on internal camera path tracing app",
             extra = "Controlled via 'camera' command",
@@ -94,7 +97,7 @@ public class CarpetSettings
             appSource = "ai_tracker"
     )
     public static boolean commandAITracker = true;
-
+    */
 
 
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!", category = EXPERIMENTAL)

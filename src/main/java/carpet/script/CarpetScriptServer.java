@@ -71,13 +71,13 @@ public class CarpetScriptServer
 
     static
     {
-        registerSettingsApp  (BundledModule.carpetNative("camera", false));
-        registerSettingsApp  (BundledModule.carpetNative("overlay", false));
+        registerBuiltInScript(BundledModule.carpetNative("camera", false));
+        registerBuiltInScript(BundledModule.carpetNative("overlay", false));
         registerBuiltInScript(BundledModule.carpetNative("event_test", false));
         registerBuiltInScript(BundledModule.carpetNative("stats_test", false));
         registerBuiltInScript(BundledModule.carpetNative("math", true));
         registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
-        registerSettingsApp  (BundledModule.carpetNative("ai_tracker", false));
+        registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
