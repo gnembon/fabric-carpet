@@ -607,7 +607,7 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 
 ### World Generation Features (as of 1.16.2+)
 
-`'acacia'`, `'bamboo'`, `'bamboo_light'`, `'bamboo_vegetation'`, `'basalt_blobs'`, `'basalt_pillar'`, 
+`'acacia'`, `'amethyst_geode'` (1.17+), `'bamboo'`, `'bamboo_light'`, `'bamboo_vegetation'`, `'basalt_blobs'`, `'basalt_pillar'`, 
 `'birch'`, `'birch_bees_0002'`, `'birch_bees_002'`, `'birch_bees_005'`, `'birch_other'`, `'birch_tall'`, 
 `'blackstone_blobs'`, `'blue_ice'`, `'bonus_chest'`, `'brown_mushroom_giant'`, `'brown_mushroom_nether'`,
 `'brown_mushroom_normal'`, `'brown_mushroom_swamp'`, `'brown_mushroom_taiga'`, `'chorus_plant'`, 
