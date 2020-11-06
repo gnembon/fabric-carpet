@@ -8,6 +8,7 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FunctionArgument extends Argument
@@ -46,7 +47,7 @@ public class FunctionArgument extends Argument
         Value functionValue = params.get(offset).evalValue(c);
         if (functionValue.isNull())
         {
-            if (allowNone) return new FunctionArgument(null, offset+1, null);
+            if (allowNone) return new FunctionArgument(null, offset+1, Collections.emptyList());
             throw new InternalExpressionException("function argument cannot be null");
         }
         if (!(functionValue instanceof FunctionValue))
