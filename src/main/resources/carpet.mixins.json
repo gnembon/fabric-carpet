@@ -197,7 +197,6 @@
     "InGameHudMixin",
     "PlayerListHudMixin",
     "PistonBlockEntityRenderer_movableTEMixin",
-    "ClientPlayNetworkHandler_smoothClientAnimationsMixin",
     "ClientPlayerEntity_clientCommandMixin",
     "WorldRenderer_fogOffMixin",
     "WorldRenderer_creativeNoClipMixin",
