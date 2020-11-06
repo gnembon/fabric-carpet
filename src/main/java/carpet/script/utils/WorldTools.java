@@ -142,7 +142,7 @@ public class WorldTools
             List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
             if (!nearbyPlayers.isEmpty())
             {
-                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, 65535);
+                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk);
                 ChunkPos chpos = new ChunkPos(pos);
                 nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
             }

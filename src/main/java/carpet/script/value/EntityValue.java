@@ -346,7 +346,7 @@ public class EntityValue extends Value
 
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
-        put("removed", (entity, arg) -> new NumericValue(entity.removed));
+        put("removed", (entity, arg) -> new NumericValue(entity.isRemoved()));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getEntityId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
@@ -620,7 +620,7 @@ public class EntityValue extends Value
 
         put("selected_slot", (e, a) -> {
            if (e instanceof PlayerEntity)
-               return new NumericValue(((PlayerEntity) e).inventory.selectedSlot);
+               return new NumericValue(((PlayerEntity) e).method_31548().selectedSlot); //getInventory
            return Value.NULL;
         });
 
@@ -796,7 +796,7 @@ public class EntityValue extends Value
     }
 
     private static final Map<String, BiConsumer<Entity, Value>> featureModifiers = new HashMap<String, BiConsumer<Entity, Value>>() {{
-        put("remove", (entity, value) -> entity.remove());
+        put("remove", (entity, value) -> entity.discard()); // using discard here - will see other options if valid
         put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
         put("health", (e, v) -> {
             float health = (float) NumericValue.asNumber(v).getDouble();

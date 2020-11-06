@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockEntityInterface;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.PistonBlockEntity;
+import net.minecraft.class_5614;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
@@ -16,11 +17,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(PistonBlockEntityRenderer.class)
-public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEntityRenderer<PistonBlockEntity>
+public abstract class PistonBlockEntityRenderer_movableTEMixin implements BlockEntityRenderer<PistonBlockEntity>
 {
-    public PistonBlockEntityRenderer_movableTEMixin(BlockEntityRenderDispatcher blockEntityRenderDispatcher_1)
+    BlockEntityRenderDispatcher dispatcher;
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void onInitCM(class_5614.class_5615 arg, CallbackInfo ci)
     {
-        super(blockEntityRenderDispatcher_1);
+        dispatcher = arg.method_32139();
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE",
@@ -41,14 +44,14 @@ public abstract class PistonBlockEntityRenderer_movableTEMixin extends BlockEnti
             BlockEntity carriedBlockEntity = ((PistonBlockEntityInterface) pistonBlockEntity_1).getCarriedBlockEntity();
             if (carriedBlockEntity != null)
             {
-                carriedBlockEntity.setPos(pistonBlockEntity_1.getPos());
+                // maybe ??? carriedBlockEntity.setPos(pistonBlockEntity_1.getPos());
                 //((BlockEntityRenderDispatcherInterface) BlockEntityRenderDispatcher.INSTANCE).renderBlockEntityOffset(carriedBlockEntity, float_1, int_1, BlockRenderLayer.field_20799, bufferBuilder_1, pistonBlockEntity_1.getRenderOffsetX(float_1), pistonBlockEntity_1.getRenderOffsetY(float_1), pistonBlockEntity_1.getRenderOffsetZ(float_1));
                 matrixStack_1.translate(
                         pistonBlockEntity_1.getRenderOffsetX(partialTicks),
                         pistonBlockEntity_1.getRenderOffsetY(partialTicks),
                         pistonBlockEntity_1.getRenderOffsetZ(partialTicks)
                 );
-                BlockEntityRenderDispatcher.INSTANCE.render(carriedBlockEntity, partialTicks, matrixStack_1, layeredVertexConsumerStorage_1);
+                dispatcher.render(carriedBlockEntity, partialTicks, matrixStack_1, layeredVertexConsumerStorage_1);
 
             }
         }

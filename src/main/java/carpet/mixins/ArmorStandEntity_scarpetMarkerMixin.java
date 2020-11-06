@@ -41,13 +41,13 @@ public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
                     String hostName = StringUtils.removeStart(owner.get(),prefix);
                     if (!hostName.isEmpty() && CarpetServer.scriptServer.getHostByName(hostName) == null)
                     {
-                        remove();
+                        discard();  //discard
                     }
 
                 }
                 else
                 {
-                    remove();
+                    discard(); // discard
                 }
             }
         }

@@ -398,23 +398,23 @@ public class SpawnReporter
     {
         if (entity.hasVehicle())
         {
-            entity.getVehicle().remove();
+            entity.getVehicle().discard();
         }
         if (entity.hasPassengers())
         {
             for (Entity e: entity.getPassengerList())
             {
-                e.remove();
+                e.discard();
             }
         }
         if (entity instanceof OcelotEntity)
         {
             for (Entity e: entity.getEntityWorld().getOtherEntities(entity, entity.getBoundingBox()))
             {
-                e.remove();
+                e.discard();
             }
         }
-        entity.remove();
+        entity.discard();
     }
 
     // yeeted from SpawnHelper - temporary fix

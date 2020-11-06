@@ -28,7 +28,7 @@ public abstract class PlayerEntity_creativeNoClipMixin extends LivingEntity
     )
     private boolean canClipTroughWorld(PlayerEntity playerEntity)
     {
-        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.abilities.flying);
+        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.method_31549().flying);
 
     }
 
@@ -38,7 +38,7 @@ public abstract class PlayerEntity_creativeNoClipMixin extends LivingEntity
     )
     private boolean collidesWithEntities(PlayerEntity playerEntity)
     {
-        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.abilities.flying);
+        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.method_31549().flying);
     }
 
     @Redirect(method = "updateSize", at = @At(
@@ -47,6 +47,6 @@ public abstract class PlayerEntity_creativeNoClipMixin extends LivingEntity
     )
     private boolean spectatorsDontPose(PlayerEntity playerEntity)
     {
-        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.abilities.flying);
+        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.method_31549().flying);
     }
 }

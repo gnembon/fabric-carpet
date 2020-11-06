@@ -4,9 +4,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Material;
 import net.minecraft.block.MaterialColor;
+import net.minecraft.class_5532; // TargetFinder
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.TargetFinder;
+//import net.minecraft.entity.ai.TargetFinder;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.entity.mob.PathAwareEntity;
@@ -231,7 +232,7 @@ public class BlockInfo
         for (int i=0; i<1000; i++)
         {
 
-            Vec3d vec = TargetFinder.findTarget(creature, 10, 7);
+            Vec3d vec = class_5532.method_31510(creature, 10, 7); // TargetFinder.findTarget(creature, 10, 7);
             if (vec == null)
             {
                 continue;
@@ -251,7 +252,7 @@ public class BlockInfo
             }
             total_ticks += 3*i;
         }
-        creature.remove();
+        creature.discard(); // discarded // remove(Entity.RemovalReason.field_26999); // 2nd option - DISCARDED
         long total_time = (total_ticks)/1000/20;
         return Messenger.s(String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
                 (100.0F*success)/1000,

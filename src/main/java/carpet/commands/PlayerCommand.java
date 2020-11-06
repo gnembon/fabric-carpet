@@ -209,9 +209,9 @@ public class PlayerCommand
     private static int lookAt(CommandContext<ServerCommandSource> context)
     {
         return manipulate(context, ap -> {
-            try {
+            //try {
                 ap.lookAt(Vec3ArgumentType.getVec3(context, "position"));
-            } catch (CommandSyntaxException ignored) {}
+            //} catch (CommandSyntaxException ignored) {}
         });
     }
 

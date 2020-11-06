@@ -28,7 +28,7 @@ public class XPcombine
                 first == other || first.world.isClient || first.getServer().getTicks() == lastTickCombine
                 || !first.isAlive() || !other.isAlive()
                 || first.getExperienceAmount() > 15000 || other.getExperienceAmount() > 15000
-                || first.pickupDelay == 32767 || other.pickupDelay == 32767
+                //|| first.pickupDelay == 32767 || other.pickupDelay == 32767
                 || first.age == -32768 || other.age == -32768
                 || ((ExperienceOrbInterface)first).getCombineDelay() != 0 || ((ExperienceOrbInterface)other).getCombineDelay() != 0
         )
@@ -37,10 +37,13 @@ public class XPcombine
         }
 
         int size = getTextureByXP(first.getExperienceAmount());
-        ((ExperienceOrbInterface) first).setAmount(first.getExperienceAmount() + other.getExperienceAmount());
-        ((ExperienceOrbInterface) first).setCombineDelay(Math.max(first.pickupDelay, other.pickupDelay));
+        ((ExperienceOrbInterface) first).setAmount(
+                first.getExperienceAmount()*((ExperienceOrbInterface) first).getCount() +
+                        other.getExperienceAmount()*((ExperienceOrbInterface) other).getCount());
+        ((ExperienceOrbInterface) first).setCount(1);
+        //((ExperienceOrbInterface) first).setCombineDelay(Math.max(first.pickupDelay, other.pickupDelay));
         first.age = Math.min(first.age, other.age);
-        other.remove();
+        other.discard();  //discard
 
 
         ExperienceOrbEntity newOrb;
@@ -51,7 +54,7 @@ public class XPcombine
             ((ExperienceOrbInterface)newOrb).setAmount(first.getExperienceAmount());
 
             first.world.spawnEntity(newOrb);
-            first.remove();
+            first.discard(); // discard
         }
         else
         {

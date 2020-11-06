@@ -2,6 +2,8 @@ package carpet.mixins;
 
 import carpet.CarpetSettings;
 import carpet.script.CarpetEventServer;
+import net.minecraft.class_5568;
+import net.minecraft.class_5579;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -12,6 +14,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
@@ -34,24 +37,25 @@ public class ServerWorld_scarpetEventMixin
         if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerWorld) (Object)this, blockPos, bl2?1:0);
     }
 
-    @Inject(method = "loadEntityUnchecked", at = @At(
+    @Redirect(method = "addEntity", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerChunkManager;loadEntity(Lnet/minecraft/entity/Entity;)V"
+            target = "Lnet/minecraft/class_5579;method_31818(Lnet/minecraft/class_5568;)Z"
     ))
-            private void onEntityAddedToWorld(Entity entity, CallbackInfo ci)
+    private boolean onEntityAddedToWorld(class_5579 class_5579, class_5568 arg)
     {
-        CarpetEventServer.Event event = ENTITY_LOAD.get(entity.getType());
-        if (event != null)
-        {
-            if (event.isNeeded())
-            {
-                event.onEntityAction(entity);
+        Entity entity = (Entity)arg;
+        boolean success = class_5579.method_31818(entity);
+        if (success) {
+            CarpetEventServer.Event event = ENTITY_LOAD.get(entity.getType());
+            if (event != null) {
+                if (event.isNeeded()) {
+                    event.onEntityAction(entity);
+                }
+            } else {
+                CarpetSettings.LOG.error("Failed to handle entity " + entity.getType().getTranslationKey());
             }
-        }
-        else
-        {
-            CarpetSettings.LOG.error("Failed to handle entity "+entity.getType().getTranslationKey());
-        }
+        };
+        return success;
     }
 
 }

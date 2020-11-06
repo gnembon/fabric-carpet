@@ -8,8 +8,10 @@ import net.minecraft.block.entity.PistonBlockEntity;
 import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,13 +29,13 @@ public abstract class PistonBlockEntity_playerHandlingMixin
     @Inject(method = "method_23672", at = @At("HEAD"), cancellable = true)
     private static void dontPushSpectators(Direction direction, Entity entity, double d, Direction direction2, CallbackInfo ci)
     {
-        if (CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).abilities.flying) ci.cancel();
+        if (CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).method_31549().flying) ci.cancel();
     }
 
     @Redirect(method = "pushEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;setVelocity(DDD)V"))
-    private void ignoreAccel(Entity entity, double x, double y, double z)
+    private static void ignoreAccel(Entity entity, double x, double y, double z)
     {
-        if (CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).abilities.flying) return;
+        if (CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).method_31549().flying) return;
         entity.setVelocity(x,y,z);
     }
 
@@ -41,15 +43,16 @@ public abstract class PistonBlockEntity_playerHandlingMixin
             value = "INVOKE",
             target = "Lnet/minecraft/entity/Entity;getPistonBehavior()Lnet/minecraft/block/piston/PistonBehavior;"
     ))
-    private PistonBehavior moveFakePlayers(Entity entity)
+    private static PistonBehavior moveFakePlayers(Entity entity,
+        World world, BlockPos blockPos, float ff, PistonBlockEntity pistonBlockEntity)
     {
-        if (entity instanceof EntityPlayerMPFake && pushedBlock.isOf(Blocks.SLIME_BLOCK))
+        if (entity instanceof EntityPlayerMPFake && pistonBlockEntity.getPushedBlock().isOf(Blocks.SLIME_BLOCK))
         {
             Vec3d vec3d = entity.getVelocity();
             double e = vec3d.x;
             double f = vec3d.y;
             double g = vec3d.z;
-            Direction direction = getMovementDirection();
+            Direction direction = pistonBlockEntity.getMovementDirection();
             switch(direction.getAxis()) {
                 case X:
                     e = (double)direction.getOffsetX();

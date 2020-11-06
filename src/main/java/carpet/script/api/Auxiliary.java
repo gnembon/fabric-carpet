@@ -369,7 +369,7 @@ public class Auxiliary {
             for (Entity e : cc.s.getWorld().getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
             {
                 total ++;
-                e.remove();
+                e.discard(); // discard // remove();
             }
             int finalTotal = total;
             return (_cc, _tt) -> new NumericValue(finalTotal);

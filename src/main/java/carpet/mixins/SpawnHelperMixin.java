@@ -117,8 +117,8 @@ public class SpawnHelperMixin
                 BlockState state = world.getBlockState(blockpos);
                 Block block = state.getBlock();
                 if (
-                        block.isIn(BlockTags.FENCES) ||
-                        block.isIn(BlockTags.WALLS) ||
+                        state.isIn(BlockTags.FENCES) ||
+                        state.isIn(BlockTags.WALLS) ||
                         ((block instanceof FenceGateBlock) && !state.get(FenceGateBlock.OPEN))
                 )
                 {

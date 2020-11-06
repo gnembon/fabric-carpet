@@ -16,6 +16,8 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
 {
     @Shadow private int amount;
 
+    @Shadow private int field_27009;
+
     public void setAmount(int amount) { this.amount = amount; }
 
     public int combineDelay = 50;
@@ -43,6 +45,16 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
                 XPcombine.searchForOtherXPNearby((ExperienceOrbEntity) (Object) this);
             }
         }
+    }
+
+    @Override
+    public int getCount() {
+        return field_27009;
+    }
+
+    @Override
+    public void setCount(int i) {
+        field_27009 = i;
     }
 
     @Inject(method = "onPlayerCollision", at = @At("HEAD"))

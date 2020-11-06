@@ -184,7 +184,7 @@ public class Entities {
         {
             String who = lv.get(0).evalValue(c).getString();
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who);
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
+            List<? extends Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });

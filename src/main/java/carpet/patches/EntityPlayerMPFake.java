@@ -46,7 +46,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
         instance.teleport(worldIn, d0, d1, d2, (float)yaw, (float)pitch);
         instance.setHealth(20.0F);
-        instance.removed = false;
+        instance.unsetRemoved();
         instance.stepHeight = 0.6F;
         interactionManagerIn.setGameMode(gamemode);
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), dimensionId);//instance.dimension);
@@ -102,7 +102,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         {
             this.networkHandler.syncWithPlayerPosition();
             this.getServerWorld().getChunkManager().updateCameraPosition(this);
-            //if (netherPortalCooldown==10) onTeleportationDone(); <- causes hard crash but would need to be done to enable portals
+            onTeleportationDone(); //<- causes hard crash but would need to be done to enable portals // not as of 1.17
         }
         super.tick();
         this.playerTick();

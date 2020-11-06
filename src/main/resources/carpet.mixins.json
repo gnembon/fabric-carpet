@@ -28,6 +28,7 @@
     "MinecraftServer_tickspeedMixin",
     "World_tickMixin",
     "ServerWorld_tickMixin",
+    "WorldChunkBEList_tickMixin",
     "ServerChunkManager_tickMixin",
     "ThreadedAnvilChunkStorage_tickMixin",
     "ChunkTicketManager_tickMixin",
@@ -122,6 +123,7 @@
     "ContainerMixin",
     "ClientConnectionMixin",
     "CauldronBlock_stackableSBoxesMixin",
+    "AbstractCauldronBlock_stackableSBoxesMixin",
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",
@@ -175,6 +177,7 @@
     "Ingredient_scarpetMixin",
     "BlockStateArgument_scarpetMixin",
 
+    "BlockEntity_movableBEMixin",
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",

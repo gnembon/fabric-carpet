@@ -9,6 +9,7 @@ import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.util.math.AffineTransformation;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.render.VertexFormats;
@@ -441,7 +442,7 @@ public class ShapesRenderer
     // some raw shit
 
     public static void drawLine(Tessellator tessellator, BufferBuilder builder, float x1, float y1, float z1, float x2, float y2, float z2, float red1, float grn1, float blu1, float alpha) {
-        builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
+        builder.begin(VertexFormat.class_5596.field_27377, VertexFormats.POSITION_COLOR); // 3 // GL LINES
         builder.vertex(x1, y1, z1).color(red1, grn1, blu1, alpha).next();
         builder.vertex(x2, y2, z2).color(red1, grn1, blu1, alpha).next();
         tessellator.draw();
@@ -454,7 +455,7 @@ public class ShapesRenderer
             boolean xthick, boolean ythick, boolean zthick,
             float red1, float grn1, float blu1, float alpha, float red2, float grn2, float blu2)
     {
-        builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR); // 3
+        builder.begin(VertexFormat.class_5596.field_27377, VertexFormats.POSITION_COLOR); // 3 /lines
         if (xthick)
         {
             builder.vertex(x1, y1, z1).color(red1, grn2, blu2, alpha).next();
@@ -507,7 +508,7 @@ public class ShapesRenderer
             boolean xthick, boolean ythick, boolean zthick,
             float red1, float grn1, float blu1, float alpha)
     {
-        builder.begin(GL11.GL_QUADS, VertexFormats.POSITION_COLOR);
+        builder.begin(VertexFormat.class_5596.field_27382, VertexFormats.POSITION_COLOR); // QUADS
 
         if (xthick && ythick)
         {
@@ -582,8 +583,8 @@ public class ShapesRenderer
             for (int dh = 0; dh < hsteps; dh++)
             {
                 float hh = dh*hstep;
-                builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
-                for (int i = 0; i <= num_steps360; i++)
+                builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR);  // line loop to line strip
+                for (int i = 0; i <= num_steps360+1; i++)
                 {
                     float theta = step * i;
                     float x = r * MathHelper.cos(theta);
@@ -598,7 +599,7 @@ public class ShapesRenderer
             {
                 for (int i = 0; i <= num_steps180; i++)
                 {
-                    builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                    builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR); // line loop to line strip
                     float theta = step * i;
                     float x = r * MathHelper.cos(theta);
 
@@ -608,12 +609,13 @@ public class ShapesRenderer
                     builder.vertex(cx + x, cy + 0, cz - z).color(red, grn, blu, alpha).next();
                     builder.vertex(cx + x, cy + h, cz - z).color(red, grn, blu, alpha).next();
                     builder.vertex(cx - x, cy + h, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx - x, cy + 0, cz + z).color(red, grn, blu, alpha).next();
                     tessellator.draw();
                 }
             }
             else
             {
-                builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27377, VertexFormats.POSITION_COLOR);  //lines
                 for (int i = 0; i <= num_steps180; i++)
                 {
                     float theta = step * i;
@@ -631,7 +633,7 @@ public class ShapesRenderer
             for (int dh = 0; dh < hsteps; dh++)
             {
                 float hh = dh * hstep;
-                builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR); // line loop to line strip
                 for (int i = 0; i <= num_steps360; i++)
                 {
                     float theta = step * i;
@@ -647,7 +649,7 @@ public class ShapesRenderer
             {
                 for (int i = 0; i <= num_steps180; i++)
                 {
-                    builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                    builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR); // line loop to line strip
                     float theta = step * i;
                     float y = r * MathHelper.cos(theta);
 
@@ -662,7 +664,7 @@ public class ShapesRenderer
             }
             else
             {
-                builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27377, VertexFormats.POSITION_COLOR);  //lines
                 for (int i = 0; i <= num_steps180; i++)
                 {
                     float theta = step * i;
@@ -679,7 +681,7 @@ public class ShapesRenderer
             for (int dh = 0; dh < hsteps; dh++)
             {
                 float hh = dh * hstep;
-                builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR); // line loop to line strip
                 for (int i = 0; i <= num_steps360; i++)
                 {
                     float theta = step * i;
@@ -694,7 +696,7 @@ public class ShapesRenderer
             {
                 for (int i = 0; i <= num_steps180; i++)
                 {
-                    builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+                    builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR); // line loop to line strip
                     float theta = step * i;
                     float x = r * MathHelper.cos(theta);
 
@@ -709,7 +711,7 @@ public class ShapesRenderer
             }
             else
             {
-                builder.begin(GL11.GL_LINES, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27377, VertexFormats.POSITION_COLOR); //lines
                 for (int i = 0; i <= num_steps180; i++)
                 {
                     float theta = step * i;
@@ -736,7 +738,7 @@ public class ShapesRenderer
         if (axis == Direction.Axis.Y)
         {
 
-            builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+            builder.begin(VertexFormat.class_5596.field_27381, VertexFormats.POSITION_COLOR);  //triangle fan
             builder.vertex(cx, cy, cz).color(red, grn, blu, alpha).next();
             for (int i = 0; i <= num_steps360; i++)
             {
@@ -748,7 +750,7 @@ public class ShapesRenderer
             tessellator.draw();
             if (!isFlat)
             {
-                builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27381, VertexFormats.POSITION_COLOR); //trifan
                 builder.vertex(cx, cy+h, cz).color(red, grn, blu, alpha).next();
                 for (int i = 0; i <= num_steps360; i++)
                 {
@@ -759,14 +761,20 @@ public class ShapesRenderer
                 }
                 tessellator.draw();
 
-                builder.begin(GL11.GL_QUAD_STRIP, VertexFormats.POSITION_COLOR);
-                for (int i = 0; i <= num_steps360; i++)
+                builder.begin(VertexFormat.class_5596.field_27382, VertexFormats.POSITION_COLOR);  // quad strip to quads
+                float xp = r * 1;
+                float zp = r * 0;
+                for (int i = 1; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float x = r * MathHelper.cos(theta);
                     float z = r * MathHelper.sin(theta);
-                    builder.vertex(cx + x, cy + 0, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + xp, cy + 0, cz + zp).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + xp, cy + h, cz + zp).color(red, grn, blu, alpha).next();
                     builder.vertex(cx + x, cy + h, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy + 0, cz + z).color(red, grn, blu, alpha).next();
+                    xp = x;
+                    zp = z;
                 }
                 tessellator.draw();
             }
@@ -774,7 +782,7 @@ public class ShapesRenderer
         }
         else if (axis == Direction.Axis.X)
         {
-            builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+            builder.begin(VertexFormat.class_5596.field_27381, VertexFormats.POSITION_COLOR);  //trifan
             builder.vertex(cx, cy, cz).color(red, grn, blu, alpha).next();
             for (int i = 0; i <= num_steps360; i++)
             {
@@ -786,7 +794,7 @@ public class ShapesRenderer
             tessellator.draw();
             if (!isFlat)
             {
-                builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27381, VertexFormats.POSITION_COLOR);  //trifan
                 builder.vertex(cx+h, cy, cz).color(red, grn, blu, alpha).next();
                 for (int i = 0; i <= num_steps360; i++)
                 {
@@ -797,21 +805,27 @@ public class ShapesRenderer
                 }
                 tessellator.draw();
 
-                builder.begin(GL11.GL_QUAD_STRIP, VertexFormats.POSITION_COLOR);
-                for (int i = 0; i <= num_steps360; i++)
+                builder.begin(VertexFormat.class_5596.field_27382, VertexFormats.POSITION_COLOR);  // quad strip to quads
+                float yp = r * 1;
+                float zp = r * 0;
+                for (int i = 1; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float y = r * MathHelper.cos(theta);
                     float z = r * MathHelper.sin(theta);
-                    builder.vertex(cx + 0, cy + y, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + 0, cy + yp, cz + zp).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + h, cy + yp, cz + zp).color(red, grn, blu, alpha).next();
                     builder.vertex(cx + h, cy + y, cz + z).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + 0, cy + y, cz + z).color(red, grn, blu, alpha).next();
+                    yp = y;
+                    zp = z;
                 }
                 tessellator.draw();
             }
         }
         else if (axis == Direction.Axis.Z)
         {
-            builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+            builder.begin(VertexFormat.class_5596.field_27381, VertexFormats.POSITION_COLOR); //trifan
             builder.vertex(cx, cy, cz).color(red, grn, blu, alpha).next();
             for (int i = 0; i <= num_steps360; i++)
             {
@@ -823,7 +837,7 @@ public class ShapesRenderer
             tessellator.draw();
             if (!isFlat)
             {
-                builder.begin(GL11.GL_TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
+                builder.begin(VertexFormat.class_5596.field_27381, VertexFormats.POSITION_COLOR); //trifan
                 builder.vertex(cx, cy, cz+h).color(red, grn, blu, alpha).next();
                 for (int i = 0; i <= num_steps360; i++)
                 {
@@ -834,14 +848,20 @@ public class ShapesRenderer
                 }
                 tessellator.draw();
 
-                builder.begin(GL11.GL_QUAD_STRIP, VertexFormats.POSITION_COLOR);
-                for (int i = 0; i <= num_steps360; i++)
+                builder.begin(VertexFormat.class_5596.field_27382, VertexFormats.POSITION_COLOR);  // quad strip to quads
+                float xp = r;
+                float yp = 0;
+                for (int i = 1; i <= num_steps360; i++)
                 {
                     float theta = step * i;
                     float x = r * MathHelper.cos(theta);
                     float y = r * MathHelper.sin(theta);
-                    builder.vertex(cx + x, cy + y, cz + 0).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + xp, cy + yp, cz + 0).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + xp, cy + yp, cz + h).color(red, grn, blu, alpha).next();
                     builder.vertex(cx + x, cy + y, cz + h).color(red, grn, blu, alpha).next();
+                    builder.vertex(cx + x, cy + y, cz + 0).color(red, grn, blu, alpha).next();
+                    xp = x;
+                    yp = y;
                 }
                 tessellator.draw();
             }
@@ -855,10 +875,10 @@ public class ShapesRenderer
     {
         float step = (float)Math.PI / (subd/2);
         int num_steps180 = (int)(Math.PI / step)+1;
-        int num_steps360 = (int)(2*Math.PI / step);
+        int num_steps360 = (int)(2*Math.PI / step)+1;
         for (int i = 0; i <= num_steps360; i++)
         {
-            builder.begin(GL11.GL_LINE_STRIP, VertexFormats.POSITION_COLOR);
+            builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR); //linestrip
             float theta = step * i ;
             for (int j = 0; j <= num_steps180; j++)
             {
@@ -872,7 +892,7 @@ public class ShapesRenderer
         }
         for (int j = 0; j <= num_steps180; j++)
         {
-            builder.begin(GL11.GL_LINE_LOOP, VertexFormats.POSITION_COLOR);
+            builder.begin(VertexFormat.class_5596.field_27378, VertexFormats.POSITION_COLOR); // line loop to line strip
             float phi = step * j ;
 
             for (int i = 0; i <= num_steps360; i++)
@@ -901,7 +921,12 @@ public class ShapesRenderer
         {
             float theta = i * step;
             float thetaprime = theta+step;
-            builder.begin(GL11.GL_QUAD_STRIP, VertexFormats.POSITION_COLOR);
+            builder.begin(VertexFormat.class_5596.field_27382, VertexFormats.POSITION_COLOR);  // quad strip to quads
+            float xb = 0;
+            float zb = 0;
+            float xbp = 0;
+            float zbp = 0;
+            float yp = r;
             for (int j = 0; j <= num_steps180; j++)
             {
                 float phi = j * step;
@@ -910,8 +935,15 @@ public class ShapesRenderer
                 float y = r * MathHelper.cos(phi);
                 float xp = r * MathHelper.sin(phi) * MathHelper.cos(thetaprime);
                 float zp = r * MathHelper.sin(phi) * MathHelper.sin(thetaprime);
-                builder.vertex(x + cx, y + cy, z + cz).color(red, grn, blu, alpha).next();
+                builder.vertex(xb + cx, yp + cy, zb + cz).color(red, grn, blu, alpha).next();
+                builder.vertex(xbp + cx, yp + cy, zbp + cz).color(red, grn, blu, alpha).next();
                 builder.vertex(xp + cx, y + cy, zp + cz).color(red, grn, blu, alpha).next();
+                builder.vertex(x + cx, y + cy, z + cz).color(red, grn, blu, alpha).next();
+                xb = x;
+                zb = z;
+                xbp = xp;
+                zbp = zp;
+                yp = y;
             }
             tessellator.draw();
         }

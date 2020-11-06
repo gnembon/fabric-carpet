@@ -58,7 +58,7 @@ public class PerimeterInfoCommand
             if (!(baseEntity instanceof  MobEntity))
             {
                 Messenger.m(source, "r Failed to spawn test entity");
-                if (baseEntity != null) baseEntity.remove();
+                if (baseEntity != null) baseEntity.discard(); // discard //remove();
                 return 0;
             }
             entityliving = (MobEntity) baseEntity;
@@ -72,7 +72,7 @@ public class PerimeterInfoCommand
         {
             Messenger.m(source, "w   ", entityliving.getDisplayName() ,"w : ","wb "+res.specific);
             res.samples.forEach(bp -> Messenger.m(source, "w   ", Messenger.tp("c", bp)));
-            entityliving.remove();
+            entityliving.discard(); // dicard // remove();
         }
         return 1;
     }

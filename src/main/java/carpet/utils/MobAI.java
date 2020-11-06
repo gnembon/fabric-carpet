@@ -39,7 +39,7 @@ public class MobAI
         return currentTrackers.contains(type);
     }
 
-    public static void clearTracking(EntityType etype)
+    public static void clearTracking(EntityType<? extends Entity> etype)
     {
         aiTrackers.remove(etype);
         for(ServerWorld world : CarpetServer.minecraft_server.getWorlds() )

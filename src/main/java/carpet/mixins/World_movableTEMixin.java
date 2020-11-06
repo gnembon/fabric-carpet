@@ -60,76 +60,63 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
      */
     public boolean setBlockStateWithBlockEntity(BlockPos blockPos_1, BlockState blockState_1, BlockEntity newBlockEntity, int int_1)
     {
-        if ((Object) this instanceof EmptyChunk)
-            return false;
-        
-        if (World.isHeightInvalid(blockPos_1))
-        {
-            return false;
-        }
-        else if (!this.isClient && isDebugWorld())
+        if (method_31606(blockPos_1) || !this.isClient && isDebugWorld()) return false;
+        WorldChunk worldChunk_1 = this.getWorldChunk(blockPos_1);
+        Block block_1 = blockState_1.getBlock();
+
+        BlockState blockState_2;
+        if (newBlockEntity != null && block_1 instanceof BlockEntityProvider)
+            blockState_2 = ((WorldChunkInterface) worldChunk_1).setBlockStateWithBlockEntity(blockPos_1, blockState_1, newBlockEntity, (int_1 & 64) != 0);
+        else
+            blockState_2 = worldChunk_1.setBlockState(blockPos_1, blockState_1, (int_1 & 64) != 0);
+
+        if (blockState_2 == null)
         {
             return false;
         }
         else
         {
-            WorldChunk worldChunk_1 = this.getWorldChunk(blockPos_1);
-            Block block_1 = blockState_1.getBlock();
-            
-            BlockState blockState_2;
-            if (newBlockEntity != null && block_1 instanceof BlockEntityProvider)
-                blockState_2 = ((WorldChunkInterface) worldChunk_1).setBlockStateWithBlockEntity(blockPos_1, blockState_1, newBlockEntity, (int_1 & 64) != 0);
-            else
-                blockState_2 = worldChunk_1.setBlockState(blockPos_1, blockState_1, (int_1 & 64) != 0);
-            
-            if (blockState_2 == null)
+            BlockState blockState_3 = this.getBlockState(blockPos_1);
+
+            if (blockState_3 != blockState_2 && (blockState_3.getOpacity((BlockView) this, blockPos_1) != blockState_2.getOpacity((BlockView) this, blockPos_1) || blockState_3.getLuminance() != blockState_2.getLuminance() || blockState_3.hasSidedTransparency() || blockState_2.hasSidedTransparency()))
             {
-                return false;
+                Profiler profiler = getProfiler();
+                profiler.push("queueCheckLight");
+                this.getChunkManager().getLightingProvider().checkBlock(blockPos_1);
+                profiler.pop();
             }
-            else
+
+            if (blockState_3 == blockState_1)
             {
-                BlockState blockState_3 = this.getBlockState(blockPos_1);
-                
-                if (blockState_3 != blockState_2 && (blockState_3.getOpacity((BlockView) this, blockPos_1) != blockState_2.getOpacity((BlockView) this, blockPos_1) || blockState_3.getLuminance() != blockState_2.getLuminance() || blockState_3.hasSidedTransparency() || blockState_2.hasSidedTransparency()))
+                if (blockState_2 != blockState_3)
                 {
-                    Profiler profiler = getProfiler();
-                    profiler.push("queueCheckLight");
-                    this.getChunkManager().getLightingProvider().checkBlock(blockPos_1);
-                    profiler.pop();
+                    this.scheduleBlockRerenderIfNeeded(blockPos_1, blockState_2, blockState_3);
                 }
-                
-                if (blockState_3 == blockState_1)
+
+                if ((int_1 & 2) != 0 && (!this.isClient || (int_1 & 4) == 0) && (this.isClient || worldChunk_1.getLevelType() != null && worldChunk_1.getLevelType().isAfter(ChunkHolder.LevelType.TICKING)))
                 {
-                    if (blockState_2 != blockState_3)
-                    {
-                        this.scheduleBlockRerenderIfNeeded(blockPos_1, blockState_2, blockState_3);
-                    }
-                    
-                    if ((int_1 & 2) != 0 && (!this.isClient || (int_1 & 4) == 0) && (this.isClient || worldChunk_1.getLevelType() != null && worldChunk_1.getLevelType().isAfter(ChunkHolder.LevelType.TICKING)))
-                    {
-                        this.updateListeners(blockPos_1, blockState_2, blockState_1, int_1);
-                    }
-                    
-                    if (!this.isClient && (int_1 & 1) != 0)
-                    {
-                        this.updateNeighborsAlways(blockPos_1, blockState_2.getBlock());
-                        if (blockState_1.hasComparatorOutput())
-                        {
-                            updateComparators(blockPos_1, block_1);
-                        }
-                    }
-                    
-                    if ((int_1 & 16) == 0)
-                    {
-                        int int_2 = int_1 & -34;
-                        blockState_2.prepare(this, blockPos_1, int_2); // prepare
-                        blockState_1.updateNeighbors(this, blockPos_1, int_2); // updateNeighbours
-                        blockState_1.prepare(this, blockPos_1, int_2); // prepare
-                    }
-                    this.onBlockChanged(blockPos_1, blockState_2, blockState_3);
+                    this.updateListeners(blockPos_1, blockState_2, blockState_1, int_1);
                 }
-                return true;
+
+                if (!this.isClient && (int_1 & 1) != 0)
+                {
+                    this.updateNeighborsAlways(blockPos_1, blockState_2.getBlock());
+                    if (blockState_1.hasComparatorOutput())
+                    {
+                        updateComparators(blockPos_1, block_1);
+                    }
+                }
+
+                if ((int_1 & 16) == 0)
+                {
+                    int int_2 = int_1 & -34;
+                    blockState_2.prepare(this, blockPos_1, int_2); // prepare
+                    blockState_1.updateNeighbors(this, blockPos_1, int_2); // updateNeighbours
+                    blockState_1.prepare(this, blockPos_1, int_2); // prepare
+                }
+                this.onBlockChanged(blockPos_1, blockState_2, blockState_3);
             }
+            return true;
         }
     }
 }

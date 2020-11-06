@@ -8,6 +8,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.PistonExtensionBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkSection;
@@ -40,10 +41,13 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
     @Shadow
     /* @Nullable */
     public abstract BlockEntity getBlockEntity(BlockPos blockPos_1, WorldChunk.CreationType worldChunk$CreationType_1);
-    
+
+    @Shadow protected abstract <T extends BlockEntity> void method_31723(T blockEntity);
+
     // Fix Failure: If a moving BlockEntity is placed while BlockEntities are ticking, this will not find it and then replace it with a new TileEntity!
     // blockEntity_2 = this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
-    @Redirect(method = "setBlockState", at = @At(value = "INVOKE", ordinal = 1,
+    // question is - with the changes in the BE handling this might not be a case anymore
+    @Redirect(method = "setBlockState", at = @At(value = "INVOKE", ordinal = 0,
             target = "Lnet/minecraft/world/chunk/WorldChunk;getBlockEntity(Lnet/minecraft/util/math/BlockPos;" + "Lnet/minecraft/world/chunk/WorldChunk$CreationType;)" + "Lnet/minecraft/block/entity/BlockEntity;"))
     private BlockEntity ifGetBlockEntity(WorldChunk worldChunk, BlockPos blockPos_1,
             WorldChunk.CreationType worldChunk$CreationType_1)
@@ -72,7 +76,8 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
         int x = blockPos_1.getX() & 15;
         int y = blockPos_1.getY();
         int z = blockPos_1.getZ() & 15;
-        ChunkSection chunkSection = this.sections[y >> 4];
+        int section = world.method_31602(y);
+        ChunkSection chunkSection = this.sections[section];
         if (chunkSection == EMPTY_SECTION)
         {
             if (newBlockState.isAir())
@@ -80,8 +85,8 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
                 return null;
             }
             
-            chunkSection = new ChunkSection(y >> 4 << 4);
-            this.sections[y >> 4] = chunkSection;
+            chunkSection = new ChunkSection(ChunkSectionPos.getSectionCoord(y));
+            this.sections[section] = chunkSection;
         }
         
         boolean boolean_2 = chunkSection.isEmpty();
@@ -121,29 +126,31 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
             else
             {
                 BlockEntity oldBlockEntity = null;
-                if (oldBlock instanceof BlockEntityProvider)
+                if (oldBlockState.method_31709()) // is BE Provider
                 {
                     oldBlockEntity = this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
                     if (oldBlockEntity != null)
                     {
-                        oldBlockEntity.resetBlock();
+                        oldBlockEntity.method_31664(oldBlockState);
+                        method_31723(oldBlockEntity);
                     }
                 }
-                
-                if (newBlock instanceof BlockEntityProvider)
+
+                if (oldBlockState.method_31709()) // is BE Provider
                 {
                     if (newBlockEntity == null)
                     {
-                        newBlockEntity = ((BlockEntityProvider) newBlock).createBlockEntity(this.world);
+                        newBlockEntity = ((BlockEntityProvider) newBlock).createBlockEntity(blockPos_1, newBlockState);
                     }
                     if (newBlockEntity != oldBlockEntity && newBlockEntity != null)
                     {
                         newBlockEntity.cancelRemoval();
-                        this.world.setBlockEntity(blockPos_1, newBlockEntity);
-                        newBlockEntity.resetBlock();
+                        this.world.addBlockEntity(newBlockEntity);
+                        newBlockEntity.method_31664(newBlockState);
+                        method_31723(newBlockEntity);
                     }
                 }
-                
+
                 if (!this.world.isClient)
                 {
                     newBlockState.onBlockAdded(this.world, blockPos_1, oldBlockState, boolean_1); //This can call setblockstate! (e.g. hopper does)

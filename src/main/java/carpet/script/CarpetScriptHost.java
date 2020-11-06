@@ -438,7 +438,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
                 {
-                    e.remove();
+                    e.discard();
                 }
             }
             if (this.saveTimeout > 0)

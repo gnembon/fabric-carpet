@@ -335,8 +335,8 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
             final long pos = cPos.toLong();
 
             final ChunkHolder oldHolder = this.currentChunkHolders.remove(pos);
-            final ChunkHolder newHolder = new ChunkHolder(cPos, oldHolder.getLevel(), this.serverLightingProvider, this.chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
-            ((ChunkHolderInterface) newHolder).setDefaultProtoChunk(cPos, this.mainThreadExecutor);
+            final ChunkHolder newHolder = new ChunkHolder(cPos, oldHolder.getLevel(), world, this.serverLightingProvider, this.chunkTaskPrioritySystem, (ChunkHolder.PlayersWatchingChunkProvider) this);
+            ((ChunkHolderInterface) newHolder).setDefaultProtoChunk(cPos, this.mainThreadExecutor, world);
             this.currentChunkHolders.put(pos, newHolder);
 
             ((ChunkTicketManagerInterface) this.ticketManager).replaceHolder(oldHolder, newHolder);

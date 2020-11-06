@@ -752,7 +752,7 @@ public class WorldAccess {
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
-                        be.fromTag(finalSourceBlockState, destTag);
+                        be.fromTag(destTag);
                         be.markDirty();
                     }
                 }

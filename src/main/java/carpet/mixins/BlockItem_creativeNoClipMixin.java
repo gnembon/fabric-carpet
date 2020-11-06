@@ -24,7 +24,7 @@ public class BlockItem_creativeNoClipMixin
                                        ItemPlacementContext contextOuter, BlockState stateOuter)
     {
         PlayerEntity player = contextOuter.getPlayer();
-        if (CarpetSettings.creativeNoClip && player != null && player.isCreative() && player.abilities.flying)
+        if (CarpetSettings.creativeNoClip && player != null && player.isCreative() && player.method_31549().flying)
         {
             // copy from canPlace
             VoxelShape voxelShape = state.getCollisionShape(world, pos, context);

@@ -12,10 +12,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Entity.class)
 public abstract class Entity_scarpetEventsMixin implements EntityInterface
 {
-    @Shadow public boolean removed;
+    //@Shadow public boolean removed;
 
     @Shadow protected int netherPortalTime;
     @Shadow private int netherPortalCooldown;
+
+    @Shadow public abstract boolean isRemoved();
+
     private boolean permanentVehicle;
 
     private final EntityEventsGroup events = new EntityEventsGroup((Entity) (Object)this);
@@ -72,7 +75,7 @@ public abstract class Entity_scarpetEventsMixin implements EntityInterface
     @Inject(method = "remove", at = @At("HEAD"))
     private void onRemove(CallbackInfo ci)
     {
-        if (!removed) events.onEvent(EntityEventsGroup.Event.ON_REMOVED);
+        if (!isRemoved()) events.onEvent(EntityEventsGroup.Event.ON_REMOVED);  // ! isRemoved()
     }
 
 

@@ -97,7 +97,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
             otherStack.decrement(amount);
             if (otherStack.isEmpty())
             {
-                other.remove();
+                other.discard(); // discard remove();
             }
             else
             {

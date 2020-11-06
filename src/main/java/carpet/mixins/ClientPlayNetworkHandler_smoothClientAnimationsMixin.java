@@ -22,6 +22,7 @@ import java.util.Iterator;
 @Mixin(ClientPlayNetworkHandler.class)
 public class ClientPlayNetworkHandler_smoothClientAnimationsMixin
 {
+    /*
     @Shadow private ClientWorld world;
     // fix as suggested by G4me4u
     @Inject( method = "onChunkData", locals = LocalCapture.CAPTURE_FAILHARD, require = 0, at = @At(
@@ -48,5 +49,5 @@ public class ClientPlayNetworkHandler_smoothClientAnimationsMixin
                 }
             }
         }
-    }
+    }*/
 }
