@@ -63,7 +63,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
         if ((Object) this instanceof EmptyChunk)
             return false;
         
-        if (World.isHeightInvalid(blockPos_1))
+        if (World.isOutOfBuildLimitVertically(blockPos_1))
         {
             return false;
         }
