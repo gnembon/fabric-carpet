@@ -49,7 +49,7 @@ public class BlockRotator
 {
     public static boolean flipBlockWithCactus(BlockState state, World world, PlayerEntity player, Hand hand, BlockHitResult hit)
     {               //getAbilities()
-        if (!player.method_31549().allowModifyWorld || !CarpetSettings.flippinCactus || !player_holds_cactus_mainhand(player))
+        if (!player.getAbilities().allowModifyWorld || !CarpetSettings.flippinCactus || !player_holds_cactus_mainhand(player))
         {
             return false;
         }

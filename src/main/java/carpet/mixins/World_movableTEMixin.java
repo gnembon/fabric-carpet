@@ -60,7 +60,7 @@ public abstract class World_movableTEMixin implements WorldInterface, WorldAcces
      */
     public boolean setBlockStateWithBlockEntity(BlockPos blockPos_1, BlockState blockState_1, BlockEntity newBlockEntity, int int_1)
     {
-        if (method_31606(blockPos_1) || !this.isClient && isDebugWorld()) return false;
+        if (isOutOfHeightLimit(blockPos_1) || !this.isClient && isDebugWorld()) return false;
         WorldChunk worldChunk_1 = this.getWorldChunk(blockPos_1);
         Block block_1 = blockState_1.getBlock();
 

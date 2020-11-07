@@ -30,7 +30,7 @@ public abstract class ContainerMixin
     @Inject( method = "method_30010", at = @At(value = "HEAD"), cancellable = true) // on slot click
     private void onThrowClick( int slotId, int clickData, SlotActionType actionType, PlayerEntity playerEntity, CallbackInfoReturnable<ItemStack> cir)
     {
-        if (actionType == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity.method_31548().getCursorStack().isEmpty() && slotId >= 0)
+        if (actionType == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity.getInventory().getCursorStack().isEmpty() && slotId >= 0)
         {
             ItemStack itemStack_1 = ItemStack.EMPTY;
             Slot slot_4 = slots.get(slotId);

@@ -172,7 +172,7 @@ public class OptimizedExplosion
                             PlayerEntity player = (PlayerEntity) entity;
 
                             if (!player.isSpectator()
-                                    && (!player.isCreative() || !player.method_31549().flying)) {  //getAbilities
+                                    && (!player.isCreative() || !player.getAbilities().flying)) {  //getAbilities
                                 e.getAffectedPlayers().put(player, new Vec3d(d5 * d10, d7 * d10, d9 * d10));
                             }
                         }
@@ -227,7 +227,7 @@ public class OptimizedExplosion
                 {
                     if (block.shouldDropItemsOnExplosion(e) && world instanceof ServerWorld)
                     {
-                        BlockEntity blockEntity = state.method_31709() ? world.getBlockEntity(blockpos) : null;  //hasBlockEntity()
+                        BlockEntity blockEntity = state.hasBlockEntity() ? world.getBlockEntity(blockpos) : null;  //hasBlockEntity()
 
                         LootContext.Builder lootBuilder = (new LootContext.Builder((ServerWorld)eAccess.getWorld()))
                                 .random(eAccess.getWorld().random)

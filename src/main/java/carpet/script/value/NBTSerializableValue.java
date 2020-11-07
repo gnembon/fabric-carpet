@@ -145,7 +145,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         Block block = blockState.getBlock();
         if (block instanceof InventoryProvider) {
             inventory = ((InventoryProvider)block).getInventory(blockState, world, blockPos);
-        } else if (blockState.method_31709()) {    //hasBlockEntity()
+        } else if (blockState.hasBlockEntity()) {
             BlockEntity blockEntity = BlockValue.getBlockEntity(world, blockPos);
             if (blockEntity instanceof Inventory) {
                 inventory = (Inventory)blockEntity;
@@ -181,7 +181,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             if (v1 instanceof EntityValue)
             {
                 Entity e = ((EntityValue) v1).getEntity();
-                if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).method_31548();
+                if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).getInventory();
                 else if (e instanceof Inventory) inv = (Inventory) e;
                 else if (e instanceof VillagerEntity) inv = ((VillagerEntity) e).getInventory();
 
@@ -231,7 +231,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return new InventoryLocator(
                             player,
                             player.getBlockPos(),
-                            isEnder ? player.getEnderChestInventory() : player.method_31548(),
+                            isEnder ? player.getEnderChestInventory() : player.getInventory(),
                             offset + 1,
                             isEnder
                     );

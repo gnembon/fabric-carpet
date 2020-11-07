@@ -47,9 +47,9 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     }
 
     @Override
-    public void method_31662(World world) {
-        super.method_31662(world);
-        if (carriedBlockEntity != null) carriedBlockEntity.method_31662(world);
+    public void setWorld(World world) {
+        super.setWorld(world);
+        if (carriedBlockEntity != null) carriedBlockEntity.setWorld(world);
     }
 
     public void setCarriedBlockEntity(BlockEntity blockEntity)
@@ -59,7 +59,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
         {
             ((BlockEntity_movableBEMixin)carriedBlockEntity).setPos(pos);
             // this might be little dangerous since pos is final for a hashing reason?
-            if (world != null) carriedBlockEntity.method_31662(world);
+            if (world != null) carriedBlockEntity.setWorld(world);
         }
         //    this.carriedBlockEntity.setPos(this.pos);
     }
@@ -83,7 +83,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     /**
      * @author 2No2Name
      */
-    @Redirect(method = "method_31707", at = @At(value = "INVOKE",  // tick
+    @Redirect(method = "tick", at = @At(value = "INVOKE",
               target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
     private static boolean movableTEsetBlockState0(
             World world, BlockPos blockPos_1, BlockState blockAState_2, int int_1,

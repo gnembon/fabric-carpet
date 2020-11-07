@@ -42,7 +42,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
     /* @Nullable */
     public abstract BlockEntity getBlockEntity(BlockPos blockPos_1, WorldChunk.CreationType worldChunk$CreationType_1);
 
-    @Shadow protected abstract <T extends BlockEntity> void method_31723(T blockEntity);
+    @Shadow protected abstract <T extends BlockEntity> void updateTicker(T blockEntity);
 
     // Fix Failure: If a moving BlockEntity is placed while BlockEntities are ticking, this will not find it and then replace it with a new TileEntity!
     // blockEntity_2 = this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
@@ -76,7 +76,7 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
         int x = blockPos_1.getX() & 15;
         int y = blockPos_1.getY();
         int z = blockPos_1.getZ() & 15;
-        int section = world.method_31602(y);
+        int section = world.getSectionIndex(y);
         ChunkSection chunkSection = this.sections[section];
         if (chunkSection == EMPTY_SECTION)
         {
@@ -126,17 +126,17 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
             else
             {
                 BlockEntity oldBlockEntity = null;
-                if (oldBlockState.method_31709()) // is BE Provider
+                if (oldBlockState.hasBlockEntity())
                 {
                     oldBlockEntity = this.getBlockEntity(blockPos_1, WorldChunk.CreationType.CHECK);
                     if (oldBlockEntity != null)
                     {
-                        oldBlockEntity.method_31664(oldBlockState);
-                        method_31723(oldBlockEntity);
+                        oldBlockEntity.setCachedState(oldBlockState);
+                        updateTicker(oldBlockEntity);
                     }
                 }
 
-                if (oldBlockState.method_31709()) // is BE Provider
+                if (oldBlockState.hasBlockEntity())
                 {
                     if (newBlockEntity == null)
                     {
@@ -146,8 +146,8 @@ public abstract class WorldChunk_movableTEMixin implements WorldChunkInterface
                     {
                         newBlockEntity.cancelRemoval();
                         this.world.addBlockEntity(newBlockEntity);
-                        newBlockEntity.method_31664(newBlockState);
-                        method_31723(newBlockEntity);
+                        newBlockEntity.setCachedState(newBlockState);
+                        updateTicker(newBlockEntity);
                     }
                 }
 

@@ -257,7 +257,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     {
         if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isOnThread())
         {
-            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.method_31548().selectedSlot, packet.getSelectedSlot());
+            PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.getInventory().selectedSlot, packet.getSelectedSlot());
         }
     }
 }

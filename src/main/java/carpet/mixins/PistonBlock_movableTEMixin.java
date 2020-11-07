@@ -51,10 +51,10 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
                        block != Blocks.SPAWNER;
     }
     
-    @Redirect(method = "isMovable", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;method_31709()Z")) // hasBLockENtity
+    @Redirect(method = "isMovable", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;hasBlockEntity()Z"))
     private static boolean ifHasBlockEntity(BlockState blockState)
     {
-        if (!blockState.method_31709())
+        if (!blockState.hasBlockEntity())
         {
             return false;
         }
@@ -88,7 +88,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
             for (int i = 0; i < list_1.size(); ++i)
             {
                 BlockPos blockpos = list_1.get(i);
-                BlockEntity blockEntity = (list_2.get(i).method_31709()) ? world_1.getBlockEntity(blockpos) : null;
+                BlockEntity blockEntity = (list_2.get(i).hasBlockEntity()) ? world_1.getBlockEntity(blockpos) : null;
                 list1_BlockEntities.get().add(blockEntity);
                 if (blockEntity != null)
                 {

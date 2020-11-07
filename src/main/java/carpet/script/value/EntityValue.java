@@ -620,7 +620,7 @@ public class EntityValue extends Value
 
         put("selected_slot", (e, a) -> {
            if (e instanceof PlayerEntity)
-               return new NumericValue(((PlayerEntity) e).method_31548().selectedSlot); //getInventory
+               return new NumericValue(((PlayerEntity) e).getInventory().selectedSlot); //getInventory
            return Value.NULL;
         });
 

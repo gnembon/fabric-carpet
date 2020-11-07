@@ -4,10 +4,10 @@ import carpet.CarpetSettings;
 import carpet.fakes.PistonBlockEntityInterface;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.PistonBlockEntity;
-import net.minecraft.class_5614;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.render.block.entity.PistonBlockEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,9 +21,9 @@ public abstract class PistonBlockEntityRenderer_movableTEMixin implements BlockE
 {
     BlockEntityRenderDispatcher dispatcher;
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInitCM(class_5614.class_5615 arg, CallbackInfo ci)
+    private void onInitCM(BlockEntityRendererFactory.Arguments arguments, CallbackInfo ci)
     {
-        dispatcher = arg.method_32139();
+        dispatcher = arguments.getRenderDispatcher();
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE",

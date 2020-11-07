@@ -248,7 +248,7 @@ public class EntityPlayerActionPack
 
     private void dropItemFromSlot(int slot, boolean dropAll)
     {
-        PlayerInventory inv = player.method_31548(); // getInventory;
+        PlayerInventory inv = player.getInventory(); // getInventory;
         if (!inv.getStack(slot).isEmpty())
             player.dropItem(inv.removeStack(slot,
                     dropAll ? inv.getStack(slot).getCount() : 1
@@ -257,7 +257,7 @@ public class EntityPlayerActionPack
 
     public void drop(int selectedSlot, boolean dropAll)
     {
-        PlayerInventory inv = player.method_31548(); // getInventory;
+        PlayerInventory inv = player.getInventory(); // getInventory;
         if (selectedSlot == -2) // all
         {
             for (int i = inv.size(); i >= 0; i--)

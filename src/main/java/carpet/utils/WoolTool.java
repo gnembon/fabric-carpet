@@ -3,7 +3,7 @@ package carpet.utils;
 import carpet.CarpetSettings;
 import carpet.helpers.HopperCounter;
 import net.minecraft.block.Material;
-import net.minecraft.block.MaterialColor;
+import net.minecraft.block.MapColor;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,12 +20,12 @@ import java.util.List;
 
 public class WoolTool
 {
-    private static final HashMap<MaterialColor,DyeColor> Material2Dye = new HashMap<>();
+    private static final HashMap<MapColor,DyeColor> Material2Dye = new HashMap<>();
     static
     {
         for (DyeColor color: DyeColor.values())
         {
-            Material2Dye.put(color.getMaterialColor(),color);
+            Material2Dye.put(color.getMapColor(),color);
         }
     }
 
@@ -98,6 +98,6 @@ public class WoolTool
         BlockState state = worldIn.getBlockState(pos);
         if (state.getMaterial() != Material.WOOL || !state.isSolidBlock(worldIn, pos)) //isSimpleFullBlock
             return null;
-        return Material2Dye.get(state.getTopMaterialColor(worldIn, pos));
+        return Material2Dye.get(state.getMapColor(worldIn, pos));
     }
 }

@@ -39,12 +39,12 @@ public class ServerWorld_scarpetEventMixin
 
     @Redirect(method = "addEntity", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/class_5579;method_31818(Lnet/minecraft/class_5568;)Z"
+            target = "Lnet/minecraft/class_5579;addEntity(Lnet/minecraft/class_5568;)Z"
     ))
     private boolean onEntityAddedToWorld(class_5579 class_5579, class_5568 arg)
     {
         Entity entity = (Entity)arg;
-        boolean success = class_5579.method_31818(entity);
+        boolean success = class_5579.addEntity(entity);
         if (success) {
             CarpetEventServer.Event event = ENTITY_LOAD.get(entity.getType());
             if (event != null) {

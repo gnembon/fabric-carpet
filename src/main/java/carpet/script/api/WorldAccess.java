@@ -956,7 +956,7 @@ public class WorldAccess {
 
         expression.addLazyFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        BlockInfo.mapColourName.get(s.getTopMaterialColor(((CarpetContext)c).s.getWorld(), p))));
+                        BlockInfo.mapColourName.get(s.getMapColor(((CarpetContext)c).s.getWorld(), p))));
 
         expression.addLazyFunction("property", -1, (c, t, lv) ->
         {
