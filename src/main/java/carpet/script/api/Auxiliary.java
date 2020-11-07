@@ -614,7 +614,7 @@ public class Auxiliary {
             return (cc, tt) -> retval;
         });
 
-        expression.addLazyFunction("plop", 4, (c, t, lv) ->{
+        expression.addLazyFunction("plop", -1, (c, t, lv) ->{
             BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
@@ -624,7 +624,6 @@ public class Auxiliary {
             {
                 Boolean res = FeatureGenerator.plop(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
 
-                //Boolean res = FeatureGenerator.spawn(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
                 if (res == null)
                     return;
                 if (what.equalsIgnoreCase("boulder"))  // there might be more of those
