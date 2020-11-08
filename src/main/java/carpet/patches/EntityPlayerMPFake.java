@@ -2,6 +2,7 @@ package carpet.patches;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
@@ -86,6 +87,11 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         isAShadow = shadow;
     }
 
+    @Override
+    protected void onEquipStack(ItemStack stack)
+    {
+        if (!isUsingItem()) super.onEquipStack(stack);
+    }
 
     @Override
     public void kill()
