@@ -76,15 +76,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         items = list;
     }
 
+    @Deprecated
     public static Value fromItemStack(ItemStack itemstack)
     {
-        if (itemstack == null || itemstack.isEmpty())
-            return Value.NULL;
-        return ListValue.of(
-                new StringValue(nameFromRegistryId(Registry.ITEM.getId(itemstack.getItem()))),
-                new NumericValue(itemstack.getCount()),
-                NBTSerializableValue.fromStack(itemstack)
-        );
+        return ValueConversions.of(itemstack);
     }
 
     public static Value fromTriple(double a, double b, double c)

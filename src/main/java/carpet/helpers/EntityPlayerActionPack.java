@@ -4,6 +4,7 @@ import carpet.fakes.ServerPlayerEntityInterface;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.passive.HorseBaseEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.vehicle.BoatEntity;
@@ -293,9 +294,9 @@ public class EntityPlayerActionPack
                             if (pos.getY() < player.server.getWorldHeight() - (side == Direction.UP ? 1 : 0) && world.canPlayerModifyAt(player, pos))
                             {
                                 ActionResult result = player.interactionManager.interactBlock(player, world, player.getStackInHand(hand), hand, blockHit);
-                                if (result == ActionResult.SUCCESS)
+                                if (result.isAccepted())
                                 {
-                                    player.swingHand(hand);
+                                    if (result.shouldSwingHand()) player.swingHand(hand);
                                     return true;
                                 }
                             }
@@ -306,18 +307,17 @@ public class EntityPlayerActionPack
                             player.updateLastActionTime();
                             EntityHitResult entityHit = (EntityHitResult) hit;
                             Entity entity = entityHit.getEntity();
+                            boolean handWasEmpty = player.getStackInHand(hand).isEmpty();
+                            boolean itemFrameEmpty = (entity instanceof ItemFrameEntity) && ((ItemFrameEntity) entity).getHeldItemStack().isEmpty();
                             Vec3d relativeHitPos = entityHit.getPos().subtract(entity.getX(), entity.getY(), entity.getZ());
-                            if (entity.interactAt(player, relativeHitPos, hand) == ActionResult.SUCCESS) return true;
-                            if (player.interact(entity, hand) == ActionResult.SUCCESS) return true;
+                            if (entity.interactAt(player, relativeHitPos, hand).isAccepted()) return true;
+                            // fix for SS itemframe always returns CONSUME even if no action is performed
+                            if (player.interact(entity, hand).isAccepted() && !(handWasEmpty && itemFrameEmpty)) return true;
                             break;
                         }
                     }
                     ItemStack handItem = player.getStackInHand(hand);
-                    ActionResult result =player.interactionManager.interactItem(player, player.getServerWorld(), handItem, hand);
-                    if (result == ActionResult.SUCCESS)
-                    {
-                        return true;
-                    }
+                    if (player.interactionManager.interactItem(player, player.getServerWorld(), handItem, hand).isAccepted()) return true;
                 }
                 return false;
             }

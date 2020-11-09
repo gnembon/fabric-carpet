@@ -5,12 +5,15 @@ import carpet.script.CarpetScriptHost;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import com.google.common.collect.Lists;
+import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -21,8 +24,11 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.advancement.Advancement;
+import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.AngleArgumentType;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.BlockStateArgument;
@@ -30,18 +36,43 @@ import net.minecraft.command.argument.BlockStateArgumentType;
 import net.minecraft.command.argument.ColorArgumentType;
 import net.minecraft.command.argument.ColumnPosArgumentType;
 import net.minecraft.command.argument.DimensionArgumentType;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.command.argument.EntitySummonArgumentType;
+import net.minecraft.command.argument.GameProfileArgumentType;
+import net.minecraft.command.argument.IdentifierArgumentType;
+import net.minecraft.command.argument.ItemEnchantmentArgumentType;
+import net.minecraft.command.argument.ItemStackArgumentType;
+import net.minecraft.command.argument.MessageArgumentType;
+import net.minecraft.command.argument.MobEffectArgumentType;
+import net.minecraft.command.argument.NbtCompoundTagArgumentType;
+import net.minecraft.command.argument.NbtPathArgumentType;
+import net.minecraft.command.argument.NbtTagArgumentType;
+import net.minecraft.command.argument.NumberRangeArgumentType;
+import net.minecraft.command.argument.ObjectiveArgumentType;
+import net.minecraft.command.argument.ObjectiveCriteriaArgumentType;
+import net.minecraft.command.argument.ParticleArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
+import net.minecraft.command.argument.ScoreHolderArgumentType;
+import net.minecraft.command.argument.ScoreboardSlotArgumentType;
 import net.minecraft.command.argument.SwizzleArgumentType;
 import net.minecraft.command.argument.TimeArgumentType;
+import net.minecraft.command.argument.UuidArgumentType;
+import net.minecraft.command.argument.Vec2ArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
+import net.minecraft.command.suggestion.SuggestionProviders;
 import net.minecraft.entity.Entity;
+import net.minecraft.predicate.NumberRange;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.server.command.BossBarCommand;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.registry.Registry;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -62,18 +93,17 @@ public abstract class CommandArgument
             // default
             new StringArgument(),
             // vanilla arguments as per https://minecraft.gamepedia.com/Argument_types
-            new VanillaUnconfigurableArgument( "bool",
-                    BoolArgumentType::bool, (c, p) -> new NumericValue(BoolArgumentType.getBool(c, p)), false
+            new VanillaUnconfigurableArgument( "bool", BoolArgumentType::bool,
+                    (c, p) -> new NumericValue(BoolArgumentType.getBool(c, p)), false
             ),
             new FloatArgument(),
             new IntArgument(),
             new WordArgument(), new GreedyStringArgument(),
-            new VanillaUnconfigurableArgument( "yaw",  // angle
-                    AngleArgumentType::angle, (c, p) -> new NumericValue(AngleArgumentType.getAngle(c, p)), true
+            new VanillaUnconfigurableArgument( "yaw", AngleArgumentType::angle,  // angle
+                    (c, p) -> new NumericValue(AngleArgumentType.getAngle(c, p)), true
             ),
             new BlockPosArgument(),
-            new VanillaUnconfigurableArgument( "block",
-                    BlockStateArgumentType::blockState,
+            new VanillaUnconfigurableArgument( "block", BlockStateArgumentType::blockState,
                     (c, p) -> {
                         BlockStateArgument result = BlockStateArgumentType.getBlockState(c, p);
                         return new BlockValue(result.getBlockState(), null, null, ((BlockStateArgumentInterface)result).getCMTag() );
@@ -81,42 +111,100 @@ public abstract class CommandArgument
                     false
             ),
             // block_predicate todo - not sure about the returned format. Needs to match block tags used in the API (future)
-            new VanillaUnconfigurableArgument("color",
-                    ColorArgumentType::color,
+            new VanillaUnconfigurableArgument("teamcolor", ColorArgumentType::color,
                     (c, p) -> {
                         Formatting format = ColorArgumentType.getColor(c, p);
-                        return ListValue.of(StringValue.of(format.getName()), new NumericValue(format.getColorValue()*256+255));
+                        return ListValue.of(StringValue.of(format.getName()), ValueConversions.ofRGB(format.getColorValue()));
                     },
                     false
             ),
-            new VanillaUnconfigurableArgument("columnpos",
-                    ColumnPosArgumentType::columnPos, (c, p) -> ValueConversions.of(ColumnPosArgumentType.getColumnPos(c, p)), false
+            new VanillaUnconfigurableArgument("columnpos", ColumnPosArgumentType::columnPos,
+                    (c, p) -> ValueConversions.of(ColumnPosArgumentType.getColumnPos(c, p)), false
             ),
             // component  // raw json
-            new VanillaUnconfigurableArgument("dimension",
-                    DimensionArgumentType::dimension, (c, p) -> ValueConversions.of(DimensionArgumentType.getDimensionArgument(c, p)), false
+            new VanillaUnconfigurableArgument("dimension", DimensionArgumentType::dimension,
+                    (c, p) -> ValueConversions.of(DimensionArgumentType.getDimensionArgument(c, p)), false
             ),
             new EntityArgument(),
-            // entity
-            // anchor // entity_anchor
-            // entitytype       // entity_summon
-            // floatrange
+            new VanillaUnconfigurableArgument("anchor", EntityAnchorArgumentType::entityAnchor,
+                    (c, p) -> StringValue.of(EntityAnchorArgumentType.getEntityAnchor(c, p).name()), false
+            ),
+            new VanillaUnconfigurableArgument("entitytype", EntitySummonArgumentType::entitySummon,
+                    (c, p) -> ValueConversions.of(EntitySummonArgumentType.getEntitySummon(c, p)), SuggestionProviders.SUMMONABLE_ENTITIES
+            ),
+            new VanillaUnconfigurableArgument("floatrange", NumberRangeArgumentType::method_30918,
+                    (c, p) -> ValueConversions.of(c.getArgument(p, NumberRange.FloatRange.class)), true
+            ),
             // function??
-            // player  // game_profile
-            // intrange
-            // enchantment
+
+            new PlayerProfileArgument(),
+            new VanillaUnconfigurableArgument("intrange", NumberRangeArgumentType::numberRange,
+                    (c, p) -> ValueConversions.of(NumberRangeArgumentType.IntRangeArgumentType.getRangeArgument(c, p)), true
+            ),
+            new VanillaUnconfigurableArgument("enchantment", ItemEnchantmentArgumentType::itemEnchantment,
+                    (c, p) -> ValueConversions.of(Registry.ENCHANTMENT.getId(ItemEnchantmentArgumentType.getEnchantment(c, p))), false
+            ),
             // item_predicate  ?? //same as item but accepts tags, not sure right now
             // slot // item_slot
-            // item  // no tags item_stack
-            // message ?? isn't it just because you can't do shit with texts in vanilla?
-            // effect // mob_effect
-            // tag // for nbt_compound_tag and nbt_tag
-            // nbtpath
-            // objective
-            // criterion
+            new VanillaUnconfigurableArgument("item", ItemStackArgumentType::itemStack,
+                    (c, p) -> ValueConversions.of(ItemStackArgumentType.getItemStackArgument(c, p).createStack(1, false)), false
+            ),
+            new VanillaUnconfigurableArgument("message", MessageArgumentType::message,
+                    (c, p) -> new FormattedTextValue(MessageArgumentType.getMessage(c, p)), true
+            ),
+            new VanillaUnconfigurableArgument("effect", MobEffectArgumentType::mobEffect,
+                    (c, p) -> ValueConversions.of(Registry.STATUS_EFFECT.getId(MobEffectArgumentType.getMobEffect(c, p))),false
+            ),
+            new TagArgument(), // for nbt_compound_tag and nbt_tag
+            new VanillaUnconfigurableArgument("path", NbtPathArgumentType::nbtPath,
+                    (c, p) -> StringValue.of(NbtPathArgumentType.getNbtPath(c, p).toString()), true
+            ),
+            new VanillaUnconfigurableArgument("objective", ObjectiveArgumentType::objective,
+                    (c, p) -> ValueConversions.of(ObjectiveArgumentType.getObjective(c, p)), false
+            ),
+            new VanillaUnconfigurableArgument("criterion", ObjectiveCriteriaArgumentType::objectiveCriteria,
+                    (c, p) -> StringValue.of(ObjectiveCriteriaArgumentType.getCriteria(c, p).getName()), false
+            ),
             // operation // not sure if we need it, you have scarpet for that
-            // particle
-            // resource ??
+            new VanillaUnconfigurableArgument("particle", ParticleArgumentType::particle,
+                    (c, p) -> ValueConversions.of(ParticleArgumentType.getParticle(c, p)), false
+            ),
+
+            // resource / identifier section
+
+            new VanillaUnconfigurableArgument("recipe", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getRecipeArgument(c, p).getId()), SuggestionProviders.ALL_RECIPES
+            ),
+            new VanillaUnconfigurableArgument("advancement", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getAdvancementArgument(c, p).getId()), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getAdvancementLoader().getAdvancements().stream().map(Advancement::getId), builder)
+            ),
+            new VanillaUnconfigurableArgument("lootcondition", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getId(IdentifierArgumentType.method_23727(c, p).getType())), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getPredicateManager().getIds(), builder)
+            ),
+            new VanillaUnconfigurableArgument("loottable", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getLootManager().getTableIds(), builder)
+            ),
+            new VanillaUnconfigurableArgument("attribute", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getId(IdentifierArgumentType.method_27575(c, p))), (ctx, builder) -> CommandSource.suggestIdentifiers(Registry.ATTRIBUTE.getIds(), builder)
+            ),
+            new VanillaUnconfigurableArgument("boss", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), BossBarCommand.SUGGESTION_PROVIDER
+            ),
+            new VanillaUnconfigurableArgument("biome", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), SuggestionProviders.ALL_BIOMES
+            ),
+            new VanillaUnconfigurableArgument("sound", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), SuggestionProviders.AVAILABLE_SOUNDS
+            ),
+            new VanillaUnconfigurableArgument("storekey", IdentifierArgumentType::identifier,
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getDataCommandStorage().getIds(), builder)
+            ),
+
+            // default
+            new CustomIdentifierArgument(),
+
+            // end resource / identifier // I would be great if you guys have suggestions for that.
+
             new VanillaUnconfigurableArgument("rotation",
                     RotationArgumentType::rotation,
                     (c, p) -> {
@@ -125,19 +213,28 @@ public abstract class CommandArgument
                     },
                     true
             ),
-            // scoreholder
-            // scoreboardslot
-            new VanillaUnconfigurableArgument("swizzle",
-                    SwizzleArgumentType::swizzle, (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())), true
+            new ScoreholderArgument(),
+            new VanillaUnconfigurableArgument("scoreboardslot", ScoreboardSlotArgumentType::scoreboardSlot,
+                    (c, p) -> StringValue.of(Scoreboard.getDisplaySlotName(ScoreboardSlotArgumentType.getScoreboardSlot(c, p))), false
+            ),
+            new VanillaUnconfigurableArgument("swizzle", SwizzleArgumentType::swizzle,
+                    (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())), true
             ),
             // team
-            new VanillaUnconfigurableArgument("time",
-                    TimeArgumentType::time, (c, p) -> new NumericValue(IntegerArgumentType.getInteger(c, p)), false
+            new VanillaUnconfigurableArgument("time", TimeArgumentType::time,
+                    (c, p) -> new NumericValue(IntegerArgumentType.getInteger(c, p)), false
             ),
-            // uuid
-            // columnlocation // vec2
+            new VanillaUnconfigurableArgument("uuid", UuidArgumentType::uuid,
+                    (c, p) -> StringValue.of(UuidArgumentType.getUuid(c, p).toString()), false
+            ),
+            new VanillaUnconfigurableArgument("surfacelocation", Vec2ArgumentType::vec2, // vec2
+                    (c, p) -> {
+                        Vec2f res = Vec2ArgumentType.getVec2(c, p);
+                        return ListValue.of(NumericValue.of(res.x), NumericValue.of(res.y));
+                    },
+                    false
+            ),
             new LocationArgument()
-            // location // vec3
     );
 
     public static final Map<String, CommandArgument> builtIns = baseTypes.stream().collect(Collectors.toMap(CommandArgument::getTypeSuffix, a -> a));
@@ -153,32 +250,29 @@ public abstract class CommandArgument
         return builtIns.getOrDefault(suffix, DEFAULT);
     }
 
-    public static RequiredArgumentBuilder<ServerCommandSource, ?> argumentNode(String param, CarpetScriptHost host)
+    public static RequiredArgumentBuilder<ServerCommandSource, ?> argumentNode(String param, CarpetScriptHost host) throws CommandSyntaxException
     {
         CommandArgument arg = getTypeForArgument(param, host);
+        if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType()).suggests(arg.suggestionProvider);
         return arg.needsMatching? argument(param, arg.getArgumentType()).suggests(arg::suggest) : argument(param, arg.getArgumentType());
     }
 
     protected String suffix;
     protected Collection<String> examples;
     protected boolean needsMatching = false;
+    protected SuggestionProvider<ServerCommandSource> suggestionProvider;
 
     protected CommandArgument(
             String suffix,
             Collection<String> examples,
-            boolean needsMatching)
+            boolean suggestFromExamples)
     {
         this.suffix = suffix;
         this.examples = examples;
-        this.needsMatching = needsMatching;
+        this.needsMatching = suggestFromExamples;
     }
 
-    public static ArgumentType<?> getArgument(String param, CarpetScriptHost host)
-    {
-        return getTypeForArgument(param, host).getArgumentType();
-    }
-
-    protected abstract ArgumentType<?> getArgumentType();
+    protected abstract ArgumentType<?> getArgumentType() throws CommandSyntaxException;
 
 
     public static Value getValue(CommandContext<ServerCommandSource> context, String param, CarpetScriptHost host) throws CommandSyntaxException
@@ -422,15 +516,11 @@ public abstract class CommandArgument
         @Override
         protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
         {
-            List<? extends Entity> founds = (List)EntityArgumentType.getOptionalEntities(context, param);
-            if (single)
-            {
-                return founds.isEmpty()?Value.NULL:new EntityValue(founds.get(0));
-            }
-            else
-            {
-                return ListValue.wrap(founds.stream().map(EntityValue::new).collect(Collectors.toList()));
-            }
+            Collection<? extends Entity> founds = EntityArgumentType.getOptionalEntities(context, param);
+            if (!single) return ListValue.wrap(founds.stream().map(EntityValue::new).collect(Collectors.toList()));
+            if (founds.size() == 0) return Value.NULL;
+            if (founds.size() == 1) return new EntityValue(founds.iterator().next());
+            throw new SimpleCommandExceptionType(new LiteralText("Multiple entities returned while only one was requested")).create();
         }
 
         @Override
@@ -445,6 +535,169 @@ public abstract class CommandArgument
         protected Supplier<CommandArgument> builder()
         {
             return EntityArgument::new;
+        }
+    }
+
+    private static class PlayerProfileArgument extends CommandArgument
+    {
+        boolean single;
+
+        private PlayerProfileArgument()
+        {
+            super("player", GameProfileArgumentType.gameProfile().getExamples(), false);
+            single = false;
+        }
+        @Override
+        protected ArgumentType<?> getArgumentType()
+        {
+            return GameProfileArgumentType.gameProfile();
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, param);
+            if (!single) return ListValue.wrap(profiles.stream().map(p -> StringValue.of(p.getName())).collect(Collectors.toList()));
+            int size = profiles.size();
+            if (size == 0) return Value.NULL;
+            if (size == 1) return StringValue.of(profiles.iterator().next().getName());
+            throw new SimpleCommandExceptionType(new LiteralText("Multiple game profiles returned while only one was requested")).create();
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config)
+        {
+            super.configure(config);
+            single = config.getOrDefault("single", Value.FALSE).getBoolean();
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return PlayerProfileArgument::new;
+        }
+    }
+
+    private static class ScoreholderArgument extends CommandArgument
+    {
+        boolean single;
+
+        private ScoreholderArgument()
+        {
+            super("scoreholder", ScoreHolderArgumentType.scoreHolder().getExamples(), false);
+            single = false;
+            suggestionProvider = ScoreHolderArgumentType.SUGGESTION_PROVIDER;
+        }
+        @Override
+        protected ArgumentType<?> getArgumentType()
+        {
+            return single?ScoreHolderArgumentType.scoreHolder():ScoreHolderArgumentType.scoreHolders();
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            Collection<String> holders = ScoreHolderArgumentType.getScoreHolders(context, param);
+            if (!single) return ListValue.wrap(holders.stream().map(StringValue::of).collect(Collectors.toList()));
+            int size = holders.size();
+            if (size == 0) return Value.NULL;
+            if (size == 1) return StringValue.of(holders.iterator().next());
+            throw new SimpleCommandExceptionType(new LiteralText("Multiple score holders returned while only one was requested")).create();
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config)
+        {
+            super.configure(config);
+            single = config.getOrDefault("single", Value.FALSE).getBoolean();
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return PlayerProfileArgument::new;
+        }
+    }
+
+    private static class TagArgument extends CommandArgument
+    {
+        boolean mapRequired;
+        private TagArgument()
+        {
+            super("tag", NbtCompoundTagArgumentType.nbtCompound().getExamples(), false);
+            mapRequired = true;
+        }
+        @Override
+        protected ArgumentType<?> getArgumentType()
+        {
+            return mapRequired?NbtCompoundTagArgumentType.nbtCompound(): NbtTagArgumentType.nbtTag();
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            if (mapRequired)
+                return new NBTSerializableValue(NbtCompoundTagArgumentType.getCompoundTag(context, param));
+            else
+                return new NBTSerializableValue(NbtTagArgumentType.getTag(context, param));
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config)
+        {
+            super.configure(config);
+            mapRequired = !config.getOrDefault("allow_element", Value.FALSE).getBoolean();
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return TagArgument::new;
+        }
+    }
+
+    private static class CustomIdentifierArgument extends CommandArgument
+    {
+        Set<Identifier> validOptions = Collections.emptySet();
+
+        protected CustomIdentifierArgument()
+        {
+            super("identifier", Collections.emptyList(), true);
+        }
+
+        @Override
+        protected ArgumentType<?> getArgumentType()
+        {
+            return IdentifierArgumentType.identifier();
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            Identifier choseValue = IdentifierArgumentType.getIdentifier(context, param);
+            if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
+            {
+                throw new SimpleCommandExceptionType(new LiteralText("Incorrect value for "+param+": "+choseValue)).create();
+            }
+            return ValueConversions.of(choseValue);
+        }
+
+        @Override
+        protected Supplier<CommandArgument> builder()
+        {
+            return CustomIdentifierArgument::new;
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config)
+        {
+            super.configure(config);
+            if (config.containsKey("options"))
+            {
+                Value optionsValue = config.get("options");
+                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom sting type requires options passed as a list");
+                validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> new Identifier(v.getString())).collect(Collectors.toSet());
+            }
         }
     }
 
@@ -556,26 +809,53 @@ public abstract class CommandArgument
         Value apply(CommandContext<ServerCommandSource> ctx, String param) throws CommandSyntaxException;
     }
 
+    @FunctionalInterface
+    private interface ArgumentProvider
+    {
+        ArgumentType<?> get() throws CommandSyntaxException;
+    }
+
     public static class VanillaUnconfigurableArgument extends  CommandArgument
     {
-        private Supplier<ArgumentType<?>> argumentTypeSupplier;
-        private ValueExtractor valueExtractor;
-        private boolean providesExamples;
+        private final ArgumentProvider argumentTypeSupplier;
+        private final ValueExtractor valueExtractor;
+        private final boolean providesExamples;
         public VanillaUnconfigurableArgument(
                 String suffix,
-                Supplier<ArgumentType<?>> argumentTypeSupplier,
+                ArgumentProvider argumentTypeSupplier,
                 ValueExtractor  valueExtractor,
-                boolean providesExamples
+                boolean suggestFromExamples
                 )
         {
-            super(suffix, argumentTypeSupplier.get().getExamples(), providesExamples);
-            this.providesExamples = providesExamples;
+            super(suffix, null, suggestFromExamples);
+            try
+            {
+                this.examples = argumentTypeSupplier.get().getExamples();
+            }
+            catch (CommandSyntaxException e)
+            {
+                this.examples = Collections.emptyList();
+            }
+            this.providesExamples = suggestFromExamples;
+            this.argumentTypeSupplier = argumentTypeSupplier;
+            this.valueExtractor = valueExtractor;
+        }
+        public VanillaUnconfigurableArgument(
+                String suffix,
+                ArgumentProvider argumentTypeSupplier,
+                ValueExtractor  valueExtractor,
+                SuggestionProvider<ServerCommandSource> suggester
+        )
+        {
+            super(suffix, Collections.emptyList(), false);
+            this.suggestionProvider = suggester;
+            this.providesExamples = false;
             this.argumentTypeSupplier = argumentTypeSupplier;
             this.valueExtractor = valueExtractor;
         }
 
         @Override
-        protected ArgumentType<?> getArgumentType()
+        protected ArgumentType<?> getArgumentType() throws CommandSyntaxException
         {
             return argumentTypeSupplier.get();
         }

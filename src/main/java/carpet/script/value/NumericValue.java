@@ -37,6 +37,13 @@ public class NumericValue extends Value
         return ((NumericValue) v1);
     }
 
+    public static <T extends Number> Value of(T value)
+    {
+        if (value == null) return Value.NULL;
+        if (value.doubleValue() == value.longValue()) return new NumericValue(value.longValue());
+        return new NumericValue(value.doubleValue());
+    }
+
 
     @Override
     public String getString()
