@@ -2,7 +2,7 @@ package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
 import carpet.utils.BlockInfo;
-import net.minecraft.block.MaterialColor;
+import net.minecraft.block.MapColor;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.brain.LookTarget;
 import net.minecraft.entity.ai.brain.WalkTarget;
@@ -64,7 +64,7 @@ public class ValueConversions
         return of(world.getRegistryKey().getValue());
     }
 
-    public static Value of(MaterialColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.color));}
+    public static Value of(MapColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.color));}
 
     public static <T extends Number> Value of(NumberRange<T> range) { return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));}
 
