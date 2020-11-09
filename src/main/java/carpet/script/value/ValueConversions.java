@@ -1,12 +1,19 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
+import carpet.utils.BlockInfo;
+import net.minecraft.block.MaterialColor;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.brain.LookTarget;
 import net.minecraft.entity.ai.brain.WalkTarget;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.ai.pathing.PathNode;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.predicate.NumberRange;
+import net.minecraft.scoreboard.ScoreboardCriterion;
+import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 
@@ -56,6 +63,48 @@ public class ValueConversions
     {
         return of(world.getRegistryKey().getValue());
     }
+
+    public static Value of(MaterialColor color) {return ListValue.of(StringValue.of(BlockInfo.mapColourName.get(color)), ofRGB(color.color));}
+
+    public static <T extends Number> Value of(NumberRange<T> range) { return ListValue.of(NumericValue.of(range.getMin()), NumericValue.of(range.getMax()));}
+
+    public static Value of(ItemStack stack)
+    {
+        if (stack == null || stack.isEmpty())
+            return Value.NULL;
+        return ListValue.of(
+                of(Registry.ITEM.getId(stack.getItem())),
+                new NumericValue(stack.getCount()),
+                NBTSerializableValue.fromStack(stack)
+        );
+    }
+
+    public static Value of(ScoreboardObjective objective)
+    {
+        return ListValue.of(
+                StringValue.of(objective.getName()),
+                StringValue.of(objective.getCriterion().getName())
+                );
+    }
+
+
+    public static Value of(ScoreboardCriterion criteria)
+    {
+        return ListValue.of(
+                StringValue.of(criteria.getName()),
+                new NumericValue(criteria.isReadOnly())
+        );
+    }
+
+
+    public static Value of(ParticleEffect particle)
+    {
+        String repr = particle.asString();
+        if (repr.startsWith("minecraft:")) return StringValue.of(repr.substring(10));
+        return StringValue.of(repr);
+    }
+
+    public static Value ofRGB(int value) {return new NumericValue(value*256+255 );}
 
     public static World dimFromValue(Value dimensionValue, MinecraftServer server)
     {

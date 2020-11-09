@@ -239,30 +239,35 @@ public class CarpetScriptServer
             return false;
         }
         //addEvents(source, name);
-        addLegacyCommand(source, name, reload, !isRuleApp); // this needs to be moved to config reader, only supporting legacy command here
+        if (!addLegacyCommand(source, name, reload, !isRuleApp)) // this needs to be moved to config reader, only supporting legacy command here
+        {
+            removeScriptHost(source, name, false, false);
+            Messenger.m(source, "r Failed to build command system for "+name+" thus failed to load the app");
+            return false;
+        }
         long end = System.nanoTime();
         CarpetSettings.LOG.info("App "+name+" loaded in "+(end-start)/1000000+" ms");
         return true;
     }
 
-    private void addLegacyCommand(ServerCommandSource source, String hostName, boolean isReload, boolean notifySource)
+    private boolean addLegacyCommand(ServerCommandSource source, String hostName, boolean isReload, boolean notifySource)
     {
         CarpetScriptHost host = modules.get(hostName);
         String loaded = isReload?"reloaded":"loaded";
         if (host == null)
         {
-            return;
+            return true;
         }
         if (host.getFunction("__command") == null)
         {
             if (notifySource) Messenger.m(source, "gi "+hostName+" app "+loaded+".");
-            return;
+            return true;
         }
         if (holyMoly.contains(hostName))
         {
             Messenger.m(source, "gi "+hostName+" app "+loaded+" with no command.");
             Messenger.m(source, "gi Tried to mask vanilla command.");
-            return;
+            return true;
         }
 
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
@@ -279,7 +284,14 @@ public class CarpetScriptServer
         {
             if (host.appConfig.containsKey(StringValue.of("legacy_command_type_support"))) // temporary stuff for testing
             {
-                command = getFancyCommand(command, host, host.getFunction(function));
+                try
+                {
+                    command = getFancyCommand(command, host, host.getFunction(function));
+                }
+                catch (CommandSyntaxException e)
+                {
+                    return false;
+                }
             }
             else
             {
@@ -304,6 +316,7 @@ public class CarpetScriptServer
         if (notifySource) Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
         server.getCommandManager().getDispatcher().register(command);
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+        return true;
     }
 
     private int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionValue function, List<String> paramNames) throws CommandSyntaxException
@@ -322,7 +335,7 @@ public class CarpetScriptServer
         return (int) response.readInteger();
     }
 
-    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, CarpetScriptHost host, FunctionValue function )
+    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, CarpetScriptHost host, FunctionValue function ) throws CommandSyntaxException
     {
         List<String> argNames = function.getArguments();
         String hostName = host.getName();
