@@ -22,4 +22,23 @@ public class WorldChunk_fillUpdatesMixin
         if (!CarpetSettings.impendingFillSkipUpdates)
             blockState.onBlockAdded(world_1, blockPos_1, blockState_1, boolean_1);
     }
+
+    @Redirect(method = "setBlockState", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/block/BlockState;onStateReplaced(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Z)V"
+    ))
+    private void onRemovedBlock(BlockState blockState, World world, BlockPos pos, BlockState state, boolean moved)
+    {
+        if (CarpetSettings.impendingFillSkipUpdates) // doing due dilligence from AbstractBlock onStateReplaced
+        {
+            if (blockState.getBlock().hasBlockEntity() && !blockState.isOf(state.getBlock()))
+            {
+                world.removeBlockEntity(pos);
+            }
+        }
+        else
+        {
+            blockState.onStateReplaced(world, pos, state, moved);
+        }
+    }
 }
