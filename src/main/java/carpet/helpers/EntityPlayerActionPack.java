@@ -45,6 +45,8 @@ public class EntityPlayerActionPack
     private float forward;
     private float strafing;
 
+    private int itemUseCooldown;
+
     public EntityPlayerActionPack(ServerPlayerEntity playerIn)
     {
         player = playerIn;
@@ -62,6 +64,8 @@ public class EntityPlayerActionPack
         sprinting = other.sprinting;
         forward = other.forward;
         strafing = other.strafing;
+
+        itemUseCooldown = other.itemUseCooldown;
     }
 
     public EntityPlayerActionPack start(ActionType type, Action action)
@@ -279,6 +283,12 @@ public class EntityPlayerActionPack
             @Override
             boolean execute(ServerPlayerEntity player, Action action)
             {
+                EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
+                if (ap.itemUseCooldown > 0)
+                {
+                    ap.itemUseCooldown--;
+                    return true;
+                }
                 HitResult hit = getTarget(player);
                 for (Hand hand : Hand.values())
                 {
@@ -297,6 +307,7 @@ public class EntityPlayerActionPack
                                 if (result.isAccepted())
                                 {
                                     if (result.shouldSwingHand()) player.swingHand(hand);
+                                    ap.itemUseCooldown = 3;
                                     return true;
                                 }
                             }
@@ -310,14 +321,26 @@ public class EntityPlayerActionPack
                             boolean handWasEmpty = player.getStackInHand(hand).isEmpty();
                             boolean itemFrameEmpty = (entity instanceof ItemFrameEntity) && ((ItemFrameEntity) entity).getHeldItemStack().isEmpty();
                             Vec3d relativeHitPos = entityHit.getPos().subtract(entity.getX(), entity.getY(), entity.getZ());
-                            if (entity.interactAt(player, relativeHitPos, hand).isAccepted()) return true;
+                            if (entity.interactAt(player, relativeHitPos, hand).isAccepted())
+                            {
+                                ap.itemUseCooldown = 3;
+                                return true;
+                            }
                             // fix for SS itemframe always returns CONSUME even if no action is performed
-                            if (player.interact(entity, hand).isAccepted() && !(handWasEmpty && itemFrameEmpty)) return true;
+                            if (player.interact(entity, hand).isAccepted() && !(handWasEmpty && itemFrameEmpty))
+                            {
+                                ap.itemUseCooldown = 3;
+                                return true;
+                            }
                             break;
                         }
                     }
                     ItemStack handItem = player.getStackInHand(hand);
-                    if (player.interactionManager.interactItem(player, player.getServerWorld(), handItem, hand).isAccepted()) return true;
+                    if (player.interactionManager.interactItem(player, player.getServerWorld(), handItem, hand).isAccepted())
+                    {
+                        ap.itemUseCooldown = 3;
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -325,6 +348,8 @@ public class EntityPlayerActionPack
             @Override
             void inactiveTick(ServerPlayerEntity player, Action action)
             {
+                EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
+                ap.itemUseCooldown = 0;
                 player.stopUsingItem();
             }
         },
@@ -499,40 +524,52 @@ public class EntityPlayerActionPack
         public final int offset;
         private int count;
         private int next;
+        private final boolean isContinuous;
 
-        private Action(int limit, int interval, int offset)
+        private Action(int limit, int interval, int offset, boolean continuous)
         {
             this.limit = limit;
             this.interval = interval;
             this.offset = offset;
             next = interval + offset;
+            isContinuous = continuous;
         }
 
         public static Action once()
         {
-            return new Action(1, 1, 0);
+            return new Action(1, 1, 0, false);
         }
 
         public static Action continuous()
         {
-            return new Action(-1, 1, 0);
+            return new Action(-1, 1, 0, true);
         }
 
         public static Action interval(int interval)
         {
-            return new Action(-1, interval, 0);
+            return new Action(-1, interval, 0, false);
         }
 
         public static Action interval(int interval, int offset)
         {
-            return new Action(-1, interval, offset);
+            return new Action(-1, interval, offset, false);
         }
 
         Boolean tick(EntityPlayerActionPack actionPack, ActionType type)
         {
             next--;
             Boolean cancel = null;
-            if (next <= 0) {
+            if (next <= 0)
+            {
+                if (interval == 1 && !isContinuous)
+                {
+                    // need to allow entity to tick, otherwise won't have effect (bow)
+                    // actions are 20 tps, so need to clear status mid tick, allowing entities process it till next time
+                    if (!type.preventSpectator || !actionPack.player.isSpectator())
+                    {
+                        type.inactiveTick(actionPack.player, this);
+                    }
+                }
 
                 if (!type.preventSpectator || !actionPack.player.isSpectator())
                 {
