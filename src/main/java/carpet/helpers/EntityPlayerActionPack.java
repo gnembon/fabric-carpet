@@ -289,6 +289,10 @@ public class EntityPlayerActionPack
                     ap.itemUseCooldown--;
                     return true;
                 }
+                if (player.isUsingItem())
+                {
+                    return true;
+                }
                 HitResult hit = getTarget(player);
                 for (Hand hand : Hand.values())
                 {
