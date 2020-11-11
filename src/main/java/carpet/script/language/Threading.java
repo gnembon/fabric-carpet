@@ -1,6 +1,7 @@
 package carpet.script.language;
 
 import carpet.script.Expression;
+import carpet.script.LazyValue;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
@@ -17,7 +18,7 @@ public class Threading
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
+            FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
             ThreadValue thread = new ThreadValue(Value.NULL, functionArgument.function, expr, tok, c, FunctionValue.resolveArgs(functionArgument.args, c, t));
             Thread.yield();
             return (cc, tt) -> thread;
@@ -28,7 +29,7 @@ public class Threading
             if (lv.size() < 2)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
             Value queue = lv.get(0).evalValue(c);
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
+            FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
             ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, FunctionValue.resolveArgs(functionArgument.args, c, t));
             Thread.yield();
             return (cc, tt) -> thread;

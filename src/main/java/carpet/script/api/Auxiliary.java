@@ -642,12 +642,12 @@ public class Auxiliary {
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
+            FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
 
             CarpetServer.scriptServer.events.scheduleCall(
                     (CarpetContext) c,
                     functionArgument.function,
-                    functionArgument.resolveArgs(c, t),
+                    FunctionValue.resolveArgs(functionArgument.args, c, t),
                     delay
             );
             return (c_, t_) -> Value.TRUE;
@@ -853,7 +853,7 @@ public class Auxiliary {
             if (lv.size() < 2)
                 throw new InternalExpressionException("'handle_event' requires at least two arguments, event name, and a callback");
             String event = lv.get(0).evalValue(c).getString();
-            FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
+            FunctionArgument<LazyValue> callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetScriptHost host = ((CarpetScriptHost)c.host);
             Value success;
             if (callback.function == null)

@@ -276,7 +276,7 @@ public class Entities {
                     : Collections.singletonList(entityValue.getString());
             Set<EntityType<? extends Entity>> types = new HashSet<>();
             descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s).typeList));
-            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
+            FunctionArgument<LazyValue> funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
             if (funArg.function == null)
             {
@@ -300,7 +300,7 @@ public class Entities {
                 throw new InternalExpressionException("First argument to entity_event should be an entity");
             String what = lv.get(1).evalValue(c).getString();
 
-            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, false);
+            FunctionArgument<LazyValue> funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, false);
 
             ((EntityValue) v).setEvent((CarpetContext)c, what, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t));
 

@@ -2,21 +2,23 @@ package carpet.script.argument;
 
 import carpet.script.Context;
 import carpet.script.LazyValue;
+import carpet.script.ScriptHost;
 import carpet.script.bundled.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class FunctionArgument extends Argument
+public class FunctionArgument<T> extends Argument
 {
     public FunctionValue function;
-    public List<LazyValue> args;
+    public List<T> args;
 
-    private FunctionArgument(FunctionValue function, int offset, List<LazyValue> args)
+    private FunctionArgument(FunctionValue function, int offset, List<T> args)
     {
         super(offset);
         this.function = function;
@@ -34,7 +36,7 @@ public class FunctionArgument extends Argument
      *                  if the number of supplied arguments is right
      * @return argument data
      */
-    public static FunctionArgument findIn(
+    public static FunctionArgument<LazyValue> findIn(
             Context c,
             Module module,
             List<LazyValue> params,
@@ -45,7 +47,7 @@ public class FunctionArgument extends Argument
         Value functionValue = params.get(offset).evalValue(c);
         if (functionValue.isNull())
         {
-            if (allowNone) return new FunctionArgument(null, offset+1, Collections.emptyList());
+            if (allowNone) return new FunctionArgument<>(null, offset+1, Collections.emptyList());
             throw new InternalExpressionException("function argument cannot be null");
         }
         if (!(functionValue instanceof FunctionValue))
@@ -65,13 +67,29 @@ public class FunctionArgument extends Argument
         }
         List<LazyValue> lvargs = new ArrayList<>();
         for (int i = offset+1, mx = params.size(); i < mx; i++) lvargs.add(params.get(i));
-        return new FunctionArgument(fun, offset+1+argsize, lvargs);
+        return new FunctionArgument<>(fun, offset + 1 + argsize, lvargs);
     }
 
-    public List<Value> resolveArgs(Context context, Integer type)
+    public static FunctionArgument<Value> fromCommandSpec(ScriptHost host, Value funSpec)
     {
-        List<Value> res = new ArrayList<>(args.size());
-        for (LazyValue arg : args) res.add(arg.evalValue(context, type));
-        return res;
+        FunctionValue function;
+        List<Value> args = Collections.emptyList();
+        if (!(funSpec instanceof ListValue))
+            funSpec = ListValue.of(funSpec);
+        List<Value> params = ((ListValue) funSpec).getItems();
+        if (params.isEmpty()) throw new InternalExpressionException("Function has empty spec");
+        Value first = params.get(0);
+        if (first instanceof FunctionValue)
+        {
+            function = (FunctionValue)first;
+        }
+        else
+        {
+            String name = funSpec.getString();
+            function = host.getAssertFunction(host.main, name);
+        }
+        if (params.size() > 1) args = params.subList(1,params.size());
+
+        return new FunctionArgument<>(function, 0, args);
     }
 }
