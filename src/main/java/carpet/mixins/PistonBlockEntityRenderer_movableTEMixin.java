@@ -21,7 +21,7 @@ public abstract class PistonBlockEntityRenderer_movableTEMixin implements BlockE
 {
     BlockEntityRenderDispatcher dispatcher;
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInitCM(BlockEntityRendererFactory.Arguments arguments, CallbackInfo ci)
+    private void onInitCM(BlockEntityRendererFactory.Context arguments, CallbackInfo ci)
     {
         dispatcher = arguments.getRenderDispatcher();
     }

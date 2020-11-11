@@ -72,15 +72,15 @@ public class BlockInfo
         put(BlockSoundGroup.CHAIN, "chain");
         put(BlockSoundGroup.NETHER_GOLD_ORE, "nether_gold_ore");
         put(BlockSoundGroup.GILDED_BLACKSTONE, "gilded_blackstone");
-        put(BlockSoundGroup.field_27196, "candle");
-        put(BlockSoundGroup.field_27197, "amethyst");
-        put(BlockSoundGroup.field_27198, "amethyst_cluster");
-        put(BlockSoundGroup.field_27199, "small_amethyst_bud");
-        put(BlockSoundGroup.field_27200, "large_amethyst_bud");
-        put(BlockSoundGroup.field_27201, "medium_amethyst_bud");
-        put(BlockSoundGroup.field_27202, "tuff");
-        put(BlockSoundGroup.field_27203, "calcite");
-        put(BlockSoundGroup.field_27204, "copper");
+        put(BlockSoundGroup.CANDLE, "candle");
+        put(BlockSoundGroup.AMETHYST_BLOCK, "amethyst");
+        put(BlockSoundGroup.AMETHYST_CLUSTER, "amethyst_cluster");
+        put(BlockSoundGroup.SMALL_AMETHYST_BUD, "small_amethyst_bud");
+        put(BlockSoundGroup.LARGE_AMETHYST_BUD, "large_amethyst_bud");
+        put(BlockSoundGroup.MEDIUM_AMETHYST_BUD, "medium_amethyst_bud");
+        put(BlockSoundGroup.TUFF, "tuff");
+        put(BlockSoundGroup.CALCITE, "calcite");
+        put(BlockSoundGroup.COPPER, "copper");
     }};
 
     public static final Map<MapColor, String> mapColourName = new HashMap<MapColor, String>() {{
