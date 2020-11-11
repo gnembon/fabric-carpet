@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.script.api.Auxiliary;
+import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.Module;
 import carpet.script.command.CommandArgument;
 import carpet.script.exception.CarpetExpressionException;
@@ -157,6 +158,26 @@ public class CarpetScriptHost extends ScriptHost
         catch (NullPointerException | InvalidCallbackException ignored)
         {
             return false;
+        }
+        return true;
+    }
+
+    private boolean readCommands()
+    {
+        Value commands = appConfig.get(StringValue.of("commands"));
+        if (commands == null) return true;
+        if (!(commands instanceof MapValue))
+            throw new InternalExpressionException("'commands' element in config should be a map");
+        for (Map.Entry<Value, Value> commandsData : ((MapValue)commands).getMap().entrySet())
+        {
+            String path = commandsData.getKey().getString();
+            FunctionArgument<Value> funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
+            //if (fun)
+
+            //... WIP
+
+            //Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
+            //appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData));
         }
         return true;
     }
