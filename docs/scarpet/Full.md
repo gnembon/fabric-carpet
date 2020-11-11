@@ -1270,16 +1270,22 @@ expr1 ; expr2 => expr2  // with expr1 as a side-effect
 
 ## Global variables
 
-All defined functions are compiled, stored persistently, and available globally - accessible to all other scripts. 
+All defined functions are compiled, stored persistently, and available globally within the app. 
 Functions can only be undefined via call to `undef('fun')`, which would erase global entry for function `fun`. 
-Since all variables have local scope inside each function, one way to share large objects is via global variables
+Since all variables have local scope inside each function, or each command script,
+ global variables is a way to share the global state. 
 
-Any variable that is used with a name that starts with `'global_'` will be stored and accessible globally, not, 
-inside current scope. It will also persist across scripts, so if a procedure needs to use its own construct, it 
-needs to define it, or initialize it explicitly, or undefine it via `undef`
+Any variable that is used with a name that starts with `'global_'` will be stored and accessible globally, not only 
+inside the current scope. If used directly in the chat window with the default app, it will persist across calls to `/script`
+function. Like functions, which are global, global variables can only be undefined via `undef`.
+
+For apps running in `'global'` scope - all players will share the same global variables and defined functions, 
+and with `player` scope, each player hosts its own state for each app, so function and global_variables are distinct.
+
 
 <pre>
-a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1,2,3,1,1]
+/script run a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1, 2, 3, 1, 1]
+/script run a(); a(); global_list  // => [1, 2, 3, 1, 1, 1, 1]
 </pre>
 
 ### `Operator ->`
@@ -3468,40 +3474,49 @@ inventory_drop(x,y,z, 0) => 64 // removed and spawned in the world a full stack 
 </pre>
 # Scarpet events system
 
-Provides the ability to execute specific function whenever an event occurs. The functions to be registered need to 
-conform with the arguments to the event specification. When loading module functions, each function that starts 
-with `__on_...` and has the required arguments, will be bound automatically. In case of player specific modules, 
-all player action events will be directed to the appropriate player space, and all tick events will be executed in 
-the global context, so its not a good idea to mix these two, so use either of these, or use commands to call tick 
-events directly, or handle player specific data inside an app.
+Scarpet provides the ability to execute specific function whenever an event occurs. The functions to be subscribed for an event 
+need to conform with the arguments to the event specification. There are several built-in events triggered when certain in-game
+events occur, but app designers can create their own events and trigger them across all loaded apps.
 
-Most events strive to report right before they take an effect in the game. The purpose of that is that this give a choice
+When loading the app, each function that starts 
+with `__on_<event>` and has the required arguments, will be bound automatically to a corresponding built-in event. '`undef`'ying
+of such function would result in unbinding the app from this event.
+
+In case of `player` scoped apps, 
+all player action events will be directed to the appropriate player hosts. Global events, like `'tick'`, cannot be handled
+in `'player'` scoped app.
+
+`'global'` scoped apps will receive both global and player built-in events.
+
+Most built-in events strive to report right before they take an effect in the game. The purpose of that is that this give a choice
 for the programmer to handle them right away (as it happens, potentially affect the course of action by changing the
 environment right before it), or decide to handle it after by scheduling another call for the end of the tick. Or both - 
 partially handle the event before it happens and handle the rest after. While in some cases this may lead to programmers
 confusion (like handling the respawn event still referring to player's original position and dimension), but gives much 
 more control over these events.
 
+Programmers can also define their own events and signal other events, including built-in events, and across all loaded apps.
+
 ## Event list
 
-Here is a list of events that are handled by scarpet. This list includes prefixes for function names, allowing apps
+Here is a list of events that are handled by default in scarpet. This list includes prefixes for function names, allowing apps
 to autoload them, but you can always add any function to any event (using `/script event` command)
 if it accepts required number of parameters.
 
-## Global events
+## Built-in global events
 
 Handling global events is only allowed in apps with `'global'` scope. With the default scope (`'player'`) you
-simply wouldn't know which player to hook up this event to. All other events can be handled by any app type.
+simply wouldn't know which player to hook up this event to.
 
 ### `__on_tick()`
 Event triggers at the beginning of each tick, located in the overworld. You can use `in_dimension()`
 to access other dimensions from there.
 
 ### `__on_tick_nether()` (Deprecated)
-Duplicate of `tick`, just automatically located in the nether.
+Duplicate of `tick`, just automatically located in the nether. Use `__on_tick() -> in_dimension('nether', ... ` instead.
 
 ### `__on_tick_ender()` (Deprecated)
-Duplicate of `tick`, just automatically located in the end.
+Duplicate of `tick`, just automatically located in the end. Use `__on_tick() -> in_dimension('end', ... ` instead.
 
 ### `__on_chunk_generated(x,z)`
 Called right after a chunk at a given coordinate is full generated. `x` and `z` correspond
@@ -3513,12 +3528,18 @@ Triggered right after a lightning strikes. Lightning entity as well as potential
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
 ### `__on_carpet_rule_changes(rule, new_value)`
-Triggered when a Carpet rule is changed. It includes extension rules, which will be namespaced as `namespace:rule`.
- 
-## Player events
+Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
+which will then be namespaced as `namespace:rule`.
 
-These are triggered with a player context. For apps with a 'player' scope, they trigger once for the appropriate
-player. In apps with `global` scope they trigger once for all players.
+### entity load event -> check `entity_load_handler()`
+
+These will trigger every time an entity of a given type is loaded into the game: spawned, added with a chunks, 
+spawned from commands, anything really. Check `entity_load_handler()` in the entity section for details.
+ 
+## Built-in player events
+
+These are triggered with a player context. For apps with a `'player'` scope, they trigger once for the appropriate
+player. In apps with `global` scope they trigger once as well as a global event.
 
 ### `__on_player_uses_item(player, item_tuple, hand)`
 Triggers with a right click action. Event is triggered right after a server receives the packet, before the 
@@ -3650,7 +3671,170 @@ Triggered when a player statistic changes. Doesn't notify on periodic an rhythmi
 `time_since_death`, `time_since_rest`, and `played_one_minute` since these are triggered every tick. Event 
 is handled before scoreboard values for these statistics are changed.
 
-### `/script event` command
+## Custom events and hacking into scarpet event system
+
+App programmers can define and trigger their own custom events. Unlike built-in events, all custom events pass a single value
+as an argument, but this doesn't mean that they cannot pass a complex list, map, or nbt tag as a message. Each event signal is
+either targetting all global context apps, if no target player has been identified, or only player scoped apps, if the target player
+is specified.
+
+Programmers can also handle built-in events the same way as custom events, as well as triggering built-in events, which I have
+have no idea why you would need that. The following snippets have the same effect:
+
+```
+__on_player_breaks_block(player, block) -> print(player+' broke '+block);
+```
+and
+```
+handle_event('player_breaks_block', _(player, block) -> print(player+' broke '+block));
+```
+
+as well as
+```
+undef('__on_player_breaks_block');
+```
+and
+```
+handle_event('player_breaks_block', null);
+```
+And `signal_event` can be used as a trigger, called twice for player based built-in events
+```
+signal_event('player_breaks_block', player, player, block); // to target all player scoped apps
+signal_event('player_breaks_block', null  , player, block); // to target all global scoped apps
+```
+or (for global only events)
+```
+signal_event('tick') // trigger only global scoped apps with no extra arguments
+```
+
+### `handle_event(event, callback ...)`
+
+Provides a handler for an event identified by the '`event`' argument. If the event doesn't exist yet, it will be created.
+All loaded apps globally can trigger that event, when they call corresponding `signal_event(event, ...)`. Callback can be
+defined as a function name, function value (or a lambda function), along with optional extra arguments that will be passed
+to it when the event is triggered. All custom events expect a function that takes one free argument, passed by the event trigger.
+If extra arguments are provided, they will be appended to the argument list of the callback function.
+
+Returns `true` if subscription to the event was successful, or `false` if it failed (for instance wrong scope for built-in event,
+or incorect number of parameters for the event).
+
+<pre>
+foo(a) -> print(a);
+handle_event('boohoo', 'foo');
+
+bar(a, b, c) -> print([a, b, c]);
+handle_event('boohoo', 'bar', 2, 3) // using b = 2, c = 3, a - passed by the caller
+
+handle_event('tick', _() -> foo('tick happened')); // built-in event
+
+handle_event('tick', null)  // nah, ima good, kthxbai
+</pre>
+
+### `signal_event(event, target_player?, ... args?)`
+
+Fires a specific event. If the event does not exist (only `handle_event` creates missing mising new events), or provided argument list
+was not matching the callee expected arguments, returns `null`, 
+otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targetting
+only `player` scoped apps for that player. Apps with globals scope will not be notified even if they handle this event.
+If the `target_player` is omitted or `null`, it will instead only target `global` scoped apps and skip `player` scoped.
+Therefore each custom event trigger can trigger each app once, but calls to '`signal_event`' can be repeated to cover
+all app scopes. Note that all built-in player events have a player as a first argument, so to trigger these events, you need to 
+provide them twice - once to specify the target player scope and second - to provide as an argument to the handler function.
+
+<pre>
+signal_event('player_breaks_block', player, player, block); // to target all player scoped apps
+signal_event('player_breaks_block', null  , player, block); // to target all global scoped apps
+signal_event('tick') // triggering tick event in all loaded apps
+</pre>
+
+## Custom events example
+
+The following example contains 4 apps, 2 of them defining a new event, `"player_farts"` triggered after 40 ticks of continuous 
+squatting. Note that this could call the recipient event handlers twice, since `signal_event` will be called twice, but 
+in this case the event is once called as a global event, and once as a player event, targeting each app once. Custom events is
+a good idea to share common event detection code with one app, and using the outcome of these events in multiple places.
+Obviously you would define each event handler once not twice in your app system.
+ 
+In this
+case here we have two ways of detecting all players squatting for more than 40 ticks - one of those apps will produce cloud particles
+in an apprpriate location, and the other will produce a sound when it happens, and they both will proceed to signal the same event, 
+thankfully for different scopes, otherwise other apps would trigger twice.
+
+``` 
+// detector1.sc
+// detecting event in a tick loop
+__config() -> {'scope' -> 'global'};
+
+global_sneaks = {};
+__on_tick() -> for(player('all'),
+   if (_~'sneaking',
+      sneak_time =  if (has(global_sneaks:_), tick_time()-global_sneaks:_ ,  global_sneaks:_=tick_time(); 0);
+      if (sneak_time > 20 && sneak_time < 40, 
+         particle('cloud', pos(_) + [0, _~'height'/2, 0] - _~'look', 1, 0.1)
+      );
+      if (sneak_time == 40, 
+         signal_event('player_farts', _, _)  // triggering all player scoped apps from a global app
+      )
+   , // else
+      delete(global_sneaks:_)
+   )
+)
+```
+
+```
+// detector2.sc
+// detecting events in a more appropriate way - player based and event based app
+__on_player_starts_sneaking(p) -> 
+(
+   global_sneaking = tick_time();
+   schedule(40, 'check', p);
+);
+
+check(p) -> 
+if( global_sneaking && tick_time() - global_sneaking == 40,
+   sound('entity.shulker.shoot', pos(p), 1, 0.6, 'player');
+   signal_event('player_farts', null, p) // trigerring all global apps from a player scoped app
+);
+
+__on_player_stops_sneaking(p) -> (global_sneaking = false);
+```
+
+And then two other apps that meant to do something with this event. One mimics an explosion, and the other - grows crops around
+the player.
+
+```
+client1.sc
+__config() -> {'scope' -> 'global'};
+
+on_fart(p, msg) -> 
+(
+   print(p+msg);
+   particle('explosion', pos(p));
+   sound('entity.generic.explode', pos(p), 1, 0.5);
+);
+
+handle_event('player_farts', 'on_fart', ' goes kaboom');
+```
+
+```
+client2.sc
+longsneak(p) ->
+(
+   ppos = pos(p);
+   loop ( 500,
+      target = ppos+[rand(12),rand(8),rand(12)]-[rand(12),rand(8),rand(12)];
+      if (material(target) == 'plant' && ticks_randomly(target), 
+         particle('happy_villager', target, 2, 0.4)
+      );
+      random_tick(target)
+   )
+);
+
+handle_event('player_farts', 'longsneak');
+```
+
+
+## `/script event` command
 
 used to display current events and bounded functions. use `add_to` ro register new event, or `remove_from` to 
 unbind a specific function from an event. Function to be bounded to an event needs to have the same number of 

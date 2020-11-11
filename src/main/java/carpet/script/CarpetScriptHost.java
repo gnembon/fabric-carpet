@@ -117,7 +117,7 @@ public class CarpetScriptHost extends ScriptHost
                 // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
                 String event = funName.replaceFirst("__on_", "");
                 if (CarpetEventServer.Event.byName.containsKey(event))
-                    scriptServer.events.addEventDirectly(event, this, function, null);
+                    scriptServer.events.addBuiltInEvent(event, this, function, null);
             }
             else if (funName.equals("__config"))
             {
@@ -188,8 +188,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             // this is nasty, we have the host and function, yet we add it via names, but hey - works for now
             String event = funName.replaceFirst("__on_","");
-            if (CarpetEventServer.Event.byName.containsKey(event))
-                scriptServer.events.removeEventDirectly(event, this, funName);
+            scriptServer.events.removeBuiltInEvent(event, this, funName);
         }
     }
 
@@ -210,6 +209,22 @@ public class CarpetScriptHost extends ScriptHost
         }
         if (host.errorSnooper == null) host.setChatErrorSnooper(source);
         return host;
+    }
+
+    public CarpetScriptHost retrieveForExecution(ServerPlayerEntity target)
+    {
+        // allowing only run
+        if (perUser == (target == null)) return null;
+
+        if (!perUser)
+        {
+            if (errorSnooper == null) setChatErrorSnooper(this.scriptServer.server.getCommandSource());
+            return this;
+        }
+        // user based
+        CarpetScriptHost userHost = (CarpetScriptHost)retrieveForExecution(target.getName().getString());
+        if (userHost.errorSnooper == null) userHost.setChatErrorSnooper(target.getCommandSource());
+        return userHost;
     }
 
     public Value handleCommandLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)

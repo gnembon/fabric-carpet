@@ -28,7 +28,6 @@ public class FunctionArgument extends Argument
      * @param module module
      * @param params list of lazy params
      * @param offset offset where to start looking for functional argument
-     * @param prematureEvaluation evaluates eagerly arguments in current context before returning
      * @param allowNone none indicates no function present, otherwise it will croak
      * @param checkArgs whether the caller expects trailing parameters to fully resolve function argument list
      *                  if not - argument count check will not be performed and its up to the caller to verify
@@ -40,7 +39,6 @@ public class FunctionArgument extends Argument
             Module module,
             List<LazyValue> params,
             int offset,
-            boolean prematureEvaluation,
             boolean allowNone,
             boolean checkArgs)
     {
@@ -66,18 +64,7 @@ public class FunctionArgument extends Argument
                 throw new InternalExpressionException("Function " + fun.getPrettyString() + " requires " + fun.getArguments().size() + " arguments");
         }
         List<LazyValue> lvargs = new ArrayList<>();
-        if (prematureEvaluation)
-        {
-            for (int i = offset+1, mx = params.size(); i < mx; i++)
-            {
-                Value arg = params.get(i).evalValue(c);
-                lvargs.add((cc, tt) -> arg);
-            }
-        }
-        else
-        {
-            for (int i = offset+1, mx = params.size(); i < mx; i++) lvargs.add(params.get(i));
-        }
+        for (int i = offset+1, mx = params.size(); i < mx; i++) lvargs.add(params.get(i));
         return new FunctionArgument(fun, offset+1+argsize, lvargs);
     }
 

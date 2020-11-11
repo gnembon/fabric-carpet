@@ -131,6 +131,10 @@ public class EntityValue extends Value
                 player = (ServerPlayerEntity) e;
             }
         }
+        else if (value.isNull())
+        {
+            return null;
+        }
         else
         {
             String playerName = value.getString();

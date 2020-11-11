@@ -34,6 +34,7 @@ flammable
 format
 game_tick
 generation_status
+handle_event
 hardness
 harvest
 in_dimension
@@ -89,6 +90,7 @@ set
 set_biome
 set_poi
 set_structure
+signal_event
 sky_light
 solid
 sound

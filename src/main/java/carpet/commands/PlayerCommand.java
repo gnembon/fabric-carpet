@@ -105,7 +105,7 @@ public class PlayerCommand
                 .executes(c -> action(c, type, EntityPlayerActionPack.Action.once()))
                 .then(literal("once").executes(c -> action(c, type, EntityPlayerActionPack.Action.once())))
                 .then(literal("continuous").executes(c -> action(c, type, EntityPlayerActionPack.Action.continuous())))
-                .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(2))
+                .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
                         .executes(c -> action(c, type, EntityPlayerActionPack.Action.interval(IntegerArgumentType.getInteger(c, "ticks"))))));
     }
 
