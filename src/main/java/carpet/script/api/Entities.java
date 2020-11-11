@@ -276,15 +276,15 @@ public class Entities {
                     : Collections.singletonList(entityValue.getString());
             Set<EntityType<? extends Entity>> types = new HashSet<>();
             descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s).typeList));
-            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, false, true, false);
+            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
             if (funArg.function == null)
             {
-                types.forEach(et -> events.removeEventDirectly(CarpetEventServer.Event.getLoadEvent(et), c.host));
+                types.forEach(et -> events.removeBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), (CarpetScriptHost) c.host));
             }
             else
             {
-                types.forEach(et -> events.addEventDirectly(CarpetEventServer.Event.getLoadEvent(et), c.host, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t)));
+                types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t)));
             }
             Value ret = new NumericValue(types.size());
             return (cc, tt) -> ret;
@@ -300,7 +300,7 @@ public class Entities {
                 throw new InternalExpressionException("First argument to entity_event should be an entity");
             String what = lv.get(1).evalValue(c).getString();
 
-            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 2, false, true, false);
+            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, false);
 
             ((EntityValue) v).setEvent((CarpetContext)c, what, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t));
 

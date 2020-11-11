@@ -11,6 +11,7 @@ import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import carpet.settings.ParsedRule;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,6 +60,7 @@ public class CarpetEventServer
     public final List<ScheduledCall> scheduledCalls = new LinkedList<>();
     public final MinecraftServer server;
     private static final List<Value> NOARGS = Collections.emptyList();
+    public final Map<String, Event> customEvents = new HashMap<>();
 
     public static class Callback
     {
@@ -93,6 +96,23 @@ public class CarpetEventServer
                         host, function, combinedArgs);
             }
         }
+
+        /**
+         * Used also in entity events
+         * @param recipient - optional target player argument
+         * @param runtimeArgs = options
+         */
+        public Boolean targetPlayer(ServerPlayerEntity recipient, List<Value> runtimeArgs)
+        {
+            List<Value> args = runtimeArgs;
+            if (!this.parametrizedArgs.isEmpty())
+            {
+                args = new ArrayList<>(runtimeArgs);
+                args.addAll(this.parametrizedArgs);
+            }
+            return CarpetServer.scriptServer.runForPlayer(recipient, host, function, args);
+        }
+
 
         @Override
         public String toString()
@@ -152,6 +172,23 @@ public class CarpetEventServer
                 for (Callback call : fails) callList.remove(call);
             }
         }
+
+        public int callCustom(ServerPlayerEntity receipient, List<Value> callArg)
+        {
+            if (callList.isEmpty()) return 0;
+            //List<Callback> fails = new ArrayList<>();
+            // skipping fails on purpose - its a player induced call.
+            int successes = 0;
+            for (Callback call: callList)
+            {
+                Boolean result = call.targetPlayer(receipient, callArg);
+                //if (result == Boolean.FALSE) fails.add(call);
+                if (result == Boolean.TRUE) successes++;
+            }
+            //for (Callback call : fails) callList.remove(call);
+            return successes;
+        }
+
         public boolean addEventCall(ServerCommandSource source,  String hostName, String funName, Function<ScriptHost, Boolean> verifier)
         {
             ScriptHost host = CarpetServer.scriptServer.getHostByName(hostName);
@@ -198,9 +235,9 @@ public class CarpetEventServer
             callList.removeIf((c)->  c.function.getString().equals(funName) && ( hostName == c.host || (c.host != null && c.host.equalsIgnoreCase(hostName) )) );
         }
 
-        public void removeAllCalls(String hostName)
+        public void removeAllCalls(CarpetScriptHost host)
         {
-            callList.removeIf((c)-> c.host != null && c.host.equals(hostName));
+            callList.removeIf((c)-> c.host != null && c.host.equals(host.getName()));
         }
         public void clearEverything()
         {
@@ -211,9 +248,11 @@ public class CarpetEventServer
     public static class Event
     {
         public static final Map<String, Event> byName = new HashMap<>();
-        public static List<String> publicEvents()
+        public static List<Event> publicEvents(CarpetScriptServer server)
         {
-            return byName.entrySet().stream().filter(e -> e.getValue().isPublic).map(Map.Entry::getKey).collect(Collectors.toList());
+            List<Event> events = byName.values().stream().filter(e -> e.isPublic).collect(Collectors.toList());
+            if (server != null) events.addAll(server.events.customEvents.values());
+            return events;
         }
 
         public static final Event TICK = new Event("tick", 0, true)
@@ -674,15 +713,15 @@ public class CarpetEventServer
             }
         };
 
-        public static String getLoadEvent(EntityType<? extends Entity> et)
+        public static String getEntityLoadEventName(EntityType<? extends Entity> et)
         {
-            return "entity_loaded_" + Registry.ENTITY_TYPE.getId(et);
+            return "entity_loaded_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
         }
 
         public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<EntityType<? extends Entity>, Event>() {{
             EntityType.get("zombie");
             Registry.ENTITY_TYPE.forEach(et -> {
-                put(et, new Event(getLoadEvent(et), 1, true, false)
+                put(et, new Event(getEntityLoadEventName(et), 1, true, false)
                 {
                     @Override
                     public void onEntityAction(Entity entity)
@@ -715,6 +754,52 @@ public class CarpetEventServer
             this.isPublic = isPublic;
             byName.put(name, this);
         }
+
+        public static List<Event> getAllEvents(CarpetScriptServer server, Predicate<Event> predicate)
+        {
+            List<CarpetEventServer.Event> eventList = new ArrayList<>(CarpetEventServer.Event.byName.values());
+            eventList.addAll(server.events.customEvents.values());
+            if (predicate == null) return eventList;
+            return eventList.stream().filter(predicate).collect(Collectors.toList());
+        }
+
+        public static Event getEvent(String name, CarpetScriptServer server)
+        {
+            if (byName.containsKey(name)) return byName.get(name);
+            return server.events.customEvents.get(name);
+        }
+
+        public static Event getOrCreateCustom(String name, CarpetScriptServer server)
+        {
+            Event event = getEvent(name, server);
+            if (event != null) return event;
+            return new Event(name, server);
+        }
+
+        public static void removeAllHostEvents(CarpetScriptHost host)
+        {
+            byName.values().forEach((e) -> e.handler.removeAllCalls(host));
+            host.getScriptServer().events.customEvents.values().forEach((e) -> e.handler.removeAllCalls(host));
+        }
+
+        public static void clearAllBuiltinEvents()
+        {
+            byName.values().forEach(e -> e.handler.clearEverything());
+        }
+
+        // custom event constructor
+        private Event(String name, CarpetScriptServer server)
+        {
+            this.name = name;
+            this.handler = new CallbackList(1);
+            this.globalOnly = false;
+            this.isPublic = true;
+            server.events.customEvents.put(name, this);
+        }
+
+        //handle_event('event', function...)
+        //signal_event('event', player or null, args.... ) -> number of apps notified
+
         public boolean isNeeded()
         {
             return handler.callList.size() > 0;
@@ -748,8 +833,7 @@ public class CarpetEventServer
     public CarpetEventServer(MinecraftServer server)
     {
         this.server = server;
-        for (Event e: Event.byName.values())
-            e.handler.callList.clear();
+        Event.clearAllBuiltinEvents();
     }
 
     public void tick()
@@ -777,25 +861,41 @@ public class CarpetEventServer
         scheduledCalls.add(new ScheduledCall(context, function, args, due));
     }
 
-    public boolean addEvent(ServerCommandSource source, String event, String host, String funName)
+    public boolean addEventFromCommand(ServerCommandSource source, String event, String host, String funName)
     {
-        if (!Event.byName.containsKey(event))
+        Event ev = Event.getEvent(event, CarpetServer.scriptServer);
+        if (ev == null)
         {
             return false;
         }
-        Event ev = Event.byName.get(event);
         boolean added = ev.handler.addEventCall(source, host, funName, h -> canAddEvent(ev, h));
         if (added) Messenger.m(source, "gi Added " + funName + " to " + event);
         return added;
     }
 
-    public void addEventDirectly(String event, ScriptHost host, FunctionValue function, List<Value> args)
+    public void addBuiltInEvent(String event, ScriptHost host, FunctionValue function, List<Value> args)
     {
+        // this is globals only
         Event ev = Event.byName.get(event);
         if (!canAddEvent(ev, host))
             throw new InternalExpressionException("Global event "+event+" can only be added to apps with global scope");
         boolean success =  ev.handler.addEventCallInternal(host, function, args==null?NOARGS:args);
         if (!success) throw new InternalExpressionException("Global event "+event+" requires "+ev.handler.reqArgs+", not "+(function.getNumParams()-((args==null)?0:args.size())));
+    }
+
+    public boolean handleCustomEvent(String event, CarpetScriptHost host, FunctionValue function, List<Value> args)
+    {
+        Event ev = Event.getOrCreateCustom(event, host.getScriptServer());
+        if (!canAddEvent(ev, host))
+            throw new InternalExpressionException("Global built-in event "+event+" can only be handled in apps with global scope");
+        return ev.handler.addEventCallInternal(host, function, args==null?NOARGS:args);
+    }
+
+    public int signalEvent(String event, CarpetScriptHost host, ServerPlayerEntity player, List<Value> callArgs)
+    {
+        Event ev = Event.getEvent(event, host.getScriptServer());
+        if (ev == null) return -1;
+        return ev.handler.callCustom(player, callArgs);
     }
 
     private boolean canAddEvent(Event event, ScriptHost host)
@@ -804,45 +904,40 @@ public class CarpetEventServer
     }
 
 
-    public boolean removeEvent(ServerCommandSource source, String event, String funName)
+    public boolean removeEventFromCommand(ServerCommandSource source, String event, String funName)
     {
-
-        if (!Event.byName.containsKey(event))
+        Event ev = Event.getEvent(event, CarpetServer.scriptServer);
+        if (ev == null)
         {
             Messenger.m(source, "r Unknown event: " + event);
             return false;
         }
         Pair<String,String> call = decodeCallback(funName);
-        Event.byName.get(event).handler.removeEventCall(call.getLeft(), call.getRight());
+        ev.handler.removeEventCall(call.getLeft(), call.getRight());
         // could verified if actually removed
         Messenger.m(source, "gi Removed event: " + funName + " from "+event);
         return true;
     }
-    public boolean removeEventDirectly(String event, ScriptHost host)
+    public boolean removeBuiltInEvent(String event, CarpetScriptHost host)
     {
-
-        if (!Event.byName.containsKey(event))
-        {
-            return false;
-        }
-        Event.byName.get(event).handler.removeAllCalls(host.getName());
+        Event ev = Event.getEvent(event, host.getScriptServer());
+        if (ev == null) return false;
+        ev.handler.removeAllCalls(host);
         return true;
     }
 
-    public void removeEventDirectly(String event, ScriptHost host, String funName)
+    public void removeBuiltInEvent(String event, CarpetScriptHost host, String funName)
     {
-        Event.byName.get(event).handler.removeEventCall(host.getName(), funName);
+        Event ev = Event.getEvent(event, host.getScriptServer());
+        if (ev != null) ev.handler.removeEventCall(host.getName(), funName);
     }
 
-    public void removeAllHostEvents(String hostName)
+    public void removeAllHostEvents(CarpetScriptHost host)
     {
-        Event.byName.values().forEach((e) -> e.handler.removeAllCalls(hostName));
-        scheduledCalls.removeIf(sc -> sc.host != null && sc.host.equals(hostName));
-    }
-
-    public void clearAll()
-    {
-        Event.byName.values().forEach(e -> e.handler.clearEverything());
+        // remove event handlers
+        Event.removeAllHostEvents(host);
+        // remove scheduled calls
+        scheduledCalls.removeIf(sc -> sc.host != null && sc.host.equals(host.getName()));
     }
 
     private Pair<String,String> decodeCallback(String funName)

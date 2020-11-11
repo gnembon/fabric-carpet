@@ -20,6 +20,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
@@ -372,7 +373,7 @@ public class CarpetScriptServer
             return false;
         }
         // stop all events associated with name
-        events.removeAllHostEvents(name);
+        events.removeAllHostEvents(modules.get(name));
         modules.get(name).onClose();
         modules.remove(name);
         if (!isRuleApp) unloadableModules.remove(name);
@@ -394,6 +395,35 @@ public class CarpetScriptServer
             if (hostname != null)
                 host = modules.get(hostname).retrieveForExecution(source);
             host.callUDF(origin, source, udf, argv);
+        }
+        catch (NullPointerException | InvalidCallbackException npe)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public Boolean runForPlayer(ServerPlayerEntity recipient, String hostname, FunctionValue udf, List<Value> argv)
+    {
+        CarpetScriptHost host;
+        ServerCommandSource source;
+
+        if (hostname == null)
+        {
+            if (recipient != null) return null;
+            host = globalHost;
+            source = server.getCommandSource();
+        }
+        else
+        {
+            host = modules.get(hostname).retrieveForExecution(recipient);
+            if (host == null) // not applicable
+                return null;
+            source = (recipient == null)? server.getCommandSource() : recipient.getCommandSource();
+        }
+        try
+        {
+            host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
         }
         catch (NullPointerException | InvalidCallbackException npe)
         {
@@ -424,7 +454,7 @@ public class CarpetScriptServer
         Map<String, Boolean> apps = new HashMap<>();
         modules.forEach((s, h) -> apps.put(s, h.perUser));
         apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
-        events.clearAll();
+        CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
         apps.forEach((s, pp) -> addScriptHost(server.getCommandSource(), s, pp, false, false));
     }

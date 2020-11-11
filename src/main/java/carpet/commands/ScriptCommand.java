@@ -74,8 +74,8 @@ public class ScriptCommand
         scarpetMatches.addAll(APIFunctions.stream().
                 filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList()));
         // not that useful in commandline, more so in external scripts, so skipping here
-        if (eventPrefix != null) scarpetMatches.addAll(CarpetEventServer.Event.publicEvents().stream().
-                filter(s -> s.startsWith(eventPrefix)).map(s -> "__on_"+s+"(").collect(Collectors.toList()));
+        if (eventPrefix != null) scarpetMatches.addAll(CarpetEventServer.Event.publicEvents(null).stream().
+                filter(e -> e.name.startsWith(eventPrefix)).map(s -> "__on_"+s+"(").collect(Collectors.toList()));
         scarpetMatches.addAll(host.globaFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
         scarpetMatches.addAll(host.globaVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
         return scarpetMatches;
@@ -269,10 +269,10 @@ public class ScriptCommand
                 executes( (cc) -> listEvents(cc.getSource())).
                 then(literal("add_to").
                         then(argument("event", StringArgumentType.word()).
-                                suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.publicEvents() ,bb)).
+                                suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.publicEvents(CarpetServer.scriptServer).stream().map(ev -> ev.name).collect(Collectors.toList()),bb)).
                                 then(argument("call", StringArgumentType.word()).
                                         suggests( (cc, bb) -> suggestMatching(suggestFunctionCalls(cc), bb)).
-                                        executes( (cc) -> CarpetServer.scriptServer.events.addEvent(
+                                        executes( (cc) -> CarpetServer.scriptServer.events.addEventFromCommand(
                                                 cc.getSource(),
                                                 StringArgumentType.getString(cc, "event"),
                                                 null,
@@ -283,7 +283,7 @@ public class ScriptCommand
                                                 suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
                                                 then(argument("call", StringArgumentType.word()).
                                                         suggests( (cc, bb) -> suggestMatching(suggestFunctionCalls(cc), bb)).
-                                                        executes( (cc) -> CarpetServer.scriptServer.events.addEvent(
+                                                        executes( (cc) -> CarpetServer.scriptServer.events.addEventFromCommand(
                                                                 cc.getSource(),
                                                                 StringArgumentType.getString(cc, "event"),
                                                                 StringArgumentType.getString(cc, "app"),
@@ -291,10 +291,10 @@ public class ScriptCommand
                                                         )?1:0)))))).
                 then(literal("remove_from").
                         then(argument("event", StringArgumentType.word()).
-                                suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.publicEvents() ,bb)).
+                                suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.publicEvents(CarpetServer.scriptServer).stream().map(ev -> ev.name).collect(Collectors.toList()) ,bb)).
                                 then(argument("call", StringArgumentType.greedyString()).
-                                        suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.byName.get(StringArgumentType.getString(cc, "event")).handler.callList.stream().map(CarpetEventServer.Callback::toString), bb)).
-                                        executes( (cc) -> CarpetServer.scriptServer.events.removeEvent(
+                                        suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.getEvent(StringArgumentType.getString(cc, "event"), CarpetServer.scriptServer).handler.callList.stream().map(CarpetEventServer.Callback::toString), bb)).
+                                        executes( (cc) -> CarpetServer.scriptServer.events.removeEventFromCommand(
                                                 cc.getSource(),
                                                 StringArgumentType.getString(cc, "event"),
                                                 StringArgumentType.getString(cc, "call")
@@ -335,7 +335,7 @@ public class ScriptCommand
     private static int listEvents(ServerCommandSource source)
     {
         Messenger.m(source, "w Lists ALL event handlers:");
-        for (CarpetEventServer.Event event: CarpetEventServer.Event.byName.values())
+        for (CarpetEventServer.Event event: CarpetEventServer.Event.getAllEvents(CarpetServer.scriptServer, null))
         {
             boolean shownEvent = false;
             for (CarpetEventServer.Callback c: event.handler.callList)

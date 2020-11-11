@@ -33,16 +33,22 @@ expr1 ; expr2 => expr2  // with expr1 as a side-effect
 
 ## Global variables
 
-All defined functions are compiled, stored persistently, and available globally - accessible to all other scripts. 
+All defined functions are compiled, stored persistently, and available globally within the app. 
 Functions can only be undefined via call to `undef('fun')`, which would erase global entry for function `fun`. 
-Since all variables have local scope inside each function, one way to share large objects is via global variables
+Since all variables have local scope inside each function, or each command script,
+ global variables is a way to share the global state. 
 
-Any variable that is used with a name that starts with `'global_'` will be stored and accessible globally, not, 
-inside current scope. It will also persist across scripts, so if a procedure needs to use its own construct, it 
-needs to define it, or initialize it explicitly, or undefine it via `undef`
+Any variable that is used with a name that starts with `'global_'` will be stored and accessible globally, not only 
+inside the current scope. If used directly in the chat window with the default app, it will persist across calls to `/script`
+function. Like functions, which are global, global variables can only be undefined via `undef`.
+
+For apps running in `'global'` scope - all players will share the same global variables and defined functions, 
+and with `player` scope, each player hosts its own state for each app, so function and global_variables are distinct.
+
 
 <pre>
-a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1,2,3,1,1]
+/script run a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1, 2, 3, 1, 1]
+/script run a(); a(); global_list  // => [1, 2, 3, 1, 1, 1, 1]
 </pre>
 
 ### `Operator ->`

@@ -70,6 +70,8 @@
 
                 format logger sound particle particle_line particle_rect system_info
 
+                handle_event signal_event
+
                 run save tick_time world_time day_time last_tick_times game_tick current_dimension in_dimension view_distance
 
                 plop harvest destroy schedule nbt draw_shape create_marker remove_all_markers

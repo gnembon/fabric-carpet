@@ -7,7 +7,9 @@ import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.script.CarpetContext;
+import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
+import carpet.script.CarpetScriptServer;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
@@ -20,6 +22,7 @@ import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
@@ -639,12 +642,12 @@ public class Auxiliary {
                 throw new InternalExpressionException("'schedule' should have at least 2 arguments, delay and call name");
             long delay = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
 
-            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, true, false, true);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
 
             CarpetServer.scriptServer.events.scheduleCall(
                     (CarpetContext) c,
                     functionArgument.function,
-                    functionArgument.resolveArgs(c, Context.NONE),
+                    functionArgument.resolveArgs(c, t),
                     delay
             );
             return (c_, t_) -> Value.TRUE;
@@ -842,6 +845,50 @@ public class Auxiliary {
             if (stat == null)
                 return LazyValue.NULL;
             return (_c, _t) -> new NumericValue(player.getStatHandler().getStat(stat));
+        });
+
+        //handle_event('event', function...)
+        expression.addLazyFunction("handle_event", -1, (c, t, lv) ->
+        {
+            if (lv.size() < 2)
+                throw new InternalExpressionException("'handle_event' requires at least two arguments, event name, and a callback");
+            String event = lv.get(0).evalValue(c).getString();
+            FunctionArgument callback = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
+            CarpetScriptHost host = ((CarpetScriptHost)c.host);
+            Value success;
+            if (callback.function == null)
+            {
+                success = host.getScriptServer().events.removeBuiltInEvent(event, host)?Value.TRUE:Value.FALSE;
+            }
+            else
+            {
+                success = host.getScriptServer().events.handleCustomEvent(event, host, callback.function, FunctionValue.resolveArgs(callback.args, c, t) )?Value.TRUE:Value.FALSE;
+            }
+            return (cc, tt) -> success;
+        });
+        //signal_event('event', player or null, args.... ) -> number of apps notified
+        expression.addLazyFunction("signal_event", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0)
+                throw new InternalExpressionException("'signal' requires at least one argument");
+            CarpetScriptServer server = ((CarpetScriptHost)c.host).getScriptServer();
+            String eventName = lv.get(0).evalValue(c).getString();
+            // no such event yet
+            if (CarpetEventServer.Event.getEvent(eventName, server) == null) return LazyValue.NULL;
+            ServerPlayerEntity player = null;
+            List<Value> args = Collections.emptyList();
+            if (lv.size() > 1)
+            {
+                player = EntityValue.getPlayerByValue(server.server, lv.get(1).evalValue(c));
+                if (lv.size() > 2)
+                {
+                    args = FunctionValue.resolveArgs(lv.subList(2, lv.size()), c, t);
+                }
+            }
+            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, (CarpetScriptHost) c.host, player, args);
+            if (counts < 0) return LazyValue.NULL;
+            Value ret = new NumericValue(counts);
+            return (cc, tt) -> ret;
         });
     }
 

@@ -20,7 +20,7 @@ public class ThreadValue extends Value
     private final long id;
     private static long sequence = 0L;
 
-    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<LazyValue> args)
+    public ThreadValue(Value pool, FunctionValue function, Expression expr, Tokenizer.Token token, Context ctx, List<Value> args)
     {
         id = sequence++;
         ExecutorService executor = ctx.host.getExecutor(pool);
@@ -36,7 +36,7 @@ public class ThreadValue extends Value
                     {
                         try
                         {
-                            return function.lazyEval(ctx, Context.NONE, expr, token, args).evalValue(ctx);
+                            return function.lazyEval(ctx, Context.NONE, expr, token, FunctionValue.lazify(args)).evalValue(ctx);
                         }
                         catch (ExitStatement exit)
                         {
