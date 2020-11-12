@@ -553,18 +553,6 @@ public class Auxiliary {
             return (cc, tt) -> ret;
         });
 
-        expression.addLazyFunction("action_bar",2, (c, t, lv)->{
-            Value pVal = lv.get(0).evalValue(c);
-
-            if(!(pVal instanceof EntityValue && ((EntityValue)pVal).getEntity() instanceof PlayerEntity))
-                throw new InternalExpressionException("'action_bar' requires a player as first argument");
-
-            PlayerEntity p =(PlayerEntity) ((EntityValue)pVal).getEntity();
-            Text message = Text.of(lv.get(1).evalValue(c).getString());
-            p.sendMessage(message,true);
-            return (cc, tt) -> Value.NULL;
-        });
-
         expression.addLazyFunction("format", -1, (c, t, lv) -> {
             if (lv.size() == 0 ) throw new InternalExpressionException("'format' requires at least one component");
             List<Value> values = lv.stream().map(lazy -> lazy.evalValue(c)).collect(Collectors.toList());
