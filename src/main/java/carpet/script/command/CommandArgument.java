@@ -804,7 +804,7 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> builder()
         {
-            return FloatArgument::new;
+            return IntArgument::new;
         }
     }
 
