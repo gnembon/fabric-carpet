@@ -498,6 +498,11 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
+        put("absorption",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getAbsorptionAmount());
+            return Value.NULL;
+        });
+
         put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
@@ -1317,6 +1322,10 @@ public class EntityValue extends Value
 
         put("add_exhaustion", (e, v)-> {
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
+        });
+
+        put("absorption",(e, v)->{
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount((float) NumericValue.asNumber(v).getLong());
         });
 
         put("saturation", (e, v)-> {
