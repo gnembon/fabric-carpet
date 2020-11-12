@@ -1,11 +1,12 @@
 package carpet.script;
 
+import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.BundledModule;
 import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
-import carpet.script.command.CommandArgument;
+import carpet.script.command.CommandToken;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.StringValue;
@@ -13,21 +14,16 @@ import carpet.script.value.Value;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -240,7 +236,31 @@ public class CarpetScriptServer
             return false;
         }
         //addEvents(source, name);
-        if (!addLegacyCommand(source, name, reload, !isRuleApp)) // this needs to be moved to config reader, only supporting legacy command here
+        String action = reload?"reloaded":"loaded";
+        if (newHost.appConfig.get(StringValue.of("commands")) != null)
+        {
+            try
+            {
+                LiteralArgumentBuilder<ServerCommandSource> command = newHost.readCommands();
+                if (command != null)
+                {
+                    if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action+" with /"+name+" command");
+                    server.getCommandManager().getDispatcher().register(command);
+                    CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+                }
+                else {
+                    if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action);
+                }
+            }
+            catch (CommandSyntaxException cse)
+            {
+                removeScriptHost(source, name, false, false);
+                Messenger.m(source, "r Failed to build command system for "+name+" thus failed to load the app ", cse.getRawMessage());
+                return false;
+            }
+
+        }
+        else if (!addLegacyCommand(source, name, reload, !isRuleApp)) // this needs to be moved to config reader, only supporting legacy command here
         {
             removeScriptHost(source, name, false, false);
             Messenger.m(source, "r Failed to build command system for "+name+" thus failed to load the app");
@@ -287,7 +307,12 @@ public class CarpetScriptServer
             {
                 try
                 {
-                    command = getFancyCommand(command, host, host.getFunction(function));
+                    FunctionValue functionValue = host.getFunction(function);
+                    command = host.addPathToCommand(
+                            command,
+                            CommandToken.parseSpec(CommandToken.specFromSignature(functionValue), host),
+                            FunctionArgument.fromCommandSpec(host, functionValue)
+                    );
                 }
                 catch (CommandSyntaxException e)
                 {
@@ -319,49 +344,6 @@ public class CarpetScriptServer
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         return true;
     }
-
-    private int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionValue function, List<String> paramNames) throws CommandSyntaxException
-    {
-        CarpetScriptHost cHost = modules.get(hostName).retrieveForExecution(ctx.getSource());
-        List<String> argNames = function.getArguments();
-        if (argNames.size() != paramNames.size())
-            throw new SimpleCommandExceptionType(new LiteralText("Target function "+function.getPrettyString()+" as wrong number of arguments, required "+paramNames.size()+", found "+argNames.size())).create();
-        List<Value> args = new ArrayList<>(argNames.size());
-        for (String s : paramNames)
-        {
-            args.add(CommandArgument.getValue(ctx, s, cHost));
-        }
-        Value response = cHost.handleCommand(ctx.getSource(), function, args);
-        if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
-        return (int) response.readInteger();
-    }
-
-    private LiteralArgumentBuilder<ServerCommandSource> getFancyCommand(LiteralArgumentBuilder<ServerCommandSource> command, CarpetScriptHost host, FunctionValue function ) throws CommandSyntaxException
-    {
-        List<String> argNames = function.getArguments();
-        String hostName = host.getName();
-        if (argNames.size() == 0)
-        {
-            return command.then(literal(function.getString()).
-                    requires((player) -> modules.containsKey(hostName)).
-                    executes((c) -> execute(c, hostName, function, Collections.emptyList())));
-        }
-        else
-        {
-            List<String> reversedArgs = new ArrayList<>(argNames);
-            Collections.reverse(reversedArgs);
-            RequiredArgumentBuilder<ServerCommandSource, ?> argChain = CommandArgument.argumentNode(reversedArgs.get(0), host).executes(c -> execute(c, hostName, function, argNames));
-            for (int i = 1; i < reversedArgs.size(); i++)
-            {
-                argChain = CommandArgument.argumentNode(reversedArgs.get(i), host).then(argChain);
-            }
-            return command.then(literal(function.getString()).
-                    requires((player) -> modules.containsKey(hostName)).
-                    then(argChain)
-            );
-        }
-    }
-
 
 
     public boolean removeScriptHost(ServerCommandSource source, String name, boolean notifySource, boolean isRuleApp)

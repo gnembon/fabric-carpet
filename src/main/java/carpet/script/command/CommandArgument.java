@@ -89,6 +89,11 @@ import static net.minecraft.server.command.CommandManager.argument;
 
 public abstract class CommandArgument
 {
+    public static CommandSyntaxException error(String text)
+    {
+        return new SimpleCommandExceptionType(new LiteralText(text)).create();
+    }
+
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
             // default
             new StringArgument(),
@@ -241,7 +246,7 @@ public abstract class CommandArgument
 
     public static final CommandArgument DEFAULT = baseTypes.get(0);
 
-    private static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
+    public static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
     {
         String[] components = argument.split("_");
         String suffix = components[components.length-1].toLowerCase(Locale.ROOT);
@@ -290,7 +295,7 @@ public abstract class CommandArgument
     public static CommandArgument buildFromConfig(String suffix, Map<String, Value> config)
     {
         if (!config.containsKey("type"))
-            throw new InternalExpressionException("Custom types should at least specify the base type");
+            throw new InternalExpressionException("Custom types should at least specify the type");
         String baseType = config.get("type").getString();
         if (!builtIns.containsKey(baseType))
             throw new InternalExpressionException("Unknown base type: "+baseType);

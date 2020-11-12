@@ -85,7 +85,7 @@ public class FunctionArgument<T> extends Argument
         }
         else
         {
-            String name = funSpec.getString();
+            String name = first.getString();
             function = host.getAssertFunction(host.main, name);
         }
         if (params.size() > 1) args = params.subList(1,params.size());
