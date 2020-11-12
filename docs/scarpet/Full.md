@@ -3192,6 +3192,18 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 Retrieves player hunger related information. For non-players, returns `null`.
 
+### `query(e, 'absorption')`
+
+Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+
+### `query(e,'xp')`
+### `query(e,'xp_level')`
+### `query(e,'xp_points')`
+### `query(e,'score')`
+
+Numbers related to player's xp. `xp` is the overall xp in the bar, `xp_level` is the levels seen in the hotbar,
+`xp_points` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the score displayed upon death 
+
 ### `query(e, 'air')`
 
 Number indicating remaining entity health, or `null` if not applicable.
@@ -3501,6 +3513,21 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 ### `modify(e, 'exhaustion', value)`
 
 Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'absorption', value)`
+
+Sets the absorption value for the player. Each point is half a yellow heart.
+
+### `modify(e, 'score', value)`
+
+Sets the score of a player. Doesn't affect player xp, and is displayed upon death.
+
+### `modify(e, 'add_xp', value)`
+### `modify(e, 'add_xp_level', value)`
+### `modify(e, 'add_score', value)` 
+
+Adds `score`, `xp` or `xp_level` to the current corresponding player values - that's the method you probably want to use 
+to manipulate how much 'xp' an action should give.
 
 ### `modify(e, 'air', ticks)`
 
