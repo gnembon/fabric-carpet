@@ -760,6 +760,31 @@ entity_load_handler('zombie', _(e) -> schedule(0, _(outer(e)) -> modify(e, 'remo
 entity_load_handler('zombie', _(e) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
 ```
 
+Word of caution: entities can be loaded with chunks in various states, for instance when a chunk is being generated, this means
+that accessing world blocks would cause the game to freeze due to force generating that chunk while generating the chunk. Make
+sure to never assume the chunk is ready and use `entity_load_handler` to schedule actions around the loaded entity, 
+or manipulate entity directly.
+
+For instance the following handler is safe, as it only accesses the entity directly. It makes all spawned pigmen jump
+```
+/script run entity_load_handler('zombified_piglin', _(e) -> modify(e, 'motion', 0, 1, 0) )
+```
+But the following handler, attempting to despawn pigmen that spawn in portals, will cause the game to freeze due to cascading access to blocks that would cause neighbouring chunks 
+to force generate, causing also error messages for all pigmen caused by packets send after entity is removed by script.
+```
+/script run entity_load_handler('zombified_piglin', _(e) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) )
+```
+Easiest method to circumvent these issues is delay the check, which may or may not cause cascade load to happen, but 
+will definitely break the infinite chain.
+```
+/script run entity_load_handler('zombified_piglin', _(e) -> schedule(0, _(outer(e)) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) ) )
+```
+But the best is to perform the check first time the entity will be ticked - giving the game all the time to ensure chunk 
+is fully loaded and entity processing, removing the tick handler 
+```
+/script run entity_load_handler('zombified_piglin', _(e) -> entity_event(e, 'on_tick', _(e) -> ( if(block(pos(e))=='nether_portal', modify(e, 'remove')); entity_event(e, 'on_tick', null) ) ) )
+```
+
 ### `entity_event(e, event, function)`, `entity_event(e, event, call_name, ... args?)`
 
 Attaches specific function from the current package to be called upon the `event`, with extra `args` carried to the 
