@@ -303,7 +303,7 @@ public class CarpetScriptServer
 
         for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
-            if (host.appConfig.containsKey(StringValue.of("legacy_command_type_support"))) // temporary stuff for testing
+            if (host.appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean())
             {
                 try
                 {

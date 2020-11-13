@@ -10,17 +10,20 @@ import net.minecraft.server.command.ServerCommandSource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static net.minecraft.server.command.CommandManager.literal;
 
-public class CommandToken
+public class CommandToken implements Comparable<CommandToken>
 {
     public String surface;
     public boolean isArgument;
+    public CommandArgument type;
 
     private CommandToken(String surface, CommandArgument type )
     {
         this.surface = surface;
+        this.type = type;
         isArgument = type != null;
     }
 
@@ -64,5 +67,29 @@ public class CommandToken
             return CommandArgument.argumentNode(surface, host);
         return literal(surface);
 
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CommandToken that = (CommandToken) o;
+        return surface.equals(that.surface) &&
+                Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(surface, type);
+    }
+
+    @Override
+    public int compareTo(CommandToken o)
+    {
+        if (isArgument && !o.isArgument) return 1;
+        if (!isArgument && o.isArgument) return -1;
+        return surface.compareTo(o.surface);
     }
 }

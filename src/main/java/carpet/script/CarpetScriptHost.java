@@ -35,6 +35,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -226,23 +227,58 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
+    static class ListComparator<T extends Comparable<T>> implements Comparator<Pair<List<T>,?>>
+    {
+        @Override
+        public int compare(Pair<List<T>,?> p1, Pair<List<T>,?> p2) {
+            List<T> o1 = p1.getKey();
+            List<T> o2 = p2.getKey();
+            for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
+                int c = o1.get(i).compareTo(o2.get(i));
+                if (c != 0) {
+                    return c;
+                }
+            }
+            return Integer.compare(o1.size(), o2.size());
+        }
+    }
+
     public LiteralArgumentBuilder<ServerCommandSource> readCommands() throws CommandSyntaxException
     {
         Value commands = appConfig.get(StringValue.of("commands"));
+
         if (commands == null) return null;
         if (!(commands instanceof MapValue))
             throw CommandArgument.error("'commands' element in config should be a map");
         List<Pair<List<CommandToken>,FunctionArgument<Value>>> commandEntries = new ArrayList<>();
+
         for (Map.Entry<Value, Value> commandsData : ((MapValue)commands).getMap().entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList()))
         {
             List<CommandToken> elements = CommandToken.parseSpec(commandsData.getKey().getString(), this);
             FunctionArgument<Value> funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
             commandEntries.add(Pair.of(elements, funSpec));
         }
-        // validate
-        // ...
-        //
-
+        commandEntries.sort(new ListComparator<>());
+        if (!appConfig.getOrDefault(StringValue.of("allow_command_conflicts"), Value.FALSE).getBoolean())
+        {
+            for (int i = 0; i < commandEntries.size()-1; i++)
+            {
+                List<CommandToken> first = commandEntries.get(i).getKey();
+                List<CommandToken> other = commandEntries.get(i+1).getKey();
+                int checkSize = Math.min(first.size(), other.size());
+                for (int t = 0; t < checkSize; t++)
+                {
+                    CommandToken tik = first.get(t);
+                    CommandToken tok = other.get(t);
+                    if (tik.isArgument && tok.isArgument && !tik.surface.equals(tok.surface))
+                        throw CommandArgument.error("Conflicting commands: \n"+
+                                " - [" +first.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at "+tik.surface+"\n"+
+                                " - [" +other.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at "+tok.surface+"\n");
+                    if (!tik.equals(tok))
+                        break;
+                }
+            }
+        }
         return this.getNewCommandTree(commandEntries);
     }
 
