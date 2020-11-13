@@ -215,7 +215,7 @@ public class CarpetScriptHost extends ScriptHost
                     Value spec = typeData.getValue();
                     if (!(spec instanceof MapValue)) throw new InternalExpressionException("Spec for '"+argument+"' should be a map");
                     Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
-                    appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData));
+                    appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
                 }
             }
             appConfig = config;
