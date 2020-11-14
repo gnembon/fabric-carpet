@@ -256,7 +256,7 @@ public abstract class CommandArgument
     public static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
     {
         String[] components = argument.split("_");
-        String suffix = components[components.length-1].toLowerCase(Locale.ROOT);
+        String suffix = components[components.length-1];
         CommandArgument arg =  host.appArgTypes.get(suffix);
         if (arg != null) return arg;
         return builtIns.getOrDefault(suffix, DEFAULT);
@@ -271,7 +271,8 @@ public abstract class CommandArgument
 
     protected String suffix;
     protected Collection<String> examples;
-    protected boolean needsMatching = false;
+    protected boolean needsMatching;
+    protected boolean caseSensitive = true;
     protected SuggestionProvider<ServerCommandSource> suggestionProvider;
     protected FunctionArgument<Value> customSuggester;
 
@@ -308,7 +309,7 @@ public abstract class CommandArgument
         String baseType = config.get("type").getString();
         if (!builtIns.containsKey(baseType))
             throw new InternalExpressionException("Unknown base type: "+baseType);
-        CommandArgument variant = builtIns.get(baseType).builder().get();
+        CommandArgument variant = builtIns.get(baseType).factory().get();
         variant.configure(config, host);
         variant.suffix = suffix;
         return variant;
@@ -316,6 +317,7 @@ public abstract class CommandArgument
 
     protected void configure(Map<String, Value> config, CarpetScriptHost host)
     {
+        caseSensitive = config.getOrDefault("case_sensitive", Value.TRUE).getBoolean();
         if (config.containsKey("suggester"))
         {
             customSuggester = FunctionArgument.fromCommandSpec(host, config.get("suggester"));
@@ -338,7 +340,8 @@ public abstract class CommandArgument
             CarpetScriptHost host
     ) throws CommandSyntaxException
     {
-        String prefix = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        String prefix = suggestionsBuilder.getRemaining();
+        if (!caseSensitive) prefix = prefix.toLowerCase(Locale.ROOT);
         suggestFor(context, prefix, host).forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
@@ -377,8 +380,11 @@ public abstract class CommandArgument
 
     protected boolean optionMatchesPrefix(String prefix, String option)
     {
-        //prefix = prefix.toLowerCase(Locale.ROOT);
-        //option = option.toLowerCase(Locale.ROOT);
+        if (!caseSensitive)
+        {
+            //prefix = prefix.toLowerCase(Locale.ROOT);
+            option = option.toLowerCase(Locale.ROOT);
+        }
         for(int i = 0; !option.startsWith(prefix, i); ++i)
         {
             i = option.indexOf('_', i);
@@ -387,12 +393,11 @@ public abstract class CommandArgument
         return true;
     }
 
-    protected abstract Supplier<CommandArgument> builder();
+    protected abstract Supplier<CommandArgument> factory();
 
     private static class StringArgument extends CommandArgument
     {
         Set<String> validOptions = Collections.emptySet();
-        boolean caseSensitive = false;
         private StringArgument()
         {
             super("string", StringArgumentType.StringType.QUOTABLE_PHRASE.getExamples(), true);
@@ -420,13 +425,12 @@ public abstract class CommandArgument
         protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
             super.configure(config, host);
-            caseSensitive = config.getOrDefault("case_sensitive", Value.FALSE).getBoolean();
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
                 if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom sting type requires options passed as a list");
                 validOptions = ((ListValue) optionsValue).getItems().stream()
-                        .map(v -> caseSensitive?v.getString():v.getString().toLowerCase(Locale.ROOT))
+                        .map(v -> caseSensitive?v.getString():(v.getString().toLowerCase(Locale.ROOT)))
                         .collect(Collectors.toSet());
             }
         }
@@ -438,7 +442,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder() { return WordArgument::new; }
+        protected Supplier<CommandArgument> factory() { return WordArgument::new; }
     }
 
     private static class WordArgument extends StringArgument
@@ -447,7 +451,7 @@ public abstract class CommandArgument
         @Override
         public ArgumentType<?> getArgumentType() { return StringArgumentType.word(); }
         @Override
-        protected Supplier<CommandArgument> builder() { return WordArgument::new; }
+        protected Supplier<CommandArgument> factory() { return WordArgument::new; }
     }
 
     private static class GreedyStringArgument extends StringArgument
@@ -456,7 +460,7 @@ public abstract class CommandArgument
         @Override
         public ArgumentType<?> getArgumentType() { return StringArgumentType.greedyString(); }
         @Override
-        protected Supplier<CommandArgument> builder() { return GreedyStringArgument::new; }
+        protected Supplier<CommandArgument> factory() { return GreedyStringArgument::new; }
     }
 
     private static class BlockPosArgument extends CommandArgument
@@ -491,7 +495,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return BlockPosArgument::new;
         }
@@ -526,7 +530,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return LocationArgument::new;
         }
@@ -539,7 +543,7 @@ public abstract class CommandArgument
 
         private EntityArgument()
         {
-            super("entity", EntityArgumentType.entities().getExamples(), false);
+            super("entities", EntityArgumentType.entities().getExamples(), false);
             onlyFans = false;
             single = false;
         }
@@ -575,7 +579,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return EntityArgument::new;
         }
@@ -587,7 +591,7 @@ public abstract class CommandArgument
 
         private PlayerProfileArgument()
         {
-            super("player", GameProfileArgumentType.gameProfile().getExamples(), false);
+            super("players", GameProfileArgumentType.gameProfile().getExamples(), false);
             single = false;
         }
         @Override
@@ -615,7 +619,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return PlayerProfileArgument::new;
         }
@@ -656,7 +660,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return PlayerProfileArgument::new;
         }
@@ -693,7 +697,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return TagArgument::new;
         }
@@ -726,7 +730,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return CustomIdentifierArgument::new;
         }
@@ -789,7 +793,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return FloatArgument::new;
         }
@@ -840,7 +844,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return IntArgument::new;
         }
@@ -910,7 +914,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
         }

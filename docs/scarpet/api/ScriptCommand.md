@@ -28,39 +28,21 @@ bar = 2;
 
 Loading operation will load that script code from disk and execute it right away. You would probably use it to load 
 some stored procedures to be used for later. To reload the module, just type `/script load` again. Reloading removes 
-all the current global state (globals and functions) that were added later by the module.
+all the current global state (globals and functions) that were added later by the module. To reload all apps along with 
+all game resources, use vanilla `/reload` command.
 
-Loading a module, if it contains a `__command()` method, will attempt to registed a command with that app name, 
-and register all public (no underscore) functions available in the module as subcommands. It will also bind specific 
-events to the event system (check Events section for details).
+
 
 Loaded apps have the ability to store and load external files, especially their persistent tag state. For that 
 check `load_app_data` and `store_app_data` functions.
 
-If an app defines `__config` method, and that method returns a map, it will be used to apply custom settings 
-for this app. Currently the following options are supported:
 
-*   `scope`: default scope for global variables for the app, Default is 'player' which means that globals and defined 
-functions will be unique for each player so that apps for each player will run in isolation. This is useful in 
-tool-like applications. Another option is 'global' which shares global state for all runs on the server - applicable 
-to 'block' like solutions, where custom behaviours are applied to blocks.
-*   `stay_loaded`: defaults to false. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
-stay loaded after startup. Otherwise, after reading a code, and fetching the config, server will drop them down. 
-This is to allow to store multiple apps on the server/world and selectively decide which one should be running at 
-startup. WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
-statically, will be performed once anyways.
 
-Unloading an app removes all of its state from the game, disables commands, and removes bounded events, and 
-saves its global state. If more cleanup is needed, one can define an `__on_close()` function which will be 
-executed when the module is unloaded, or server is closing, or crashing. However, there is no need to do that 
-explicitly for the things mentioned in the previous statement.
+Unloading the app will only mask their command tree, not remove it. This has the same effect than not having that command
+at all, with the exception that if you load a diffrent app with the same name, this may cause commands to reappear.
+To remove the commands fully, use `/reload`.
 
-Scripts can be loaded in shared(global) and player mode. Default is player, so all globals and stored functions are 
-individual for each player, meaning scripts don't need to worry about making sure they store some intermittent 
-data for each player independently. In global mode - all global values and stored functions are shared among all 
-players. To access specific player data with commandblocks, use `/execute as (player) run script in (app) run ...`.
-To access global/server state, you need to disown the command from any player, so use a commandblock, or any 
-arbitrary entity: `/execute as @e[type=bat,limit=1] run script in (module) globals` for instance.
+
 
 ### `/script in <app> ...`
 

@@ -32,9 +32,11 @@ public class CommandToken implements Comparable<CommandToken>
         // todo add more type checking and return null
         if (!source.startsWith("<"))
         {
+            if (!source.matches("[_a-zA-Z]+")) return null;
             return new CommandToken(source, null);
         }
         source = source.substring(1, source.length()-1);
+        if (!source.matches("[_a-zA-Z]+")) return null;
         CommandArgument arg = CommandArgument.getTypeForArgument(source, host);
         return new CommandToken(source, arg);
     }
