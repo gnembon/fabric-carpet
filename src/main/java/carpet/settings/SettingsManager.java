@@ -268,7 +268,7 @@ public class SettingsManager
     }
 
     /**
-     * Disables all @l{@link ParsedRule} with the {@link RuleCategory#COMMAND} category,
+     * Disables all {@link ParsedRule} with the {@link RuleCategory#COMMAND} category,
      * called when the {@link SettingsManager} is {@link #locked}.
      */
     public void disableBooleanCommands()
@@ -709,7 +709,7 @@ public class SettingsManager
 
     public void inspectClientsideCommand(ServerCommandSource source, String string)
     {
-        if (string.startsWith("/carpet "))
+        if (string.startsWith("/"+identifier+" "))
         {
             String[] res = string.split("\\s+", 3);
             if (res.length == 3)

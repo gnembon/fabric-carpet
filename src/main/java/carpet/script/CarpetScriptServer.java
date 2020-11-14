@@ -222,13 +222,6 @@ public class CarpetScriptServer
         //    Messenger.m(source, "r Failed to add "+name+" app: invalid app config (via '__config()' function)");
         //    return false;
         //}
-        if (module == null)
-        {
-            Messenger.m(source, "r Unable to locate the app, but created empty "+name+" app instead");
-            modules.put(name, newHost);
-            return true;
-        }
-        String code = module.getCode();
         if (module.getCode() == null)
         {
             Messenger.m(source, "r Unable to load "+name+" app - not found");
