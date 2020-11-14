@@ -69,7 +69,7 @@ public class BundledModule extends Module
             module.name = null;
             module.code = null;
         }
-    	return module;
+        return module;
     }
 
     @Override

@@ -133,8 +133,7 @@ public class SettingsManager
      * to this {@link SettingsManager} in order to handle them. 
      * @param settingsClass The class that will be analyzed
      */
-    @SuppressWarnings("rawtypes")
-	public void parseSettingsClass(Class settingsClass)
+    public void parseSettingsClass(Class settingsClass)
     {
         for (Field f : settingsClass.getDeclaredFields())
         {
