@@ -5,6 +5,7 @@ import carpet.script.api.Auxiliary;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.Module;
 import carpet.script.command.CommandArgument;
+import carpet.script.command.CommandToken;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
@@ -16,24 +17,32 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.CarpetSettings;
 import carpet.utils.Messenger;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.math.BlockPos;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
+import static net.minecraft.server.command.CommandManager.literal;
 
 public class CarpetScriptHost extends ScriptHost
 {
@@ -100,6 +109,62 @@ public class CarpetScriptHost extends ScriptHost
         return host;
     }
 
+    private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument<Value> funcSpec, List<String> paramNames) throws CommandSyntaxException
+    {
+        CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveForExecution(ctx.getSource());
+        List<String> argNames = funcSpec.function.getArguments();
+        if ((argNames.size()-funcSpec.args.size()) != paramNames.size())
+            throw new SimpleCommandExceptionType(new LiteralText("Target function "+funcSpec.function.getPrettyString()+" as wrong number of arguments, required "+paramNames.size()+", found "+argNames.size()+" with "+funcSpec.args.size()+" provided")).create();
+        List<Value> args = new ArrayList<>(argNames.size());
+        for (String s : paramNames)
+        {
+            args.add(CommandArgument.getValue(ctx, s, cHost));
+        }
+        args.addAll(funcSpec.args);
+        Value response = cHost.handleCommand(ctx.getSource(), funcSpec.function, args);
+        // will skip prints for new
+        //if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
+        return (int) response.readInteger();
+    }
+
+    public LiteralArgumentBuilder<ServerCommandSource> addPathToCommand(
+            LiteralArgumentBuilder<ServerCommandSource> command,
+            List<CommandToken> path,
+            FunctionArgument<Value> functionSpec
+    ) throws CommandSyntaxException
+    {
+        String hostName = main.getName();
+        List<String> commandArgs = path.stream().filter(t -> t.isArgument).map(t -> t.surface).collect(Collectors.toList());
+        if (commandArgs.size() != (functionSpec.function.getNumParams()-functionSpec.args.size()) )
+            throw CommandArgument.error("Number of parameters in function doesn't match parameters for a command");
+        if (path.isEmpty())
+        {
+            return command.executes((c) -> execute(c, hostName, functionSpec, Collections.emptyList()));
+        }
+        List<CommandToken> reversedPath = new ArrayList<>(path);
+        Collections.reverse(reversedPath);
+        ArgumentBuilder<ServerCommandSource, ?> argChain = reversedPath.get(0).getCommandNode(this).executes(c -> execute(c, hostName, functionSpec, commandArgs));
+        for (int i = 1; i < reversedPath.size(); i++)
+        {
+            argChain = reversedPath.get(i).getCommandNode(this).then(argChain);
+        }
+        return command.then(argChain);
+    }
+
+    public LiteralArgumentBuilder<ServerCommandSource> getNewCommandTree(
+            List<Pair<List<CommandToken>,FunctionArgument<Value>>> entries
+    ) throws CommandSyntaxException
+    {
+        String hostName = main.getName();
+        LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
+               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName));
+        for (Pair<List<CommandToken>,FunctionArgument<Value>> commandData : entries)
+        {
+            command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
+        }
+        return command;
+    }
+
     @Override
     protected ScriptHost duplicate()
     {
@@ -150,7 +215,7 @@ public class CarpetScriptHost extends ScriptHost
                     Value spec = typeData.getValue();
                     if (!(spec instanceof MapValue)) throw new InternalExpressionException("Spec for '"+argument+"' should be a map");
                     Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
-                    appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData));
+                    appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
                 }
             }
             appConfig = config;
@@ -162,24 +227,59 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
-    private boolean readCommands()
+    static class ListComparator<T extends Comparable<T>> implements Comparator<Pair<List<T>,?>>
+    {
+        @Override
+        public int compare(Pair<List<T>,?> p1, Pair<List<T>,?> p2) {
+            List<T> o1 = p1.getKey();
+            List<T> o2 = p2.getKey();
+            for (int i = 0; i < Math.min(o1.size(), o2.size()); i++) {
+                int c = o1.get(i).compareTo(o2.get(i));
+                if (c != 0) {
+                    return c;
+                }
+            }
+            return Integer.compare(o1.size(), o2.size());
+        }
+    }
+
+    public LiteralArgumentBuilder<ServerCommandSource> readCommands() throws CommandSyntaxException
     {
         Value commands = appConfig.get(StringValue.of("commands"));
-        if (commands == null) return true;
+
+        if (commands == null) return null;
         if (!(commands instanceof MapValue))
-            throw new InternalExpressionException("'commands' element in config should be a map");
-        for (Map.Entry<Value, Value> commandsData : ((MapValue)commands).getMap().entrySet())
+            throw CommandArgument.error("'commands' element in config should be a map");
+        List<Pair<List<CommandToken>,FunctionArgument<Value>>> commandEntries = new ArrayList<>();
+
+        for (Map.Entry<Value, Value> commandsData : ((MapValue)commands).getMap().entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList()))
         {
-            String path = commandsData.getKey().getString();
+            List<CommandToken> elements = CommandToken.parseSpec(commandsData.getKey().getString(), this);
             FunctionArgument<Value> funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
-            //if (fun)
-
-            //... WIP
-
-            //Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
-            //appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData));
+            commandEntries.add(Pair.of(elements, funSpec));
         }
-        return true;
+        commandEntries.sort(new ListComparator<>());
+        if (!appConfig.getOrDefault(StringValue.of("allow_command_conflicts"), Value.FALSE).getBoolean())
+        {
+            for (int i = 0; i < commandEntries.size()-1; i++)
+            {
+                List<CommandToken> first = commandEntries.get(i).getKey();
+                List<CommandToken> other = commandEntries.get(i+1).getKey();
+                int checkSize = Math.min(first.size(), other.size());
+                for (int t = 0; t < checkSize; t++)
+                {
+                    CommandToken tik = first.get(t);
+                    CommandToken tok = other.get(t);
+                    if (tik.isArgument && tok.isArgument && !tik.surface.equals(tok.surface))
+                        throw CommandArgument.error("Conflicting commands: \n"+
+                                " - [" +first.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at "+tik.surface+"\n"+
+                                " - [" +other.stream().map(tt -> tt.surface).collect(Collectors.joining(" ")) + "] at "+tok.surface+"\n");
+                    if (!tik.equals(tok))
+                        break;
+                }
+            }
+        }
+        return this.getNewCommandTree(commandEntries);
     }
 
     @Override

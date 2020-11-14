@@ -2,11 +2,13 @@ package carpet.script.command;
 
 import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
+import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -22,11 +24,14 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.context.ParsedCommandNode;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.tree.ArgumentCommandNode;
+import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.advancement.Advancement;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.AngleArgumentType;
@@ -74,8 +79,10 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.registry.Registry;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -89,6 +96,11 @@ import static net.minecraft.server.command.CommandManager.argument;
 
 public abstract class CommandArgument
 {
+    public static CommandSyntaxException error(String text)
+    {
+        return new SimpleCommandExceptionType(new LiteralText(text)).create();
+    }
+
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
             // default
             new StringArgument(),
@@ -241,10 +253,10 @@ public abstract class CommandArgument
 
     public static final CommandArgument DEFAULT = baseTypes.get(0);
 
-    private static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
+    public static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
     {
         String[] components = argument.split("_");
-        String suffix = components[components.length-1].toLowerCase(Locale.ROOT);
+        String suffix = components[components.length-1];
         CommandArgument arg =  host.appArgTypes.get(suffix);
         if (arg != null) return arg;
         return builtIns.getOrDefault(suffix, DEFAULT);
@@ -254,13 +266,16 @@ public abstract class CommandArgument
     {
         CommandArgument arg = getTypeForArgument(param, host);
         if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType()).suggests(arg.suggestionProvider);
-        return arg.needsMatching? argument(param, arg.getArgumentType()).suggests(arg::suggest) : argument(param, arg.getArgumentType());
+        return arg.needsMatching? argument(param, arg.getArgumentType()).suggests((c, b) -> arg.suggest(c, b, host)) : argument(param, arg.getArgumentType());
     }
 
     protected String suffix;
     protected Collection<String> examples;
-    protected boolean needsMatching = false;
+    protected boolean needsMatching;
+    protected boolean caseSensitive = true;
     protected SuggestionProvider<ServerCommandSource> suggestionProvider;
+    protected FunctionArgument<Value> customSuggester;
+
 
     protected CommandArgument(
             String suffix,
@@ -287,23 +302,29 @@ public abstract class CommandArgument
         return suffix;
     }
 
-    public static CommandArgument buildFromConfig(String suffix, Map<String, Value> config)
+    public static CommandArgument buildFromConfig(String suffix, Map<String, Value> config, CarpetScriptHost host)
     {
         if (!config.containsKey("type"))
-            throw new InternalExpressionException("Custom types should at least specify the base type");
+            throw new InternalExpressionException("Custom types should at least specify the type");
         String baseType = config.get("type").getString();
         if (!builtIns.containsKey(baseType))
             throw new InternalExpressionException("Unknown base type: "+baseType);
-        CommandArgument variant = builtIns.get(baseType).builder().get();
-        variant.configure(config);
+        CommandArgument variant = builtIns.get(baseType).factory().get();
+        variant.configure(config, host);
         variant.suffix = suffix;
         return variant;
     }
 
-    protected void configure(Map<String, Value> config)
+    protected void configure(Map<String, Value> config, CarpetScriptHost host)
     {
+        caseSensitive = config.getOrDefault("case_sensitive", Value.TRUE).getBoolean();
+        if (config.containsKey("suggester"))
+        {
+            customSuggester = FunctionArgument.fromCommandSpec(host, config.get("suggester"));
+        }
         if (config.containsKey("suggest"))
         {
+            if (config.containsKey("suggester")) throw new InternalExpressionException("Attempted to provide 'suggest' list while 'suggester' is present");
             Value suggestionValue = config.get("suggest");
             if (!(suggestionValue instanceof ListValue)) throw new InternalExpressionException("Argument suggestions needs to be a list");
             examples = ((ListValue) suggestionValue).getItems().stream()
@@ -311,34 +332,59 @@ public abstract class CommandArgument
                     .collect(Collectors.toSet());
             if (!examples.isEmpty()) needsMatching = true;
         }
-    };
+    }
 
     public CompletableFuture<Suggestions> suggest(
             CommandContext<ServerCommandSource> context,
-            SuggestionsBuilder suggestionsBuilder
-    )
+            SuggestionsBuilder suggestionsBuilder,
+            CarpetScriptHost host
+    ) throws CommandSyntaxException
     {
-        String prefix = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
-        suggestFor(prefix).forEach(suggestionsBuilder::suggest);
+        String prefix = suggestionsBuilder.getRemaining();
+        if (!caseSensitive) prefix = prefix.toLowerCase(Locale.ROOT);
+        suggestFor(context, prefix, host).forEach(suggestionsBuilder::suggest);
         return suggestionsBuilder.buildFuture();
     }
 
-    protected List<String> suggestFor(String prefix)
+    protected List<String> suggestFor(CommandContext<ServerCommandSource> context, String prefix, CarpetScriptHost host) throws CommandSyntaxException
     {
-        return getOptions().stream().filter(s -> optionMatchesPrefix(prefix, s)).collect(Collectors.toList());
+        return getOptions(context, host).stream().filter(s -> optionMatchesPrefix(prefix, s)).collect(Collectors.toList());
     }
 
-    protected Collection<String> getOptions()
+    protected Collection<String> getOptions(CommandContext<ServerCommandSource> context, CarpetScriptHost host) throws CommandSyntaxException
     {
+        if (customSuggester != null)
+        {
+            Map<Value, Value> params = new HashMap<>();
+            for(ParsedCommandNode<ServerCommandSource> pnode : context.getNodes())
+            {
+                CommandNode<ServerCommandSource> node = pnode.getNode();
+                if (node instanceof ArgumentCommandNode)
+                {
+                    params.put(StringValue.of(node.getName()), CommandArgument.getValue(context, node.getName(), host));
+                }
+            }
+            List<Value> args = new ArrayList<>(customSuggester.args.size()+1);
+            args.add(MapValue.wrap(params));
+            args.addAll(customSuggester.args);
+            Value response = host.handleCommand(context.getSource(), customSuggester.function, args);
+            if (!(response instanceof ListValue)) throw error("Custom suggester should return a list of options");
+            return ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+        }
+        if (needsMatching) return examples;
         //return Lists.newArrayList("");
         // better than nothing I guess
         // nothing is such a bad default.
-        if (needsMatching) return examples;
         return Collections.singletonList("... "+getTypeSuffix());
     }
 
     protected boolean optionMatchesPrefix(String prefix, String option)
     {
+        if (!caseSensitive)
+        {
+            //prefix = prefix.toLowerCase(Locale.ROOT);
+            option = option.toLowerCase(Locale.ROOT);
+        }
         for(int i = 0; !option.startsWith(prefix, i); ++i)
         {
             i = option.indexOf('_', i);
@@ -347,12 +393,11 @@ public abstract class CommandArgument
         return true;
     }
 
-    protected abstract Supplier<CommandArgument> builder();
+    protected abstract Supplier<CommandArgument> factory();
 
     private static class StringArgument extends CommandArgument
     {
         Set<String> validOptions = Collections.emptySet();
-        boolean caseSensitive = false;
         private StringArgument()
         {
             super("string", StringArgumentType.StringType.QUOTABLE_PHRASE.getExamples(), true);
@@ -377,25 +422,27 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
-            caseSensitive = config.getOrDefault("case_sensitive", Value.FALSE).getBoolean();
+            super.configure(config, host);
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
                 if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom sting type requires options passed as a list");
                 validOptions = ((ListValue) optionsValue).getItems().stream()
-                        .map(v -> caseSensitive?v.getString():v.getString().toLowerCase(Locale.ROOT))
+                        .map(v -> caseSensitive?v.getString():(v.getString().toLowerCase(Locale.ROOT)))
                         .collect(Collectors.toSet());
             }
         }
 
         @Override
-        protected Collection<String> getOptions() { return validOptions.isEmpty()?super.getOptions():validOptions; }
+        protected Collection<String> getOptions(CommandContext<ServerCommandSource> context, CarpetScriptHost host) throws CommandSyntaxException
+        {
+            return validOptions.isEmpty()?super.getOptions(context, host):validOptions;
+        }
 
         @Override
-        protected Supplier<CommandArgument> builder() { return WordArgument::new; }
+        protected Supplier<CommandArgument> factory() { return WordArgument::new; }
     }
 
     private static class WordArgument extends StringArgument
@@ -404,7 +451,7 @@ public abstract class CommandArgument
         @Override
         public ArgumentType<?> getArgumentType() { return StringArgumentType.word(); }
         @Override
-        protected Supplier<CommandArgument> builder() { return WordArgument::new; }
+        protected Supplier<CommandArgument> factory() { return WordArgument::new; }
     }
 
     private static class GreedyStringArgument extends StringArgument
@@ -413,7 +460,7 @@ public abstract class CommandArgument
         @Override
         public ArgumentType<?> getArgumentType() { return StringArgumentType.greedyString(); }
         @Override
-        protected Supplier<CommandArgument> builder() { return GreedyStringArgument::new; }
+        protected Supplier<CommandArgument> factory() { return GreedyStringArgument::new; }
     }
 
     private static class BlockPosArgument extends CommandArgument
@@ -441,14 +488,14 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             mustBeLoaded = config.getOrDefault("loaded", Value.FALSE).getBoolean();
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return BlockPosArgument::new;
         }
@@ -476,14 +523,14 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             blockCentered = config.getOrDefault("block_centered", Value.TRUE).getBoolean();
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return LocationArgument::new;
         }
@@ -496,7 +543,7 @@ public abstract class CommandArgument
 
         private EntityArgument()
         {
-            super("entity", EntityArgumentType.entities().getExamples(), false);
+            super("entities", EntityArgumentType.entities().getExamples(), false);
             onlyFans = false;
             single = false;
         }
@@ -524,15 +571,15 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             onlyFans = config.getOrDefault("players", Value.FALSE).getBoolean();
             single = config.getOrDefault("single", Value.FALSE).getBoolean();
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return EntityArgument::new;
         }
@@ -544,7 +591,7 @@ public abstract class CommandArgument
 
         private PlayerProfileArgument()
         {
-            super("player", GameProfileArgumentType.gameProfile().getExamples(), false);
+            super("players", GameProfileArgumentType.gameProfile().getExamples(), false);
             single = false;
         }
         @Override
@@ -565,14 +612,14 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             single = config.getOrDefault("single", Value.FALSE).getBoolean();
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return PlayerProfileArgument::new;
         }
@@ -606,14 +653,14 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             single = config.getOrDefault("single", Value.FALSE).getBoolean();
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return PlayerProfileArgument::new;
         }
@@ -643,14 +690,14 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             mapRequired = !config.getOrDefault("allow_element", Value.FALSE).getBoolean();
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return TagArgument::new;
         }
@@ -683,15 +730,15 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return CustomIdentifierArgument::new;
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
@@ -731,9 +778,9 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             if (config.containsKey("min"))
             {
                 min = NumericValue.asNumber(config.get("min"), "min").getDouble();
@@ -746,7 +793,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return FloatArgument::new;
         }
@@ -782,9 +829,9 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
         {
-            super.configure(config);
+            super.configure(config, host);
             if (config.containsKey("min"))
             {
                 min = NumericValue.asNumber(config.get("min"), "min").getLong();
@@ -797,9 +844,9 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
-            return FloatArgument::new;
+            return IntArgument::new;
         }
     }
 
@@ -867,7 +914,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected Supplier<CommandArgument> builder()
+        protected Supplier<CommandArgument> factory()
         {
             return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
         }
