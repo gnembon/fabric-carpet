@@ -44,6 +44,12 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     }
     
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
+    /**
+     * Registers a {@link CarpetExtension} to be managed by Carpet.<br>
+     * Should be called before Carpet's startup, like in Fabric Loader's
+     * {@link net.fabricmc.api.ModInitializer} entrypoint
+     * @param extension The instance of a {@link CarpetExtension} to be registered
+     */
     public static void manageExtension(CarpetExtension extension)
     {
         extensions.add(extension);
