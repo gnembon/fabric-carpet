@@ -50,6 +50,13 @@ public class CarpetScriptServer
     private static final List<Module> bundledModuleData = new ArrayList<>();
     private static final List<Module> ruleModuleData = new ArrayList<>();
 
+    /**
+     * Registers a Scarpet App to be always available to be loaded
+     * in the /script load list.
+     * @see BundledModule#fromPath(ClassLoader, String, String, boolean)
+     * 
+     * @param app The {@link BundledModule} of the app
+     */
     public static void registerBuiltInScript(BundledModule app)
     {
         bundledModuleData.add(app);
@@ -57,10 +64,11 @@ public class CarpetScriptServer
     
     /**
      * Registers a Scarpet App to be used as a Rule App
-     * (to be controlled with the value of a Carpet rule)
+     * (to be controlled with the value of a Carpet rule).
+     * Libraries should be registered with {@link #registerBuiltInScript(BundledModule)} instead
+     * @see BundledModule#fromPath(ClassLoader, String, String, boolean)
      * 
-     * @param app is the BundledModule of an app. Libraries
-     * should be registered as builtInScripts instead
+     * @param app The {@link BundledModule} of the app.
      */
     public static void registerSettingsApp(BundledModule app) {
     	ruleModuleData.add(app);
