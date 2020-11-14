@@ -197,6 +197,9 @@ produce an exception.
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
 
+### `action_bar(player, message)`, `action_bar(player_list,message)`
+Send messages to player's action bar (above hotbar). Can also input a list of players, and they will receive the message at the same time.
+
 ### `format(components, ...)`, `format(l(components, ...))`
 
 Creates a line of formatted text. Each component is either a string indicating formatting and text it corresponds to
