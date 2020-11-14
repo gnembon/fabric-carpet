@@ -7,6 +7,7 @@ import java.util.Random;
 
 import carpet.commands.*;
 import carpet.network.ServerNetworkHandler;
+import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -91,6 +92,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     {
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         scriptServer.initializeForWorld();
+        HopperCounter.resetAll(minecraftServer);
     }
 
     public static void tick(MinecraftServer server)

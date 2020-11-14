@@ -20,7 +20,7 @@ public class BundledModule extends Module
     /**
      * Creates a new {@link BundledModule} with an app located in Carpet's script storage.
      * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
-     * @param isLibrary A {@link boolean} Indicating whether or not the script is a library
+     * @param isLibrary A {@link boolean} indicating whether or not the script is a library
      * @return The created {@link BundledModule}
      */
     public static BundledModule carpetNative(String scriptName, boolean isLibrary)
@@ -34,7 +34,7 @@ public class BundledModule extends Module
      * 
      * @param path A {@link String} being the path to the directory where the app is located.
      * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
-     * @param isLibrary A {@link boolean} Indicating whether or not the script is a library
+     * @param isLibrary A {@link boolean} indicating whether or not the script is a library
      * @return The created {@link BundledModule}
      */
     public static BundledModule fromPath(String path, String scriptName, boolean isLibrary) {
@@ -47,7 +47,7 @@ public class BundledModule extends Module
      * 
      * @param fullPath A {@link String} being the full path to the app's code, including file and extension.
      * @param scriptName A {@link String} being the custom name for the script.
-     * @param isLibrary A {@link boolean} Indicating whether or not the script is a library
+     * @param isLibrary A {@link boolean} indicating whether or not the script is a library
      * @return The created {@link BundledModule}
      */
     public static BundledModule fromPathWithCustomName(String fullPath, String customName, boolean isLibrary) {

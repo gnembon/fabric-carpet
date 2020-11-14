@@ -13,9 +13,9 @@ import java.lang.System;
  */
 public class RulePrinter implements PreLaunchEntrypoint {
 
-	@Override
-	public void onPreLaunch() {
-		CarpetServer.onGameStarted();
+    @Override
+    public void onPreLaunch() {
+        CarpetServer.onGameStarted();
         CarpetServer.settingsManager.printAllRulesToLog(null);
         System.exit(0);
     }
