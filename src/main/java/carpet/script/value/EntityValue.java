@@ -498,6 +498,31 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
+        put("absorption",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getAbsorptionAmount());
+            return Value.NULL;
+        });
+
+        put("xp",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).totalExperience);
+            return Value.NULL;
+        });
+
+        put("xp_level", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceLevel);
+            return Value.NULL;
+        });
+
+        put("xp_points", (e, a)->{//todo add modify implementation to docs.
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceProgress);
+            return Value.NULL;
+        });
+
+        put("score", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getScore());
+            return Value.NULL;
+        });
+
         put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
@@ -1317,6 +1342,26 @@ public class EntityValue extends Value
 
         put("add_exhaustion", (e, v)-> {
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
+        });
+
+        put("absorption",(e, v)->{
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount((float) NumericValue.asNumber(v).getLong());
+        });
+
+        put("add_xp",(e, v)->{
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).addExperience((int) NumericValue.asNumber(v).getLong());
+        });
+
+        put("add_xp_level",(e, v)->{
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).addExperienceLevels((int) NumericValue.asNumber(v).getLong());
+        });
+
+        put("score", (e, v)->{
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).setScore((int) NumericValue.asNumber(v).getLong());
+        });
+
+        put("add_score",(e, v)->{
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).addScore((int) NumericValue.asNumber(v).getLong());
         });
 
         put("saturation", (e, v)-> {
