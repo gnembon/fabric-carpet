@@ -212,6 +212,11 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `weather(clear_ticks, rain_ticks, thunder)`
+
+Sets weather to clear for `ticks` ticks, after which it will rain for `second_ticks`
+ticks, and if `thunder` is true, it will thunder as well.
+
 ## Block and World querying
 
 ### `pos(block), pos(entity)`

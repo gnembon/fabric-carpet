@@ -58,6 +58,7 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ChunkTicketType;
@@ -412,6 +413,24 @@ public class WorldAccess {
             return LazyValue.TRUE;
         });
 
+
+        expression.addLazyFunction("weather",3,(c, t, lv)->{
+            ServerWorld world = ((CarpetContext) c).s.getWorld();
+
+            Value clear_value = lv.get(0).evalValue(c);
+            Value rain_value = lv.get(1).evalValue(c);
+
+            if(!(clear_value instanceof NumericValue && rain_value instanceof NumericValue))
+                throw new InternalExpressionException("'weather' requires numeric argument for ticks");
+
+            world.setWeather(
+                    ((NumericValue) clear_value).getInt(),
+                    ((NumericValue) rain_value).getInt(),true,
+                    lv.get(2).evalValue(c).getBoolean()
+            );
+
+            return LazyValue.TRUE;
+        });
 
         expression.addLazyFunction("pos", 1, (c, t, lv) ->
         {
