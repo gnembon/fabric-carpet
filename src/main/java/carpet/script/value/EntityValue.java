@@ -17,6 +17,7 @@ import carpet.script.exception.InternalExpressionException;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.class_5575;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.ai.brain.Brain;
 import net.minecraft.entity.ai.brain.Memory;
@@ -210,7 +211,7 @@ public class EntityValue extends Value
 
     public static class EntityClassDescriptor
     {
-        public EntityType<? extends Entity> directType;
+        public class_5575<Entity, ? extends Entity> directType; // interface of EntityType
         public Predicate<? super Entity> filteringPredicate;
         public List<EntityType<? extends  Entity>> typeList;
         public Value listValue;
@@ -221,7 +222,21 @@ public class EntityValue extends Value
             typeList = types;
             listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getId(et)))).collect(Collectors.toList()));
         }
+
+        EntityClassDescriptor( class_5575<Entity, ?> type, Predicate<? super Entity> predicate, List<EntityType<?>> types)
+        {
+            directType = type;
+            filteringPredicate = predicate;
+            typeList = types;
+            listValue = (types==null)?Value.NULL:ListValue.wrap(types.stream().map(et -> StringValue.of(nameFromRegistryId(Registry.ENTITY_TYPE.getId(et)))).collect(Collectors.toList()));
+        }
+
         EntityClassDescriptor(EntityType<?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
+        {
+            this(type, predicate, types.collect(Collectors.toList()));
+        }
+
+        EntityClassDescriptor(class_5575<Entity, ?> type, Predicate<? super Entity> predicate, Stream<EntityType<?>> types)
         {
             this(type, predicate, types.collect(Collectors.toList()));
         }
@@ -279,49 +294,49 @@ public class EntityValue extends Value
             ).collect(Collectors.toSet());
 
 
-            put("*", new EntityClassDescriptor(null, e -> true, allTypes) );
-            put("valid", new EntityClassDescriptor(null, EntityPredicates.VALID_ENTITY, allTypes));
-            put("!valid", new EntityClassDescriptor(null, e -> !e.isAlive(), allTypes));
+            put("*", new EntityClassDescriptor(class_5575.method_31795(Entity.class), e -> true, allTypes) );
+            put("valid", new EntityClassDescriptor(class_5575.method_31795(Entity.class), EntityPredicates.VALID_ENTITY, allTypes));
+            put("!valid", new EntityClassDescriptor(class_5575.method_31795(Entity.class), e -> !e.isAlive(), allTypes));
 
-            put("living",  new EntityClassDescriptor(null, (e) -> (e instanceof LivingEntity && e.isAlive()), allTypes.stream().filter(living::contains)));
-            put("!living",  new EntityClassDescriptor(null, (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
+            put("living",  new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), EntityPredicates.VALID_ENTITY, allTypes.stream().filter(living::contains)));
+            put("!living",  new EntityClassDescriptor(class_5575.method_31795(Entity.class), (e) -> (!(e instanceof LivingEntity) && e.isAlive()), allTypes.stream().filter(et -> !living.contains(et))));
 
-            put("projectile", new EntityClassDescriptor(null, (e) -> (e instanceof ProjectileEntity && e.isAlive()), allTypes.stream().filter(projectiles::contains)));
-            put("!projectile", new EntityClassDescriptor(null, (e) -> (!(e instanceof ProjectileEntity) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
+            put("projectile", new EntityClassDescriptor(class_5575.method_31795(ProjectileEntity.class), EntityPredicates.VALID_ENTITY, allTypes.stream().filter(projectiles::contains)));
+            put("!projectile", new EntityClassDescriptor(class_5575.method_31795(Entity.class), (e) -> (!(e instanceof ProjectileEntity) && e.isAlive()), allTypes.stream().filter(et -> !projectiles.contains(et) && !living.contains(et))));
 
-            put("minecarts", new EntityClassDescriptor(null, (e) -> (e instanceof AbstractMinecartEntity && e.isAlive()), allTypes.stream().filter(minecarts::contains)));
-            put("!minecarts", new EntityClassDescriptor(null, (e) -> (!(e instanceof AbstractMinecartEntity) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
+            put("minecarts", new EntityClassDescriptor(class_5575.method_31795(AbstractMinecartEntity.class), EntityPredicates.VALID_ENTITY, allTypes.stream().filter(minecarts::contains)));
+            put("!minecarts", new EntityClassDescriptor(class_5575.method_31795(Entity.class), (e) -> (!(e instanceof AbstractMinecartEntity) && e.isAlive()), allTypes.stream().filter(et -> !minecarts.contains(et) && !living.contains(et))));
 
 
             // combat groups
 
-            put("arthropod", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
-            put("!arthropod", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
+            put("arthropod", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(arthropods::contains)));
+            put("!arthropod", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.ARTHROPOD && e.isAlive()), allTypes.stream().filter(et -> !arthropods.contains(et) && living.contains(et))));
 
-            put("undead", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(undeads::contains)));
-            put("!undead", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
+            put("undead", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(undeads::contains)));
+            put("!undead", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.UNDEAD && e.isAlive()), allTypes.stream().filter(et -> !undeads.contains(et) && living.contains(et))));
 
-            put("aquatic", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
-            put("!aquatic", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
+            put("aquatic", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(aquatique::contains)));
+            put("!aquatic", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.AQUATIC && e.isAlive()), allTypes.stream().filter(et -> !aquatique.contains(et) && living.contains(et))));
 
-            put("illager", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(illagers::contains)));
-            put("!illager", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
+            put("illager", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(illagers::contains)));
+            put("!illager", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.ILLAGER && e.isAlive()), allTypes.stream().filter(et -> !illagers.contains(et) && living.contains(et))));
 
-            put("regular", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() == EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(regular::contains)));
-            put("!regular", new EntityClassDescriptor(null, e -> ((e instanceof LivingEntity) && ((LivingEntity) e).getGroup() != EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
+            put("regular", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() == EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(regular::contains)));
+            put("!regular", new EntityClassDescriptor(class_5575.method_31795(LivingEntity.class), e -> (((LivingEntity) e).getGroup() != EntityGroup.DEFAULT && e.isAlive()), allTypes.stream().filter(et -> !regular.contains(et) && living.contains(et))));
 
             for (Identifier typeId : Registry.ENTITY_TYPE.getIds())
             {
                 EntityType<?> type  = Registry.ENTITY_TYPE.get(typeId);
                 String mobType = ValueConversions.simplify(typeId);
                 put(    mobType, new EntityClassDescriptor(type, EntityPredicates.VALID_ENTITY, Stream.of(type)));
-                put("!"+mobType, new EntityClassDescriptor(null, (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
+                put("!"+mobType, new EntityClassDescriptor(class_5575.method_31795(Entity.class), (e) -> e.getType() != type  && e.isAlive(), allTypes.stream().filter(et -> et != type)));
             }
             for (SpawnGroup catId : SpawnGroup.values())
             {
                 String catStr = catId.getName();
-                put(    catStr, new EntityClassDescriptor(null, e -> ((e.getType().getSpawnGroup() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() == catId)));
-                put("!"+catStr, new EntityClassDescriptor(null, e -> ((e.getType().getSpawnGroup() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() != catId)));
+                put(    catStr, new EntityClassDescriptor(class_5575.method_31795(Entity.class), e -> ((e.getType().getSpawnGroup() == catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() == catId)));
+                put("!"+catStr, new EntityClassDescriptor(class_5575.method_31795(Entity.class), e -> ((e.getType().getSpawnGroup() != catId) && e.isAlive()), allTypes.stream().filter(et -> et.getSpawnGroup() != catId)));
             }
         }};
     }

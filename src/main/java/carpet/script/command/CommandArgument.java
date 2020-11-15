@@ -191,13 +191,13 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getAdvancementArgument(c, p).getId()), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getAdvancementLoader().getAdvancements().stream().map(Advancement::getId), builder)
             ),
             new VanillaUnconfigurableArgument("lootcondition", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getId(IdentifierArgumentType.method_23727(c, p).getType())), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getPredicateManager().getIds(), builder)
+                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getId(IdentifierArgumentType.getPredicateArgument(c, p).getType())), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getPredicateManager().getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("loottable", IdentifierArgumentType::identifier,
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getLootManager().getTableIds(), builder)
             ),
             new VanillaUnconfigurableArgument("attribute", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getId(IdentifierArgumentType.method_27575(c, p))), (ctx, builder) -> CommandSource.suggestIdentifiers(Registry.ATTRIBUTE.getIds(), builder)
+                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getId(IdentifierArgumentType.getAttributeArgument(c, p))), (ctx, builder) -> CommandSource.suggestIdentifiers(Registry.ATTRIBUTE.getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("boss", IdentifierArgumentType::identifier,
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), BossBarCommand.SUGGESTION_PROVIDER
