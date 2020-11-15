@@ -414,22 +414,44 @@ public class WorldAccess {
         });
 
 
-        expression.addLazyFunction("weather",3,(c, t, lv)->{
+        expression.addLazyFunction("weather",-1,(c, t, lv) -> {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
 
-            Value clear_value = lv.get(0).evalValue(c);
-            Value rain_value = lv.get(1).evalValue(c);
+            Value val = lv.get(0).evalValue(c);
 
-            if(!(clear_value instanceof NumericValue && rain_value instanceof NumericValue))
-                throw new InternalExpressionException("'weather' requires numeric argument for ticks");
+            if(lv.size()==1) {
+                boolean retBool;
+                switch (val.getString()) {
+                    case "clear":
+                        retBool = !(world.isRaining() && world.isThundering());
+                        break;
+                    case "rain":
+                        retBool = world.isRaining();
+                        break;
+                    case "thunder":
+                        retBool = world.isThundering();
+                        break;
+                    default:
+                        throw new InternalExpressionException("Weather can only be 'clear', 'rain' or 'thunder'");
+                }
+                return (_c,_t) -> new NumericValue(retBool);
+            } else if(lv.size()==3){
 
-            world.setWeather(
-                    ((NumericValue) clear_value).getInt(),
-                    ((NumericValue) rain_value).getInt(),true,
-                    lv.get(2).evalValue(c).getBoolean()
-            );
+                Value rainValue = lv.get(1).evalValue(c);
 
-            return LazyValue.TRUE;
+                if (!(val instanceof NumericValue && rainValue instanceof NumericValue))
+                    throw new InternalExpressionException("'weather' requires numeric argument for ticks");
+
+                world.setWeather(
+                        ((NumericValue) val).getInt(),
+                        ((NumericValue) rainValue).getInt(),
+                        ((NumericValue) rainValue).getInt()>0,//Only gonna make it rain if rain time isn't 0
+                        lv.get(2).evalValue(c).getBoolean()
+                );
+
+                return LazyValue.TRUE;
+            } else
+                throw new InternalExpressionException("'weather' accepts 1 argument for querying, or 3 for modifying the weather.");
         });
 
         expression.addLazyFunction("pos", 1, (c, t, lv) ->
