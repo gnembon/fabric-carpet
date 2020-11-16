@@ -97,6 +97,26 @@ public class CarpetSettings
             appSource = "ai_tracker"
     )
     public static boolean commandAITracker = true;
+
+    @Rule(
+        desc = "Enables /draw commands",
+        extra = {
+            "... allows for drawing simple shapes or",
+            "other shapes which are sorta difficult to do normally"
+        },
+        appSource = "draw",
+        category = {FEATURE, SCARPET, COMMAND}
+    )
+    public static boolean commandDraw = false;
+
+    @Rule(
+        desc = "Enables /distance command to measure in game distance between points",
+        extra = "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
+        appSource = "distance",
+        category = {FEATURE, SCARPET, COMMAND}
+    )
+    public static boolean commandDistance = false;
+
     */
 
 
