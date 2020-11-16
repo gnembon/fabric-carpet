@@ -211,7 +211,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'anchor'`: string of `feet` or `eyes`.
   * `'entitytype'`: string representing a type of entity 
   * `'floatrange'`: pair of two numbers where one is smaller than the other 
-  * `'players'`: returning a list of valid player entities. If configured with `'single'` returns only one player or `null`.
+  * `'players'`: returning a list of valid player name string, logged in or not. If configured with `'single'` returns only one player or `null`.
   * `'intrange'`: same as `'floatrange'`, but requiring integers. 
   * `'enchantment'`: name of an enchantment
   * `'item'`: triple of item type, count of 1, and nbt.

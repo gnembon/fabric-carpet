@@ -27,35 +27,76 @@ global_renderers = m(
     }
 );
 
-__command() -> '';
+global_shapes = {'sphere' -> [], 'box' -> []};
 
-monument() -> __toggle('monument', 'structures');
-fortress() -> __toggle('fortress', 'structures');
-mansion() -> __toggle('mansion', 'structures');
-jungle_pyramid() -> __toggle('jungle_pyramid', 'structures');
-desert_pyramid() -> __toggle('desert_pyramid', 'structures');
-endcity() -> __toggle('endcity', 'structures');
-igloo() -> __toggle('igloo', 'structures');
-shipwreck() -> __toggle('shipwreck', 'structures');
-swamp_hut() -> __toggle('swamp_hut', 'structures');
-stronghold() -> __toggle('stronghold', 'structures');
-ocean_ruin() -> __toggle('ocean_ruin', 'structures');
-buried_treasure() -> __toggle('buried_treasure', 'structures');
-pillager_outpost() -> __toggle('pillager_outpost', 'structures');
-mineshaft() -> __toggle('mineshaft', 'structures');
-village() -> __toggle('village', 'structures');
-nether_fossil() -> __toggle('nether_fossil', 'structures');
-bastion_remnant() -> __toggle('bastion_remnant', 'structures');
-ruined_portal() -> __toggle('ruined_portal', 'structures');
+__config() ->
+{
+    'commands' -> {
+        'structure <structure>' -> _(s) -> __toggle(s, 'structures'),
+        'slime_chunks' -> ['__toggle', 'slime_chunks', 'chunks'],
+        'portal coordinates' -> ['__toggle', 'coords', 'portals'],
+        'portal links' -> ['__toggle', 'links', 'portals'],
+        '<shape> <radius> following <player>' -> ['display_shape', [null,0xffffffff], true],
+        '<shape> <radius> at <player>' -> ['display_shape', [null,0xffffffff], false],
+        '<shape> <radius> following <player> <color>' -> ['display_shape', true],
+        '<shape> <radius> at <player> <color>' -> ['display_shape', false],
+        '<shape> clear' -> 'clear_shape',
+        'clear' -> 'clear',
+    },
+    'arguments' -> {
+        'structure' -> {'type' -> 'term', 'suggest' -> [
+            'monument', 'fortress', 'mansion', 'jungle_pyramid',
+            'desert_pyramid', 'endcity', 'igloo', 'shipwreck',
+            'swamp_hut', 'stronghold', 'ocean_ruin', 'buried_treasure',
+            'pillager_outpost', 'mineshaft', 'village', 'nether_fossil',
+            'bastion_remnant', 'ruined_portal'
+        ]},
+        'player' -> {'type' -> 'players', 'single' -> true},
+        'radius' -> {'type' -> 'int', 'min' -> 0, 'max' -> 1024, 'suggest' -> [128, 24, 32]},
+        'shape' -> {'type' -> 'term', 'options' -> keys(global_shapes) },
+        'color' -> {'type' -> 'teamcolor'}
+    }
+};
 
-slime_chunks() -> __toggle('slime_chunks', 'chunks');
 
-portal_coordinates() -> __toggle('coords', 'portals');
-portal_links() -> __toggle('links', 'portals');
+display_shape(shape, r, player, color, following) ->
+(
+
+    player = player(player);
+    if (!player, return());
+    if (shape == 'sphere',
+        shape_config = {
+            'center' -> if(following, [0,0,0], pos(player)),
+            'radius' -> r
+        }
+    , shape == 'box',
+        shape_config = {
+            'from' -> if(following, [-r,-r,-r], pos(player)-r),
+            'to' -> if(following, [r,r,r], pos(player)+r)
+        }
+    );
+    if (shape_config,
+        if (following, shape_config:'follow' = player);
+        shape_config:'fill' = color:1 - 200;
+        shape_config:'color' = color:1;
+        shape_config:'line' = 5;
+        draw_shape(shape, 72000, shape_config);
+        global_shapes:shape += shape_config;
+    )
+);
 
 
+clear_shape(shape) ->
+(
+    for(global_shapes:shape, draw_shape(shape, 0, _));
+    global_shapes:shape = [];
+);
 
-clear() -> for(global_renderers, global_renderers:_:'tasks' = m() );
+clear() ->
+(
+    for(global_renderers, global_renderers:_:'tasks' = m() );
+    for(global_shapes, clear_shape(_));
+);
 
 __toggle(feature, renderer) ->
 (
@@ -63,11 +104,11 @@ __toggle(feature, renderer) ->
     config = global_renderers:renderer;
     if( has(config:'tasks':feature),
         delete(config:'tasks':feature);
-        'disabled '+feature+' overlays';
+        print(p, format('gi disabled '+feature+' overlays'));
     ,
         config:'tasks' += feature;
         if (!config:'active', call(config:'handler', p~'name'));
-        'enabled '+feature+' overlays';
+        print(p, format('gi enabled '+feature+' overlays'));
     )
 );
 
@@ -80,6 +121,9 @@ __should_run(renderer, player_name) ->
     config:'active' = true;
     l(p, config);
 );
+
+
+
 
 __structure_renderer(player_name) ->
 (
