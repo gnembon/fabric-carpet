@@ -3,14 +3,19 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.ExperienceOrbInterface;
 import carpet.helpers.XPcombine;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+import java.util.Map;
 
 @Mixin(ExperienceOrbEntity.class)
 public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
@@ -18,6 +23,10 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
     @Shadow private int amount;
 
     @Shadow private int field_27009;
+
+    @Shadow protected abstract int getMendingRepairCost(int repairAmount);
+
+    @Shadow protected abstract int getMendingRepairAmount(int experienceAmount);
 
     public void setAmount(int amount) { this.amount = amount; }
 
@@ -73,6 +82,23 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
         {
             field_27009 --;
             playerEntity.addExperience(experience);
+        }
+    }
+
+    // temporary until gets fixed game-side
+    @Inject(method = "onPlayerCollision", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true, at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/entity/ExperienceOrbEntity;getMendingRepairAmount(I)I"
+    ))
+    void cancelApplication(PlayerEntity player, CallbackInfo ci, Map.Entry<EquipmentSlot, ItemStack> entry, ItemStack itemStack)
+    {
+        if (CarpetSettings.xpfix && field_27009 > 1)
+        {
+            int i = Math.min(getMendingRepairAmount(this.amount), itemStack.getDamage());
+            field_27009--;
+            itemStack.setDamage(itemStack.getDamage() - i);
+            // cancel effects of mending application
+            ci.cancel();
         }
     }
 

@@ -155,6 +155,10 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
+    @Rule( desc = "xpfix", category = SURVIVAL )
+    public static boolean xpfix = false;
+
+
     @Rule( desc = "XP orbs combine with other into bigger orbs", category = FEATURE )
     public static boolean combineXPOrbs = false;
 
