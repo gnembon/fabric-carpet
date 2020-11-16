@@ -73,6 +73,7 @@ public class CarpetSettings
 
     /*
     These will be turned when events can be added / removed in code
+    Then also gotta remember to remove relevant rules
 
     @Rule(
             desc = "Turns on internal camera path tracing app",
