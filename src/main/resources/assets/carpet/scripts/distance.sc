@@ -28,7 +28,7 @@ _calculate(start_pos, end_pos)->(
 );
 
 __on_player_places_block(player, item_tuple, hand, block) ->(
-    if(system_info('world_carpet_rules'):'carpets'&&block=='brown_carpet',
+    if(system_info('world_carpet_rules'):'carpets'=='true'&&block=='brown_carpet',
         if(player~'sneaking',
             set_start(pos(block)),
             _calculate(null,pos(block))
