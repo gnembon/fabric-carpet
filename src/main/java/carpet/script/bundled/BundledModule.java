@@ -17,14 +17,46 @@ public class BundledModule extends Module
         this.name = name;
         this.code = code;
     }
+    /**
+     * Creates a new {@link BundledModule} with an app located in Carpet's script storage.
+     * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
+     * @param isLibrary A {@link boolean} indicating whether or not the script is a library
+     * @return The created {@link BundledModule}
+     */
     public static BundledModule carpetNative(String scriptName, boolean isLibrary)
     {
-        BundledModule module = new BundledModule(null, null, isLibrary);
-        try
-        {
-            module.name = scriptName.toLowerCase(Locale.ROOT);
+        return fromPath("assets/carpet/scripts/", scriptName, isLibrary);
+    }
+    
+    /**
+     * Creates a new {@link BundledModule} with an app located at a specified place.
+     * @see #fromPathWithCustomName(ClassLoader, String, String, boolean)
+     * 
+     * @param path A {@link String} being the path to the directory where the app is located.
+     * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
+     * @param isLibrary A {@link boolean} indicating whether or not the script is a library
+     * @return The created {@link BundledModule}
+     */
+    public static BundledModule fromPath(String path, String scriptName, boolean isLibrary) {
+    	return fromPathWithCustomName(path+scriptName+(isLibrary?".scl":".sc"), scriptName, isLibrary);
+    }
+    
+    /**
+     * Creates a new {@link BundledModule} with an app located at the specified fullPath with a custom name.
+     * @see #fromPath(ClassLoader, String, String, boolean)
+     * 
+     * @param fullPath A {@link String} being the full path to the app's code, including file and extension.
+     * @param scriptName A {@link String} being the custom name for the script.
+     * @param isLibrary A {@link boolean} indicating whether or not the script is a library
+     * @return The created {@link BundledModule}
+     */
+    public static BundledModule fromPathWithCustomName(String fullPath, String customName, boolean isLibrary) {
+    	BundledModule module = new BundledModule(null, null, isLibrary);
+    	try
+    	{
+            module.name = customName.toLowerCase(Locale.ROOT);
             module.code = IOUtils.toString(
-                    BundledModule.class.getClassLoader().getResourceAsStream("assets/carpet/scripts/"+scriptName+(isLibrary?".scl":".sc")),
+            		BundledModule.class.getClassLoader().getResourceAsStream(fullPath),
                     StandardCharsets.UTF_8
             );
         }

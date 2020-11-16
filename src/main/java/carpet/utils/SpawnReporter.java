@@ -231,8 +231,9 @@ public class SpawnReporter
                 return SpawnGroup.AMBIENT;
             case CYAN:
                 return SpawnGroup.WATER_AMBIENT;
+            default:
+            	return null;
         }
-        return null;
     }
     
     public static SpawnGroup get_creature_type_from_code(String type_code)

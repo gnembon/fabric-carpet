@@ -2,7 +2,6 @@ package carpet.script.value;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.Tokenizer;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;

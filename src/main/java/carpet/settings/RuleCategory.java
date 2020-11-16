@@ -12,6 +12,11 @@ public class RuleCategory
     public static final String TNT = "tnt";
     public static final String DISPENSER = "dispenser";
     public static final String SCARPET = "scarpet";
+    /**
+     * Rules with this {@link RuleCategory} will have a client-side
+     * counterpart, so they can be set independently without the server
+     * being Carpet's
+     */
     public static final String CLIENT = "client";
 
 }

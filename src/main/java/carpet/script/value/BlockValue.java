@@ -1,7 +1,6 @@
 package carpet.script.value;
 
 import carpet.script.CarpetContext;
-import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;

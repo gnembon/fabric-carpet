@@ -7,6 +7,7 @@ import java.util.Random;
 
 import carpet.commands.*;
 import carpet.network.ServerNetworkHandler;
+import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
@@ -44,6 +45,12 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     }
     
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
+    /**
+     * Registers a {@link CarpetExtension} to be managed by Carpet.<br>
+     * Should be called before Carpet's startup, like in Fabric Loader's
+     * {@link net.fabricmc.api.ModInitializer} entrypoint
+     * @param extension The instance of a {@link CarpetExtension} to be registered
+     */
     public static void manageExtension(CarpetExtension extension)
     {
         extensions.add(extension);
@@ -85,6 +92,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     {
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         scriptServer.initializeForWorld();
+        HopperCounter.resetAll(minecraftServer);
     }
 
     public static void tick(MinecraftServer server)

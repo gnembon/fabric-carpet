@@ -21,25 +21,6 @@ jobs:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
-      - name: Generate RulePrinter class
-        run: |
-          cd src/main/java/carpet/utils
-          echo "
-          package carpet.utils;
-          import carpet.CarpetServer;
-          import carpet.settings.SettingsManager;
-          import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
-          import java.lang.System;
-          public class RulePrinter implements PreLaunchEntrypoint {
-            @Override
-            public void onPreLaunch() {
-                CarpetServer.onGameStarted();
-                CarpetServer.settingsManager.printAllRulesToLog(null);
-                System.exit(0);
-            }
-          }
-          " > RulePrinter.java
-          cd ../../../../../
       - name: Replace fabric.mod.json
         run: |
           cd src/main/resources

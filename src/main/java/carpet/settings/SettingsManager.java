@@ -48,9 +48,19 @@ import static net.minecraft.command.CommandSource.suggestMatching;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
+/**
+ * Manages and parses Carpet rules with their own command.
+ * @see #SettingsManager(String, String, String)
+ * 
+ */
 public class SettingsManager
 {
     private Map<String, ParsedRule<?>> rules = new HashMap<>();
+    /**
+     * Whether or not this {@link SettingsManager} is locked. That is specified
+     * by writing "locked" at the beginning of the settings file. May not
+     * correctly react to changes.
+     */
     public boolean locked;
     private final String version;
     private final String identifier;
@@ -59,7 +69,13 @@ public class SettingsManager
     private List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> observers = new ArrayList<>();
     private static List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> staticObservers = new ArrayList<>();
 
-
+    /**
+     * Creates a new {@link SettingsManager} without a fancy name.
+     * @see #SettingsManager(String, String, String)
+     * 
+     * @param version A {@link String} with the mod's version
+     * @param identifier A {@link String} with the mod's id, will be the command name
+     */
     public SettingsManager(String version, String identifier)
     {
         this.version = version;
@@ -67,6 +83,14 @@ public class SettingsManager
         this.fancyName = identifier;
     }
 
+    /**
+     * Creates a new {@link SettingsManager} with a fancy name
+     * @see #SettingsManager(String, String)
+     * 
+     * @param version A {@link String} with the mod's version
+     * @param identifier A {@link String} with the mod's id, will be the command name
+     * @param fancyName A {@link String} being the mod's fancy name.
+     */
     public SettingsManager(String version, String identifier, String fancyName)
     {
         this.version = version;
@@ -74,22 +98,41 @@ public class SettingsManager
         this.fancyName = fancyName;
     }
 
+    /**
+     * @return A {@link String} being this {@link SettingsManager}'s 
+     *         identifier, which is also the command name
+     */
     public String getIdentifier() {
         return identifier;
     }
     
+    /**
+     * Attaches a {@link MinecraftServer} to this {@link SettingsManager}.<br>
+     * This is handled automatically by Carpet
+     * @param server The {@link MinecraftServer} instance to be attached
+     */
     public void attachServer(MinecraftServer server)
     {
         this.server = server;
         loadConfigurationFromConf();
     }
 
+    /**
+     * Detaches the {@link MinecraftServer} of this {@link SettingsManager} and
+     * resets its {@link ParsedRule}s to their default values.<br>
+     * This is handled automatically by Carpet
+     */
     public void detachServer()
     {
         for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(null);
         server = null;
     }
 
+    /**
+     * Adds all annotated fields with the {@link Rule} annotation 
+     * to this {@link SettingsManager} in order to handle them. 
+     * @param settingsClass The class that will be analyzed
+     */
     public void parseSettingsClass(Class settingsClass)
     {
         for (Field f : settingsClass.getDeclaredFields())
@@ -101,10 +144,31 @@ public class SettingsManager
         }
     }
 
+    /**
+     * Adds a custom rule observer to changes in rules from 
+     * <b>this specific</b> {@link SettingsManager} instance.
+     * @see SettingsManager#addGlobalRuleObserver(TriConsumer)
+     * 
+     * @param observer A {@link TriConsumer} that will be called with
+     *                 the used {@link ServerCommandSource}, the changed
+     *                 {@link ParsedRule} and a {@link String} being the
+     *                 value that the user typed.
+     */
     public void addRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
     {
         observers.add(observer);
     }
+    
+    /**
+     * Adds a custom rule observer to changes in rules from 
+     * <b>any</b> registered {@link SettingsManger} instance.
+     * @see SettingsManager#addRuleObserver(TriConsumer)
+     * 
+     * @param observer A {@link TriConsumer} that will be called with
+     *                 the used {@link ServerCommandSource}, the changed
+     *                 {@link ParsedRule} and a {@link String} being the
+     *                 value that the user typed.
+     */
     public static void addGlobalRuleObserver(TriConsumer<ServerCommandSource, ParsedRule<?>, String> observer)
     {
         staticObservers.add(observer);
@@ -133,6 +197,10 @@ public class SettingsManager
         }
     }
     
+    /**
+     * Initializes Scarpet rules in this {@link SettingsManager}, if any.<br>
+     * This is handled automatically by Carpet.
+     */
     public void initializeScarpetRules() {
         for (ParsedRule<?> rule : rules.values())
         {
@@ -142,6 +210,10 @@ public class SettingsManager
         }
     }
 
+    /**
+     * @return An {@link Iterable} list of all categories
+     *         from rules in this {@link SettingsManager}
+     */
     public Iterable<String> getCategories()
     {
         Set<String> categories = new HashSet<>();
@@ -150,16 +222,29 @@ public class SettingsManager
     }
 
 
+    /**
+     * Gets a registered rule in this {@link SettingsManager} by its name.
+     * @param name The rule name
+     * @return The {@link ParsedRule} with that name
+     */
     public ParsedRule<?> getRule(String name)
     {
         return rules.get(name);
     }
 
+    /**
+     * @return A {@link Collection} of the registered rules in this
+     *         {@link SettingsManager}.
+     */
     public Collection<ParsedRule<?>> getRules()
     {
         return rules.values().stream().sorted().collect(Collectors.toList());
     }
 
+    /**
+     * @return A {@link Collection} of {@link ParsedRule}s that have defaults
+     *         for this world different than the rule's default value.
+     */
     public Collection<ParsedRule<?>> findStartupOverrides()
     {
         Set<String> defaults = readSettingsFromConf().getLeft().keySet();
@@ -167,7 +252,10 @@ public class SettingsManager
                 sorted().collect(Collectors.toList());
     }
 
-
+    /**
+     * @return A collection of {@link ParsedRule} that are not in 
+     *         their default value
+     */
     public Collection<ParsedRule<?>> getNonDefault()
     {
         return rules.values().stream().filter(r -> !r.isDefault()).sorted().collect(Collectors.toList());
@@ -178,6 +266,10 @@ public class SettingsManager
         return server.getSavePath(WorldSavePath.ROOT).resolve(identifier+".conf").toFile();
     }
 
+    /**
+     * Disables all {@link ParsedRule} with the {@link RuleCategory#COMMAND} category,
+     * called when the {@link SettingsManager} is {@link #locked}.
+     */
     public void disableBooleanCommands()
     {
         for (ParsedRule<?> rule : rules.values())
@@ -213,6 +305,9 @@ public class SettingsManager
         ///todo is it really needed? resendCommandTree();
     }
 
+    /**
+     * Notifies all players that the commands changed by resending the command tree.
+     */
     public void notifyPlayersCommandsChanged()
     {
         if (server == null || server.getPlayerManager() == null)
@@ -228,6 +323,15 @@ public class SettingsManager
         }));
     }
 
+    /**
+     * Returns whether the the {@link ServerCommandSource} can execute
+     * a command given the required permission level, according to
+     * Carpet's standard for permissions.
+     * @param source The origin {@link ServerCommandSource}
+     * @param commandLevel A {@link String} being the permission level (either 0-4, a 
+     *                     {@link boolean} value or "ops".
+     * @return Whether or not the {@link ServerCommandSource} meets the required level
+     */
     public static boolean canUseCommand(ServerCommandSource source, String commandLevel)
     {
         switch (commandLevel)
@@ -245,6 +349,12 @@ public class SettingsManager
         return false;
     }
 
+    /**
+     * @param commandLevel A {@link String} being a permission level according to 
+     *                     Carpet's standard for permissions (either 0-4, a {@link boolean}, 
+     *                     or "ops".
+     * @return An {@link int} with the translated Vanilla permission level
+     */
     public static int getCommandLevel(String commandLevel)
     {
         switch (commandLevel)
@@ -347,6 +457,15 @@ public class SettingsManager
         }).sorted().collect(ImmutableList.toImmutableList());
     }
 
+    /**
+     * A method to pretty print in markdown (useful for Github wiki/readme) the current
+     * registered rules for a category to the log. Contains the name, description,
+     * categories, type, defaults, wether or not they are strict, their suggested
+     * values, and the descriptions of their validators.
+     * @param category A {@link String} being the category to print, {@link null} to print
+     *                 all registered rules.
+     * @return {@link int} 1 if things didn't fail, and all the info to System.out
+     */
     public int printAllRulesToLog(String category)
     {
         PrintStream ps = System.out;
@@ -393,6 +512,11 @@ public class SettingsManager
         return rule;
     }
 
+    /**
+     * Registers the the settings command for this {@link SettingsManager}.<br>
+     * It is handled automatically by Carpet.
+     * @param dispatcher The current {@link CommandDispatcher}
+     */
     public void registerCommand(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         if (dispatcher.getRoot().getChildren().stream().anyMatch(node -> node.getName().equalsIgnoreCase(identifier)))
@@ -584,7 +708,7 @@ public class SettingsManager
 
     public void inspectClientsideCommand(ServerCommandSource source, String string)
     {
-        if (string.startsWith("/carpet "))
+        if (string.startsWith("/"+identifier+" "))
         {
             String[] res = string.split("\\s+", 3);
             if (res.length == 3)

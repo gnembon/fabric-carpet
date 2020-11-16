@@ -1,7 +1,6 @@
 package carpet.script;
 
 import carpet.script.exception.ExpressionException;
-import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;

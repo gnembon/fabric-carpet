@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import carpet.network.CarpetClient;
+import carpet.settings.SettingsManager;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,6 +24,10 @@ public class ClientPlayerEntity_clientCommandMixin
         {
             ClientPlayerEntity playerSource = (ClientPlayerEntity)(Object) this;
             CarpetServer.settingsManager.inspectClientsideCommand(playerSource.getCommandSource(), string);
+            CarpetServer.extensions.forEach(e -> {
+                SettingsManager sm = e.customSettingsManager();
+                if (sm != null) sm.inspectClientsideCommand(playerSource.getCommandSource(), string);
+            });
         }
     }
 }

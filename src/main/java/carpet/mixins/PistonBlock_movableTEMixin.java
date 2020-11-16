@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Mixin(PistonBlock.class)
 public abstract class PistonBlock_movableTEMixin extends FacingBlock
