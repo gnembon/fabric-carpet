@@ -161,7 +161,7 @@ public class SettingsManager
     
     /**
      * Adds a custom rule observer to changes in rules from 
-     * <b>any</b> registered {@link SettingsManger} instance.
+     * <b>any</b> registered {@link SettingsManager} instance.
      * @see SettingsManager#addRuleObserver(TriConsumer)
      * 
      * @param observer A {@link TriConsumer} that will be called with
