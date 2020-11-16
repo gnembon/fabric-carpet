@@ -4,7 +4,7 @@ __config()->{
     'commands'->{
         'from <start_pos>'->'set_start',
         'from <start_pos> to <end_pos>'->'_calculate',
-        'to <end_pos>'->'calculate'
+        'to <end_pos>'->_(end_pos)->(_calculate(null,end_pos))
     }
 };
 
