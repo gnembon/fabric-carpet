@@ -49,7 +49,7 @@ villager_buddy_detection() -> __toggle('villager_buddy_detection', null);
 item_pickup() -> __toggle('item_pickup', null);
 portal_cooldown() -> __toggle('portal_cooldown', null);
 health() -> __toggle('health', null);
-
+//xpstack() -> __toggle('xpstack', null); //1.17 feature
 
 toggle_boxes() ->
 (
@@ -365,6 +365,17 @@ global_functions = {
          null
       ]
    },
+
+   'xpstack' -> {
+      'experience_orb' -> [
+         _(arg) -> _(orb) -> (
+            ct = query(orb, 'nbt', 'Count');
+            [[], [], if (ct > 1, [['stack', 'stack:', ct]],[]) ]
+         ),
+      ,
+         null
+      ]
+   },
 };
 
 global_villager_food = {
@@ -505,12 +516,17 @@ __tick_tracker() ->
    p = player();
    [px, py, pz] = pos(p);
    in_dimension(p,
-      for (entity_area('living', px, py, pz, global_range, global_range, global_range),
+      for (entity_area('valid', px, py, pz, global_range, global_range, global_range),
          __handle_entity(_)
       )
    );
    schedule(global_interval, '__tick_tracker');
 );
+
+global_entity_anchors = {
+    'experience_orb' -> 'xyz',
+    'player' -> 'xyz'
+};
 
 __handle_entity(e) ->
 (
@@ -531,7 +547,8 @@ __handle_entity(e) ->
 
    if (labels_to_add,
       base_height = 0;
-      [snap, base_pos] = if(e~'type'=='player', ['xyz', [0, e~'height', 0]], ['dxydz', [0.5, e~'height'+0.4, 0.5]]);
+      snap = global_entity_anchors:(e~'type') || 'dxydz';
+      base_pos = if(snap == 'xyz', [0, e~'height'+0.3, 0], [0.5, e~'height'+0.3, 0.5]);
       for (labels_to_add,
          if (length(_) == 2,
             [label, text] = _;
