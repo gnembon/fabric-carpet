@@ -108,7 +108,7 @@ public class CarpetSettings
         appSource = "draw",
         category = {FEATURE, SCARPET, COMMAND}
     )
-    public static boolean commandDraw = false;
+    public static String commandDraw = "true";
 
     @Rule(
         desc = "Enables /distance command to measure in game distance between points",
@@ -116,7 +116,7 @@ public class CarpetSettings
         appSource = "distance",
         category = {FEATURE, SCARPET, COMMAND}
     )
-    public static boolean commandDistance = false;
+    public static String commandDistance = "true";
 
 
 
