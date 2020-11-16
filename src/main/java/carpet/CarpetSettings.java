@@ -98,7 +98,7 @@ public class CarpetSettings
             appSource = "ai_tracker"
     )
     public static boolean commandAITracker = true;
-
+    */
     @Rule(
         desc = "Enables /draw commands",
         extra = {
@@ -118,7 +118,7 @@ public class CarpetSettings
     )
     public static boolean commandDistance = false;
 
-    */
+
 
 
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!", category = EXPERIMENTAL)
@@ -369,13 +369,6 @@ public class CarpetSettings
     public static String defaultLoggers = "none";
 
     @Rule(
-            desc = "Enables /distance command to measure in game distance between points",
-            extra = "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
-            category = COMMAND
-    )
-    public static String commandDistance = "true";
-
-    @Rule(
             desc = "Enables /info command for blocks",
             extra = {
                     "Also enables gray carpet placement action",
@@ -391,10 +384,7 @@ public class CarpetSettings
             category = COMMAND
     )
     public static String commandPerimeterInfo = "true";
-
-    @Rule(desc = "Enables /draw commands", extra = {"... allows for drawing simple shapes or","other shapes which are sorta difficult to do normally"}, category = COMMAND)
-    public static String commandDraw = "true";
-
+    
     @Rule(
             desc = "Enables /script command",
             extra = "An in-game scripting API for Scarpet programming language",
