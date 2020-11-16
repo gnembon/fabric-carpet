@@ -25,7 +25,8 @@ __config() -> {
         'orientation'->{'type'->'string', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'string','suggest'->['up','down']},
         'hollow'->{'type'->'bool'}
-    }
+    },
+    'scope'->'global'
 };
 
 
