@@ -13,6 +13,9 @@ publish/
 *.ipr
 *.iws
 
+# eclipse
+*.launch
+
 # vscode
 
 .settings/

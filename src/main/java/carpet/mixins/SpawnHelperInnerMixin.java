@@ -2,7 +2,6 @@ package carpet.mixins;
 
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.utils.SpawnReporter;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.util.math.GravityField;

@@ -10,7 +10,6 @@ import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.BlockView;
-import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.EmptyChunk;

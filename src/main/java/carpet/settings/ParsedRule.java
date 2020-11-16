@@ -16,6 +16,14 @@ import java.util.Set;
 
 import static carpet.utils.Translations.tr;
 
+/**
+ * A parsed Carpet rule, with its field, name, value, and other useful stuff.
+ * 
+ * It is generated from the fields with the {@link Rule} annotation
+ * when being parsed by {@link SettingsManager#parseSettingsClass(Class)}.
+ *
+ * @param <T> The field's type
+ */
 public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final Field field;
     public final String name;
@@ -177,6 +185,9 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return this;
     }
 
+    /**
+     * @return The value of this {@link ParsedRule}, in its type
+     */
     public T get()
     {
         try
@@ -189,11 +200,19 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         }
     }
 
+    /**
+     * @return The value of this {@link ParsedRule}, as a {@link String}
+     */
     public String getAsString()
     {
         return convertToString(get());
     }
 
+    /**
+     * @return The value of this {@link ParsedRule}, converted to a {@link boolean}.
+     *         It will only return {@link true} if it's a true {@link boolean} or
+     *         a number greater than zero.
+     */
     public boolean getBoolValue()
     {
         if (type == boolean.class) return (Boolean) get();
@@ -201,11 +220,17 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return false;
     }
 
+    /**
+     * @return Wether or not this {@link ParsedRule} is in its default value
+     */
     public boolean isDefault()
     {
         return defaultValue.equals(get());
     }
 
+    /**
+     * Resets this rule to its default value
+     */
     public void resetToDefault(ServerCommandSource source)
     {
         set(source, defaultValue, defaultAsString);
@@ -247,16 +272,28 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         return String.format("rule.%s.name", name);
     }
 
+    /**
+     * @return A {@link String} being the translated {@link ParsedRule#name} of this rule,
+     *                          in Carpet's configured language.
+     */
     public String translatedName(){
         String key = translationKey();
         return Translations.hasTranslation(key) ? tr(key) + String.format(" (%s)", name): name;
     }
 
+    /**
+     * @return A {@link String} being the translated {@link ParsedRule#description} of this rule,
+     *                          in Carpet's configured language.
+     */
     public String translatedDescription()
     {
         return tr(String.format("rule.%s.desc", (name)), description);
     }
 
+    /**
+     * @return A {@link String} being the translated {@link ParsedRule#extraInfo} of this 
+     * 	                        {@link ParsedRule}, in Carpet's configured language.
+     */
     public List<String> translatedExtras()
     {
         if (!Translations.hasTranslations()) return extraInfo;

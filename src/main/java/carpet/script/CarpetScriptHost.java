@@ -136,7 +136,7 @@ public class CarpetScriptHost extends ScriptHost
         String hostName = main.getName();
         List<String> commandArgs = path.stream().filter(t -> t.isArgument).map(t -> t.surface).collect(Collectors.toList());
         if (commandArgs.size() != (functionSpec.function.getNumParams()-functionSpec.args.size()) )
-            throw CommandArgument.error("Number of parameters in function doesn't match parameters for a command");
+            throw CommandArgument.error("Number of parameters in function "+functionSpec.function.fullName()+" doesn't match parameters for a command");
         if (path.isEmpty())
         {
             return command.executes((c) -> execute(c, hostName, functionSpec, Collections.emptyList()));

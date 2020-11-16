@@ -5,7 +5,6 @@ on:
       - master
     paths:
     - "docs/**"
-    - "!docs/scarpet/Full.md"
 jobs:
   Scarpet:
     runs-on: ubuntu-latest

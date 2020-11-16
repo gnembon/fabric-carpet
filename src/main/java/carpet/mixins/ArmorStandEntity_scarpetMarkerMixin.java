@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
 import carpet.script.api.Auxiliary;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
