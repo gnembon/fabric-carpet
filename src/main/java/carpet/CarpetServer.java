@@ -116,7 +116,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         PlayerCommand.register(dispatcher);
         //CameraModeCommand.register(dispatcher);
         InfoCommand.register(dispatcher);
+        DistanceCommand.register(dispatcher);
         PerimeterInfoCommand.register(dispatcher);
+        DrawCommand.register(dispatcher);
         ScriptCommand.register(dispatcher);
         MobAICommand.register(dispatcher);
         // registering command of extensions that has registered before either server is created

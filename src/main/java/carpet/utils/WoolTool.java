@@ -46,6 +46,18 @@ public class WoolTool
                 if (!"false".equals(CarpetSettings.commandSpawn))
                     Messenger.send(placer, SpawnReporter.show_mobcaps(pos, worldIn));
                 break;
+            case BROWN:
+                if (!"false".equals(CarpetSettings.commandDistance))
+                {
+                    ServerCommandSource source = placer.getCommandSource();
+                    if (!DistanceCalculator.hasStartingPoint(source) || placer.isSneaking()) {
+                        DistanceCalculator.setStart(source, Vec3d.of(pos) ); // zero padded pos
+                    }
+                    else {
+                        DistanceCalculator.setEnd(source, Vec3d.of(pos));
+                    }
+                }
+                break;
             case GRAY:
                 if (!"false".equals(CarpetSettings.commandInfo))
                     Messenger.send(placer, BlockInfo.blockInfo(pos.down(), worldIn));
