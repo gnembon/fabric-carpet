@@ -75,7 +75,7 @@ public class ScriptCommand
                 filter(s -> s.startsWith(prefix) && s.length() <= maxLen).map(s -> s+"(").collect(Collectors.toList()));
         // not that useful in commandline, more so in external scripts, so skipping here
         if (eventPrefix != null) scarpetMatches.addAll(CarpetEventServer.Event.publicEvents(null).stream().
-                filter(e -> e.name.startsWith(eventPrefix)).map(s -> "__on_"+s+"(").collect(Collectors.toList()));
+                filter(e -> e.name.startsWith(eventPrefix)).map(s -> "__on_"+s.name+"(").collect(Collectors.toList()));
         scarpetMatches.addAll(host.globaFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
         scarpetMatches.addAll(host.globaVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
         return scarpetMatches;

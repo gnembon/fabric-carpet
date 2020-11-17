@@ -364,10 +364,13 @@ public class EntityPlayerActionPack
                 switch (hit.getType()) {
                     case ENTITY: {
                         EntityHitResult entityHit = (EntityHitResult) hit;
-                        player.attack(entityHit.getEntity());
+                        if (!action.isContinuous)
+                        {
+                            player.attack(entityHit.getEntity());
+                            player.swingHand(Hand.MAIN_HAND);
+                        }
                         player.resetLastAttackedTicks();
                         player.updateLastActionTime();
-                        player.swingHand(Hand.MAIN_HAND);
                         return true;
                     }
                     case BLOCK: {
