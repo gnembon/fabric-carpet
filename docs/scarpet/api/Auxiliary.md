@@ -245,6 +245,17 @@ Example usages:
   // not a problem in apps
 </pre>
 
+### `send_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+
+Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
+ * `players` is either a player or a list of players
+ * `type` is either `'title'`, `'subtitle'`, `actionbar` or `clear`
+ * `title` is what title to send to the player. It is mandatory except for `clear` type
+ * `...Ticks` are the number of ticks the title will stay in that state. 
+   If not specified, it will use current defaults (those defaults may have changed from a previous `/title times` execution).
+   Executing with those will set the times to the specified ones.
+   Note that `actionbar` type doesn't support changing times (hardcoded in vanilla).
+
 ### `logger(msg), logger(type, msg)`
 
 Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
