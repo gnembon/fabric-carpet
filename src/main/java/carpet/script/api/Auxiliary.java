@@ -460,7 +460,7 @@ public class Auxiliary {
             Value pVal = lv.get(0).evalValue(c);
             TitleS2CPacket.Action action;
             List<Value> targets;
-            Text title;
+            Text title = null;
             int in, out, stay;
             if (pVal instanceof ListValue)
             {
@@ -501,11 +501,14 @@ public class Auxiliary {
             }
             if (action != Action.CLEAR && lv.size() < 3)
                 throw new InternalExpressionException("Third argument of 'send_title' must be present except for 'clear' type");
-            pVal = lv.get(2).evalValue(c);
-            if (pVal instanceof FormattedTextValue)
-                title = ((FormattedTextValue) pVal).getText();
-            else
-                title = Text.of(pVal.getString());
+            if (lv.size() > 3)
+            {
+            	pVal = lv.get(2).evalValue(c);
+                if (pVal instanceof FormattedTextValue)
+                    title = ((FormattedTextValue) pVal).getText();
+                else
+                    title = Text.of(pVal.getString());
+            }
             TitleS2CPacket timesPacket = null;
             if (lv.size() > 3)
             {
