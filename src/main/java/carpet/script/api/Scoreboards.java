@@ -113,7 +113,7 @@ public class Scoreboards {
             else
             {
                 String critetionName = lv.get(1).evalValue(c).getString();
-                criterion = ScoreboardCriterion.createStatCriterion(critetionName).orElse(null);
+                criterion = ScoreboardCriterion.getOrCreateStatCriterion(critetionName).orElse(null);
                 if (criterion==null)
                 {
                     throw new InternalExpressionException("Unknown scoreboard criterion: "+critetionName);
@@ -124,7 +124,7 @@ public class Scoreboards {
             if (objective != null)
                 return LazyValue.FALSE;
 
-            scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getCriterionType());
+            scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getDefaultRenderType());
             return LazyValue.TRUE;
         });
 
