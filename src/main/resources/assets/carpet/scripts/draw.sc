@@ -19,9 +19,9 @@ __config() -> {
     },
     'arguments'->{
         'center'->{'type'->'pos', 'loaded'->'true'},
-        'radius'->{'type'->'int', 'suggest'->[]},//to avoid default suggestions
+        'radius'->{'type'->'int', 'suggest'->[], 'min'->0},//to avoid default suggestions
         'replacement'->{'type'->'block'},
-        'height'->{'type'->'int', 'suggest'->[]},
+        'height'->{'type'->'int', 'suggest'->[],'min'->0},
         'orientation'->{'type'->'string', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'string','suggest'->['up','down']},
         'hollow'->{'type'->'bool'}
