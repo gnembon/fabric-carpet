@@ -115,16 +115,18 @@ draw_sphere(pos, radius, block, replacement, hollow)->(
             nextZn = 0;
             instaquit = false;
             c_for(z=0,z<=ceilRadiusZ,z+=1,
-                zn = nextZn;
-                nextZn = (z+1)/radiusZ;
+                if(!instaquit,
+                    zn = nextZn;
+                    nextZn = (z+1)/radiusZ;
 
-                if(!instaquit && length_sq([xn, yn, zn]) > 1,instaquit = true);
+                    if(length_sq([xn, yn, zn]) > 1,instaquit = true);
 
-                if (!instaquit && !(!hollow && length_sq([nextXn, yn, zn]) <= 1 && length_sq([xn, nextYn, zn]) <= 1 && length_sq([xn, yn, nextZn]) <= 1),
-                    c_for(xmod=-1,xmod<2,xmod+=2,
-                        c_for(ymod=-1,ymod<2,ymod+=2,
-                            c_for(zmod=-1,zmod<2,zmod+=2,
-                                set_block(pos:0 + xmod*x, pos:1 + ymod*y, pos:2 + zmod*z, block, replacement)
+                    if(!(!hollow && length_sq([nextXn, yn, zn]) <= 1 && length_sq([xn, nextYn, zn]) <= 1 && length_sq([xn, yn, nextZn]) <= 1),
+                        c_for(xmod=-1,xmod<2,xmod+=2,
+                            c_for(ymod=-1,ymod<2,ymod+=2,
+                                c_for(zmod=-1,zmod<2,zmod+=2,
+                                    set_block(pos:0 + xmod*x, pos:1 + ymod*y, pos:2 + zmod*z, block, replacement)
+                                )
                             )
                         )
                     )
