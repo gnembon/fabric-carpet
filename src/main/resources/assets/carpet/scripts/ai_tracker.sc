@@ -369,8 +369,12 @@ global_functions = {
    'xpstack' -> {
       'experience_orb' -> [
          _(arg) -> _(orb) -> (
-            ct = query(orb, 'nbt', 'Count');
-            [[], [], if (ct > 1, [['stack', 'stack:', ct]],[]) ]
+            tag = query(orb, 'nbt');
+            ct = tag:'Count';
+            [[], [], if (ct > 1, [
+                //['value', 'size:', tag:'Value'],
+                ['stack', ct]
+            ],[]) ]
          ),
       ,
          null
@@ -528,6 +532,8 @@ global_entity_anchors = {
     'player' -> 'xyz'
 };
 
+global_jitter = {'experience_orb'};
+
 __handle_entity(e) ->
 (
    entity_type = e ~ 'type';
@@ -547,8 +553,14 @@ __handle_entity(e) ->
 
    if (labels_to_add,
       base_height = 0;
-      snap = global_entity_anchors:(e~'type') || 'dxydz';
+      etype = e~'type';
+      eid = e~'id';
+      snap = global_entity_anchors:etype || 'dxydz';
       base_pos = if(snap == 'xyz', [0, e~'height'+0.3, 0], [0.5, e~'height'+0.3, 0.5]);
+      if (has(global_jitter:etype),
+         offset = ([(eid % 7)/7,(eid % 13)/13, (eid % 23)/23]-0.5)/2;
+         base_pos = base_pos+offset;
+      );
       for (labels_to_add,
          if (length(_) == 2,
             [label, text] = _;
