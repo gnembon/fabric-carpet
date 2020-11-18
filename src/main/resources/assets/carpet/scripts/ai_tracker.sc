@@ -49,7 +49,7 @@ villager_buddy_detection() -> __toggle('villager_buddy_detection', null);
 item_pickup() -> __toggle('item_pickup', null);
 portal_cooldown() -> __toggle('portal_cooldown', null);
 health() -> __toggle('health', null);
-//xpstack() -> __toggle('xpstack', null); //1.17 feature
+xpstack() -> __toggle('xpstack', null); //1.17 feature
 
 toggle_boxes() ->
 (
