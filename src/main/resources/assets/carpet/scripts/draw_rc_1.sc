@@ -36,20 +36,24 @@ test(a,b,c)->print(center+ ' ' + radius + ' ' + block);
 //"Boilerplate" code
 
 set_block(x, y, z, block, replacement)-> (
-    success=0;
     if(block != block(x, y, z),
         set([x, y, z],block);
-        success+=1;
-
-        if(system_info('world_carpet_rules'):'fillUpdates',update(block(x, y, z)))
+        global_affected += 1;
     );
-    success
+);
+
+global_affected = 0;
+
+affected(player) -> (
+    print(player,format('gi Filled ' + global_affected + ' blocks'));
+    affected = global_affected;
+    global_affected = 0;
+    affected
 );
 
 length_sq(vec)->return(_vec_length(vec)^2);//cos of lengthSq func in DrawCommand.java
 
 fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->(
-    successes = 0;
     r = floor(dr);
     drsq = dr^2;
     if(orientation=='x',
@@ -58,38 +62,38 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
                 if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
                     (hollow && ((rectangle && (abs(a) == r || abs(b) ==r)) || //If hollow and it's a rectangle
                     (!rectangle && (a*a + b*b <= drsq && (abs(a)+1)^ 2 + (abs(b)+1)^2 >= drsq)))),//If hollow and not rectangle
-                    successes+=set_block(pos:0+offset,pos:1+a,pos:2+b,block, replacement)
+                    set_block(pos:0+offset,pos:1+a,pos:2+b,block, replacement)
                 )
             )
-        ),
-        orientation == 'y',
+        )
+    ,orientation == 'y',
         c_for(a=-r,a<=r,a+=1,
             c_for(b=-r,b<=r,b+=1,
                 if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
                     (hollow && ((rectangle && (abs(a) == r || abs(b) ==r)) || //If hollow and it's a rectangle
                     (!rectangle && (a*a + b*b <= drsq && (abs(a)+1)^ 2 + (abs(b)+1)^2 >= drsq)))),//If hollow and not rectangle
-                    successes+=set_block(pos:0+a,pos:1+offset,pos:2+b,block, replacement)
+                    set_block(pos:0+a,pos:1+offset,pos:2+b,block, replacement)
                 )
             )
-        ),
-        orientation == 'z',
+        )
+    ,orientation == 'z',
         c_for(a=-r,a<=r,a+=1,
             c_for(b=-r,b<=r,b+=1,
                 if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
                     (hollow && ((rectangle && (abs(a) == r || abs(b) ==r)) || //If hollow and it's a rectangle
                     (!rectangle && (a*a + b*b <= drsq && (abs(a)+1)^2 + (abs(b)+1)^2 >= drsq)))),//If hollow and not rectangle
-                    successes+=set_block(pos:0+b,pos:1+a,pos:2+offset,block, replacement)
+                    set_block(pos:0+b,pos:1+a,pos:2+offset,block, replacement)
                 )
             )
-        ),
-        print(player(),format('r Error while running command: orientation can only be "x", "y" or "z", '+orientation+' is invalid.'))
+        )
+    ,
+        print(player(),format('r Error while running command: orientation can only be "x", "y" or "z", '+orientation+' is invalid.'));
+        global_affected = 0;
     );
-    successes
 );
 
 //drawing commands
 draw_sphere(pos, radius, block, replacement, hollow)->(
-    affected = 0;
 
     radiusX = radius+0.5;
     radiusY = radius+0.5;
@@ -109,21 +113,18 @@ draw_sphere(pos, radius, block, replacement, hollow)->(
             yn = nextYn;
             nextYn = (y + 1) / radiusY;
             nextZn = 0;
+            instaquit = false;
             c_for(z=0,z<=ceilRadiusZ,z+=1,
                 zn = nextZn;
                 nextZn = (z+1)/radiusZ;
 
-                if(length_sq([xn, yn, zn]) > 1,break());
+                if(!instaquit && length_sq([xn, yn, zn]) > 1,instaquit = true);
 
-                if (!hollow && length_sq([nextXn, yn, zn]) <= 1 && length_sq([xn, nextYn, zn]) <= 1 && length_sq([xn, yn, nextZn]) <= 1,
-                    continue()
-                );
-
-                c_for(xmod=-1,xmod<2,xmod+=2,
-                    c_for(ymod=-1,ymod<2,ymod+=2,
-                        c_for(zmod=-1,zmod<2,zmod+=2,
-                            affected += set_block(
-                                pos:0 + xmod*x, pos:1 + ymod*y, pos:2 + zmod*z, block, replacement
+                if (!instaquit && !(!hollow && length_sq([nextXn, yn, zn]) <= 1 && length_sq([xn, nextYn, zn]) <= 1 && length_sq([xn, yn, nextZn]) <= 1),
+                    c_for(xmod=-1,xmod<2,xmod+=2,
+                        c_for(ymod=-1,ymod<2,ymod+=2,
+                            c_for(zmod=-1,zmod<2,zmod+=2,
+                                set_block(pos:0 + xmod*x, pos:1 + ymod*y, pos:2 + zmod*z, block, replacement)
                             )
                         )
                     )
@@ -132,53 +133,46 @@ draw_sphere(pos, radius, block, replacement, hollow)->(
         )
     );
 
-    print(player(),format('gi Filled ' + affected + ' blocks'));
-    return(affected)
+    affected(player())
 );
 
 
 draw_diamond(pos, radius, block, replacement)->(
-    affected = 0;
 
     c_for(r=0, r<radius, r+=1,
         y = r-radius+1;
         c_for(x=-r,x<=r,x+=1,
             z=r-abs(x);
 
-            affected += set_block(pos:0+x,pos:1-y,pos:2+z, block, replacement);
-            affected += set_block(pos:0+x,pos:1-y,pos:2-z, block, replacement);
-            affected += set_block(pos:0+x,pos:1+y,pos:2+z, block, replacement);
-            affected += set_block(pos:0+x,pos:1+y,pos:2-z, block, replacement);
+            set_block(pos:0+x,pos:1-y,pos:2+z, block, replacement);
+            set_block(pos:0+x,pos:1-y,pos:2-z, block, replacement);
+            set_block(pos:0+x,pos:1+y,pos:2+z, block, replacement);
+            set_block(pos:0+x,pos:1+y,pos:2-z, block, replacement);
         )
     );
 
-    print(player(),format('gi Filled ' + affected + ' blocks'));
-    return(affected)
+    affected(player())
 );
 
 draw_pyramid(pos, rad, height, pointing, orientation, block, hollow, replacement, is_square)->(
 
     pointup = pointing=='up';
     radius = rad+0.5;
-    affected = 0;
 
     for(range(height),
         r = if(pointup, radius - radius * _ / height, radius * _ / height);
-        affected += fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
+        fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
     );
-    print(player(),format('gi Filled ' + affected + ' blocks'));
-    return(affected)
+    affected(player())
 );
 
 draw_prism(pos, rad, height, orientation, block, hollow, replacement, is_square)->(
     radius = rad+0.5;
-    affected = 0;
 
     for(range(height),
-        affected += fill_flat(pos, _, radius, is_square, orientation, block, if(_==0 || _==height-1,false,hollow), replacement)//Always close ends off
+        fill_flat(pos, _, radius, is_square, orientation, block, if(_==0 || _==height-1,false,hollow), replacement)//Always close ends off
     );
-    print(player(),format('gi Filled ' + affected + ' blocks'));
-    return(affected)
+    affected(player())
 );
 
 //then(literal("cylinder").
