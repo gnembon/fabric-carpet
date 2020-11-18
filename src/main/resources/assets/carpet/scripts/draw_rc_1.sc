@@ -41,8 +41,7 @@ set_block(x, y, z, block, replacement)-> (
         set([x, y, z],block);
         success+=1;
 
-        //todo add check for carpet setting CarpetSettings.fillUpdates
-        update(block(x, y, z))
+        if(system_info('world_carpet_rules'):'fillUpdates',update(block(x, y, z)))
     );
     success
 );
