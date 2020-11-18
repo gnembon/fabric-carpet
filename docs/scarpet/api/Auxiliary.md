@@ -193,12 +193,9 @@ Other value types will only be converted to tags (including NBT tags) if `force`
 extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
 produce an exception.
 
-### `print(expr)`, `print(player/player_list, expr)`, `print(where, player/player_list, expr)`
+### `print(expr)`, `print(player/player_list, expr)`
 
-Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
-Optionally send to one or more players only, and can also choose where to send it. `where` argument can be one of:
-- `'chat'` : normal behaviour of sending to chat
-- `'action_bar'` : sends message to actionbar (above hotbar)
+Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr. Can optionally define player or list of players to send the message to
 
 ### `format(components, ...)`, `format(l(components, ...))`
 
