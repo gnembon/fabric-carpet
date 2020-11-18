@@ -51,7 +51,7 @@ affected(player) -> (
     affected
 );
 
-length_sq(vec)->return(_vec_length(vec)^2);//cos of lengthSq func in DrawCommand.java
+length_sq(vec) -> _vec_length(vec)^2; //cos of lengthSq func in DrawCommand.java
 
 fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->(
     r = floor(dr);
