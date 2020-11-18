@@ -40,11 +40,12 @@ _calculate(start_pos, end_pos)->(
     )
 );
 
-__on_player_places_block(player, item_tuple, hand, block) ->(
+__on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->
+    pos = pos_offset(block,face);//for clicking against the wall.
     if(block=='brown_carpet' && system_info('world_carpet_rules'):'carpets'=='true',
-        if(player~'sneaking',
-            set_start(pos(block)),
-            _calculate(null,pos(block))
+        if(global_position==null||player~'sneaking',//wont complain for first carpet
+            set_start(pos),
+            _calculate(null,pos)
         )
     )
 );
@@ -61,9 +62,9 @@ calculate(end_pos)->(
         'w Distance between ',
         'c '+start_pos,'?/tp '+(str(start_pos)-','-'['-']'), 'w  and ',
         'c '+end_pos,'?/tp '+(str(end_pos)-','-'['-']'), 'w :\n',
-        'w  - Spherical: ', 'w '+spherical+'\n',
-        'w  - Cylindrical: ', 'w '+cylindrical+'\n',
-        'w  - Manhattan: ', 'w '+manhattan
+        'w  - Spherical: ', 'wb '+spherical+'\n',
+        'w  - Cylindrical: ', 'wb '+cylindrical+'\n',
+        'w  - Manhattan: ', 'wb '+manhattan
     ));
 
     schedule(0,'_draw_line',end_pos);
@@ -71,8 +72,8 @@ calculate(end_pos)->(
 
 _draw_line(end_pos)->(
     if(global_show_line,
-        draw_shape('line',100,'from',global_position,'to',end_pos, 'player',player()),
+        draw_shape('line',20,'from',global_position,'to',end_pos, 'player',player()),
         return()
     );
-    schedule(100,'_draw_line',end_pos)
+    schedule(20,'_draw_line',end_pos)
 );
