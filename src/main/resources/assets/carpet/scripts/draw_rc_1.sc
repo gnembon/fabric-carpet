@@ -54,33 +54,27 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
     r = floor(dr);
     drsq = dr^2;
     if(orientation=='x',
-        c_for(a=-r,a<=r,a+=1,
-            c_for(b=-r,b<=r,b+=1,
-                if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
-                    (hollow && ((rectangle && (abs(a) == r || abs(b) ==r)) || //If hollow and it's a rectangle
-                    (!rectangle && (a*a + b*b <= drsq && (abs(a)+1)^ 2 + (abs(b)+1)^2 >= drsq)))),//If hollow and not rectangle
-                    set_block(pos:0+offset,pos:1+a,pos:2+b,block, replacement)
-                )
+        scan(pos,0,-r,-r,
+            if((!hollow && (rectangle || _y^2 + _z^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_y) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_y^2 + _z^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x+offset,_y,_z,block, replacement)
             )
         ),
     orientation == 'y',
-        c_for(a=-r,a<=r,a+=1,
-            c_for(b=-r,b<=r,b+=1,
-                if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
-                    (hollow && ((rectangle && (abs(a) == r || abs(b) ==r)) || //If hollow and it's a rectangle
-                    (!rectangle && (a*a + b*b <= drsq && (abs(a)+1)^ 2 + (abs(b)+1)^2 >= drsq)))),//If hollow and not rectangle
-                    set_block(pos:0+a,pos:1+offset,pos:2+b,block, replacement)
-                )
+        scan(pos,-r,0,-r,
+            if((!hollow && (rectangle || _x^2 + _z^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_x) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_x^2 + _z^2 <= drsq && (abs(_x)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x,_y+offset,_z,block, replacement)
             )
         ),
     orientation == 'z',
-        c_for(a=-r,a<=r,a+=1,
-            c_for(b=-r,b<=r,b+=1,
-                if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
-                    (hollow && ((rectangle && (abs(a) == r || abs(b) ==r)) || //If hollow and it's a rectangle
-                    (!rectangle && (a*a + b*b <= drsq && (abs(a)+1)^2 + (abs(b)+1)^2 >= drsq)))),//If hollow and not rectangle
-                    set_block(pos:0+b,pos:1+a,pos:2+offset,block, replacement)
-                )
+        scan(pos,-r,-r,0,
+            if((!hollow && (rectangle || _y^2 + _x^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_y) == r || abs(_x) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_y^2 + _x^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_x)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x,_y,_z+offset,block, replacement)
             )
         ),
         print(player(),format('r Error while running command: orientation can only be "x", "y" or "z", '+orientation+' is invalid.'));
@@ -118,7 +112,7 @@ draw_diamond(pos, radius, block, replacement)->(
     affected(player())
 );
 
-draw_pyramid(type, pos, rad, height, pointing, orientation, block, fill_type, replacement, is_square)->(
+draw_pyramid(pos, rad, height, pointing, orientation, block, fill_type, replacement, is_square)->(
 
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
@@ -131,7 +125,7 @@ draw_pyramid(type, pos, rad, height, pointing, orientation, block, fill_type, re
     affected(player())
 );
 
-draw_prism(type, pos, rad, height, orientation, block, fill_type, replacement, is_square)->(
+draw_prism(pos, rad, height, orientation, block, fill_type, replacement, is_square)->(
 
     hollow = fill_type =='hollow';
     radius = rad+0.5;
