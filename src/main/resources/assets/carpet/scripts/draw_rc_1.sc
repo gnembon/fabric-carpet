@@ -135,16 +135,3 @@ draw_prism(pos, rad, height, orientation, block, fill_type, replacement, is_squa
     );
     affected(player())
 );
-
-//then(literal("cylinder").
-//        then(argument("center", BlockPosArgumentType.blockPos()).
-//                then(argument("radius", IntegerArgumentType.integer(1)).
-//                        then(argument("height",IntegerArgumentType.integer(1)).
-//                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
-//                                                .then(drawShape(c -> DrawCommand.drawPrism(c, "circle")))))))).
-//then(literal("cuboid").
-//        then(argument("center", BlockPosArgumentType.blockPos()).
-//                then(argument("radius", IntegerArgumentType.integer(1)).
-//                        then(argument("height",IntegerArgumentType.integer(1)).
-//                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
-//                                        .then(drawShape(c -> DrawCommand.drawPrism(c, "square"))))))));
