@@ -69,8 +69,8 @@ public class DrawCommand
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
                                         then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
-                                                        .then(drawShape(c -> DrawCommand.drawPrism(c, "circle")))))))).
+                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggestMatching(new String[]{"y","x","z"},b))
+                                                                .then(drawShape(c -> DrawCommand.drawPrism(c, "circle")))))))).
                 then(literal("cuboid").
                         then(argument("center", BlockPosArgumentType.blockPos()).
                                 then(argument("radius", IntegerArgumentType.integer(1)).
