@@ -24,7 +24,7 @@ __config() -> {
         'height'->{'type'->'int', 'suggest'->[],'min'->0},
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
-        'hollow'->{'type'->'bool'},
+        'hollow'->{'type'->'term','suggest'->['hollow','solid']},
     },
     'scope'->'global'
 };
@@ -118,8 +118,9 @@ draw_diamond(pos, radius, block, replacement)->(
     affected(player())
 );
 
-draw_pyramid(type, pos, rad, height, pointing, orientation, block, hollow, replacement, is_square)->(
+draw_pyramid(type, pos, rad, height, pointing, orientation, block, fill_type, replacement, is_square)->(
 
+    hollow = fill_type=='hollow';
     pointup = pointing=='up';
     radius = rad+0.5;
 
@@ -130,8 +131,9 @@ draw_pyramid(type, pos, rad, height, pointing, orientation, block, hollow, repla
     affected(player())
 );
 
-draw_prism(type, pos, rad, height, orientation, block, hollow, replacement, is_square)->(
+draw_prism(type, pos, rad, height, orientation, block, fill_type, replacement, is_square)->(
 
+    hollow = fill_type =='hollow';
     radius = rad+0.5;
 
     for(range(height),
