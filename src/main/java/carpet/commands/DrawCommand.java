@@ -386,7 +386,7 @@ public class DrawCommand
             double r = pointup ? radius - radius * i / height - 1 : radius * i / height;
             affected+= fillFlat(world, pos, i, r, isSquare, orientation, block, replacement, list, mbpos);
         }
-
+        
         CarpetSettings.impendingFillSkipUpdates = false;
 
         if (CarpetSettings.fillUpdates) {
