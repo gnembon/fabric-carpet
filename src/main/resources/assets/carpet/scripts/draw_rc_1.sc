@@ -2,20 +2,20 @@ import('math','_euclidean_sq','_vec_length');
 
 __config() -> {
     'commands'->{
-        'sphere <center> <radius> <block>'->['draw_sphere',null, false],
-        'sphere <center> <radius> <block> replace <replacement>'->['draw_sphere',false],
-        'ball <center> <radius> <block>'->['draw_sphere', null, true],
-        'ball <center> <radius> <block> replace <replacement>'->['draw_sphere', true],
+        'sphere <center> <radius> <block>'->['draw_sphere',null,true],
+        'sphere <center> <radius> <block> replace <replacement>'->['draw_sphere',true],
+        'ball <center> <radius> <block>'->['draw_sphere',null,false],
+        'ball <center> <radius> <block> replace <replacement>'->['draw_sphere',false],
         'diamond <center> <radius> <block>'->['draw_diamond',null],
         'diamond <center> <radius> <block> replace <replacement>'->'draw_diamond',
-        'cone <center> <radius> <height> <pointing> <orientation> <block> <hollow>'->['draw_pyramid',null, false],
-        'cone <center> <radius> <height> <pointing> <orientation> <block> <hollow> replace <replacement>'->['draw_pyramid', false],
         'pyramid <center> <radius> <height> <pointing> <orientation> <block> <hollow>'->['draw_pyramid',null, true],
         'pyramid <center> <radius> <height> <pointing> <orientation> <block> <hollow> replace <replacement>'->['draw_pyramid', true],
-        'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->['draw_prism', null, false],
-        'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', false],
+        'cone <center> <radius> <height> <pointing> <orientation> <block> <hollow>'->['draw_pyramid',null, false],
+        'cone <center> <radius> <height> <pointing> <orientation> <block> <hollow> replace <replacement>'->['draw_pyramid', false],
         'cuboid <center> <radius> <height> <orientation> <block> <hollow>'->['draw_prism', null, true],
-        'cuboid <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', true]
+        'cuboid <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', true],
+        'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->['draw_prism', null, false],
+        'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', false]
     },
     'arguments'->{
         'center'->{'type'->'pos', 'loaded'->'true'},
@@ -24,14 +24,11 @@ __config() -> {
         'height'->{'type'->'int', 'suggest'->[],'min'->0},
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
-        'hollow'->{'type'->'bool'}
+        'hollow'->{'type'->'bool'},
     },
     'scope'->'global'
 };
 
-
-
-test(a,b,c)->print(center+ ' ' + radius + ' ' + block);
 
 //"Boilerplate" code
 
@@ -51,7 +48,7 @@ affected(player) -> (
     affected
 );
 
-length_sq(vec) -> _vec_length(vec)^2; //cos of lengthSq func in DrawCommand.java
+length_sq(vec) -> _vec_length(vec)^2;
 
 fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->(
     r = floor(dr);
@@ -65,8 +62,8 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
                     set_block(pos:0+offset,pos:1+a,pos:2+b,block, replacement)
                 )
             )
-        )
-    ,orientation == 'y',
+        ),
+    orientation == 'y',
         c_for(a=-r,a<=r,a+=1,
             c_for(b=-r,b<=r,b+=1,
                 if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
@@ -75,8 +72,8 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
                     set_block(pos:0+a,pos:1+offset,pos:2+b,block, replacement)
                 )
             )
-        )
-    ,orientation == 'z',
+        ),
+    orientation == 'z',
         c_for(a=-r,a<=r,a+=1,
             c_for(b=-r,b<=r,b+=1,
                 if((!hollow && (rectangle || a*a + b*b <= drsq))||//if not hollow, vry simple
@@ -85,59 +82,24 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
                     set_block(pos:0+b,pos:1+a,pos:2+offset,block, replacement)
                 )
             )
-        )
-    ,
+        ),
         print(player(),format('r Error while running command: orientation can only be "x", "y" or "z", '+orientation+' is invalid.'));
         global_affected = 0;
     );
 );
 
 //drawing commands
-draw_sphere(pos, radius, block, replacement, hollow)->(
 
-    radiusX = radius+0.5;
-    radiusY = radius+0.5;
-    radiusZ = radius+0.5;
-
-    ceilRadiusX = ceil(radiusX);
-    ceilRadiusY = ceil(radiusY);
-    ceilRadiusZ = ceil(radiusZ);
-
-    nextXn = 0;
-
-    c_for(x=0,x<=ceilRadiusX,x+=1,
-        xn=nextXn;
-        nextXn = (x+1)/radiusX;
-        nextYn = 0;
-        c_for(y=0,y<=ceilRadiusY,y+=1,
-            yn = nextYn;
-            nextYn = (y + 1) / radiusY;
-            nextZn = 0;
-            instaquit = false;
-            c_for(z=0,z<=ceilRadiusZ,z+=1,
-                if(!instaquit,
-                    zn = nextZn;
-                    nextZn = (z+1)/radiusZ;
-
-                    if(length_sq([xn, yn, zn]) > 1,instaquit = true);
-
-                    if(!(!hollow && length_sq([nextXn, yn, zn]) <= 1 && length_sq([xn, nextYn, zn]) <= 1 && length_sq([xn, yn, nextZn]) <= 1),
-                        c_for(xmod=-1,xmod<2,xmod+=2,
-                            c_for(ymod=-1,ymod<2,ymod+=2,
-                                c_for(zmod=-1,zmod<2,zmod+=2,
-                                    set_block(pos:0 + xmod*x, pos:1 + ymod*y, pos:2 + zmod*z, block, replacement)
-                                )
-                            )
-                        )
-                    )
-                )
-            )
+draw_sphere(centre, radius, block, replacement, hollow)->(
+    scan(centre,[radius,radius,radius],
+        l = length_sq([_x,_y,_z]-centre);
+        if((l<=radius^2+radius) && (!hollow || l>=radius^2-radius),
+            set_block(_x, _y, _z, block, replacement)
         )
     );
 
-    affected(player())
+    affected(player());
 );
-
 
 draw_diamond(pos, radius, block, replacement)->(
 
@@ -156,7 +118,7 @@ draw_diamond(pos, radius, block, replacement)->(
     affected(player())
 );
 
-draw_pyramid(pos, rad, height, pointing, orientation, block, hollow, replacement, is_square)->(
+draw_pyramid(type, pos, rad, height, pointing, orientation, block, hollow, replacement, is_square)->(
 
     pointup = pointing=='up';
     radius = rad+0.5;
@@ -168,7 +130,8 @@ draw_pyramid(pos, rad, height, pointing, orientation, block, hollow, replacement
     affected(player())
 );
 
-draw_prism(pos, rad, height, orientation, block, hollow, replacement, is_square)->(
+draw_prism(type, pos, rad, height, orientation, block, hollow, replacement, is_square)->(
+
     radius = rad+0.5;
 
     for(range(height),
