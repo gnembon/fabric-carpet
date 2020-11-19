@@ -11,6 +11,7 @@ __config()->{
 };
 
 global_position=null;
+global_end_position=null;
 
 global_show_line=false;
 
@@ -67,13 +68,15 @@ calculate(end_pos)->(
         'w  - Manhattan: ', 'wb '+manhattan
     ));
 
-    schedule(0,'_draw_line',end_pos);
+    global_end_position = end_pos;
+
+    schedule(0,'_draw_line',start_pos,end_pos);
 );
 
-_draw_line(end_pos)->(
-    if(global_show_line,
-        draw_shape('line',20,'from',global_position,'to',end_pos, 'player',player()),
+_draw_line(start_pos,end_pos)->(
+    if(global_show_line && global_position == start_pos && global_end_position == end_pos,//so if it changes, it will stop drawing this line.
+        draw_shape('line',20,'from',start_pos,'to',end_pos, 'player',player()),
         return()
     );
-    schedule(20,'_draw_line',end_pos)
+    schedule(20,'_draw_line',start_pos,end_pos)
 );
