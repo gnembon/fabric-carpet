@@ -15,6 +15,11 @@ global_end_position=null;
 
 global_show_line=false;
 
+global_line = {
+    'start_pos'->global_position,
+    'end_pos'->global_end_position
+};
+
 set_start(pos)->(
     global_position= pos;
     print(player(),format('gi Initial point set to: ', 'g '+pos,'?/tp '+(str(pos)-','-'['-']')))
@@ -23,7 +28,8 @@ set_start(pos)->(
 _toggle_line()->(
     global_show_line= !global_show_line;
     if(global_show_line,
-        print('Toggled lines on'),
+        print('Toggled lines on');
+        _draw_line(),
         print('Toggled lines off')
     );
     null
@@ -70,13 +76,12 @@ calculate(end_pos)->(
 
     global_end_position = end_pos;
 
-    schedule(0,'_draw_line',start_pos,end_pos);
+    schedule(0,'_draw_line');
 );
 
-_draw_line(start_pos,end_pos)->(
-    if(global_show_line && global_position == start_pos && global_end_position == end_pos,//so if it changes, it will stop drawing this line.
-        draw_shape('line',20,'from',start_pos,'to',end_pos, 'player',player()),
-        return()
-    );
-    schedule(20,'_draw_line',start_pos,end_pos)
+_draw_line()->(
+    if(global_show_line,//It will always draw from the global positions, so it will turn on if there is a line
+        draw_shape('line',20,'from',start_pos,'to',end_pos, 'player',player());
+        schedule(20,'_draw_line')
+    )
 );
