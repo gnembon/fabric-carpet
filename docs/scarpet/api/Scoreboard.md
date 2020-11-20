@@ -27,3 +27,118 @@ for the objective.
 ### `scoreboard_display(place, objective)`
 
 sets display location for a specified `objective`. If `objective` is `null`, then display is cleared.
+
+# Team
+
+### `team_list()`, `team_list(team)`
+
+Returns all available teams as a list with no arguments.
+
+When a `team` is specified, it returns all the players inside that team. If the `team` is invalid, returns `null`.
+
+### `team_add(team)`, `team_add(team,player)`
+
+With one argument, creates a new `team` and returns its name if successfull, or `null` if team already exists.
+
+If a `player` is specified, the player will join the given `team`. Returns `true` if player joined the team, or `false` if nothing changed since the player was already in this team. If the team is invalid, returns `null`
+
+### `team_remove(team)`
+
+Removes a `team`. Returns `true` if the team was deleted, or `null` if the team is invalid.
+
+### `team_leave(player)`
+
+Removes the `player` from the team he is in. Returns `true` if the player left a team, otherwise `false`.
+
+### `team_empty(team)`
+
+Removes all players inside the `team` and returns the number of people that were in the team, or `null` if the team is invalid.
+
+### `team_modify(team,property,value?)`
+
+Reads the `property` of the `team` if no `value` is specified. If a `value` is added as a third argument, it sets the `property` to that `value`.
+
+The properties are the same as in `/team modify` command:
+
+* `collisionRule`
+  * Type: String
+  * Options:
+    * always
+    * never
+    * pushOtherTeams
+    * pushOwnTeam
+    
+* `color`
+  * Type: String
+  * Options: (same strings as `'teamcolor'` [command argument](https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md#command-argument-types] options)
+    * aqua
+    * black
+    * blue
+    * dark_aqua
+    * dark_blue
+    * dark_gray
+    * dark_green
+    * dark_purple
+    * dark_red
+    * gold
+    * gray
+    * green
+    * light_purple
+    * red
+    * yellow
+    * white
+
+* `displayName`
+  * Type: String or FormattedText, when querying returns FormattedText
+  
+* `prefix`
+  * Type: String or FormattedText, when querying returns FormattedText
+
+* `suffix`
+  * Type: String or FormattedText, when querying returns FormattedText
+
+* `friendlyFire`
+  * Type: boolean
+  
+* `seeFriendlyInvisibles`
+  * Type: boolean
+  
+* `nametagVisibility`
+  * Type: String
+  * Options:
+    * always
+    * never
+    * hideForOtherTeams
+    * hideForOwnTeam
+
+* `deathMessageVisibility`
+  * Type: String
+  * Options:
+    * always
+    * never
+    * hideForOtherTeams
+    * hideForOwnTeam
+    
+## Example usage:
+
+`team_add('admin')` Create a team with the name 'admin'
+
+`team_add('admin','Steve')` Joing the player 'Steve' into the team 'admin'
+
+`team_leave('Steve')` Steve leaves the team he is currently in
+
+`team_empty('admin')` All player in the team 'admin' will be removed from it
+
+`team_list()` List all teams
+
+`team_list('admin')` Get all players in 'admin' team
+
+`team_modify('admin','color','dark_red')` Make the team color for team 'admin' dark red
+
+`team_modify('admin','prefix',format('r Admin | '))` Set prefix of all players in 'admin'
+
+`team_modify('admin','displayName','Administrators')` Set display name for team 'admin'
+
+`team_modify('admin','seeFriendlyInvisibles',true)` Make all players in 'admin' see other admins even when invisible
+
+`team_remove('admin')` Remove team admin
