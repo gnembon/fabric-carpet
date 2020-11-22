@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
 import carpet.settings.ParsedRule;
+import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -78,6 +79,12 @@ public class ServerNetworkHandler
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
         DataBuilder data = DataBuilder.create().withTickRate();
         CarpetServer.settingsManager.getRules().forEach(data::withRule);
+        CarpetServer.extensions.forEach(e -> {
+        	SettingsManager eManager = e.customSettingsManager();
+        	if (eManager != null) {
+        		eManager.getRules().forEach(data::withRule);
+        	}
+        });
         playerEntity.networkHandler.sendPacket(new CustomPayloadS2CPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
     }
 
@@ -234,9 +241,10 @@ public class ServerNetworkHandler
                 rules = new CompoundTag();
                 tag.put("Rules", rules);
             }
+            String identifier = (rule.settingsManager != CarpetServer.settingsManager) ? rule.settingsManager.getIdentifier()+":" : "";
             CompoundTag ruleNBT = new CompoundTag();
             ruleNBT.putString("Value", rule.getAsString());
-            rules.put(rule.name, ruleNBT);
+            rules.put(identifier+rule.name, ruleNBT);
             return this;
         }
 

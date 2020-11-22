@@ -1,9 +1,11 @@
 package carpet.network;
 
 import carpet.CarpetServer;
+import carpet.CarpetExtension;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
 import carpet.settings.ParsedRule;
+import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.AbstractNumberTag;
@@ -19,36 +21,58 @@ import java.util.function.BiConsumer;
 
 public class ClientNetworkHandler
 {
-    private static Map<String, BiConsumer<ClientPlayerEntity, Tag>> dataHandlers = new HashMap<String, BiConsumer<ClientPlayerEntity, Tag>>(){{
-        put("Rules", (p, t) -> {
+    private static Map<String, BiConsumer<ClientPlayerEntity, Tag>> dataHandlers = new HashMap<String, BiConsumer<ClientPlayerEntity, Tag>>();
+    static
+    {
+        dataHandlers.put("Rules", (p, t) -> {
             CompoundTag ruleset = (CompoundTag)t;
-            for (String ruleName: ruleset.getKeys())
+            for (String fullRuleName: ruleset.getKeys())
             {
-                ParsedRule<?> rule = CarpetServer.settingsManager.getRule(ruleName);
+            	int separatorPos = fullRuleName.indexOf(':');
+            	SettingsManager manager = null;
+            	String ruleName;
+            	if (separatorPos > -1)
+            	{
+            		String identifier = fullRuleName.substring(0,separatorPos);
+                	ruleName = fullRuleName.substring(separatorPos + 1);
+                	for (CarpetExtension extension:CarpetServer.extensions) {
+                		SettingsManager eManager = extension.customSettingsManager();
+                		if (eManager != null && identifier.equals(eManager.getIdentifier()))
+                		{
+                			manager = eManager;
+                			break;
+                		}
+                	}
+            	}
+            	else
+            	{
+            		ruleName = fullRuleName;
+            		manager = CarpetServer.settingsManager;
+            	}
+                ParsedRule<?> rule = (manager != null) ? manager.getRule(ruleName) : null;
                 if (rule == null)
-                    CarpetSettings.LOG.error("Received unknown rule: "+ruleName);
+                    CarpetSettings.LOG.error("Received unknown rule: "+fullRuleName);
                 else
                 {
-                    CompoundTag ruleNBT = (CompoundTag) ruleset.get(ruleName);
+                    CompoundTag ruleNBT = (CompoundTag) ruleset.get(fullRuleName);
                     String value = ruleNBT.getString("Value");
                     rule.set(null, value);
                 }
             }
         });
-        put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
-        put("scShape", (p, t) -> { // deprecated
+        dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
+        dataHandlers.put("scShape", (p, t) -> { // deprecated
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((CompoundTag)t);
         });
-        put("scShapes", (p, t) -> {
+        dataHandlers.put("scShapes", (p, t) -> {
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShapes((ListTag) t);
         });
-        put("clientCommand", (p, t) -> {
+        dataHandlers.put("clientCommand", (p, t) -> {
             CarpetClient.onClientCommand(t);
         });
-    }};
-
+    };
 
     public static void handleData(PacketByteBuf data, ClientPlayerEntity player)
     {
