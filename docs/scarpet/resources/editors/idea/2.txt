@@ -84,6 +84,12 @@ scoreboard
 scoreboard_add
 scoreboard_remove
 scoreboard_display
+team_add
+team_list
+team_remove
+team_leave
+team_empty
+team_property
 see_sky
 set
 set_biome
