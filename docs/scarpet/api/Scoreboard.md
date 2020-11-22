@@ -55,10 +55,7 @@ Removes a `team`. Returns `true` if the team was deleted, or `null` if the team 
 Removes the `player` from the team he is in. Returns `true` if the player left a team, otherwise `false`.
 
 `team_leave('Steve')` -> Removes Steve from the team he is currently in
-
-### `team_empty(team)`
-
-Removes all players inside the `team` and returns the number of people that were in the team, or `null` if the team is invalid.
+`for(team_list('admin'), team_leave('admin', _))` -> Remove all players from team 'admin'
 
 ### `team_property(team,property,value?)`
 

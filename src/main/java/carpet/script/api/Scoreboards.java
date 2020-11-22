@@ -259,25 +259,6 @@ public class Scoreboards {
             return (_c, _t) -> ret;
         });
 
-        expression.addLazyFunction("team_empty", 1, (c, t, lv) ->
-        {
-            CarpetContext cc = (CarpetContext)c;
-            ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
-            Value teamVal = lv.get(0).evalValue(c);
-
-            if(!(teamVal instanceof StringValue)) throw new InternalExpressionException("'team_add' requires a string as the first argument");
-
-            Team team = scoreboard.getTeam(teamVal.getString());
-
-            if(team == null) return LazyValue.NULL;
-
-            Value ret = new NumericValue(team.getPlayerList().size());
-            if(team.getPlayerList().size() != 0) {
-                team.getPlayerList().forEach((player) -> scoreboard.removePlayerFromTeam(player, team));
-            }
-            return (_c, _t) -> ret;
-        });
-
         expression.addLazyFunction("team_property", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
