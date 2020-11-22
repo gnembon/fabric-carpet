@@ -2,6 +2,7 @@ package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
 import carpet.utils.BlockInfo;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.MaterialColor;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.brain.LookTarget;
@@ -17,10 +18,12 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 
+import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.Identifier;
 
+import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
@@ -315,5 +318,16 @@ public class ValueConversions
         ));
         ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
         return MapValue.wrap(ret);
+    }
+
+    public static Value fromProperty(BlockState state, Property<?> p)
+    {
+        Comparable<?> object = state.get(p);
+        if (object instanceof Boolean || object instanceof Number) return StringValue.of(object.toString());
+        if (object instanceof StringIdentifiable)
+        {
+            return StringValue.of(((StringIdentifiable) object).asString());
+        }
+        throw new InternalExpressionException("Unknown property type: "+p.getName());
     }
 }
