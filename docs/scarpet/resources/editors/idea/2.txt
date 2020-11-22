@@ -5,8 +5,8 @@ blast_resistance
 block
 block_data
 block_light
-block_properties
 block_sound
+block_state
 block_tick
 blocks_daylight
 blocks_movement
@@ -69,7 +69,6 @@ poi
 pos
 pos_offset
 power
-property
 query
 random_tick
 recipe_data
