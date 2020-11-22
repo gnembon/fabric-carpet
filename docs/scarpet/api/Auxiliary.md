@@ -245,16 +245,17 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `send_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
 Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
  * `players` is either a player or a list of players
- * `type` is either `'title'`, `'subtitle'`, `actionbar` or `clear`
- * `title` is what title to send to the player. It is mandatory except for `clear` type
- * `...Ticks` are the number of ticks the title will stay in that state. 
+ * `type` is either `'title'`, `'subtitle'`, `actionbar` or `clear`.
+   Note: `subtitle` will only be displayed if there is a title being displayed (can be an empty one)
+ * `title` is what title to send to the player. It is required except for `clear` type
+ * `...Ticks` are the number of ticks the title will stay in that state.
    If not specified, it will use current defaults (those defaults may have changed from a previous `/title times` execution).
    Executing with those will set the times to the specified ones.
-   Note that `actionbar` type doesn't support changing times (hardcoded in vanilla).
+   Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
 ### `logger(msg), logger(type, msg)`
 
@@ -480,7 +481,7 @@ Available options in the scarpet app space:
   * `world_seed` - a numeric seed of the world
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
-  * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_change(rule, newValue)` event.
+  * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
  
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`

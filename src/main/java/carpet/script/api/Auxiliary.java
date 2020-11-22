@@ -455,8 +455,8 @@ public class Auxiliary {
             Value finalRes = res;
             return (_c, _t) -> finalRes; // pass through for variables
         });
-        expression.addLazyFunction("send_title", -1, (c, t, lv) -> {
-            if (lv.size() < 2) throw new InternalExpressionException("'send_title' needs at least a target, type and message, and optionally times");
+        expression.addLazyFunction("display_title", -1, (c, t, lv) -> {
+            if (lv.size() < 2) throw new InternalExpressionException("'display_title' needs at least a target, type and message, and optionally times");
             Value pVal = lv.get(0).evalValue(c);
             TitleS2CPacket.Action action;
             List<Value> targets;
@@ -468,7 +468,7 @@ public class Auxiliary {
                 for (Value player:targets)
                 {
                     if (!(player instanceof EntityValue && ((EntityValue) pVal).getEntity() instanceof PlayerEntity))
-                        throw new InternalExpressionException("'action_bar' only takes players or player lists as first argument");
+                        throw new InternalExpressionException("'display_title' only takes players or player lists as first argument");
                 }
             }
             else if (pVal instanceof EntityValue && ((EntityValue) pVal).getEntity() instanceof PlayerEntity)
@@ -477,11 +477,11 @@ public class Auxiliary {
             }
             else
             {
-                throw new InternalExpressionException("'send_title' requires a player or a list of players as first argument");
+                throw new InternalExpressionException("'display_title' requires a player or a list of players as first argument");
             }
             pVal = lv.get(1).evalValue(c);
             if (!(pVal instanceof StringValue)) 
-                throw new InternalExpressionException("'send_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+                throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
             switch (pVal.getString()) 
             {
                 case "title":
@@ -497,10 +497,10 @@ public class Auxiliary {
                     action = Action.CLEAR;
                     break;
                 default:
-                    throw new InternalExpressionException("'send_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
             }
             if (action != Action.CLEAR && lv.size() < 3)
-                throw new InternalExpressionException("Third argument of 'send_title' must be present except for 'clear' type");
+                throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
             if (lv.size() > 3)
             {
             	pVal = lv.get(2).evalValue(c);
@@ -518,7 +518,7 @@ public class Auxiliary {
                     out = Integer.valueOf(lv.get(5).evalValue(c).getString());
                     timesPacket = new TitleS2CPacket(Action.TIMES, null, in, stay, out);
                 } catch (NumberFormatException e) {
-                    throw new InternalExpressionException("If specified, 'send_title' requires integers as fourth, fifth and sixth arguments");
+                    throw new InternalExpressionException("If specified, 'display_title' requires integers as fourth, fifth and sixth arguments");
                 }
             }
             TitleS2CPacket packet = new TitleS2CPacket(action, title);
