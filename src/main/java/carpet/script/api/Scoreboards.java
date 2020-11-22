@@ -284,7 +284,7 @@ public class Scoreboards {
             if(!(propertyVal instanceof StringValue)) throw new InternalExpressionException("'team_property' requires a string as the second argument");
 
             switch (propertyVal.getString()) {
-                case "collisionRule":
+                case "collision_rule":
                     if(!modifying) {
                         Value ret = new StringValue(team.getCollisionRule().name);
                         return (_c, _t) -> ret;
@@ -292,9 +292,18 @@ public class Scoreboards {
 
                     if(!(settingVal instanceof StringValue)) throw  new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
 
-                    AbstractTeam.CollisionRule collisionRule = AbstractTeam.CollisionRule.getRule(settingVal.getString());
-                    if(collisionRule == null) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
-                    team.setCollisionRule(collisionRule);
+                    switch(settingVal.getString()) {
+                        case "always":
+                            team.setCollisionRule(AbstractTeam.CollisionRule.ALWAYS); break;
+                        case "never":
+                            team.setCollisionRule(AbstractTeam.CollisionRule.NEVER); break;
+                        case "push_other_teams":
+                            team.setCollisionRule(AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS); break;
+                        case "push_own_team":
+                            team.setCollisionRule(AbstractTeam.CollisionRule.PUSH_OWN_TEAM); break;
+                        default:
+                            throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
+                    }
                     break;
                 case "color":
                     if(!modifying) {
@@ -309,7 +318,7 @@ public class Scoreboards {
                     team.setColor(color);
 
                     break;
-                case "deathMessageVisibility":
+                case "death_message_visibility":
                     if(!modifying) {
                         Value ret = new StringValue(team.getDeathMessageVisibilityRule().name);
                         return (_c, _t) -> ret;
@@ -317,12 +326,20 @@ public class Scoreboards {
 
                     if(!(settingVal instanceof StringValue)) throw  new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
 
-                    AbstractTeam.VisibilityRule deathMessageVisibility = AbstractTeam.VisibilityRule.getRule(settingVal.getString());
-                    if(deathMessageVisibility == null) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
-                    team.setDeathMessageVisibilityRule(deathMessageVisibility);
-
+                    switch(settingVal.getString()) {
+                        case "always":
+                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.ALWAYS); break;
+                        case "never":
+                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.NEVER); break;
+                        case "hide_for_other_teams":
+                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OTHER_TEAMS); break;
+                        case "hide_for_own_team":
+                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OWN_TEAM); break;
+                        default:
+                            throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
+                    }
                     break;
-                case "displayName":
+                case "display_name":
                     if(!modifying) {
                         Value ret = new FormattedTextValue(team.getDisplayName());
                         return (_c, _t) -> ret;
@@ -341,7 +358,7 @@ public class Scoreboards {
                     team.setDisplayName(displayName);
 
                     break;
-                case "friendlyFire":
+                case "friendly_fire":
                     if(!modifying) {
                         Value ret = new NumericValue(team.isFriendlyFireAllowed());
                         return (_c, _t) -> ret;
@@ -352,7 +369,7 @@ public class Scoreboards {
                     boolean friendlyFire = settingVal.getBoolean();
                     team.setFriendlyFireAllowed(friendlyFire);
                     break;
-                case "nametagVisibility":
+                case "nametag_visibility":
                     if(!modifying) {
                         Value ret = new StringValue(team.getNameTagVisibilityRule().name);
                         return (_c, _t) -> ret;
@@ -360,9 +377,18 @@ public class Scoreboards {
 
                     if(!(settingVal instanceof StringValue)) throw  new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
 
-                    AbstractTeam.VisibilityRule nametagVisibility = AbstractTeam.VisibilityRule.getRule(settingVal.getString());
-                    if(nametagVisibility == null) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
-                    team.setNameTagVisibilityRule(nametagVisibility);
+                    switch(settingVal.getString()) {
+                        case "always":
+                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.ALWAYS); break;
+                        case "never":
+                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.NEVER); break;
+                        case "hide_for_other_teams":
+                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OTHER_TEAMS); break;
+                        case "hide_for_own_team":
+                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OWN_TEAM); break;
+                        default:
+                            throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
+                    }
                     break;
                 case "prefix":
                     if(!modifying) {
@@ -382,7 +408,7 @@ public class Scoreboards {
 
                     team.setPrefix(prefix);
                     break;
-                case "seeFriendlyInvisibles":
+                case "see_friendly_invisibles":
                     if(!modifying) {
                         Value ret = new NumericValue(team.shouldShowFriendlyInvisibles());
                         return (_c, _t) -> ret;

@@ -38,7 +38,7 @@ When a `team` is specified, it returns all the players inside that team. If the 
 
 ### `team_add(team)`, `team_add(team,player)`
 
-With one argument, creates a new `team` and returns its name if successfull, or `null` if team already exists.
+With one argument, creates a new `team` and returns its name if successful, or `null` if team already exists.
 
 
 `team_add('admin')` -> Create a team with the name 'admin'
@@ -61,17 +61,15 @@ Removes the `player` from the team he is in. Returns `true` if the player left a
 
 Reads the `property` of the `team` if no `value` is specified. If a `value` is added as a third argument, it sets the `property` to that `value`.
 
-The properties are the same as in `/team modify` command:
-
-* `collisionRule`
+* `collision_rule`
   * Type: String
-  * Options: always, never, pushOtherTeams, pushOwnTeam
+  * Options: always, never, push_other_teams, push_own_team
     
 * `color`
   * Type: String
   * Options: See [team command](https://minecraft.gamepedia.com/Commands/team#Arguments) (same strings as `'teamcolor'` [command argument](https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md#command-argument-types] options))
 
-* `displayName`
+* `display_name`
   * Type: String or FormattedText, when querying returns FormattedText
   
 * `prefix`
@@ -80,26 +78,27 @@ The properties are the same as in `/team modify` command:
 * `suffix`
   * Type: String or FormattedText, when querying returns FormattedText
 
-* `friendlyFire`
+* `friendly_fire`
   * Type: boolean
   
-* `seeFriendlyInvisibles`
+* `see_friendly_invisibles`
   * Type: boolean
   
-* `nametagVisibility`
+* `nametag_visibility`
   * Type: String
-  * Options: always, never, hideForOtherTeams, hideForOwnTeam
+  * Options: always, never, hide_for_other_teams, hide_for_own_team
 
-* `deathMessageVisibility`
+* `death_message_visibility`
   * Type: String
-  * Options: always, never, hideForOtherTeams, hideForOwnTeam
+  * Options: always, never, hide_for_other_teams, hide_for_own_team
 
 Examples:
 
 ```
 team_property('admin','color','dark_red')                 Make the team color for team 'admin' dark red
 team_property('admin','prefix',format('r Admin | '))      Set prefix of all players in 'admin'
-team_property('admin','displayName','Administrators')     Set display name for team 'admin'
-team_property('admin','seeFriendlyInvisibles',true)       Make all players in 'admin' see other admins even when invisible
+team_property('admin','display_name','Administrators')     Set display name for team 'admin'
+team_property('admin','see_friendly_invisibles',true)       Make all players in 'admin' see other admins even when invisible
+team_property('admin','death_message_visibility','hide_for_other_team')       Make all players in 'admin' see other admins even when invisible
 ```
 
