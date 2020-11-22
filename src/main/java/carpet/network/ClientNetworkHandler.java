@@ -28,30 +28,30 @@ public class ClientNetworkHandler
             CompoundTag ruleset = (CompoundTag)t;
             for (String fullRuleName: ruleset.getKeys())
             {
-            	int separatorPos = fullRuleName.indexOf(':');
-            	SettingsManager manager = null;
-            	String ruleName;
-            	if (separatorPos > -1)
-            	{
-            		String identifier = fullRuleName.substring(0,separatorPos);
-                	ruleName = fullRuleName.substring(separatorPos + 1);
-                	for (CarpetExtension extension:CarpetServer.extensions) {
-                		SettingsManager eManager = extension.customSettingsManager();
-                		if (eManager != null && identifier.equals(eManager.getIdentifier()))
-                		{
-                			manager = eManager;
-                			break;
-                		}
-                	}
-            	}
-            	else
-            	{
-            		ruleName = fullRuleName;
-            		manager = CarpetServer.settingsManager;
-            	}
+                int separatorPos = fullRuleName.indexOf(':');
+                SettingsManager manager = null;
+                String ruleName;
+                if (separatorPos > -1)
+                {
+                    String identifier = fullRuleName.substring(0, separatorPos);
+                    ruleName = fullRuleName.substring(separatorPos + 1);
+                    for (CarpetExtension extension: CarpetServer.extensions) {
+                        SettingsManager eManager = extension.customSettingsManager();
+                        if (eManager != null && identifier.equals(eManager.getIdentifier()))
+                        {
+                            manager = eManager;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    ruleName = fullRuleName;
+                    manager = CarpetServer.settingsManager;
+                }
                 ParsedRule<?> rule = (manager != null) ? manager.getRule(ruleName) : null;
                 if (rule == null)
-                    CarpetSettings.LOG.error("Received unknown rule: "+fullRuleName);
+                    CarpetSettings.LOG.error("Received unknown rule: " + fullRuleName);
                 else
                 {
                     CompoundTag ruleNBT = (CompoundTag) ruleset.get(fullRuleName);

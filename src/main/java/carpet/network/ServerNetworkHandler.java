@@ -80,10 +80,10 @@ public class ServerNetworkHandler
         DataBuilder data = DataBuilder.create().withTickRate();
         CarpetServer.settingsManager.getRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
-        	SettingsManager eManager = e.customSettingsManager();
-        	if (eManager != null) {
-        		eManager.getRules().forEach(data::withRule);
-        	}
+            SettingsManager eManager = e.customSettingsManager();
+            if (eManager != null) {
+                eManager.getRules().forEach(data::withRule);
+            }
         });
         playerEntity.networkHandler.sendPacket(new CustomPayloadS2CPacket(CarpetClient.CARPET_CHANNEL, data.build() ));
     }
