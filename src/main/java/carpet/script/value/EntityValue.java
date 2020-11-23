@@ -143,7 +143,7 @@ public class EntityValue extends Value
         return player;
     }
 
-    public static String getPlayerNameByValue(MinecraftServer server, Value value)
+    public static String getPlayerNameByValue(Value value)
     {
         String playerName = null;
         if (value instanceof EntityValue)
