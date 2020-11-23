@@ -186,12 +186,18 @@ public class PlayerCommand
             return true;
         }
         GameProfile profile = server.getUserCache().findByName(playerName);
-        if (manager.getUserBanList().contains(profile))
+        if (profile == null)
         {
-            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned");
+            Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
+                    "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
             return true;
         }
-        if (manager.isWhitelistEnabled() && profile != null && manager.isWhitelisted(profile) && !context.getSource().hasPermissionLevel(2))
+        if (manager.getUserBanList().contains(profile))
+        {
+            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
+            return true;
+        }
+        if (manager.isWhitelistEnabled() && manager.isWhitelisted(profile) && !context.getSource().hasPermissionLevel(2))
         {
             Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
             return true;
