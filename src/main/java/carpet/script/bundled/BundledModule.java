@@ -30,7 +30,7 @@ public class BundledModule extends Module
     
     /**
      * Creates a new {@link BundledModule} with an app located at a specified place.
-     * @see #fromPathWithCustomName(ClassLoader, String, String, boolean)
+     * @see #fromPathWithCustomName(String, String, boolean)
      * 
      * @param path A {@link String} being the path to the directory where the app is located.
      * @param scriptName A {@link String} being the name of the script. The extension will be autocompleted
@@ -43,10 +43,10 @@ public class BundledModule extends Module
     
     /**
      * Creates a new {@link BundledModule} with an app located at the specified fullPath with a custom name.
-     * @see #fromPath(ClassLoader, String, String, boolean)
+     * @see #fromPath(String, String, boolean)
      * 
      * @param fullPath A {@link String} being the full path to the app's code, including file and extension.
-     * @param scriptName A {@link String} being the custom name for the script.
+     * @param customName A {@link String} being the custom name for the script.
      * @param isLibrary A {@link boolean} indicating whether or not the script is a library
      * @return The created {@link BundledModule}
      */

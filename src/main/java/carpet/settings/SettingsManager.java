@@ -180,17 +180,17 @@ public class SettingsManager
         observers.forEach(observer -> observer.accept(source, rule, userTypedValue));
         staticObservers.forEach(observer -> observer.accept(source, rule, userTypedValue));
         ServerNetworkHandler.updateRuleWithConnectedClients(rule);
-        switchScarpetRule(source, rule);
+        switchScarpetRuleIfNeeded(source, rule);
         if (CARPET_RULE_CHANGES.isNeeded()) CARPET_RULE_CHANGES.onCarpetRuleChanges(rule, source);
     }
     
-    void switchScarpetRule(ServerCommandSource source, ParsedRule<?> rule)
+    private void switchScarpetRuleIfNeeded(ServerCommandSource source, ParsedRule<?> rule)
     {
         if (!rule.scarpetApp.isEmpty())
         {
             if (rule.getBoolValue() || (rule.type == String.class && !rule.get().equals("false")))
             {
-                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, true);
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, s -> canUseCommand(s, rule.get()));
             } else {
                 CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
             }
@@ -205,7 +205,7 @@ public class SettingsManager
         for (ParsedRule<?> rule : rules.values())
         {
             if (!rule.scarpetApp.isEmpty()) {
-                switchScarpetRule(server.getCommandSource(), rule);
+                switchScarpetRuleIfNeeded(server.getCommandSource(), rule);
             }
         }
     }
@@ -332,9 +332,11 @@ public class SettingsManager
      *                     {@link boolean} value or "ops".
      * @return Whether or not the {@link ServerCommandSource} meets the required level
      */
-    public static boolean canUseCommand(ServerCommandSource source, String commandLevel)
+    public static boolean canUseCommand(ServerCommandSource source, Object commandLevel)
     {
-        switch (commandLevel)
+        if (commandLevel instanceof Boolean) return (Boolean) commandLevel;
+        String commandLevelString = commandLevel.toString();
+        switch (commandLevelString)
         {
             case "true": return true;
             case "false": return false;
@@ -344,7 +346,7 @@ public class SettingsManager
             case "2":
             case "3":
             case "4":
-                return source.hasPermissionLevel(Integer.parseInt(commandLevel));
+                return source.hasPermissionLevel(Integer.parseInt(commandLevelString));
         }
         return false;
     }

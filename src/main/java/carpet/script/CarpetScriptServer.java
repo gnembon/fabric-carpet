@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -53,7 +54,7 @@ public class CarpetScriptServer
     /**
      * Registers a Scarpet App to be always available to be loaded
      * in the /script load list.
-     * @see BundledModule#fromPath(ClassLoader, String, String, boolean)
+     * @see BundledModule#fromPath(String, String, boolean)
      * 
      * @param app The {@link BundledModule} of the app
      */
@@ -66,7 +67,7 @@ public class CarpetScriptServer
      * Registers a Scarpet App to be used as a Rule App
      * (to be controlled with the value of a Carpet rule).
      * Libraries should be registered with {@link #registerBuiltInScript(BundledModule)} instead
-     * @see BundledModule#fromPath(ClassLoader, String, String, boolean)
+     * @see BundledModule#fromPath(String, String, boolean)
      * 
      * @param app The {@link BundledModule} of the app.
      */
@@ -116,7 +117,7 @@ public class CarpetScriptServer
             Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(server.getCommandSource(), moduleName, true, true, false);
+                addScriptHost(server.getCommandSource(), moduleName, true, true, null);
             }
         }
 
@@ -192,9 +193,10 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload, boolean isRuleApp)
+    public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload, Function<ServerCommandSource, Boolean> commandValidator)
     {
         //TODO add per player modules to support player actions better on a server
+        boolean isRuleApp = commandValidator != null;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
         boolean reload = false;
@@ -242,7 +244,7 @@ public class CarpetScriptServer
         {
             try
             {
-                LiteralArgumentBuilder<ServerCommandSource> command = newHost.readCommands();
+                LiteralArgumentBuilder<ServerCommandSource> command = newHost.readCommands(commandValidator);
                 if (command != null)
                 {
                     if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action+" with /"+name+" command");
@@ -261,7 +263,7 @@ public class CarpetScriptServer
             }
 
         }
-        else if (!addLegacyCommand(source, name, reload, !isRuleApp)) // this needs to be moved to config reader, only supporting legacy command here
+        else if (!addLegacyCommand(source, name, reload, !isRuleApp, commandValidator)) // this needs to be moved to config reader, only supporting legacy command here
         {
             removeScriptHost(source, name, false, false);
             Messenger.m(source, "r Failed to build command system for "+name+" thus failed to load the app");
@@ -272,7 +274,7 @@ public class CarpetScriptServer
         return true;
     }
 
-    private boolean addLegacyCommand(ServerCommandSource source, String hostName, boolean isReload, boolean notifySource)
+    private boolean addLegacyCommand(ServerCommandSource source, String hostName, boolean isReload, boolean notifySource, Function<ServerCommandSource, Boolean> useValidator)
     {
         CarpetScriptHost host = modules.get(hostName);
         String loaded = isReload?"reloaded":"loaded";
@@ -293,7 +295,7 @@ public class CarpetScriptServer
         }
 
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> modules.containsKey(hostName)).
+                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player)).
                 executes( (c) ->
                 {
                     Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
@@ -439,6 +441,6 @@ public class CarpetScriptServer
         apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, pp) -> addScriptHost(server.getCommandSource(), s, pp, false, false));
+        apps.forEach((s, pp) -> addScriptHost(server.getCommandSource(), s, pp, false, null));
     }
 }
