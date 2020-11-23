@@ -958,6 +958,8 @@ public class WorldAccess {
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
                         BlockInfo.mapColourName.get(s.getMapColor(((CarpetContext)c).s.getWorld(), p))));
 
+
+        // Deprecated for block_state()
         expression.addLazyFunction("property", -1, (c, t, lv) ->
         {
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
@@ -973,6 +975,7 @@ public class WorldAccess {
             return (_c, _t) -> retval;
         });
 
+        // Deprecated for block_state()
         expression.addLazyFunction("block_properties", -1, (c, t, lv) ->
         {
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
@@ -982,6 +985,31 @@ public class WorldAccess {
                     p -> new StringValue(p.getName())).collect(Collectors.toList())
             );
             return (_c, _t) -> res;
+        });
+
+        // block_state(block)
+        // block_state(block, property)
+        expression.addLazyFunction("block_state", -1, (c, t, lv) ->
+        {
+            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
+            BlockState state = locator.block.getBlockState();
+            StateManager<Block, BlockState> states = state.getBlock().getStateManager();
+            if (locator.offset == lv.size())
+            {
+                Map<Value,Value> properties = new HashMap<>();
+                for(Property<?> p : states.getProperties())
+                {
+                    properties.put(StringValue.of(p.getName()), ValueConversions.fromProperty(state, p));// ValueConversions.fromObject(state.get(p), false));
+                }
+                Value ret = MapValue.wrap(properties);
+                return (_c, _t) -> ret;
+            }
+            String tag = lv.get(locator.offset).evalValue(c).getString();
+            Property<?> property = states.getProperty(tag);
+            if (property == null)
+                return LazyValue.NULL;
+            Value retval = ValueConversions.fromProperty(state, property);
+            return (_c, _t) -> retval;
         });
 
         expression.addLazyFunction("biome", -1, (c, t, lv) -> {

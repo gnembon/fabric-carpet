@@ -85,14 +85,14 @@ public class Functions {
         expression.addLazyFunction("outer", 1, (c, t, lv) ->
         {
             if (t != Context.LOCALIZATION)
-                throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures");
+                throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
             return (cc, tt) -> new FunctionAnnotationValue(lv.get(0).evalValue(c), 0);
         });
 
         expression.addLazyUnaryOperator("...", Operators.precedence.get("def->..."), false, (c, t, lv) ->
         {
             if (t != Context.LOCALIZATION)
-                throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures");
+                throw new InternalExpressionException("That functionality has not been implemented yet.");
             return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), 1);
         });
 

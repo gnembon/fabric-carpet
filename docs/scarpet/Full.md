@@ -2186,22 +2186,32 @@ pos_offset(block(0,5,0), 'up', 2)  => l(0,7,0)
 pos_offset(l(0,5,0), 'up', -2 ) => l(0,3,0)
 </pre>
 
-### `block_properties(pos)`
+### `(Deprecated) block_properties(pos)`
 
-Returns a list of available block properties for a particular block. If a block has no properties, returns an empty list.
+Deprecated by `keys(block_state(pos))`.
 
-### `property(pos, name)`
+### `(Deprecated) property(pos, name)`
 
-Returns property of block at `pos`, or specified by `block` argument. If a block doesn't have that property, `null` 
-value is returned. Returned values are always strings. It is expected from the user to know what to expect and convert 
-values to numbers using `number()` function or booleans using `bool()` function.
+Deprecated by `block_state(pos, name)`
+
+### `block_state(block)`, `block_state(block, property)`
+
+If used with a `block` argument only, it returns a map of block properties and their values.  If a block has no properties, returns an
+empty map.
+
+If `property` is specified, returns value of that property, or `null` if property is not applicable.
+
+Returned values or properties are always strings. It is expected from the user to know what to expect and convert 
+values to numbers using `number()` function or booleans using `bool()` function. Returned string values can be directly used
+back in state definition in various applications where block properties are required.
 
 <pre>
-set(x,y,z,'iron_trapdoor','half','top'); property(x,y,z,'half')  => top
-set(x,y,z,'air'); property(x,y,z,'half')  => null
-property(block('iron_trapdoor[half=top]'),'half')  => top
-property(block('iron_trapdoor[half=top]'),'powered')  => false
-bool(property(block('iron_trapdoor[half=top]'),'powered'))  => 0
+set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
+set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z,'half')  => top
+set(x,y,z,'air'); block_state(x,y,z,'half')  => null
+block_state(block('iron_trapdoor[half=top]'),'half')  => top
+block_state(block('iron_trapdoor[half=top]'),'powered')  => false
+bool(block_state(block('iron_trapdoor[half=top]'),'powered'))  => 0
 </pre>
 
 ### `block_data(pos)`
