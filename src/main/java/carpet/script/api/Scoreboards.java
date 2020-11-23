@@ -20,7 +20,6 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.scoreboard.AbstractTeam;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -161,18 +160,13 @@ public class Scoreboards {
             CarpetContext cc = (CarpetContext)c;
             ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
             if(lv.size() == 0) {
-                Value ret = ListValue.wrap(scoreboard.getTeamNames().stream().map(StringValue::new).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(scoreboard.getTeamNames().stream().map(StringValue::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             } else if(lv.size() == 1) {
-                Value teamVal = lv.get(0).evalValue(c);
-                if(teamVal instanceof StringValue) {
-                    Team team = scoreboard.getTeam(lv.get(0).evalValue(c).getString());
-                    if(team == null) return LazyValue.NULL;
-                    Value ret = ListValue.wrap(team.getPlayerList().stream().map(StringValue::new).collect(Collectors.toList()));
-                    return (_c, _t) -> ret;
-                } else {
-                    throw new InternalExpressionException("'team_list' requires a string as the first argument");
-                }
+                Team team = scoreboard.getTeam(lv.get(0).evalValue(c).getString());
+                if(team == null) return LazyValue.NULL;
+                Value ret = ListValue.wrap(team.getPlayerList().stream().map(StringValue::of).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
             } else {
                 return LazyValue.NULL;
             }
@@ -185,10 +179,7 @@ public class Scoreboards {
 
             CarpetContext cc = (CarpetContext)c;
             ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
-            Value teamVal = lv.get(0).evalValue(c);
-            if(!(teamVal instanceof StringValue)) throw new InternalExpressionException("'team_add' requires a string as the first argument");
-
-            String teamName = teamVal.getString();
+            String teamName = lv.get(0).evalValue(c).getString();
 
             if(lv.size() == 1) {
                 if(scoreboard.getTeam(teamName) == null) {
@@ -200,14 +191,9 @@ public class Scoreboards {
                 }
             } else if(lv.size() == 2) {
                 Value playerVal = lv.get(1).evalValue(c);
-                String player;
-                if(playerVal instanceof StringValue) {
-                    player = playerVal.getString();
-                } else if(playerVal instanceof EntityValue && ((EntityValue) playerVal).getEntity() instanceof ServerPlayerEntity) {
-                    player = ((EntityValue) playerVal).getEntity().getEntityName();
-                } else {
-                    throw new InternalExpressionException("'team_add' requires a string or a player as the second argument");
-                }
+
+                String player = EntityValue.getPlayerNameByValue(playerVal);
+                if(player == null) return LazyValue.NULL;
 
                 Team team = scoreboard.getTeam(teamName);
                 if(team == null) return LazyValue.NULL;
@@ -228,10 +214,8 @@ public class Scoreboards {
             CarpetContext cc = (CarpetContext)c;
             ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
             Value teamVal = lv.get(0).evalValue(c);
-            if(!(teamVal instanceof StringValue)) throw new InternalExpressionException("'team_remove' requires a string as the first argument");
 
             String team = teamVal.getString();
-
 
             if(scoreboard.getTeam(team) != null) {
                 scoreboard.removeTeam(scoreboard.getTeam(team));
@@ -247,14 +231,10 @@ public class Scoreboards {
             CarpetContext cc = (CarpetContext)c;
             ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
             Value playerVal = lv.get(0).evalValue(c);
-            String player;
-            if(playerVal instanceof StringValue) {
-                player = playerVal.getString();
-            } else if(playerVal instanceof EntityValue && ((EntityValue) playerVal).getEntity() instanceof ServerPlayerEntity) {
-                player = ((EntityValue) playerVal).getEntity().getEntityName();
-            } else {
-                throw new InternalExpressionException("'team_leave' requires a string or a player as the first argument");
-            }
+
+            String player = EntityValue.getPlayerNameByValue(playerVal);
+            if(player == null) return LazyValue.NULL;
+
             Value ret = new NumericValue(scoreboard.clearPlayerTeam(player));
             return (_c, _t) -> ret;
         });
@@ -276,8 +256,6 @@ public class Scoreboards {
                 settingVal = lv.get(2).evalValue(c);
             }
 
-            if(!(teamVal instanceof StringValue)) throw new InternalExpressionException("'team_property' requires a string as the first argument");
-
             Team team = scoreboard.getTeam(teamVal.getString());
             if(team == null) return LazyValue.NULL;
 
@@ -292,18 +270,9 @@ public class Scoreboards {
 
                     if(!(settingVal instanceof StringValue)) throw  new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
 
-                    switch(settingVal.getString()) {
-                        case "always":
-                            team.setCollisionRule(AbstractTeam.CollisionRule.ALWAYS); break;
-                        case "never":
-                            team.setCollisionRule(AbstractTeam.CollisionRule.NEVER); break;
-                        case "push_other_teams":
-                            team.setCollisionRule(AbstractTeam.CollisionRule.PUSH_OTHER_TEAMS); break;
-                        case "push_own_team":
-                            team.setCollisionRule(AbstractTeam.CollisionRule.PUSH_OWN_TEAM); break;
-                        default:
-                            throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
-                    }
+                    AbstractTeam.CollisionRule collisionRule = AbstractTeam.CollisionRule.getRule(settingVal.getString());
+                    if(collisionRule == null) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
+                    team.setCollisionRule(collisionRule);
                     break;
                 case "color":
                     if(!modifying) {
@@ -326,18 +295,10 @@ public class Scoreboards {
 
                     if(!(settingVal instanceof StringValue)) throw  new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
 
-                    switch(settingVal.getString()) {
-                        case "always":
-                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.ALWAYS); break;
-                        case "never":
-                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.NEVER); break;
-                        case "hide_for_other_teams":
-                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OTHER_TEAMS); break;
-                        case "hide_for_own_team":
-                            team.setDeathMessageVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OWN_TEAM); break;
-                        default:
-                            throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
-                    }
+                    AbstractTeam.VisibilityRule deathMessageVisibility = AbstractTeam.VisibilityRule.getRule(settingVal.getString());
+                    if(deathMessageVisibility == null) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
+                    team.setDeathMessageVisibilityRule(deathMessageVisibility);
+
                     break;
                 case "display_name":
                     if(!modifying) {
@@ -377,18 +338,10 @@ public class Scoreboards {
 
                     if(!(settingVal instanceof StringValue)) throw  new InternalExpressionException("'team_property' requires a string as the third argument for the property " + propertyVal.getString());
 
-                    switch(settingVal.getString()) {
-                        case "always":
-                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.ALWAYS); break;
-                        case "never":
-                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.NEVER); break;
-                        case "hide_for_other_teams":
-                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OTHER_TEAMS); break;
-                        case "hide_for_own_team":
-                            team.setNameTagVisibilityRule(AbstractTeam.VisibilityRule.HIDE_FOR_OWN_TEAM); break;
-                        default:
-                            throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
-                    }
+                    AbstractTeam.VisibilityRule nametagVisibility = AbstractTeam.VisibilityRule.getRule(settingVal.getString());
+                    if(nametagVisibility == null) throw new InternalExpressionException("Unknown value for property " + propertyVal.getString() + ": " + settingVal.getString());
+                    team.setNameTagVisibilityRule(nametagVisibility);
+
                     break;
                 case "prefix":
                     if(!modifying) {
