@@ -73,6 +73,7 @@ public class CarpetSettings
 
     /*
     These will be turned when events can be added / removed in code
+    Then also gotta remember to remove relevant rules
 
     @Rule(
             desc = "Turns on internal camera path tracing app",
@@ -97,7 +98,27 @@ public class CarpetSettings
             appSource = "ai_tracker"
     )
     public static boolean commandAITracker = true;
+
+    @Rule(
+        desc = "Enables /draw commands",
+        extra = {
+            "... allows for drawing simple shapes or",
+            "other shapes which are sorta difficult to do normally"
+        },
+        appSource = "draw",
+        category = {FEATURE, SCARPET, COMMAND}
+    )
+    public static String commandDraw = "true";
+
+    @Rule(
+        desc = "Enables /distance command to measure in game distance between points",
+        extra = "Also enables brown carpet placement action if 'carpets' rule is turned on as well",
+        appSource = "distance",
+        category = {FEATURE, SCARPET, COMMAND}
+    )
+    public static String commandDistance = "true";
     */
+
 
 
     @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!", category = EXPERIMENTAL)
@@ -373,6 +394,7 @@ public class CarpetSettings
 
     @Rule(desc = "Enables /draw commands", extra = {"... allows for drawing simple shapes or","other shapes which are sorta difficult to do normally"}, category = COMMAND)
     public static String commandDraw = "true";
+
 
     @Rule(
             desc = "Enables /script command",
