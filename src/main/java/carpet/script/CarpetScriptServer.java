@@ -168,7 +168,7 @@ public class CarpetScriptServer
         {
             for (Module mi : bundledModuleData)
             {
-                if (!mi.isLibrary()) moduleNames.add(mi.getName());
+                if (!mi.isLibrary() && !mi.getName().endsWith("_beta")) moduleNames.add(mi.getName());
             }
         }
         File folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
