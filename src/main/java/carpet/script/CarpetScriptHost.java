@@ -39,6 +39,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
@@ -152,12 +153,12 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> getNewCommandTree(
-            List<Pair<List<CommandToken>,FunctionArgument<Value>>> entries
+            List<Pair<List<CommandToken>,FunctionArgument<Value>>> entries, Function<ServerCommandSource, Boolean> useValidator
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName));
+               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player));
         for (Pair<List<CommandToken>,FunctionArgument<Value>> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
@@ -243,7 +244,7 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public LiteralArgumentBuilder<ServerCommandSource> readCommands() throws CommandSyntaxException
+    public LiteralArgumentBuilder<ServerCommandSource> readCommands(Function<ServerCommandSource, Boolean> useValidator) throws CommandSyntaxException
     {
         Value commands = appConfig.get(StringValue.of("commands"));
 
@@ -279,7 +280,7 @@ public class CarpetScriptHost extends ScriptHost
                 }
             }
         }
-        return this.getNewCommandTree(commandEntries);
+        return this.getNewCommandTree(commandEntries, useValidator);
     }
 
     @Override

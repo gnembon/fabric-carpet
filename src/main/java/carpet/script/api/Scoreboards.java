@@ -62,7 +62,7 @@ public class Scoreboards {
             }
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
-            if (objective == null) throw new InternalExpressionException("Unknown objective: "+objectiveName);
+            if (objective == null) return LazyValue.NULL;
             if (lv.size()==1)
             {
                 Value ret = ListValue.wrap(scoreboard.getAllPlayerScores(objective).stream().map(s -> new StringValue(s.getPlayerName())).collect(Collectors.toList()));
@@ -149,7 +149,7 @@ public class Scoreboards {
             }
             String objectiveString = target.getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveString);
-            if (objective == null) throw new InternalExpressionException("Objective doesn't exist: "+objectiveString);
+            if (objective == null) return LazyValue.NULL;
             scoreboard.setObjectiveSlot(slot, objective);
             return (_c, _t) -> new NumericValue(slot);
         });
