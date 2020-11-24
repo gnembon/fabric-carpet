@@ -29,7 +29,7 @@ _toggle_line()->(
     global_show_line= !global_show_line;
     if(global_show_line,
         print('Toggled lines on');
-        _draw_line(),
+        if(global_position && global_end_position,_draw_line()),//making sure that neither of them are null
         print('Toggled lines off')
     );
     null
@@ -47,7 +47,7 @@ _calculate(start_pos, end_pos)->(
     )
 );
 
-__on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->
+__on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->(
     pos = pos_offset(block,face);//for clicking against the wall.
     if(block=='brown_carpet' && system_info('world_carpet_rules'):'carpets'=='true',
         if(global_position==null||player~'sneaking',//wont complain for first carpet
@@ -81,7 +81,8 @@ calculate(end_pos)->(
 
 _draw_line()->(
     if(global_show_line,//It will always draw from the global positions, so it will turn on if there is a line
-        draw_shape('line',20,'from',global_position,'to',global_end_position, 'player',player());
+        draw_shape('line',20,'from',global_position,'to',global_end_position, 'player',player(),'color',0x000000FF);
+        draw_shape('label',20,'pos',global_end_position,'text',_round(_euclidean(global_position,global_end_position),100),'color',0x000000FF);
         schedule(20,'_draw_line')
     )
 );
