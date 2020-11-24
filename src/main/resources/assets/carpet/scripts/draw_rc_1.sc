@@ -34,17 +34,23 @@ __config() -> {
 
 set_block(x, y, z, block, replacement)-> (
     if(block != block(x, y, z),
-        set([x, y, z],block);
-        global_affected += 1;
+        without_updates(set([x, y, z],block));
+        global_affected:0 += [x, y, z];
+        global_affected:1 += 1;
     );
 );
 
-global_affected = 0;
+global_affected = [[],0];
 
 affected(player) -> (
-    print(player,format('gi Filled ' + global_affected + ' blocks'));
-    affected = global_affected;
-    global_affected = 0;
+    print(player,format('gi Filled ' + global_affected:1 + ' blocks'));
+    affected = global_affected:1;
+
+    if(system_info('world_carpet_rules'):'fillUpdates',
+        for(global_affected:0,update(_));//updating if fillUpdates is true
+    );
+
+    global_affected = [[],0];
     affected
 );
 
@@ -78,7 +84,7 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
             )
         ),
         print(player(),format('r Error while running command: orientation can only be "x", "y" or "z", '+orientation+' is invalid.'));
-        global_affected = 0;
+        global_affected = [[],0];
     );
 );
 
@@ -112,14 +118,13 @@ draw_diamond(pos, radius, block, replacement)->(
     affected(player())
 );
 
-draw_pyramid(pos, rad, height, pointing, orientation, block, fill_type, replacement, is_square)->(
+draw_pyramid(pos, radius, height, pointing, orientation, block, fill_type, replacement, is_square)->(
 
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
-    radius = rad+0.5;
 
     for(range(height),
-        r = if(pointup, radius - radius * _ / height, radius * _ / height);
+        r = if(pointup, radius - radius * _ / height -1, radius * _ / height);
         fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
     );
     affected(player())
