@@ -81,7 +81,7 @@ calculate(end_pos)->(
 
 _draw_line()->(
     if(global_show_line,//It will always draw from the global positions, so it will turn on if there is a line
-        draw_shape('line',20,'from',start_pos,'to',end_pos, 'player',player());
+        draw_shape('line',20,'from',global_position,'to',global_end_position, 'player',player());
         schedule(20,'_draw_line')
     )
 );
