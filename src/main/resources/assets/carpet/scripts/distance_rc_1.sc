@@ -29,7 +29,7 @@ _toggle_line()->(
     global_show_line= !global_show_line;
     if(global_show_line,
         print('Toggled lines on');
-        if(global_position && global_end_position,_draw_line()),//making sure that neither of them are null
+        if(global_end_position,_draw_line()),//making sure that there is a start an end pos, and Ive made it so there is no end pos without start pos
         print('Toggled lines off')
     );
     null
