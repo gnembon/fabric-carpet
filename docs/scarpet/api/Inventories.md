@@ -8,6 +8,18 @@ two arguments, keyword `'enderchest'`, followed by the player entity argument, o
 form: `'enderchest_steve'`. If your player name starts with enderchest, it can be always accessed by passing a player
 entity value. If all else fails, it will try to identify first three arguments as coordinates of a block position of
 a block inventory. Player inventories can also be called by their name.
+
+You can also use `'equipment'` as a keyword preceeding an entity indicating the need of access that entity as a mob. 
+Equipment inventory
+consists of its armour and hand items, and a few living entites can have both, their regular inventory, and their equipment inventory. For some
+entities (players) their regular inventory already contains the equipment. For entity types that only have
+their equipment inventory, the equipment is returned by default.
+
+<pre>
+inventory_size(player()) => 41  // items
+inventory_size('enderchest', player()) => 27 // equipment
+inventory_size('equipment', player()) => 6 // equipment
+</pre>
  
  If the entity or a block doesn't have 
 an inventory, they typically do nothing and return null.
@@ -91,6 +103,7 @@ have an inventory
 <pre>
 inventory_size(player()) => 41
 inventory_size('enderchest', player()) => 27 // enderchest
+inventory_size('equipment', player()) => 6 // equipment
 inventory_size(x,y,z) => 27 // chest
 inventory_size(block(pos)) => 5 // hopper
 </pre>

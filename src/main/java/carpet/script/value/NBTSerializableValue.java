@@ -1,8 +1,10 @@
 package carpet.script.value;
 
+import carpet.fakes.InventoryBearerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.LivingInventory;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
@@ -15,6 +17,8 @@ import net.minecraft.command.argument.ItemStackArgument;
 import net.minecraft.command.argument.ItemStringReader;
 import net.minecraft.command.argument.NbtPathArgumentType;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
@@ -184,7 +188,8 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).getInventory();
                 else if (e instanceof Inventory) inv = (Inventory) e;
                 else if (e instanceof VillagerEntity) inv = ((VillagerEntity) e).getInventory();
-
+                else if (e instanceof InventoryBearerInterface) inv = ((InventoryBearerInterface)e).getCMInventory();
+                else if (e instanceof LivingEntity) inv = new LivingInventory((MobEntity) e);
                 if (inv == null)
                     return null;
 
@@ -221,6 +226,14 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     ServerPlayerEntity player = EntityValue.getPlayerByValue(c.s.getMinecraftServer(), v2);
                     if (player == null) throw new InternalExpressionException("enderchest inventory requires player argument");
                     return new InventoryLocator(player, player.getBlockPos(), player.getEnderChestInventory(), offset + 2, true);
+                }
+                else if (strVal.equals("equipment"))
+                {
+                    Value v2 = params.get(1 + offset).evalValue(c);
+                    if (!(v2 instanceof EntityValue)) throw new InternalExpressionException("mob inventory requires a mob argument");
+                    Entity e = ((EntityValue) v2).getEntity();
+                    if (!(e instanceof LivingEntity)) throw new InternalExpressionException("mob inventory requires a mob argument");
+                    return new InventoryLocator(e, e.getBlockPos(), new LivingInventory((LivingEntity) e), offset + 2, false);
                 }
                 else
                 {
