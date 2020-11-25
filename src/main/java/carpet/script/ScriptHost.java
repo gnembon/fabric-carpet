@@ -8,9 +8,11 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +35,8 @@ public abstract class ScriptHost
     private final Map<Value, ThreadPoolExecutor> executorServices = new HashMap<>();
     private final Map<Value, Object> locks = new ConcurrentHashMap<>();
     protected boolean inTermination = false;
+
+    private final Set<String> deprecations = new HashSet<>();
 
     public Random getRandom(long aLong)
     {
@@ -378,5 +382,15 @@ public abstract class ScriptHost
     public void resetErrorSnooper()
     {
         errorSnooper=null;
+    }
+
+    public static final Logger DEPRECATION_LOG = LogManager.getLogger("Scarpet Deprecation Warnings");
+
+    public boolean issueDeprecation(String feature)
+    {
+        if (deprecations.contains(feature)) return false;
+        deprecations.add(feature);
+        DEPRECATION_LOG.warn("'"+feature+"' is deprecated and soon will be removed. Please consult the docs for their replacement");
+        return true;
     }
 }

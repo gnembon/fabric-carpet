@@ -366,7 +366,28 @@ public class Expression
 
     public void alias(String copy, String original)
     {
-        functions.put(copy, functions.get(original));
+        ILazyFunction originalFunction = functions.get(original);
+        functions.put(copy, new ILazyFunction()
+        {
+            @Override
+            public int getNumParams()
+            {
+                return originalFunction.getNumParams();
+            }
+
+            @Override
+            public boolean numParamsVaries()
+            {
+                return originalFunction.numParamsVaries();
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Integer type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams)
+            {
+                c.host.issueDeprecation(copy+"(...)");
+                return originalFunction.lazyEval(c, type, expr, token, lazyParams);
+            }
+        });
     }
 
 

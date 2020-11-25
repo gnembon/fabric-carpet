@@ -543,6 +543,7 @@ public class WorldAccess {
         // Deprecated, use loaded_status as more indicative
         expression.addLazyFunction("loaded_ep", -1, (c, t, lv) ->
         {
+            c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             Value retval = ((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos))?Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
@@ -739,11 +740,12 @@ public class WorldAccess {
                 return (c_, t_) -> Value.FALSE;
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
+            Boolean[] result = new Boolean[]{true};
             cc.s.getMinecraftServer().submitAndJoin( () ->
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
-                world.setBlockState(targetPos, finalSourceBlockState, 2);
-                if (finalData != null)
+                boolean success = world.setBlockState(targetPos, finalSourceBlockState, 2);
+                if (success && finalData != null)
                 {
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
@@ -756,7 +758,9 @@ public class WorldAccess {
                         be.markDirty();
                     }
                 }
+                result[0] = success;
             });
+            if (!result[0]) return LazyValue.FALSE;
             Value retval = new BlockValue(finalSourceBlockState, world, targetLocator.block.getPos());
             return (c_, t_) -> retval;
         });
@@ -962,6 +966,7 @@ public class WorldAccess {
         // Deprecated for block_state()
         expression.addLazyFunction("property", -1, (c, t, lv) ->
         {
+            c.host.issueDeprecation("property(...)");
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             if (lv.size() <= locator.offset)
@@ -978,6 +983,7 @@ public class WorldAccess {
         // Deprecated for block_state()
         expression.addLazyFunction("block_properties", -1, (c, t, lv) ->
         {
+            c.host.issueDeprecation("block_properties(...)");
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             StateManager<Block, BlockState> states = state.getBlock().getStateManager();

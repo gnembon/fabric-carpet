@@ -1,3 +1,5 @@
 _euclidean_sq(vec1, vec2) -> reduce(vec1 - vec2, _a + _*_, 0);
 _euclidean(vec1, vec2) -> sqrt(reduce(vec1 - vec2, _a + _*_, 0));
+_manhattan(vec1, vec2) -> reduce(vec1-vec2,_a+abs(_),0);
 _vec_length(vec) -> sqrt(reduce(vec, _a + _*_, 0));
+_round(num,precision) -> round(num/precision)*precision;
