@@ -34,27 +34,27 @@ __config() -> {
 
 set_block(x, y, z, block, replacement)-> (
     if(block != block(x, y, z),
-        without_updates(set([x, y, z],block));
-        global_affected:0 += [x, y, z];
-        global_affected:1 += 1;
+        without_updates( if (set([x, y, z],block),
+            global_affected += [x, y, z];
+        ));
     );
 );
 
-global_affected = [[],0];
+global_affected = [];
 
 affected(player) -> (
-    print(player,format('gi Filled ' + global_affected:1 + ' blocks'));
-    affected = global_affected:1;
+    affected = length(global_affected);
+    print(player,format('gi Filled ' + affected + ' blocks'));
 
     if(system_info('world_carpet_rules'):'fillUpdates',
-        for(global_affected:0,update(_));//updating if fillUpdates is true
+        for(global_affected,update(_));//updating if fillUpdates is true
     );
 
-    global_affected = [[],0];
+    global_affected = [];
     affected
 );
 
-length_sq(vec) -> _vec_length(vec)^2;
+length_sq(vec) -> reduce(vec, _a + _*_, 0);
 
 fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->(
     r = floor(dr);
@@ -84,7 +84,7 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
             )
         ),
         print(player(),format('r Error while running command: orientation can only be "x", "y" or "z", '+orientation+' is invalid.'));
-        global_affected = [[],0];
+        global_affected = [];
     );
 );
 
