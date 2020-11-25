@@ -6,6 +6,7 @@ import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
+import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -90,6 +91,7 @@ import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
@@ -417,41 +419,58 @@ public class WorldAccess {
         expression.addLazyFunction("weather",-1,(c, t, lv) -> {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
 
-            Value val = lv.get(0).evalValue(c);
+            if(lv.size()==0)//cos it can thunder when raining or when clear.
+                return (_c,_t)->new StringValue( world.isThundering()? "thunder" : (world.isRaining()? "rain":"clear"));
+
+
+            Value weather = lv.get(0).evalValue(c);
+            ServerWorldProperties worldProperties = ((ServerWorldInterface) world).getWorldPropertiesCM();
 
             if(lv.size()==1) {
-                boolean retBool;
-                switch (val.getString()) {
+                int ticks;
+
+                switch (weather.getString()) {
                     case "clear":
-                        retBool = !(world.isRaining() && world.isThundering());
+                        ticks = worldProperties.getClearWeatherTime();
                         break;
                     case "rain":
-                        retBool = world.isRaining();
+                        ticks = world.isRaining()? worldProperties.getRainTime():0;//cos if not it gives 1 for ome reason
                         break;
                     case "thunder":
-                        retBool = world.isThundering();
+                        ticks = world.isThundering()? worldProperties.getThunderTime():0;//same dealio here
                         break;
                     default:
                         throw new InternalExpressionException("Weather can only be 'clear', 'rain' or 'thunder'");
                 }
-                return (_c,_t) -> new NumericValue(retBool);
-            } else if(lv.size()==3){
+                return (_c,_t) -> new NumericValue(ticks);
+            } else if(lv.size()==2){
+                int ticks = ((NumericValue)lv.get(1).evalValue(c)).getInt();
 
-                Value rainValue = lv.get(1).evalValue(c);
+                switch (weather.getString()){
+                    case "clear":
+                        world.setWeather(ticks,0,false,false);
+                        break;
 
-                if (!(val instanceof NumericValue && rainValue instanceof NumericValue))
-                    throw new InternalExpressionException("'weather' requires numeric argument for ticks");
+                    case "rain":
+                        world.setWeather(0,ticks,true,false);
+                        break;
 
-                world.setWeather(
-                        ((NumericValue) val).getInt(),
-                        ((NumericValue) rainValue).getInt(),
-                        ((NumericValue) rainValue).getInt()>0,//Only gonna make it rain if rain time isn't 0
-                        lv.get(2).evalValue(c).getBoolean()
-                );
+                    case "thunder":
+                        world.setWeather(//setting to previous values, cos dont wanna touch those
+                                worldProperties.getClearWeatherTime(),
+                                ticks,//this is used to set thunder time, idk why...
+                                world.isRaining(),// use this method cos it seems more reliable
+                                true
+                        );
+                        break;
+
+                    default:
+                        throw new InternalExpressionException("Weather can only be 'clear', 'rain' or 'thunder'");
+                }
 
                 return LazyValue.TRUE;
             } else
-                throw new InternalExpressionException("'weather' accepts 1 argument for querying, or 3 for modifying the weather.");
+                throw new InternalExpressionException("'weather' between 0 and 2 arguments");
         });
 
         expression.addLazyFunction("pos", 1, (c, t, lv) ->

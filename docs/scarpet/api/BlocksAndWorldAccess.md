@@ -212,14 +212,15 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
-### `weather(clear_ticks, rain_ticks, thunder)`,`weather(type)`
+### `weather()`,`weather(type)`,`weather(type, ticks)`
 
-Sets weather to clear for `ticks` ticks, after which it will rain for `second_ticks`
-ticks, and if `thunder` is true, it will thunder as well.
+If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
+always return `'thunder'`, if not will return `'rain'` or `'clear'` based on the current weather.
 
-If only 1 argument is specified, it must be either `'clear'`,`'rain'` or `'thunder'`, and will return true if the weather
-is in that state. NB: It can be thundering without there being a thunderstorm, there must be both thunder _and_ rain for
-there to be a thunderstorm.
+With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of remaining ticks for that weather type.
+NB: It can thunder without there being a thunderstorm, there has to be both rain and thunder to form a storm.
+
+With two args, sets the weather to `type` for `ticks` ticks.
 
 ## Block and World querying
 

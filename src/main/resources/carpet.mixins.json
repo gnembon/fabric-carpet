@@ -170,6 +170,7 @@
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetEventMixin",
     "HungerManagerMixin_scarpetEventsMixin",
+    "ServerWorldMixin_scarpetEventsMixin",
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
