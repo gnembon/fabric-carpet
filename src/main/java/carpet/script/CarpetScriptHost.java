@@ -57,7 +57,10 @@ public class CarpetScriptHost extends ScriptHost
     public Map<Value, Value> appConfig;
     public Map<String, CommandArgument> appArgTypes;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes)
+    Function<ServerCommandSource, Boolean> commandValidator;
+    boolean isRuleApp;
+
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -74,11 +77,13 @@ public class CarpetScriptHost extends ScriptHost
         }
         appConfig = config;
         appArgTypes = argTypes;
+        this.commandValidator = commandValidator;
+        this.isRuleApp = isRuleApp;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
     {
-        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>());
+    CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
         if (module != null)
         {
@@ -169,7 +174,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, main, false, this, appConfig, appArgTypes);
+        return new CarpetScriptHost(scriptServer, main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp);
     }
 
     @Override

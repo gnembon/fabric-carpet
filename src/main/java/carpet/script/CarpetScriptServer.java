@@ -84,8 +84,8 @@ public class CarpetScriptServer
         registerBuiltInScript(BundledModule.carpetNative("math", true));
         registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
         registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
-        registerSettingsApp(BundledModule.carpetNative("draw_beta", false));
-        registerSettingsApp(BundledModule.carpetNative("distance_beta", false));
+        registerBuiltInScript(BundledModule.carpetNative("draw_beta", false));
+        registerBuiltInScript(BundledModule.carpetNative("distance_beta", false));
     }
 
     public CarpetScriptServer(MinecraftServer server)
@@ -103,7 +103,7 @@ public class CarpetScriptServer
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
-        globalHost = CarpetScriptHost.create(this, null, false, null);
+        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false);
     }
 
     public void initializeForWorld()
@@ -119,7 +119,7 @@ public class CarpetScriptServer
             Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(server.getCommandSource(), moduleName, true, true, null);
+                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);
             }
         }
 
@@ -195,10 +195,11 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload, Function<ServerCommandSource, Boolean> commandValidator)
+    public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
+                                 boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
         //TODO add per player modules to support player actions better on a server
-        boolean isRuleApp = commandValidator != null;
+        if (commandValidator == null) commandValidator = p -> true;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
         boolean reload = false;
@@ -214,7 +215,7 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to add "+name+" app");
             return false;
         }
-        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source);
+        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp);
         if (newHost == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -436,13 +437,26 @@ public class CarpetScriptServer
         }
     }
 
+    static class TransferData
+    {
+        boolean perUser;
+        Function<ServerCommandSource, Boolean> commandValidator;
+        boolean isRuleApp;
+        private TransferData(CarpetScriptHost host)
+        {
+            perUser = host.perUser;
+            commandValidator = host.commandValidator;
+            isRuleApp = host.isRuleApp;
+        }
+    }
+
     public void reload(MinecraftServer server)
     {
-        Map<String, Boolean> apps = new HashMap<>();
-        modules.forEach((s, h) -> apps.put(s, h.perUser));
+        Map<String, TransferData> apps = new HashMap<>();
+        modules.forEach((s, h) -> apps.put(s, new TransferData(h)));
         apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, pp) -> addScriptHost(server.getCommandSource(), s, pp, false, null));
+        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp));
     }
 }

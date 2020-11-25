@@ -190,7 +190,7 @@ public class SettingsManager
         {
             if (rule.getBoolValue() || (rule.type == String.class && !rule.get().equals("false")))
             {
-                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, false, false, s -> canUseCommand(s, rule.get()));
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> canUseCommand(s, rule.get()), false, false, true);
             } else {
                 CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
             }
