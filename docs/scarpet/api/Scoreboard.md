@@ -3,7 +3,8 @@
 ### `scoreboard()`, `scoreboard(objective)`, `scoreboard(objective, key)`, `scoreboard(objective, key, value)`
 
 Displays or modifies individual scoreboard values. With no arguments, returns the list of current objectives.
-With specified `objective`, lists all keys (players) associated with current objective. With specified `objective`,
+With specified `objective`, lists all keys (players) associated with current objective, or `null` if objective does not exist.
+With specified `objective` and
 `key`, returns current value of the objective for a given player (key). With additional `value` sets a new scoreboard
  value, returning previous value associated with the `key`.
  
@@ -26,7 +27,8 @@ for the objective.
 
 ### `scoreboard_display(place, objective)`
 
-sets display location for a specified `objective`. If `objective` is `null`, then display is cleared.
+Sets display location for a specified `objective`. If `objective` is `null`, then display is cleared. If objective is invalid,
+returns `null`.
 
 # Team
 
