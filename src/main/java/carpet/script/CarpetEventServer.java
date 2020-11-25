@@ -269,6 +269,12 @@ public class CarpetEventServer
         public static final Event NETHER_TICK = new Event("tick_nether", 0, true)
         {
             @Override
+            public boolean deprecated()
+            {
+                return true;
+            }
+
+            @Override
             public void onTick()
             {
                 handler.call(Collections::emptyList, () ->
@@ -279,6 +285,11 @@ public class CarpetEventServer
         };
         public static final Event ENDER_TICK = new Event("tick_ender", 0, true)
         {
+            @Override
+            public boolean deprecated()
+            {
+                return true;
+            }
             @Override
             public void onTick()
             {
@@ -804,6 +815,7 @@ public class CarpetEventServer
         {
             return handler.callList.size() > 0;
         }
+        public boolean deprecated() {return false;}
         //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
         public void onTick() { }
         public void onChunkGenerated(ServerWorld world, Chunk chunk) { }
@@ -900,9 +912,9 @@ public class CarpetEventServer
 
     private boolean canAddEvent(Event event, ScriptHost host)
     {
+        if (event.deprecated()) host.issueDeprecation(event.name+" event");
         return !(event.globalOnly && (host.perUser || host.parent != null));
     }
-
 
     public boolean removeEventFromCommand(ServerCommandSource source, String event, String funName)
     {

@@ -543,6 +543,7 @@ public class WorldAccess {
         // Deprecated, use loaded_status as more indicative
         expression.addLazyFunction("loaded_ep", -1, (c, t, lv) ->
         {
+            c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             Value retval = ((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos))?Value.TRUE : Value.FALSE;
             return (c_, t_) -> retval;
@@ -965,6 +966,7 @@ public class WorldAccess {
         // Deprecated for block_state()
         expression.addLazyFunction("property", -1, (c, t, lv) ->
         {
+            c.host.issueDeprecation("property(...)");
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             if (lv.size() <= locator.offset)
@@ -981,6 +983,7 @@ public class WorldAccess {
         // Deprecated for block_state()
         expression.addLazyFunction("block_properties", -1, (c, t, lv) ->
         {
+            c.host.issueDeprecation("block_properties(...)");
             BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
             BlockState state = locator.block.getBlockState();
             StateManager<Block, BlockState> states = state.getBlock().getStateManager();

@@ -744,4 +744,15 @@ public class CarpetScriptHost extends ScriptHost
     {
         return scriptServer;
     }
+
+    @Override
+    public boolean issueDeprecation(String feature)
+    {
+        if(super.issueDeprecation(feature))
+        {
+            Messenger.m(responsibleSource, "rb '"+feature+"' is deprecated and soon will be removed. Please consult the docs for their replacement");
+            return true;
+        }
+        return false;
+    }
 }

@@ -638,14 +638,14 @@ save_as(file) ->
         //otherwise mojang will interpret 0.0d as 0i and fail to insert
         put(path_nbt:'points', point_nbt, _i);
     );
-    store_app_data(path_nbt, file);
+    write_file(file, 'nbt', path_nbt);
     'stored path as '+file;
 );
 
 // loads path under the local file that
 load(file) ->
 (
-    path_nbt = load_app_data(file);
+    path_nbt = read_file(file, 'nbt');
     if (!path_nbt, exit('No path to load: '+file));
     new_points = map(get(path_nbt, 'points[]'), l(_:'pos[]', _:'duration', _:'type'));
     if (!new_points || first(new_points, length(_:0) != 5),

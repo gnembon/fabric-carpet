@@ -577,6 +577,7 @@ public class Auxiliary {
 
         expression.addLazyFunction("seed", -1, (c, t, lv) -> {
             ServerCommandSource s = ((CarpetContext)c).s;
+            c.host.issueDeprecation("seed()");
             Value ret = new NumericValue(s.getWorld().getSeed());
             return (cc, tt) -> ret;
         });
@@ -785,6 +786,7 @@ public class Auxiliary {
             boolean shared = false;
             if (lv.size()>0)
             {
+                c.host.issueDeprecation("load_app_data(...) with arguments");
                 file = recognizeResource(lv.get(0).evalValue(c));
                 if (lv.size() > 1)
                 {
@@ -807,6 +809,7 @@ public class Auxiliary {
             boolean shared = false;
             if (lv.size()>1)
             {
+                c.host.issueDeprecation("store_app_data(...) with more than one argument");
                 file = recognizeResource(lv.get(1).evalValue(c));
                 if (lv.size() > 2)
                 {
