@@ -38,8 +38,8 @@ public abstract class Validator<T>
             return newValue;
         }
         @Override
-        public String description() { return "Its a client command so can be issued when connecting to non-carpet servers. " +
-                "In client-server setting it will only affect the executing player, so each player needs to type it" +
+        public String description() { return "Its a client command so can be issued and potentially be effective when connecting to non-carpet/vanilla servers. " +
+                "In these situations (on vanilla servers) it will only affect the executing player, so each player needs to type it" +
                 " separately for the desired effect";}
     }
 
