@@ -739,11 +739,12 @@ public class WorldAccess {
                 return (c_, t_) -> Value.FALSE;
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
+            Boolean[] result = new Boolean[]{true};
             cc.s.getMinecraftServer().submitAndJoin( () ->
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
-                world.setBlockState(targetPos, finalSourceBlockState, 2);
-                if (finalData != null)
+                boolean success = world.setBlockState(targetPos, finalSourceBlockState, 2);
+                if (success && finalData != null)
                 {
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
@@ -756,7 +757,9 @@ public class WorldAccess {
                         be.markDirty();
                     }
                 }
+                result[0] = success;
             });
+            if (!result[0]) return LazyValue.FALSE;
             Value retval = new BlockValue(finalSourceBlockState, world, targetLocator.block.getPos());
             return (c_, t_) -> retval;
         });
