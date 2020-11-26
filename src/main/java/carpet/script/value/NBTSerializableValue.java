@@ -4,7 +4,7 @@ import carpet.fakes.InventoryBearerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.utils.LivingInventory;
+import carpet.script.utils.EquipmentInventory;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
@@ -175,47 +175,15 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return inventory;
     }
 
-
     public static InventoryLocator locateInventory(CarpetContext c, List<LazyValue> params, int offset)
     {
         try
         {
-            Inventory inv = null;
-            Value v1 = params.get(0 + offset).evalValue(c);
-            if (v1 instanceof EntityValue)
+            Value v1 = params.get(offset).evalValue(c);
+            if (v1.isNull())
             {
-                Entity e = ((EntityValue) v1).getEntity();
-                if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).inventory;
-                else if (e instanceof Inventory) inv = (Inventory) e;
-                else if (e instanceof VillagerEntity) inv = ((VillagerEntity) e).getInventory();
-                else if (e instanceof InventoryBearerInterface) inv = ((InventoryBearerInterface)e).getCMInventory();
-                else if (e instanceof LivingEntity) inv = new LivingInventory((MobEntity) e);
-                if (inv == null)
-                    return null;
-
-                return new InventoryLocator(e, e.getBlockPos(), inv, offset + 1);
-            }
-            else if (v1 instanceof BlockValue)
-            {
-                BlockPos pos = ((BlockValue) v1).getPos();
-                if (pos == null)
-                    throw new InternalExpressionException("Block to access inventory needs to be positioned in the world");
-                inv = getInventoryAt(c.s.getWorld(), pos);
-                if (inv == null)
-                    return null;
-                return new InventoryLocator(pos, pos, inv, offset + 1);
-            }
-            else if (v1 instanceof ListValue)
-            {
-                List<Value> args = ((ListValue) v1).getItems();
-                BlockPos pos = new BlockPos(
-                        NumericValue.asNumber(args.get(0)).getDouble(),
-                        NumericValue.asNumber(args.get(1)).getDouble(),
-                        NumericValue.asNumber(args.get(2)).getDouble());
-                inv = getInventoryAt(c.s.getWorld(), pos);
-                if (inv == null)
-                    return null;
-                return new InventoryLocator(pos, pos, inv, offset + 1);
+                offset ++;
+                v1 = params.get(offset).evalValue(c);
             }
             else if (v1 instanceof StringValue)
             {
@@ -227,34 +195,67 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     if (player == null) throw new InternalExpressionException("enderchest inventory requires player argument");
                     return new InventoryLocator(player, player.getBlockPos(), player.getEnderChestInventory(), offset + 2, true);
                 }
-                else if (strVal.equals("equipment"))
+                if (strVal.equals("equipment"))
                 {
                     Value v2 = params.get(1 + offset).evalValue(c);
-                    if (!(v2 instanceof EntityValue)) throw new InternalExpressionException("mob inventory requires a mob argument");
+                    if (!(v2 instanceof EntityValue)) throw new InternalExpressionException("Equipment inventory requires a living entity argument");
                     Entity e = ((EntityValue) v2).getEntity();
-                    if (!(e instanceof LivingEntity)) throw new InternalExpressionException("mob inventory requires a mob argument");
-                    return new InventoryLocator(e, e.getBlockPos(), new LivingInventory((LivingEntity) e), offset + 2, false);
+                    if (!(e instanceof LivingEntity)) throw new InternalExpressionException("Equipment inventory requires a living entity argument");
+                    return new InventoryLocator(e, e.getBlockPos(), new EquipmentInventory((LivingEntity) e), offset + 2);
                 }
-                else
-                {
-                    boolean isEnder = strVal.startsWith("enderchest_");
-                    if (isEnder) strVal = strVal.substring(11); // len("enderchest_")
-                    ServerPlayerEntity player = c.s.getMinecraftServer().getPlayerManager().getPlayer(strVal);
-                    if (player == null) throw new InternalExpressionException("String description of an inventory should either denote a player or player's enderchest");
-                    return new InventoryLocator(
-                            player,
-                            player.getBlockPos(),
-                            isEnder ? player.getEnderChestInventory() : player.inventory,
-                            offset + 1,
-                            isEnder
-                    );
-                }
+                boolean isEnder = strVal.startsWith("enderchest_");
+                if (isEnder) strVal = strVal.substring(11); // len("enderchest_")
+                ServerPlayerEntity player = c.s.getMinecraftServer().getPlayerManager().getPlayer(strVal);
+                if (player == null) throw new InternalExpressionException("String description of an inventory should either denote a player or player's enderchest");
+                return new InventoryLocator(
+                        player,
+                        player.getBlockPos(),
+                        isEnder ? player.getEnderChestInventory() : player.inventory,
+                        offset + 1,
+                        isEnder
+                );
+            }
+            if (v1 instanceof EntityValue)
+            {
+                Inventory inv = null;
+                Entity e = ((EntityValue) v1).getEntity();
+                if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).inventory;
+                else if (e instanceof Inventory) inv = (Inventory) e;
+                else if (e instanceof VillagerEntity) inv = ((VillagerEntity) e).getInventory();
+                else if (e instanceof InventoryBearerInterface) inv = ((InventoryBearerInterface)e).getCMInventory();
+                else if (e instanceof LivingEntity) return new InventoryLocator(e, e.getBlockPos(), new EquipmentInventory((MobEntity) e), offset+1);
+                if (inv == null)
+                    return null;
+
+                return new InventoryLocator(e, e.getBlockPos(), inv, offset+1);
+            }
+            if (v1 instanceof BlockValue)
+            {
+                BlockPos pos = ((BlockValue) v1).getPos();
+                if (pos == null)
+                    throw new InternalExpressionException("Block to access inventory needs to be positioned in the world");
+                Inventory inv = getInventoryAt(c.s.getWorld(), pos);
+                if (inv == null)
+                    return null;
+                return new InventoryLocator(pos, pos, inv, offset+1);
+            }
+            if (v1 instanceof ListValue)
+            {
+                List<Value> args = ((ListValue) v1).getItems();
+                BlockPos pos = new BlockPos(
+                        NumericValue.asNumber(args.get(0)).getDouble(),
+                        NumericValue.asNumber(args.get(1)).getDouble(),
+                        NumericValue.asNumber(args.get(2)).getDouble());
+                Inventory inv = getInventoryAt(c.s.getWorld(), pos);
+                if (inv == null)
+                    return null;
+                return new InventoryLocator(pos, pos, inv, offset+1);
             }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset).evalValue(c)).getDouble(),
                     NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble());
-            inv = getInventoryAt(c.s.getWorld(), pos);
+            Inventory inv = getInventoryAt(c.s.getWorld(), pos);
             if (inv == null)
                 return null;
             return new InventoryLocator(pos, pos, inv, offset + 3);

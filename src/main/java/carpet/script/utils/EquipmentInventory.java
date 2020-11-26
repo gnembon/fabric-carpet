@@ -9,7 +9,7 @@ import net.minecraft.item.ItemStack;
 import java.util.Arrays;
 import java.util.List;
 
-public class LivingInventory implements Inventory
+public class EquipmentInventory implements Inventory
 {
     private static final List<EquipmentSlot> slotToSlot = Arrays.asList(
             EquipmentSlot.MAINHAND,
@@ -18,7 +18,7 @@ public class LivingInventory implements Inventory
     );
 
     LivingEntity mob;
-    public LivingInventory(LivingEntity mob)
+    public EquipmentInventory(LivingEntity mob)
     {
         this.mob = mob;
     }

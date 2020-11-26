@@ -3,29 +3,30 @@
 ## Manipulating inventories of blocks and entities
 
 Most functions in this category require inventory as the first argument. Inventory could be specified by an entity, 
-or a block, or position (three coordinates) of a potential block with inventory. Player enderchest inventory require 
-two arguments, keyword `'enderchest'`, followed by the player entity argument, or a single argument as a string of a
-form: `'enderchest_steve'`. If your player name starts with enderchest, it can be always accessed by passing a player
+or a block, or position (three coordinates) of a potential block with inventory, or can be preceded with inventory
+type.
+Inventory type can be `null` (default), `'enderchest'` denoting player enderchest storage, or `'equipment'` applying to 
+entities hand and armour pieces. Then the type can be followed by entity, block or position coordinates.
+For instance, player enderchest inventory requires 
+two arguments, keyword `'enderchest'`, followed by the player entity argument, (or a single argument as a string of a
+form: `'enderchest_steve'` for legacy support). If your player name starts with `'enderchest_'`, first of all, tough luck, 
+but then it can be always accessed by passing a player
 entity value. If all else fails, it will try to identify first three arguments as coordinates of a block position of
-a block inventory. Player inventories can also be called by their name.
+a block inventory. Player inventories can also be called by their name. 
 
-You can also use `'equipment'` as a keyword preceeding an entity indicating the need of access that entity as a mob. 
-Equipment inventory
-consists of its armour and hand items, and a few living entites can have both, their regular inventory, and their equipment inventory. For some
-entities (players) their regular inventory already contains the equipment. For entity types that only have
-their equipment inventory, the equipment is returned by default.
+A few living entities can have both: their regular inventory, and their equipment inventory. 
+Player's regular inventory already contains the equipment, but you can access the equipment part as well, as well as 
+their enderchest separately. For entity types that only have
+their equipment inventory, the equipment is returned by default (`null` type).
 
-<pre>
-inventory_size(player()) => 41  // items
-inventory_size('enderchest', player()) => 27 // equipment
-inventory_size('equipment', player()) => 6 // equipment
-</pre>
+If that's confusing see examples under `inventory_size` on how to access inventories. All other `inventory_...()` functions 
+use the same scheme.
+
  
  If the entity or a block doesn't have 
-an inventory, they typically do nothing and return null.
+an inventory, all API functions typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
-Manipulating of the nbt data can be costly, but retrieving them from the tuple to match other aspects is cheap
 
 ### `stack_limit(item)`
 
@@ -98,14 +99,26 @@ item name that serves as a replacement after crafting is done. Currently it can 
 ### `inventory_size(inventory)`
 
 Returns the size of the inventory for the entity or block in question. Returns null if the block or entity don't 
-have an inventory
+have an inventory.
 
 <pre>
 inventory_size(player()) => 41
 inventory_size('enderchest', player()) => 27 // enderchest
 inventory_size('equipment', player()) => 6 // equipment
+inventory_size(null, player()) => 41  // default inventory for players
+
 inventory_size(x,y,z) => 27 // chest
 inventory_size(block(pos)) => 5 // hopper
+
+horse = spawn('horse', x, y, z);
+inventory_size(horse); => 2 // default horse inventory
+inventory_size('equipment', horse); => 6 // unused horse equipment inventory
+inventory_size(null, horse); => 2 // default horse
+
+creeper = spawn('creeper', x, y, z);
+inventory_size(creeper); => 6 // default creeper inventory is equipment since it has no other
+inventory_size('equipment', creeper); => 6 // unused horse equipment inventory
+inventory_size(null, creeper); => 6 // creeper default is its equipment
 </pre>
 
 ### `inventory_has_items(inventory)`
