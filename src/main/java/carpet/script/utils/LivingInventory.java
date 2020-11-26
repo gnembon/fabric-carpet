@@ -1,23 +1,21 @@
 package carpet.script.utils;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class LivingInventory implements Inventory
 {
-    private static final Int2ObjectMap<EquipmentSlot> slotToSlot = new Int2ObjectOpenHashMap<EquipmentSlot>(){{
-                put(0, EquipmentSlot.MAINHAND);
-                put(1, EquipmentSlot.FEET);
-                put(2, EquipmentSlot.LEGS);
-                put(3, EquipmentSlot.CHEST);
-                put(4, EquipmentSlot.HEAD);
-                put(5, EquipmentSlot.OFFHAND);
-    }};
+    private static final List<EquipmentSlot> slotToSlot = Arrays.asList(
+            EquipmentSlot.MAINHAND,
+            EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD,
+            EquipmentSlot.OFFHAND
+    );
 
     LivingEntity mob;
     public LivingInventory(LivingEntity mob)
@@ -34,7 +32,7 @@ public class LivingInventory implements Inventory
     @Override
     public boolean isEmpty()
     {
-        for (EquipmentSlot slot: EquipmentSlot.values())
+        for (EquipmentSlot slot: slotToSlot)
             if (!mob.getEquippedStack(slot).isEmpty()) return false;
         return true;
     }
@@ -42,16 +40,32 @@ public class LivingInventory implements Inventory
     @Override
     public ItemStack getStack(int slot)
     {
-        EquipmentSlot slotSlot = slotToSlot.getOrDefault(slot, null);
-        if (slotSlot == null) return null;
-        return mob.getEquippedStack(slotToSlot.get(slot));
+        EquipmentSlot slotSlot;
+        try
+        {
+            slotSlot = slotToSlot.get(slot);
+        }
+        catch (IndexOutOfBoundsException ignored)
+        {
+            //going out of the index should be really exceptional
+            return null;
+        }
+        return mob.getEquippedStack(slotSlot);
     }
 
     @Override
     public ItemStack removeStack(int slot, int amount)
     {
-        EquipmentSlot slotSlot = slotToSlot.getOrDefault(slot, null);
-        if (slotSlot == null) return null;
+        EquipmentSlot slotSlot;
+        try
+        {
+            slotSlot = slotToSlot.get(slot);
+        }
+        catch (IndexOutOfBoundsException ignored)
+        {
+            //going out of the index should be really exceptional
+            return null;
+        }
         ItemStack stack = mob.getEquippedStack(slotSlot);
         stack.decrement(amount);
         return stack;
@@ -60,8 +74,16 @@ public class LivingInventory implements Inventory
     @Override
     public ItemStack removeStack(int slot)
     {
-        EquipmentSlot slotSlot = slotToSlot.getOrDefault(slot, null);
-        if (slotSlot == null) return null;
+        EquipmentSlot slotSlot;
+        try
+        {
+            slotSlot = slotToSlot.get(slot);
+        }
+        catch (IndexOutOfBoundsException ignored)
+        {
+            //going out of the index should be really exceptional
+            return null;
+        }
         ItemStack previous = mob.getEquippedStack(slotSlot);
         mob.equipStack(slotSlot, ItemStack.EMPTY);
         return previous;
@@ -70,8 +92,16 @@ public class LivingInventory implements Inventory
     @Override
     public void setStack(int slot, ItemStack stack)
     {
-        EquipmentSlot slotSlot = slotToSlot.getOrDefault(slot, null);
-        if (slotSlot == null) return;
+        EquipmentSlot slotSlot;
+        try
+        {
+            slotSlot = slotToSlot.get(slot);
+        }
+        catch (IndexOutOfBoundsException ignored)
+        {
+            //going out of the index should be really exceptional
+            return;
+        }
         mob.equipStack(slotSlot, stack);
     }
 
@@ -90,7 +120,7 @@ public class LivingInventory implements Inventory
     @Override
     public void clear()
     {
-        for (EquipmentSlot slot: EquipmentSlot.values())
+        for (EquipmentSlot slot: slotToSlot)
             mob.equipStack(slot, ItemStack.EMPTY);
     }
 }
