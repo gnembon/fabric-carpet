@@ -210,7 +210,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 return new InventoryLocator(
                         player,
                         player.getBlockPos(),
-                        isEnder ? player.getEnderChestInventory() : player.inventory,
+                        isEnder ? player.getEnderChestInventory() : player.getInventory(),
                         offset + 1,
                         isEnder
                 );
