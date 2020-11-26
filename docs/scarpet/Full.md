@@ -1913,6 +1913,11 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'players'`: returning a list of valid player name string, logged in or not. If configured with `'single'` returns only one player or `null`.
   * `'intrange'`: same as `'floatrange'`, but requiring integers. 
   * `'enchantment'`: name of an enchantment
+  * `'slot'`: provides a list of inventory type and slot. Can be configured with `'restrict'` requiring
+   `'player'`, `'enderchest'`, `'equipment'`, `'armor'`, `'weapon'`, `'container'`, `'villager'` or `'horse'` restricting selection of 
+   available slots. Scarpet supports all vanilla slots, except for `horse.chest` - chest item, not items themselves. This you would
+   need to manage yourself via nbt directly. Also, for entities that change their capacity, like llamas, you need to check yourself if
+   the specified container slot is valid for your entity.
   * `'item'`: triple of item type, count of 1, and nbt.
   * `'message'`: text with expanded embedded player names 
   * `'effect'`: string representing a status effect
@@ -3586,29 +3591,30 @@ health back to the villager after being harmed.
 ## Manipulating inventories of blocks and entities
 
 Most functions in this category require inventory as the first argument. Inventory could be specified by an entity, 
-or a block, or position (three coordinates) of a potential block with inventory. Player enderchest inventory require 
-two arguments, keyword `'enderchest'`, followed by the player entity argument, or a single argument as a string of a
-form: `'enderchest_steve'`. If your player name starts with enderchest, it can be always accessed by passing a player
+or a block, or position (three coordinates) of a potential block with inventory, or can be preceded with inventory
+type.
+Inventory type can be `null` (default), `'enderchest'` denoting player enderchest storage, or `'equipment'` applying to 
+entities hand and armour pieces. Then the type can be followed by entity, block or position coordinates.
+For instance, player enderchest inventory requires 
+two arguments, keyword `'enderchest'`, followed by the player entity argument, (or a single argument as a string of a
+form: `'enderchest_steve'` for legacy support). If your player name starts with `'enderchest_'`, first of all, tough luck, 
+but then it can be always accessed by passing a player
 entity value. If all else fails, it will try to identify first three arguments as coordinates of a block position of
-a block inventory. Player inventories can also be called by their name.
+a block inventory. Player inventories can also be called by their name. 
 
-You can also use `'equipment'` as a keyword preceeding an entity indicating the need of access that entity as a mob. 
-Equipment inventory
-consists of its armour and hand items, and a few living entites can have both, their regular inventory, and their equipment inventory. For some
-entities (players) their regular inventory already contains the equipment. For entity types that only have
-their equipment inventory, the equipment is returned by default.
+A few living entities can have both: their regular inventory, and their equipment inventory. 
+Player's regular inventory already contains the equipment, but you can access the equipment part as well, as well as 
+their enderchest separately. For entity types that only have
+their equipment inventory, the equipment is returned by default (`null` type).
 
-<pre>
-inventory_size(player()) => 41  // items
-inventory_size('enderchest', player()) => 27 // equipment
-inventory_size('equipment', player()) => 6 // equipment
-</pre>
+If that's confusing see examples under `inventory_size` on how to access inventories. All other `inventory_...()` functions 
+use the same scheme.
+
  
  If the entity or a block doesn't have 
-an inventory, they typically do nothing and return null.
+an inventory, all API functions typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
-Manipulating of the nbt data can be costly, but retrieving them from the tuple to match other aspects is cheap
 
 ### `stack_limit(item)`
 
@@ -3681,14 +3687,26 @@ item name that serves as a replacement after crafting is done. Currently it can 
 ### `inventory_size(inventory)`
 
 Returns the size of the inventory for the entity or block in question. Returns null if the block or entity don't 
-have an inventory
+have an inventory.
 
 <pre>
 inventory_size(player()) => 41
 inventory_size('enderchest', player()) => 27 // enderchest
 inventory_size('equipment', player()) => 6 // equipment
+inventory_size(null, player()) => 41  // default inventory for players
+
 inventory_size(x,y,z) => 27 // chest
 inventory_size(block(pos)) => 5 // hopper
+
+horse = spawn('horse', x, y, z);
+inventory_size(horse); => 2 // default horse inventory
+inventory_size('equipment', horse); => 6 // unused horse equipment inventory
+inventory_size(null, horse); => 2 // default horse
+
+creeper = spawn('creeper', x, y, z);
+inventory_size(creeper); => 6 // default creeper inventory is equipment since it has no other
+inventory_size('equipment', creeper); => 6 // unused horse equipment inventory
+inventory_size(null, creeper); => 6 // creeper default is its equipment
 </pre>
 
 ### `inventory_has_items(inventory)`
@@ -4157,8 +4175,83 @@ for the objective.
 
 ### `scoreboard_display(place, objective)`
 
-sets display location for a specified `objective`. If `objective` is `null`, then display is cleared. If objective is invalid,
+Sets display location for a specified `objective`. If `objective` is `null`, then display is cleared. If objective is invalid,
 returns `null`.
+
+# Team
+
+### `team_list()`, `team_list(team)`
+
+Returns all available teams as a list with no arguments.
+
+When a `team` is specified, it returns all the players inside that team. If the `team` is invalid, returns `null`.
+
+### `team_add(team)`, `team_add(team,player)`
+
+With one argument, creates a new `team` and returns its name if successful, or `null` if team already exists.
+
+
+`team_add('admin')` -> Create a team with the name 'admin'
+`team_add('admin','Steve')` -> Joing the player 'Steve' into the team 'admin'
+
+If a `player` is specified, the player will join the given `team`. Returns `true` if player joined the team, or `false` if nothing changed since the player was already in this team. If the team is invalid, returns `null`
+
+### `team_remove(team)`
+
+Removes a `team`. Returns `true` if the team was deleted, or `null` if the team is invalid.
+
+### `team_leave(player)`
+
+Removes the `player` from the team he is in. Returns `true` if the player left a team, otherwise `false`.
+
+`team_leave('Steve')` -> Removes Steve from the team he is currently in
+`for(team_list('admin'), team_leave('admin', _))` -> Remove all players from team 'admin'
+
+### `team_property(team,property,value?)`
+
+Reads the `property` of the `team` if no `value` is specified. If a `value` is added as a third argument, it sets the `property` to that `value`.
+
+* `collisionRule`
+  * Type: String
+  * Options: always, never, pushOtherTeams, pushOwnTeam
+    
+* `color`
+  * Type: String
+  * Options: See [team command](https://minecraft.gamepedia.com/Commands/team#Arguments) (same strings as `'teamcolor'` [command argument](https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md#command-argument-types] options))
+
+* `displayName`
+  * Type: String or FormattedText, when querying returns FormattedText
+  
+* `prefix`
+  * Type: String or FormattedText, when querying returns FormattedText
+
+* `suffix`
+  * Type: String or FormattedText, when querying returns FormattedText
+
+* `friendlyFire`
+  * Type: boolean
+  
+* `seeFriendlyInvisibles`
+  * Type: boolean
+  
+* `nametagVisibility`
+  * Type: String
+  * Options: always, never, hideForOtherTeams, hideForOwnTeam
+
+* `deathMessageVisibility`
+  * Type: String
+  * Options: always, never, hideForOtherTeams, hideForOwnTeam
+
+Examples:
+
+```
+team_property('admin','color','dark_red')                 Make the team color for team 'admin' dark red
+team_property('admin','prefix',format('r Admin | '))      Set prefix of all players in 'admin'
+team_property('admin','display_name','Administrators')     Set display name for team 'admin'
+team_property('admin','seeFriendlyInvisibles',true)       Make all players in 'admin' see other admins even when invisible
+team_property('admin','deathMessageVisibility','hideForOtherTeams')       Make all players in 'admin' see other admins even when invisible
+```
+
 # Auxiliary aspects
 
 Collection of other methods that control smaller, yet still important aspects of the game

@@ -144,6 +144,28 @@ public class EntityValue extends Value
         return player;
     }
 
+    public static String getPlayerNameByValue(Value value)
+    {
+        String playerName = null;
+        if (value instanceof EntityValue)
+        {
+            Entity e = ((EntityValue) value).getEntity();
+            if (e instanceof ServerPlayerEntity)
+            {
+                playerName = e.getEntityName();
+            }
+        }
+        else if (value.isNull())
+        {
+            return null;
+        }
+        else
+        {
+            playerName = value.getString();
+        }
+        return playerName;
+    }
+
     @Override
     public String getString()
     {
