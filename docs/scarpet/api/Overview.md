@@ -214,6 +214,11 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'players'`: returning a list of valid player name string, logged in or not. If configured with `'single'` returns only one player or `null`.
   * `'intrange'`: same as `'floatrange'`, but requiring integers. 
   * `'enchantment'`: name of an enchantment
+  * `'slot'`: provides a list of inventory type and slot. Can be configured with `'restrict'` requiring
+   `'player'`, `'enderchest'`, `'equipment'`, `'armor'`, `'weapon'`, `'container'`, `'villager'` or `'horse'` restricting selection of 
+   available slots. Scarpet supports all vanilla slots, except for `horse.chest` - chest item, not items themselves. This you would
+   need to manage yourself via nbt directly. Also, for entities that change their capacity, like llamas, you need to check yourself if
+   the specified container slot is valid for your entity.
   * `'item'`: triple of item type, count of 1, and nbt.
   * `'message'`: text with expanded embedded player names 
   * `'effect'`: string representing a status effect

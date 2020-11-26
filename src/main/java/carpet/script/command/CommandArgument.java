@@ -47,6 +47,7 @@ import net.minecraft.command.argument.EntitySummonArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.IdentifierArgumentType;
 import net.minecraft.command.argument.ItemEnchantmentArgumentType;
+import net.minecraft.command.argument.ItemSlotArgumentType;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.command.argument.MessageArgumentType;
 import net.minecraft.command.argument.MobEffectArgumentType;
@@ -78,11 +79,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.registry.Registry;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -158,6 +162,7 @@ public abstract class CommandArgument
             ),
             // item_predicate  ?? //same as item but accepts tags, not sure right now
             // slot // item_slot
+            new SlotArgument(),
             new VanillaUnconfigurableArgument("item", ItemStackArgumentType::itemStack,
                     (c, p) -> ValueConversions.of(ItemStackArgumentType.getItemStackArgument(c, p).createStack(1, false)), false
             ),
@@ -847,6 +852,100 @@ public abstract class CommandArgument
         protected Supplier<CommandArgument> factory()
         {
             return IntArgument::new;
+        }
+    }
+    private static class SlotArgument extends CommandArgument
+    {
+        private String restrict;
+        private static final Map<String, Pair<Set<Integer>, Set<String>>> RESTRICTED_CONTAINERS = new HashMap<String, Pair<Set<Integer>, Set<String>>>(){{
+            int i;
+            for (String source : Arrays.asList("player", "enderchest", "equipment", "armor", "weapon", "container", "villager", "horse"))
+                put(source, Pair.of(new HashSet<>(), new HashSet<>()));
+            for (i = 0; i < 41; i++) get("player").getLeft().add(i);
+            for(i = 0; i < 41; i++) get("player").getRight().add("container." + i);
+            for(i = 0; i < 9; i++) get("player").getRight().add("hotbar." + i);
+            for(i = 0; i < 27; i++) get("player").getRight().add("inventory." + i);
+            for (String place : Arrays.asList("weapon", "weapon.mainhand", "weapon.offhand"))
+            {
+                get("player").getRight().add(place);
+                get("equipment").getRight().add(place);
+                get("weapon").getRight().add(place);
+            }
+            for (String place : Arrays.asList("armor.feet","armor.legs", "armor.chest","armor.head"))
+            {
+                get("player").getRight().add(place);
+                get("equipment").getRight().add(place);
+                get("armor").getRight().add(place);
+            }
+
+            for (i = 0; i < 27; i++) get("enderchest").getLeft().add(200+i);
+            for(i = 0; i < 27; i++) get("enderchest").getRight().add("enderchest." + i);
+
+            for (i = 0; i < 6; i++) get("equipment").getLeft().add(98+i);
+
+            for (i = 0; i < 4; i++) get("armor").getLeft().add(100+i);
+
+            for (i = 0; i < 2; i++) get("weapon").getLeft().add(98+i);
+
+            for (i = 0; i < 54; i++) get("container").getLeft().add(i);
+            for(i = 0; i < 41; i++) get("container").getRight().add("container." + i);
+
+            for (i = 0; i < 8; i++) get("villager").getLeft().add(i);
+            for(i = 0; i < 8; i++) get("villager").getRight().add("villager." + i);
+
+            for (i = 0; i < 15; i++) get("horse").getLeft().add(500+i);
+            for(i = 0; i < 15; i++) get("horse").getRight().add("horse." + i);
+            get("horse").getLeft().add(400);
+            get("horse").getRight().add("horse.saddle");
+            get("horse").getLeft().add(401);
+            get("horse").getRight().add("horse.armor");
+        }};
+
+        protected SlotArgument()
+        {
+            super("slot", ItemSlotArgumentType.itemSlot().getExamples(), false);
+        }
+
+        @Override
+        protected ArgumentType<?> getArgumentType() throws CommandSyntaxException
+        {
+            return ItemSlotArgumentType.itemSlot();
+        }
+
+        @Override
+        protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
+        {
+            int slot = ItemSlotArgumentType.getItemSlot(context, param);
+            if (restrict != null && !RESTRICTED_CONTAINERS.get(restrict).getLeft().contains(slot))
+            {
+                throw new SimpleCommandExceptionType(new LiteralText("Incorrect slot restricted to "+restrict)).create();
+            }
+            return ValueConversions.ofVanillaSlotResult(slot);
+        }
+
+        @Override
+        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        {
+            super.configure(config, host);
+            if (config.containsKey("restrict"))
+            {
+                restrict = config.get("restrict").getString().toLowerCase(Locale.ROOT);
+                needsMatching = true;
+                if (!RESTRICTED_CONTAINERS.containsKey(restrict))
+                    throw new InternalExpressionException("Incorrect slot restriction: "+restrict);
+            }
+        }
+
+        @Override
+        protected Collection<String> getOptions(CommandContext<ServerCommandSource> context, CarpetScriptHost host) throws CommandSyntaxException
+        {
+            return restrict==null?super.getOptions(context, host):RESTRICTED_CONTAINERS.get(restrict).getRight();
+        }
+
+        @Override
+        protected Supplier<CommandArgument> factory()
+        {
+            return SlotArgument::new;
         }
     }
 
