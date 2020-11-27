@@ -3950,6 +3950,10 @@ Triggered when a server receives a request to deploy elytra, regardless if the f
 ### `__on_player_wakes_up(player)`
 Player wakes up from the bed mid sleep, but not when it is kicked out of bed because it finished sleeping.
 
+### `__on_player_escapes_sleep(player)`
+Same as `player_wakes_up` but only triggered when pressing the ESC button. Not sure why Mojang decided to send that event
+twice when pressing escape, but might be interesting to be able to detect that.
+
 ### `__on_player_starts_sneaking(player)`
 ### `__on_player_stops_sneaking(player)`
 ### `__on_player_starts_sprinting(player)`
