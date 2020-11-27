@@ -658,18 +658,18 @@ public class Expression
                 case UNARY_OPERATOR:
                 {
                     final LazyValue value = stack.pop();
-                    LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, value, null).evalValue(c);
+                    LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, value, null).evalValue(c, t);
                     stack.push(result);
                     break;
                 }
                 case OPERATOR:
                     final LazyValue v1 = stack.pop();
                     final LazyValue v2 = stack.pop();
-                    LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2, v1).evalValue(c);
+                    LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2, v1).evalValue(c, t);
                     stack.push(result);
                     break;
                 case VARIABLE:
-                    stack.push((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c));
+                    stack.push((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t));
                     break;
                 case FUNCTION:
                     String name = token.surface;
@@ -700,7 +700,7 @@ public class Expression
                         stack.pop();
                     }
 
-                    stack.push((c, t) -> f.lazyEval(c, t, this, token, p).evalValue(c));
+                    stack.push((c, t) -> f.lazyEval(c, t, this, token, p).evalValue(c, t));
                     break;
                 case OPEN_PAREN:
                     stack.push(LazyValue.PARAMS_START);
