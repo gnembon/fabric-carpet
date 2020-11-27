@@ -27,7 +27,8 @@ __on_player_stops_sprinting(player) ->
 __on_player_switches_slot(player, from, to) -> 
 __on_player_swaps_hands(player) -> 
 __on_player_uses_item(player, item_tuple, hand) -> 
-__on_player_wakes_up(player) -> 
+__on_player_wakes_up(player) ->
+__on_player_escapes_sleep(player) ->
 __on_statistic(player, category, event, value) -> 
 __on_tick() -> 
 __on_tick_ender() -> 
