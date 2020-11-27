@@ -997,7 +997,7 @@ public class WorldAccess {
         // block_state(block, property)
         expression.addLazyFunction("block_state", -1, (c, t, lv) ->
         {
-            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0, true);
             BlockState state = locator.block.getBlockState();
             StateManager<Block, BlockState> states = state.getBlock().getStateManager();
             if (locator.offset == lv.size())
