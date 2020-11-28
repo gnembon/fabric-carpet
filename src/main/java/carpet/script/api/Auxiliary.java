@@ -307,7 +307,7 @@ public class Auxiliary {
                 pointLocator = Vector3Argument.findIn(cc, lv, 1, true);
                 if (lv.size()>pointLocator.offset)
                 {
-                    BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true);
+                    BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true, false);
                     if (blockLocator.block != null) targetBlock = blockLocator.block.getBlockState();
                     if (lv.size() > blockLocator.offset)
                     {

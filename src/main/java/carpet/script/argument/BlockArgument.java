@@ -16,22 +16,30 @@ import java.util.List;
 public class BlockArgument extends Argument
 {
     public final BlockValue block;
+    public final String replacement;
     private BlockArgument(BlockValue b, int o)
     {
         super(o);
         block = b;
+        replacement = null;
+    }
+    private BlockArgument(BlockValue b, int o, String replacement)
+    {
+        super(o);
+        block = b;
+        this.replacement = replacement;
     }
     public static BlockArgument findIn(CarpetContext c, List<LazyValue> params, int offset)
     {
-        return findIn(c, params,offset, false, false);
+        return findIn(c, params,offset, false, false, false);
     }
 
     public static BlockArgument findIn(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString)
     {
-        return findIn(c, params,offset, acceptString, false);
+        return findIn(c, params,offset, acceptString, false, false);
     }
 
-    public static BlockArgument findIn(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString, boolean optional)
+    public static BlockArgument findIn(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString, boolean optional, boolean anyString)
     {
         try
         {
@@ -40,6 +48,10 @@ public class BlockArgument extends Argument
             if (optional && v1 instanceof NullValue)
             {
                 return new BlockArgument(null, 1+offset);
+            }
+            if (anyString && v1 instanceof StringValue)
+            {
+                return new BlockArgument(null, 1+offset, v1.getString());
             }
             if (acceptString && v1 instanceof StringValue)
             {

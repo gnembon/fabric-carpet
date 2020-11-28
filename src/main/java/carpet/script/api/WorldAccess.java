@@ -18,6 +18,7 @@ import carpet.script.LazyValue;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.BiomeInfo;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
@@ -102,6 +103,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1059,14 +1061,31 @@ public class WorldAccess {
 
         expression.addLazyFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
-            ServerWorld world = cc.s.getWorld();
-            BlockPos pos = locator.block.getPos();
-            Biome biome = world.getBiome(pos);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false, false, true);
+            Biome biome;
+            if (locator.replacement != null)
+            {
+                biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(locator.replacement));
+                if (biome == null) throw new InternalExpressionException("Unknown biome: "+locator.replacement);
+            }
+            else
+            {
+                ServerWorld world = cc.s.getWorld();
+                BlockPos pos = locator.block.getPos();
+                biome = world.getBiome(pos);
+            }
             // in locatebiome
-            Identifier biomeId = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
-            Value res = new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
-            return (_c, _t) -> res;
+            if (locator.offset == lv.size())
+            {
+                Identifier biomeId = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
+                Value res = new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
+                return (_c, _t) -> res;
+            }
+            String biomeFeature = lv.get(locator.offset).evalValue(c).getString();
+            Function<Biome, Value> featureProvider = BiomeInfo.biomeFeatures.get(biomeFeature);
+            if (featureProvider == null) throw new InternalExpressionException("Unknown biome feature: "+biomeFeature);
+            Value ret = featureProvider.apply(biome);
+            return (_c, _t) -> ret;
         });
 
         expression.addLazyFunction("set_biome", -1, (c, t, lv) ->
