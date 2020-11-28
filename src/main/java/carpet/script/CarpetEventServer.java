@@ -337,6 +337,14 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
             }
         };
+        public static final Event PLAYER_ESCAPES_SLEEP = new Event("player_escapes_sleep", 1, false)
+        {
+            @Override
+            public void onPlayerEvent(ServerPlayerEntity player)
+            {
+                handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+            }
+        };
         public static final Event PLAYER_RIDES = new Event("player_rides", 5, false)
         {
             @Override

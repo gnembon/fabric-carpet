@@ -70,7 +70,7 @@ public class Loops {
         // expr receives bounded variable '_' indicating iteration
         expression.addLazyFunction("loop", 2, (c, t, lv) ->
         {
-            long limit = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+            long limit = NumericValue.asNumber(lv.get(0).evalValue(c, Context.NONE)).getLong();
             Value lastOne = Value.NULL;
             LazyValue expr = lv.get(1);
             //scoping
@@ -99,7 +99,7 @@ public class Loops {
         // receives bounded variable '_' with the expression
         expression.addLazyFunction("map", 2, (c, t, lv) ->
         {
-            Value rval= lv.get(0).evalValue(c);
+            Value rval= lv.get(0).evalValue(c, Context.NONE);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'map' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -144,7 +144,7 @@ public class Loops {
         // produces list of values for which the expression is true
         expression.addLazyFunction("filter", 2, (c, t, lv) ->
         {
-            Value rval= lv.get(0).evalValue(c);
+            Value rval= lv.get(0).evalValue(c, Context.NONE);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'filter' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -191,7 +191,7 @@ public class Loops {
         expression.addLazyFunction("first", 2, (c, t, lv) ->
         {
 
-            Value rval= lv.get(0).evalValue(c);
+            Value rval= lv.get(0).evalValue(c, Context.NONE);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'first' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -242,7 +242,7 @@ public class Loops {
         // returns true if expr is true for all items
         expression.addLazyFunction("all", 2, (c, t, lv) ->
         {
-            Value rval= lv.get(0).evalValue(c);
+            Value rval= lv.get(0).evalValue(c, Context.NONE);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'all' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -306,7 +306,7 @@ public class Loops {
         // can be substituted for first and all, but first is more efficient and all doesn't require knowing list size
         expression.addLazyFunction("for", 2, (c, t, lv) ->
         {
-            Value rval= lv.get(0).evalValue(c);
+            Value rval= lv.get(0).evalValue(c, Context.NONE);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'for' function should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();
@@ -358,8 +358,8 @@ public class Loops {
         {
             LazyValue expr = lv.get(1);
 
-            Value acc = lv.get(2).evalValue(c);
-            Value rval= lv.get(0).evalValue(c);
+            Value acc = lv.get(2).evalValue(c, Context.NONE);
+            Value rval= lv.get(0).evalValue(c, Context.NONE);
             if (!(rval instanceof AbstractListValue))
                 throw new InternalExpressionException("First argument of 'reduce' should be a list or iterator");
             Iterator<Value> iterator = ((AbstractListValue) rval).iterator();

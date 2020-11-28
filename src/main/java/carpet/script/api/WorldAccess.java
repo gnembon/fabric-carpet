@@ -18,6 +18,7 @@ import carpet.script.LazyValue;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.BiomeInfo;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
@@ -66,6 +67,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.tag.TagManager;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
@@ -101,6 +103,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -997,7 +1000,7 @@ public class WorldAccess {
         // block_state(block, property)
         expression.addLazyFunction("block_state", -1, (c, t, lv) ->
         {
-            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0);
+            BlockArgument locator = BlockArgument.findIn((CarpetContext) c, lv, 0, true);
             BlockState state = locator.block.getBlockState();
             StateManager<Block, BlockState> states = state.getBlock().getStateManager();
             if (locator.offset == lv.size())
@@ -1018,16 +1021,71 @@ public class WorldAccess {
             return (_c, _t) -> retval;
         });
 
+        expression.addLazyFunction("block_list", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.BLOCK.getIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            CarpetContext cc = (CarpetContext)c;
+            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            String tag = lv.get(0).evalValue(c).getString();
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            if (blockTag == null) return LazyValue.NULL;
+            Value ret = ListValue.wrap(blockTag.values().stream().map(b -> ValueConversions.of(Registry.BLOCK.getId(b))).collect(Collectors.toList()));
+            return (_c, _t) -> ret;
+        });
+
+        expression.addLazyFunction("block_tags", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(tagManager.getBlocks().getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
+            if (blockLocator.offset == lv.size())
+            {
+                Value ret = ListValue.wrap(tagManager.getBlocks().getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            String tag = lv.get(blockLocator.offset).evalValue(c).getString();
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            if (blockTag == null) return LazyValue.NULL;
+            return blockLocator.block.getBlockState().isIn(blockTag)?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
+
         expression.addLazyFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            BlockArgument locator = BlockArgument.findIn(cc, lv, 0);
-            ServerWorld world = cc.s.getWorld();
-            BlockPos pos = locator.block.getPos();
-            Biome biome = world.getBiome(pos);
+            BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false, false, true);
+            Biome biome;
+            if (locator.replacement != null)
+            {
+                biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(locator.replacement));
+                if (biome == null) throw new InternalExpressionException("Unknown biome: "+locator.replacement);
+            }
+            else
+            {
+                ServerWorld world = cc.s.getWorld();
+                BlockPos pos = locator.block.getPos();
+                biome = world.getBiome(pos);
+            }
             // in locatebiome
-            Identifier biomeId = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
-            Value res = new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
-            return (_c, _t) -> res;
+            if (locator.offset == lv.size())
+            {
+                Identifier biomeId = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
+                Value res = new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
+                return (_c, _t) -> res;
+            }
+            String biomeFeature = lv.get(locator.offset).evalValue(c).getString();
+            Function<Biome, Value> featureProvider = BiomeInfo.biomeFeatures.get(biomeFeature);
+            if (featureProvider == null) throw new InternalExpressionException("Unknown biome feature: "+biomeFeature);
+            Value ret = featureProvider.apply(biome);
+            return (_c, _t) -> ret;
         });
 
         expression.addLazyFunction("set_biome", -1, (c, t, lv) ->
@@ -1128,7 +1186,17 @@ public class WorldAccess {
             Map<Value, Value> ret = new HashMap<>();
             for(StructureFeature<?> str : StructureFeature.STRUCTURES.values())
             {
-                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                StructureStart<?> start;
+                try
+                {
+                    start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                }
+                catch (NullPointerException npe)
+                {
+                    CarpetSettings.LOG.error("Failed to detect structure: "+str.getName());
+                    start = null;
+                }
+
                 if (start == null) continue;
 
                 Value key = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(str)));

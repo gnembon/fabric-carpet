@@ -299,23 +299,27 @@ public class ValueConversions
     public static Value of(StructureStart<?> structure)
     {
         if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
-        List<Value> pieces = new ArrayList<>();
-        for (StructurePiece piece : structure.getChildren())
-        {
-            BlockBox box = piece.getBoundingBox();
-            pieces.add(ListValue.of(
-                    new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
-                    (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
-                    ListValue.fromTriple(box.minX, box.minY, box.minZ),
-                    ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
-            ));
-        }
         BlockBox boundingBox = structure.getBoundingBox();
+        if (boundingBox.maxX < boundingBox.minX || boundingBox.maxY < boundingBox.minY || boundingBox.maxZ < boundingBox.minZ) return Value.NULL;
         Map<Value, Value> ret = new HashMap<>();
         ret.put(new StringValue("box"), ListValue.of(
                 ListValue.fromTriple(boundingBox.minX, boundingBox.minY, boundingBox.minZ),
                 ListValue.fromTriple(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ)
         ));
+        List<Value> pieces = new ArrayList<>();
+        for (StructurePiece piece : structure.getChildren())
+        {
+            BlockBox box = piece.getBoundingBox();
+            if (box.maxX >= box.minX && box.maxY >= box.minY && box.maxZ >= box.minZ)
+            {
+                pieces.add(ListValue.of(
+                        new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
+                        (piece.getFacing() == null) ? Value.NULL : new StringValue(piece.getFacing().getName()),
+                        ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                        ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+                ));
+            }
+        }
         ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
         return MapValue.wrap(ret);
     }

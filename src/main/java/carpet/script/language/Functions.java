@@ -45,11 +45,10 @@ public class Functions {
             {
                 FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
                 FunctionValue fun = functionArgument.function;
-                Value retval = fun.callInContext(expr, c, t, fun.getExpression(), fun.getToken(), functionArgument.args).evalValue(c);
-                return (cc, tt) -> retval; ///!!!! dono might need to store expr and token in statics? (e? t?)
+                return fun.callInContext(c, t, functionArgument.args);
             }
             // gimme signature
-            String name = lv.get(0).evalValue(c).getString();
+            String name = lv.get(0).evalValue(c, Context.NONE).getString();
             List<String> args = new ArrayList<>();
             List<String> globals = new ArrayList<>();
             String varArgs = null;
