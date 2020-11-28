@@ -89,6 +89,7 @@ team_list
 team_remove
 team_leave
 team_property
+bossbar
 see_sky
 set
 set_biome
