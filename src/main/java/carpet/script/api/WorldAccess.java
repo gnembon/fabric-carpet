@@ -66,6 +66,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.tag.TagManager;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
 import net.minecraft.util.Identifier;
@@ -1017,6 +1018,44 @@ public class WorldAccess {
             Value retval = ValueConversions.fromProperty(state, property);
             return (_c, _t) -> retval;
         });
+
+        expression.addLazyFunction("block_list", -1, (c, t, lv) ->
+        {
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.BLOCK.getIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            CarpetContext cc = (CarpetContext)c;
+            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            String tag = lv.get(0).evalValue(c).getString();
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            if (blockTag == null) return LazyValue.NULL;
+            Value ret = ListValue.wrap(blockTag.values().stream().map(b -> ValueConversions.of(Registry.BLOCK.getId(b))).collect(Collectors.toList()));
+            return (_c, _t) -> ret;
+        });
+
+        expression.addLazyFunction("block_tags", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext)c;
+            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(tagManager.getBlocks().getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
+            if (blockLocator.offset == lv.size())
+            {
+                Value ret = ListValue.wrap(tagManager.getBlocks().getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            String tag = lv.get(blockLocator.offset).evalValue(c).getString();
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            if (blockTag == null) return LazyValue.NULL;
+            return blockLocator.block.getBlockState().isIn(blockTag)?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
 
         expression.addLazyFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
