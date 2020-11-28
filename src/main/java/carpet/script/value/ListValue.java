@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.lang.Math.abs;
@@ -91,7 +92,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
 
-
+    public static ListValue wrap(Stream<Value> stream)
+    {
+        return wrap(stream.collect(Collectors.toList()));
+    }
 
     public static ListValue wrap(List<Value> list)
     {

@@ -1061,16 +1061,22 @@ public class WorldAccess {
 
         expression.addLazyFunction("biome", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
+            ServerWorld world = cc.s.getWorld();
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(world.getRegistryManager().get(Registry.BIOME_KEY).getIds().stream().map(ValueConversions::of));
+                return (_c, _t) -> ret;
+            }
             BlockArgument locator = BlockArgument.findIn(cc, lv, 0, false, false, true);
+
             Biome biome;
             if (locator.replacement != null)
             {
-                biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(locator.replacement));
-                if (biome == null) throw new InternalExpressionException("Unknown biome: "+locator.replacement);
+                biome = world.getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(locator.replacement));
+                if (biome == null) return LazyValue.NULL;
             }
             else
             {
-                ServerWorld world = cc.s.getWorld();
                 BlockPos pos = locator.block.getPos();
                 biome = world.getBiome(pos);
             }
@@ -1082,9 +1088,9 @@ public class WorldAccess {
                 return (_c, _t) -> res;
             }
             String biomeFeature = lv.get(locator.offset).evalValue(c).getString();
-            Function<Biome, Value> featureProvider = BiomeInfo.biomeFeatures.get(biomeFeature);
+            BiFunction<ServerWorld, Biome, Value> featureProvider = BiomeInfo.biomeFeatures.get(biomeFeature);
             if (featureProvider == null) throw new InternalExpressionException("Unknown biome feature: "+biomeFeature);
-            Value ret = featureProvider.apply(biome);
+            Value ret = featureProvider.apply(world, biome);
             return (_c, _t) -> ret;
         });
 
