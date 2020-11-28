@@ -685,7 +685,7 @@ making it preferred for scoping ungenerated terrain, but it takes some compute r
 Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
 the actual structure from forming.
   
-If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
+If structure is specified, it will return `null` if a chunk is not eligible or invalid, `true` if the structure should appear, or 
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
 list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
 
@@ -702,7 +702,7 @@ the first case it returns a map of structures at a given position, keyed by stru
 the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
 name, returns a map with two values, `'box'` for bounding box of the structure, and `'pieces'` for a list of 
 components for that structure, with their name, direction and two sets of coordinates 
-indicating the bounding box of the structure piece.
+indicating the bounding box of the structure piece. If structure is invalid, its data will be `null`.
 
 Requires a `Standard Structure` name (see above).
 

@@ -1128,7 +1128,17 @@ public class WorldAccess {
             Map<Value, Value> ret = new HashMap<>();
             for(StructureFeature<?> str : StructureFeature.STRUCTURES.values())
             {
-                StructureStart start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                StructureStart<?> start;
+                try
+                {
+                    start = FeatureGenerator.shouldStructureStartAt(world, pos, str, needSize);
+                }
+                catch (NullPointerException npe)
+                {
+                    CarpetSettings.LOG.error("Failed to detect structure: "+str.getName());
+                    start = null;
+                }
+
                 if (start == null) continue;
 
                 Value key = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(str)));
