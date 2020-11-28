@@ -2262,9 +2262,32 @@ poi(x,y,z,5) => []  // nothing around
 poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two portal blocks in the range
 </pre>
 
-### `biome(pos)`
+### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`
 
-Returns the biome at that block position.
+Without arguments, returns the list of biomes in the world.
+
+With block, or name, returns the name of the biome in that position, or null, if provided biome is not valid. 
+
+With an optional feature, it returns value for the specified attribute for that biome. Available and querable features include:
+* `'top_material'`: unlocalized block representing the top surface material
+* `'under_material'`: unlocalized block representing what sits below topsoil
+* `'category'`: the parent biome this biome is derived from. Possible values include:
+`'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
+`'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
+`'swamp'`, `'mushroom'` and  `'nether'`.
+* `'temperature'`: temperature from 0 to 1
+* `'fog_color'`: RGBA color value of fog 
+* `'foliage_color'`: RGBA color value of foliage
+* `'sky_color'`: RGBA color value of sky
+* `'water_color'`: RGBA color value of water
+* `'water_fog_color'`: RGBA color value of water fog
+* `'humidity'`: value from 0 to 1 indicating how wet is the biome
+* `'precipitation'`: value from 0 to 1 indicating if the biome has precipitation
+* `'depth'`: value from -2 to 2 indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+and values < 0, below sea level.
+* `'scale'`: value from -2 to 2 indicating how flat is the terrain.
+* `'features'`: list of features that generate in the biome, grouped by generation steps
+* `'structures'`: list of structures that generate in the biome.
 
 ### `solid(pos)`
 
