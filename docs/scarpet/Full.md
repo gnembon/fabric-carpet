@@ -2222,6 +2222,16 @@ block_state(block('iron_trapdoor[half=top]'),'powered')  => false
 bool(block_state(block('iron_trapdoor[half=top]'),'powered'))  => 0
 </pre>
 
+### `block_list()`, `block_list(tag)`
+
+Returns list of all blocks. If tag is provided, returns list of blocks that belong to this block tag.
+
+### `block_tags()`, `block_tags(block)`, `block_tags(block, tag)`
+
+Without arguments, returns list of available tags, with block supplied (either by coordinates, or via block name), returns lost
+of tags the block belongs to, and if a tag is specified, returns `null` if tag is invalid, `false` if this block doesn't belong 
+to this tag, and `true` if the block belongs to the tag.
+
 ### `block_data(pos)`
 
 Return NBT string associated with specific location, or null if the block does not carry block data. Can be currently 
