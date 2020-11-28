@@ -24,6 +24,7 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
@@ -60,6 +61,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
@@ -67,6 +69,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -619,6 +622,29 @@ public class Auxiliary {
         });
 
         expression.addLazyFunction("plop", -1, (c, t, lv) ->{
+            if (lv.size() == 0)
+            {
+                Map<Value, Value> plopData = new HashMap<>();
+                CarpetContext cc = (CarpetContext)c;
+                DynamicRegistryManager registryManager = cc.s.getWorld().getRegistryManager();
+                plopData.put(StringValue.of("scarpet_custom"),
+                        ListValue.wrap(FeatureGenerator.featureMap.keySet().stream().sorted().map(StringValue::of).collect(Collectors.toList()))
+                );
+                plopData.put(StringValue.of("features"),
+                        ListValue.wrap(Registry.FEATURE.getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                );
+                plopData.put(StringValue.of("configured_features"),
+                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_FEATURE_WORLDGEN).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                );
+                plopData.put(StringValue.of("structures"),
+                        ListValue.wrap(Registry.STRUCTURE_FEATURE.getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                );
+                plopData.put(StringValue.of("configured_structures"),
+                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                );
+                Value ret = MapValue.wrap(plopData);
+                return (_c, _t) -> ret;
+            }
             BlockArgument locator = BlockArgument.findIn((CarpetContext)c, lv, 0);
             if (lv.size() <= locator.offset)
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
@@ -656,23 +682,7 @@ public class Auxiliary {
 
         expression.addLazyFunction("logger", -1, (c, t, lv) ->
         {
-            //CarpetSettings.LOG.error("Standard Structures:");
-            //CarpetSettings.LOG.error(Registry.STRUCTURE_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted(). collect(Collectors.joining(", ")));
-            //CarpetSettings.LOG.error("");
-            //CarpetSettings.LOG.error("Configured Structures:");
-            //CarpetSettings.LOG.error(BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted().collect(Collectors.joining(", ")));
-            //CarpetSettings.LOG.error("");
-            //CarpetSettings.LOG.error("Features:");
-            //CarpetSettings.LOG.error(Registry.FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted().collect(Collectors.joining(", ")));
-            //CarpetSettings.LOG.error("");
-            //CarpetSettings.LOG.error("Configured Features:");
-            //CarpetSettings.LOG.error(BuiltinRegistries.CONFIGURED_FEATURE.getIds().stream().map(i -> "`'"+NBTSerializableValue.nameFromRegistryId(i)+"'`").sorted().collect(Collectors.joining(", ")));
-            //CarpetSettings.LOG.error("");
-            //CarpetSettings.LOG.error("Custom:");
-            //CarpetSettings.LOG.error(FeatureGenerator.featureMap.keySet().stream().map(i -> "`'"+i+"'`").sorted().collect(Collectors.joining(", ")));
-
             //CarpetSettings.LOG.error(Registry.ENTITY_TYPE.getIds().stream().sorted().map(ValueConversions::simplify).collect(Collectors.joining("`, `")));
-
             Value res;
 
             if(lv.size()==1)
