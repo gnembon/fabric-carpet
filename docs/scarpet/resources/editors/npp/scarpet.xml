@@ -58,6 +58,8 @@
                 structure_eligibility structures structure_references set_structure reset_chunk reload_chunk custom_dimension
                 add_chunk_ticket
 
+                send_title
+
                 scoreboard scoreboard_add scoreboard_remove scoreboard_display
 
                 player spawn entity_id entity_list entity_area entity_selector query modify entity_event entity_load_handler entity_types

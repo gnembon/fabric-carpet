@@ -248,10 +248,10 @@ Example usages:
 ### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
 Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
- * `players` is either a player or a list of players
+ * `players` is either an online player or a list of players. When sending a single player, it will throw if the player is invalid or offline.
  * `type` is either `'title'`, `'subtitle'`, `actionbar` or `clear`.
    Note: `subtitle` will only be displayed if there is a title being displayed (can be an empty one)
- * `title` is what title to send to the player. It is required except for `clear` type
+ * `title` is what title to send to the player. It is required except for `clear` type. Can be a text formatted using `format()`
  * `...Ticks` are the number of ticks the title will stay in that state.
    If not specified, it will use current defaults (those defaults may have changed from a previous `/title times` execution).
    Executing with those will set the times to the specified ones.

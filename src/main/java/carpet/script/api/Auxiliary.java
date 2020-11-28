@@ -459,25 +459,21 @@ public class Auxiliary {
             if (lv.size() < 2) throw new InternalExpressionException("'display_title' needs at least a target, type and message, and optionally times");
             Value pVal = lv.get(0).evalValue(c);
             TitleS2CPacket.Action action;
-            List<Value> targets;
+            List<ServerPlayerEntity> targets;
             Text title = null;
             int in, out, stay;
+            MinecraftServer server = ((CarpetContext)c).s.getMinecraftServer();
             if (pVal instanceof ListValue)
             {
-                targets = ((ListValue) pVal).getItems();
-                for (Value player:targets)
-                {
-                    if (!(player instanceof EntityValue && ((EntityValue) pVal).getEntity() instanceof PlayerEntity))
-                        throw new InternalExpressionException("'display_title' only takes players or player lists as first argument");
-                }
-            }
-            else if (pVal instanceof EntityValue && ((EntityValue) pVal).getEntity() instanceof PlayerEntity)
-            {
-                targets = Arrays.asList(pVal);
+            	targets = ((ListValue) pVal).getItems().stream()
+            			  .map(v -> EntityValue.getPlayerByValue(server, v))
+            			  .filter(v -> v != null).collect(Collectors.toList());
             }
             else
             {
-                throw new InternalExpressionException("'display_title' requires a player or a list of players as first argument");
+                targets = Collections.singletonList(EntityValue.getPlayerByValue(server, pVal));
+                if(targets.get(0) == null)
+                	throw new InternalExpressionException("'display_title' requires an online player or a list of players as first argument");
             }
             pVal = lv.get(1).evalValue(c);
             if (!(pVal instanceof StringValue)) 
@@ -522,11 +518,10 @@ public class Auxiliary {
                 }
             }
             TitleS2CPacket packet = new TitleS2CPacket(action, title);
-            for (Value player:targets)
+            for (ServerPlayerEntity player:targets)
             {
-                ServerPlayNetworkHandler networkHandler = ((ServerPlayerEntity) ((EntityValue) player).getEntity()).networkHandler;
-                if (timesPacket != null) networkHandler.sendPacket(timesPacket);
-                networkHandler.sendPacket(packet);
+                if (timesPacket != null) player.networkHandler.sendPacket(timesPacket);
+                player.networkHandler.sendPacket(packet);
             }
             return (cc, tt) -> Value.NULL;
         });
