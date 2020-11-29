@@ -36,6 +36,7 @@ import net.minecraft.advancement.Advancement;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.AngleArgumentType;
 import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.BlockPredicateArgumentType;
 import net.minecraft.command.argument.BlockStateArgument;
 import net.minecraft.command.argument.BlockStateArgumentType;
 import net.minecraft.command.argument.ColorArgumentType;
@@ -125,6 +126,9 @@ public abstract class CommandArgument
                         return new BlockValue(result.getBlockState(), null, null, ((BlockStateArgumentInterface)result).getCMTag() );
                     },
                     false
+            ),
+            new VanillaUnconfigurableArgument( "blockpredicate", BlockPredicateArgumentType::blockPredicate,
+                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getMinecraftServer().getTagManager(), BlockPredicateArgumentType.getBlockPredicate(c, p)), false
             ),
             // block_predicate todo - not sure about the returned format. Needs to match block tags used in the API (future)
             new VanillaUnconfigurableArgument("teamcolor", ColorArgumentType::color,

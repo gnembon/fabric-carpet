@@ -40,13 +40,17 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -73,7 +77,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -400,11 +406,21 @@ public class Auxiliary {
                 Value parsed = ((NBTSerializableValue) v).toValue();
                 return (cc, tt) -> parsed;
             }
-            NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString());
+            NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString(), false);
             if (ret == null)
                 return LazyValue.NULL;
             Value parsed = ret.toValue();
             return (cc, tt) -> parsed;
+        });
+
+        expression.addFunction("tag_matches", (lv) -> {
+            int numParam = lv.size();
+            if (numParam != 2 && numParam != 3) throw new InternalExpressionException("'tag_matches' requires 2 or 3 arguments");
+            if (lv.get(1).isNull()) return Value.TRUE;
+            if (lv.get(0).isNull()) return Value.FALSE;
+            Tag source = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(0)))).getTag();
+            Tag match = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(1)))).getTag();
+            return new NumericValue(NbtHelper.matches(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
         expression.addLazyFunction("encode_nbt", -1, (c, t, lv) -> {
@@ -434,6 +450,7 @@ public class Auxiliary {
             if (lv.size() == 2)
             {
                 ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), res);
+                if (player == null) return LazyValue.NULL;
                 s = player.getCommandSource();
                 res = lv.get(1).evalValue(c);
             }
@@ -454,6 +471,66 @@ public class Auxiliary {
             }
             Value finalRes = res;
             return (_c, _t) -> finalRes; // pass through for variables
+        });
+        expression.addLazyFunction("display_title", -1, (c, t, lv) -> {
+            if (lv.size() < 2) throw new InternalExpressionException("'display_title' needs at least a target, type and message, and optionally times");
+            Value pVal = lv.get(0).evalValue(c);
+            if (!(pVal instanceof ListValue)) pVal = ListValue.of(pVal);
+            MinecraftServer server = ((CarpetContext)c).s.getMinecraftServer();
+            Stream<ServerPlayerEntity> targets = ((ListValue) pVal).getItems().stream().map(v ->
+            {
+                ServerPlayerEntity player = EntityValue.getPlayerByValue(server, v);
+                if (player == null) throw new InternalExpressionException("'display_title' requires a valid online player or a list of players as first argument. "+v.getString()+" is not a player.");
+                return player;
+            });
+            TitleS2CPacket.Action action;
+            switch (lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT))
+            {
+                case "title":
+                    action = Action.TITLE;
+                    break;
+                case "subtitle":
+                    action = Action.SUBTITLE;
+                    break;
+                case "actionbar":
+                    action = Action.ACTIONBAR;
+                    break;
+                case "clear":
+                    action = Action.CLEAR;
+                    break;
+                default:
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+            }
+            if (action != Action.CLEAR && lv.size() < 3)
+                throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
+            Text title = null;
+            if (lv.size() > 2)
+            {
+            	pVal = lv.get(2).evalValue(c);
+                if (pVal instanceof FormattedTextValue)
+                    title = ((FormattedTextValue) pVal).getText();
+                else
+                    title = Text.of(pVal.getString());
+            }
+            TitleS2CPacket timesPacket;
+            if (lv.size() > 3)
+            {
+                int in = NumericValue.asNumber(lv.get(3).evalValue(c),"fade in for display_title" ).getInt();
+                int stay = NumericValue.asNumber(lv.get(4).evalValue(c),"stay for display_title" ).getInt();
+                int out = NumericValue.asNumber(lv.get(5).evalValue(c),"fade out for display_title" ).getInt();
+                timesPacket = new TitleS2CPacket(Action.TIMES, null, in, stay, out);
+            }
+            else timesPacket = null;
+
+            TitleS2CPacket packet = new TitleS2CPacket(action, title);
+            AtomicInteger total = new AtomicInteger(0);
+            targets.forEach(p -> {
+                if (timesPacket != null) p.networkHandler.sendPacket(timesPacket);
+                p.networkHandler.sendPacket(packet);
+                total.getAndIncrement();
+            });
+            Value ret = NumericValue.of(total.get());
+            return (cc, tt) -> ret;
         });
 
         expression.addLazyFunction("format", -1, (c, t, lv) -> {

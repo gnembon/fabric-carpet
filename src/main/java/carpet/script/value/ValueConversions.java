@@ -1,9 +1,11 @@
 package carpet.script.value;
 
+import carpet.fakes.BlockPredicateInterface;
 import carpet.script.exception.InternalExpressionException;
 import carpet.utils.BlockInfo;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.MapColor;
+import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.brain.LookTarget;
 import net.minecraft.entity.ai.brain.WalkTarget;
@@ -21,6 +23,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.tag.TagManager;
 import net.minecraft.util.Identifier;
 
 import net.minecraft.util.StringIdentifiable;
@@ -40,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ValueConversions
@@ -378,5 +382,16 @@ public class ValueConversions
         Value ret = slotIdsToSlotParams.get(itemSlot);
         if (ret == null) return ListValue.of(Value.NULL, NumericValue.of(itemSlot));
         return ret;
+    }
+
+    public static Value ofBlockPredicate(TagManager tagManager, Predicate<CachedBlockPosition> blockPredicate)
+    {
+        BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
+        return ListValue.of(
+                predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getId(predicateData.getCMBlockState().getBlock())),
+                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.getBlocks().getTagId(predicateData.getCMBlockTag())),
+                MapValue.wrap(predicateData.getCMProperties()),
+                predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
+        );
     }
 }

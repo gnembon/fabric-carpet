@@ -176,6 +176,8 @@
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
     "BlockStateArgument_scarpetMixin",
+    "StatePredicate_scarpetMixin",
+    "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
     "PillagerEntity_scarpetMixin",
 

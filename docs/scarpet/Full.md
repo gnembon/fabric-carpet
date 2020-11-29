@@ -3429,10 +3429,10 @@ If called with `false` value, it will disable AI in the mob. `true` will enable 
 Sets if the entity obeys any collisions, including collisions with the terrain and basic physics. Not affecting 
 players, since they are controlled client side.
 
-### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?)`
+### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?, ambient?)`
 
-Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true` 
-and `true`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
+Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
+`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
@@ -4432,6 +4432,12 @@ Consult section about container operations in `Expression` to learn about possib
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
 
+### `tag_matches(daddy_tag, baby_tag, match_lists?)`
+
+Utility returning `true` if `baby_tag` is fully contained in `daddy_tag`. Anything matches `null` baby tag, and
+Nothing is contained in a `null` daddy tag. If `match_lists` is specified and `false`, content of nested lists is ignored. 
+Default behaviour is to match them.
+
 ### `parse_nbt(tag)`
 
 Converts NBT tag to a scarpet value, which you can navigate through much better.
@@ -4513,6 +4519,18 @@ Example usages:
   // the reason why I backslash the second space is that otherwise command parser may contract consecutive spaces
   // not a problem in apps
 </pre>
+
+### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+
+Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
+ * `players` is either an online player or a list of players. When sending a single player, it will throw if the player is invalid or offline.
+ * `type` is either `'title'`, `'subtitle'`, `actionbar` or `clear`.
+   Note: `subtitle` will only be displayed if there is a title being displayed (can be an empty one)
+ * `title` is what title to send to the player. It is required except for `clear` type. Can be a text formatted using `format()`
+ * `...Ticks` are the number of ticks the title will stay in that state.
+   If not specified, it will use current defaults (those defaults may have changed from a previous `/title times` execution).
+   Executing with those will set the times to the specified ones.
+   Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
 ### `logger(msg), logger(type, msg)`
 
@@ -4738,7 +4756,7 @@ Available options in the scarpet app space:
   * `world_seed` - a numeric seed of the world
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
-  * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_change(rule, newValue)` event.
+  * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
  
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
