@@ -121,7 +121,7 @@ public class CarpetSettings
 
 
 
-    @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!", category = EXPERIMENTAL)
+    @Rule(desc = "Gbhs sgnf sadsgras fhskdpri!!!", category = EXPERIMENTAL)
     public static boolean superSecretSetting = false;
 
     @Rule(
@@ -247,7 +247,7 @@ public class CarpetSettings
     @Rule( desc = "Merges stationary primed TNT entities", category = TNT )
     public static boolean mergeTNT = false;
 
-    @Rule(
+    /*@Rule(
             desc = "Lag optimizations for redstone dust",
             extra = {
                     "by Theosib",
@@ -256,7 +256,7 @@ public class CarpetSettings
             },
             category = {EXPERIMENTAL, OPTIMIZATION}
     )
-    public static boolean fastRedstoneDust = false;
+    public static boolean fastRedstoneDust = false;*/
 
     @Rule(desc = "Only husks spawn in desert temples", category = FEATURE)
     public static boolean huskSpawningInTemples = false;
@@ -348,10 +348,10 @@ public class CarpetSettings
     public static boolean summonNaturalLightning = false;
 
     @Rule(desc = "Enables /spawn command for spawn tracking", category = COMMAND)
-    public static String commandSpawn = "true";
+    public static String commandSpawn = "ops";
 
     @Rule(desc = "Enables /tick command to control game clocks", category = COMMAND)
-    public static String commandTick = "true";
+    public static String commandTick = "ops";
 
     @Rule(
             desc = "Enables /profile command to monitor game performance",
@@ -397,7 +397,7 @@ public class CarpetSettings
     public static String commandPerimeterInfo = "true";
 
     @Rule(desc = "Enables /draw commands", extra = {"... allows for drawing simple shapes or","other shapes which are sorta difficult to do normally"}, category = COMMAND)
-    public static String commandDraw = "true";
+    public static String commandDraw = "ops";
 
 
     @Rule(
@@ -434,10 +434,10 @@ public class CarpetSettings
     public static boolean scriptsAutoload = false;
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
-    public static String commandPlayer = "true";
+    public static String commandPlayer = "ops";
 
     @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND)
-    public static String commandTrackAI = "true";
+    public static String commandTrackAI = "ops";
 
     @Rule(desc = "Placing carpets may issue carpet commands for non-op players", category = SURVIVAL)
     public static boolean carpets = false;

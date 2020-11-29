@@ -326,10 +326,10 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'water_color'`: RGBA color value of water
 * `'water_fog_color'`: RGBA color value of water fog
 * `'humidity'`: value from 0 to 1 indicating how wet is the biome
-* `'precipitation'`: value from 0 to 1 indicating if the biome has precipitation
-* `'depth'`: value from -2 to 2 indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+* `'precipitation'`: `'rain'` `'snot'`, or `'none'`... ok, maybe `'snow'`, but that means snots for sure as well.
+* `'depth'`: float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
 and values < 0, below sea level.
-* `'scale'`: value from -2 to 2 indicating how flat is the terrain.
+* `'scale'`: float value indicating how flat is the terrain.
 * `'features'`: list of features that generate in the biome, grouped by generation steps
 * `'structures'`: list of structures that generate in the biome.
 
