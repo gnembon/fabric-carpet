@@ -94,8 +94,9 @@ public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightSto
                         final long dst = BlockPos.add(pos, ox + t * dx, dy, oz + t * dz);
                         long src = BlockPos.offset(dst, dir);
 
-                        if (neighborLightArray == null)
-                            src = BlockPos.asLong(BlockPos.unpackLongX(src), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackY(neighborCeilingSectionPos)), BlockPos.unpackLongZ(src));
+                        // fixed due to https://bugs.mojang.com/browse/MC-196542 so keeping the direction
+                        //if (neighborLightArray == null)
+                        //    src = BlockPos.asLong(BlockPos.unpackLongX(src), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackY(neighborCeilingSectionPos)), BlockPos.unpackLongZ(src));
 
                         final int srcLevel = neighborCeilingLightArray != null ?
                             ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, src)
