@@ -19,12 +19,14 @@ create_marker
 current_dimension
 custom_dimension
 day_time
+delete_file
 destroy
 diamond
 display_title
 draw_shape
 drop_item
 emitted_light
+encode_nbt
 entity_area
 entity_event
 entity_id
@@ -62,6 +64,7 @@ modify
 nbt
 neighbours
 opacity
+parse_nbt
 particle
 particle_line
 particle_rect
@@ -87,11 +90,13 @@ scoreboard
 scoreboard_add
 scoreboard_remove
 scoreboard_display
+tag_matches
 team_add
 team_list
 team_remove
 team_leave
 team_property
+read_file
 see_sky
 set
 set_biome
@@ -120,3 +125,4 @@ view_distance
 volume
 without_updates
 world_time
+write_file

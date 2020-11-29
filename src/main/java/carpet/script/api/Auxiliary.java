@@ -40,6 +40,7 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
@@ -405,11 +406,21 @@ public class Auxiliary {
                 Value parsed = ((NBTSerializableValue) v).toValue();
                 return (cc, tt) -> parsed;
             }
-            NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString());
+            NBTSerializableValue ret = NBTSerializableValue.parseString(v.getString(), false);
             if (ret == null)
                 return LazyValue.NULL;
             Value parsed = ret.toValue();
             return (cc, tt) -> parsed;
+        });
+
+        expression.addFunction("tag_matches", (lv) -> {
+            int numParam = lv.size();
+            if (numParam != 2 && numParam != 3) throw new InternalExpressionException("'tag_matches' requires 2 or 3 arguments");
+            if (lv.get(1).isNull()) return Value.TRUE;
+            if (lv.get(0).isNull()) return Value.FALSE;
+            Tag source = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(0)))).getTag();
+            Tag match = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(1)))).getTag();
+            return new NumericValue(NbtHelper.matches(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
         expression.addLazyFunction("encode_nbt", -1, (c, t, lv) -> {

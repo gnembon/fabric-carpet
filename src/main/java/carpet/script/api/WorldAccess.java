@@ -808,9 +808,7 @@ public class WorldAccess {
                     tag = ((NBTSerializableValue) tagValue).getCompoundTag();
                 else
                 {
-                    NBTSerializableValue readTag = NBTSerializableValue.parseString(tagValue.getString());
-                    if (readTag == null)
-                        throw new InternalExpressionException("Incorrect tag: "+tagValue.getString());
+                    NBTSerializableValue readTag = NBTSerializableValue.parseString(tagValue.getString(), true);
                     tag = readTag.getCompoundTag();
                 }
             }

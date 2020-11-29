@@ -80,7 +80,8 @@
 
                 plop harvest destroy schedule nbt draw_shape create_marker remove_all_markers
 
-                load_app_data store_app_data escape_nbt statistic
+                load_app_data store_app_data read_file write_file delete_file
+                escape_nbt parse_nbt encode_nbt tag_matches statistic
             </Keywords>
             <Keywords name="Keywords3">euler pi null true false</Keywords>
             <Keywords name="Keywords4">x y z p</Keywords>

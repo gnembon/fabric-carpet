@@ -227,7 +227,7 @@ public class NumericValue extends Value
     }
     public NumericValue(boolean boolval)
     {
-        this(boolval?1.0D:0.0D);
+        this(boolval?1L:0L);
     }
 
     @Override
