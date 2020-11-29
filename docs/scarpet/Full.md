@@ -4432,6 +4432,12 @@ Consult section about container operations in `Expression` to learn about possib
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
 
+### `tag_matches(daddy_tag, baby_tag, match_lists?)`
+
+Utility returning `true` if `baby_tag` is fully contained in `daddy_tag`. Anything matches `null` baby tag, and
+Nothing is contained in a `null` daddy tag. If `match_lists` is specified and `false`, content of nested lists is ignored. 
+Default behaviour is to match them.
+
 ### `parse_nbt(tag)`
 
 Converts NBT tag to a scarpet value, which you can navigate through much better.
