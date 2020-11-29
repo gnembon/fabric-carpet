@@ -6,7 +6,6 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.command.argument.BlockPredicateArgumentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.state.property.Property;
 import net.minecraft.tag.Tag;
@@ -18,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mixin(BlockPredicateArgumentType.StatePredicate.class)
+@Mixin(targets = "net.minecraft.command.argument.BlockPredicateArgumentType$StatePredicate")
 public class StatePredicate_scarpetMixin implements BlockPredicateInterface
 {
 

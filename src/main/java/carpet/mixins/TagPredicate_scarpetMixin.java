@@ -5,7 +5,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.command.argument.BlockPredicateArgumentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tag.Tag;
 import org.spongepowered.asm.mixin.Final;
@@ -15,7 +14,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Mixin(BlockPredicateArgumentType.TagPredicate.class)
+@Mixin(targets = "net.minecraft.command.argument.BlockPredicateArgumentType$TagPredicate")
 public class TagPredicate_scarpetMixin implements BlockPredicateInterface
 {
     @Shadow @Final private Tag<Block> tag;

@@ -3,5 +3,3 @@ accessWidener	v1	named
 accessible class net/minecraft/server/world/ThreadedAnvilChunkStorage$TicketManager
 accessible class net/minecraft/server/world/ServerLightingProvider$Stage
 accessible class net/minecraft/recipe/Ingredient$Entry
-accessible class net/minecraft/command/argument/BlockPredicateArgumentType$StatePredicate
-accessible class net/minecraft/command/argument/BlockPredicateArgumentType$TagPredicate
