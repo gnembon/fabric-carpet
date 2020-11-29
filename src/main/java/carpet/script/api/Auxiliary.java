@@ -451,7 +451,7 @@ public class Auxiliary {
             {
                 ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), res);
                 if (player == null) return LazyValue.NULL;
-                s = player.getCommandSource();
+                playersVal = res;
                 res = lv.get(1).evalValue(c);
             }
             if (res instanceof FormattedTextValue)
