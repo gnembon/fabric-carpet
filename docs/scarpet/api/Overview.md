@@ -206,6 +206,20 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'pos'`: block position as a triple of coordinates. Customized with `'loaded'`, if true requiring the position 
   to be loaded.
   * `'block'`: a valid block state wrapped in a block value (including block properties and data)
+  * `'blockpredicate`': returns a 4-tuple indicating conditions of a block to match: block name, block tag,
+  map of required state properties, and tag to match. Either block name or block tag are `null` but not both.
+  Property map is always specified, but its empty for no conditions, and matching nbt tag can be `null` indicating
+  no requirements. Technically the 'all-matching' predicate would be `[null, null, {}, null]`, but 
+  block name or block tag is always specified. One can use the following routine to match a block agains this predicate:
+  ```
+    block_to_match = block(x,y,z);
+    [block_name, block_tag, properties, nbt_tag] = block_predicate;
+   
+    (block_name == null || block_name == block_to_match) &&
+    (block_tag == null || block_tags(block_to_match, block_tag)) &&
+    all(properties, block_state(block_to_match, _) == properties:_) &&
+    (!tag || tag_matches(block_data(block_to_match), tag))
+  ```
   * `'teamcolor'`: name of a team, and an integer color value of one of 16 valid team colors.
   * `'columnpos'`: a pair of x and z coordinates.
   * `'dimension'`: string representing a valid dimension in the world.

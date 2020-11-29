@@ -20,7 +20,7 @@ __config() -> {
     'arguments'->{
         'center'->{'type'->'pos', 'loaded'->'true'},
         'radius'->{'type'->'int', 'suggest'->[], 'min'->0},//to avoid default suggestions
-        'replacement'->{'type'->'block'},
+        'replacement'->{'type'->'blockpredicate'},
         'height'->{'type'->'int', 'suggest'->[],'min'->0},
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
@@ -32,9 +32,20 @@ __config() -> {
 
 //"Boilerplate" code
 
+_block_matches(existing, block_predicate) ->
+(
+    [name, block_tag, properties, nbt] = block_predicate;
+
+    (name == null || name == existing) &&
+    (block_tag == null || block_tags(existing, block_tag)) &&
+    all(properties, block_state(existing, _) == properties:_) &&
+    (!tag || tag_matches(block_data(existing), tag))
+);
+
 set_block(x, y, z, block, replacement)-> (
-    if(block != block(x, y, z),
-        without_updates( if (set([x, y, z],block),
+    existing = block(x, y, z);
+    if(block != existing && (replacement && _block_matches(existing, replacement) ),
+        without_updates( if (set(existing,block),
             global_affected += [x, y, z];
         ));
     );
