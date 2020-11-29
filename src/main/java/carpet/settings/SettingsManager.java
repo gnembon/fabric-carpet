@@ -13,6 +13,9 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -24,13 +27,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -247,7 +250,7 @@ public class SettingsManager
      */
     public Collection<ParsedRule<?>> findStartupOverrides()
     {
-        Set<String> defaults = readSettingsFromConf().getLeft().keySet();
+        Set<String> defaults = readSettingsFromConf(getFile()).getLeft().keySet();
         return rules.values().stream().filter(r -> defaults.contains(r.name)).
                 sorted().collect(Collectors.toList());
     }
@@ -261,9 +264,9 @@ public class SettingsManager
         return rules.values().stream().filter(r -> !r.isDefault()).sorted().collect(Collectors.toList());
     }
 
-    private File getFile()
+    private Path getFile()
     {
-        return server.getSavePath(WorldSavePath.ROOT).resolve(identifier+".conf").toFile();
+        return server.getSavePath(WorldSavePath.ROOT).resolve(identifier+".conf");
     }
 
     /**
@@ -288,14 +291,13 @@ public class SettingsManager
     {
         if (locked)
             return;
-        try
+        try (BufferedWriter fw = Files.newBufferedWriter(getFile()))
         {
-            FileWriter fw  = new FileWriter(getFile());
             for (String key: values.keySet())
             {
-                fw.write(key+" "+values.get(key)+"\n");
+                fw.write(key+" "+values.get(key));
+                fw.newLine();
             }
-            fw.close();
         }
         catch (IOException e)
         {
@@ -378,7 +380,7 @@ public class SettingsManager
     private void loadConfigurationFromConf()
     {
         for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(server.getCommandSource());
-        Pair<Map<String, String>,Boolean> conf = readSettingsFromConf();
+        Pair<Map<String, String>, Boolean> conf = readSettingsFromConf(getFile());
         locked = false;
         if (conf.getRight())
         {
@@ -401,11 +403,10 @@ public class SettingsManager
     }
 
 
-    private Pair<Map<String, String>,Boolean> readSettingsFromConf()
+    private Pair<Map<String, String>, Boolean> readSettingsFromConf(Path path)
     {
-        try
+        try (BufferedReader reader = Files.newBufferedReader(path))
         {
-            BufferedReader reader = new BufferedReader(new FileReader(getFile()));
             String line = "";
             boolean confLocked = false;
             Map<String,String> result = new HashMap<String, String>();
@@ -435,11 +436,24 @@ public class SettingsManager
 
                 }
             }
-            reader.close();
             return Pair.of(result, confLocked);
         }
-        catch(FileNotFoundException e)
+        catch(NoSuchFileException e)
         {
+            if (path.equals(getFile()) && FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+            {
+                Path defaultsPath = FabricLoader.getInstance().getConfigDir().resolve("carpet/default_"+identifier+".conf");
+                try {
+                    if (Files.notExists(defaultsPath))
+                    {
+                        Files.createDirectories(defaultsPath.getParent());
+                        Files.createFile(defaultsPath);
+                    }
+                    return readSettingsFromConf(defaultsPath);
+                } catch (IOException e2) {
+                    CarpetSettings.LOG.error("Exception when loading fallback default config: ", e);
+                }
+            }
             return Pair.of(new HashMap<>(), false);
         }
         catch (IOException e)
@@ -617,7 +631,7 @@ public class SettingsManager
     {
         if (locked) return 0;
         if (!rules.containsKey(rule.name)) return 0;
-        Pair<Map<String, String>,Boolean> conf = readSettingsFromConf();
+        Pair<Map<String, String>,Boolean> conf = readSettingsFromConf(getFile());
         conf.getLeft().put(rule.name, stringValue);
         writeSettingsToConf(conf.getLeft()); // this may feels weird, but if conf
         // is locked, it will never reach this point.
@@ -630,7 +644,7 @@ public class SettingsManager
     {
         if (locked) return 0;
         if (!rules.containsKey(rule.name)) return 0;
-        Pair<Map<String, String>,Boolean> conf = readSettingsFromConf();
+        Pair<Map<String, String>,Boolean> conf = readSettingsFromConf(getFile());
         conf.getLeft().remove(rule.name);
         writeSettingsToConf(conf.getLeft());
         rules.get(rule.name).resetToDefault(source);
