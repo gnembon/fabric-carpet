@@ -1256,7 +1256,10 @@ public class EntityValue extends Value
                     boolean showIcon = true;
                     if (lv.size() > 4)
                         showIcon = lv.get(4).getBoolean();
-                    le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, showParticles, showIcon));
+                    boolean ambient = false;
+                    if (lv.size() > 5)
+                        showIcon = lv.get(5).getBoolean();
+                    le.addStatusEffect(new StatusEffectInstance(effect, duration, amplifier, ambient, showParticles, showIcon));
                     return;
                 }
             }
@@ -1269,7 +1272,7 @@ public class EntityValue extends Value
                 le.removeStatusEffect(effect);
                 return;
             }
-            throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles and show icon");
+            throw new InternalExpressionException("'effect' needs either no arguments (clear) or effect name, duration, and optional amplifier, show particles, show icon and ambient");
         });
 
         put("gamemode", (e,v)->{
