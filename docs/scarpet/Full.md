@@ -151,9 +151,10 @@ have memory and act like objects so to speak. Check `outer(var)` for details.
 ## Code delivery, line indicators
 
 Note that this should only apply to pasting your code to execute with commandblock. Scarpet recommends placing 
-your code in apps (files with `.sc` extension that can be placed inside "/scripts" folder in the world files and 
-loaded as a scarpet app with command `/script load [app_name]`. Scarpet apps loaded from disk should only 
-contain code, no need to start with "/script run" prefix
+your code in apps (files with `.sc` extension that can be placed inside `/scripts` folder in the world files 
+or as a globally available app in singleplayer in the `.minecraft/config/carpet/scripts` folder and loaded 
+as a Scarpet app with the command `/script load [app_name]`. Scarpet apps loaded from disk should only 
+contain code, no need to start with `/script run` prefix.
 
 The following is the code that could be provided in a `foo.sc` app file located in world `/scripts` folder
 
@@ -1705,7 +1706,8 @@ Here is the gist of the Minecraft related functions. Otherwise the CarpetScript 
 ## App structure
 
 The main delivery method for scarpet programs into the game is in the form of apps in `*.sc` files located in the world `scripts` 
-folder. When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
+folder. In singleplayer, you can also save apps in `.minecraft/config/carpet/scripts` for them to be available in any world. 
+When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
 (more about the app scopes below), without executing of any functions, unless called directly, and with the exception of the
 `__config()` function, if present, which will be executed once. Loading the app will also bind specific 
 events to the event system (check Events section for details).
@@ -1739,7 +1741,7 @@ running anything in the global scope for a `'player'` scoped app is not recommen
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
 This is to allow to store multiple apps on the server/world and selectively decide which one should be running at 
 startup. WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
-statically, will be performed once anyways.
+statically, will be performed once anyways. Only apps present in the world's `scripts` folder will be autoloaded.
 *   `'legacy_command_type_support'` - if `true`, and the app defines the legacy command system via `__command()` function,
 all parameters of command functions will be interpreted and used using brigadier / vanilla style argument parser and their type
 will be inferred from their names, otherwise
@@ -4795,13 +4797,15 @@ to simulate running commands in a different scope.
 
 # `/script load / unload <app> (global?)`, `/script in <app>` commands
 
-`load / unload` commands allow for very conventient way of writing your code, providing it to the game and 
-distribute with your worlds without the need of use of commandblocks. Just place your scarpet code in the 
-/scripts folder of your world files and make sure it ends with `.sc` extension. The good thing about editing that 
-code is that you can no only use normal editing without the need of marking of newlines, 
+`load / unload` commands allow for very convenient way of writing your code, providing it to the game and 
+distribute with your worlds without the need of use of commandblocks. Just place your Scarpet code in the 
+`/scripts` folder of your world files and make sure it ends with `.sc` extension. In singleplayer, you can 
+also save your scripts in `.minecraft/config/carpet/scripts` to make them available in any world.
+
+The good thing about editing that code is that you can not only use normal editing without the need of marking of newlines,  
 but you can also use comments in your code.
 
-a comment is anything that starts with a double slash, and continues to the end of the line:
+A comment is anything that starts with a double slash, and continues to the end of the line:
 
 <pre>
 foo = 1;
