@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +27,13 @@ public class FileModule extends Module
     private String name;
     private String code;
     private boolean library;
-    public FileModule(File sourceFile)
+    public FileModule(Path sourcePath)
     {
-        library = sourceFile.getName().endsWith(".scl");
+        library = sourcePath.getFileName().toString().endsWith(".scl");
         try
         {
-            name = sourceFile.getName().replaceFirst("\\.scl?","").toLowerCase(Locale.ROOT);
-            code = new String(Files.readAllBytes(sourceFile.toPath()), StandardCharsets.UTF_8);
+            name = sourcePath.getFileName().toString().replaceFirst("\\.scl?","").toLowerCase(Locale.ROOT);
+            code = new String(Files.readAllBytes(sourcePath), StandardCharsets.UTF_8);
         }
         catch ( IOException e)
         {
