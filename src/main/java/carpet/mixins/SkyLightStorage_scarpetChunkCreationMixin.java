@@ -88,19 +88,26 @@ public abstract class SkyLightStorage_scarpetChunkCreationMixin extends LightSto
                 final int dx = Math.abs(dir.getOffsetZ());
                 final int dz = Math.abs(dir.getOffsetX());
 
+                int emptyLightLevel = (neighborCeilingLightArray == null)
+                    ? (this.isSectionEnabled(ChunkSectionPos.withZeroY(neighborCeilingSectionPos)) ? 0 : 15)
+                    : 0;
+                int neighbourY = (neighborLightArray == null)
+                    ? ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackY(neighborCeilingSectionPos))
+                    : 0;
+
                 for (int t = 0; t < 16; ++t)
                     for (int dy = 0; dy < 16; ++dy)
                     {
                         final long dst = BlockPos.add(pos, ox + t * dx, dy, oz + t * dz);
                         long src = BlockPos.offset(dst, dir);
 
-                        // fixed due to https://bugs.mojang.com/browse/MC-196542 so keeping the direction
-                        //if (neighborLightArray == null)
-                        //    src = BlockPos.asLong(BlockPos.unpackLongX(src), ChunkSectionPos.getBlockCoord(ChunkSectionPos.unpackY(neighborCeilingSectionPos)), BlockPos.unpackLongZ(src));
+                        long adj_src = (neighborLightArray != null)
+                            ? src
+                            : BlockPos.asLong(BlockPos.unpackLongX(src), neighbourY, BlockPos.unpackLongZ(src));
 
-                        final int srcLevel = neighborCeilingLightArray != null ?
-                            ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, src)
-                            : this.isSectionEnabled(ChunkSectionPos.withZeroY(neighborCeilingSectionPos)) ? 0 : 15;
+                        final int srcLevel = neighborCeilingLightArray != null
+                            ? ((ChunkLightProviderInterface) lightProvider).callGetCurrentLevelFromSection(neighborCeilingLightArray, adj_src)
+                            : emptyLightLevel;
 
                         levelPropagator.cmInvokeUpdateLevel(src, dst, levelPropagator.cmCallGetPropagatedLevel(src, dst, srcLevel), true);
                     }
