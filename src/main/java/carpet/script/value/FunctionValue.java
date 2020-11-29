@@ -150,11 +150,11 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return varArgs != null;
     }
 
-    public LazyValue callInContext(Expression callingExpression, Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+    public LazyValue callInContext(Context c, Integer type, List<LazyValue> lazyParams)
     {
         try
         {
-            return lazyEval(c, type, e, t, lazyParams);
+            return lazyEval(c, type, expression, token, lazyParams);
         }
         catch (ExpressionException exc)
         {
@@ -164,12 +164,12 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         catch (InternalExpressionException exc)
         {
             exc.stack.add(this);
-            throw new ExpressionException(c, e, t, exc.getMessage(), exc.stack);
+            throw new ExpressionException(c, expression, token, exc.getMessage(), exc.stack);
         }
 
         catch (ArithmeticException exc)
         {
-            throw new ExpressionException(c, e, t, "Your math is wrong, "+exc.getMessage(), Collections.singletonList(this));
+            throw new ExpressionException(c, expression, token, "Your math is wrong, "+exc.getMessage(), Collections.singletonList(this));
         }
     }
 

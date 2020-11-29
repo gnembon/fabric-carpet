@@ -1,9 +1,11 @@
 package carpet.script.value;
 
+import carpet.fakes.BlockPredicateInterface;
 import carpet.script.exception.InternalExpressionException;
 import carpet.utils.BlockInfo;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.MaterialColor;
+import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.brain.LookTarget;
 import net.minecraft.entity.ai.brain.WalkTarget;
@@ -21,6 +23,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructurePiece;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.tag.TagManager;
 import net.minecraft.util.Identifier;
 
 import net.minecraft.util.StringIdentifiable;
@@ -40,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ValueConversions
@@ -299,23 +303,27 @@ public class ValueConversions
     public static Value of(StructureStart<?> structure)
     {
         if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
-        List<Value> pieces = new ArrayList<>();
-        for (StructurePiece piece : structure.getChildren())
-        {
-            BlockBox box = piece.getBoundingBox();
-            pieces.add(ListValue.of(
-                    new StringValue( NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
-                    (piece.getFacing()== null)?Value.NULL: new StringValue(piece.getFacing().getName()),
-                    ListValue.fromTriple(box.minX, box.minY, box.minZ),
-                    ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
-            ));
-        }
         BlockBox boundingBox = structure.getBoundingBox();
+        if (boundingBox.maxX < boundingBox.minX || boundingBox.maxY < boundingBox.minY || boundingBox.maxZ < boundingBox.minZ) return Value.NULL;
         Map<Value, Value> ret = new HashMap<>();
         ret.put(new StringValue("box"), ListValue.of(
                 ListValue.fromTriple(boundingBox.minX, boundingBox.minY, boundingBox.minZ),
                 ListValue.fromTriple(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ)
         ));
+        List<Value> pieces = new ArrayList<>();
+        for (StructurePiece piece : structure.getChildren())
+        {
+            BlockBox box = piece.getBoundingBox();
+            if (box.maxX >= box.minX && box.maxY >= box.minY && box.maxZ >= box.minZ)
+            {
+                pieces.add(ListValue.of(
+                        new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
+                        (piece.getFacing() == null) ? Value.NULL : new StringValue(piece.getFacing().getName()),
+                        ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                        ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+                ));
+            }
+        }
         ret.put(new StringValue("pieces"), ListValue.wrap(pieces));
         return MapValue.wrap(ret);
     }
@@ -374,5 +382,16 @@ public class ValueConversions
         Value ret = slotIdsToSlotParams.get(itemSlot);
         if (ret == null) return ListValue.of(Value.NULL, NumericValue.of(itemSlot));
         return ret;
+    }
+
+    public static Value ofBlockPredicate(TagManager tagManager, Predicate<CachedBlockPosition> blockPredicate)
+    {
+        BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
+        return ListValue.of(
+                predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getId(predicateData.getCMBlockState().getBlock())),
+                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.getBlocks().getTagId(predicateData.getCMBlockTag())),
+                MapValue.wrap(predicateData.getCMProperties()),
+                predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
+        );
     }
 }

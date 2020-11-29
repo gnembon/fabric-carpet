@@ -137,7 +137,7 @@ public class Entities {
             {
                 Value nbt = lv.get(position.offset).evalValue(c);
                 NBTSerializableValue v = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
-                        : NBTSerializableValue.parseString(nbt.getString());
+                        : NBTSerializableValue.parseString(nbt.getString(), true);
                 hasTag = true;
                 tag = v.getCompoundTag();
 

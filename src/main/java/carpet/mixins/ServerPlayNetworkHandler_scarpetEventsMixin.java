@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.CarpetSettings;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.ButtonClickC2SPacket;
 import net.minecraft.network.packet.c2s.play.CraftRequestC2SPacket;
@@ -27,6 +28,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_CLICKS_BLOCK;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DEPLOYS_ELYTRA;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DROPS_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_DROPS_STACK;
+import static carpet.script.CarpetEventServer.Event.PLAYER_ESCAPES_SLEEP;
 import static carpet.script.CarpetEventServer.Event.PLAYER_INTERACTS_WITH_ENTITY;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RELEASED_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_RIDES;
@@ -205,7 +207,11 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     private void onWakeUp(ClientCommandC2SPacket clientCommandC2SPacket_1, CallbackInfo ci)
     {
         //weird one - doesn't seem to work, maybe MP
-        PLAYER_WAKES_UP.onPlayerEvent(player);
+        if (player.isSleeping())
+            PLAYER_WAKES_UP.onPlayerEvent(player);
+        else
+            PLAYER_ESCAPES_SLEEP.onPlayerEvent(player);
+
     }
 
     @Inject(method = "onClientCommand", at = @At(
