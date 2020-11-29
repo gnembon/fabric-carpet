@@ -8,13 +8,15 @@ to simulate running commands in a different scope.
 
 # `/script load / unload <app> (global?)`, `/script in <app>` commands
 
-`load / unload` commands allow for very conventient way of writing your code, providing it to the game and 
-distribute with your worlds without the need of use of commandblocks. Just place your scarpet code in the 
-/scripts folder of your world files and make sure it ends with `.sc` extension. The good thing about editing that 
-code is that you can no only use normal editing without the need of marking of newlines, 
+`load / unload` commands allow for very convenient way of writing your code, providing it to the game and 
+distribute with your worlds without the need of use of commandblocks. Just place your Scarpet code in the 
+`/scripts` folder of your world files and make sure it ends with `.sc` extension. In singleplayer, you can 
+also save your scripts in `.minecraft/config/carpet/scripts` to make them available in any world.
+
+The good thing about editing that code is that you can not only use normal editing without the need of marking of newlines,  
 but you can also use comments in your code.
 
-a comment is anything that starts with a double slash, and continues to the end of the line:
+A comment is anything that starts with a double slash, and continues to the end of the line:
 
 <pre>
 foo = 1;

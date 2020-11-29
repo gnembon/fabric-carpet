@@ -151,9 +151,10 @@ have memory and act like objects so to speak. Check `outer(var)` for details.
 ## Code delivery, line indicators
 
 Note that this should only apply to pasting your code to execute with commandblock. Scarpet recommends placing 
-your code in apps (files with `.sc` extension that can be placed inside "/scripts" folder in the world files and 
-loaded as a scarpet app with command `/script load [app_name]`. Scarpet apps loaded from disk should only 
-contain code, no need to start with "/script run" prefix
+your code in apps (files with `.sc` extension that can be placed inside `/scripts` folder in the world files 
+or as a globally available app in singleplayer in the `.minecraft/config/carpet/scripts` folder and loaded 
+as a Scarpet app with the command `/script load [app_name]`. Scarpet apps loaded from disk should only 
+contain code, no need to start with `/script run` prefix.
 
 The following is the code that could be provided in a `foo.sc` app file located in world `/scripts` folder
 

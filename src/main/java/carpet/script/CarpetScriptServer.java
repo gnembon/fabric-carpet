@@ -17,6 +17,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 
+import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -143,16 +144,18 @@ public class CarpetScriptServer
                 ).findFirst();
             if (scriptPath.isPresent())
                 return new FileModule(scriptPath.get());
-            
-            Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
-            Files.createDirectories(globalFolder);
-            scriptPath = Files.walk(globalFolder)
-                .filter(script -> 
-                    script.getFileName().toString().equalsIgnoreCase(name+".sc") || 
-                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
-                ).findFirst();
-            if (scriptPath.isPresent())
-                return new FileModule(scriptPath.get());
+
+            if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+            {
+                Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+                Files.createDirectories(globalFolder);
+                scriptPath = Files.walk(globalFolder)
+                        .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
+                                (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
+                        .findFirst();
+                if (scriptPath.isPresent())
+                    return new FileModule(scriptPath.get());
+            }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while loading the app: ", e);
         }
@@ -193,15 +196,15 @@ public class CarpetScriptServer
             Files.createDirectories(worldScripts);
             Files.walk(worldScripts)
                 .filter(f -> f.toString().endsWith(".sc"))
-                .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc","").toLowerCase(Locale.ROOT)));
+                .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
 
-            if (includeBuiltIns)
+            if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
             {
                 Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 Files.createDirectories(globalScripts);
                 Files.walk(globalScripts)
                     .filter(f -> f.toString().endsWith(".sc"))
-                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc","").toLowerCase(Locale.ROOT)));
+                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
             }
         } catch (IOException e) {
             CarpetSettings.LOG.error("Exception while searching for apps: ", e);
