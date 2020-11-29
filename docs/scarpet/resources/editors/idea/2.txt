@@ -21,6 +21,7 @@ custom_dimension
 day_time
 destroy
 diamond
+display_title
 draw_shape
 drop_item
 emitted_light

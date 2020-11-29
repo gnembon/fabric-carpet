@@ -43,10 +43,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -454,6 +457,74 @@ public class Auxiliary {
             }
             Value finalRes = res;
             return (_c, _t) -> finalRes; // pass through for variables
+        });
+        expression.addLazyFunction("display_title", -1, (c, t, lv) -> {
+            if (lv.size() < 2) throw new InternalExpressionException("'display_title' needs at least a target, type and message, and optionally times");
+            Value pVal = lv.get(0).evalValue(c);
+            TitleS2CPacket.Action action;
+            List<ServerPlayerEntity> targets;
+            Text title = null;
+            int in, out, stay;
+            MinecraftServer server = ((CarpetContext)c).s.getMinecraftServer();
+            if (pVal instanceof ListValue)
+            {
+                targets = ((ListValue) pVal).getItems().stream()
+                          .map(v -> EntityValue.getPlayerByValue(server, v))
+                          .filter(v -> v != null).collect(Collectors.toList());
+            }
+            else
+            {
+                targets = Collections.singletonList(EntityValue.getPlayerByValue(server, pVal));
+                if (targets.get(0) == null)
+                    throw new InternalExpressionException("'display_title' requires an online player or a list of players as first argument");
+            }
+            pVal = lv.get(1).evalValue(c);
+            switch (pVal.getString()) 
+            {
+                case "title":
+                    action = Action.TITLE;
+                    break;
+                case "subtitle":
+                    action = Action.SUBTITLE;
+                    break;
+                case "actionbar":
+                    action = Action.ACTIONBAR;
+                    break;
+                case "clear":
+                    action = Action.CLEAR;
+                    break;
+                default:
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+            }
+            if (action != Action.CLEAR && lv.size() < 3)
+                throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
+            if (lv.size() > 2)
+            {
+            	pVal = lv.get(2).evalValue(c);
+                if (pVal instanceof FormattedTextValue)
+                    title = ((FormattedTextValue) pVal).getText();
+                else
+                    title = Text.of(pVal.getString());
+            }
+            TitleS2CPacket timesPacket = null;
+            if (lv.size() > 3)
+            {
+                try {
+                    in = Integer.valueOf(lv.get(3).evalValue(c).getString());
+                    stay = Integer.valueOf(lv.get(4).evalValue(c).getString());
+                    out = Integer.valueOf(lv.get(5).evalValue(c).getString());
+                    timesPacket = new TitleS2CPacket(Action.TIMES, null, in, stay, out);
+                } catch (NumberFormatException e) {
+                    throw new InternalExpressionException("If specified, 'display_title' requires integers as fourth, fifth and sixth arguments");
+                }
+            }
+            TitleS2CPacket packet = new TitleS2CPacket(action, title);
+            for (ServerPlayerEntity player:targets)
+            {
+                if (timesPacket != null) player.networkHandler.sendPacket(timesPacket);
+                player.networkHandler.sendPacket(packet);
+            }
+            return (cc, tt) -> Value.NULL;
         });
 
         expression.addLazyFunction("format", -1, (c, t, lv) -> {
