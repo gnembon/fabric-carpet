@@ -465,19 +465,17 @@ public class Auxiliary {
             MinecraftServer server = ((CarpetContext)c).s.getMinecraftServer();
             if (pVal instanceof ListValue)
             {
-            	targets = ((ListValue) pVal).getItems().stream()
-            			  .map(v -> EntityValue.getPlayerByValue(server, v))
-            			  .filter(v -> v != null).collect(Collectors.toList());
+                targets = ((ListValue) pVal).getItems().stream()
+                          .map(v -> EntityValue.getPlayerByValue(server, v))
+                          .filter(v -> v != null).collect(Collectors.toList());
             }
             else
             {
                 targets = Collections.singletonList(EntityValue.getPlayerByValue(server, pVal));
-                if(targets.get(0) == null)
-                	throw new InternalExpressionException("'display_title' requires an online player or a list of players as first argument");
+                if (targets.get(0) == null)
+                    throw new InternalExpressionException("'display_title' requires an online player or a list of players as first argument");
             }
             pVal = lv.get(1).evalValue(c);
-            if (!(pVal instanceof StringValue)) 
-                throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
             switch (pVal.getString()) 
             {
                 case "title":
@@ -497,7 +495,7 @@ public class Auxiliary {
             }
             if (action != Action.CLEAR && lv.size() < 3)
                 throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
-            if (lv.size() > 3)
+            if (lv.size() > 2)
             {
             	pVal = lv.get(2).evalValue(c);
                 if (pVal instanceof FormattedTextValue)
