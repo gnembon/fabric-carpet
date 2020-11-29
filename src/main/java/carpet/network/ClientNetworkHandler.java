@@ -26,35 +26,39 @@ public class ClientNetworkHandler
     {
         dataHandlers.put("Rules", (p, t) -> {
             CompoundTag ruleset = (CompoundTag)t;
-            for (String fullRuleName: ruleset.getKeys())
+            for (String ruleKey: ruleset.getKeys())
             {
-                int separatorPos = fullRuleName.indexOf(':');
+                CompoundTag ruleNBT = (CompoundTag) ruleset.get(ruleKey);
                 SettingsManager manager = null;
                 String ruleName;
-                if (separatorPos > -1)
+                if (ruleNBT.contains("Manager"))
                 {
-                    String identifier = fullRuleName.substring(0, separatorPos);
-                    ruleName = fullRuleName.substring(separatorPos + 1);
-                    for (CarpetExtension extension: CarpetServer.extensions) {
-                        SettingsManager eManager = extension.customSettingsManager();
-                        if (eManager != null && identifier.equals(eManager.getIdentifier()))
-                        {
-                            manager = eManager;
-                            break;
+                    ruleName = ruleNBT.getString("Rule");
+                    String managerName = ruleNBT.getString("Manager");
+                    if (managerName == "carpet")
+                    {
+                        manager = CarpetServer.settingsManager;
+                    }
+                    else
+                    {
+                        for (CarpetExtension extension: CarpetServer.extensions) {
+                            SettingsManager eManager = extension.customSettingsManager();
+                            if (eManager != null && managerName.equals(eManager.getIdentifier()))
+                            {
+                                manager = eManager;
+                                break;
+                            }
                         }
                     }
                 }
-                else
+                else // Backwards compatibility
                 {
-                    ruleName = fullRuleName;
                     manager = CarpetServer.settingsManager;
+                    ruleName = ruleKey;
                 }
                 ParsedRule<?> rule = (manager != null) ? manager.getRule(ruleName) : null;
-                if (rule == null)
-                    CarpetSettings.LOG.error("Received unknown rule: " + fullRuleName);
-                else
+                if (rule != null)
                 {
-                    CompoundTag ruleNBT = (CompoundTag) ruleset.get(fullRuleName);
                     String value = ruleNBT.getString("Value");
                     rule.set(null, value);
                 }

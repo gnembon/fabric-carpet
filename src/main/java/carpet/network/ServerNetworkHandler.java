@@ -241,10 +241,14 @@ public class ServerNetworkHandler
                 rules = new CompoundTag();
                 tag.put("Rules", rules);
             }
-            String identifier = (rule.settingsManager != CarpetServer.settingsManager) ? rule.settingsManager.getIdentifier()+":" : "";
+            String identifier = rule.settingsManager.getIdentifier();
+            String key = rule.name;
+            while (rules.contains(key)) { key = key+"2";}
             CompoundTag ruleNBT = new CompoundTag();
             ruleNBT.putString("Value", rule.getAsString());
-            rules.put(identifier+rule.name, ruleNBT);
+            ruleNBT.putString("Manager",identifier);
+            ruleNBT.putString("Rule",rule.name);
+            rules.put(key, ruleNBT);
             return this;
         }
 
