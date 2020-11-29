@@ -122,4 +122,10 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         this.hungerManager = new HungerManager();
         kill();
     }
+
+    @Override
+    public String getIp()
+    {
+        return "127.0.0.1";
+    }
 }
