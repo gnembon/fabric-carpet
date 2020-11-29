@@ -439,6 +439,7 @@ public class Auxiliary {
             if (lv.size() == 2)
             {
                 ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), res);
+                if (player == null) return LazyValue.NULL;
                 s = player.getCommandSource();
                 res = lv.get(1).evalValue(c);
             }
