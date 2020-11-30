@@ -152,8 +152,8 @@ bossbar('script:test','value',74)
 bossbar('script:test','name',format('rb Test'))  -> Change text
 bossbar('script:test','visible',false)  -> removes visibility, but keeps players
 bossbar('script:test','players',player('all'))  -> Visible for all players
-bossbar('script:test','players',[player('Steve')])  -> Visible for Steve only 
-bossbar('script:test','players',[])  -> Visible for nobody
+bossbar('script:test','players',player('Steve'))  -> Visible for Steve only 
+bossbar('script:test','players',null)  -> Invalid player, removing all players
 bossbar('script:test','add_player',player('Alex'))  -> Add Alex to the list of players that can see the bossbar
 bossbar('script:test','remove')  -> remove bossbar 'script:test'
 for(bossbar(),bossbar(_,'remove'))  -> remove all bossbars
