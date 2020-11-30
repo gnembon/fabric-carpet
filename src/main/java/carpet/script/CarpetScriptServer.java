@@ -16,19 +16,25 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -127,20 +133,32 @@ public class CarpetScriptServer
 
     public Module getModule(String name, boolean allowLibraries)
     {
-        File folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
-        File[] listOfFiles = folder.listFiles();
-        if (listOfFiles != null)
-            for (File script : listOfFiles)
+        try {
+            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Files.createDirectories(folder);
+            Optional<Path>
+            scriptPath = Files.walk(folder)
+                .filter(script -> 
+                    script.getFileName().toString().equalsIgnoreCase(name+".sc") || 
+                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
+                ).findFirst();
+            if (scriptPath.isPresent())
+                return new FileModule(scriptPath.get());
+
+            if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
-                if (script.getName().equalsIgnoreCase(name+".sc"))
-                {
-                    return new FileModule(script);
-                }
-                if (allowLibraries && script.getName().equalsIgnoreCase(name+".scl"))
-                {
-                    return new FileModule(script);
-                }
+                Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+                Files.createDirectories(globalFolder);
+                scriptPath = Files.walk(globalFolder)
+                        .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
+                                (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
+                        .findFirst();
+                if (scriptPath.isPresent())
+                    return new FileModule(scriptPath.get());
             }
+        } catch (IOException e) {
+            CarpetSettings.LOG.error("Exception while loading the app: ", e);
+        }
         for (Module moduleData : bundledModuleData)
         {
             if (moduleData.getName().equalsIgnoreCase(name) && (allowLibraries || !moduleData.isLibrary()))
@@ -173,17 +191,23 @@ public class CarpetScriptServer
                 if (!mi.isLibrary() && !mi.getName().endsWith("_beta")) moduleNames.add(mi.getName());
             }
         }
-        File folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
-        File[] listOfFiles = folder.listFiles();
-        if (listOfFiles == null)
-            return moduleNames;
-        for (File script : listOfFiles)
-        {
-            if (script.getName().endsWith(".sc"))
+        try {
+            Path worldScripts = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Files.createDirectories(worldScripts);
+            Files.walk(worldScripts)
+                .filter(f -> f.toString().endsWith(".sc"))
+                .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+
+            if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
             {
-                String name = script.getName().replaceFirst("\\.sc","").toLowerCase(Locale.ROOT);
-                moduleNames.add(name);
+                Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+                Files.createDirectories(globalScripts);
+                Files.walk(globalScripts)
+                    .filter(f -> f.toString().endsWith(".sc"))
+                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
             }
+        } catch (IOException e) {
+            CarpetSettings.LOG.error("Exception while searching for apps: ", e);
         }
         return moduleNames;
     }

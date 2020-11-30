@@ -63,6 +63,7 @@ import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.ScoreHolderArgumentType;
 import net.minecraft.command.argument.ScoreboardSlotArgumentType;
 import net.minecraft.command.argument.SwizzleArgumentType;
+import net.minecraft.command.argument.TeamArgumentType;
 import net.minecraft.command.argument.TimeArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.command.argument.Vec2ArgumentType;
@@ -130,7 +131,6 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument( "blockpredicate", BlockPredicateArgumentType::blockPredicate,
                     (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getMinecraftServer().getTagManager(), BlockPredicateArgumentType.getBlockPredicate(c, p)), false
             ),
-            // block_predicate todo - not sure about the returned format. Needs to match block tags used in the API (future)
             new VanillaUnconfigurableArgument("teamcolor", ColorArgumentType::color,
                     (c, p) -> {
                         Formatting format = ColorArgumentType.getColor(c, p);
@@ -165,7 +165,6 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of(Registry.ENCHANTMENT.getId(ItemEnchantmentArgumentType.getEnchantment(c, p))), false
             ),
             // item_predicate  ?? //same as item but accepts tags, not sure right now
-            // slot // item_slot
             new SlotArgument(),
             new VanillaUnconfigurableArgument("item", ItemStackArgumentType::itemStack,
                     (c, p) -> ValueConversions.of(ItemStackArgumentType.getItemStackArgument(c, p).createStack(1, false)), false
@@ -241,7 +240,9 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("swizzle", SwizzleArgumentType::swizzle,
                     (c, p) -> StringValue.of(SwizzleArgumentType.getSwizzle(c, p).stream().map(Direction.Axis::asString).collect(Collectors.joining())), true
             ),
-            // team
+            new VanillaUnconfigurableArgument("team", TeamArgumentType::team,
+                    (c, p) -> StringValue.of(TeamArgumentType.getTeam(c, p).getName()), false
+            ),
             new VanillaUnconfigurableArgument("time", TimeArgumentType::time,
                     (c, p) -> new NumericValue(IntegerArgumentType.getInteger(c, p)), false
             ),
@@ -437,7 +438,7 @@ public abstract class CommandArgument
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
-                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom sting type requires options passed as a list");
+                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom string type requires options passed as a list");
                 validOptions = ((ListValue) optionsValue).getItems().stream()
                         .map(v -> caseSensitive?v.getString():(v.getString().toLowerCase(Locale.ROOT)))
                         .collect(Collectors.toSet());

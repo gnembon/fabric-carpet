@@ -6,7 +6,8 @@ Here is the gist of the Minecraft related functions. Otherwise the CarpetScript 
 ## App structure
 
 The main delivery method for scarpet programs into the game is in the form of apps in `*.sc` files located in the world `scripts` 
-folder. When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
+folder. In singleplayer, you can also save apps in `.minecraft/config/carpet/scripts` for them to be available in any world. 
+When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
 (more about the app scopes below), without executing of any functions, unless called directly, and with the exception of the
 `__config()` function, if present, which will be executed once. Loading the app will also bind specific 
 events to the event system (check Events section for details).
@@ -40,7 +41,7 @@ running anything in the global scope for a `'player'` scoped app is not recommen
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
 This is to allow to store multiple apps on the server/world and selectively decide which one should be running at 
 startup. WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
-statically, will be performed once anyways.
+statically, will be performed once anyways. Only apps present in the world's `scripts` folder will be autoloaded.
 *   `'legacy_command_type_support'` - if `true`, and the app defines the legacy command system via `__command()` function,
 all parameters of command functions will be interpreted and used using brigadier / vanilla style argument parser and their type
 will be inferred from their names, otherwise
@@ -205,6 +206,20 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'pos'`: block position as a triple of coordinates. Customized with `'loaded'`, if true requiring the position 
   to be loaded.
   * `'block'`: a valid block state wrapped in a block value (including block properties and data)
+  * `'blockpredicate`': returns a 4-tuple indicating conditions of a block to match: block name, block tag,
+  map of required state properties, and tag to match. Either block name or block tag are `null` but not both.
+  Property map is always specified, but its empty for no conditions, and matching nbt tag can be `null` indicating
+  no requirements. Technically the 'all-matching' predicate would be `[null, null, {}, null]`, but 
+  block name or block tag is always specified. One can use the following routine to match a block agains this predicate:
+  ```
+    block_to_match = block(x,y,z);
+    [block_name, block_tag, properties, nbt_tag] = block_predicate;
+   
+    (block_name == null || block_name == block_to_match) &&
+    (block_tag == null || block_tags(block_to_match, block_tag)) &&
+    all(properties, block_state(block_to_match, _) == properties:_) &&
+    (!tag || tag_matches(block_data(block_to_match), tag))
+  ```
   * `'teamcolor'`: name of a team, and an integer color value of one of 16 valid team colors.
   * `'columnpos'`: a pair of x and z coordinates.
   * `'dimension'`: string representing a valid dimension in the world.
