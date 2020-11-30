@@ -22,7 +22,7 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
 {
     @Shadow private int amount;
 
-    @Shadow private int field_27009;
+    @Shadow private int pickingCount;
 
     @Shadow protected abstract int getMendingRepairCost(int repairAmount);
 
@@ -59,12 +59,12 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
 
     @Override
     public int getCount() {
-        return field_27009;
+        return pickingCount;
     }
 
     @Override
     public void setCount(int i) {
-        field_27009 = i;
+        pickingCount = i;
     }
 
     @Inject(method = "onPlayerCollision", at = @At("HEAD"))
@@ -78,9 +78,9 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
     void addXP(PlayerEntity playerEntity, int experience)
     {
         playerEntity.addExperience(experience);
-        if (CarpetSettings.xpNoCooldown) while(field_27009 > 1)
+        if (CarpetSettings.xpNoCooldown) while(pickingCount > 1)
         {
-            field_27009 --;
+            pickingCount --;
             playerEntity.addExperience(experience);
         }
     }
@@ -92,10 +92,10 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
     ))
     void cancelApplication(PlayerEntity player, CallbackInfo ci, Map.Entry<EquipmentSlot, ItemStack> entry, ItemStack itemStack)
     {
-        if (CarpetSettings.xpfix && field_27009 > 1)
+        if (CarpetSettings.xpfix && pickingCount > 1)
         {
             int i = Math.min(getMendingRepairAmount(this.amount), itemStack.getDamage());
-            field_27009--;
+            pickingCount--;
             itemStack.setDamage(itemStack.getDamage() - i);
             // cancel effects of mending application
             ci.cancel();
