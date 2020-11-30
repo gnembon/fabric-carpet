@@ -41,6 +41,7 @@ public class NumericValue extends Value
     {
         if (value == null) return Value.NULL;
         if (value.doubleValue() == value.longValue()) return new NumericValue(value.longValue());
+        if (value instanceof Float) return new NumericValue(0.000_001D * Math.round(1_000_000.0D*value.doubleValue()));
         return new NumericValue(value.doubleValue());
     }
 
@@ -226,7 +227,7 @@ public class NumericValue extends Value
     }
     public NumericValue(boolean boolval)
     {
-        this(boolval?1.0D:0.0D);
+        this(boolval?1L:0L);
     }
 
     @Override

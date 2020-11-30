@@ -2204,20 +2204,33 @@ Deprecated by `block_state(pos, name)`
 If used with a `block` argument only, it returns a map of block properties and their values.  If a block has no properties, returns an
 empty map.
 
-If `property` is specified, returns value of that property, or `null` if property is not applicable.
+If `property` is specified, returns a string value of that property, or `null` if property is not applicable.
 
 Returned values or properties are always strings. It is expected from the user to know what to expect and convert 
 values to numbers using `number()` function or booleans using `bool()` function. Returned string values can be directly used
 back in state definition in various applications where block properties are required.
 
+`block_state` can also accept block names as input, returning block's default state.
+
 <pre>
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z,'half')  => top
+block_state('iron_trapdoor','half')  => top
 set(x,y,z,'air'); block_state(x,y,z,'half')  => null
 block_state(block('iron_trapdoor[half=top]'),'half')  => top
 block_state(block('iron_trapdoor[half=top]'),'powered')  => false
 bool(block_state(block('iron_trapdoor[half=top]'),'powered'))  => 0
 </pre>
+
+### `block_list()`, `block_list(tag)`
+
+Returns list of all blocks. If tag is provided, returns list of blocks that belong to this block tag.
+
+### `block_tags()`, `block_tags(block)`, `block_tags(block, tag)`
+
+Without arguments, returns list of available tags, with block supplied (either by coordinates, or via block name), returns lost
+of tags the block belongs to, and if a tag is specified, returns `null` if tag is invalid, `false` if this block doesn't belong 
+to this tag, and `true` if the block belongs to the tag.
 
 ### `block_data(pos)`
 
@@ -2249,9 +2262,32 @@ poi(x,y,z,5) => []  // nothing around
 poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two portal blocks in the range
 </pre>
 
-### `biome(pos)`
+### `biome()` `biome(name)` `biome(block)` `biome(block/name, feature)`
 
-Returns the biome at that block position.
+Without arguments, returns the list of biomes in the world.
+
+With block, or name, returns the name of the biome in that position, or null, if provided biome is not valid. 
+
+With an optional feature, it returns value for the specified attribute for that biome. Available and querable features include:
+* `'top_material'`: unlocalized block representing the top surface material
+* `'under_material'`: unlocalized block representing what sits below topsoil
+* `'category'`: the parent biome this biome is derived from. Possible values include:
+`'none'`, `'taiga'`, `'extreme_hills'`, `'jungle'`, `'mesa'`, `'plains'`, `'savanna'`,
+`'icy'`, `'the_end'`, `'beach'`, `'forest'`, `'ocean'`, `'desert'`, `'river'`,
+`'swamp'`, `'mushroom'` and  `'nether'`.
+* `'temperature'`: temperature from 0 to 1
+* `'fog_color'`: RGBA color value of fog 
+* `'foliage_color'`: RGBA color value of foliage
+* `'sky_color'`: RGBA color value of sky
+* `'water_color'`: RGBA color value of water
+* `'water_fog_color'`: RGBA color value of water fog
+* `'humidity'`: value from 0 to 1 indicating how wet is the biome
+* `'precipitation'`: `'rain'` `'snot'`, or `'none'`... ok, maybe `'snow'`, but that means snots for sure as well.
+* `'depth'`: float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+and values < 0, below sea level.
+* `'scale'`: float value indicating how flat is the terrain.
+* `'features'`: list of features that generate in the biome, grouped by generation steps
+* `'structures'`: list of structures that generate in the biome.
 
 ### `solid(pos)`
 
@@ -2460,9 +2496,12 @@ This function is tentative - will likely change when chunk ticket API is properl
 Scarpet provides convenient methods to access and modify information about structures as well as spawn in-game
 structures and features. List of available options and names that you can use depends mostly if you are using scarpet
 with minecraft 1.16.1 and below or 1.16.2 and above since in 1.16.2 Mojang has added JSON support for worldgen features
-meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet
+meaning that since 1.16.2 - they have official names that can be used by datapacks and scarpet. If you have most recent
+scarpet on 1.16.4, you can use `plop()` to get all available worldgen features including custom features and structures
+controlled by datapacks. It returns a map of lists in the following categories: 
+`'scarpet_custom'`, `'configured_features'`, `'structures'`, `'features'`, `'configured_structures'`
 
-### Previous Structure Names, including variants (as of MC 1.16.3)
+### Previous Structure Names, including variants (MC1.16.1 and below)
 *   `'monument'`: Ocean Monument. Generates at fixed Y coordinate, surrounds itself with water.
 *   `'fortress'`: Nether Fortress. Altitude varies, but its bounded by the code.
 *   `'mansion'`: Woodland Mansion
@@ -2492,7 +2531,7 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 *   `'bastion_remnant_treasure'`: Treasure room version of a piglin bastion (1.16)
 *   `'bastion_remnant_bridge'` : Bridge version of a piglin bastion (1.16)
 
-### Feature Names (as of mc1.16.1) 
+### Feature Names (1.16.1 and below) 
 
 *   `'oak'`
 *   `'oak_beehive'`: oak with a hive (1.15+).
@@ -2556,13 +2595,17 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 *   `'twisting_vines'` (1.16)
 *   `'basalt_pillar'` (1.16)
 
-### Standard Structures (as of 1.16.2+)
+### Standard Structures (as of MC1.16.2+)
+
+Use `plop():'structures'`, but it always returns the following:
 
 `'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'endcity'`, `'fortress'`, `'igloo'`, 
 `'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'monument'`, `'nether_fossil'`, `'ocean_ruin'`, 
 `'pillager_outpost'`, `'ruined_portal'`, `'shipwreck'`, `'stronghold'`, `'swamp_hut'`, `'village'`
 
-### Structure Variants (as of 1.16.2+)
+### Structure Variants (as of MC1.16.2+)
+
+Use `plop():'configured_structures'`, but it always returns the following:
 
 `'bastion_remnant'`, `'buried_treasure'`, `'desert_pyramid'`, `'end_city'`, `'fortress'`, `'igloo'`, 
 `'jungle_pyramid'`, `'mansion'`, `'mineshaft'`, `'mineshaft_mesa'`, `'monument'`, `'nether_fossil'`,
@@ -2571,48 +2614,16 @@ meaning that since 1.16.2 - they have official names that can be used by datapac
 `'ruined_portal_swamp'`, `'shipwreck'`, `'shipwreck_beached'`, `'stronghold'`, `'swamp_hut'`, 
 `'village_desert'`, `'village_plains'`, `'village_savanna'`, `'village_snovy'`, `'village_taiga'`
 
-### World Generation Features (as of 1.16.2+)
+### World Generation Features (as of MC1.16.2+)
 
-`'acacia'`, `'amethyst_geode'` (1.17+), `'bamboo'`, `'bamboo_light'`, `'bamboo_vegetation'`, `'basalt_blobs'`, `'basalt_pillar'`, 
-`'birch'`, `'birch_bees_0002'`, `'birch_bees_002'`, `'birch_bees_005'`, `'birch_other'`, `'birch_tall'`, 
-`'blackstone_blobs'`, `'blue_ice'`, `'bonus_chest'`, `'brown_mushroom_giant'`, `'brown_mushroom_nether'`,
-`'brown_mushroom_normal'`, `'brown_mushroom_swamp'`, `'brown_mushroom_taiga'`, `'chorus_plant'`, 
-`'crimson_forest_vegetation'`, `'crimson_fungi'`, `'crimson_fungi_planted'`, `'dark_forest_vegetation_brown'`, 
-`'dark_forest_vegetation_red'`, `'dark_oak'`, `'delta'`, `'desert_well'`, `'disk_clay'`, `'disk_gravel'`, 
-`'disk_sand'`, `'end_gateway'`, `'end_gateway_delayed'`, `'end_island'`, `'end_island_decorated'`, `'end_spike'`, 
-`'fancy_oak'`, `'fancy_oak_bees_0002'`, `'fancy_oak_bees_002'`, `'fancy_oak_bees_005'`, `'flower_default'`, 
-`'flower_forest'`, `'flower_plain'`, `'flower_plain_decorated'`, `'flower_swamp'`, `'flower_warm'`, 
-`'forest_flower_trees'`, `'forest_flower_vegetation'`, `'forest_flower_vegetation_common'`, `'forest_rock'`, 
-`'fossil'`, `'freeze_top_layer'`, `'glowstone'`, `'glowstone_extra'`, `'huge_brown_mushroom'`, 
-`'huge_red_mushroom'`, `'ice_patch'`, `'ice_spike'`, `'iceberg_blue'`, `'iceberg_packed'`, `'jungle_bush'`,
-`'jungle_tree'`, `'jungle_tree_no_vine'`, `'kelp_cold'`, `'kelp_warm'`, `'lake_lava'`, `'lake_water'`, 
-`'large_basalt_columns'`, `'mega_jungle_tree'`, `'mega_pine'`, `'mega_spruce'`, `'monster_room'`, 
-`'mushroom_field_vegetation'`, `'nether_sprouts'`, `'nope'`, `'oak'`, `'oak_badlands'`, `'oak_bees_0002'`, 
-`'oak_bees_002'`, `'oak_bees_005'`, `'ore_andesite'`, `'ore_blackstone'`, `'ore_coal'`, `'ore_debris_large'`,
-`'ore_debris_small'`, `'ore_diamond'`, `'ore_diorite'`, `'ore_dirt'`, `'ore_emerald'`, `'ore_gold'`, 
-`'ore_gold_deltas'`, `'ore_gold_extra'`, `'ore_gold_nether'`, `'ore_granite'`, `'ore_gravel'`, 
-`'ore_gravel_nether'`, `'ore_infested'`, `'ore_iron'`, `'ore_lapis'`, `'ore_magma'`, `'ore_quartz_deltas'`, 
-`'ore_quartz_nether'`, `'ore_redstone'`, `'ore_soul_sand'`, `'patch_berry_bush'`, `'patch_berry_decorated'`, 
-`'patch_berry_sparse'`, `'patch_brown_mushroom'`, `'patch_cactus'`, `'patch_cactus_decorated'`, 
-`'patch_cactus_desert'`, `'patch_crimson_roots'`, `'patch_dead_bush'`, `'patch_dead_bush_2'`, 
-`'patch_dead_bush_badlands'`, `'patch_fire'`, `'patch_grass_badlands'`, `'patch_grass_forest'`, 
-`'patch_grass_jungle'`, `'patch_grass_normal'`, `'patch_grass_plain'`, `'patch_grass_savanna'`, 
-`'patch_grass_taiga'`, `'patch_grass_taiga_2'`, `'patch_large_fern'`, `'patch_melon'`, `'patch_pumpkin'`, 
-`'patch_red_mushroom'`, `'patch_soul_fire'`, `'patch_sugar_cane'`, `'patch_sugar_cane_badlands'`, 
-`'patch_sugar_cane_desert'`, `'patch_sugar_cane_swamp'`, `'patch_sunflower'`, `'patch_taiga_grass'`, 
-`'patch_tall_grass'`, `'patch_tall_grass_2'`, `'patch_waterlilly'`, `'pile_hay'`, `'pile_ice'`, 
-`'pile_melon'`, `'pile_pumpkin'`, `'pile_snow'`, `'pine'`, `'plain_vegetation'`, `'red_mushroom_giant'`,
-`'red_mushroom_nether'`, `'red_mushroom_normal'`, `'red_mushroom_swamp'`, `'red_mushroom_taiga'`, 
-`'sea_pickle'`, `'seagrass_cold'`, `'seagrass_deep'`, `'seagrass_deep_cold'`, `'seagrass_deep_warm'`, 
-`'seagrass_normal'`, `'seagrass_river'`, `'seagrass_simple'`, `'seagrass_swamp'`, `'seagrass_warm'`, 
-`'small_basalt_columns'`, `'spring_closed'`, `'spring_closed_double'`, `'spring_delta'`, `'spring_lava'`, 
-`'spring_lava_double'`, `'spring_open'`, `'spring_water'`, `'spruce'`, `'spruce_snovy'`, `'super_birch_bees_0002'`, 
-`'swamp_tree'`, `'taiga_vegetation'`, `'trees_giant'`, `'trees_giant_spruce'`, `'trees_jungle'`, 
-`'trees_jungle_edge'`, `'trees_mountain'`, `'trees_mountain_edge'`, `'trees_savanna'`, `'trees_shattered_savanna'`, 
-`'trees_water'`, `'twisting_vines'`, `'vines'`, `'void_start_platform'`, `'warm_ocean_vegetation'`, 
-`'warped_forest_vegetation'`, `'warped_fungi'`, `'warped_fungi_planted'`, `'weeping_vines'`
+Use `plop():'features'` and `plop():'configured_features'` for a list of available options. Your output may vary based on
+datapacks installed in your world.
 
-### Custom Scarpet Features (1.16.2+)
+### Custom Scarpet Features
+
+Use `plop():'scarpet_custom'` for a full list.
+
+These contain some popular features and structures that are impossible or difficult to obtain with vanilla structures/features.
 
 * `'bastion_remnant_bridge'` - Bridge version of a bastion remnant
 * `'bastion_remnant_hoglin_stable'` - Hoglin stables version of a bastion remnant
@@ -2638,7 +2649,7 @@ making it preferred for scoping ungenerated terrain, but it takes some compute r
 Unlike `'structure'` this will return a tentative structure location. Random factors in world generation may prevent
 the actual structure from forming.
   
-If structure is specified, it will return `null` if a chunk is not eligible, `true` if the structure should appear, or 
+If structure is specified, it will return `null` if a chunk is not eligible or invalid, `true` if the structure should appear, or 
 a map with two values: `'box'` for a pair of coordinates indicating bounding box of the structure, and `'pieces'` for 
 list of elements of the structure (as a tuple), with its name, direction, and box coordinates of the piece.
 
@@ -2655,7 +2666,7 @@ the first case it returns a map of structures at a given position, keyed by stru
 the bounding box of the structure - a pair of two 3-value coords (see examples). When called with an extra structure 
 name, returns a map with two values, `'box'` for bounding box of the structure, and `'pieces'` for a list of 
 components for that structure, with their name, direction and two sets of coordinates 
-indicating the bounding box of the structure piece.
+indicating the bounding box of the structure piece. If structure is invalid, its data will be `null`.
 
 Requires a `Standard Structure` name (see above).
 
@@ -3418,10 +3429,10 @@ If called with `false` value, it will disable AI in the mob. `true` will enable 
 Sets if the entity obeys any collisions, including collisions with the terrain and basic physics. Not affecting 
 players, since they are controlled client side.
 
-### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?)`
+### `modify(e, 'effect', name?, duration?, amplifier?, show_particles?, show_icon?, ambient?)`
 
-Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true` 
-and `true`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
+Applies status effect to the living entity. Takes several optional parameters, which default to `0`, `true`, 
+`true` and `false`. If no duration is specified, or if it's null or 0, the effect is removed. If name is not specified,
 it clears all effects.
 
 ### `modify(e, 'home', null), modify(e, 'home', block, distance?), modify(e, 'home', x, y, z, distance?)`
@@ -3950,6 +3961,10 @@ Triggered when a server receives a request to deploy elytra, regardless if the f
 ### `__on_player_wakes_up(player)`
 Player wakes up from the bed mid sleep, but not when it is kicked out of bed because it finished sleeping.
 
+### `__on_player_escapes_sleep(player)`
+Same as `player_wakes_up` but only triggered when pressing the ESC button. Not sure why Mojang decided to send that event
+twice when pressing escape, but might be interesting to be able to detect that.
+
 ### `__on_player_starts_sneaking(player)`
 ### `__on_player_stops_sneaking(player)`
 ### `__on_player_starts_sprinting(player)`
@@ -4217,7 +4232,7 @@ Reads the `property` of the `team` if no `value` is specified. If a `value` is a
     
 * `color`
   * Type: String
-  * Options: See [team command](https://minecraft.gamepedia.com/Commands/team#Arguments) (same strings as `'teamcolor'` [command argument](https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md#command-argument-types] options))
+  * Options: See [team command](https://minecraft.gamepedia.com/Commands/team#Arguments) (same strings as `'teamcolor'` [command argument](https://github.com/gnembon/fabric-carpet/blob/master/docs/scarpet/Full.md#command-argument-types) options)
 
 * `displayName`
   * Type: String or FormattedText, when querying returns FormattedText
@@ -4417,6 +4432,12 @@ Consult section about container operations in `Expression` to learn about possib
 Excapes all the special characters in the string or nbt tag and returns a string that can be stored in nbt directly 
 as a string value.
 
+### `tag_matches(daddy_tag, baby_tag, match_lists?)`
+
+Utility returning `true` if `baby_tag` is fully contained in `daddy_tag`. Anything matches `null` baby tag, and
+Nothing is contained in a `null` daddy tag. If `match_lists` is specified and `false`, content of nested lists is ignored. 
+Default behaviour is to match them.
+
 ### `parse_nbt(tag)`
 
 Converts NBT tag to a scarpet value, which you can navigate through much better.
@@ -4498,6 +4519,18 @@ Example usages:
   // the reason why I backslash the second space is that otherwise command parser may contract consecutive spaces
   // not a problem in apps
 </pre>
+
+### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+
+Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
+ * `players` is either an online player or a list of players. When sending a single player, it will throw if the player is invalid or offline.
+ * `type` is either `'title'`, `'subtitle'`, `actionbar` or `clear`.
+   Note: `subtitle` will only be displayed if there is a title being displayed (can be an empty one)
+ * `title` is what title to send to the player. It is required except for `clear` type. Can be a text formatted using `format()`
+ * `...Ticks` are the number of ticks the title will stay in that state.
+   If not specified, it will use current defaults (those defaults may have changed from a previous `/title times` execution).
+   Executing with those will set the times to the specified ones.
+   Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
 ### `logger(msg), logger(type, msg)`
 
@@ -4723,7 +4756,7 @@ Available options in the scarpet app space:
   * `world_seed` - a numeric seed of the world
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
-  * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_change(rule, newValue)` event.
+  * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
  
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`

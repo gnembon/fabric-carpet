@@ -268,7 +268,7 @@ public class Scoreboards {
             if(!(propertyVal instanceof StringValue)) throw new InternalExpressionException("'team_property' requires a string as the second argument");
 
             switch (propertyVal.getString()) {
-                case "collision_rule":
+                case "collisionRule":
                     if(!modifying) {
                         Value ret = new StringValue(team.getCollisionRule().name);
                         return (_c, _t) -> ret;
@@ -293,7 +293,7 @@ public class Scoreboards {
                     team.setColor(color);
 
                     break;
-                case "death_message_visibility":
+                case "deathMessageVisibility":
                     if(!modifying) {
                         Value ret = new StringValue(team.getDeathMessageVisibilityRule().name);
                         return (_c, _t) -> ret;
@@ -306,7 +306,7 @@ public class Scoreboards {
                     team.setDeathMessageVisibilityRule(deathMessageVisibility);
 
                     break;
-                case "display_name":
+                case "displayName":
                     if(!modifying) {
                         Value ret = new FormattedTextValue(team.getDisplayName());
                         return (_c, _t) -> ret;
@@ -325,7 +325,7 @@ public class Scoreboards {
                     team.setDisplayName(displayName);
 
                     break;
-                case "friendly_fire":
+                case "friendlyFire":
                     if(!modifying) {
                         Value ret = new NumericValue(team.isFriendlyFireAllowed());
                         return (_c, _t) -> ret;
@@ -336,7 +336,7 @@ public class Scoreboards {
                     boolean friendlyFire = settingVal.getBoolean();
                     team.setFriendlyFireAllowed(friendlyFire);
                     break;
-                case "nametag_visibility":
+                case "nametagVisibility":
                     if(!modifying) {
                         Value ret = new StringValue(team.getNameTagVisibilityRule().name);
                         return (_c, _t) -> ret;
@@ -367,7 +367,7 @@ public class Scoreboards {
 
                     team.setPrefix(prefix);
                     break;
-                case "see_friendly_invisibles":
+                case "seeFriendlyInvisibles":
                     if(!modifying) {
                         Value ret = new NumericValue(team.shouldShowFriendlyInvisibles());
                         return (_c, _t) -> ret;

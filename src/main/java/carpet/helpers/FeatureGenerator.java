@@ -49,7 +49,7 @@ public class FeatureGenerator
             return custom.plop(world, pos);
         }
         Identifier id = new Identifier(featureName);
-        ConfiguredStructureFeature<?, ?> structureFeature = BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.get(id);
+        ConfiguredStructureFeature<?, ?> structureFeature = world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).get(id);
         if (structureFeature != null)
         {
             return ((StructureFeatureInterface)structureFeature.feature).plopAnywhere(
@@ -58,7 +58,7 @@ public class FeatureGenerator
 
         }
 
-        ConfiguredFeature<?, ?> feature = BuiltinRegistries.CONFIGURED_FEATURE.get(id);
+        ConfiguredFeature<?, ?> feature = world.getRegistryManager().get(Registry.CONFIGURED_FEATURE_WORLDGEN).get(id);
         if (feature != null)
         {
             CarpetSettings.skipGenerationChecks = true;
@@ -77,7 +77,7 @@ public class FeatureGenerator
     public static ConfiguredStructureFeature<?, ?> resolveConfiguredStructure(String name, ServerWorld world, BlockPos pos)
     {
         Identifier id = new Identifier(name);
-        ConfiguredStructureFeature<?, ?> configuredStructureFeature =  BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.get(id);
+        ConfiguredStructureFeature<?, ?> configuredStructureFeature =  world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).get(id);
         if (configuredStructureFeature != null) return configuredStructureFeature;
         StructureFeature<?> structureFeature = Registry.STRUCTURE_FEATURE.get(id);
         if (structureFeature == null) return null;
@@ -137,7 +137,7 @@ public class FeatureGenerator
     {
         ConfiguredStructureFeature<?, ?> configuredFeature = world.getBiome(pos).getGenerationSettings().method_30978(structure.configure(null));
         if (configuredFeature.config != null || !tryHard) return configuredFeature;
-        return BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.getEntries().stream().
+        return world.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).getEntries().stream().
                 filter(cS -> cS.getValue().feature == structure).
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
@@ -168,7 +168,7 @@ public class FeatureGenerator
         return null;
     }
 
-    private static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
+    public static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
         put("oak_bees", simpleTree(ConfiguredFeatures.OAK.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
         put("fancy_oak_bees", simpleTree(ConfiguredFeatures.FANCY_OAK.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
         put("birch_bees", simpleTree(ConfiguredFeatures.BIRCH.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));

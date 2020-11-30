@@ -104,7 +104,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return id.toString();
     }
 
-    public static NBTSerializableValue parseString(String nbtString)
+    public static NBTSerializableValue parseString(String nbtString, boolean fail)
     {
         Tag tag;
         try
@@ -113,7 +113,8 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         catch (CommandSyntaxException e)
         {
-           throw new InternalExpressionException("Incorrect NBT tag: nbtString");
+            if (fail) throw new InternalExpressionException("Incorrect NBT tag: "+ nbtString);
+            return null;
         }
         NBTSerializableValue value = new NBTSerializableValue(tag);
         value.nbtString = null;
@@ -331,7 +332,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             return v;
         if (v instanceof NullValue)
             return Value.NULL;
-        return NBTSerializableValue.parseString(v.getString());
+        return NBTSerializableValue.parseString(v.getString(), true);
     }
 
 

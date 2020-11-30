@@ -17,6 +17,12 @@ __on_player_wakes_up(player) -> (
     print('Player '+player+' wakes up')
 );
 
+__on_player_escapes_sleep(player) -> (
+    print('');
+    print('__on_player_escapes_sleep(player)');
+    print('Player '+player+' wakes up using ESC key')
+);
+
 __on_player_rides(player, forward, strafe, jumping, sneaking) ->
 (
 	print('');

@@ -149,7 +149,7 @@ public abstract class Fluff
         {
             try
             {
-                return (c, type_ignored) -> AbstractOperator.this.eval(v1.evalValue(c), v2.evalValue(c));
+                return (c, type_ignored) -> AbstractOperator.this.eval(v1.evalValue(c, type), v2.evalValue(c, type));
             }
             catch (RuntimeException exc)
             {
