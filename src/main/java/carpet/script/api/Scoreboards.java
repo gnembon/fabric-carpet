@@ -407,126 +407,125 @@ public class Scoreboards {
         {
             BossBarManager bossBarManager = ((CarpetContext)c).s.getMinecraftServer().getBossBarManager();
             if(lv.size() > 3) throw new InternalExpressionException("'bossbar' accepts max three arguments");
+
             if(lv.size() == 0) {
                 Value ret = ListValue.wrap(bossBarManager.getAll().stream().map(CommandBossBar::getId).map(Identifier::toString).map(StringValue::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
-            } else if(lv.size() == 1) {
-                String id = lv.get(0).evalValue(c).getString();
-                Identifier identifier;
-                try {
-                    identifier = new Identifier(id);
-                } catch (InvalidIdentifierException invalidIdentifierException) {
-                    return LazyValue.NULL;
-                }
+            }
+
+            String id = lv.get(0).evalValue(c).getString();
+            Identifier identifier;
+            try {
+                identifier = new Identifier(id);
+            } catch (InvalidIdentifierException invalidIdentifierException) {
+                return LazyValue.NULL;
+            }
+
+            if(lv.size() == 1) {
                 if(bossBarManager.get(identifier) != null) return LazyValue.FALSE;
                 Value ret = StringValue.of(bossBarManager.add(identifier,new LiteralText(id)).getId().toString());
                 return (_c, _t) -> ret;
-            } else {
-                String id = lv.get(0).evalValue(c).getString();
-                Identifier identifier;
-                try {
-                    identifier = new Identifier(id);
-                } catch (InvalidIdentifierException invalidIdentifierException) {
-                    return LazyValue.NULL;
-                }
-                String property = lv.get(1).evalValue(c).getString();
-                CommandBossBar bossBar = bossBarManager.get(identifier);
-                Value propertyValue;
-                if(lv.size() == 3) {
-                    propertyValue = lv.get(2).evalValue(c);
-                } else {
-                    propertyValue = null;
-                }
-                if(bossBar == null) return LazyValue.NULL;
-                switch (property) {
-                    case "color":
-                        if(propertyValue == null) {
-                            BossBar.Color color = (bossBar).getColor();
-                            if(color == null) return LazyValue.NULL;
-                            return (_c, _t) -> StringValue.of(color.getName());
-                        }
-
-                        BossBar.Color color = BossBar.Color.byName(propertyValue.getString());
-                        if(color == null) return LazyValue.NULL;
-                        bossBar.setColor(BossBar.Color.byName(propertyValue.getString()));
-                        return LazyValue.TRUE;
-                    case "max":
-                        if(propertyValue == null) return (_c, _t) -> NumericValue.of(bossBar.getMaxValue());
-
-                        if(!(propertyValue instanceof NumericValue)) throw new InternalExpressionException("'bossbar' requires a number as the value for the property " + property);
-                        bossBar.setMaxValue(((NumericValue) propertyValue).getInt());
-                        return LazyValue.TRUE;
-                    case "name":
-                        if(propertyValue == null) return (_c, _t) -> new FormattedTextValue(bossBar.getName());
-
-                        if(propertyValue instanceof FormattedTextValue) {
-                            bossBar.setName(((FormattedTextValue) propertyValue).getText());
-                        } else {
-                            bossBar.setName(new LiteralText(propertyValue.getString()));
-                        }
-                        return LazyValue.TRUE;
-                    case "add_player":
-                        if(propertyValue == null) throw new InternalExpressionException("Bossbar property " + property + " can't be queried, add a third parameter");
-
-                        if(propertyValue instanceof ListValue) {
-                            ((ListValue) propertyValue).getItems().forEach((v)->{
-                                ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext)c).s.getMinecraftServer(),propertyValue);
-                                if(player != null) bossBar.addPlayer(player);
-                            });
-
-                            return LazyValue.TRUE;
-                        } else {
-                            ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getMinecraftServer(), propertyValue);
-                            if(player != null) {
-                                bossBar.addPlayer(player);
-                                return LazyValue.TRUE;
-                            } else {
-                                return LazyValue.FALSE;
-                            }
-                        }
-                    case "players":
-                        if(propertyValue == null) {
-                            return (_c, _t) -> ListValue.wrap(bossBar.getPlayers().stream().map(EntityValue::new).collect(Collectors.toList()));
-                        }
-
-                        if(propertyValue instanceof ListValue) {
-                            bossBar.clearPlayers();
-                            ((ListValue) propertyValue).getItems().forEach((v)->{
-                                ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext)c).s.getMinecraftServer(),v);
-                                if(player != null) bossBar.addPlayer(player);
-                            });
-                            return LazyValue.TRUE;
-                        } else {
-                            throw new InternalExpressionException("'bossbar' value for property " + property + " needs to be a List");
-                        }
-                    case "style":
-                        if(propertyValue == null) {
-                            return (_c, _t) -> StringValue.of(bossBar.getOverlay().getName());
-                        }
-
-                        BossBar.Style style = BossBar.Style.byName(propertyValue.getString());
-                        if(style == null) throw new InternalExpressionException("'" + propertyValue.getString() + "' is not a valid value for property " + property);
-                        bossBar.setOverlay(style);
-                        return LazyValue.TRUE;
-                    case "value":
-                        if(propertyValue == null) return (_c, _t) -> NumericValue.of(bossBar.getValue());
-
-                        if(!(propertyValue instanceof NumericValue)) throw new InternalExpressionException("'bossbar' requires a number as the value for the property " + property);
-                        bossBar.setValue(((NumericValue) propertyValue).getInt());
-                        return LazyValue.TRUE;
-                    case "visible":
-                        if(propertyValue == null) return (_c, _t) -> new NumericValue(bossBar.isVisible());
-
-                        bossBar.setVisible(propertyValue.getBoolean());
-                        return LazyValue.TRUE;
-                    case "remove":
-                        bossBarManager.remove(bossBar);
-                        return LazyValue.TRUE;
-                    default:
-                        throw new InternalExpressionException("Unknown bossbar property " + property);
-                }
             }
 
+            String property = lv.get(1).evalValue(c).getString();
+
+            CommandBossBar bossBar = bossBarManager.get(identifier);
+            if(bossBar == null) return LazyValue.NULL;
+
+            Value propertyValue = (lv.size() == 3)?lv.get(2).evalValue(c):null;
+
+            switch (property) {
+                case "color":
+                    if(propertyValue == null) {
+                        BossBar.Color color = (bossBar).getColor();
+                        if(color == null) return LazyValue.NULL;
+                        return (_c, _t) -> StringValue.of(color.getName());
+                    }
+
+                    BossBar.Color color = BossBar.Color.byName(propertyValue.getString());
+                    if(color == null) return LazyValue.NULL;
+                    bossBar.setColor(BossBar.Color.byName(propertyValue.getString()));
+                    return LazyValue.TRUE;
+                case "max":
+                    if(propertyValue == null) return (_c, _t) -> NumericValue.of(bossBar.getMaxValue());
+
+                    if(!(propertyValue instanceof NumericValue)) throw new InternalExpressionException("'bossbar' requires a number as the value for the property " + property);
+                    bossBar.setMaxValue(((NumericValue) propertyValue).getInt());
+                    return LazyValue.TRUE;
+                case "name":
+                    if(propertyValue == null) return (_c, _t) -> new FormattedTextValue(bossBar.getName());
+
+                    if(propertyValue instanceof FormattedTextValue) {
+                        bossBar.setName(((FormattedTextValue) propertyValue).getText());
+                    } else {
+                        bossBar.setName(new LiteralText(propertyValue.getString()));
+                    }
+                    return LazyValue.TRUE;
+                case "add_player":
+                    if(propertyValue == null) throw new InternalExpressionException("Bossbar property " + property + " can't be queried, add a third parameter");
+
+                    if(propertyValue instanceof ListValue) {
+                        ((ListValue) propertyValue).getItems().forEach((v)->{
+                            ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext)c).s.getMinecraftServer(),propertyValue);
+                            if(player != null) bossBar.addPlayer(player);
+                        });
+                        return LazyValue.TRUE;
+                    }
+
+                    ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getMinecraftServer(), propertyValue);
+                    if(player != null) {
+                        bossBar.addPlayer(player);
+                        return LazyValue.TRUE;
+                    }
+                    return LazyValue.FALSE;
+                case "players":
+                    if(propertyValue == null) {
+                        return (_c, _t) -> ListValue.wrap(bossBar.getPlayers().stream().map(EntityValue::new).collect(Collectors.toList()));
+                    }
+
+                    if(propertyValue instanceof ListValue) {
+                        bossBar.clearPlayers();
+                        ((ListValue) propertyValue).getItems().forEach((v) -> {
+                            ServerPlayerEntity p = EntityValue.getPlayerByValue(((CarpetContext) c).s.getMinecraftServer(), v);
+                            if (p != null) bossBar.addPlayer(p);
+                        });
+                        return LazyValue.TRUE;
+                    }
+
+
+                    ServerPlayerEntity p = EntityValue.getPlayerByValue(((CarpetContext) c).s.getMinecraftServer(), propertyValue);
+                    bossBar.clearPlayers();
+                    if (p != null) {
+                        bossBar.addPlayer(p);
+                        return LazyValue.TRUE;
+                    }
+                    return LazyValue.FALSE;
+                case "style":
+                    if(propertyValue == null) {
+                        return (_c, _t) -> StringValue.of(bossBar.getOverlay().getName());
+                    }
+
+                    BossBar.Style style = BossBar.Style.byName(propertyValue.getString());
+                    if(style == null) throw new InternalExpressionException("'" + propertyValue.getString() + "' is not a valid value for property " + property);
+                    bossBar.setOverlay(style);
+                    return LazyValue.TRUE;
+                case "value":
+                    if(propertyValue == null) return (_c, _t) -> NumericValue.of(bossBar.getValue());
+
+                    if(!(propertyValue instanceof NumericValue)) throw new InternalExpressionException("'bossbar' requires a number as the value for the property " + property);
+                    bossBar.setValue(((NumericValue) propertyValue).getInt());
+                    return LazyValue.TRUE;
+                case "visible":
+                    if(propertyValue == null) return (_c, _t) -> new NumericValue(bossBar.isVisible());
+
+                    bossBar.setVisible(propertyValue.getBoolean());
+                    return LazyValue.TRUE;
+                case "remove":
+                    bossBarManager.remove(bossBar);
+                    return LazyValue.TRUE;
+                default:
+                    throw new InternalExpressionException("Unknown bossbar property " + property);
+            }
         });
     }
 }
