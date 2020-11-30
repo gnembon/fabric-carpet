@@ -12,6 +12,7 @@ block_tick
 block_tags
 blocks_daylight
 blocks_movement
+bossbar
 brightness
 chunk_tickets
 crafting_remaining_item
@@ -92,10 +93,10 @@ scoreboard_remove
 scoreboard_display
 tag_matches
 team_add
-team_list
-team_remove
 team_leave
+team_list
 team_property
+team_remove
 read_file
 see_sky
 set
