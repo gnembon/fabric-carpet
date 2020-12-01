@@ -714,10 +714,6 @@ Modifies directly player raw hunger components. Has no effect on non-players
 
 Sets the absorption value for the player. Each point is half a yellow heart.
 
-### `modify(e, 'score', value)`
-
-Sets the score of a player. Doesn't affect player xp, and is displayed upon death.
-
 ### `modify(e, 'add_xp', value)`
 ### `modify(e, 'xp_level', value)`
 ### `modify(e, 'xp_score', value)` 
