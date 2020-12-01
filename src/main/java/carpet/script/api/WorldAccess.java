@@ -434,7 +434,7 @@ public class WorldAccess {
                         ticks = worldProperties.getClearWeatherTime();
                         break;
                     case "rain":
-                        ticks = world.isRaining()? worldProperties.getRainTime():0;//cos if not it gives 1 for ome reason
+                        ticks = world.isRaining()? worldProperties.getRainTime():0;//cos if not it gives 1 for some reason
                         break;
                     case "thunder":
                         ticks = world.isThundering()? worldProperties.getThunderTime():0;//same dealio here
@@ -456,10 +456,10 @@ public class WorldAccess {
                         break;
 
                     case "thunder":
-                        world.setWeather(//setting to previous values, cos dont wanna touch those
-                                worldProperties.getClearWeatherTime(),
+                        world.setWeather(
+                                0,
                                 ticks,//this is used to set thunder time, idk why...
-                                world.isRaining(),// use this method cos it seems more reliable
+                                true,
                                 true
                         );
                         break;
