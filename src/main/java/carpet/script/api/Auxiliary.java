@@ -447,28 +447,42 @@ public class Auxiliary {
             if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
             Value res = lv.get(0).evalValue(c);
-            if (lv.size() == 2)
-            {
-                ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), res);
-                if (player == null) return LazyValue.NULL;
+            Value playersVal = Value.NULL;
+            if (lv.size() == 2){
                 playersVal = res;
                 res = lv.get(1).evalValue(c);
             }
-            if (res instanceof FormattedTextValue)
-            {
-                s.sendFeedback(((FormattedTextValue) res).getText(), false);
-            }
-            else
-            {
-                if (s.getEntity() instanceof PlayerEntity)
-                {
-                    Messenger.m((PlayerEntity) s.getEntity(), "w " + res.getString());
+
+            if(playersVal instanceof ListValue){
+
+                List<Value> players = ((ListValue) playersVal).getItems();
+                for(Value playerVal:players){
+                    ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), playerVal);
+                    if (player == null) return LazyValue.NULL;
+                    if(res instanceof FormattedTextValue)
+                        player.getCommandSource().sendFeedback(((FormattedTextValue) res).getText(), false);
+                    else
+                        Messenger.m(player, "w "+res.getString());
                 }
+
+            } else if(playersVal instanceof EntityValue){
+
+                ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), playersVal);
+                if (player == null) return LazyValue.NULL;
+                if(res instanceof FormattedTextValue)
+                    player.getCommandSource().sendFeedback(((FormattedTextValue) res).getText(), false);
                 else
-                {
+                    Messenger.m(player, "w "+res.getString());
+
+            } else {
+
+                if (res instanceof FormattedTextValue)
+                    s.sendFeedback(((FormattedTextValue) res).getText(), false);
+                else
                     Messenger.m(s, "w " + res.getString());
-                }
+
             }
+
             Value finalRes = res;
             return (_c, _t) -> finalRes; // pass through for variables
         });

@@ -195,7 +195,8 @@ produce an exception.
 
 ### `print(expr)`, `print(player/player_list, expr)`
 
-Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr. Can optionally define player or list of players to send the message to
+Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format(l(components, ...))`
 
