@@ -513,7 +513,7 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
-        put("xp_points", (e, a)->{//todo add modify implementation to docs.
+        put("xp_progress", (e, a)->{
             if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceProgress);
             return Value.NULL;
         });
@@ -1349,22 +1349,19 @@ public class EntityValue extends Value
         });
 
         put("add_xp", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperience((int) NumericValue.asNumber(v).getLong());
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperience(NumericValue.asNumber(v).getInt());
         });
 
-        put("add_xp_level", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperienceLevels((int) NumericValue.asNumber(v).getLong());
+        put("xp_level", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperienceLevels(NumericValue.asNumber(v).getInt()-((PlayerEntity) e).experienceLevel);
         });
 
-        put("score", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).setScore((int) NumericValue.asNumber(v).getLong());
+        put("xp_score", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setScore(NumericValue.asNumber(v).getInt());
         });
 
-        put("add_score", (e, v) -> {
-            if (e instanceof PlayerEntity) ((PlayerEntity) e).addScore((int) NumericValue.asNumber(v).getLong());
-        });
         put("saturation", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient(NumericValue.asNumber(v).getFloat());
         });
 
         put("air", (e, v) -> e.setAir(NumericValue.asNumber(v).getInt()));

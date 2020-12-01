@@ -394,7 +394,7 @@ Gets the absorption of the player (yellow hearts, e.g when having a golden apple
 
 ### `query(e,'xp')`
 ### `query(e,'xp_level')`
-### `query(e,'xp_points')`
+### `query(e,'xp_progress')`
 ### `query(e,'score')`
 
 Numbers related to player's xp. `xp` is the overall xp in the bar, `xp_level` is the levels seen in the hotbar,
@@ -719,10 +719,10 @@ Sets the absorption value for the player. Each point is half a yellow heart.
 Sets the score of a player. Doesn't affect player xp, and is displayed upon death.
 
 ### `modify(e, 'add_xp', value)`
-### `modify(e, 'add_xp_level', value)`
-### `modify(e, 'add_score', value)` 
+### `modify(e, 'xp_level', value)`
+### `modify(e, 'xp_score', value)` 
 
-Adds `score`, `xp` or `xp_level` to the current corresponding player values - that's the method you probably want to use 
+Manipulates player xp values - that's the method you probably want to use 
 to manipulate how much 'xp' an action should give.
 
 ### `modify(e, 'air', ticks)`
