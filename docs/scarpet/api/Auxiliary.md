@@ -329,7 +329,12 @@ write_file('foo', 'shared_raw', 'five\n', 'six\n');
 
 read_file('foo', 'shared_text')     => ['one', 'two', 'three', '', 'four', '', 'five', 'six']
 </pre>
-  
+
+### `gamerule()`,`gamerule(rule)`,`gamerule(rule, value)`
+
+If run with no args, returns map of gamerules to their values.
+If run with just the rule name (lowercase, with underscores, e.g `do_mob_loot` instead of `doMobLoot`)
+
 ### `run(expr)`
 
 Runs a vanilla command from the string result of the `expr` and returns a triple of success count, 

@@ -18,7 +18,9 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.GameRule;
 import carpet.script.utils.ShapeDispatcher;
+import carpet.script.utils.SystemInfo;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -67,6 +69,7 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -554,6 +557,39 @@ public class Auxiliary {
                 values = ((ListValue) values.get(0)).getItems();
             Value ret = new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
             return (cc, tt) -> ret;
+        });
+
+        expression.addLazyFunction("gamerule", -1, (c, t, lv)->{
+
+            CarpetContext cc = (CarpetContext) c;
+
+            if (lv.size() == 0)
+            {
+                Value ret = GameRule.getAll(cc);
+                return (_c, _t) -> ret;
+            }
+
+            String what = lv.get(0).evalValue(c).getString();
+            GameRules.Key res = GameRule.gamerules.get(what);
+            if (res == null) throw new InternalExpressionException("Unknown gamerule: " + what);
+
+            if (lv.size() == 1)
+                return (_c, _t) -> GameRule.getRuleValue(res, cc.s.getWorld());
+
+            if(lv.size()==2){
+                NumericValue val = (NumericValue) lv.get(1).evalValue(c);
+
+                GameRules.Rule ruleValue = cc.s.getWorld().getGameRules().get(res);
+                if(ruleValue instanceof GameRules.BooleanRule)
+                    ((GameRules.BooleanRule) ruleValue).set(val.getBoolean(),cc.s.getMinecraftServer());
+                else
+                    ruleValue.setValue(new GameRules.IntRule(null,val.getInt()),cc.s.getMinecraftServer());
+
+                return LazyValue.TRUE;
+            }
+
+            throw new InternalExpressionException("'gamerule' requires between 0 and 2 parameters");
+
         });
 
         expression.addLazyFunction("run", 1, (c, t, lv) -> {
