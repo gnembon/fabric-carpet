@@ -18,6 +18,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -84,7 +85,7 @@ public class ScriptCommand
     private static CompletableFuture<Suggestions> suggestCode(
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
-    )
+    ) throws CommandSyntaxException
     {
         CarpetScriptHost currentHost = getHost(context);
         String previous = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
@@ -291,7 +292,7 @@ public class ScriptCommand
                                                         )?1:0)))))).
                 then(literal("remove_from").
                         then(argument("event", StringArgumentType.word()).
-                                suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.publicEvents(CarpetServer.scriptServer).stream().map(ev -> ev.name).collect(Collectors.toList()) ,bb)).
+                                suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.publicEvents(CarpetServer.scriptServer).stream().filter(CarpetEventServer.Event::isNeeded).map(ev -> ev.name).collect(Collectors.toList()) ,bb)).
                                 then(argument("call", StringArgumentType.greedyString()).
                                         suggests( (cc, bb) -> suggestMatching(CarpetEventServer.Event.getEvent(StringArgumentType.getString(cc, "event"), CarpetServer.scriptServer).handler.callList.stream().map(CarpetEventServer.Callback::toString), bb)).
                                         executes( (cc) -> CarpetServer.scriptServer.events.removeEventFromCommand(
@@ -311,14 +312,14 @@ public class ScriptCommand
                                 suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.modules.keySet(), bb)).
                                 then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t))));
     }
-    private static CarpetScriptHost getHost(CommandContext<ServerCommandSource> context)
+    private static CarpetScriptHost getHost(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
     {
         CarpetScriptHost host;
         try
         {
             String name = StringArgumentType.getString(context, "app").toLowerCase(Locale.ROOT);
             CarpetScriptHost parentHost = CarpetServer.scriptServer.modules.getOrDefault(name, CarpetServer.scriptServer.globalHost);
-            host =  parentHost.retrieveForExecution(context.getSource());
+            host =  parentHost.retrieveOwnForExecution(context.getSource());
         }
         catch (IllegalArgumentException ignored)
         {
@@ -327,7 +328,7 @@ public class ScriptCommand
         host.setChatErrorSnooper(context.getSource());
         return host;
     }
-    private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c)
+    private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c) throws CommandSyntaxException
     {
         CarpetScriptHost host = getHost(c);
         return host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
@@ -350,7 +351,7 @@ public class ScriptCommand
         }
         return 1;
     }
-    private static int listGlobals(CommandContext<ServerCommandSource> context, boolean all)
+    private static int listGlobals(CommandContext<ServerCommandSource> context, boolean all) throws CommandSyntaxException
     {
         CarpetScriptHost host = getHost(context);
         ServerCommandSource source = context.getSource();
@@ -425,7 +426,7 @@ public class ScriptCommand
         //host.resetErrorSnooper();  // lets say no need to reset the snooper in case something happens on the way
     }
 
-    private static int invoke(CommandContext<ServerCommandSource> context, String call, BlockPos pos1, BlockPos pos2,  String args)
+    private static int invoke(CommandContext<ServerCommandSource> context, String call, BlockPos pos1, BlockPos pos2,  String args) throws CommandSyntaxException
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
@@ -453,7 +454,7 @@ public class ScriptCommand
     }
 
 
-    private static int compute(CommandContext<ServerCommandSource> context, String expr)
+    private static int compute(CommandContext<ServerCommandSource> context, String expr) throws CommandSyntaxException
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
@@ -463,7 +464,7 @@ public class ScriptCommand
         });
     }
 
-    private static int scriptScan(CommandContext<ServerCommandSource> context, BlockPos origin, BlockPos a, BlockPos b, String expr)
+    private static int scriptScan(CommandContext<ServerCommandSource> context, BlockPos origin, BlockPos a, BlockPos b, String expr) throws CommandSyntaxException
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
@@ -512,7 +513,7 @@ public class ScriptCommand
 
 
     private static int scriptFill(CommandContext<ServerCommandSource> context, BlockPos origin, BlockPos a, BlockPos b, String expr,
-                                BlockStateArgument block, Predicate<CachedBlockPosition> replacement, String mode)
+                                BlockStateArgument block, Predicate<CachedBlockPosition> replacement, String mode) throws CommandSyntaxException
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);

@@ -1387,7 +1387,7 @@ public class EntityValue extends Value
         EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
         if (event == null)
             throw new InternalExpressionException("Unknown entity event: " + eventName);
-        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host.getName(), fun, args);
+        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host, fun, args);
     }
 
     @Override

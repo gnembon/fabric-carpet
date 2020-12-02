@@ -961,6 +961,7 @@ public class Auxiliary {
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'signal' requires at least one argument");
+            CarpetContext cc = (CarpetContext)c;
             CarpetScriptServer server = ((CarpetScriptHost)c.host).getScriptServer();
             String eventName = lv.get(0).evalValue(c).getString();
             // no such event yet
@@ -975,10 +976,10 @@ public class Auxiliary {
                     args = FunctionValue.resolveArgs(lv.subList(2, lv.size()), c, t);
                 }
             }
-            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, (CarpetScriptHost) c.host, player, args);
+            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, cc, player, args);
             if (counts < 0) return LazyValue.NULL;
             Value ret = new NumericValue(counts);
-            return (cc, tt) -> ret;
+            return (c_, t_) -> ret;
         });
     }
 

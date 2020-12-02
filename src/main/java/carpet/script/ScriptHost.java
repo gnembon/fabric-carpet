@@ -318,13 +318,19 @@ public abstract class ScriptHost
         ScriptHost oldUserHost = userHosts.get(user);
         if (oldUserHost != null) return oldUserHost;
         ScriptHost userHost = this.duplicate();
-        userHost.modules.putAll(this.modules);
-        this.moduleData.forEach((key, value) -> userHost.moduleData.put(key, new ModuleData(key, value)));
-        // fixing imports
-        userHost.moduleData.forEach((module, data) -> data.setImportsBasedOn(userHost, this.moduleData.get(data.parent)));
         userHost.user = user;
+        this.transferToChild(userHost);
         userHosts.put(user, userHost);
         return userHost;
+    }
+
+    protected void transferToChild(ScriptHost host)
+    {
+        // adding imports
+        host.modules.putAll(this.modules);
+        this.moduleData.forEach((key, value) -> host.moduleData.put(key, new ModuleData(key, value)));
+        // fixing imports
+        host.moduleData.forEach((module, data) -> data.setImportsBasedOn(host, this.moduleData.get(data.parent)));
     }
 
     public void handleExpressionException(String msg, ExpressionException exc)
