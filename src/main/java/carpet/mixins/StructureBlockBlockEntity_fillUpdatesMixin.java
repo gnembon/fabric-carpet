@@ -17,15 +17,15 @@ public abstract class StructureBlockBlockEntity_fillUpdatesMixin
 {
     @Redirect(method = "place", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/structure/Structure;place(Lnet/minecraft/world/ServerWorldAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/structure/StructurePlacementData;Ljava/util/Random;)V"
+            target = "Lnet/minecraft/structure/Structure;place(Lnet/minecraft/world/ServerWorldAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/structure/StructurePlacementData;Ljava/util/Random;I)Z"
     ))
-    private void onStructurePlacen(Structure structure, ServerWorldAccess serverWorldAccess, BlockPos pos, StructurePlacementData placementData, Random random)
+    private boolean onStructurePlacen(Structure structure, ServerWorldAccess serverWorldAccess, BlockPos pos, BlockPos blockPos, StructurePlacementData placementData, Random random, int i)
     {
         if(!CarpetSettings.fillUpdates)
             CarpetSettings.impendingFillSkipUpdates = true;
         try
         {
-            structure.place(serverWorldAccess, pos, placementData, random);
+            return structure.place(serverWorldAccess, pos, blockPos, placementData, random, i); // serverWorldAccess, pos, placementData, random);
         }
         finally
         {

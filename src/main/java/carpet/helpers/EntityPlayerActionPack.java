@@ -305,7 +305,7 @@ public class EntityPlayerActionPack
                             BlockHitResult blockHit = (BlockHitResult) hit;
                             BlockPos pos = blockHit.getBlockPos();
                             Direction side = blockHit.getSide();
-                            if (pos.getY() < player.server.getWorldHeight() - (side == Direction.UP ? 1 : 0) && world.canPlayerModifyAt(player, pos))
+                            if (pos.getY() < player.getServerWorld().getTopHeightLimit() - (side == Direction.UP ? 1 : 0) && world.canPlayerModifyAt(player, pos))
                             {
                                 ActionResult result = player.interactionManager.interactBlock(player, world, player.getStackInHand(hand), hand, blockHit);
                                 if (result.isAccepted())
@@ -393,7 +393,7 @@ public class EntityPlayerActionPack
                         boolean blockBroken = false;
                         if (player.interactionManager.getGameMode().isCreative())
                         {
-                            player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                            player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.getServerWorld().getTopHeightLimit());
                             ap.blockHitDelay = 5;
                             blockBroken = true;
                         }
@@ -401,9 +401,9 @@ public class EntityPlayerActionPack
                         {
                             if (ap.currentBlock != null)
                             {
-                                player.interactionManager.processBlockBreakingAction(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                                player.interactionManager.processBlockBreakingAction(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, side, player.getServerWorld().getTopHeightLimit());
                             }
-                            player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                            player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, side, player.getServerWorld().getTopHeightLimit());
                             boolean notAir = !state.isAir();
                             if (notAir && ap.curBlockDamageMP == 0)
                             {
@@ -426,7 +426,7 @@ public class EntityPlayerActionPack
                             ap.curBlockDamageMP += state.calcBlockBreakingDelta(player, player.world, pos);
                             if (ap.curBlockDamageMP >= 1)
                             {
-                                player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.server.getWorldHeight());
+                                player.interactionManager.processBlockBreakingAction(pos, PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, side, player.getServerWorld().getTopHeightLimit());
                                 ap.currentBlock = null;
                                 ap.blockHitDelay = 5;
                                 blockBroken = true;
@@ -448,7 +448,7 @@ public class EntityPlayerActionPack
                 EntityPlayerActionPack ap = ((ServerPlayerEntityInterface) player).getActionPack();
                 if (ap.currentBlock == null) return;
                 player.world.setBlockBreakingInfo(-1, ap.currentBlock, -1);
-                player.interactionManager.processBlockBreakingAction(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.server.getWorldHeight());
+                player.interactionManager.processBlockBreakingAction(ap.currentBlock, PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.getServerWorld().getTopHeightLimit());
                 ap.currentBlock = null;
             }
         },

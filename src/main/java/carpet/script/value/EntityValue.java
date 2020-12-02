@@ -1295,7 +1295,7 @@ public class EntityValue extends Value
             GameMode toSet = v instanceof NumericValue ?
                     GameMode.byId(((NumericValue) v).getInt(), null) :
                     GameMode.byName(v.getString().toLowerCase(Locale.ROOT), null);
-            if (toSet != null) ((ServerPlayerEntity) e).setGameMode(toSet);
+            if (toSet != null) ((ServerPlayerEntity) e).changeGameMode(toSet);
         });
 
         put("jumping",(e,v)->{
