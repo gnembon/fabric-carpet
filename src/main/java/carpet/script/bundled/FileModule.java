@@ -23,6 +23,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 public class FileModule extends Module
 {
@@ -171,6 +172,20 @@ public class FileModule extends Module
             return result;
         }
         catch (IOException e)
+        {
+            return null;
+        }
+    }
+
+    public static Stream<Path> listFiles(Path dir, String ext)
+    {
+        boolean folderListing = ext.equals("folder");
+        try
+        {
+            return Files.list(dir).
+                    filter(path -> folderListing?Files.isDirectory(path):path.toString().endsWith(ext));
+        }
+        catch (IOException ignored)
         {
             return null;
         }
