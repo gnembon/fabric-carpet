@@ -217,6 +217,13 @@ public class ServerNetworkHandler
 
     }
 
+    public static String getPlayerStatus(ServerPlayerEntity player)
+    {
+        if (remoteCarpetPlayers.containsKey(player)) return "carpet "+remoteCarpetPlayers.get(player);
+        if (validCarpetPlayers.contains(player)) return "carpet "+CarpetSettings.carpetVersion;
+        return "vanilla";
+    }
+
     private static class DataBuilder
     {
         private CompoundTag tag;
