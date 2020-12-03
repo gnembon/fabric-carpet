@@ -3170,6 +3170,11 @@ Player's ping in milliseconds, or `null` if its not a player.
 
 Player's permission level, or `null` if not applicable for this entity.
 
+### `query(e, 'client_brand')`
+
+Returns recognized type of client of the client connected. Possible results include `'vanilla'`, or `'carpet <version>'` where 
+version indicates the version of the connected carpet client. 
+
 ### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
@@ -4791,7 +4796,6 @@ Available options in the scarpet app space:
   * `game_version` - base version of the game
   
  Server related properties
-
  * `server_motd` - the motd of the server visible when joining
  * `server_ip` - IP adress of the game hosted
  * `server_whitelisted` - boolean indicating whether the access to the server is only for whitelisted players
@@ -4807,7 +4811,10 @@ Available options in the scarpet app space:
  * `java_version` - version of Java
  * `java_bits` - number indicating how many bits the Java has, 32 or 64
  * `java_system_cpu_load` - current percentage of CPU used by the system
- * `java_process_cpu_load` - current percentage of CPU used by JVM# `/script run` command
+ * `java_process_cpu_load` - current percentage of CPU used by JVM
+ 
+ Scarpet related properties
+ * `scarpet_version` - returns the version of the carpet your scarpet comes with.# `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 
 commandblock, etc... The command receives 4 variables, `x`, `y`, `z` and `p` indicating position and 
