@@ -557,38 +557,6 @@ public class Auxiliary {
             return (cc, tt) -> ret;
         });
 
-        expression.addLazyFunction("gamerule", -1, (c, t, lv)->{
-
-            CarpetContext cc = (CarpetContext) c;
-
-            if (lv.size() == 0)
-                return (_c,_t) -> GameRule.getAll(cc);
-
-            Value whatVal = lv.get(0).evalValue(c);
-
-            if (lv.size() == 1)
-                return (_c, _t) -> GameRule.getAll(cc).get(whatVal);
-
-            String what = whatVal.toString();
-            GameRules.Key<?> res = GameRule.gamerules(cc).get(what);
-            if (res == null) throw new InternalExpressionException("Unknown gamerule: " + what);
-
-            if(lv.size()==2){
-                NumericValue val = (NumericValue) lv.get(1).evalValue(c);
-
-                GameRules.Rule ruleValue = cc.s.getWorld().getGameRules().get(res);
-                if(ruleValue instanceof GameRules.BooleanRule)
-                    ((GameRules.BooleanRule) ruleValue).set(val.getBoolean(),cc.s.getMinecraftServer());
-                else
-                    ruleValue.setValue(new GameRules.IntRule(null,val.getInt()),cc.s.getMinecraftServer());
-
-                return (_c,_t) -> val;
-            }
-
-            throw new InternalExpressionException("'gamerule' requires between 0 and 2 parameters");
-
-        });
-
         expression.addLazyFunction("run", 1, (c, t, lv) -> {
             BlockPos target = ((CarpetContext)c).origin;
             Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);

@@ -1,6 +1,5 @@
 package carpet.script.utils;
 
-import carpet.fakes.GameRulesInterface;
 import carpet.script.CarpetContext;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
