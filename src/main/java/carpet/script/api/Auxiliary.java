@@ -88,12 +88,12 @@ public class Auxiliary {
     public static final String MARKER_STRING = "__scarpet_marker";
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
 
-    public static String recognizeResource(Value value)
+    public static String recognizeResource(Value value, boolean isFloder)
     {
         String origfile = value.getString();
         String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
         file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
-        if (file.isEmpty())
+        if (file.isEmpty() && !isFloder)
         {
             throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
         }
@@ -786,7 +786,7 @@ public class Auxiliary {
         });
 
         expression.addLazyFunction("read_file", 2, (c, t, lv) -> {
-            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String resource = recognizeResource(lv.get(0).evalValue(c), false);
             String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
             boolean shared = origtype.startsWith("shared_");
             String type = shared ? origtype.substring(7) : origtype; //len(shared_)
@@ -809,7 +809,7 @@ public class Auxiliary {
         });
 
         expression.addLazyFunction("delete_file", 2, (c, t, lv) -> {
-            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String resource = recognizeResource(lv.get(0).evalValue(c), false);
             String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
             boolean shared = origtype.startsWith("shared_");
             String type = shared ? origtype.substring(7) : origtype; //len(shared_)
@@ -821,7 +821,7 @@ public class Auxiliary {
 
         expression.addLazyFunction("write_file", -1, (c, t, lv) -> {
             if (lv.size() < 3) throw new InternalExpressionException("'write_file' requires three or more arguments");
-            String resource = recognizeResource(lv.get(0).evalValue(c));
+            String resource = recognizeResource(lv.get(0).evalValue(c), false);
             String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
             boolean shared = origtype.startsWith("shared_");
             String type = shared ? origtype.substring(7) : origtype; //len(shared_)
@@ -874,7 +874,7 @@ public class Auxiliary {
             if (lv.size()>0)
             {
                 c.host.issueDeprecation("load_app_data(...) with arguments");
-                file = recognizeResource(lv.get(0).evalValue(c));
+                file = recognizeResource(lv.get(0).evalValue(c), false);
                 if (lv.size() > 1)
                 {
                     shared = lv.get(1).evalValue(c).getBoolean();
@@ -897,7 +897,7 @@ public class Auxiliary {
             if (lv.size()>1)
             {
                 c.host.issueDeprecation("store_app_data(...) with more than one argument");
-                file = recognizeResource(lv.get(1).evalValue(c));
+                file = recognizeResource(lv.get(1).evalValue(c), false);
                 if (lv.size() > 2)
                 {
                     shared = lv.get(2).evalValue(c).getBoolean();

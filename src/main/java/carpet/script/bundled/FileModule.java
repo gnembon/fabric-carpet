@@ -1,5 +1,7 @@
 package carpet.script.bundled;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.PositionTracker;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagReaders;
@@ -60,25 +62,40 @@ public class FileModule extends Module
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
+    // to read non-compound tags - these won't be compressed
     public static Tag read(File file)
     {
-        try (DataInputStream dataInput_1 = new DataInputStream(new FileInputStream(file)))
+        try
         {
-            byte byte_1 = dataInput_1.readByte();
-            if (byte_1 == 0)
+            return NbtIo.readCompressed(file);
+        }
+        catch (IOException e)
+        {
+            try
             {
+                return NbtIo.read(file);
+            }
+            catch (IOException ioException)
+            {
+                try (DataInputStream dataInput_1 = new DataInputStream(new FileInputStream(file)))
+                {
+                    byte byte_1 = dataInput_1.readByte();
+                    if (byte_1 == 0)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        dataInput_1.readUTF();
+                        return TagReaders.of(byte_1).read(dataInput_1, 0, PositionTracker.DEFAULT);
+                    }
+                }
+                catch (IOException ignored)
+                {
+                }
                 return null;
             }
-            else
-            {
-                dataInput_1.readUTF();
-                return TagReaders.of(byte_1).read(dataInput_1, 0, PositionTracker.DEFAULT);
-            }
         }
-        catch (IOException ignored)
-        {
-        }
-        return null;
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
@@ -87,18 +104,32 @@ public class FileModule extends Module
         File file_2 = new File(file.getAbsolutePath() + "_tmp");
         if (file_2.exists()) file_2.delete();
 
-        try(DataOutputStream dataOutputStream_1 = new DataOutputStream(new FileOutputStream(file_2)))
+        if (tag_1 instanceof CompoundTag)
         {
-            dataOutputStream_1.writeByte(tag_1.getType());
-            if (tag_1.getType() != 0)
+            try
             {
-                dataOutputStream_1.writeUTF("");
-                tag_1.write(dataOutputStream_1);
+                NbtIo.writeCompressed((CompoundTag) tag_1, file_2);
+            }
+            catch (IOException e)
+            {
+                return false;
             }
         }
-        catch (IOException e)
+        else
         {
-            return false;
+            try (DataOutputStream dataOutputStream_1 = new DataOutputStream(new FileOutputStream(file_2)))
+            {
+                dataOutputStream_1.writeByte(tag_1.getType());
+                if (tag_1.getType() != 0)
+                {
+                    dataOutputStream_1.writeUTF("");
+                    tag_1.write(dataOutputStream_1);
+                }
+            }
+            catch (IOException e)
+            {
+                return false;
+            }
         }
         if (file.exists()) file.delete();
         if (!file.exists()) file_2.renameTo(file);
