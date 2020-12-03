@@ -20,7 +20,6 @@ import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.GameRule;
 import carpet.script.utils.ShapeDispatcher;
-import carpet.script.utils.SystemInfo;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -52,7 +51,6 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -564,17 +562,16 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext) c;
 
             if (lv.size() == 0)
-            {
-                Value ret = GameRule.getAll(cc);
-                return (_c, _t) -> ret;
-            }
+                return (_c,_t) -> GameRule.getAll(cc);
 
-            String what = lv.get(0).evalValue(c).getString();
-            GameRules.Key res = GameRule.gamerules.get(what);
-            if (res == null) throw new InternalExpressionException("Unknown gamerule: " + what);
+            Value whatVal = lv.get(0).evalValue(c);
 
             if (lv.size() == 1)
-                return (_c, _t) -> GameRule.getRuleValue(res, cc.s.getWorld());
+                return (_c, _t) -> GameRule.getAll(cc).get(whatVal);
+
+            String what = whatVal.toString();
+            GameRules.Key<?> res = GameRule.gamerules(cc).get(what);
+            if (res == null) throw new InternalExpressionException("Unknown gamerule: " + what);
 
             if(lv.size()==2){
                 NumericValue val = (NumericValue) lv.get(1).evalValue(c);
@@ -585,7 +582,7 @@ public class Auxiliary {
                 else
                     ruleValue.setValue(new GameRules.IntRule(null,val.getInt()),cc.s.getMinecraftServer());
 
-                return LazyValue.TRUE;
+                return (_c,_t) -> val;
             }
 
             throw new InternalExpressionException("'gamerule' requires between 0 and 2 parameters");
