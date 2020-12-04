@@ -10,6 +10,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.s2c.play.HeldItemChangeS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.server.world.ServerWorld;
@@ -274,6 +275,12 @@ public class EntityPlayerActionPack
                 selectedSlot = inv.selectedSlot;
             dropItemFromSlot(selectedSlot, dropAll);
         }
+    }
+
+    public void setSlot(int slot)
+    {
+        player.inventory.selectedSlot = slot-1;
+        player.networkHandler.sendPacket(new HeldItemChangeS2CPacket(slot-1));
     }
 
     public enum ActionType
