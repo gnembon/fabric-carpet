@@ -9,6 +9,7 @@ import carpet.fakes.MobEntityInterface;
 import carpet.fakes.HungerManagerInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
+import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
@@ -600,6 +601,14 @@ public class EntityValue extends Value
                 if (isowner) return new StringValue("lan_host");
                 return new StringValue("lan player");
                 // realms?
+            }
+            return Value.NULL;
+        });
+
+        put("client_brand", (e, a) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                return StringValue.of(ServerNetworkHandler.getPlayerStatus((ServerPlayerEntity) e));
             }
             return Value.NULL;
         });
@@ -1413,7 +1422,7 @@ public class EntityValue extends Value
         EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
         if (event == null)
             throw new InternalExpressionException("Unknown entity event: " + eventName);
-        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host.getName(), fun, args);
+        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host, fun, args);
     }
 
     @Override

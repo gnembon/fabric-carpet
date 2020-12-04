@@ -366,6 +366,11 @@ Player's ping in milliseconds, or `null` if its not a player.
 
 Player's permission level, or `null` if not applicable for this entity.
 
+### `query(e, 'client_brand')`
+
+Returns recognized type of client of the client connected. Possible results include `'vanilla'`, or `'carpet <version>'` where 
+version indicates the version of the connected carpet client. 
+
 ### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 

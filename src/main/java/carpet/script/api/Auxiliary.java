@@ -33,6 +33,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
+import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
@@ -70,6 +71,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,17 +90,37 @@ import static java.lang.Math.min;
 public class Auxiliary {
     public static final String MARKER_STRING = "__scarpet_marker";
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
+    private static final Map<String, String> supportedTypes = ImmutableMap.of(
+            "raw", ".txt",
+            "text", ".txt",
+            "nbt", ".nbt",
+            "folder", "folder"
+    );
 
-    public static String recognizeResource(Value value)
+    public static String recognizeResource(Value value, boolean isFloder)
     {
         String origfile = value.getString();
         String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
         file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
-        if (file.isEmpty())
+        if (file.isEmpty() && !isFloder)
         {
             throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
         }
         return file;
+    }
+
+    public static Triple<String, String, Boolean> getFileDescriptor(List<LazyValue> lv, Context c, boolean isFloder)
+    {
+        if (lv.size() < 2) throw new InternalExpressionException("File functions require path and type as first two arguments");
+        String resource = recognizeResource(lv.get(0).evalValue(c), isFloder);
+        String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+        boolean shared = origtype.startsWith("shared_");
+        String type = shared ? origtype.substring(7) : origtype; //len(shared_)
+        if (!supportedTypes.containsKey(type))
+            throw new InternalExpressionException("Unsupported file type: "+origtype);
+        if (type.equals("folder") && !isFloder)
+            throw new InternalExpressionException("Folder types are no supported for this IO function");
+        return Triple.of(resource, type, shared);
     }
 
     public static void apply(Expression expression)
@@ -832,23 +854,29 @@ public class Auxiliary {
             return (_c, _t) -> res; // pass through for variables
         });
 
-        expression.addLazyFunction("read_file", 2, (c, t, lv) -> {
-            String resource = recognizeResource(lv.get(0).evalValue(c));
-            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            boolean shared = origtype.startsWith("shared_");
-            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
-            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
-                throw new InternalExpressionException("Unsupported file type: "+origtype);
+        expression.addLazyFunction("list_files", 2, (c, t, lv) ->
+        {
+            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, true);
+            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc.getLeft(), supportedTypes.get(fdesc.getMiddle()), fdesc.getRight());
+            if (files == null) return LazyValue.NULL;
+            Value ret = ListValue.wrap(files.map(StringValue::of).collect(Collectors.toList()));
+            return (cc, tt) -> ret;
+        });
+
+
+        expression.addLazyFunction("read_file", 2, (c, t, lv) ->
+        {
+            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
             Value retVal;
-            if (type.equals("nbt"))
+            if (fdesc.getMiddle().equals("nbt"))
             {
-                Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(resource, shared);
+                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
             else
             {
-                List<String> content = ((CarpetScriptHost) ((CarpetContext) c).host).readTextResource(resource, shared);
+                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc.getLeft(), fdesc.getRight());
                 if (content == null) return LazyValue.NULL;
                 retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
             }
@@ -856,33 +884,26 @@ public class Auxiliary {
         });
 
         expression.addLazyFunction("delete_file", 2, (c, t, lv) -> {
-            String resource = recognizeResource(lv.get(0).evalValue(c));
-            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            boolean shared = origtype.startsWith("shared_");
-            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
-            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
-                throw new InternalExpressionException("Unsupported file type: "+origtype);
-            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).removeResourceFile(resource, shared, type);
-            return success?LazyValue.TRUE:LazyValue.FALSE;
+            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
+            return ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle())
+                    ? LazyValue.TRUE
+                    : LazyValue.FALSE;
         });
 
         expression.addLazyFunction("write_file", -1, (c, t, lv) -> {
             if (lv.size() < 3) throw new InternalExpressionException("'write_file' requires three or more arguments");
-            String resource = recognizeResource(lv.get(0).evalValue(c));
-            String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
-            boolean shared = origtype.startsWith("shared_");
-            String type = shared ? origtype.substring(7) : origtype; //len(shared_)
-            if (!type.equals("raw") && !type.equals("text") && !type.equals("nbt"))
-                throw new InternalExpressionException("Unsupported file type: "+origtype);
+            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
+
+
             boolean success;
-            if (type.equals("nbt"))
+            if (fdesc.getMiddle().equals("nbt"))
             {
                 Value val = lv.get(2).evalValue(c);
                 NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                         ? (NBTSerializableValue) val
                         : new NBTSerializableValue(val.getString());
                 Tag tag = tagValue.getTag();
-                success = ((CarpetScriptHost)((CarpetContext)c).host).writeTagFile(tag, resource, shared);
+                success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc.getLeft(), fdesc.getRight());
             }
             else
             {
@@ -907,7 +928,7 @@ public class Auxiliary {
                         data.add(lv.get(i).evalValue(c).getString());
                     }
                 }
-                success = ((CarpetScriptHost) ((CarpetContext) c).host).appendLogFile(resource, shared, type, data);
+                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
             }
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
@@ -921,7 +942,7 @@ public class Auxiliary {
             if (lv.size()>0)
             {
                 c.host.issueDeprecation("load_app_data(...) with arguments");
-                file = recognizeResource(lv.get(0).evalValue(c));
+                file = recognizeResource(lv.get(0).evalValue(c), false);
                 if (lv.size() > 1)
                 {
                     shared = lv.get(1).evalValue(c).getBoolean();
@@ -944,7 +965,7 @@ public class Auxiliary {
             if (lv.size()>1)
             {
                 c.host.issueDeprecation("store_app_data(...) with more than one argument");
-                file = recognizeResource(lv.get(1).evalValue(c));
+                file = recognizeResource(lv.get(1).evalValue(c), false);
                 if (lv.size() > 2)
                 {
                     shared = lv.get(2).evalValue(c).getBoolean();
@@ -1008,6 +1029,7 @@ public class Auxiliary {
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'signal' requires at least one argument");
+            CarpetContext cc = (CarpetContext)c;
             CarpetScriptServer server = ((CarpetScriptHost)c.host).getScriptServer();
             String eventName = lv.get(0).evalValue(c).getString();
             // no such event yet
@@ -1022,10 +1044,10 @@ public class Auxiliary {
                     args = FunctionValue.resolveArgs(lv.subList(2, lv.size()), c, t);
                 }
             }
-            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, (CarpetScriptHost) c.host, player, args);
+            int counts = ((CarpetScriptHost)c.host).getScriptServer().events.signalEvent(eventName, cc, player, args);
             if (counts < 0) return LazyValue.NULL;
             Value ret = new NumericValue(counts);
-            return (cc, tt) -> ret;
+            return (c_, t_) -> ret;
         });
     }
 

@@ -276,13 +276,15 @@ Available output types:
 ### `read_file(resource, type)`
 ### `delete_file(resource, type)`
 ### `write_file(resource, type, data, ...)`
+### `list_files(resource, type)`
 
 With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
- content, or deletes the resource.
+ content, deletes the resource, or lists other files under this resource.
 
 Resource is identified by a path to the file.  
 A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
-from the name. Empty descriptors are invalid. Do not add file extensions to the descriptor - extensions are inferred
+from the name. Empty descriptors are invalid, except for `list_files` where it means the root folder.
+ Do not add file extensions to the descriptor - extensions are inferred
 based on the `type` of the file.
  
 Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
@@ -297,33 +299,26 @@ specific data directory is under `world/scripts/foo.data/...`, and shared data s
 
 The default no-name app, via `/script run` command can only save/load/read files from the shared space.
 
-Functions return `null` if an error is encounter or no file is present (for read and delete operations). Returns `true`
-for success writes and deletes, and requested data, based on the file type, for read operations.
-
-NBT files can be written once as they an store one tag at a time. Consecutive writes will overwrite previous data.
-
-Write operations to text files always result in appending to the existing file, so consecutive writes will increase
-the size of the file and add data to it. Since files are closed after each write, sending multiple lines of data to
-write is beneficial for writing speed. To send multiple packs of data, either provide them flat or as a list in the
-third argument.
- * `write_file('temp', 'text', 'foo', 'bar', 'baz')` or
- * write_file('temp', 'text', l('foo', 'bar', 'baz'))
+Functions return `null` if an error is encounter or no file is present (for read, list and delete operations). Returns `true`
+for success writes and deletes, and requested data, based on the file type, for read operations. It returns list of files 
+for folder listing.
  
-To log a single line of string
- 
-Supported values for resource `type` is:
+Supported values for resource `type` are:
  * `nbt` - NBT tag
  * `text` - text resource with automatic newlines added
  * `raw` - text resource without implied newlines
- * `shared_nbt`, `shared_text`, `shared_raw` - shared versions of the above
+ * `folder` - for `list_files` only - indicting folder listing instead of files
+ * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
  
 NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
 stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
 sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
-record to the file.
+record to the file. Since files are closed after each write, sending multiple lines of data to
+write is beneficial for writing speed. To send multiple packs of data, either provide them flat or as a list in the
+third argument.
 
 <pre>
-write_file('foo', 'shared_text, l('one', 'two'));
+write_file('foo', 'shared_text, ['one', 'two']);
 write_file('foo', 'shared_text', 'three\n', 'four\n');
 write_file('foo', 'shared_raw', 'five\n', 'six\n');
 
@@ -506,7 +501,6 @@ Available options in the scarpet app space:
   * `game_version` - base version of the game
   
  Server related properties
-
  * `server_motd` - the motd of the server visible when joining
  * `server_ip` - IP adress of the game hosted
  * `server_whitelisted` - boolean indicating whether the access to the server is only for whitelisted players
@@ -523,3 +517,7 @@ Available options in the scarpet app space:
  * `java_bits` - number indicating how many bits the Java has, 32 or 64
  * `java_system_cpu_load` - current percentage of CPU used by the system
  * `java_process_cpu_load` - current percentage of CPU used by JVM
+ 
+ Scarpet related properties
+ * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+

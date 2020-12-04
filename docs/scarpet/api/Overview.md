@@ -33,10 +33,10 @@ the app state and all players interactions run in the same context, sharing defi
 explicitly keyed with players, player names, uuids, etc.
 Even for `'player'` scoped apps, you can access specific player app with with commandblocks using
 `/execute as <player> run script in <app> run ...`.
-To access global/server state for a player app, you need to disown the command from any player, 
+To access global/server state for a player app, which you shouldn't do, you need to disown the command from any player, 
 so either use a command block, or any 
 arbitrary entity: `/execute as @e[type=bat,limit=1] run script in <app> globals` for instance, however
-running anything in the global scope for a `'player'` scoped app is not recommended.
+running anything in the global scope for a `'player'` scoped app is not intended.
 *   `'stay_loaded'`: defaults to `false`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
 This is to allow to store multiple apps on the server/world and selectively decide which one should be running at 

@@ -36,22 +36,15 @@ __config() ->
         'slime_chunks' -> ['__toggle', 'slime_chunks', 'chunks'],
         'portal coordinates' -> ['__toggle', 'coords', 'portals'],
         'portal links' -> ['__toggle', 'links', 'portals'],
-        '<shape> <radius> following <player>' -> ['display_shape', [null,0xffffffff], true],
-        '<shape> <radius> at <player>' -> ['display_shape', [null,0xffffffff], false],
-        '<shape> <radius> following <player> <color>' -> ['display_shape', true],
-        '<shape> <radius> at <player> <color>' -> ['display_shape', false],
+        '<shape> <radius> following <entities>' -> ['display_shape', [null,0xffffffff], true],
+        '<shape> <radius> at <entities>' -> ['display_shape', [null,0xffffffff], false],
+        '<shape> <radius> following <entities> <color>' -> ['display_shape', true],
+        '<shape> <radius> at <entities> <color>' -> ['display_shape', false],
         '<shape> clear' -> 'clear_shape',
         'clear' -> 'clear',
     },
     'arguments' -> {
-        'structure' -> {'type' -> 'term', 'suggest' -> [
-            'monument', 'fortress', 'mansion', 'jungle_pyramid',
-            'desert_pyramid', 'endcity', 'igloo', 'shipwreck',
-            'swamp_hut', 'stronghold', 'ocean_ruin', 'buried_treasure',
-            'pillager_outpost', 'mineshaft', 'village', 'nether_fossil',
-            'bastion_remnant', 'ruined_portal'
-        ]},
-        'player' -> {'type' -> 'players', 'single' -> true},
+        'structure' -> {'type' -> 'term', 'suggest' -> plop():'structures' },
         'radius' -> {'type' -> 'int', 'min' -> 0, 'max' -> 1024, 'suggest' -> [128, 24, 32]},
         'shape' -> {'type' -> 'term', 'options' -> keys(global_shapes) },
         'color' -> {'type' -> 'teamcolor'}
@@ -59,29 +52,30 @@ __config() ->
 };
 
 
-display_shape(shape, r, player, color, following) ->
+display_shape(shape, r, entities, color, following) ->
 (
-
-    player = player(player);
-    if (!player, return());
-    if (shape == 'sphere',
-        shape_config = {
-            'center' -> if(following, [0,0,0], pos(player)),
-            'radius' -> r
-        }
-    , shape == 'box',
-        shape_config = {
-            'from' -> if(following, [-r,-r,-r], pos(player)-r),
-            'to' -> if(following, [r,r,r], pos(player)+r)
-        }
-    );
-    if (shape_config,
-        if (following, shape_config:'follow' = player);
-        shape_config:'fill' = color:1 - 200;
-        shape_config:'color' = color:1;
-        shape_config:'line' = 5;
-        draw_shape(shape, 72000, shape_config);
-        global_shapes:shape += shape_config;
+    thicc = max(1, floor(6-length(entities)/2));
+    fillc = 250 - 100/(length(entities)+1);
+    for (entities,
+        if (shape == 'sphere',
+            shape_config = {
+                'center' -> if(following, [0,0,0], pos(_)),
+                'radius' -> r
+            }
+        , shape == 'box',
+            shape_config = {
+                'from' -> if(following, [-r,-r,-r], pos(_)-r),
+                'to' -> if(following, [r,r,r], pos(_)+r)
+            }
+        );
+        if (shape_config,
+            if (following, shape_config:'follow' = _);
+            shape_config:'fill' = color:1 - fillc;
+            shape_config:'color' = color:1;
+            shape_config:'line' = thicc;
+            draw_shape(shape, 72000, shape_config);
+            global_shapes:shape += shape_config;
+        )
     )
 );
 
