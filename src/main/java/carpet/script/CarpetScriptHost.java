@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -671,6 +672,12 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (getName() == null && !isShared) return null; //
         return Module.listFile(main, resource, "txt", isShared);
+    }
+
+    public Stream<String> listFolder(String resource, String ext, boolean isShared)
+    {
+        if (getName() == null && !isShared) return null; //
+        return Module.listFolder(main, resource, ext, isShared);
     }
 
 
