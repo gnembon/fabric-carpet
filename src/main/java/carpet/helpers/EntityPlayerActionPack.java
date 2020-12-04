@@ -279,7 +279,7 @@ public class EntityPlayerActionPack
 
     public void setSlot(int slot)
     {
-        player.inventory.selectedSlot = slot-1;
+        player.getInventory().selectedSlot = slot-1;
         player.networkHandler.sendPacket(new HeldItemChangeS2CPacket(slot-1));
     }
 
