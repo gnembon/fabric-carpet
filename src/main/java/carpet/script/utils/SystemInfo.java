@@ -124,7 +124,7 @@ public class SystemInfo {
             });
             return carpetRules;
         });
-        put("gamerules", GameRule::getAll);
+        put("world_gamerules", GameRule::getAll);
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
 
     }};
