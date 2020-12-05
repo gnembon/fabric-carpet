@@ -18,13 +18,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class ScriptHost
@@ -189,7 +186,13 @@ public abstract class ScriptHost
     public FunctionValue getAssertFunction(Module module, String name)
     {
         FunctionValue ret = getFunction(module, name);
-        if (ret == null) throw new InternalExpressionException("Function "+name+" is not defined yet");
+        if (ret == null)
+        {
+            if (module == main)
+                throw new InternalExpressionException("Function '"+name+"' is not defined yet");
+            else
+                throw new InternalExpressionException("Function '"+name+"' is not defined nor visible by its name in the imported module '"+module.getName()+"'");
+        }
         return ret;
     }
     private FunctionValue getFunction(Module module, String name)
