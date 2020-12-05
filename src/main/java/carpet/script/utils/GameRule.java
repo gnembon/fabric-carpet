@@ -43,11 +43,14 @@ public class GameRule {
     }
 
     public static NumericValue getRuleValue(GameRules.Key rule, World world){
-
         try {//cos cant check for instanceof with gamerules for some reason
             return new NumericValue(world.getGameRules().getBoolean(rule));
-        } catch(Exception exc){
-            return new NumericValue(world.getGameRules().getInt(rule));
+        } catch(ClassCastException cce){
+            try {
+                return new NumericValue(world.getGameRules().getInt(rule));
+            } catch(ClassCastException exc){//for mods which implement, say, string gamerules
+                return (NumericValue) Value.ZERO;
+            }
         }
     }
 }
