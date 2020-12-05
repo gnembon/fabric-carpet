@@ -746,6 +746,10 @@ Required arguments: `entity, amount, source, attacking_entity`
 It doesn't mean that all entity types will have a chance to execute a given event, but entities will not error 
 when you attach an inapplicable event to it.
 
+In case you want to pass an event handler that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
+
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 
 Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
