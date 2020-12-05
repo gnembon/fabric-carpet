@@ -60,11 +60,11 @@ global_generators = {
 _create_shapes(mode, from, to) ->
 (
     shapes = call(global_generators:mode, from+[0, 0.07, 0], to+[0, 0.07, 0]);
-    shapes += ['label', 'pos',to+[0,0.2,0],             'align', 'right', 'indent', -1.5, 'text',format('rb Cylindrical:')];
-    shapes += ['label', 'pos',to+[0,0.2,0],             'align', 'left',                  'text',_round(_euclidean(from, [to:0, from:1, to:2]), 0.001)];
+    shapes += ['label', 'pos',to+[0,0.2,0],              'align', 'right', 'indent', -1.5, 'text',format('rb Cylindrical:')];
+    shapes += ['label', 'pos',to+[0,0.2,0],              'align', 'left',                  'text',_round(_euclidean(from, [to:0, from:1, to:2]), 0.001)];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 1, 'align', 'right', 'indent', -1.5, 'text',format('rb Manhattan:')];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 1, 'align', 'left',                  'text',_round(_manhattan(from,to),0.001)];
-    shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'right', 'indent', -1.5, 'text',format('rb Euclidian:')];
+    shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'right', 'indent', -1.5, 'text',format('rb Euclidean:')];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'left',                  'text',_round(_euclidean(from,to),0.001)];
     map(shapes, put(_, 1, [20, 'player', player()], 'extend'); _);
 );
