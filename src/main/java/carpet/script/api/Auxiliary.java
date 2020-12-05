@@ -19,6 +19,7 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.FixedCommandSource;
+import carpet.script.utils.GameRule;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
@@ -68,6 +69,7 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -584,6 +586,37 @@ public class Auxiliary {
                 Value ret = ListValue.of(Value.NULL, ListValue.of(), new FormattedTextValue(new LiteralText(exc.getMessage())));
                 return (c_, t_) -> ret;
             }
+        });
+
+        expression.addLazyFunction("gamerule", -1, (c, t, lv)->{
+
+            CarpetContext cc = (CarpetContext) c;
+
+            if (lv.size() == 0)
+                return (_c,_t) -> GameRule.getAll(cc);
+
+            Value whatVal = lv.get(0).evalValue(c);
+
+            if (lv.size() == 1)
+                return (_c, _t) -> GameRule.getAll(cc).get(whatVal);
+
+            String what = whatVal.toString();
+            GameRules.Key<?> res = GameRule.gamerules(cc).get(what);
+            if (res == null) throw new InternalExpressionException("Unknown gamerule: " + what);
+
+            if(lv.size()==2){
+                NumericValue val = (NumericValue) lv.get(1).evalValue(c);
+
+                GameRules.Rule ruleValue = cc.s.getWorld().getGameRules().get(res);
+                if(ruleValue instanceof GameRules.BooleanRule)
+                    ((GameRules.BooleanRule) ruleValue).set(val.getBoolean(),cc.s.getMinecraftServer());
+                else
+                    ruleValue.setValue(new GameRules.IntRule(null,val.getInt()),cc.s.getMinecraftServer());
+
+                return (_c,_t) -> val;
+            }
+
+            throw new InternalExpressionException("'gamerule' requires between 0 and 2 parameters");
         });
 
         expression.addLazyFunction("save", 0, (c, t, lv) -> {
