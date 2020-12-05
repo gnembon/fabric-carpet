@@ -9,6 +9,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 public class EntityEventsGroup
 {
-    private final Map<Event, Map<String, CarpetEventServer.Callback>> actions;
+    private final Map<Event, Map<Pair<String,String>, CarpetEventServer.Callback>> actions;
     private final Entity entity;
     public EntityEventsGroup(Entity e)
     {
@@ -30,18 +31,27 @@ public class EntityEventsGroup
     public void onEvent(Event type, Object... args)
     {
         if (actions.isEmpty()) return; // most of the cases, trying to be nice
-        Map<String, CarpetEventServer.Callback> actionSet = actions.get(type);
+        Map<Pair<String,String>, CarpetEventServer.Callback> actionSet = actions.get(type);
         if (actionSet == null) return;
 
 
-        for (Iterator<Map.Entry<String, CarpetEventServer.Callback>> iterator = actionSet.entrySet().iterator(); iterator.hasNext(); )
+        for (Iterator<Map.Entry<Pair<String,String>, CarpetEventServer.Callback>> iterator = actionSet.entrySet().iterator(); iterator.hasNext(); )
         {
-            Map.Entry<String, CarpetEventServer.Callback> action = iterator.next();
-            ScriptHost host = CarpetServer.scriptServer.getHostByName(action.getKey());
+            Map.Entry<Pair<String,String>, CarpetEventServer.Callback> action = iterator.next();
+            Pair<String,String> key = action.getKey();
+            ScriptHost host = CarpetServer.scriptServer.getHostByName(key.getLeft());
             if (host == null)
             {
                 iterator.remove();
                 continue;
+            }
+            if (key.getRight() != null)
+            {
+                if (entity.getServer().getPlayerManager().getPlayer(key.getRight())==null)
+                {
+                    iterator.remove();
+                    continue;
+                }
             }
             if (!type.call(action.getValue(), entity, args))
                 iterator.remove();
@@ -49,18 +59,19 @@ public class EntityEventsGroup
         if (actionSet.isEmpty()) actions.remove(type);
     }
 
-    public void addEvent(Event type, String hostName, FunctionValue fun, List<Value> extraargs)
+    public void addEvent(Event type, ScriptHost host, FunctionValue fun, List<Value> extraargs)
     {
+        Pair<String,String> key = Pair.of(host.getName(), host.user);
         if (fun != null)
         {
-            CarpetEventServer.Callback call = type.create(hostName, fun, extraargs);
+            CarpetEventServer.Callback call = type.create(key, fun, extraargs);
             if (call == null)
                 throw new InternalExpressionException("wrong number of arguments for callback, required "+type.argcount);
-            actions.computeIfAbsent(type, k -> new HashMap<>()).put(hostName, call);
+            actions.computeIfAbsent(type, k -> new HashMap<>()).put(key, call);
         }
         else
         {
-            actions.computeIfAbsent(type, k -> new HashMap<>()).remove(hostName);
+            actions.computeIfAbsent(type, k -> new HashMap<>()).remove(key);
             if (actions.get(type).isEmpty())
                 actions.remove(type);
         }
@@ -107,13 +118,13 @@ public class EntityEventsGroup
             argcount = args+1; // entity is not extra
             byName.put(identifier, this);
         }
-        public CarpetEventServer.Callback create(String hostName, FunctionValue function, List<Value> extraArgs)
+        public CarpetEventServer.Callback create(Pair<String,String> key, FunctionValue function, List<Value> extraArgs)
         {
             if ((function.getArguments().size()-(extraArgs == null ? 0 : extraArgs.size())) != argcount)
             {
                 return null;
             }
-            return new CarpetEventServer.Callback(hostName, function, extraArgs);
+            return new CarpetEventServer.Callback(key.getLeft(), key.getRight(), function, extraArgs);
         }
         public boolean call(CarpetEventServer.Callback tickCall, Entity entity, Object ... args)
         {

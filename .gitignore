@@ -6,6 +6,10 @@ out/
 classes/
 publish/
 
+# git
+
+.shelf/
+
 # idea
 
 .idea/
@@ -28,3 +32,4 @@ bin/
 # fabric
 
 run/
+logs/

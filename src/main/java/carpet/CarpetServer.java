@@ -5,7 +5,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import carpet.commands.*;
+import carpet.commands.CounterCommand;
+import carpet.commands.DistanceCommand;
+import carpet.commands.DrawCommand;
+import carpet.commands.InfoCommand;
+import carpet.commands.LogCommand;
+import carpet.commands.MobAICommand;
+import carpet.commands.PerimeterInfoCommand;
+import carpet.commands.PlayerCommand;
+import carpet.commands.ProfileCommand;
+import carpet.commands.ScriptCommand;
+import carpet.commands.SpawnCommand;
+import carpet.commands.TestCommand;
+import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
@@ -143,6 +155,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     {
         ServerNetworkHandler.onPlayerJoin(player);
         LoggerRegistry.playerConnected(player);
+        scriptServer.onPlayerJoin(player);
         extensions.forEach(e -> e.onPlayerLoggedIn(player));
 
     }

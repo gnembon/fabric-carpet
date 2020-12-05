@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
 import carpet.script.value.ListValue;
@@ -123,14 +124,7 @@ public class SystemInfo {
             });
             return carpetRules;
         });
-
-
-
-
-
-
-
-
+        put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
 
     }};
     public static Value get(String what, CarpetContext cc)
