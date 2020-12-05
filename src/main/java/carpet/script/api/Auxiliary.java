@@ -18,6 +18,7 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.FixedCommandSource;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
@@ -565,29 +566,14 @@ public class Auxiliary {
 
         expression.addLazyFunction("run", 1, (c, t, lv) -> {
             BlockPos target = ((CarpetContext)c).origin;
-            Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
+            Vec3d posf = new Vec3d((double)target.getX()+0.5D, target.getY(),(double)target.getZ()+0.5D);
             ServerCommandSource s = ((CarpetContext)c).s;
             try
             {
                 Value[] error = {Value.NULL};
                 List<Value> output = new ArrayList<>();
                 Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                        new ServerCommandSource(
-                                CommandOutput.DUMMY, posf, Vec2f.ZERO, s.getWorld(), CarpetSettings.runPermissionLevel,
-                                s.getName(), s.getDisplayName(), s.getMinecraftServer(), s.getEntity(), true,
-                                (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET)
-                        {
-                            @Override
-                            public void sendError(Text message)
-                            {
-                                error[0] = new FormattedTextValue(message);
-                            }
-                            @Override
-                            public void sendFeedback(Text message, boolean broadcastToOps)
-                            {
-                                output.add(new FormattedTextValue(message));
-                            }
-                        },
+                        new FixedCommandSource(s, posf, error, output),
                         lv.get(0).evalValue(c).getString())
                 );
                 Value ret = ListValue.of(retval, ListValue.wrap(output), error[0]);
