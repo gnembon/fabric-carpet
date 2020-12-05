@@ -167,7 +167,7 @@ test() -> callme('foo' , 5);
 callme(fun, arg) -> call(fun, arg);
 ```
 
-In this case `'foo'` will not dereferenced in `lib` is not visible by name. In tightly coupled modules, where `lib` is just
+In this case `'foo'` will fail to dereference in `lib` as it is not visible by name. In tightly coupled modules, where `lib` is just
 a component of your `app` you can use circular import to acknowledge the symbol from the other module (pretty much like
 imports in Java classes), and that solves the issue but makes the library dependent on the main app: 
 ```
@@ -175,7 +175,7 @@ imports in Java classes), and that solves the issue but makes the library depend
 import('app','foo');
 callme(fun, arg) -> call(fun, arg);
 ```
-But you can circumvent that issue by explictly dereferencing the local function where it is used as a lambda argument created 
+You can circumvent that issue by explicitly dereferencing the local function where it is used as a lambda argument created 
 in the module in which the requested function is visible:
 ```
 //app.sc
@@ -187,14 +187,13 @@ test() -> callme(_(x) -> foo(x), 5);
 //lib.scl
 callme(fun, arg) -> call(fun, arg);
 ```
-Or passing an explicit reference to the function, not calling it by name:
+Or by passing an explicit reference to the function, instead of calling it by name:
 ```
 //app.sc
 import('lib', 'callme');
 global_foohandler = (foo(x) -> x*x);
 test() -> callme(global_foohandler, 5);
 ```
-
 
 Little technical note: the use of `_` in expression passed to built in functions is much more efficient due to not 
 creating new call stacks for each invoked function, but anonymous functions is the only mechanism available for 
