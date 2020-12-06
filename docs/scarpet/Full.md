@@ -2235,6 +2235,16 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `weather()`,`weather(type)`,`weather(type, ticks)`
+
+If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
+always return `'thunder'`, if not will return `'rain'` or `'clear'` based on the current weather.
+
+With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of remaining ticks for that weather type.
+NB: It can thunder without there being a thunderstorm, there has to be both rain and thunder to form a storm.
+
+With two args, sets the weather to `type` for `ticks` ticks.
+
 ## Block and World querying
 
 ### `pos(block), pos(entity)`
@@ -3253,6 +3263,18 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 Retrieves player hunger related information. For non-players, returns `null`.
 
+### `query(e, 'absorption')`
+
+Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+
+### `query(e,'xp')`
+### `query(e,'xp_level')`
+### `query(e,'xp_progress')`
+### `query(e,'score')`
+
+Numbers related to player's xp. `xp` is the overall xp in the bar, `xp_level` is the levels seen in the hotbar,
+`xp_points` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the score displayed upon death 
+
 ### `query(e, 'air')`
 
 Number indicating remaining entity health, or `null` if not applicable.
@@ -3562,6 +3584,17 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 ### `modify(e, 'exhaustion', value)`
 
 Modifies directly player raw hunger components. Has no effect on non-players
+
+### `modify(e, 'absorption', value)`
+
+Sets the absorption value for the player. Each point is half a yellow heart.
+
+### `modify(e, 'add_xp', value)`
+### `modify(e, 'xp_level', value)`
+### `modify(e, 'xp_score', value)` 
+
+Manipulates player xp values - that's the method you probably want to use 
+to manipulate how much 'xp' an action should give.
 
 ### `modify(e, 'air', ticks)`
 
@@ -4553,9 +4586,10 @@ Other value types will only be converted to tags (including NBT tags) if `force`
 extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
 produce an exception.
 
-### `print(expr)`
+### `print(expr)`, `print(player/player_list, expr)`
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format(l(components, ...))`
 
