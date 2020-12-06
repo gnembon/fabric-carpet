@@ -468,43 +468,30 @@ public class Auxiliary {
         {
             if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
+            MinecraftServer server = s.getMinecraftServer();
             Value res = lv.get(0).evalValue(c);
-            Value playersVal = Value.NULL;
-            if (lv.size() == 2){
-                playersVal = res;
+            List<ServerPlayerEntity> targets = null;
+            if (lv.size() == 2)
+            {
+                List<Value> playerValues = (res instanceof ListValue)?((ListValue) res).getItems():Collections.singletonList(res);
+                List<ServerPlayerEntity> playerTargets = new ArrayList<>();
+                playerValues.forEach(pv -> {
+                    ServerPlayerEntity player = EntityValue.getPlayerByValue(server, pv);
+                    if (player == null) throw new InternalExpressionException("Cannot target player "+pv.getString()+" in print");
+                    playerTargets.add(player);
+                });
+                targets = playerTargets;
                 res = lv.get(1).evalValue(c);
             }
-
-            if(playersVal instanceof ListValue){
-
-                List<Value> players = ((ListValue) playersVal).getItems();
-                for(Value playerVal:players){
-                    ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), playerVal);
-                    if (player == null) return LazyValue.NULL;
-                    if(res instanceof FormattedTextValue)
-                        player.getCommandSource().sendFeedback(((FormattedTextValue) res).getText(), false);
-                    else
-                        Messenger.m(player, "w "+res.getString());
-                }
-
-            } else if(playersVal instanceof EntityValue){
-
-                ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), playersVal);
-                if (player == null) return LazyValue.NULL;
-                if(res instanceof FormattedTextValue)
-                    player.getCommandSource().sendFeedback(((FormattedTextValue) res).getText(), false);
-                else
-                    Messenger.m(player, "w "+res.getString());
-
-            } else {
-
-                if (res instanceof FormattedTextValue)
-                    s.sendFeedback(((FormattedTextValue) res).getText(), false);
-                else
-                    Messenger.m(s, "w " + res.getString());
-
+            Text message = (res instanceof FormattedTextValue)?((FormattedTextValue) res).getText():new LiteralText(res.getString());
+            if (targets == null)
+            {
+                s.sendFeedback(message, false);
             }
-
+            else
+            {
+                targets.forEach(p -> p.getCommandSource().sendFeedback(message, false));
+            }
             Value finalRes = res;
             return (_c, _t) -> finalRes; // pass through for variables
         });
