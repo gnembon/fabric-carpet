@@ -486,7 +486,7 @@ Available options in the scarpet app space:
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
-  * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Unlike carpet rules, values are returned as numbers, so you can do boolean comparisons directly. Haven't tested with rules from other mods, we'll cross that bridge when it comes to it. Gamerules are read-only due to a ~~authoritarian decision~~ democratic vote.
+  * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Unlike carpet rules, values are returned as numbers, so you can do boolean comparisons directly. Haven't tested with rules from other mods, we'll cross that bridge when it comes to it. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. It is still possible to change them though using `run('gamerule ...`.
 
 
  Relevant gameplay related properties
