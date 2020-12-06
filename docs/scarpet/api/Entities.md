@@ -405,8 +405,8 @@ Gets the absorption of the player (yellow hearts, e.g when having a golden apple
 ### `query(e,'xp_progress')`
 ### `query(e,'score')`
 
-Numbers related to player's xp. `xp` is the overall xp in the bar, `xp_level` is the levels seen in the hotbar,
-`xp_points` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the score displayed upon death 
+Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
+`xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
 
 ### `query(e, 'air')`
 
@@ -724,10 +724,13 @@ Sets the absorption value for the player. Each point is half a yellow heart.
 
 ### `modify(e, 'add_xp', value)`
 ### `modify(e, 'xp_level', value)`
+### `modify(e, 'xp_progress', value)`
 ### `modify(e, 'xp_score', value)` 
 
-Manipulates player xp values - that's the method you probably want to use 
-to manipulate how much 'xp' an action should give.
+Manipulates player xp values - `'add_xp'` the method you probably want to use 
+to manipulate how much 'xp' an action should give. `'xp_score'` only affects the number you see when you die, and 
+`'xp_progress'` controls the xp progressbar above the hotbar, should take values from 0 to 1, but you can set it to any value, 
+maybe you will get a double, who knows.
 
 ### `modify(e, 'air', ticks)`
 

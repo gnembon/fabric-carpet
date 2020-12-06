@@ -420,16 +420,17 @@ public class WorldAccess {
             ServerWorld world = ((CarpetContext) c).s.getWorld();
 
             if(lv.size()==0)//cos it can thunder when raining or when clear.
-                return (_c,_t)->new StringValue( world.isThundering()? "thunder" : (world.isRaining()? "rain":"clear"));
-
+            {
+                Value ret = new StringValue(world.isThundering() ? "thunder" : (world.isRaining() ? "rain" : "clear"));
+                return (_c, _t) -> ret;
+            }
 
             Value weather = lv.get(0).evalValue(c);
             ServerWorldProperties worldProperties = ((ServerWorldInterface) world).getWorldPropertiesCM();
-
-            if(lv.size()==1) {
+            if(lv.size()==1)
+            {
                 int ticks;
-
-                switch (weather.getString()) {
+                switch (weather.getString().toLowerCase(Locale.ROOT)) {
                     case "clear":
                         ticks = worldProperties.getClearWeatherTime();
                         break;
@@ -442,11 +443,14 @@ public class WorldAccess {
                     default:
                         throw new InternalExpressionException("Weather can only be 'clear', 'rain' or 'thunder'");
                 }
-                return (_c,_t) -> new NumericValue(ticks);
-            } else if(lv.size()==2){
-                int ticks = ((NumericValue)lv.get(1).evalValue(c)).getInt();
-
-                switch (weather.getString()){
+                Value ret = new NumericValue(ticks);
+                return (_c,_t) -> ret;
+            }
+            if(lv.size()==2)
+            {
+                int ticks = NumericValue.asNumber(lv.get(1).evalValue(c), "tick_time in 'weather'").getInt();
+                switch (weather.getString().toLowerCase(Locale.ROOT))
+                {
                     case "clear":
                         world.setWeather(ticks,0,false,false);
                         break;
@@ -467,10 +471,10 @@ public class WorldAccess {
                     default:
                         throw new InternalExpressionException("Weather can only be 'clear', 'rain' or 'thunder'");
                 }
-
-                return LazyValue.TRUE;
-            } else
-                throw new InternalExpressionException("'weather' between 0 and 2 arguments");
+                Value ret = NumericValue.of(ticks);
+                return (_c, _t) -> ret;
+            }
+            throw new InternalExpressionException("'weather' requires 0, 1 or 2 arguments");
         });
 
         expression.addLazyFunction("pos", 1, (c, t, lv) ->
