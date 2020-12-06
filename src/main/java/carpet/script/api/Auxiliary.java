@@ -332,7 +332,7 @@ public class Auxiliary {
             {
                 Value nameValue = lv.get(0).evalValue(c);
                 name = nameValue instanceof NullValue ? "" : nameValue.getString();
-                pointLocator = Vector3Argument.findIn(cc, lv, 1, true);
+                pointLocator = Vector3Argument.findIn(cc, lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
                     BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true, false);

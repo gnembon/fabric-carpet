@@ -145,9 +145,8 @@ global_functions = {
                   [10+half_width,10+height,10+half_width],
                   0x65432100, 'buddy detection', false
             );
-            [x,y,z] = pos(e);
             current_id = e~'id';
-            buddies = entity_area('villager', x, y+height/2, z, 10+half_width, 10+height/2, 10+half_width);
+            buddies = entity_area('villager', e, 10, 10, 10);
             nb = length(buddies);
             for (filter(buddies, _~'id' != current_id),
                visuals+=['line', global_duration, 'from', pos(e), 'to', pos(_), 'color', 0xffff00ff];
@@ -518,9 +517,8 @@ __tick_tracker() ->
       return()
    );
    p = player();
-   [px, py, pz] = pos(p);
    in_dimension(p,
-      for (entity_area('valid', px, py, pz, global_range, global_range, global_range),
+      for (entity_area('valid', p, global_range, global_range, global_range),
          __handle_entity(_)
       )
    );
