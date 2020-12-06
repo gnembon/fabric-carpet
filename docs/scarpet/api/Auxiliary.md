@@ -299,18 +299,16 @@ specific data directory is under `world/scripts/foo.data/...`, and shared data s
 
 The default no-name app, via `/script run` command can only save/load/read files from the shared space.
 
-The default no-name app, via `/script run` command can only save/load/read files from the shared space.
-
 Functions return `null` if an error is encounter or no file is present (for read, list and delete operations). Returns `true`
-for success writes and deletes, and requested data, based on the file type, for read operations. It returns list of files
+for success writes and deletes, and requested data, based on the file type, for read operations. It returns list of files 
 for folder listing.
  
 Supported values for resource `type` are:
  * `nbt` - NBT tag
-* `text` - text resource with automatic newlines added
-* `raw` - text resource without implied newlines
-* `folder` - for `list_files` only - indicting folder listing instead of files
-* `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
+ * `text` - text resource with automatic newlines added
+ * `raw` - text resource without implied newlines
+ * `folder` - for `list_files` only - indicting folder listing instead of files
+ * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
 
 NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension,
 stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
@@ -326,7 +324,7 @@ write_file('foo', 'shared_raw', 'five\n', 'six\n');
 
 read_file('foo', 'shared_text')     => ['one', 'two', 'three', '', 'four', '', 'five', 'six']
 </pre>
-
+  
 ### `run(expr)`
 
 Runs a vanilla command from the string result of the `expr` and returns a triple of success count, 
@@ -515,5 +513,5 @@ Available options in the scarpet app space:
  * `java_system_cpu_load` - current percentage of CPU used by the system
  * `java_process_cpu_load` - current percentage of CPU used by JVM
  
-Scarpet related properties
+ Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
