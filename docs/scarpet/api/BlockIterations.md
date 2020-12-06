@@ -2,14 +2,16 @@
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
-### `scan(center, range, lower_range?, expr)`
+### `scan(center, range, upper_range?, expr)`
 
 Evaluates expression over area of blocks defined by its center `center = (cx, cy, cz)`, expanded in all directions 
 by `range = (dx, dy, dz)` blocks, or optionally in negative with `range` coords, and `upper_range` coords in 
-positive values.
-`center` can be defined either as three coordinates, a list of three coords, or a block value.
-`range` and `lower_range` can have the same representations, just if its a block, it computes the distance to the center
+positive values, so you can use that if you know the lower coord, and dimension by calling `'scan(center, 0, 0, 0, w, h, d, ...)`.
+
+`center` can be defined either as three coordinates, a single tuple of three coords, or a block value.
+`range` and `upper_range` can have the same representations, just if they are block values, it computes the distance to the center
 as range instead of taking the values as is.
+
 `expr` receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
 
 Returns number of successful evaluations of `expr` (with `true` boolean result) unless called in void context, 
@@ -34,7 +36,7 @@ Returns the list of 6 neighbouring blocks to the argument. Commonly used with ot
 for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 </pre>
 
-### `rect(centre, range?, positive_range?)`
+### `rect(centre, range?, upper_range?)`
 
 Returns an iterator, just like `range` function that iterates over a rectangular area of blocks. If only center
 point is specified, it iterates over 27 blocks. If `range` arguments are specified, expands selection by the  respective 
@@ -42,7 +44,7 @@ number of blocks in each direction. If `positive_range` arguments are specified,
  it uses `range` for negative offset, and `positive_range` for positive.
 
 `centre` can be defined either as three coordinates, a list of three coords, or a block value.
-`range` and `positive_range` can have the same representations, just if its a block, it computes the distance to the center
+`range` and `positive_range` can have the same representations, just if they are block values, it computes the distance to the center
 as range instead of taking the values as is.`
 
 ### `diamond(centre_pos, radius?, height?)`
