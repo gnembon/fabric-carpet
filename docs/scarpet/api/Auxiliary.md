@@ -278,7 +278,7 @@ Available output types:
 ### `write_file(resource, type, data, ...)`
 
 With the specified `resource` in the scripts folder, of a specific `type`, writes/appends `data` to it, reads its
- content, or deletes the resource.
+  content, deletes the resource, or lists other files under this resource.
 
 Resource is identified by a path to the file.  
 A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
