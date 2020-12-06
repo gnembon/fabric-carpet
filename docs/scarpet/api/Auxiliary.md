@@ -284,7 +284,7 @@ With the specified `resource` in the scripts folder, of a specific `type`, write
 Resource is identified by a path to the file.  
 A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid, except for `list_files` where it means the root folder.
-Do not add file extensions to the descriptor - extensions are inferred
+ Do not add file extensions to the descriptor - extensions are inferred
 based on the `type` of the file.
  
 Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
@@ -309,8 +309,8 @@ Supported values for resource `type` are:
  * `raw` - text resource without implied newlines
  * `folder` - for `list_files` only - indicting folder listing instead of files
  * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
-
-NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension,
+ 
+NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
 stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
 sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
 record to the file. Since files are closed after each write, sending multiple lines of data to
