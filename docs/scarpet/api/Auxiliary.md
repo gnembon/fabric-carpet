@@ -193,9 +193,10 @@ Other value types will only be converted to tags (including NBT tags) if `force`
 extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
 produce an exception.
 
-### `print(expr)`
+### `print(expr)`, `print(player/player_list, expr)`
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format(l(components, ...))`
 

@@ -168,7 +168,7 @@
     "ChunkTicketManager_scarpetMixin",
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
-    "ServerWorld_scarpetEventMixin",
+    "ServerWorld_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
 
     "RecipeManager_scarpetMixin",

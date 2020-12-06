@@ -499,6 +499,31 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
+        put("absorption",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getAbsorptionAmount());
+            return Value.NULL;
+        });
+
+        put("xp",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).totalExperience);
+            return Value.NULL;
+        });
+
+        put("xp_level", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceLevel);
+            return Value.NULL;
+        });
+
+        put("xp_progress", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceProgress);
+            return Value.NULL;
+        });
+
+        put("score", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getScore());
+            return Value.NULL;
+        });
+
         put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
@@ -1328,8 +1353,24 @@ public class EntityValue extends Value
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
         });
 
+        put("absorption", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount((float) NumericValue.asNumber(v).getLong());
+        });
+
+        put("add_xp", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperience(NumericValue.asNumber(v).getInt());
+        });
+
+        put("xp_level", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperienceLevels(NumericValue.asNumber(v).getInt()-((PlayerEntity) e).experienceLevel);
+        });
+
+        put("xp_score", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setScore(NumericValue.asNumber(v).getInt());
+        });
+
         put("saturation", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient(NumericValue.asNumber(v).getFloat());
         });
 
         put("air", (e, v) -> e.setAir(NumericValue.asNumber(v).getInt()));
