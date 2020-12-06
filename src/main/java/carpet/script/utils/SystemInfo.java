@@ -13,6 +13,7 @@ import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
 import net.minecraft.util.WorldSavePath;
+import net.minecraft.world.GameRules;
 
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
@@ -124,7 +125,17 @@ public class SystemInfo {
             });
             return carpetRules;
         });
-        put("world_gamerules", GameRule::getAll);
+        put("world_gamerules", c->{
+            Map<Value, Value> rules = new HashMap<>();
+            final GameRules gameRules = c.s.getWorld().getGameRules();
+            GameRules.accept(new GameRules.Visitor() {
+                @Override
+                public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                    rules.put(StringValue.of(key.getName()), StringValue.of(gameRules.get(key).toString()));
+                }
+            });
+            return MapValue.wrap(rules);
+        });
         put("scarpet_version", c -> StringValue.of(CarpetSettings.carpetVersion));
 
     }};
