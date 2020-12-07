@@ -1,4 +1,4 @@
-__command() ->
+_command() ->
 (
    print('camera: scarpet app.');
    print('-------------------');
@@ -57,7 +57,42 @@ __command() ->
    print('');
    null
 );
-
+__config() ->{
+    'commands'->{
+        ''->'_command',
+        'start'->['__start_with', _() -> l(l(__camera_position(), 0,'sharp'))],
+        'add <seconds>'->'add',
+        'prepend <seconds>'->'prepend',
+        'clear'->'clear',
+        'select'->'select',
+        'place_player'->'place_player',
+        'move'->'move',
+        'duration <seconds>',
+        'split_point'->'split_point',
+        'delete_point'->'delete_point',
+        'trim_path'->'trim_path',
+        'save_as <name>'->'save_as',
+        'load <name>'->'load',
+        'interpolation <interpolation>'->['__interpolation',true],
+        'interpolation gauss'->['__interpolation','gauss',true],
+        'interpolation gauss <float>'->_(float)->(__interpolation('gauss_'+str(float),true)),
+        'repeat <seconds> <last_delay>'->'repeat',
+        'stretch <factor>'->'stretch',
+        'transpose'->'transpose',
+        'play'->'play',
+        'show'->'show',
+        'hide'->'hide',
+        'prefer_smooth_play'->_()->(global_prefer_sync = false;print(player(),format('gi Smooth path play')));
+        'prefer_synced_play'->_()->(global_prefer_sync = true; print(player(),format('gi Synchronized path play')));
+    },
+    'arguments'->{
+        'seconds'->{'type'->'int','suggest'->[]},
+        'last_delay'->{'type'->'int','suggest'->[]},
+        'name'->{'type'->'string','suggest'->[]},
+        'interpolation'->{'type'->'term','options'->['linear','cr']}
+        'factor'->{'type'->'int','min'->25,'max'->'400'}
+    }
+};
 global_points = null;
 global_dimension = null;
 global_player = null;
@@ -77,9 +112,6 @@ global_color_a = null;
 global_color_b = null;
 
 global_path_precalculated = null;
-
-// starts the path with current player location
-start() -> __start_with( _() -> l(l(__camera_position(), 0,'sharp')) );
 
 // start path with customized initial points selection
 __start_with(points_supplier) ->
@@ -150,7 +182,6 @@ __assert_point_selected(validator) ->
 );
 
 //select a custom interpolation method
-interpolation(method) -> __interpolation(method, true);
 __interpolation(method, verbose) ->
 (
    __prepare_path_if_needed() -> __prepare_path_if_needed_generic();
@@ -216,9 +247,6 @@ repeat(times, last_section_delay) ->
 stretch(percentage) ->
 (
    if (err = __is_not_valid_for_motion(), exit(err));
-   if (percentage < 25 || percentage > 400,
-       exit('path speed can only be speed, or slowed down 4 times. Re-call command for larger changes')
-   );
    ratio = percentage/100;
    previous_path_length = global_points:(-1):1;
    for(global_points, _:1 = _:1*ratio );
@@ -491,9 +519,6 @@ hide() ->
 
 // runs the player on the path
 global_prefer_sync = false;
-
-prefer_smooth_play() -> (global_prefer_sync = false; 'Smooth path play');
-prefer_synced_play() -> (global_prefer_sync = true; 'Synchronized path play');
 
 play() ->
 (

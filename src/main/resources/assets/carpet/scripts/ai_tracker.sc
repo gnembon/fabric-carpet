@@ -65,14 +65,12 @@ __config() ->{
     }
 };
 
-
 global_duration = 12;
 global_interval = 10;
 
 global_opacity = 8;
 
 global_display_boxes = true;
-
 
 global_range = 48;
 
