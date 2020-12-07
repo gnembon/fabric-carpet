@@ -11,7 +11,7 @@ _command() ->
    print(' "/camera place_player - Move player to the selected point');
    print(' "/camera move" - Move the selected point to players location');
    print(' "/camera duration <X>" - Set new selected path duration');
-   print(' "/camera split_point>" - Split selected path in half.');
+   print(' "/camera split_point" - Split selected path in half.');
    print(' "/camera delete_point" - Remove current key point');
    print(' "/camera trim_path" - Remove all key points from selected up');
    print('');
@@ -60,39 +60,45 @@ _command() ->
 __config() ->{
     'commands'->{
         ''->'_command',
-        'start'->['__start_with', _() -> l(l(__camera_position(), 0,'sharp'))],
+        '<command>'->'_call',
         'add <seconds>'->'add',
         'prepend <seconds>'->'prepend',
-        'clear'->'clear',
-        'select'->'select',
-        'place_player'->'place_player',
-        'move'->'move',
         'duration <seconds>',
-        'split_point'->'split_point',
-        'delete_point'->'delete_point',
-        'trim_path'->'trim_path',
         'save_as <name>'->'save_as',
         'load <name>'->'load',
         'interpolation <interpolation>'->['__interpolation',true],
         'interpolation gauss'->['__interpolation','gauss',true],
         'interpolation gauss <float>'->_(float)->(__interpolation('gauss_'+str(float),true)),
         'repeat <seconds> <last_delay>'->'repeat',
-        'stretch <factor>'->'stretch',
-        'transpose'->'transpose',
-        'play'->'play',
-        'show'->'show',
-        'hide'->'hide',
-        'prefer_smooth_play'->_()->(global_prefer_sync = false;print(player(),format('gi Smooth path play')));
-        'prefer_synced_play'->_()->(global_prefer_sync = true; print(player(),format('gi Synchronized path play')));
+        'stretch <factor>'->'stretch'
     },
     'arguments'->{
         'seconds'->{'type'->'int','suggest'->[]},
         'last_delay'->{'type'->'int','suggest'->[]},
         'name'->{'type'->'string','suggest'->[]},
         'interpolation'->{'type'->'term','options'->['linear','cr']}
-        'factor'->{'type'->'int','min'->25,'max'->'400'}
+        'factor'->{'type'->'int','min'->25,'max'->'400'},
+        'command'->{'type'->'term','options'->[
+            'start',
+            'clear',
+            'select',
+            'place_player',
+            'move',
+            'split_point',
+            'delete_point',
+            'trim_path',
+            'transpose',
+            'play',
+            'show',
+            'hide',
+            'prefer_smooth_play',
+            'prefer_synced_play'
+        ]}
     }
 };
+
+_call(command)->call(command);
+
 global_points = null;
 global_dimension = null;
 global_player = null;
@@ -112,6 +118,9 @@ global_color_a = null;
 global_color_b = null;
 
 global_path_precalculated = null;
+
+// starts the path with current player location
+start() -> __start_with( _() -> l(l(__camera_position(), 0,'sharp')) );
 
 // start path with customized initial points selection
 __start_with(points_supplier) ->
@@ -519,6 +528,9 @@ hide() ->
 
 // runs the player on the path
 global_prefer_sync = false;
+
+prefer_smooth_play() -> (global_prefer_sync = false; 'Smooth path play');
+prefer_synced_play() -> (global_prefer_sync = true; 'Synchronized path play');
 
 play() ->
 (
