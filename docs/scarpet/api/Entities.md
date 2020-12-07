@@ -52,7 +52,9 @@ to the `regular` group.
 *  `monster`, `creature`, `ambient`, `water_creature`, `water_ambient`, `misc` - another categorization of 
 living entities based on their spawn group. Negative descriptor resolves to all living types that don't belong to that
 category.
-*  Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
+* All entity tags including those provided with datapacks. Built-in entity tags include: `skeletons`, `raiders`, 
+`beehive_inhabitors` (bee, duh), `arrows` and `impact_projectiles`.
+* Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
 `area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
 `chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
 `egg`, `elder_guardian`, `end_crystal`, `ender_dragon`, `ender_pearl`, `enderman`, `endermite`, `evoker`, 
@@ -209,13 +211,21 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-### `query(e, 'tags')`
+###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
 
-List of entity's tags.
+List of entity's scoreboard tags.
 
-### `query(e, 'has_tag',tag)`
+### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
 
-Boolean, true if the entity is marked with `tag`.
+Boolean, true if the entity is marked with a `tag` scoreboad tag.
+
+### `query(e, 'entity_tags')`
+
+List of entity tags assigned to the type this entity represents.
+
+### `query(e, 'has_entity_tag', tag)`
+
+Returns `true` if the entity matches that entity tag, `false` if it doesn't, and `null` if the tag is not valid. 
 
 ### `query(e, 'is_burning')`
 
