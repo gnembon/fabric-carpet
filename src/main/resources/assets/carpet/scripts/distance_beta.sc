@@ -77,8 +77,10 @@ set_start(pos)->(
 );
 
 set_mode(mode)->(
-    global_current_mode = mode;
-    print(player(),format('gi Set display mode to '+mode))
+    if (global_display_modes ~ mode,
+        global_current_mode = mode;
+        print(player(),format('gi Set display mode to '+mode))
+    )
 );
 
 calculate(end)->(
@@ -89,9 +91,12 @@ calculate(end)->(
     )
 );
 
+_carpets() -> system_info('world_carpet_rules'):'carpets'=='true';
+
+
 on_player_places_block(player, item_tuple, hand, block) ->
 (
-    if(block==global_assist_block,
+    if(block==global_assist_block && _carpets(),
         effective_pos = pos(block)+[0.5, 0, 0.5];
         if(global_current_start==null||player~'sneaking',//wont complain for first carpet
             set_start(effective_pos)
@@ -103,7 +108,7 @@ on_player_places_block(player, item_tuple, hand, block) ->
 
 on_player_uses_item(player, item_tuple, hand) ->
 (
-    if (item_tuple:0 == global_assist_block && hand == 'mainhand',
+    if (item_tuple:0 == global_assist_block && hand == 'mainhand' && _carpets(),
        if (player ~'sneaking',
         global_current_mode = global_display_modes:(global_display_modes ~ global_current_mode + 1);
         display_title(player, 'actionbar', format('w Distance mode: ','e '+global_current_mode));
