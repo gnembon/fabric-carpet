@@ -78,7 +78,8 @@ set_start(pos)->(
 
 set_mode(mode)->(
     if (global_display_modes ~ mode,
-        global_current_mode = mode
+        global_current_mode = mode;
+        print(player(),format('gi Set display mode to '+mode))
     )
 );
 
