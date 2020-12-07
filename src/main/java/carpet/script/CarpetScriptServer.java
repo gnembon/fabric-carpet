@@ -122,7 +122,6 @@ public class CarpetScriptServer
         });
         if (CarpetSettings.scriptsAutoload)
         {
-            Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
             for (String moduleName: listAvailableModules(false))
             {
                 addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);

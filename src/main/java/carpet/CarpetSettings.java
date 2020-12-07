@@ -427,7 +427,7 @@ public class CarpetSettings
             extra = "if /script is enabled",
             category = SCARPET
     )
-    public static boolean scriptsAutoload = false;
+    public static boolean scriptsAutoload = true;
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static String commandPlayer = "ops";
