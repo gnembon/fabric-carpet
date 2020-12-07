@@ -4883,7 +4883,9 @@ Available options in the scarpet app space:
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
- 
+  * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
+
+
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
@@ -4913,7 +4915,8 @@ Available options in the scarpet app space:
  * `java_process_cpu_load` - current percentage of CPU used by JVM
  
  Scarpet related properties
- * `scarpet_version` - returns the version of the carpet your scarpet comes with.# `/script run` command
+ * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+# `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 
 commandblock, etc... The command receives 4 variables, `x`, `y`, `z` and `p` indicating position and 
