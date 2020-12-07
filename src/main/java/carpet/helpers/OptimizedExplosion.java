@@ -132,7 +132,8 @@ public class OptimizedExplosion
 
                 if (d12 <= 1.0D) {
                     double d5 = entity.getX() - eAccess.getX();
-                    double d7 = entity.getY() + (double) entity.getStandingEyeHeight() - eAccess.getY();
+                    // Change in 1.16 snapshots to fix a bug with TNT jumping
+                    double d7 = (entity instanceof TntEntity ? entity.getY() : entity.getEyeY()) - eAccess.getY();
                     double d9 = entity.getZ() - eAccess.getZ();
                     double d13 = (double) MathHelper.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
 
