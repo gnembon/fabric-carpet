@@ -102,9 +102,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerLoadedWorlds(MinecraftServer minecraftServer)
     {
+        HopperCounter.resetAll(minecraftServer);
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         scriptServer.initializeForWorld();
-        HopperCounter.resetAll(minecraftServer);
     }
 
     public static void tick(MinecraftServer server)
@@ -169,9 +169,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerClosed(MinecraftServer server)
     {
+        if (scriptServer != null) scriptServer.onClose();
         ServerNetworkHandler.close();
         currentCommandDispatcher = null;
-        if (scriptServer != null) scriptServer.onClose();
 
         LoggerRegistry.stopLoggers();
         extensions.forEach(e -> e.onServerClosed(server));

@@ -52,6 +52,8 @@ inventory_remove
 inventory_set
 inventory_size
 item_category
+item_list
+item_tags
 last_tick_times
 light
 liquid

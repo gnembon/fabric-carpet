@@ -224,10 +224,28 @@ public class EntityValue extends Value
         return entity.hashCode();
     }
 
-    public static EntityClassDescriptor getEntityDescriptor(String who)
+    public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
     {
         EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
-        if (eDesc == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+        if (eDesc == null)
+        {
+            boolean positive = true;
+            if (who.startsWith("!"))
+            {
+                positive = false;
+                who = who.substring(1);
+            }
+            net.minecraft.tag.Tag<EntityType<?>> eTag = server.getTagManager().getEntityTypes().getTag(new Identifier(who));
+            if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+            if (positive)
+            {
+                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.values().stream());
+            }
+            else
+            {
+                return new EntityClassDescriptor(null, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+            }
+        }
         return eDesc;
         //TODO add more here like search by tags, or type
         //if (who.startsWith('tag:'))
@@ -416,8 +434,21 @@ public class EntityValue extends Value
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengerList().stream().map(EntityValue::new).collect(Collectors.toList())));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
         put("unmountable", (e, a) -> new NumericValue(((EntityInterface)e).isPermanentVehicle()));
+        // deprecated
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
+
+        put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTagsFor(e.getType()).stream().map(ValueConversions::of).collect(Collectors.toList())));
+        // deprecated
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+
+        put("has_scoreboard_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+        put("has_entity_tag", (e, a) -> {
+            net.minecraft.tag.Tag<EntityType<?>> tag = e.getServer().getTagManager().getEntityTypes().getTag(new Identifier(a.getString()));
+            if (tag == null) return Value.NULL;
+            return new NumericValue(e.getType().isIn(tag));
+        });
+
         put("yaw", (e, a)-> new NumericValue(e.yaw));
         put("head_yaw", (e, a)-> {
             if (e instanceof LivingEntity)

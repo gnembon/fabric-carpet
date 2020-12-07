@@ -217,7 +217,7 @@ public class CarpetScriptHost extends ScriptHost
             if (!(ret instanceof MapValue)) return false;
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
-            persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.FALSE).getBoolean();
+            persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
             // read custom arguments
             Value arguments = config.get(StringValue.of("arguments"));
             if (arguments != null)

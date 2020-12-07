@@ -1757,7 +1757,8 @@ Here is the gist of the Minecraft related functions. Otherwise the CarpetScript 
 ## App structure
 
 The main delivery method for scarpet programs into the game is in the form of apps in `*.sc` files located in the world `scripts` 
-folder. In singleplayer, you can also save apps in `.minecraft/config/carpet/scripts` for them to be available in any world. 
+folder, flat. In singleplayer, you can also save apps in `.minecraft/config/carpet/scripts` for them to be available in any world,
+and here you can actually organize them in folders. 
 When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
 (more about the app scopes below), without executing of any functions, unless called directly, and with the exception of the
 `__config()` function, if present, which will be executed once. Loading the app will also bind specific 
@@ -2919,7 +2920,9 @@ to the `regular` group.
 *  `monster`, `creature`, `ambient`, `water_creature`, `water_ambient`, `misc` - another categorization of 
 living entities based on their spawn group. Negative descriptor resolves to all living types that don't belong to that
 category.
-*  Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
+* All entity tags including those provided with datapacks. Built-in entity tags include: `skeletons`, `raiders`, 
+`beehive_inhabitors` (bee, duh), `arrows` and `impact_projectiles`.
+* Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
 `area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
 `chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
 `egg`, `elder_guardian`, `end_crystal`, `ender_dragon`, `ender_pearl`, `enderman`, `endermite`, `evoker`, 
@@ -3076,13 +3079,21 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-### `query(e, 'tags')`
+###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
 
-List of entity's tags.
+List of entity's scoreboard tags.
 
-### `query(e, 'has_tag',tag)`
+### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
 
-Boolean, true if the entity is marked with `tag`.
+Boolean, true if the entity is marked with a `tag` scoreboad tag.
+
+### `query(e, 'entity_tags')`
+
+List of entity tags assigned to the type this entity represents.
+
+### `query(e, 'has_entity_tag', tag)`
+
+Returns `true` if the entity matches that entity tag, `false` if it doesn't, and `null` if the tag is not valid. 
 
 ### `query(e, 'is_burning')`
 
@@ -3744,6 +3755,14 @@ an inventory, all API functions typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
 
+### item_list(tag?)
+
+With no arguments, returns a list of all items in the game. With an item tag provided, list items matching the tag, or `null` if tag is not valid.
+
+### item_tags(item, tag?)
+
+Returns list of tags the item belongs to, or, if tag is provided, `true` if an item maches the tag, `false` if it doesn't and `null` if that's not a valid tag
+
 ### `stack_limit(item)`
 
 Returns number indicating what is the stack limit for the item. Its typically 1 (non-stackable), 16 (like buckets), 
@@ -3939,6 +3958,13 @@ if it accepts required number of parameters.
 
 Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
  is responsible independently from handling their events, so a global event may be executed multiple times for each player.
+
+### `__on_server_starts()`
+Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
+
+### `__on_server_shuts_down()`
+Event triggers when the server started the shutdown process, before `__on_close()` is executed. Unlike `__on_close()`, it doesn't
+trigger with `/reload`.
 
 ### `__on_tick()`
 Event triggers at the beginning of each tick, located in the overworld. You can use `in_dimension()`

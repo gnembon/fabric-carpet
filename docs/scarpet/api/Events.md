@@ -32,6 +32,13 @@ if it accepts required number of parameters.
 Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
  is responsible independently from handling their events, so a global event may be executed multiple times for each player.
 
+### `__on_server_starts()`
+Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
+
+### `__on_server_shuts_down()`
+Event triggers when the server started the shutdown process, before `__on_close()` is executed. Unlike `__on_close()`, it doesn't
+trigger with `/reload`.
+
 ### `__on_tick()`
 Event triggers at the beginning of each tick, located in the overworld. You can use `in_dimension()`
 to access other dimensions from there.

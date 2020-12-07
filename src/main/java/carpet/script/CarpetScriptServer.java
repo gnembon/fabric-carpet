@@ -122,13 +122,12 @@ public class CarpetScriptServer
         });
         if (CarpetSettings.scriptsAutoload)
         {
-            Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
             for (String moduleName: listAvailableModules(false))
             {
                 addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);
             }
         }
-
+        CarpetEventServer.Event.START.onTick();
     }
 
     public Module getModule(String name, boolean allowLibraries)
@@ -149,7 +148,7 @@ public class CarpetScriptServer
             {
                 Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 Files.createDirectories(globalFolder);
-                scriptPath = Files.list(globalFolder)
+                scriptPath = Files.walk(globalFolder)
                         .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
                                 (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
                         .findFirst();
@@ -194,7 +193,7 @@ public class CarpetScriptServer
         try {
             Path worldScripts = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
             Files.createDirectories(worldScripts);
-            Files.walk(worldScripts)
+            Files.list(worldScripts)
                 .filter(f -> f.toString().endsWith(".sc"))
                 .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
 
@@ -490,6 +489,7 @@ public class CarpetScriptServer
 
     public void onClose()
     {
+        CarpetEventServer.Event.SHUTDOWN.onTick();
         for (ScriptHost host : modules.values())
         {
             host.onClose();
