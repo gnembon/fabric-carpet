@@ -58,6 +58,8 @@
                 structure_eligibility structures structure_references set_structure reset_chunk reload_chunk custom_dimension
                 add_chunk_ticket
 
+                convert_date unix_time
+
                 display_title
 
                 scoreboard scoreboard_add scoreboard_remove scoreboard_display
