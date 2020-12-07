@@ -1,4 +1,4 @@
-__command() -> '
+_command() -> '
 ai_tracker allows to display
 some extra information about
 various entities AI activity
@@ -18,11 +18,52 @@ Current supported actions
  - breeding info for villagers
 
 Settings you may want to change
- - toggle_boxes: hides/shows large boxes and spheres
+ - toggle boxes: hides/shows large boxes and spheres
  - update_frequency: changes update speed
  - clear: removes all options
  - transparency: default opacity of shapes, 8 for start
 ';
+
+__config() ->{
+    'commands'->{
+        ''->'_command',
+        'clear'->'clear';
+        'toggle boxes'->_()->global_display_boxes = !global_display_boxes,
+        'toggle <display>'->['__toggle',null],
+        'toggle villager_hostile_detection <hostile>'->_(h)->__toggle('villager_hostile_detection',h),
+        'update_frequency <ticks>'->_()->(global_interval = ticks;global_duration = ticks + 2),
+        'transparency <alpha>'->_()->global_opacity = floor(alpha)
+    },
+    'arguments'->{
+        'display'->{'type'->'term','options'->[
+            'villager_iron_golem_spawning',
+            'pathfinding',
+            'velocity',
+            'villager_breeding',
+            'villager_buddy_detection',
+            'item_pickup',
+            'portal_cooldown',
+            'health',
+            'pathfinding',
+            //'xpstack', 1.17+
+            ]},
+        'ticks'->{'type'->'int','min'->0,'max'->100},
+        'alpha'->{'type'->'int','min'->0,'max'->255},
+        'hostile'->{'type'->'term','options'->[
+            'drowned',
+            'evoker',
+            'husk',
+            'illusioner',
+            'pillager',
+            'ravager',
+            'vex',
+            'vindicator',
+            'zoglin',
+            'zombie',
+            'zombie_villager'
+            ]}
+    }
+};
 
 
 global_duration = 12;
@@ -33,55 +74,12 @@ global_opacity = 8;
 global_display_boxes = true;
 
 
-
 global_range = 48;
 
 // list of triples - [entity_type, feature, callback]
 global_active_functions = [];
 global_feature_switches = {};
 global_tracker_running = false;
-
-villager_iron_golem_spawning() -> __toggle('villager_iron_golem_spawning', null);
-pathfinding() -> __toggle('pathfinding', null);
-velocity() -> __toggle('velocity', null);
-villager_breeding() -> __toggle('villager_breeding', null);
-villager_buddy_detection() -> __toggle('villager_buddy_detection', null);
-item_pickup() -> __toggle('item_pickup', null);
-portal_cooldown() -> __toggle('portal_cooldown', null);
-health() -> __toggle('health', null);
-//xpstack() -> __toggle('xpstack', null); //1.17 feature
-
-toggle_boxes() ->
-(
-   global_display_boxes = !global_display_boxes;
-   null;
-);
-
-update_frequency(ticks) ->
-(
-   if (type(ticks) != 'number' || ticks <=0 || ticks > 100, exit('Ticks needs to be a positive number from 1 to 100'));
-   global_interval = ticks;
-   global_duration = ticks + 2;
-   null;
-);
-
-transparency(alpha) ->
-(
-   if (type(alpha) != 'number' || alpha <=0 || alpha > 255, exit('Ticks needs to be a number from 0 to 255'));
-   global_opacity = floor(alpha);
-   null;
-);
-
-
-
-villager_hostile_detection(hostile) ->
-(
-   if (!has(global_hostile_to_villager:hostile),
-      print(player(), 'Unknown hostile that affects villagers, possible options are: '+keys(global_hostile_to_villager));
-      exit(null);
-   );
-   __toggle('villager_hostile_detection', hostile);
-);
 
 global_entity_positions = {};
 
@@ -579,5 +577,3 @@ __handle_entity(e) ->
    );
    draw_shape(shapes_to_display);
 );
-
-
