@@ -507,6 +507,7 @@ Available options in the scarpet app space:
  * `server_whitelist` - list of players allowed to log in
  * `server_banned_players` - list of banned player names
  * `server_banned_ips` - list of banned IP addresses
+ * `server_dev_environment` - boolean indicating whether this server is in a development environment.
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM

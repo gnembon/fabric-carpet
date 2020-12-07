@@ -12,6 +12,7 @@ import carpet.script.value.Value;
 import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.GameRules;
 
@@ -82,6 +83,7 @@ public class SystemInfo {
             }
             return whitelist;
         });
+        put("server_dev_environment", c-> new NumericValue(FabricLoader.getInstance().isDevelopmentEnvironment()));
 
         put("java_max_memory", c -> new NumericValue(Runtime.getRuntime().maxMemory()));
         put("java_allocated_memory", c -> new NumericValue(Runtime.getRuntime().totalMemory()));
@@ -117,7 +119,7 @@ public class SystemInfo {
             CarpetServer.extensions.forEach(e -> {
                 SettingsManager manager = e.customSettingsManager();
                 if (manager == null) return;
-                
+
                 Collection<ParsedRule<?>> extensionRules = manager.getRules();
                 extensionRules.forEach(rule -> {
                     carpetRules.put(new StringValue(manager.getIdentifier()+":"+rule.name), new StringValue(rule.getAsString()));
