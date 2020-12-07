@@ -15,7 +15,9 @@ __config() -> {
         'cuboid <center> <radius> <height> <orientation> <block> <hollow>'->['draw_prism', null, true],
         'cuboid <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', true],
         'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->['draw_prism', null, false],
-        'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', false]
+        'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', false],
+        'cache <mode>'->'set_cache_mode',
+        'cache clear'->_()->write_file('cache','nbt',encode_nbt({'sphere'->{},'diamond'->{},'pyramid'->{},'prism'->{}}))
     },
     'arguments'->{
         'center'->{'type'->'pos', 'loaded'->'true'},
@@ -25,6 +27,7 @@ __config() -> {
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
+        'mode'->{'type'->'term','options'->['never', 'ingame', 'always']}
     },
     'scope'->'global'
 };
@@ -32,12 +35,6 @@ __config() -> {
 
 //"Boilerplate" code
 
-global_shape_cache={//Saving shapes so dont have to recalculate them again and again
-    'sphere'->{},//using <String,Array<Pos>> where the positions are relative to centre. (just using java notation cos its clearer)
-    'diamond'->{},//eg: {'radius'->whatever,'height'->bla,'orientation'->bla} gets mapped to the vectors to place blocks in from the centre.
-    'pyramid'->{},//so then it's more efficient to place same shape over and over again.
-    'prism'->{}//using strings for storage cos can't use maps as keys
-};
 
 _block_matches(existing, block_predicate) ->
 (
@@ -99,9 +96,29 @@ fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->
     );
 );
 
+//Cache stuff
+
+__on_close()->(
+    if(global_cache_mode=='always',
+        write_file('cache','nbt',encode_nbt(global_shape_cache))
+    )
+);
+
+//on_start()->
+global_shape_cache = parse_nbt(read_file('cache','nbt'));
+if(global_shape_cache==null||global_shape_cache=={'sphere'->{},'diamond'->{},'pyramid'->{},'prism'->{}},//Basically if saved blank cache or deleted it
+    global_shape_cache={//Saving shapes so dont have to recalculate them again and again
+        'sphere'->{},//using <String,Array<Pos>> where the positions are relative to centre. (just using java notation cos its clearer)
+        'diamond'->{},//eg: {'radius'->whatever,'height'->bla,'orientation'->bla} gets mapped to the vectors to place blocks in from the centre.
+        'pyramid'->{},//so then it's more efficient to place same shape over and over again.
+        'prism'->{}//using strings for storage cos can't use maps as keys
+    },
+    print('Loaded previously saved shape cache');
+    global_cache_mode='always'//Assuming that if they cached before, they wanna do it again
+);
+
 draw_from_cache(cache, args_key, pos, block, replacement)->(
-    if(!has(global_shape_cache:cache,str(args_key)),print('not in cache');return(false));
-    print('drawn form cache');
+    if(!has(global_shape_cache:cache,str(args_key)) || global_cache_mode=='never',return(false));
 
     positions = global_shape_cache:cache:str(args_key);
     for(positions,
@@ -114,14 +131,28 @@ save_to_cache(cache, args_key)->(
     print('Saved '+args_key+' to cache')
 );
 
-//drawing commands
+global_cache_mode='ingame';//Can be 'never', 'ingame' or 'always'. Going lowercase cos the command looks better
+
+set_cache_mode(mode)->(
+    global_cache_mode=mode;
+    message = if(
+        mode=='never',
+        'gi Will not save drawn shapes to cache',
+        mode=='ingame',
+        'gi Will now cache drawn shapes within the game, but not across restarts (default)',
+        'gi Will now save cache drawn within the game, and across restarts'
+    );
+    print(player(),format('gi Set cache mode to: '+global_cache_mode+'\n', message));
+);
+
+//Drawing commands
 
 draw_sphere(centre, radius, block, replacement, hollow)->(
-    if(!draw_from_cache('sphere',{
-                'radius'->radius,
-                'hollow'->hollow
-            }, centre, block, replacement
-            ),
+    cache = {
+       'radius'->radius,
+       'hollow'->hollow
+    };
+    if(!draw_from_cache('sphere', cache, centre, block, replacement),
 
         scan(centre,[radius,radius,radius],
             l = length_sq([_x,_y,_z]-centre);
@@ -129,16 +160,14 @@ draw_sphere(centre, radius, block, replacement, hollow)->(
                 set_block(_x, _y, _z, block, replacement, centre)
             )
         );
-        save_to_cache('sphere',{
-            'radius'->radius,
-            'hollow'->hollow
-        })
+        save_to_cache('sphere',cache)
     );
-    affected(player());
+    affected(player())
 );
 
 draw_diamond(pos, radius, block, replacement)->(
-    if(!draw_from_cache('diamond',{'radius'->radius}, pos, block, replacement),
+    cache = {'radius'->radius};
+    if(!draw_from_cache('diamond', cache, pos, block, replacement),
         c_for(r=0, r<radius, r+=1,
             y = r-radius+1;
             c_for(x=-r,x<=r,x+=1,
@@ -150,7 +179,7 @@ draw_diamond(pos, radius, block, replacement)->(
                 set_block(pos:0+x,pos:1+y,pos:2-z, block, replacement, pos);
             )
         );
-        save_to_cache('diamond',{'radius'->radius})
+        save_to_cache('diamond',cache)
     );
     affected(player())
 );
@@ -172,14 +201,7 @@ draw_pyramid(pos, radius, height, pointing, orientation, block, fill_type, repla
             r = if(pointup, radius - radius * _ / height -1, radius * _ / height);
             fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
         );
-        save_to_cache('pyramid',{
-            'radius'->radius,
-            'height'->height,
-            'pointing'->pointing,
-            'orientation'->orientation,
-            'fill_type'->fill_type,
-            'is_square'->is_square
-        })
+        save_to_cache('pyramid', cache)
     );
     affected(player())
 );
