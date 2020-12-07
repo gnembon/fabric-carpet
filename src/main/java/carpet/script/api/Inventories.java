@@ -97,7 +97,7 @@ public class Inventories {
             String tag = lv.get(1).evalValue(c).getString();
             net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(new Identifier(tag));
             if (itemTag == null) return LazyValue.NULL;
-            return item.isIn(itemTag)?LazyValue.TRUE:LazyValue.FALSE;
+            return itemTag.contains(item)?LazyValue.TRUE:LazyValue.FALSE;
         });
 
         expression.addLazyFunction("recipe_data", -1, (c, t, lv) ->
