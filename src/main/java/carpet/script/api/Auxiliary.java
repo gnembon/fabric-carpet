@@ -18,6 +18,7 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.FixedCommandSource;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
@@ -34,7 +35,6 @@ import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.BlockState;
-import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
@@ -49,7 +49,6 @@ import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -63,7 +62,6 @@ import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.EulerAngle;
-import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
@@ -331,7 +329,7 @@ public class Auxiliary {
             {
                 Value nameValue = lv.get(0).evalValue(c);
                 name = nameValue instanceof NullValue ? "" : nameValue.getString();
-                pointLocator = Vector3Argument.findIn(cc, lv, 1, true);
+                pointLocator = Vector3Argument.findIn(cc, lv, 1, true, false);
                 if (lv.size()>pointLocator.offset)
                 {
                     BlockArgument blockLocator = BlockArgument.findIn(cc, lv, pointLocator.offset, true, true, false);
@@ -467,28 +465,29 @@ public class Auxiliary {
         {
             if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
+            MinecraftServer server = s.getMinecraftServer();
             Value res = lv.get(0).evalValue(c);
+            List<ServerPlayerEntity> targets = null;
             if (lv.size() == 2)
             {
-                ServerPlayerEntity player = EntityValue.getPlayerByValue(s.getMinecraftServer(), res);
-                if (player == null) return LazyValue.NULL;
-                s = player.getCommandSource();
+                List<Value> playerValues = (res instanceof ListValue)?((ListValue) res).getItems():Collections.singletonList(res);
+                List<ServerPlayerEntity> playerTargets = new ArrayList<>();
+                playerValues.forEach(pv -> {
+                    ServerPlayerEntity player = EntityValue.getPlayerByValue(server, pv);
+                    if (player == null) throw new InternalExpressionException("Cannot target player "+pv.getString()+" in print");
+                    playerTargets.add(player);
+                });
+                targets = playerTargets;
                 res = lv.get(1).evalValue(c);
             }
-            if (res instanceof FormattedTextValue)
+            Text message = (res instanceof FormattedTextValue)?((FormattedTextValue) res).getText():new LiteralText(res.getString());
+            if (targets == null)
             {
-                s.sendFeedback(((FormattedTextValue) res).getText(), false);
+                s.sendFeedback(message, false);
             }
             else
             {
-                if (s.getEntity() instanceof PlayerEntity)
-                {
-                    Messenger.m((PlayerEntity) s.getEntity(), "w " + res.getString());
-                }
-                else
-                {
-                    Messenger.m(s, "w " + res.getString());
-                }
+                targets.forEach(p -> p.getCommandSource().sendFeedback(message, false));
             }
             Value finalRes = res;
             return (_c, _t) -> finalRes; // pass through for variables
@@ -565,29 +564,14 @@ public class Auxiliary {
 
         expression.addLazyFunction("run", 1, (c, t, lv) -> {
             BlockPos target = ((CarpetContext)c).origin;
-            Vec3d posf = new Vec3d((double)target.getX()+0.5D,(double)target.getY(),(double)target.getZ()+0.5D);
+            Vec3d posf = new Vec3d((double)target.getX()+0.5D, target.getY(),(double)target.getZ()+0.5D);
             ServerCommandSource s = ((CarpetContext)c).s;
             try
             {
                 Value[] error = {Value.NULL};
                 List<Value> output = new ArrayList<>();
                 Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                        new ServerCommandSource(
-                                CommandOutput.DUMMY, posf, Vec2f.ZERO, s.getWorld(), CarpetSettings.runPermissionLevel,
-                                s.getName(), s.getDisplayName(), s.getMinecraftServer(), s.getEntity(), true,
-                                (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET)
-                        {
-                            @Override
-                            public void sendError(Text message)
-                            {
-                                error[0] = new FormattedTextValue(message);
-                            }
-                            @Override
-                            public void sendFeedback(Text message, boolean broadcastToOps)
-                            {
-                                output.add(new FormattedTextValue(message));
-                            }
-                        },
+                        new FixedCommandSource(s, posf, error, output),
                         lv.get(0).evalValue(c).getString())
                 );
                 Value ret = ListValue.of(retval, ListValue.wrap(output), error[0]);

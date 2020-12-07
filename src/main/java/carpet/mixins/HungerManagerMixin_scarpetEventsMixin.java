@@ -8,13 +8,11 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(HungerManager.class)
 public class HungerManagerMixin_scarpetEventsMixin implements HungerManagerInterface {
     @Shadow private float exhaustion;
-    public float getExhaustionCM(){
-        return exhaustion;
-    }
-
+    @Shadow private float foodSaturationLevel;
     @Override
-    public void setExhaustionCM(float exhaust)
-    {
-        exhaustion = exhaust;
-    }
+    public float getExhaustionCM(){ return exhaustion; }
+    @Override
+    public void setExhaustionCM(float exhaust) { exhaustion = exhaust; }
+    @Override
+    public void setSaturationCM(float saturn) { foodSaturationLevel = saturn; }
 }

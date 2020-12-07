@@ -194,14 +194,24 @@ public class Entities {
             if (lv.size()<3) throw new InternalExpressionException("'entity_area' requires entity type, center and range arguments");
             String who = lv.get(0).evalValue(c).getString();
             CarpetContext cc = (CarpetContext)c;
-            Vector3Argument centerLocator = Vector3Argument.findIn(cc, lv, 1);
-            Vec3d center = centerLocator.vec;
-            if (centerLocator.fromBlock) center.add(0.5, 0.5, 0.5);
+            Vector3Argument centerLocator = Vector3Argument.findIn(cc, lv, 1, false, true);
+
+            Box centerBox;
+            if (centerLocator.entity != null)
+            {
+                centerBox = centerLocator.entity.getBoundingBox();
+            }
+            else
+            {
+                Vec3d center = centerLocator.vec;
+                if (centerLocator.fromBlock) center.add(0.5, 0.5, 0.5);
+                centerBox = new Box(center, center);
+            }
             Vector3Argument rangeLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
             if (rangeLocator.fromBlock)
                 throw new InternalExpressionException("Range of 'entity_area' cannot come from a block argument");
             Vec3d range = rangeLocator.vec;
-            Box area = new Box(center, center).expand(range.x, range.y, range.z);
+            Box area = centerBox.expand(range.x, range.y, range.z);
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who);
             List<? extends Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(eDesc.directType, area,eDesc.filteringPredicate);
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));

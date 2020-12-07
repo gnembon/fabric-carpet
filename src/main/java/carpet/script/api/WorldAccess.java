@@ -6,6 +6,7 @@ import carpet.fakes.BiomeArrayInterface;
 import carpet.fakes.ChunkGeneratorInterface;
 import carpet.fakes.ChunkTicketManagerInterface;
 import carpet.fakes.ServerChunkManagerInterface;
+import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.SpawnHelperInnerInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -58,6 +59,7 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ChunkTicketType;
@@ -89,6 +91,7 @@ import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
@@ -412,6 +415,67 @@ public class WorldAccess {
             return LazyValue.TRUE;
         });
 
+
+        expression.addLazyFunction("weather",-1,(c, t, lv) -> {
+            ServerWorld world = ((CarpetContext) c).s.getWorld();
+
+            if(lv.size()==0)//cos it can thunder when raining or when clear.
+            {
+                Value ret = new StringValue(world.isThundering() ? "thunder" : (world.isRaining() ? "rain" : "clear"));
+                return (_c, _t) -> ret;
+            }
+
+            Value weather = lv.get(0).evalValue(c);
+            ServerWorldProperties worldProperties = ((ServerWorldInterface) world).getWorldPropertiesCM();
+            if(lv.size()==1)
+            {
+                int ticks;
+                switch (weather.getString().toLowerCase(Locale.ROOT)) {
+                    case "clear":
+                        ticks = worldProperties.getClearWeatherTime();
+                        break;
+                    case "rain":
+                        ticks = world.isRaining()? worldProperties.getRainTime():0;//cos if not it gives 1 for some reason
+                        break;
+                    case "thunder":
+                        ticks = world.isThundering()? worldProperties.getThunderTime():0;//same dealio here
+                        break;
+                    default:
+                        throw new InternalExpressionException("Weather can only be 'clear', 'rain' or 'thunder'");
+                }
+                Value ret = new NumericValue(ticks);
+                return (_c,_t) -> ret;
+            }
+            if(lv.size()==2)
+            {
+                int ticks = NumericValue.asNumber(lv.get(1).evalValue(c), "tick_time in 'weather'").getInt();
+                switch (weather.getString().toLowerCase(Locale.ROOT))
+                {
+                    case "clear":
+                        world.setWeather(ticks,0,false,false);
+                        break;
+
+                    case "rain":
+                        world.setWeather(0,ticks,true,false);
+                        break;
+
+                    case "thunder":
+                        world.setWeather(
+                                0,
+                                ticks,//this is used to set thunder time, idk why...
+                                true,
+                                true
+                        );
+                        break;
+
+                    default:
+                        throw new InternalExpressionException("Weather can only be 'clear', 'rain' or 'thunder'");
+                }
+                Value ret = NumericValue.of(ticks);
+                return (_c, _t) -> ret;
+            }
+            throw new InternalExpressionException("'weather' requires 0, 1 or 2 arguments");
+        });
 
         expression.addLazyFunction("pos", 1, (c, t, lv) ->
         {

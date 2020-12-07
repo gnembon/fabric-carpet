@@ -263,6 +263,10 @@ handle_event('tick', _() -> foo('tick happened')); // built-in event
 handle_event('tick', null)  // nah, ima good, kthxbai
 </pre>
 
+In case you want to pass an event handler that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
+
 ### `signal_event(event, target_player?, ... args?)`
 
 Fires a specific event. If the event does not exist (only `handle_event` creates missing new events), or provided argument list

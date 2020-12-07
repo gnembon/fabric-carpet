@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.fakes.ServerWorldInterface;
 import carpet.script.CarpetEventServer;
 import net.minecraft.class_5568;
 import net.minecraft.class_5579;
@@ -11,7 +12,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.level.ServerWorldProperties;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -22,7 +25,7 @@ import static carpet.script.CarpetEventServer.Event.ENTITY_LOAD;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 
 @Mixin(ServerWorld.class)
-public class ServerWorld_scarpetEventMixin
+public class ServerWorld_scarpetMixin implements ServerWorldInterface
 {
     @Inject(method = "tickChunk", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
@@ -58,4 +61,9 @@ public class ServerWorld_scarpetEventMixin
         return success;
     }
 
+    @Shadow
+    private ServerWorldProperties worldProperties;
+    public ServerWorldProperties getWorldPropertiesCM(){
+        return worldProperties;
+    }
 }

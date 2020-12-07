@@ -31,6 +31,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
+import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
@@ -511,6 +512,31 @@ public class EntityValue extends Value
 
         put("exhaustion",(e, a)->{
             if(e instanceof PlayerEntity) return new NumericValue(((HungerManagerInterface)((PlayerEntity) e).getHungerManager()).getExhaustionCM());
+            return Value.NULL;
+        });
+
+        put("absorption",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getAbsorptionAmount());
+            return Value.NULL;
+        });
+
+        put("xp",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).totalExperience);
+            return Value.NULL;
+        });
+
+        put("xp_level", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceLevel);
+            return Value.NULL;
+        });
+
+        put("xp_progress", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceProgress);
+            return Value.NULL;
+        });
+
+        put("score", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getScore());
             return Value.NULL;
         });
 
@@ -1343,11 +1369,36 @@ public class EntityValue extends Value
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
         });
 
-        put("saturation", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
+        put("absorption", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount((float) NumericValue.asNumber(v, "absorbtion").getLong());
         });
 
-        put("air", (e, v) -> e.setAir(NumericValue.asNumber(v).getInt()));
+        put("add_xp", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperience(NumericValue.asNumber(v, "add_xp").getInt());
+        });
+
+        put("xp_level", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperienceLevels(NumericValue.asNumber(v, "xp_level").getInt()-((PlayerEntity) e).experienceLevel);
+        });
+
+        put("xp_progress", (e, v) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                ServerPlayerEntity p = (ServerPlayerEntity) e;
+                p.experienceProgress = NumericValue.asNumber(v, "xp_progress").getFloat();
+                p.networkHandler.sendPacket(new ExperienceBarUpdateS2CPacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
+            }
+        });
+
+        put("xp_score", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setScore(NumericValue.asNumber(v, "xp_score").getInt());
+        });
+
+        put("saturation", (e, v)-> {
+            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setSaturationCM(NumericValue.asNumber(v, "saturation").getFloat());
+        });
+
+        put("air", (e, v) -> e.setAir(NumericValue.asNumber(v, "air").getInt()));
 
         put("breaking_progress", (e, a) -> {
             if (e instanceof ServerPlayerEntity)

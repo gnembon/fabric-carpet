@@ -804,6 +804,9 @@ a = 3; task_thread('temp', _(outer(a), b) -> foo(a,b), 5)
     => Another example of running the same thing passing arguments using closure over anonymous function as well as passing a parameter.
 </pre>
 
+In case you want to create a task based on a function that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
 ### `sleep()` `sleep(timeout)`, `sleep(timeout, close_expr)`
 
 
@@ -1373,7 +1376,7 @@ foo(... x) -> ...  # all arguments for foo are included in the list
 ### `import(module_name, symbols ...)`
 
 Imports symbols from other apps and libraries into the current one: global variables or functions, allowing to use 
-them in the current app. This include other symbols imported by these modules. Scarpet supports cicular dependencies, 
+them in the current app. This includes other symbols imported by these modules. Scarpet supports circular dependencies, 
 but if symbols are used directly in the module body rather than functions, it may not be able to retrieve them. 
 Returns full list of available symbols that could be imported from this module, which can be used to debug import 
 issues, and list contents of libraries.
@@ -1382,8 +1385,56 @@ issues, and list contents of libraries.
 
 calls a user defined function with specified arguments. It is equivalent to calling `function(args...)` directly 
 except you can use it with function value, or name instead. This means you can pass functions to other user defined 
-functions as arguments and call them with `call` internally. And since function definitions return the defined 
+functions as arguments and call them with `call` internally. Since function definitions return the defined 
 function, they can be defined in place as anonymous functions.
+
+#### Passing function references to other modules of your application
+
+In case a function is defined by its name, Scarpet will attempt to resolve its definition in the given module and its imports,
+meaning if the call is in a imported library, and not in the main module of your app, and that function is not visible from the
+library perspective, but in the app, it won't be call-able. In case you pass a function name to a separate module in your app, 
+it should import back that method from the main module for visibility. 
+
+Check an example of a problematic code of a library that expects a function value as a passed argument and how it is called in
+the parent app:
+```
+//app.sc
+import('lib', 'callme');
+foo(x) -> x*x;
+test() -> callme('foo' , 5);
+```
+```
+//lib.scl
+callme(fun, arg) -> call(fun, arg);
+```
+
+In this case `'foo'` will fail to dereference in `lib` as it is not visible by name. In tightly coupled modules, where `lib` is just
+a component of your `app` you can use circular import to acknowledge the symbol from the other module (pretty much like
+imports in Java classes), and that solves the issue but makes the library dependent on the main app: 
+```
+//lib.scl
+import('app','foo');
+callme(fun, arg) -> call(fun, arg);
+```
+You can circumvent that issue by explicitly dereferencing the local function where it is used as a lambda argument created 
+in the module in which the requested function is visible:
+```
+//app.sc
+import('lib', 'callme');
+foo(x) -> x*x;
+test() -> callme(_(x) -> foo(x), 5);
+```
+```
+//lib.scl
+callme(fun, arg) -> call(fun, arg);
+```
+Or by passing an explicit reference to the function, instead of calling it by name:
+```
+//app.sc
+import('lib', 'callme');
+global_foohandler = (foo(x) -> x*x);
+test() -> callme(global_foohandler, 5);
+```
 
 Little technical note: the use of `_` in expression passed to built in functions is much more efficient due to not 
 creating new call stacks for each invoked function, but anonymous functions is the only mechanism available for 
@@ -2184,6 +2235,16 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `weather()`,`weather(type)`,`weather(type, ticks)`
+
+If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
+always return `'thunder'`, if not will return `'rain'` or `'clear'` based on the current weather.
+
+With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of remaining ticks for that weather type.
+NB: It can thunder without there being a thunderstorm, there has to be both rain and thunder to form a storm.
+
+With two args, sets the weather to `type` for `ticks` ticks.
+
 ## Block and World querying
 
 ### `pos(block), pos(entity)`
@@ -2754,14 +2815,16 @@ the future.
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
 
-### `scan(center, range, lower_range?, expr)`
+### `scan(center, range, upper_range?, expr)`
 
 Evaluates expression over area of blocks defined by its center `center = (cx, cy, cz)`, expanded in all directions 
 by `range = (dx, dy, dz)` blocks, or optionally in negative with `range` coords, and `upper_range` coords in 
-positive values.
-`center` can be defined either as three coordinates, a list of three coords, or a block value.
-`range` and `lower_range` can have the same representations, just if its a block, it computes the distance to the center
+positive values, so you can use that if you know the lower coord, and dimension by calling `'scan(center, 0, 0, 0, w, h, d, ...)`.
+
+`center` can be defined either as three coordinates, a single tuple of three coords, or a block value.
+`range` and `upper_range` can have the same representations, just if they are block values, it computes the distance to the center
 as range instead of taking the values as is.
+
 `expr` receives `_x, _y, _z` as coords of current analyzed block and `_`, which represents the block itself.
 
 Returns number of successful evaluations of `expr` (with `true` boolean result) unless called in void context, 
@@ -2786,7 +2849,7 @@ Returns the list of 6 neighbouring blocks to the argument. Commonly used with ot
 for(neighbours(x,y,z),air(_)) => 4 // number of air blocks around a block
 </pre>
 
-### `rect(centre, range?, positive_range?)`
+### `rect(centre, range?, upper_range?)`
 
 Returns an iterator, just like `range` function that iterates over a rectangular area of blocks. If only center
 point is specified, it iterates over 27 blocks. If `range` arguments are specified, expands selection by the  respective 
@@ -2794,7 +2857,7 @@ number of blocks in each direction. If `positive_range` arguments are specified,
  it uses `range` for negative offset, and `positive_range` for positive.
 
 `centre` can be defined either as three coordinates, a list of three coords, or a block value.
-`range` and `positive_range` can have the same representations, just if its a block, it computes the distance to the center
+`range` and `positive_range` can have the same representations, just if they are block values, it computes the distance to the center
 as range instead of taking the values as is.`
 
 ### `diamond(centre_pos, radius?, height?)`
@@ -2878,10 +2941,13 @@ belonging to that group.
 
  
 Returns entities of a specified type in an area centered on `center` and at most `distance` blocks away from 
-the center point. Uses the same `type` selectors as `entities_list`.
+the center point/area. Uses the same `type` selectors as `entities_list`.
 
 `center` and `distance` can either be a triple of coordinates or three consecutive arguments for `entity_area`. `center` can 
-also be represented as a block, in this case the search box will be centered on the middle of the block.
+also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
+entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
+
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
@@ -3197,6 +3263,18 @@ Number indicating remaining entity health, or `null` if not applicable.
 
 Retrieves player hunger related information. For non-players, returns `null`.
 
+### `query(e, 'absorption')`
+
+Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+
+### `query(e,'xp')`
+### `query(e,'xp_level')`
+### `query(e,'xp_progress')`
+### `query(e,'score')`
+
+Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
+`xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
+
 ### `query(e, 'air')`
 
 Number indicating remaining entity health, or `null` if not applicable.
@@ -3507,6 +3585,20 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
 Modifies directly player raw hunger components. Has no effect on non-players
 
+### `modify(e, 'absorption', value)`
+
+Sets the absorption value for the player. Each point is half a yellow heart.
+
+### `modify(e, 'add_xp', value)`
+### `modify(e, 'xp_level', value)`
+### `modify(e, 'xp_progress', value)`
+### `modify(e, 'xp_score', value)` 
+
+Manipulates player xp values - `'add_xp'` the method you probably want to use 
+to manipulate how much 'xp' an action should give. `'xp_score'` only affects the number you see when you die, and 
+`'xp_progress'` controls the xp progressbar above the hotbar, should take values from 0 to 1, but you can set it to any value, 
+maybe you will get a double, who knows.
+
 ### `modify(e, 'air', ticks)`
 
 Modifies entity air
@@ -3549,6 +3641,10 @@ Required arguments: `entity, amount, source, attacking_entity`
 
 It doesn't mean that all entity types will have a chance to execute a given event, but entities will not error 
 when you attach an inapplicable event to it.
+
+In case you want to pass an event handler that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
 
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 
@@ -4075,6 +4171,10 @@ handle_event('tick', _() -> foo('tick happened')); // built-in event
 handle_event('tick', null)  // nah, ima good, kthxbai
 </pre>
 
+In case you want to pass an event handler that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
+
 ### `signal_event(event, target_player?, ... args?)`
 
 Fires a specific event. If the event does not exist (only `handle_event` creates missing new events), or provided argument list
@@ -4489,9 +4589,10 @@ Other value types will only be converted to tags (including NBT tags) if `force`
 extra treatment when loading them back from NBT, but using `force` true will always produce output / never 
 produce an exception.
 
-### `print(expr)`
+### `print(expr)`, `print(player/player_list, expr)`
 
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
+Can optionally define player or list of players to send the message to.
 
 ### `format(components, ...)`, `format(l(components, ...))`
 
@@ -4740,6 +4841,9 @@ algorithm has taken in to account last time mobs spawned.
 Schedules a user defined function to run with a specified `delay` ticks of delay. Scheduled functions run at the end 
 of the tick, and they will run in order they were scheduled.
 
+In case you want to schedule a function that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
 ### `statistic(player, category, entry)`
 
 Queries in-game statistics for certain values. Categories include:
@@ -4779,7 +4883,9 @@ Available options in the scarpet app space:
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
- 
+  * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
+
+
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
@@ -4809,7 +4915,8 @@ Available options in the scarpet app space:
  * `java_process_cpu_load` - current percentage of CPU used by JVM
  
  Scarpet related properties
- * `scarpet_version` - returns the version of the carpet your scarpet comes with.# `/script run` command
+ * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+# `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 
 commandblock, etc... The command receives 4 variables, `x`, `y`, `z` and `p` indicating position and 
