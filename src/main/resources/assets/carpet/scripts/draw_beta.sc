@@ -17,7 +17,12 @@ __config() -> {
         'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->['draw_prism', null, false],
         'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', false],
         'cache <mode>'->'set_cache_mode',
-        'cache clear'->_()->write_file('cache','nbt',encode_nbt({'sphere'->{},'diamond'->{},'pyramid'->{},'prism'->{}}))
+        'cache clear'->_()->delete_file('cache','nbt'),
+        'cache save'->_()->write_file('cache','nbt',encode_nbt(global_shape_cache)),
+        if(system_info('server_dev_environment')||system_info('world_carpet_rules'):'superSecretSetting',
+            'debug <bool>'->_(bool)->global_debug=bool,
+            ''->_()->''
+        )
     },
     'arguments'->{
         'center'->{'type'->'pos', 'loaded'->'true'},
@@ -32,6 +37,7 @@ __config() -> {
     'scope'->'global'
 };
 
+global_debug=false;
 
 //"Boilerplate" code
 
@@ -148,12 +154,12 @@ set_cache_mode(mode)->(
 //Drawing commands
 
 draw_sphere(centre, radius, block, replacement, hollow)->(
+    if(global_debug, start_time=unix_time());
     cache = {
        'radius'->radius,
        'hollow'->hollow
     };
     if(!draw_from_cache('sphere', cache, centre, block, replacement),
-
         scan(centre,[radius,radius,radius],
             l = length_sq([_x,_y,_z]-centre);
             if((l<=radius^2+radius) && (!hollow || l>=radius^2-radius),
@@ -162,10 +168,15 @@ draw_sphere(centre, radius, block, replacement, hollow)->(
         );
         save_to_cache('sphere',cache)
     );
-    affected(player())
+    affected(player());
+    if(global_debug,
+        end_time=unix_time();
+        print(player(),format('gi Time taken: '+(end_time-start_time)+'ms'))
+    )
 );
 
 draw_diamond(pos, radius, block, replacement)->(
+    if(global_debug, start_time=unix_time());
     cache = {'radius'->radius};
     if(!draw_from_cache('diamond', cache, pos, block, replacement),
         c_for(r=0, r<radius, r+=1,
@@ -181,10 +192,15 @@ draw_diamond(pos, radius, block, replacement)->(
         );
         save_to_cache('diamond',cache)
     );
-    affected(player())
+    affected(player());
+    if(global_debug,
+        end_time=unix_time();
+        print(player(),format('gi Time taken: '+(end_time-start_time)+'ms'))
+    )
 );
 
 draw_pyramid(pos, radius, height, pointing, orientation, block, fill_type, replacement, is_square)->(
+    if(global_debug, start_time=unix_time());
     cache = {//this one's longer cos of a ton of params
         'radius'->radius,
         'height'->height,
@@ -203,10 +219,15 @@ draw_pyramid(pos, radius, height, pointing, orientation, block, fill_type, repla
         );
         save_to_cache('pyramid', cache)
     );
-    affected(player())
+    affected(player());
+    if(global_debug,
+        end_time=unix_time();
+        print(player(),format('gi Time taken: '+(end_time-start_time)+'ms'))
+    )
 );
 
 draw_prism(pos, rad, height, orientation, block, fill_type, replacement, is_square)->(
+    if(global_debug, start_time=unix_time());
     cache = {
         'radius'->radius,
         'height'->height,
@@ -223,5 +244,9 @@ draw_prism(pos, rad, height, orientation, block, fill_type, replacement, is_squa
         );
         save_to_cache('pyramid',cache)
     );
-    affected(player())
+    affected(player());
+    if(global_debug,
+        end_time=unix_time();
+        print(player(),format('gi Time taken: '+(end_time-start_time)+'ms'))
+    )
 );
