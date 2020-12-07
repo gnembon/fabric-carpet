@@ -221,7 +221,6 @@ public class CarpetScriptServer
     public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
-        //TODO add per player modules to support player actions better on a server
         if (commandValidator == null) commandValidator = p -> true;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
@@ -325,8 +324,19 @@ public class CarpetScriptServer
             return true;
         }
 
+        Function<ServerCommandSource, Boolean> configValidator;
+        try
+        {
+            configValidator = host.getCommandConfigPermissions();
+        }
+        catch (CommandSyntaxException e)
+        {
+            Messenger.m(source, "rb "+e.getMessage());
+            return false;
+        }
+
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player)).
+                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player)).
                 executes( (c) ->
                 {
                     CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());
