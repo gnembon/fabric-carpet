@@ -149,7 +149,7 @@ public class CarpetScriptServer
             {
                 Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
                 Files.createDirectories(globalFolder);
-                scriptPath = Files.list(globalFolder)
+                scriptPath = Files.walk(globalFolder)
                         .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
                                 (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
                         .findFirst();
@@ -194,7 +194,7 @@ public class CarpetScriptServer
         try {
             Path worldScripts = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
             Files.createDirectories(worldScripts);
-            Files.walk(worldScripts)
+            Files.list(worldScripts)
                 .filter(f -> f.toString().endsWith(".sc"))
                 .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
 

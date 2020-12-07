@@ -6,7 +6,8 @@ Here is the gist of the Minecraft related functions. Otherwise the CarpetScript 
 ## App structure
 
 The main delivery method for scarpet programs into the game is in the form of apps in `*.sc` files located in the world `scripts` 
-folder. In singleplayer, you can also save apps in `.minecraft/config/carpet/scripts` for them to be available in any world. 
+folder, flat. In singleplayer, you can also save apps in `.minecraft/config/carpet/scripts` for them to be available in any world,
+and here you can actually organize them in folders. 
 When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
 (more about the app scopes below), without executing of any functions, unless called directly, and with the exception of the
 `__config()` function, if present, which will be executed once. Loading the app will also bind specific 
