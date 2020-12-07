@@ -309,6 +309,30 @@ public class CarpetEventServer
             return events;
         }
 
+        public static final Event START = new Event("server_starts", 0, true)
+        {
+            @Override
+            public void onTick()
+            {
+                handler.call(Collections::emptyList, () ->
+                        CarpetServer.minecraft_server.getCommandSource().
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.OVERWORLD))
+                );
+            }
+        };
+
+        public static final Event SHUTDOWN = new Event("server_shuts_down", 0, true)
+        {
+            @Override
+            public void onTick()
+            {
+                handler.call(Collections::emptyList, () ->
+                        CarpetServer.minecraft_server.getCommandSource().
+                                withWorld(CarpetServer.minecraft_server.getWorld(World.OVERWORLD))
+                );
+            }
+        };
+
         public static final Event TICK = new Event("tick", 0, true)
         {
             @Override

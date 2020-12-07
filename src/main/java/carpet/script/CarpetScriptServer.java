@@ -127,7 +127,7 @@ public class CarpetScriptServer
                 addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);
             }
         }
-
+        CarpetEventServer.Event.START.onTick();
     }
 
     public Module getModule(String name, boolean allowLibraries)
@@ -489,6 +489,7 @@ public class CarpetScriptServer
 
     public void onClose()
     {
+        CarpetEventServer.Event.SHUTDOWN.onTick();
         for (ScriptHost host : modules.values())
         {
             host.onClose();
