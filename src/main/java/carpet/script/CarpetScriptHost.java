@@ -11,6 +11,7 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
@@ -38,6 +39,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -163,13 +165,57 @@ public class CarpetScriptHost extends ScriptHost
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
+        Function<ServerCommandSource, Boolean> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player));
+               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player));
         for (Pair<List<CommandToken>,FunctionArgument<Value>> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
         }
         return command;
+    }
+
+    public Function<ServerCommandSource, Boolean> getCommandConfigPermissions() throws CommandSyntaxException
+    {
+        Value confValue = appConfig.get(StringValue.of("command_permission"));
+        if (confValue == null) return s -> true;
+        if (confValue instanceof NumericValue)
+        {
+            int level = ((NumericValue) confValue).getInt();
+            if (level < 1 || level > 4) throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
+            return s -> s.hasPermissionLevel(level);
+        }
+        if (!(confValue instanceof FunctionValue))
+        {
+            String perm = confValue.getString().toLowerCase(Locale.ROOT);
+            switch (perm)
+            {
+                case "ops": return s -> s.hasPermissionLevel(2);
+                case "server": return s -> !(s.getEntity() instanceof ServerPlayerEntity);
+                case "players": return s -> s.getEntity() instanceof ServerPlayerEntity;
+                case "all": return s -> true;
+                default: throw CommandArgument.error("Unknown command permission: "+perm);
+            }
+        }
+        FunctionValue fun = (FunctionValue) confValue;
+        if (fun.getNumParams() != 1) throw CommandArgument.error("Custom command permission function should expect 1 argument");
+        String hostName = getName();
+        return s -> {
+            try
+            {
+                CarpetScriptHost cHost = null;
+                cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(s);
+                Value response = cHost.handleCommand(s, fun, Collections.singletonList(
+                        (s.getEntity() instanceof ServerPlayerEntity)?new EntityValue(s.getEntity()):Value.NULL)
+                );
+                return response.getBoolean();
+            }
+            catch (CommandSyntaxException e)
+            {
+                Messenger.m(s, "rb Unable to run app command: "+e.getMessage());
+                return false;
+            }
+        };
     }
 
     @Override

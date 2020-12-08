@@ -38,10 +38,9 @@ To access global/server state for a player app, which you shouldn't do, you need
 so either use a command block, or any 
 arbitrary entity: `/execute as @e[type=bat,limit=1] run script in <app> globals` for instance, however
 running anything in the global scope for a `'player'` scoped app is not intended.
-*   `'stay_loaded'`: defaults to `false`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
+*   `'stay_loaded'`: defaults to `true`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
-This is to allow to store multiple apps on the server/world and selectively decide which one should be running at 
-startup. WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
+ WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
 statically, will be performed once anyways. Only apps present in the world's `scripts` folder will be autoloaded.
 *   `'legacy_command_type_support'` - if `true`, and the app defines the legacy command system via `__command()` function,
 all parameters of command functions will be interpreted and used using brigadier / vanilla style argument parser and their type
@@ -52,9 +51,20 @@ conflicts and ambiguities between different paths of execution. While ambiguous 
 and they tend to execute correctly, the suggestion support works really poorly in these situations and scarpet
 will warn and prevent such apps from loading with an error message. If `allow_command_conflicts` is specified and 
 `true`, then scarpet will load all provided commands regardless.
+*   `'command_permission'` - indicates a custom permission to run the command. It can either be a number indicating 
+permission level (from 1 to 4) or a string value, one of: `'all'` (default), `'ops'` (default opped player with permission level of 2),
+`'server'` - command accessible only through the server console and commandblocks, but not in chat, `'players'` - opposite
+of the former, allowing only use in player chat. It can also be a function (lambda function or function value, not function name)
+that takes 1 parameter, which represents the calling player, or `'null'` if the command represents a server call. 
+The function will prevent the command from running if it evaluates to `false`.
+Please note, that Minecraft evaluates eligible commands for players when they join, or on reload/restart, so if you use a 
+predicate that is volatile and might change, the command might falsely do or do not indicate that it is available to the player,
+however player will always be able to type it in and either succeed, or fail, based on their current permissions.
+Custom permission applies to legacy commands with `'legacy_command_type_support'` as well
+as for the custom commands defined with `'commands'`, see below.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
-as for the custom commands defined with `'commands'`, see below
-*   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below
+as for the custom commands defined with `'commands'`, see below.
+*   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.
 
 ## Custom app commands
 
