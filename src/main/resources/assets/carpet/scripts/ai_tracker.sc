@@ -27,7 +27,7 @@ Settings you may want to change
 __config() ->{
     'commands'->{
         ''->'_command',
-        'clear'->'clear';
+        'clear'->'clear',
         'toggle boxes'->_()->global_display_boxes = !global_display_boxes,
         'toggle <display>'->['__toggle',null],
         'toggle villager_hostile_detection <hostile>'->_(h)->__toggle('villager_hostile_detection',h),
@@ -44,7 +44,6 @@ __config() ->{
             'item_pickup',
             'portal_cooldown',
             'health',
-            'pathfinding',
             //'xpstack', 1.17+
             ]},
         'ticks'->{'type'->'int','min'->0,'max'->100},
