@@ -530,7 +530,7 @@ public class Auxiliary {
                 if (pVal instanceof FormattedTextValue)
                     title = ((FormattedTextValue) pVal).getText();
                 else
-                    title = Text.of(pVal.getString());
+                    title = new LiteralText(pVal.getString());
             }
             TitleS2CPacket timesPacket;
             if (lv.size() > 3)
