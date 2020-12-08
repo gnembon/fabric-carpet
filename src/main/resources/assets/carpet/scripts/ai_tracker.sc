@@ -35,32 +35,10 @@ __config() ->{
         'transparency <alpha>'->_()->global_opacity = floor(alpha)
     },
     'arguments'->{
-        'display'->{'type'->'term','options'->[
-            'villager_iron_golem_spawning',
-            'pathfinding',
-            'velocity',
-            'villager_breeding',
-            'villager_buddy_detection',
-            'item_pickup',
-            'portal_cooldown',
-            'health',
-            //'xpstack', 1.17+
-            ]},
+        'display'->{'type'->'term','options'->keys(global_functions)},
         'ticks'->{'type'->'int','min'->0,'max'->100},
         'alpha'->{'type'->'int','min'->0,'max'->255},
-        'hostile'->{'type'->'term','options'->[
-            'drowned',
-            'evoker',
-            'husk',
-            'illusioner',
-            'pillager',
-            'ravager',
-            'vex',
-            'vindicator',
-            'zoglin',
-            'zombie',
-            'zombie_villager'
-            ]}
+        'hostile'->{'type'->'term','options'->keys(global_hostile_to_villager)}
     }
 };
 
