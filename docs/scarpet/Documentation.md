@@ -38,5 +38,7 @@
 
 [`/script` Command](/docs/scarpet/api/ScriptCommand.md)
 
+[Built-in Scarpet apps](/docs/scarpet/api/BuiltIns.md)
+
 ## [One Page](/docs/scarpet/Full.md)
 
