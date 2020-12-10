@@ -809,6 +809,26 @@ public class CarpetEventServer
                 );
             }
         };
+        public static final Event EXPLOSION = new Event("explosion", 5, true)
+        {
+            @Override
+            public void onExplosion(ServerWorld world, double x, double y, double z, float power, DamageSource source, boolean createFire, List<BlockPos> affectedBlocks)
+            {
+                handler.call(
+                        () -> Arrays.asList(
+                                new ListValue(
+                                        Arrays.asList(new NumericValue(x), new NumericValue(y), new NumericValue(z))
+                                ),
+                                new NumericValue(power),
+                                source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker()),
+                                createFire?Value.TRUE:Value.FALSE,
+                                new ListValue(affectedBlocks.stream().map(
+                                        a -> new BlockValue(world.getBlockState(a),world,a)
+                                ).collect(Collectors.toList()))
+                        ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                );
+            }
+        };
 
         public static String getEntityLoadEventName(EntityType<? extends Entity> et)
         {
@@ -927,6 +947,7 @@ public class CarpetEventServer
         public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}
         public void onSlotSwitch(ServerPlayerEntity player, int from, int to) {}
 
+        public void onExplosion(ServerWorld world, double x, double y, double z, float power, DamageSource source, boolean createFire, List<BlockPos> affectedBlocks) { }
 
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
