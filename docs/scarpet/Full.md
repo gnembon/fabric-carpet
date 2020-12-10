@@ -3995,10 +3995,6 @@ at the same time.
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
-### `__on_explosion(pos, power, source, create_fire, blocks)`
-Triggered right before an explosion blows up, right before any changes to the world are done, but the decision to blow up is already made.  
-The parameter `blocks` contains the list of block that will blow up (or would blow up if `explosionNoBlockDamage` is setted to `true`).
-
 ### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.
@@ -4027,7 +4023,7 @@ Example events that may cause it to happen is releasing a bow. The event is trig
 the request, however the `item_tuple` is provided representing the item that the player started with. You can use that and
 compare with the currently held item for a delta.
 
-### `__on_player_finishes_using_item(player, item_tuple, hand)`
+### `__on_player_finishes_using_item(player, item_tuple, hand))`
 Player using of an item is done. This is controlled server side and is responsible for such events as finishing
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.
@@ -4137,7 +4133,7 @@ ingested by the player. The exact position of these items is unknown as technica
 items could be spread all across the inventory.
 
 ### `__on_player_connects(player)`
-Triggered when the player has successfully logged in and was placed in the game.
+Triggered when the player has successfully logged in and was placed in the gaem.
 
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
