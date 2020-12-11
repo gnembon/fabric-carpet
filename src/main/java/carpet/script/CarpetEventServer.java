@@ -816,9 +816,7 @@ public class CarpetEventServer
             {
                 handler.call(
                         () -> Arrays.asList(
-                                new ListValue(
-                                        Arrays.asList(new NumericValue(x), new NumericValue(y), new NumericValue(z))
-                                ),
+                                ListValue.fromTriple(x, y, z),
                                 new NumericValue(power),
                                 source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker()),
                                 createFire?Value.TRUE:Value.FALSE,
