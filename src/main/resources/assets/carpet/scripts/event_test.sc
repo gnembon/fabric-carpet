@@ -292,3 +292,14 @@ __on_player_picks_up_item(player, item) ->
     print(' Player '+player+' injects '+item);
 );
 
+__on_player_trades(player, entity, buy, buyB, sell) ->
+(
+    print('');
+    print('__on_player_trades(player, item)');
+    print('player trades:');
+    print('  - player: '+player);
+    print('  - entity: '+ entity);
+    print('  - buy: '+ buy);
+    print('  - buyB: '+ buyB);
+    print('  - sell: '+ sell);
+);

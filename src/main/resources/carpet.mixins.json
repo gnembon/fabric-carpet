@@ -164,6 +164,7 @@
     "BlockItem_scarpetEventMixin",
     "PlayerManager_scarpetEventsMixin",
     "PlayerInventory_scarpetEventMixin",
+    "TradeOutputSlot_scarpetEventMixin",
 
     "ChunkTicketManager_scarpetMixin",
     "StatType_scarpetMixin",
