@@ -16,7 +16,7 @@ import java.util.List;
 
 import static carpet.script.CarpetEventServer.Event.EXPLOSION;
 
-@Mixin(value = Explosion.class)
+@Mixin(value = Explosion.class, priority = 990)
 public abstract class Explosion_scarpetEventMixin
 {
     @Shadow @Final private World world;
