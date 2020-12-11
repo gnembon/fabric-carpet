@@ -343,12 +343,14 @@ __config() ->{
         'clear'->'clear',
         'toggle boxes'->_()->global_display_boxes = !global_display_boxes,
         'toggle <display>'->['__toggle',null],
-        'toggle villager_hostile_detection <hostile>'->_(h)->__toggle('villager_hostile_detection',h),
+        'toggle villager <villager_display>'->_(d)->__toggle('villager_'+d,null),
+        'toggle villager hostile_detection <hostile>'->_(h)->__toggle('villager_hostile_detection',h),
         'update_frequency <ticks>'->_(ticks)->(global_interval = ticks;global_duration = ticks + 2),
         'transparency <alpha>'->_(alpha)->global_opacity = floor(alpha)
     },
     'arguments'->{
-        'display'->{'type'->'term','options'->keys(global_functions)},
+        'display'->{'type'->'term','options'->['item_pickup','velocity','portal_cooldown','health','pathfinding','xpstack']},
+        'villager_display'->{'type'->'term','options'->['iron_golem_spawning','buddy_detection','hostile_detection','breeding']},
         'ticks'->{'type'->'int','min'->0,'max'->100},
         'alpha'->{'type'->'int','min'->0,'max'->255},
         'hostile'->{'type'->'term','options'->keys(global_hostile_to_villager)}
