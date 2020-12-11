@@ -76,7 +76,7 @@ __config() ->{
         'seconds'->{'type'->'int','suggest'->[]},
         'last_delay'->{'type'->'int','suggest'->[]},
         'name'->{'type'->'string','suggest'->[]},
-        'interpolation'->{'type'->'term','options'->['linear','cr']}
+        'interpolation'->{'type'->'term','options'->['linear','catmull_rom']}
         'factor'->{'type'->'int','min'->25,'max'->'400'},
         'command'->{'type'->'term','options'->[
             'start',
@@ -199,7 +199,7 @@ __interpolation(method, verbose) ->
    // or optionally __prepare_path_if_needed, if path is inefficient to compute point by point
    global_interpolator = if (
        method == 'linear', '__interpolator_linear',
-       method == 'cr', '__interpolator_cr',
+       method == 'catmull_rom', '__interpolator_cr',
        method == 'gauss', _(s, p) -> __interpolator_gauB(s, p, 0),
        method ~ '^gauss_',
             (
@@ -207,8 +207,7 @@ __interpolation(method, verbose) ->
                 type = replace(type,'_','.');
                 variance = round(60*number(type));
                 _(s, p, outer(variance)) -> __interpolator_gauB(s, p, variance);
-            ),
-       exit('Choose one of the following methods: linear, gauss, gauss_<deviation>, cr')
+            )
    );
    __update();
    if(verbose, 'Interpolation changed to '+method, '');
