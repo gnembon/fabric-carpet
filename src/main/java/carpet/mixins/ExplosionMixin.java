@@ -8,7 +8,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -24,19 +23,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-import static carpet.script.CarpetEventServer.Event.EXPLOSION;
-
 @Mixin(value = Explosion.class)
 public abstract class ExplosionMixin
 {
+    @Shadow
+    @Final
+    private List<BlockPos> affectedBlocks;
+
     @Shadow @Final private World world;
-    @Shadow @Final private double x;
-    @Shadow @Final private double y;
-    @Shadow @Final private double z;
-    @Shadow @Final private float power;
-    @Shadow @Final private DamageSource damageSource;
-    @Shadow @Final private boolean createFire;
-    @Shadow @Final private List<BlockPos> affectedBlocks;
 
     private ExplosionLogHelper eLogger;
 
@@ -59,9 +53,6 @@ public abstract class ExplosionMixin
         {
             eLogger.setAffectBlocks( ! affectedBlocks.isEmpty());
             eLogger.onExplosionDone(this.world.getTime());
-        }
-        if (EXPLOSION.isNeeded()) {
-            EXPLOSION.onExplosion((ServerWorld) world, x, y, z, power, damageSource, createFire, affectedBlocks);
         }
         if (CarpetSettings.explosionNoBlockDamage)
         {
