@@ -20,7 +20,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_TRADES;
 public abstract class TradeOutputSlot_scarpetEventMixin {
     @Shadow @Final private Merchant merchant;
 
-    @Inject(method = "onTakeItem", require = 0, at = @At(value = "INVOKE",
+    @Inject(method = "onTakeItem", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/village/Merchant;trade(Lnet/minecraft/village/TradeOffer;)V"),
             locals = LocalCapture.CAPTURE_FAILHARD
     )
