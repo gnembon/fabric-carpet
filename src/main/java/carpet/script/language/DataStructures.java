@@ -135,23 +135,25 @@ public class DataStructures {
 
         expression.addFunction("range", (lv) ->
         {
-            long from = 0;
-            long to = 0;
-            long step = 1;
+            NumericValue from = Value.ZERO;
+            NumericValue to;
+            NumericValue step = Value.ONE;
             int argsize = lv.size();
             if (argsize == 0 || argsize > 3)
                 throw new InternalExpressionException("'range' accepts from 1 to 3 arguments, not "+argsize);
-            to = NumericValue.asNumber(lv.get(0)).getLong();
+            to = NumericValue.asNumber(lv.get(0));
             if (lv.size() > 1)
             {
                 from = to;
-                to = NumericValue.asNumber(lv.get(1)).getLong();
+                to = NumericValue.asNumber(lv.get(1));
                 if (lv.size() > 2)
                 {
-                    step = NumericValue.asNumber(lv.get(2)).getLong();
+                    step = NumericValue.asNumber(lv.get(2));
                 }
             }
-            return LazyListValue.range(from, to, step);
+            return (from.isInteger() && to.isInteger() && step.isInteger())
+                    ? LazyListValue.rangeLong(from.getLong(), to.getLong(), step.getLong())
+                    : LazyListValue.rangeDouble(from.getDouble(), to.getDouble(), step.getDouble());
         });
 
         expression.addLazyFunction("m", -1, (c, t, llv) ->

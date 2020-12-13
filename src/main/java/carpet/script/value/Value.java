@@ -13,10 +13,12 @@ import java.util.regex.PatternSyntaxException;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
-    public static Value FALSE = new NumericValue(0);
-    public static Value TRUE = new NumericValue(1);
-    public static Value ZERO = FALSE;
-    public static Value NULL = new NullValue();
+    public static NumericValue FALSE = new NumericValue(0);
+    public static NumericValue TRUE = new NumericValue(1);
+    public static NumericValue ZERO = FALSE;
+    public static NumericValue ONE = TRUE;
+
+    public static NullValue NULL = new NullValue();
 
     public String boundVariable;
 

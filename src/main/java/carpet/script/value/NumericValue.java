@@ -308,4 +308,9 @@ public class NumericValue extends Value
         if (longValue != null) return new NumericValue(-longValue);
         return new NumericValue(-value);
     }
+
+    public boolean isInteger()
+    {
+        return longValue!= null ||  getDouble() == (double)getLong();
+    }
 }
