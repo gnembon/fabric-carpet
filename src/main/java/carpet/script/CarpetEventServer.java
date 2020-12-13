@@ -18,6 +18,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
@@ -35,6 +36,8 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.village.Merchant;
+import net.minecraft.village.TradeOffer;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import org.apache.commons.lang3.tuple.Pair;
@@ -548,6 +551,20 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         };
+        public static final Event PLAYER_TRADES = new Event("player_trades", 5, false)
+        {
+            @Override
+            public void onTrade(ServerPlayerEntity player, Merchant merchant, TradeOffer tradeOffer)
+            {
+                handler.call( () -> Arrays.asList(
+                        new EntityValue(player),
+                        merchant instanceof MerchantEntity ? new EntityValue((MerchantEntity) merchant) : Value.NULL,
+                        ValueConversions.of(tradeOffer.getOriginalFirstBuyItem()),
+                        ValueConversions.of(tradeOffer.getSecondBuyItem()),
+                        ValueConversions.of(tradeOffer.getSellItem())
+                ), player::getCommandSource);
+            }
+        };
         public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, false)
         {
             @Override
@@ -926,6 +943,7 @@ public class CarpetEventServer
         public void onDamage(Entity target, float amount, DamageSource source) { }
         public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}
         public void onSlotSwitch(ServerPlayerEntity player, int from, int to) {}
+        public void onTrade(ServerPlayerEntity player, Merchant merchant, TradeOffer tradeOffer) {}
 
 
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
