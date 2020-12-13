@@ -69,7 +69,7 @@ public abstract class PlayerManager_fakePlayersMixin
             ServerPlayerEntity serverPlayerEntity_3 = (ServerPlayerEntity) var5.next();
             if(serverPlayerEntity_3 instanceof EntityPlayerMPFake)
             {
-                serverPlayerEntity_3.kill();
+                ((EntityPlayerMPFake)serverPlayerEntity_3).kill(new TranslatableText("multiplayer.disconnect.duplicate_login"));
                 continue;
             }
             serverPlayerEntity_3.networkHandler.disconnect(new TranslatableText("multiplayer.disconnect.duplicate_login"));

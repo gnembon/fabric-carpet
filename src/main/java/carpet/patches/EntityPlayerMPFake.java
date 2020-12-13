@@ -9,6 +9,7 @@ import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.NetworkSide;
+import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -94,8 +95,13 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     @Override
     public void kill()
     {
+        kill(Messenger.s("Killed"));
+    }
+
+    public void kill(Text reason)
+    {
         this.server.send(new ServerTask(this.server.getTicks(), () -> {
-            this.networkHandler.onDisconnected(Messenger.s("Killed"));
+            this.networkHandler.onDisconnected(reason);
         }));
     }
 
@@ -118,7 +124,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         super.onDeath(cause);
         setHealth(20);
         this.hungerManager = new HungerManager();
-        kill();
+        kill(this.getDamageTracker().getDeathMessage());
     }
 
     @Override

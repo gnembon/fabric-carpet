@@ -1710,6 +1710,8 @@ map(range(10),_*_)  => [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
 reduce(range(10),_a+_, 0)  => 45
 range(5,10)  => [5, 6, 7, 8, 9]
 range(20, 10, -2)  => [20, 18, 16, 14, 12]
+range(-0.3, 0.3, 0.1)  => [-0.3, -0.2, -0.1, 0, 0.1, 0.2]
+range(0.3, -0.3, -0.1) => [0.3, 0.2, 0.1, -0, -0.1, -0.2]
 </pre>
 
 ## Map operations
@@ -4051,7 +4053,12 @@ adjusted.
 ### `__on_player_interacts_with_entity(player, entity, hand)`
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
-with that interaction
+with that interaction.
+
+### `__on_player_trades(player, entity, buy, buyB, sell)`
+Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
+changes and merchant updates its trade-uses counter.
+The parameter `entity` can be `null` if the merchant is not an entity.
 
 ### `__on_player_collides_with_entity(player, entity)`
 Triggered every time a player - entity collisions are calculated, before effects of collisions are applied in the game. 
