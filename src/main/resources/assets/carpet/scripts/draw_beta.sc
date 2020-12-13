@@ -16,9 +16,6 @@ __config() -> {
         'cuboid <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', true],
         'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->['draw_prism', null, false],
         'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->['draw_prism', false],
-        'cache <mode>'->'set_cache_mode',
-        'cache clear'->_()->delete_file('cache','nbt'),
-        'cache save'->_()->write_file('cache','nbt',encode_nbt(global_shape_cache)),
         if(system_info('server_dev_environment')||system_info('world_carpet_rules'):'superSecretSetting',
             'debug <bool>'->_(bool)->global_debug=bool,
             ''->_()->''
@@ -52,122 +49,135 @@ _block_matches(existing, block_predicate) ->
     (!tag || tag_matches(block_data(existing), tag))
 );
 
-set_block(x, y, z, block, replacement, cpos)-> (
+set_block(x, y, z, block, replacement)-> (
     existing = block(x, y, z);
     if(block != existing && (!replacement || _block_matches(existing, replacement) ),
-        global_positions:1 += bool(set(existing,block));
+        global_positions += bool(set(existing,block))
     );
-    global_positions:0+=[x, y ,z]-cpos//so it's relative to centre pos, and we can draw from cache more smartly
 );
 
-global_positions = [[],0];
+global_positions = 0;
 
 affected(player) -> (
-    affected = global_positions:1;
+    affected = global_positions;
     print(player,format('gi Filled ' + affected + ' blocks'));
 
-    global_positions = [[],0];
+    global_positions = 0;
     affected
 );
 
 length_sq(vec) -> reduce(vec, _a + _*_, 0);
 
 fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->(
-    r = floor(dr);
-    drsq = dr^2;
+    if(rectangle,
+        fill_flat_square(pos, offset, dr, orientation, block, replacement, hollow),
+        fill_flat_circle(pos, offset, dr, orientation, block, replacement, hollow)
+    )
+);
+
+fill_flat_square(pos, offset, radius, orientation, block, replacement, hollow)->(
+    [cx,cy,cz]=pos;
     if(orientation=='x',
-        scan(pos,0,-r,-r,
-            if((!hollow && (rectangle || _y^2 + _z^2 <= drsq))||//if not hollow, vry simple
-                (hollow && ((rectangle && (abs(_y) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
-                (!rectangle && (_y^2 + _z^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
-                set_block(_x+offset,_y,_z,block, replacement, pos)
+        for(range(-radius,radius+1),
+            r=_;
+            if(hollow,
+                set_block(cx+offset,cy+radius,cz+r,block,replacement);
+                set_block(cx+offset,cy-radius,cz+r,block,replacement);
+                set_block(cx+offset,cy+r,cz+radius,block,replacement);
+                set_block(cx+offset,cy+r,cz-radius,block,replacement),
+                for(range(-radius,radius+1),set_block(cx+offset,cy+_,cz+r,block,replacement))
             )
         ),
-    orientation == 'y',
-        scan(pos,-r,0,-r,
-            if((!hollow && (rectangle || _x^2 + _z^2 <= drsq))||//if not hollow, vry simple
-                (hollow && ((rectangle && (abs(_x) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
-                (!rectangle && (_x^2 + _z^2 <= drsq && (abs(_x)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
-                set_block(_x,_y+offset,_z,block, replacement, pos)
+        orientation=='y',
+        for(range(-radius,radius+1),
+            r=_;
+            if(hollow,
+                set_block(cx+radius,cy+offset,cz+r,block,replacement);
+                set_block(cx-radius,cy+offset,cz+r,block,replacement);
+                set_block(cx+r,cy+offset,cz+radius,block,replacement);
+                set_block(cx+r,cy+offset,cz-radius,block,replacement),
+                for(range(-radius,radius+1),set_block(cx+_,cy+offset,cz+r,block,replacement))
             )
         ),
-    orientation == 'z',
-        scan(pos,-r,-r,0,
-            if((!hollow && (rectangle || _y^2 + _x^2 <= drsq))||//if not hollow, vry simple
-                (hollow && ((rectangle && (abs(_y) == r || abs(_x) ==r)) || //If hollow and it's a rectangle
-                (!rectangle && (_y^2 + _x^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_x)+1)^2 >= drsq)))),//If hollow and not rectangle
-                set_block(_x,_y,_z+offset,block, replacement, pos)
+        orientation=='z',
+        for(range(-radius,radius+1),
+            r=_;
+            if(hollow,
+                set_block(cx+r,cy+radius,cz+offset,block,replacement);
+                set_block(cx+r,cy-radius,cz+offset,block,replacement);
+                set_block(cx+radius,cy+r,cz+offset,block,replacement);
+                set_block(cx-radius,cy+r,cz+offset,block,replacement),
+                for(range(-radius,radius+1),set_block(cx+r,cy+_,cz+offset,block,replacement))
             )
         )
-    );
-);
-
-//Cache stuff
-
-__on_close()->(
-    if(global_cache_mode=='always',
-        write_file('cache','nbt',encode_nbt(global_shape_cache))
     )
 );
 
-//on_start()->
-global_shape_cache = parse_nbt(read_file('cache','nbt'));
-if(global_shape_cache==null||global_shape_cache=={'sphere'->{},'diamond'->{},'pyramid'->{},'prism'->{}},//Basically if saved blank cache or deleted it
-    global_shape_cache={//Saving shapes so dont have to recalculate them again and again
-        'sphere'->{},//using <String,Array<Pos>> where the positions are relative to centre. (just using java notation cos its clearer)
-        'diamond'->{},//eg: {'radius'->whatever,'height'->bla,'orientation'->bla} gets mapped to the vectors to place blocks in from the centre.
-        'pyramid'->{},//so then it's more efficient to place same shape over and over again.
-        'prism'->{}//using strings for storage cos can't use maps as keys
-    },
-    print('Loaded previously saved shape cache');
-    global_cache_mode='always'//Assuming that if they cached before, they wanna do it again
-);
+fill_flat_circle(pos, offset, radius, orientation, block, replacement, hollow)->(
+    [cx,cy,cz]=pos;
+    if(orientation=='x',
+        for(range(-90, 90, 45/radius),
+            cpitch = cos(_)*radius;
+            spitch = sin(_)*radius;
 
-draw_from_cache(cache, args_key, pos, block, replacement)->(
-    if(!has(global_shape_cache:cache,str(args_key)) || global_cache_mode=='never',return(false));
+            if(hollow,
+                set_block(cx+offset,cy+cpitch,cz+spitch,block,replacement);
+                set_block(cx+offset,cy-cpitch,cz+spitch,block,replacement),
+                for(range(-cpitch,cpitch),
+                    set_block(cx+offset,cy+_,cz+cpitch,block,replacement);
+                )
+            )
+        ),
+        orientation=='y',
+        for(range(-90, 90, round(45/radius)),
+            cpitch = round(cos(_)*radius);
+            spitch = round(sin(_)*radius);
 
-    positions = global_shape_cache:cache:str(args_key);
-    for(positions,
-        set_block(_:0+pos:0, _:1+pos:1, _:2+pos:2, block, replacement, pos)
+            if(hollow,
+                set_block(cx+cpitch-1,cy+offset,cz+spitch,block,replacement);
+                set_block(cx-cpitch,cy+offset,cz+spitch,block,replacement),
+                for(range(-cpitch,cpitch),
+                    set_block(cx+_,cy+offset,cz+spitch,block,replacement);
+                )
+            )
+        ),
+        orientation=='z',
+        for(range(-90, 90, 45/radius),
+            cpitch = cos(_)*radius;
+            spitch = sin(_)*radius;
+
+            if(hollow,
+                set_block(cx+spitch,cy+cpitch,cz+offset,block,replacement);
+                set_block(cx+spitch,cy-cpitch,cz+offset,block,replacement),
+                for(range(-cpitch,cpitch),
+                    set_block(cx+cpitch,cy+_,cz+offset,block,replacement);
+                )
+            )
+        )
     )
-);
-
-save_to_cache(cache, args_key)->(
-    put(global_shape_cache:cache, {str(args_key)->global_positions:0)};
-    print('Saved '+args_key+' to cache')
-);
-
-global_cache_mode='ingame';//Can be 'never', 'ingame' or 'always'. Going lowercase cos the command looks better
-
-set_cache_mode(mode)->(
-    global_cache_mode=mode;
-    message = if(
-        mode=='never',
-        'gi Will not save drawn shapes to cache',
-        mode=='ingame',
-        'gi Will now cache drawn shapes within the game, but not across restarts (default)',
-        'gi Will now save cache drawn within the game, and across restarts'
-    );
-    print(player(),format('gi Set cache mode to: '+global_cache_mode+'\n', message));
 );
 
 //Drawing commands
 
 draw_sphere(centre, radius, block, replacement, hollow)->(
     if(global_debug, start_time=unix_time());
-    cache = {
-       'radius'->radius,
-       'hollow'->hollow
-    };
-    if(!draw_from_cache('sphere', cache, centre, block, replacement),
-        scan(centre,[radius,radius,radius],
-            l = length_sq([_x,_y,_z]-centre);
-            if((l<=radius^2+radius) && (!hollow || l>=radius^2-radius),
-                set_block(_x, _y, _z, block, replacement, centre)
+    [cx,cy,cz]=centre;
+    for(range(-90, 90, 45/radius),
+        cpitch = cos(_);
+        spitch = sin(_);
+        for(range(0, 180, 45/radius),
+            cyaw = cos(_)*cpitch*radius;
+            syaw = sin(_)*cpitch*radius;
+            if(hollow,
+                set_block(cx+cyaw,cy+spitch*radius,cz+syaw,block,replacement);
+                set_block(cx+cos(_+180)*cpitch*radius,cy+spitch*radius,cz+sin(_+180)*cpitch*radius,block,replacement),
+                for(range(-syaw,syaw+1),
+                    set_block(cx+cyaw*cpitch,cy+spitch*radius,cz+_,block,replacement)
+                )
             )
-        );
-        save_to_cache('sphere',cache)
+        )
     );
+
     affected(player());
     if(global_debug,
         end_time=unix_time();
@@ -177,21 +187,19 @@ draw_sphere(centre, radius, block, replacement, hollow)->(
 
 draw_diamond(pos, radius, block, replacement)->(
     if(global_debug, start_time=unix_time());
-    cache = {'radius'->radius};
-    if(!draw_from_cache('diamond', cache, pos, block, replacement),
-        c_for(r=0, r<radius, r+=1,
-            y = r-radius+1;
-            c_for(x=-r,x<=r,x+=1,
-                z=r-abs(x);
 
-                set_block(pos:0+x,pos:1-y,pos:2+z, block, replacement, pos);
-                set_block(pos:0+x,pos:1-y,pos:2-z, block, replacement, pos);
-                set_block(pos:0+x,pos:1+y,pos:2+z, block, replacement, pos);
-                set_block(pos:0+x,pos:1+y,pos:2-z, block, replacement, pos);
-            )
-        );
-        save_to_cache('diamond',cache)
+    c_for(r=0, r<radius, r+=1,
+        y = r-radius+1;
+        c_for(x=-r,x<=r,x+=1,
+            z=r-abs(x);
+
+            set_block(pos:0+x,pos:1-y,pos:2+z, block, replacement);
+            set_block(pos:0+x,pos:1-y,pos:2-z, block, replacement);
+            set_block(pos:0+x,pos:1+y,pos:2+z, block, replacement);
+            set_block(pos:0+x,pos:1+y,pos:2-z, block, replacement);
+        )
     );
+
     affected(player());
     if(global_debug,
         end_time=unix_time();
@@ -201,24 +209,14 @@ draw_diamond(pos, radius, block, replacement)->(
 
 draw_pyramid(pos, radius, height, pointing, orientation, block, fill_type, replacement, is_square)->(
     if(global_debug, start_time=unix_time());
-    cache = {//this one's longer cos of a ton of params
-        'radius'->radius,
-        'height'->height,
-        'pointing'->pointing,
-        'orientation'->orientation,
-        'fill_type'->fill_type,
-        'is_square'->is_square
-    };
-    if(!draw_from_cache('pyramid',cache , pos, block, replacement),
-        hollow = fill_type=='hollow';
-        pointup = pointing=='up';
 
-        for(range(height),
-            r = if(pointup, radius - radius * _ / height -1, radius * _ / height);
-            fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
-        );
-        save_to_cache('pyramid', cache)
+    hollow = fill_type=='hollow';
+    pointup = pointing=='up';
+    for(range(height),
+        r = if(pointup, radius - radius * _ / height -1, radius * _ / height);
+        fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
     );
+
     affected(player());
     if(global_debug,
         end_time=unix_time();
@@ -228,22 +226,14 @@ draw_pyramid(pos, radius, height, pointing, orientation, block, fill_type, repla
 
 draw_prism(pos, rad, height, orientation, block, fill_type, replacement, is_square)->(
     if(global_debug, start_time=unix_time());
-    cache = {
-        'radius'->radius,
-        'height'->height,
-        'orientation'->orientation,
-        'fill_type'->fill_type,
-        'is_square'->is_square
-    };
-    if(!draw_from_cache('prism',cache , pos, block, replacement),
-        hollow = fill_type =='hollow';
-        radius = rad+0.5;
 
-        for(range(height),
-            fill_flat(pos, _, radius, is_square, orientation, block, if(_==0 || _==height-1,false,hollow), replacement)//Always close ends off
-        );
-        save_to_cache('pyramid',cache)
+    hollow = fill_type =='hollow';
+    radius = rad+0.5;
+
+    for(range(height),
+        fill_flat(pos, _, radius, is_square, orientation, block, if(_==0 || _==height-1,false,hollow), replacement)//Always close ends off
     );
+
     affected(player());
     if(global_debug,
         end_time=unix_time();
