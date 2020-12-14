@@ -5,7 +5,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.TradeOutputSlot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.village.Merchant;
-import net.minecraft.village.TradeOffer;
+import net.minecraft.village.MerchantInventory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,14 +20,15 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_TRADES;
 public abstract class TradeOutputSlot_scarpetEventMixin {
     @Shadow @Final private Merchant merchant;
 
+    @Shadow @Final private MerchantInventory merchantInventory;
+
     @Inject(method = "onTakeItem", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/village/Merchant;trade(Lnet/minecraft/village/TradeOffer;)V"),
-            locals = LocalCapture.CAPTURE_FAILHARD
+            target = "Lnet/minecraft/village/Merchant;trade(Lnet/minecraft/village/TradeOffer;)V")
     )
-    private void onTrade(PlayerEntity player, ItemStack stack, CallbackInfoReturnable cir, TradeOffer tradeOffer) {
+    private void onTrade(PlayerEntity player, ItemStack stack, CallbackInfoReturnable<ItemStack> cir) {
         if(PLAYER_TRADES.isNeeded() && !this.merchant.getMerchantWorld().isClient())
         {
-            PLAYER_TRADES.onTrade((ServerPlayerEntity) player, merchant, tradeOffer);
+            PLAYER_TRADES.onTrade((ServerPlayerEntity) player, merchant, merchantInventory.getTradeOffer());
         }
     }
 }

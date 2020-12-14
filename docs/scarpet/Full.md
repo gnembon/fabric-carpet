@@ -4055,7 +4055,7 @@ Triggered when player right clicks (interacts) with an entity, even if the entit
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
 with that interaction.
 
-### `__on_player_trades(player, entity, buy, buyB, sell)`
+### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
 Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
 changes and merchant updates its trade-uses counter.
 The parameter `entity` can be `null` if the merchant is not an entity.
