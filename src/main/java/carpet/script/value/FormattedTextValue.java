@@ -27,7 +27,7 @@ public class FormattedTextValue extends StringValue
     @Override
     public Value clone()
     {
-        return new FormattedTextValue(text);
+        return new FormattedTextValue(text.shallowCopy());
     }
 
     @Override

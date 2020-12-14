@@ -4,6 +4,8 @@ import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.nbt.Tag;
+import net.minecraft.text.BaseText;
+import net.minecraft.text.LiteralText;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +81,14 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public Value add(Value o) {
         String lstr = this.getString();
+        if (o instanceof FormattedTextValue)
+        {
+            if (lstr == null)
+                return ((FormattedTextValue) o).clone();
+            BaseText newText = new LiteralText(lstr);
+            newText.append(((FormattedTextValue) o).getText().shallowCopy());
+            return new FormattedTextValue(newText);
+        }
         if (lstr == null) // null
             return new StringValue(o.getString());
         String rstr = o.getString();
