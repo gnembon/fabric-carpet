@@ -35,12 +35,12 @@ public class InventoryHelper
             changed = true;
         }
 
-        if (bet.method_33133()) // isEmpty
+        if (bet.isEmpty())
         {
             tag.remove("BlockEntityTag");
             changed = true;
         }
-        if (tag.method_33133())
+        if (tag.isEmpty())
         {
             stack.setTag(null);
             changed = true;

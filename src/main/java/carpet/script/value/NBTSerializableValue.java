@@ -392,7 +392,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     {
         Tag tag = getTag();
         if (tag instanceof CompoundTag)
-            return !((CompoundTag) tag).method_33133();
+            return !((CompoundTag) tag).isEmpty();
         if (tag instanceof AbstractListTag)
             return ((AbstractListTag) tag).isEmpty();
         if (tag instanceof AbstractNumberTag)

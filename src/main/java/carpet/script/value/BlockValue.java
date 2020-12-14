@@ -108,7 +108,7 @@ public class BlockValue extends Value
     {
         if (data != null)
         {
-            if (data.method_33133())
+            if (data.isEmpty())
                 return null;
             return data;
         }

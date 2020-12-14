@@ -27,7 +27,7 @@ public abstract class ContainerMixin
 
     @Shadow @Final public DefaultedList<Slot> slots;
 
-    @Inject( method = "method_30010", at = @At(value = "HEAD"), cancellable = true) // on slot click
+    @Inject( method = "removeStack", at = @At(value = "HEAD"), cancellable = true)
     private void onThrowClick( int slotId, int clickData, SlotActionType actionType, PlayerEntity playerEntity, CallbackInfoReturnable<ItemStack> cir)
     {
         if (actionType == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity.getInventory().getCursorStack().isEmpty() && slotId >= 0)
