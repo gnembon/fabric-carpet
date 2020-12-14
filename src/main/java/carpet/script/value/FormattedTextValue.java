@@ -48,10 +48,25 @@ public class FormattedTextValue extends StringValue
         return StringTag.of(Text.Serializer.toJson(text));
     }
 
+    @Override
+    public Value add(Value o) {
+        if (o instanceof FormattedTextValue)
+        {
+            Text mergedText = ((BaseText) text).shallowCopy().append(((FormattedTextValue) o).getText());
+            return new FormattedTextValue(mergedText);
+        }
+        else
+        {
+            Text mergedText = ((BaseText) text).shallowCopy().append(o.getString());
+            return new FormattedTextValue(mergedText);
+        }
+    }
+
     public String serialize()
     {
         return Text.Serializer.toJson(text);
     }
+
     public static FormattedTextValue deserialize(String serialized)
     {
         return new FormattedTextValue(Text.Serializer.fromJson(serialized));
