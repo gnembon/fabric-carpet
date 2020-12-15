@@ -3,6 +3,7 @@ package carpet.script.value;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.text.BaseText;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 
 public class FormattedTextValue extends StringValue
@@ -12,6 +13,33 @@ public class FormattedTextValue extends StringValue
     {
         super(null);
         this.text = text;
+    }
+
+    public static Value combine(Value left, Value right) {
+        BaseText text;
+        if (left instanceof FormattedTextValue)
+        {
+            text = (BaseText) ((FormattedTextValue) left).getText().shallowCopy();
+        }
+        else
+        {
+            if (left instanceof NullValue)
+                return right;
+            text = new LiteralText(left.getString());
+        }
+        
+        if (right instanceof FormattedTextValue)
+        {
+            text.append(((FormattedTextValue) right).getText().shallowCopy());
+            return new FormattedTextValue(text);
+        }
+        else
+        {
+            if (right instanceof NullValue)
+                return left;
+            text.append(right.getString());
+            return new FormattedTextValue(text);
+        }
     }
 
     @Override
@@ -27,7 +55,7 @@ public class FormattedTextValue extends StringValue
     @Override
     public Value clone()
     {
-        return new FormattedTextValue(text.shallowCopy());
+        return new FormattedTextValue(text);
     }
 
     @Override
@@ -50,16 +78,7 @@ public class FormattedTextValue extends StringValue
 
     @Override
     public Value add(Value o) {
-        if (o instanceof FormattedTextValue)
-        {
-            Text mergedText = ((BaseText) text).shallowCopy().append(((FormattedTextValue) o).getText());
-            return new FormattedTextValue(mergedText);
-        }
-        else
-        {
-            Text mergedText = ((BaseText) text).shallowCopy().append(o.getString());
-            return new FormattedTextValue(mergedText);
-        }
+        return combine(this, o);
     }
 
     public String serialize()
