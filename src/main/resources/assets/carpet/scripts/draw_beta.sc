@@ -213,7 +213,7 @@ draw_pyramid(pos, radius, height, pointing, orientation, block, fill_type, repla
     hollow = fill_type=='hollow';
     pointup = pointing=='up';
     for(range(height),
-        r = if(pointup, radius - radius * _ / height -1, radius * _ / height);
+        r = if(pointup, radius * ( 1- _ / height) -1, radius * _ / height);
         fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
     );
 
