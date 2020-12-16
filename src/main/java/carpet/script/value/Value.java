@@ -79,6 +79,10 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public Value add(Value o) {
         String lstr = this.getString();
+        if (o instanceof FormattedTextValue)
+        {
+            return FormattedTextValue.combine(this, o);
+        }
         if (lstr == null) // null
             return new StringValue(o.getString());
         String rstr = o.getString();
