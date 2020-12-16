@@ -812,7 +812,7 @@ public class WorldAccess {
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
                 boolean success = world.setBlockState(targetPos, finalSourceBlockState, 2);
-                if (success && finalData != null)
+                if (finalData != null)
                 {
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
@@ -823,6 +823,7 @@ public class WorldAccess {
                         destTag.putInt("z", targetPos.getZ());
                         be.fromTag(finalSourceBlockState, destTag);
                         be.markDirty();
+                        success = true;
                     }
                 }
                 result[0] = success;
