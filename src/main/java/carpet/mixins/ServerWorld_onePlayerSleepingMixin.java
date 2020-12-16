@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 @Mixin(ServerWorld.class)
 public class ServerWorld_onePlayerSleepingMixin
-{
+{/* removed due to 1.17 changes
     @Shadow @Final private List<ServerPlayerEntity> players;
 
     @Shadow private boolean allPlayersSleeping;
@@ -49,5 +49,5 @@ public class ServerWorld_onePlayerSleepingMixin
             return stream.anyMatch((p) -> !p.isSpectator() && p.isSleepingLongEnough());
         return stream.noneMatch(predicate);
     }
-
+*/
 }

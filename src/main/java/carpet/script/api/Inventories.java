@@ -73,7 +73,7 @@ public class Inventories {
             CarpetContext cc = (CarpetContext)c;
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             String tag = lv.get(0).evalValue(c).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Item> itemTag = tagManager.method_33164(Registry.ITEM_KEY).getTag(new Identifier(tag));
             if (itemTag == null) return LazyValue.NULL;
             Value ret = ListValue.wrap(itemTag.values().stream().map(b -> ValueConversions.of(Registry.ITEM.getId(b))).collect(Collectors.toList()));
             return (_c, _t) -> ret;
@@ -85,17 +85,17 @@ public class Inventories {
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             if (lv.size() == 0)
             {
-                Value ret = ListValue.wrap(tagManager.getItems().getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.method_33164(Registry.ITEM_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             Item item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString()).getItem();
             if (lv.size() == 1)
             {
-                Value ret = ListValue.wrap(tagManager.getItems().getTagsFor(item).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.method_33164(Registry.ITEM_KEY).getTagsFor(item).stream().map(ValueConversions::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(1).evalValue(c).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Item> itemTag = tagManager.method_33164(Registry.ITEM_KEY).getTag(new Identifier(tag));
             if (itemTag == null) return LazyValue.NULL;
             return itemTag.contains(item)?LazyValue.TRUE:LazyValue.FALSE;
         });

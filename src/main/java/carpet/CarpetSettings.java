@@ -538,8 +538,8 @@ public class CarpetSettings
     public static boolean waterFlow = true;
     */
 
-    @Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
-    public static boolean onePlayerSleeping = false;
+    //@Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
+    //public static boolean onePlayerSleeping = false;
 
     @Rule(
             desc = "Sets a different motd message on client trying to connect to the server",

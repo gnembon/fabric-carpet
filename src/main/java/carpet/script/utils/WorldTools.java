@@ -97,7 +97,7 @@ public class WorldTools
         ChunkGenerator chunkGenerator2;
         DimensionType dimensionType2;
         if (dimensionOptions == null) {
-            dimensionType2 = (DimensionType)server.getRegistryManager().getDimensionTypes().getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
+            dimensionType2 = (DimensionType)server.getRegistryManager().method_33309(Registry.DIMENSION_TYPE_KEY).getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
             chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (new Random()).nextLong());
         } else {
             dimensionType2 = dimensionOptions.getDimensionType();

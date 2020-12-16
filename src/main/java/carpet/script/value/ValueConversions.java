@@ -389,7 +389,7 @@ public class ValueConversions
         BlockPredicateInterface predicateData = (BlockPredicateInterface) blockPredicate;
         return ListValue.of(
                 predicateData.getCMBlockState()==null?Value.NULL:of(Registry.BLOCK.getId(predicateData.getCMBlockState().getBlock())),
-                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.getBlocks().getTagId(predicateData.getCMBlockTag())),
+                predicateData.getCMBlockTag()==null?Value.NULL:of(tagManager.method_33164(Registry.BLOCK_KEY).getUncheckedTagId(predicateData.getCMBlockTag())),
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );

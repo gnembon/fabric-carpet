@@ -1109,7 +1109,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             String tag = lv.get(0).evalValue(c).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.method_33164(Registry.BLOCK_KEY).getTag(new Identifier(tag));
             if (blockTag == null) return LazyValue.NULL;
             Value ret = ListValue.wrap(blockTag.values().stream().map(b -> ValueConversions.of(Registry.BLOCK.getId(b))).collect(Collectors.toList()));
             return (_c, _t) -> ret;
@@ -1121,17 +1121,17 @@ public class WorldAccess {
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             if (lv.size() == 0)
             {
-                Value ret = ListValue.wrap(tagManager.getBlocks().getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.method_33164(Registry.BLOCK_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
-                Value ret = ListValue.wrap(tagManager.getBlocks().getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.method_33164(Registry.BLOCK_KEY).getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(blockLocator.offset).evalValue(c).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.method_33164(Registry.BLOCK_KEY).getTag(new Identifier(tag));
             if (blockTag == null) return LazyValue.NULL;
             return blockLocator.block.getBlockState().isIn(blockTag)?LazyValue.TRUE:LazyValue.FALSE;
         });
