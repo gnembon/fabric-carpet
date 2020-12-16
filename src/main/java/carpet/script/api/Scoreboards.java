@@ -1,5 +1,7 @@
 package carpet.script.api;
 
+import carpet.mixins.ScoreboardObjective_scarpetMixin;
+import carpet.mixins.Scoreboard_scarpetMixin;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
@@ -11,6 +13,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.Value;
+import com.google.common.collect.Lists;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Scoreboard;
@@ -127,8 +130,13 @@ public class Scoreboards {
             }
 
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
-            if (objective != null)
+            if (objective != null) {
+                ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriterion()).remove(objective);
+                ((ScoreboardObjective_scarpetMixin) objective).setCriterion(criterion);
+                (((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
+                scoreboard.updateObjective(objective);
                 return LazyValue.FALSE;
+            }
 
             scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getCriterionType());
             return LazyValue.TRUE;

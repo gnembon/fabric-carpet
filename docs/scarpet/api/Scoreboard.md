@@ -10,8 +10,9 @@ With specified `objective` and
  
 ### `scoreboard_add(objective, criterion?)`
 
-Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`. Returns `false` if objective 
-already existed, `true` otherwise.
+Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`.
+If the objective already exists, changes the criterion of that objective and returns false.
+If the objective was added, returns true.
 
 <pre>
 scoreboard_add('counter')
