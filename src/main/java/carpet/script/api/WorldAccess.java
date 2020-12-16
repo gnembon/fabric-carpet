@@ -777,6 +777,21 @@ public class WorldAccess {
                     }
                     args = ((ListValue) args.get(0)).getItems();
                 }
+                else if (args.get(0) instanceof MapValue)
+                {
+                    if (args.size() == 2)
+                    {
+                        Value dataValue = NBTSerializableValue.fromValue( args.get(1));
+                        if (dataValue instanceof NBTSerializableValue)
+                        {
+                            data = ((NBTSerializableValue) dataValue).getCompoundTag();
+                        }
+                    }
+                    Map<Value, Value> state = ((MapValue) args.get(0)).getMap();
+                    List<Value> mapargs = new ArrayList<>();
+                    state.forEach( (k, v) -> {mapargs.add(k); mapargs.add(v);});
+                    args = mapargs;
+                }
                 else
                 {
                     if ((args.size() & 1) == 1)
