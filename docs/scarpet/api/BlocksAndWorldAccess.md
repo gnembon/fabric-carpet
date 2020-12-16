@@ -36,18 +36,19 @@ print(b); // 'stone', block was evaluated 'eagerly' but call to `block`
 All the functions below can be used with block value, queried with coord triple, or 3-long list. All `pos` in the 
 functions referenced below refer to either method of passing block position.
 
-### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, l(property?, value?, ...), block_data?)`
+### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, [property?, value?, ...], block_data?)`, `set(pos, block, {property? -> value?, ...}, block_data?)`
 
-First part of the `set` function is either a coord triple, list of three numbers, or other block with coordinates. 
-Second part, `block` is either block value as a result of `block()` function string value indicating the block name, 
-and optional `property - value` pairs for extra block properties. Optional `block_data` include the block data to 
+First argument for the `set` function is either a coord triple, list of three numbers, or a world localized block value. 
+Second argument, `block`, is either an existing block value, a result of `block()` function, or a string value indicating the block name
+with optional state and block data. It is then followed by an optional 
+`property - value` pairs for extra block state (which can also be provided in a list or a map). Optional `block_data` include the block data to 
 be set for the target block.
 
 If `block` is specified only by name, then if a 
 destination block is the same the `set` operation is skipped, otherwise is executed, for other potential extra
-properties.
+properties that the original source block may have contained.
 
-The returned value is either the block state that has been set, or `false` if block setting was skipped
+The returned value is either the block state that has been set, or `false` if block setting was skipped, or failed
 
 <pre>
 set(0,5,0,'bedrock')  => bedrock
@@ -63,11 +64,15 @@ scan(0,100,0,20,20,20,set(_,block('glass')))
 b = block('glass'); scan(0,100,0,20,20,20,set(_,b))
     // yet another option, skips all parsing
 set(x,y,z,'iron_trapdoor')  // sets bottom iron trapdoor
-set(x,y,z,'iron_trapdoor[half=top]')  // Incorrect. sets bottom iron trapdoor - no parsing of properties
-set(x,y,z,'iron_trapdoor','half','top') // correct - top trapdoor
-set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
+
+set(x,y,z,'iron_trapdoor[half=top]')  // sets the top trapdoor
+set(x,y,z,'iron_trapdoor','half','top') // also correct - top trapdoor
+set(x,y,z,'iron_trapdoor', ['half','top']) // same
+set(x,y,z,'iron_trapdoor', {'half' -> 'top'}) // same
+set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing of block state
+
 set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
-set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
+set(x,y,z,'hopper', {'facing' -> 'north'}, nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
 </pre>
 
 ### `without_updates(expr)`
@@ -211,6 +216,16 @@ mine(x,y,z) ->
 Causes a block to be harvested by a specified player entity. Honors player item enchantments, as well as damages the 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
+
+### `weather()`,`weather(type)`,`weather(type, ticks)`
+
+If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
+always return `'thunder'`, if not will return `'rain'` or `'clear'` based on the current weather.
+
+With one arg, (either `'clear'`, `'rain` or `'thunder'`), returns the number of remaining ticks for that weather type.
+NB: It can thunder without there being a thunderstorm, there has to be both rain and thunder to form a storm.
+
+With two args, sets the weather to `type` for `ticks` ticks.
 
 ## Block and World querying
 

@@ -23,6 +23,7 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.predicate.entity.EntityPredicates;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -183,8 +185,9 @@ public class Entities {
         expression.addLazyFunction("entity_list", 1, (c, t, lv) ->
         {
             String who = lv.get(0).evalValue(c).getString();
-            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who);
-            List<Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
+            ServerCommandSource source = ((CarpetContext)c).s;
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getMinecraftServer());
+            List<Entity> entityList = source.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
@@ -194,16 +197,26 @@ public class Entities {
             if (lv.size()<3) throw new InternalExpressionException("'entity_area' requires entity type, center and range arguments");
             String who = lv.get(0).evalValue(c).getString();
             CarpetContext cc = (CarpetContext)c;
-            Vector3Argument centerLocator = Vector3Argument.findIn(cc, lv, 1);
-            Vec3d center = centerLocator.vec;
-            if (centerLocator.fromBlock) center.add(0.5, 0.5, 0.5);
+            Vector3Argument centerLocator = Vector3Argument.findIn(cc, lv, 1, false, true);
+
+            Box centerBox;
+            if (centerLocator.entity != null)
+            {
+                centerBox = centerLocator.entity.getBoundingBox();
+            }
+            else
+            {
+                Vec3d center = centerLocator.vec;
+                if (centerLocator.fromBlock) center.add(0.5, 0.5, 0.5);
+                centerBox = new Box(center, center);
+            }
             Vector3Argument rangeLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
             if (rangeLocator.fromBlock)
                 throw new InternalExpressionException("Range of 'entity_area' cannot come from a block argument");
             Vec3d range = rangeLocator.vec;
-            Box area = new Box(center, center).expand(range.x, range.y, range.z);
-            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who);
-            List<? extends Entity> entityList = ((CarpetContext)c).s.getWorld().getEntitiesByType(eDesc.directType, area,eDesc.filteringPredicate);
+            Box area = centerBox.expand(range.x, range.y, range.z);
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, cc.s.getMinecraftServer());
+            List<? extends Entity> entityList = cc.s.getWorld().getEntitiesByType(eDesc.directType, area,eDesc.filteringPredicate);
             Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
             return (_c, _t ) -> retval;
         });
@@ -228,7 +241,9 @@ public class Entities {
             Value v = lv.get(0).evalValue(c);
             if (!(v instanceof EntityValue))
                 throw new InternalExpressionException("First argument to query should be an entity");
-            String what = lv.get(1).evalValue(c).getString();
+            String what = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            if (what.equals("tags"))
+                c.host.issueDeprecation("'tags' for entity querying");
             Value retval;
             if (lv.size()==2)
                 retval = ((EntityValue) v).get(what, null);
@@ -259,11 +274,13 @@ public class Entities {
             return (cc, tt) -> v;
         });
 
-        expression.addFunction("entity_types", (lv) ->
+        expression.addLazyFunction("entity_types", -1, (c, t, lv) ->
         {
+
             if (lv.size() > 1) throw new InternalExpressionException("'entity_types' requires one or no arguments");
-            String desc = (lv.size() == 1)?lv.get(0).getString():"*";
-            return EntityValue.getEntityDescriptor(desc).listValue;
+            String desc = (lv.size() == 1)?lv.get(0).evalValue(c).getString():"*";
+            Value ret = EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).s.getMinecraftServer()).listValue;
+            return (_c, _t) -> ret;
         });
 
         expression.addLazyFunction("entity_load_handler", -1, (c, t, lv) ->
@@ -275,7 +292,7 @@ public class Entities {
                     ? ((ListValue) entityValue).getItems().stream().map(Value::getString).collect(Collectors.toList())
                     : Collections.singletonList(entityValue.getString());
             Set<EntityType<? extends Entity>> types = new HashSet<>();
-            descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s).typeList));
+            descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).s.getMinecraftServer()).typeList));
             FunctionArgument<LazyValue> funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
             if (funArg.function == null)

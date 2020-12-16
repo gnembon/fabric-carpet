@@ -18,13 +18,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class ScriptHost
@@ -189,7 +186,13 @@ public abstract class ScriptHost
     public FunctionValue getAssertFunction(Module module, String name)
     {
         FunctionValue ret = getFunction(module, name);
-        if (ret == null) throw new InternalExpressionException("Function "+name+" is not defined yet");
+        if (ret == null)
+        {
+            if (module == main)
+                throw new InternalExpressionException("Function '"+name+"' is not defined yet");
+            else
+                throw new InternalExpressionException("Function '"+name+"' is not defined nor visible by its name in the imported module '"+module.getName()+"'");
+        }
         return ret;
     }
     private FunctionValue getFunction(Module module, String name)
@@ -318,13 +321,19 @@ public abstract class ScriptHost
         ScriptHost oldUserHost = userHosts.get(user);
         if (oldUserHost != null) return oldUserHost;
         ScriptHost userHost = this.duplicate();
-        userHost.modules.putAll(this.modules);
-        this.moduleData.forEach((key, value) -> userHost.moduleData.put(key, new ModuleData(key, value)));
-        // fixing imports
-        userHost.moduleData.forEach((module, data) -> data.setImportsBasedOn(userHost, this.moduleData.get(data.parent)));
         userHost.user = user;
+        this.transferToChild(userHost);
         userHosts.put(user, userHost);
         return userHost;
+    }
+
+    protected void transferToChild(ScriptHost host)
+    {
+        // adding imports
+        host.modules.putAll(this.modules);
+        this.moduleData.forEach((key, value) -> host.moduleData.put(key, new ModuleData(key, value)));
+        // fixing imports
+        host.moduleData.forEach((module, data) -> data.setImportsBasedOn(host, this.moduleData.get(data.parent)));
     }
 
     public void handleExpressionException(String msg, ExpressionException exc)

@@ -5,7 +5,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import carpet.commands.*;
+import carpet.commands.CounterCommand;
+import carpet.commands.DistanceCommand;
+import carpet.commands.DrawCommand;
+import carpet.commands.InfoCommand;
+import carpet.commands.LogCommand;
+import carpet.commands.MobAICommand;
+import carpet.commands.PerimeterInfoCommand;
+import carpet.commands.PlayerCommand;
+import carpet.commands.ProfileCommand;
+import carpet.commands.ScriptCommand;
+import carpet.commands.SpawnCommand;
+import carpet.commands.TestCommand;
+import carpet.commands.TickCommand;
 import carpet.network.ServerNetworkHandler;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
@@ -90,9 +102,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerLoadedWorlds(MinecraftServer minecraftServer)
     {
+        HopperCounter.resetAll(minecraftServer);
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         scriptServer.initializeForWorld();
-        HopperCounter.resetAll(minecraftServer);
     }
 
     public static void tick(MinecraftServer server)
@@ -143,6 +155,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     {
         ServerNetworkHandler.onPlayerJoin(player);
         LoggerRegistry.playerConnected(player);
+        scriptServer.onPlayerJoin(player);
         extensions.forEach(e -> e.onPlayerLoggedIn(player));
 
     }
@@ -156,9 +169,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerClosed(MinecraftServer server)
     {
+        if (scriptServer != null) scriptServer.onClose();
         ServerNetworkHandler.close();
         currentCommandDispatcher = null;
-        if (scriptServer != null) scriptServer.onClose();
 
         LoggerRegistry.stopLoggers();
         extensions.forEach(e -> e.onServerClosed(server));

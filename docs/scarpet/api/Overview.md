@@ -6,7 +6,9 @@ Here is the gist of the Minecraft related functions. Otherwise the CarpetScript 
 ## App structure
 
 The main delivery method for scarpet programs into the game is in the form of apps in `*.sc` files located in the world `scripts` 
-folder. When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
+folder, flat. In singleplayer, you can also save apps in `.minecraft/config/carpet/scripts` for them to be available in any world,
+and here you can actually organize them in folders. 
+When loaded (via `/script load` command, etc.), the game will run the content of the app once, regardless of its scope
 (more about the app scopes below), without executing of any functions, unless called directly, and with the exception of the
 `__config()` function, if present, which will be executed once. Loading the app will also bind specific 
 events to the event system (check Events section for details).
@@ -32,15 +34,14 @@ the app state and all players interactions run in the same context, sharing defi
 explicitly keyed with players, player names, uuids, etc.
 Even for `'player'` scoped apps, you can access specific player app with with commandblocks using
 `/execute as <player> run script in <app> run ...`.
-To access global/server state for a player app, you need to disown the command from any player, 
+To access global/server state for a player app, which you shouldn't do, you need to disown the command from any player, 
 so either use a command block, or any 
 arbitrary entity: `/execute as @e[type=bat,limit=1] run script in <app> globals` for instance, however
-running anything in the global scope for a `'player'` scoped app is not recommended.
-*   `'stay_loaded'`: defaults to `false`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
+running anything in the global scope for a `'player'` scoped app is not intended.
+*   `'stay_loaded'`: defaults to `true`. If true, and `/carpet scriptsAutoload` is turned on, the following apps will 
 stay loaded after startup. Otherwise, after reading the app the first time, and fetching the config, server will drop them down. 
-This is to allow to store multiple apps on the server/world and selectively decide which one should be running at 
-startup. WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
-statically, will be performed once anyways.
+ WARNING: all apps will run once at startup anyways, so be aware that their actions that are called 
+statically, will be performed once anyways. Only apps present in the world's `scripts` folder will be autoloaded.
 *   `'legacy_command_type_support'` - if `true`, and the app defines the legacy command system via `__command()` function,
 all parameters of command functions will be interpreted and used using brigadier / vanilla style argument parser and their type
 will be inferred from their names, otherwise
@@ -50,9 +51,20 @@ conflicts and ambiguities between different paths of execution. While ambiguous 
 and they tend to execute correctly, the suggestion support works really poorly in these situations and scarpet
 will warn and prevent such apps from loading with an error message. If `allow_command_conflicts` is specified and 
 `true`, then scarpet will load all provided commands regardless.
+*   `'command_permission'` - indicates a custom permission to run the command. It can either be a number indicating 
+permission level (from 1 to 4) or a string value, one of: `'all'` (default), `'ops'` (default opped player with permission level of 2),
+`'server'` - command accessible only through the server console and commandblocks, but not in chat, `'players'` - opposite
+of the former, allowing only use in player chat. It can also be a function (lambda function or function value, not function name)
+that takes 1 parameter, which represents the calling player, or `'null'` if the command represents a server call. 
+The function will prevent the command from running if it evaluates to `false`.
+Please note, that Minecraft evaluates eligible commands for players when they join, or on reload/restart, so if you use a 
+predicate that is volatile and might change, the command might falsely do or do not indicate that it is available to the player,
+however player will always be able to type it in and either succeed, or fail, based on their current permissions.
+Custom permission applies to legacy commands with `'legacy_command_type_support'` as well
+as for the custom commands defined with `'commands'`, see below.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
-as for the custom commands defined with `'commands'`, see below
-*   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below
+as for the custom commands defined with `'commands'`, see below.
+*   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.
 
 ## Custom app commands
 
@@ -205,6 +217,20 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'pos'`: block position as a triple of coordinates. Customized with `'loaded'`, if true requiring the position 
   to be loaded.
   * `'block'`: a valid block state wrapped in a block value (including block properties and data)
+  * `'blockpredicate`': returns a 4-tuple indicating conditions of a block to match: block name, block tag,
+  map of required state properties, and tag to match. Either block name or block tag are `null` but not both.
+  Property map is always specified, but its empty for no conditions, and matching nbt tag can be `null` indicating
+  no requirements. Technically the 'all-matching' predicate would be `[null, null, {}, null]`, but 
+  block name or block tag is always specified. One can use the following routine to match a block agains this predicate:
+  ```
+    block_to_match = block(x,y,z);
+    [block_name, block_tag, properties, nbt_tag] = block_predicate;
+   
+    (block_name == null || block_name == block_to_match) &&
+    (block_tag == null || block_tags(block_to_match, block_tag)) &&
+    all(properties, block_state(block_to_match, _) == properties:_) &&
+    (!tag || tag_matches(block_data(block_to_match), tag))
+  ```
   * `'teamcolor'`: name of a team, and an integer color value of one of 16 valid team colors.
   * `'columnpos'`: a pair of x and z coordinates.
   * `'dimension'`: string representing a valid dimension in the world.

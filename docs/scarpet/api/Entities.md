@@ -52,7 +52,9 @@ to the `regular` group.
 *  `monster`, `creature`, `ambient`, `water_creature`, `water_ambient`, `misc` - another categorization of 
 living entities based on their spawn group. Negative descriptor resolves to all living types that don't belong to that
 category.
-*  Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
+* All entity tags including those provided with datapacks. Built-in entity tags include: `skeletons`, `raiders`, 
+`beehive_inhabitors` (bee, duh), `arrows` and `impact_projectiles`.
+* Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
 `area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
 `chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
 `egg`, `elder_guardian`, `end_crystal`, `ender_dragon`, `ender_pearl`, `enderman`, `endermite`, `evoker`, 
@@ -74,10 +76,13 @@ belonging to that group.
 
  
 Returns entities of a specified type in an area centered on `center` and at most `distance` blocks away from 
-the center point. Uses the same `type` selectors as `entities_list`.
+the center point/area. Uses the same `type` selectors as `entities_list`.
 
 `center` and `distance` can either be a triple of coordinates or three consecutive arguments for `entity_area`. `center` can 
-also be represented as a block, in this case the search box will be centered on the middle of the block.
+also be represented as a block, in this case the search box will be centered on the middle of the block, or an entity - in this case
+entire bounding box of the entity serves as a 'center' of search which is then expanded in all directions with the `'distance'` vector.
+
+In any case - returns all entities which bounding box collides with the bounding box defined by `'center'` and `'disteance'`.
 
 entity_area is simpler than `entity_selector` and runs about 20% faster, but is limited to predefined selectors and 
 cuboid search area.
@@ -206,13 +211,21 @@ List of entities riding the entity.
 
 Entity that `e` rides.
 
-### `query(e, 'tags')`
+###  `query(e, 'scoreboard_tags')`, `query(e, 'tags')`(deprecated)
 
-List of entity's tags.
+List of entity's scoreboard tags.
 
-### `query(e, 'has_tag',tag)`
+### `query(e, 'has_scoreboard_tag',tag)`, `query(e, 'has_tag',tag)`(deprecated)
 
-Boolean, true if the entity is marked with `tag`.
+Boolean, true if the entity is marked with a `tag` scoreboad tag.
+
+### `query(e, 'entity_tags')`
+
+List of entity tags assigned to the type this entity represents.
+
+### `query(e, 'has_entity_tag', tag)`
+
+Returns `true` if the entity matches that entity tag, `false` if it doesn't, and `null` if the tag is not valid. 
 
 ### `query(e, 'is_burning')`
 
@@ -366,6 +379,11 @@ Player's ping in milliseconds, or `null` if its not a player.
 
 Player's permission level, or `null` if not applicable for this entity.
 
+### `query(e, 'client_brand')`
+
+Returns recognized type of client of the client connected. Possible results include `'vanilla'`, or `'carpet <version>'` where 
+version indicates the version of the connected carpet client. 
+
 ### `query(e, 'effect', name?)`
 
 Without extra arguments, it returns list of effect active on a living entity. Each entry is a triple of short 
@@ -387,6 +405,18 @@ Number indicating remaining entity health, or `null` if not applicable.
 ### `query(e, 'exhaustion')`
 
 Retrieves player hunger related information. For non-players, returns `null`.
+
+### `query(e, 'absorption')`
+
+Gets the absorption of the player (yellow hearts, e.g when having a golden apple.)
+
+### `query(e,'xp')`
+### `query(e,'xp_level')`
+### `query(e,'xp_progress')`
+### `query(e,'score')`
+
+Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is the levels seen in the hotbar,
+`xp_progress` is a float between 0 and 1 indicating the percentage of the xp bar filled, and `score` is the number displayed upon death 
 
 ### `query(e, 'air')`
 
@@ -698,6 +728,20 @@ Will set entity on fire for `ticks` ticks. Set to 0 to extinguish.
 
 Modifies directly player raw hunger components. Has no effect on non-players
 
+### `modify(e, 'absorption', value)`
+
+Sets the absorption value for the player. Each point is half a yellow heart.
+
+### `modify(e, 'add_xp', value)`
+### `modify(e, 'xp_level', value)`
+### `modify(e, 'xp_progress', value)`
+### `modify(e, 'xp_score', value)` 
+
+Manipulates player xp values - `'add_xp'` the method you probably want to use 
+to manipulate how much 'xp' an action should give. `'xp_score'` only affects the number you see when you die, and 
+`'xp_progress'` controls the xp progressbar above the hotbar, should take values from 0 to 1, but you can set it to any value, 
+maybe you will get a double, who knows.
+
 ### `modify(e, 'air', ticks)`
 
 Modifies entity air
@@ -740,6 +784,10 @@ Required arguments: `entity, amount, source, attacking_entity`
 
 It doesn't mean that all entity types will have a chance to execute a given event, but entities will not error 
 when you attach an inapplicable event to it.
+
+In case you want to pass an event handler that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
 
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 

@@ -9,10 +9,8 @@ with `__on_<event>` and has the required arguments, will be bound automatically 
 of such function would result in unbinding the app from this event.
 
 In case of `player` scoped apps, 
-all player action events will be directed to the appropriate player hosts. Global events, like `'tick'`, cannot be handled
-in `'player'` scoped app.
-
-`'global'` scoped apps will receive both global and player built-in events.
+all player action events will be directed to the appropriate player hosts. Global events, like `'tick'`, that don't have a specific
+player target will be executed multiple times, once for each player, and once in `'global'` scoped apps.
 
 Most built-in events strive to report right before they take an effect in the game. The purpose of that is that this give a choice
 for the programmer to handle them right away (as it happens, potentially affect the course of action by changing the
@@ -31,8 +29,15 @@ if it accepts required number of parameters.
 
 ## Built-in global events
 
-Handling global events is only allowed in apps with `'global'` scope. With the default scope (`'player'`) you
-simply wouldn't know which player to hook up this event to.
+Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
+ is responsible independently from handling their events, so a global event may be executed multiple times for each player.
+
+### `__on_server_starts()`
+Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
+
+### `__on_server_shuts_down()`
+Event triggers when the server started the shutdown process, before `__on_close()` is executed. Unlike `__on_close()`, it doesn't
+trigger with `/reload`.
 
 ### `__on_tick()`
 Event triggers at the beginning of each tick, located in the overworld. You can use `in_dimension()`
@@ -109,7 +114,12 @@ adjusted.
 ### `__on_player_interacts_with_entity(player, entity, hand)`
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
-with that interaction
+with that interaction.
+
+### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
+Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
+changes and merchant updates its trade-uses counter.
+The parameter `entity` can be `null` if the merchant is not an entity.
 
 ### `__on_player_collides_with_entity(player, entity)`
 Triggered every time a player - entity collisions are calculated, before effects of collisions are applied in the game. 
@@ -205,8 +215,11 @@ is handled before scoreboard values for these statistics are changed.
 
 App programmers can define and trigger their own custom events. Unlike built-in events, all custom events pass a single value
 as an argument, but this doesn't mean that they cannot pass a complex list, map, or nbt tag as a message. Each event signal is
-either targetting all global context apps, if no target player has been identified, or only player scoped apps, if the target player
-is specified.
+either targetting all apps instances for all players, including global apps, if no target player has been identified, 
+or only player scoped apps, if the target player
+is specified, running once for that player app. You cannot target global apps with player-targeted signals. Built-in events
+do target global apps, since their first argument is clearly defined and passed. That may change in the future in case there is 
+a compelling argument to be able to target global apps with player scopes. 
 
 Programmers can also handle built-in events the same way as custom events, as well as triggering built-in events, which I have
 have no idea why you would need that. The following snippets have the same effect:
@@ -230,11 +243,11 @@ handle_event('player_breaks_block', null);
 And `signal_event` can be used as a trigger, called twice for player based built-in events
 ```
 signal_event('player_breaks_block', player, player, block); // to target all player scoped apps
-signal_event('player_breaks_block', null  , player, block); // to target all global scoped apps
+signal_event('player_breaks_block', null  , player, block); // to target all global scoped apps and all player instances
 ```
-or (for global only events)
+or (for global events)
 ```
-signal_event('tick') // trigger only global scoped apps with no extra arguments
+signal_event('tick') // trigger all apps with a tick event
 ```
 
 ### `handle_event(event, callback ...)`
@@ -248,6 +261,8 @@ If extra arguments are provided, they will be appended to the argument list of t
 Returns `true` if subscription to the event was successful, or `false` if it failed (for instance wrong scope for built-in event,
 or incorect number of parameters for the event).
 
+If a callback is specified as `null`, the given app (or player app instance )stops handling that event. 
+
 <pre>
 foo(a) -> print(a);
 handle_event('boohoo', 'foo');
@@ -260,113 +275,61 @@ handle_event('tick', _() -> foo('tick happened')); // built-in event
 handle_event('tick', null)  // nah, ima good, kthxbai
 </pre>
 
+In case you want to pass an event handler that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
+
 ### `signal_event(event, target_player?, ... args?)`
 
-Fires a specific event. If the event does not exist (only `handle_event` creates missing mising new events), or provided argument list
+Fires a specific event. If the event does not exist (only `handle_event` creates missing new events), or provided argument list
 was not matching the callee expected arguments, returns `null`, 
 otherwise returns number of apps notified. If `target_player` is specified and not `null` triggers a player specific event, targetting
 only `player` scoped apps for that player. Apps with globals scope will not be notified even if they handle this event.
-If the `target_player` is omitted or `null`, it will instead only target `global` scoped apps and skip `player` scoped.
-Therefore each custom event trigger can trigger each app once, but calls to '`signal_event`' can be repeated to cover
-all app scopes. Note that all built-in player events have a player as a first argument, so to trigger these events, you need to 
+If the `target_player` is omitted or `null`, it will target `global` scoped apps and all instances of `player` scoped apps.
+Note that all built-in player events have a player as a first argument, so to trigger these events, you need to 
 provide them twice - once to specify the target player scope and second - to provide as an argument to the handler function.
 
 <pre>
 signal_event('player_breaks_block', player, player, block); // to target all player scoped apps
-signal_event('player_breaks_block', null  , player, block); // to target all global scoped apps
-signal_event('tick') // triggering tick event in all loaded apps
+signal_event('player_breaks_block', null  , player, block); // to target all global scoped apps and all player instances
+signal_event('tick') // trigger all apps with a tick event
 </pre>
 
 ## Custom events example
 
-The following example contains 4 apps, 2 of them defining a new event, `"player_farts"` triggered after 40 ticks of continuous 
-squatting. Note that this could call the recipient event handlers twice, since `signal_event` will be called twice, but 
-in this case the event is once called as a global event, and once as a player event, targeting each app once. Custom events is
-a good idea to share common event detection code with one app, and using the outcome of these events in multiple places.
-Obviously you would define each event handler once not twice in your app system.
- 
-In this
-case here we have two ways of detecting all players squatting for more than 40 ticks - one of those apps will produce cloud particles
-in an apprpriate location, and the other will produce a sound when it happens, and they both will proceed to signal the same event, 
-thankfully for different scopes, otherwise other apps would trigger twice.
+The following example shows how you can communicate between different instances of the same player scoped app. It important to note
+that signals can trigger other apps as well, assuming the name of the event matches. In this case the request name is called
+`tp_request` and is triggered with a command.
+
 
 ``` 
-// detector1.sc
-// detecting event in a tick loop
-__config() -> {'scope' -> 'global'};
-
-global_sneaks = {};
-__on_tick() -> for(player('all'),
-   if (_~'sneaking',
-      sneak_time =  if (has(global_sneaks:_), tick_time()-global_sneaks:_ ,  global_sneaks:_=tick_time(); 0);
-      if (sneak_time > 20 && sneak_time < 40, 
-         particle('cloud', pos(_) + [0, _~'height'/2, 0] - _~'look', 1, 0.1)
-      );
-      if (sneak_time == 40, 
-         signal_event('player_farts', _, _)  // triggering all player scoped apps from a global app
+// tpa.sc
+global_requester = null;
+__config() -> {
+	'commands' -> {
+		'<player>' -> _(to) -> signal_event('tp_request', to, player()),
+      'accept' -> _() -> if(global_requester, 
+         run('tp '+global_requester~'command_name'); 
+         global_requester = null
       )
-   , // else
-      delete(global_sneaks:_)
-   )
-)
+	},
+   'arguments' -> {
+      'player' -> {'type' -> 'players', 'single' -> true}
+   }
+};
+handle_event('tp_request', _(req) -> (
+   global_requester = req;
+   print(player(), format(
+      'w '+req+' requested to teleport to you. Click ',
+      'yb here', '^yb here', '!/tpa accept',
+      'w  to accept it.'
+   ));
+));
 ```
-
-```
-// detector2.sc
-// detecting events in a more appropriate way - player based and event based app
-__on_player_starts_sneaking(p) -> 
-(
-   global_sneaking = tick_time();
-   schedule(40, 'check', p);
-);
-
-check(p) -> 
-if( global_sneaking && tick_time() - global_sneaking == 40,
-   sound('entity.shulker.shoot', pos(p), 1, 0.6, 'player');
-   signal_event('player_farts', null, p) // trigerring all global apps from a player scoped app
-);
-
-__on_player_stops_sneaking(p) -> (global_sneaking = false);
-```
-
-And then two other apps that meant to do something with this event. One mimics an explosion, and the other - grows crops around
-the player.
-
-```
-client1.sc
-__config() -> {'scope' -> 'global'};
-
-on_fart(p, msg) -> 
-(
-   print(p+msg);
-   particle('explosion', pos(p));
-   sound('entity.generic.explode', pos(p), 1, 0.5);
-);
-
-handle_event('player_farts', 'on_fart', ' goes kaboom');
-```
-
-```
-client2.sc
-longsneak(p) ->
-(
-   ppos = pos(p);
-   loop ( 500,
-      target = ppos+[rand(12),rand(8),rand(12)]-[rand(12),rand(8),rand(12)];
-      if (material(target) == 'plant' && ticks_randomly(target), 
-         particle('happy_villager', target, 2, 0.4)
-      );
-      random_tick(target)
-   )
-);
-
-handle_event('player_farts', 'longsneak');
-```
-
 
 ## `/script event` command
 
-used to display current events and bounded functions. use `add_to` ro register new event, or `remove_from` to 
+used to display current events and bounded functions. use `add_to` to register a new event, or `remove_from` to 
 unbind a specific function from an event. Function to be bounded to an event needs to have the same number of 
 parameters as the action is attempting to bind to (see list above). All calls in modules loaded via `/script load` 
-that have functions listed above will be automatically bounded and unbounded when script is unloaded.
+that handle specific built-in events will be automatically bounded, and unbounded when script is unloaded.

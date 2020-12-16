@@ -4,9 +4,11 @@ import carpet.script.CarpetContext;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
+import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.List;
@@ -16,7 +18,8 @@ public class Vector3Argument extends Argument
     public Vec3d vec;
     public final double yaw;
     public final double pitch;
-    public boolean fromBlock;
+    public boolean fromBlock = false;
+    public Entity entity = null;
     private Vector3Argument(Vec3d v, int o)
     {
         super(o);
@@ -38,13 +41,19 @@ public class Vector3Argument extends Argument
         return this;
     }
 
+    private Vector3Argument withEntity(Entity e)
+    {
+        entity = e;
+        return this;
+    }
+
 
     public static Vector3Argument findIn(CarpetContext c, List<LazyValue> params, int offset)
     {
-        return findIn(c,params, offset, false);
+        return findIn(c,params, offset, false, false);
     }
 
-    public static Vector3Argument findIn(CarpetContext c, List<LazyValue> params, int offset, boolean optionalDirection)
+    public static Vector3Argument findIn(CarpetContext c, List<LazyValue> params, int offset, boolean optionalDirection, boolean optionalEntity)
     {
         try
         {
@@ -53,6 +62,11 @@ public class Vector3Argument extends Argument
             {
                 // pos + 0.5v
                 return (new Vector3Argument(Vec3d.ofCenter(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
+            }
+            if (optionalEntity && v1 instanceof EntityValue)
+            {
+                Entity e = ((EntityValue) v1).getEntity();
+                return new Vector3Argument(e.getPos(), 1+offset).withEntity(e);
             }
             if (v1 instanceof ListValue)
             {

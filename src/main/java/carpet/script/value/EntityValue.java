@@ -9,6 +9,7 @@ import carpet.fakes.MobEntityInterface;
 import carpet.fakes.HungerManagerInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
+import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
 import carpet.script.EntityEventsGroup;
@@ -29,6 +30,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
+import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.command.EntitySelector;
 import net.minecraft.command.EntitySelectorReader;
@@ -221,10 +223,28 @@ public class EntityValue extends Value
         return entity.hashCode();
     }
 
-    public static EntityClassDescriptor getEntityDescriptor(String who)
+    public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
     {
         EntityClassDescriptor eDesc = EntityClassDescriptor.byName.get(who);
-        if (eDesc == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+        if (eDesc == null)
+        {
+            boolean positive = true;
+            if (who.startsWith("!"))
+            {
+                positive = false;
+                who = who.substring(1);
+            }
+            net.minecraft.tag.Tag<EntityType<?>> eTag = server.getTagManager().getEntityTypes().getTag(new Identifier(who));
+            if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
+            if (positive)
+            {
+                return new EntityClassDescriptor(null, e -> eTag.contains(e.getType()) && e.isAlive(), eTag.values().stream());
+            }
+            else
+            {
+                return new EntityClassDescriptor(null, e -> !eTag.contains(e.getType()) && e.isAlive(), Registry.ENTITY_TYPE.stream().filter(et -> !eTag.contains(et)));
+            }
+        }
         return eDesc;
         //TODO add more here like search by tags, or type
         //if (who.startsWith('tag:'))
@@ -399,8 +419,21 @@ public class EntityValue extends Value
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengerList().stream().map(EntityValue::new).collect(Collectors.toList())));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
         put("unmountable", (e, a) -> new NumericValue(((EntityInterface)e).isPermanentVehicle()));
+        // deprecated
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
+
+        put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTagsFor(e.getType()).stream().map(ValueConversions::of).collect(Collectors.toList())));
+        // deprecated
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+
+        put("has_scoreboard_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+        put("has_entity_tag", (e, a) -> {
+            net.minecraft.tag.Tag<EntityType<?>> tag = e.getServer().getTagManager().getEntityTypes().getTag(new Identifier(a.getString()));
+            if (tag == null) return Value.NULL;
+            return new NumericValue(e.getType().isIn(tag));
+        });
+
         put("yaw", (e, a)-> new NumericValue(e.yaw));
         put("head_yaw", (e, a)-> {
             if (e instanceof LivingEntity)
@@ -498,6 +531,31 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
+        put("absorption",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getAbsorptionAmount());
+            return Value.NULL;
+        });
+
+        put("xp",(e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).totalExperience);
+            return Value.NULL;
+        });
+
+        put("xp_level", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceLevel);
+            return Value.NULL;
+        });
+
+        put("xp_progress", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).experienceProgress);
+            return Value.NULL;
+        });
+
+        put("score", (e, a)->{
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getScore());
+            return Value.NULL;
+        });
+
         put("jumping", (e, a) -> {
             if (e instanceof LivingEntity)
             {
@@ -575,6 +633,14 @@ public class EntityValue extends Value
                 if (isowner) return new StringValue("lan_host");
                 return new StringValue("lan player");
                 // realms?
+            }
+            return Value.NULL;
+        });
+
+        put("client_brand", (e, a) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                return StringValue.of(ServerNetworkHandler.getPlayerStatus((ServerPlayerEntity) e));
             }
             return Value.NULL;
         });
@@ -1319,11 +1385,36 @@ public class EntityValue extends Value
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
         });
 
-        put("saturation", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevelClient((float)NumericValue.asNumber(v).getLong());
+        put("absorption", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setAbsorptionAmount((float) NumericValue.asNumber(v, "absorbtion").getLong());
         });
 
-        put("air", (e, v) -> e.setAir(NumericValue.asNumber(v).getInt()));
+        put("add_xp", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperience(NumericValue.asNumber(v, "add_xp").getInt());
+        });
+
+        put("xp_level", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).addExperienceLevels(NumericValue.asNumber(v, "xp_level").getInt()-((PlayerEntity) e).experienceLevel);
+        });
+
+        put("xp_progress", (e, v) -> {
+            if (e instanceof ServerPlayerEntity)
+            {
+                ServerPlayerEntity p = (ServerPlayerEntity) e;
+                p.experienceProgress = NumericValue.asNumber(v, "xp_progress").getFloat();
+                p.networkHandler.sendPacket(new ExperienceBarUpdateS2CPacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
+            }
+        });
+
+        put("xp_score", (e, v) -> {
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).setScore(NumericValue.asNumber(v, "xp_score").getInt());
+        });
+
+        put("saturation", (e, v)-> {
+            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setSaturationCM(NumericValue.asNumber(v, "saturation").getFloat());
+        });
+
+        put("air", (e, v) -> e.setAir(NumericValue.asNumber(v, "air").getInt()));
 
         put("breaking_progress", (e, a) -> {
             if (e instanceof ServerPlayerEntity)
@@ -1372,7 +1463,7 @@ public class EntityValue extends Value
         EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
         if (event == null)
             throw new InternalExpressionException("Unknown entity event: " + eventName);
-        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host.getName(), fun, args);
+        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host, fun, args);
     }
 
     @Override

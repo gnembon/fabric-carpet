@@ -36,7 +36,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.19+v201125";
+    public static final String carpetVersion = "1.4.21+v201216";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -427,7 +427,7 @@ public class CarpetSettings
             extra = "if /script is enabled",
             category = SCARPET
     )
-    public static boolean scriptsAutoload = false;
+    public static boolean scriptsAutoload = true;
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static String commandPlayer = "ops";

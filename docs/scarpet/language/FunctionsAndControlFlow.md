@@ -135,7 +135,7 @@ foo(... x) -> ...  # all arguments for foo are included in the list
 ### `import(module_name, symbols ...)`
 
 Imports symbols from other apps and libraries into the current one: global variables or functions, allowing to use 
-them in the current app. This include other symbols imported by these modules. Scarpet supports cicular dependencies, 
+them in the current app. This includes other symbols imported by these modules. Scarpet supports circular dependencies, 
 but if symbols are used directly in the module body rather than functions, it may not be able to retrieve them. 
 Returns full list of available symbols that could be imported from this module, which can be used to debug import 
 issues, and list contents of libraries.
@@ -144,8 +144,56 @@ issues, and list contents of libraries.
 
 calls a user defined function with specified arguments. It is equivalent to calling `function(args...)` directly 
 except you can use it with function value, or name instead. This means you can pass functions to other user defined 
-functions as arguments and call them with `call` internally. And since function definitions return the defined 
+functions as arguments and call them with `call` internally. Since function definitions return the defined 
 function, they can be defined in place as anonymous functions.
+
+#### Passing function references to other modules of your application
+
+In case a function is defined by its name, Scarpet will attempt to resolve its definition in the given module and its imports,
+meaning if the call is in a imported library, and not in the main module of your app, and that function is not visible from the
+library perspective, but in the app, it won't be call-able. In case you pass a function name to a separate module in your app, 
+it should import back that method from the main module for visibility. 
+
+Check an example of a problematic code of a library that expects a function value as a passed argument and how it is called in
+the parent app:
+```
+//app.sc
+import('lib', 'callme');
+foo(x) -> x*x;
+test() -> callme('foo' , 5);
+```
+```
+//lib.scl
+callme(fun, arg) -> call(fun, arg);
+```
+
+In this case `'foo'` will fail to dereference in `lib` as it is not visible by name. In tightly coupled modules, where `lib` is just
+a component of your `app` you can use circular import to acknowledge the symbol from the other module (pretty much like
+imports in Java classes), and that solves the issue but makes the library dependent on the main app: 
+```
+//lib.scl
+import('app','foo');
+callme(fun, arg) -> call(fun, arg);
+```
+You can circumvent that issue by explicitly dereferencing the local function where it is used as a lambda argument created 
+in the module in which the requested function is visible:
+```
+//app.sc
+import('lib', 'callme');
+foo(x) -> x*x;
+test() -> callme(_(x) -> foo(x), 5);
+```
+```
+//lib.scl
+callme(fun, arg) -> call(fun, arg);
+```
+Or by passing an explicit reference to the function, instead of calling it by name:
+```
+//app.sc
+import('lib', 'callme');
+global_foohandler = (foo(x) -> x*x);
+test() -> callme(global_foohandler, 5);
+```
 
 Little technical note: the use of `_` in expression passed to built in functions is much more efficient due to not 
 creating new call stacks for each invoked function, but anonymous functions is the only mechanism available for 

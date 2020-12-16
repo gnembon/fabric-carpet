@@ -1,8 +1,8 @@
 package carpet.script;
 
+import carpet.CarpetSettings;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.BundledModule;
-import carpet.CarpetSettings;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
@@ -16,19 +16,25 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
+
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -116,31 +122,42 @@ public class CarpetScriptServer
         });
         if (CarpetSettings.scriptsAutoload)
         {
-            Messenger.m(server.getCommandSource(), "Auto-loading world scarpet apps");
             for (String moduleName: listAvailableModules(false))
             {
                 addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);
             }
         }
-
+        CarpetEventServer.Event.START.onTick();
     }
 
     public Module getModule(String name, boolean allowLibraries)
     {
-        File folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
-        File[] listOfFiles = folder.listFiles();
-        if (listOfFiles != null)
-            for (File script : listOfFiles)
+        try {
+            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Files.createDirectories(folder);
+            Optional<Path>
+            scriptPath = Files.list(folder)
+                .filter(script -> 
+                    script.getFileName().toString().equalsIgnoreCase(name+".sc") || 
+                    (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name+".scl"))
+                ).findFirst();
+            if (scriptPath.isPresent())
+                return new FileModule(scriptPath.get());
+
+            if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
-                if (script.getName().equalsIgnoreCase(name+".sc"))
-                {
-                    return new FileModule(script);
-                }
-                if (allowLibraries && script.getName().equalsIgnoreCase(name+".scl"))
-                {
-                    return new FileModule(script);
-                }
+                Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+                Files.createDirectories(globalFolder);
+                scriptPath = Files.walk(globalFolder)
+                        .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
+                                (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
+                        .findFirst();
+                if (scriptPath.isPresent())
+                    return new FileModule(scriptPath.get());
             }
+        } catch (IOException e) {
+            CarpetSettings.LOG.error("Exception while loading the app: ", e);
+        }
         for (Module moduleData : bundledModuleData)
         {
             if (moduleData.getName().equalsIgnoreCase(name) && (allowLibraries || !moduleData.isLibrary()))
@@ -173,17 +190,23 @@ public class CarpetScriptServer
                 if (!mi.isLibrary() && !mi.getName().endsWith("_beta")) moduleNames.add(mi.getName());
             }
         }
-        File folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts").toFile();
-        File[] listOfFiles = folder.listFiles();
-        if (listOfFiles == null)
-            return moduleNames;
-        for (File script : listOfFiles)
-        {
-            if (script.getName().endsWith(".sc"))
+        try {
+            Path worldScripts = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
+            Files.createDirectories(worldScripts);
+            Files.list(worldScripts)
+                .filter(f -> f.toString().endsWith(".sc"))
+                .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
+
+            if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
             {
-                String name = script.getName().replaceFirst("\\.sc","").toLowerCase(Locale.ROOT);
-                moduleNames.add(name);
+                Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+                Files.createDirectories(globalScripts);
+                Files.walk(globalScripts)
+                    .filter(f -> f.toString().endsWith(".sc"))
+                    .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
             }
+        } catch (IOException e) {
+            CarpetSettings.LOG.error("Exception while searching for apps: ", e);
         }
         return moduleNames;
     }
@@ -198,7 +221,6 @@ public class CarpetScriptServer
     public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
-        //TODO add per player modules to support player actions better on a server
         if (commandValidator == null) commandValidator = p -> true;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
@@ -272,6 +294,11 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to build command system for "+name+" thus failed to load the app");
             return false;
         }
+        if (newHost.isPerUser())
+        {
+            // that will provide player hosts right at the startup
+            newHost.retrieveForExecution(source, null);
+        }
         long end = System.nanoTime();
         CarpetSettings.LOG.info("App "+name+" loaded in "+(end-start)/1000000+" ms");
         return true;
@@ -297,12 +324,23 @@ public class CarpetScriptServer
             return true;
         }
 
+        Function<ServerCommandSource, Boolean> configValidator;
+        try
+        {
+            configValidator = host.getCommandConfigPermissions();
+        }
+        catch (CommandSyntaxException e)
+        {
+            Messenger.m(source, "rb "+e.getMessage());
+            return false;
+        }
+
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player)).
+                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player)).
                 executes( (c) ->
                 {
-                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                            handleCommandLegacy(c.getSource(),"__command", null, "");
+                    CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                    Value response = targetHost.handleCommandLegacy(c.getSource(),"__command", null, "");
                     if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
                     return (int)response.readInteger();
                 });
@@ -331,15 +369,15 @@ public class CarpetScriptServer
                         then(literal(function).
                                 requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
                                 executes((c) -> {
-                                    Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                            handleCommandLegacy(c.getSource(), function, null, "");
+                                    CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                    Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, "");
                                     if (!response.isNull()) Messenger.m(c.getSource(), "gi " + response.getString());
                                     return (int) response.readInteger();
                                 }).
                                 then(argument("args...", StringArgumentType.greedyString()).
                                         executes( (c) -> {
-                                            Value response = modules.get(hostName).retrieveForExecution(c.getSource()).
-                                                    handleCommandLegacy(c.getSource(), function,null, StringArgumentType.getString(c, "args..."));
+                                            CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                            Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, StringArgumentType.getString(c, "args..."));
                                             if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
                                             return (int)response.readInteger();
                                         })));
@@ -370,54 +408,84 @@ public class CarpetScriptServer
         return true;
     }
 
-    public boolean runas(ServerCommandSource source, String hostname, FunctionValue udf, List<Value> argv)
-    {
-        return runas(BlockPos.ORIGIN, source, hostname, udf, argv);
-    }
-
-    public boolean runas(BlockPos origin, ServerCommandSource source, String hostname, FunctionValue udf, List<Value> argv)
+    public boolean runEventCall(ServerCommandSource sender, String hostname, String optionalTarget, FunctionValue udf, List<Value> argv)
     {
         CarpetScriptHost host = globalHost;
-        try
+        if (hostname != null)
+            host = modules.get(hostname);
+        if (host == null) return false;
+        // dummy call for player apps that reside on the global copy - do not run them, but report as successes.
+        if (host.isPerUser() && optionalTarget==null) return true;
+        ServerPlayerEntity target = null;
+        if (optionalTarget != null)
         {
-            if (hostname != null)
-                host = modules.get(hostname).retrieveForExecution(source);
-            host.callUDF(origin, source, udf, argv);
+            target = sender.getMinecraftServer().getPlayerManager().getPlayer(optionalTarget);
+            if (target == null) return false;
         }
-        catch (NullPointerException | InvalidCallbackException npe)
-        {
-            return false;
-        }
-        return true;
+        int successes = signal(sender, target, hostname, udf, argv, true );
+        return successes >= 0;
     }
 
-    public Boolean runForPlayer(ServerPlayerEntity recipient, String hostname, FunctionValue udf, List<Value> argv)
+    public void runScheduledCall(BlockPos origin, ServerCommandSource source, String hostname, CarpetScriptHost host, FunctionValue udf, List<Value> argv)
     {
-        CarpetScriptHost host;
-        ServerCommandSource source;
+        if (hostname != null && !modules.containsKey(hostname)) // well - scheduled call app got unloaded
+            return;
+        try
+        {
+            host.callUDF(origin, source, udf, argv);
+        }
+        catch (NullPointerException | InvalidCallbackException ignored)
+        {
+        }
+    }
+
+    /**
+     * returns number of successful calls in the host or -1 if failed exceptionally
+     * @param sender
+     * @param optionalRecipient
+     * @param hostname
+     * @param udf
+     * @param argv
+     * @param reportFails - returns -1 when any call failed
+     * @return
+     */
+    public int signal(ServerCommandSource sender, ServerPlayerEntity optionalRecipient, String hostname, FunctionValue udf, List<Value> argv, boolean reportFails)
+    {
 
         if (hostname == null)
         {
-            if (recipient != null) return null;
-            host = globalHost;
-            source = server.getCommandSource();
+            if (optionalRecipient != null) return 0;
+            try
+            {
+                globalHost.callUDF(BlockPos.ORIGIN, sender, udf, argv);
+            }
+            catch (NullPointerException | InvalidCallbackException npe)
+            {
+                return reportFails?-1:0;
+            }
+            return 1;
         }
-        else
+        String hostRecipient = optionalRecipient == null?null:optionalRecipient.getEntityName();
+        ServerCommandSource source = (optionalRecipient == null)? sender : optionalRecipient.getCommandSource().withLevel(CarpetSettings.runPermissionLevel);
+        int successes = 0;
+        for (CarpetScriptHost host : modules.get(hostname).retrieveForExecution(sender, hostRecipient))
         {
-            host = modules.get(hostname).retrieveForExecution(recipient);
-            if (host == null) // not applicable
-                return null;
-            source = (recipient == null)? server.getCommandSource() : recipient.getCommandSource();
+            // getPlayer will always return nonnull cause retrieve for execution only returns hosts for existing players.
+            ServerCommandSource executingSource = host.perUser
+                    ? source.getMinecraftServer().getPlayerManager().getPlayer(host.user).getCommandSource()
+                    : source.getMinecraftServer().getCommandSource();
+            try
+            {
+                host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
+            }
+            catch (NullPointerException | InvalidCallbackException npe)
+            {
+                if (reportFails) return -1;
+                continue;
+            }
+            successes ++;
         }
-        try
-        {
-            host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
-        }
-        catch (NullPointerException | InvalidCallbackException npe)
-        {
-            return false;
-        }
-        return true;
+        return successes;
     }
 
     public void tick()
@@ -431,10 +499,28 @@ public class CarpetScriptServer
 
     public void onClose()
     {
+        CarpetEventServer.Event.SHUTDOWN.onTick();
         for (ScriptHost host : modules.values())
         {
             host.onClose();
         }
+    }
+
+    public void onPlayerJoin(ServerPlayerEntity player)
+    {
+        modules.values().forEach(h ->
+        {
+            if (h.isPerUser())
+            {
+                try
+                {
+                    h.retrieveOwnForExecution(player.getCommandSource());
+                }
+                catch (CommandSyntaxException ignored)
+                {
+                }
+            }
+        });
     }
 
     static class TransferData

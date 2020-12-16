@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.CarpetSettings;
 import carpet.script.api.Auxiliary;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.Module;
@@ -10,12 +11,12 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import carpet.CarpetSettings;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -38,9 +39,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -117,7 +120,7 @@ public class CarpetScriptHost extends ScriptHost
 
     private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument<Value> funcSpec, List<String> paramNames) throws CommandSyntaxException
     {
-        CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveForExecution(ctx.getSource());
+        CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
         List<String> argNames = funcSpec.function.getArguments();
         if ((argNames.size()-funcSpec.args.size()) != paramNames.size())
             throw new SimpleCommandExceptionType(new LiteralText("Target function "+funcSpec.function.getPrettyString()+" as wrong number of arguments, required "+paramNames.size()+", found "+argNames.size()+" with "+funcSpec.args.size()+" provided")).create();
@@ -162,8 +165,9 @@ public class CarpetScriptHost extends ScriptHost
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
+        Function<ServerCommandSource, Boolean> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player));
+               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player));
         for (Pair<List<CommandToken>,FunctionArgument<Value>> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
@@ -171,10 +175,61 @@ public class CarpetScriptHost extends ScriptHost
         return command;
     }
 
+    public Function<ServerCommandSource, Boolean> getCommandConfigPermissions() throws CommandSyntaxException
+    {
+        Value confValue = appConfig.get(StringValue.of("command_permission"));
+        if (confValue == null) return s -> true;
+        if (confValue instanceof NumericValue)
+        {
+            int level = ((NumericValue) confValue).getInt();
+            if (level < 1 || level > 4) throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
+            return s -> s.hasPermissionLevel(level);
+        }
+        if (!(confValue instanceof FunctionValue))
+        {
+            String perm = confValue.getString().toLowerCase(Locale.ROOT);
+            switch (perm)
+            {
+                case "ops": return s -> s.hasPermissionLevel(2);
+                case "server": return s -> !(s.getEntity() instanceof ServerPlayerEntity);
+                case "players": return s -> s.getEntity() instanceof ServerPlayerEntity;
+                case "all": return s -> true;
+                default: throw CommandArgument.error("Unknown command permission: "+perm);
+            }
+        }
+        FunctionValue fun = (FunctionValue) confValue;
+        if (fun.getNumParams() != 1) throw CommandArgument.error("Custom command permission function should expect 1 argument");
+        String hostName = getName();
+        return s -> {
+            try
+            {
+                CarpetScriptHost cHost = null;
+                cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(s);
+                Value response = cHost.handleCommand(s, fun, Collections.singletonList(
+                        (s.getEntity() instanceof ServerPlayerEntity)?new EntityValue(s.getEntity()):Value.NULL)
+                );
+                return response.getBoolean();
+            }
+            catch (CommandSyntaxException e)
+            {
+                Messenger.m(s, "rb Unable to run app command: "+e.getMessage());
+                return false;
+            }
+        };
+    }
+
     @Override
     protected ScriptHost duplicate()
     {
         return new CarpetScriptHost(scriptServer, main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp);
+    }
+
+    @Override
+    protected void transferToChild(ScriptHost host)
+    {
+        super.transferToChild(host);
+        // transfer Events
+        CarpetEventServer.Event.transferAllHostEventsToChild((CarpetScriptHost) host);
     }
 
     @Override
@@ -208,7 +263,7 @@ public class CarpetScriptHost extends ScriptHost
             if (!(ret instanceof MapValue)) return false;
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
-            persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.FALSE).getBoolean();
+            persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
             // read custom arguments
             Value arguments = config.get(StringValue.of("arguments"));
             if (arguments != null)
@@ -319,38 +374,58 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public CarpetScriptHost retrieveForExecution(ServerCommandSource source)
+    public List<CarpetScriptHost> retrieveForExecution(ServerCommandSource source, String optionalTarget)
     {
-        CarpetScriptHost host = this;
+        List<CarpetScriptHost> targets = new ArrayList<>();
         if (perUser)
         {
-            try
+            if (optionalTarget == null)
             {
-                ServerPlayerEntity player = source.getPlayer();
-                host = (CarpetScriptHost) retrieveForExecution(player.getName().getString());
+                for (ServerPlayerEntity player : source.getMinecraftServer().getPlayerManager().getPlayerList())
+                {
+                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
+                    targets.add(host);
+                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
+                }
             }
-            catch (CommandSyntaxException e)
+            else
             {
-                host = (CarpetScriptHost)  retrieveForExecution((String) null);
+                ServerPlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(optionalTarget);
+                if (player != null)
+                {
+                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
+                    targets.add(host);
+                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
+                }
             }
         }
-        if (host.errorSnooper == null) host.setChatErrorSnooper(source);
-        return host;
+        else
+        {
+            targets.add(this);
+            if (this.errorSnooper == null) this.setChatErrorSnooper(source);
+        }
+        return targets;
     }
 
-    public CarpetScriptHost retrieveForExecution(ServerPlayerEntity target)
+    public CarpetScriptHost retrieveOwnForExecution(ServerCommandSource source) throws CommandSyntaxException
     {
-        // allowing only run
-        if (perUser == (target == null)) return null;
-
         if (!perUser)
         {
-            if (errorSnooper == null) setChatErrorSnooper(this.scriptServer.server.getCommandSource());
+            if (errorSnooper == null) setChatErrorSnooper(source);
             return this;
         }
         // user based
-        CarpetScriptHost userHost = (CarpetScriptHost)retrieveForExecution(target.getName().getString());
-        if (userHost.errorSnooper == null) userHost.setChatErrorSnooper(target.getCommandSource());
+        ServerPlayerEntity player;
+        try
+        {
+            player = source.getPlayer();
+        }
+        catch (CommandSyntaxException ignored)
+        {
+            throw new SimpleCommandExceptionType(new LiteralText("Cannot run player based apps without the player context")).create();
+        }
+        CarpetScriptHost userHost = (CarpetScriptHost)retrieveForExecution(player.getEntityName());
+        if (userHost.errorSnooper == null) userHost.setChatErrorSnooper(source);
         return userHost;
     }
 
@@ -643,6 +718,12 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (getName() == null && !isShared) return null; //
         return Module.listFile(main, resource, "txt", isShared);
+    }
+
+    public Stream<String> listFolder(String resource, String ext, boolean isShared)
+    {
+        if (getName() == null && !isShared) return null; //
+        return Module.listFolder(main, resource, ext, isShared);
     }
 
 

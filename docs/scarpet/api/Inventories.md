@@ -28,6 +28,14 @@ an inventory, all API functions typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
 
+### item_list(tag?)
+
+With no arguments, returns a list of all items in the game. With an item tag provided, list items matching the tag, or `null` if tag is not valid.
+
+### item_tags(item, tag?)
+
+Returns list of tags the item belongs to, or, if tag is provided, `true` if an item maches the tag, `false` if it doesn't and `null` if that's not a valid tag
+
 ### `stack_limit(item)`
 
 Returns number indicating what is the stack limit for the item. Its typically 1 (non-stackable), 16 (like buckets), 

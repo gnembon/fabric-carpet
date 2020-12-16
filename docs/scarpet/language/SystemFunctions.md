@@ -122,6 +122,9 @@ a = 3; task_thread('temp', _(outer(a), b) -> foo(a,b), 5)
     => Another example of running the same thing passing arguments using closure over anonymous function as well as passing a parameter.
 </pre>
 
+In case you want to create a task based on a function that is not defined in your module, please read the tips on
+ "Passing function references to other modules of your application" section in the `call(...)` section.
+
 ### `sleep()` `sleep(timeout)`, `sleep(timeout, close_expr)`
 
 

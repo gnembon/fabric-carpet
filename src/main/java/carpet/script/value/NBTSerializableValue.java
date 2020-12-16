@@ -267,7 +267,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
     }
 
-    private static Map<String,ItemStackArgument> itemCache = new HashMap<>();
+    private static final Map<String,ItemStackArgument> itemCache = new HashMap<>();
 
     public static ItemStackArgument parseItem(String itemString)
     {
