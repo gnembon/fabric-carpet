@@ -6,8 +6,10 @@ __config() -> {
         'sphere <center> <radius> <block> replace <replacement>'->['draw_sphere',true],
         'ball <center> <radius> <block>'->['draw_sphere',null,false],
         'ball <center> <radius> <block> replace <replacement>'->['draw_sphere',false],
-        'diamond <center> <radius> <block>'->['draw_diamond',null],
-        'diamond <center> <radius> <block> replace <replacement>'->'draw_diamond',
+        'diamond <center> <radius> <block> hollow'->['draw_diamond',null],
+        'diamond <center> <radius> <block> hollow replace <replacement>'->'draw_diamond',
+        'diamond <center> <radius> <block>'->['draw_filled_diamond',null],
+        'diamond <center> <radius> <block> replace <replacement>'->'draw_filled_diamond',
         'pyramid <center> <radius> <height> <pointing> <orientation> <block> <hollow>'->['draw_pyramid',null, true],
         'pyramid <center> <radius> <height> <pointing> <orientation> <block> <hollow> replace <replacement>'->['draw_pyramid', true],
         'cone <center> <radius> <height> <pointing> <orientation> <block> <hollow>'->['draw_pyramid',null, false],
@@ -49,11 +51,11 @@ _block_matches(existing, block_predicate) ->
     (!tag || tag_matches(block_data(existing), tag))
 );
 
-set_block(x, y, z, block, replacement)-> (
-    existing = block(x, y, z);
+set_block(... pos, block, replacement)-> (
+    existing = block(if(length(pos)==1,pos:0,pos));//Cos optional args return list always
     if(block != existing && (!replacement || _block_matches(existing, replacement) ),
         global_positions += bool(set(existing,block))
-    );
+    )
 );
 
 global_positions = 0;
@@ -193,14 +195,29 @@ draw_diamond(pos, radius, block, replacement)->(
         c_for(x=-r,x<=r,x+=1,
             z=r-abs(x);
 
-            set_block(pos:0+x,pos:1-y,pos:2+z, block, replacement);
-            set_block(pos:0+x,pos:1-y,pos:2-z, block, replacement);
-            set_block(pos:0+x,pos:1+y,pos:2+z, block, replacement);
-            set_block(pos:0+x,pos:1+y,pos:2-z, block, replacement);
+            set_block(pos+[x,y,z], block, replacement);
+            set_block(pos+[x,y,-z], block, replacement);
+            set_block(pos+[x,-y,z], block, replacement);
+            set_block(pos+[x,-y,-z], block, replacement);
         )
     );
 
     affected(player());
+    if(global_debug,
+        end_time=unix_time();
+        print(player(),format('gi Time taken: '+(end_time-start_time)+'ms'))
+    )
+);
+
+draw_filled_diamond(pos, radius, block, replacement)->(
+    if(global_debug, start_time=unix_time());
+
+    for(diamond(pos,radius,radius),
+        set_block(pos(_),block,replacement)
+    );
+
+    affected(player());
+
     if(global_debug,
         end_time=unix_time();
         print(player(),format('gi Time taken: '+(end_time-start_time)+'ms'))
