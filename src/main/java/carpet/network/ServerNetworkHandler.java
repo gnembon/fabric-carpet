@@ -77,7 +77,7 @@ public class ServerNetworkHandler
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
-        DataBuilder data = DataBuilder.create().withTickRate();
+        DataBuilder data = DataBuilder.create().withTickRate().withTickingState().withTickPlayerActiveTimeout();
         CarpetServer.settingsManager.getRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
             SettingsManager eManager = e.customSettingsManager();
@@ -173,6 +173,30 @@ public class ServerNetworkHandler
         }
     }
 
+    public static void updateTickingStateToConnectedPlayers()
+    {
+        if (CarpetSettings.superSecretSetting) return;
+        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        {
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+                    CarpetClient.CARPET_CHANNEL,
+                    DataBuilder.create().withTickingState().build()
+            ));
+        }
+    }
+
+    public static void updateTickPlayerActiveTimeoutToConnectedPlayers()
+    {
+        if (CarpetSettings.superSecretSetting) return;
+        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        {
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+                    CarpetClient.CARPET_CHANNEL,
+                    DataBuilder.create().withTickPlayerActiveTimeout().build()
+            ));
+        }
+    }
+
     public static void broadcastCustomCommand(String command, Tag data)
     {
         if (CarpetSettings.superSecretSetting) return;
@@ -238,6 +262,20 @@ public class ServerNetworkHandler
         private DataBuilder withTickRate()
         {
             tag.putFloat("TickRate", TickSpeed.tickrate);
+            return this;
+        }
+        private DataBuilder withTickingState()
+        {
+            CompoundTag tickingState = new CompoundTag();
+            tickingState.putBoolean("is_paused", TickSpeed.is_paused);
+            tickingState.putBoolean("deepFreeze", TickSpeed.deepFreeze);
+            tickingState.putBoolean("is_superhot", TickSpeed.is_superHot);
+            tag.put("TickingState", tickingState);
+            return this;
+        }
+        private DataBuilder withTickPlayerActiveTimeout()
+        {
+            tag.putInt("TickPlayerActiveTimeout", TickSpeed.player_active_timeout);
             return this;
         }
         private DataBuilder withRule(ParsedRule<?> rule)

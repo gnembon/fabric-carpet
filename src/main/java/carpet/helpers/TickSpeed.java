@@ -7,7 +7,6 @@ import java.util.function.BiConsumer;
 import carpet.CarpetServer;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.Messenger;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -66,6 +65,7 @@ public class TickSpeed
     public static void add_ticks_to_run_in_pause(int ticks)
     {
         player_active_timeout = PLAYER_GRACE+ticks;
+        ServerNetworkHandler.updateTickPlayerActiveTimeoutToConnectedPlayers();
     }
 
     public static BaseText tickrate_advance(ServerPlayerEntity player, int advance, String callback, ServerCommandSource source)
@@ -155,7 +155,7 @@ public class TickSpeed
         }
     }
 
-    public static void tick(MinecraftServer server)
+    public static void tick()
     {
         process_entities = true;
         if (player_active_timeout > 0)

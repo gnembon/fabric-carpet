@@ -65,6 +65,13 @@ public class ClientNetworkHandler
             }
         });
         dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
+        dataHandlers.put("TickingState", (p, t) -> {
+            CompoundTag tickingState = (CompoundTag)t;
+            TickSpeed.is_paused = tickingState.getBoolean("is_paused");
+            TickSpeed.deepFreeze = tickingState.getBoolean("deepFreeze");
+            TickSpeed.is_superHot = tickingState.getBoolean("is_superHot");
+        });
+        dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.player_active_timeout = ((AbstractNumberTag)t).getInt());
         dataHandlers.put("scShape", (p, t) -> { // deprecated
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((CompoundTag)t);

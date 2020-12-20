@@ -2,6 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
+import carpet.network.ServerNetworkHandler;
 import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
@@ -107,6 +108,7 @@ public class TickCommand
             TickSpeed.deepFreeze = false;
             Messenger.m(source, "gi Game runs normally");
         }
+        ServerNetworkHandler.updateTickingStateToConnectedPlayers();
         return 1;
     }
 
@@ -119,6 +121,7 @@ public class TickCommand
     private static int toggleSuperHot(ServerCommandSource source)
     {
         TickSpeed.is_superHot = !TickSpeed.is_superHot;
+        ServerNetworkHandler.updateTickingStateToConnectedPlayers();
         if (TickSpeed.is_superHot)
         {
             Messenger.m(source,"gi Superhot enabled");

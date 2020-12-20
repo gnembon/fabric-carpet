@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.helpers.TickSpeed;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
@@ -960,6 +961,8 @@ public class CarpetEventServer
 
     public void tick()
     {
+        if (!TickSpeed.process_entities && TickSpeed.deepFreeze)
+            return;
         Iterator<ScheduledCall> eventIterator = scheduledCalls.iterator();
         List<ScheduledCall> currentCalls = new ArrayList<>();
         while(eventIterator.hasNext())
