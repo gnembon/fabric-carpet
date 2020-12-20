@@ -303,3 +303,12 @@ __on_player_trades(player, entity, buy_left, buy_right, sell) ->
     print('  - buy_right: '+ buy_right);
     print('  - sell: '+ sell)
 );
+
+__on_player_swings_hand(player, hand) ->
+(
+	print('');
+	print('__on_player_swings_hand(player, hand)');
+	print('player swings hand:');
+	print('  - player: '+player);
+	print('  - hand: '+hand);
+);

@@ -344,6 +344,11 @@ Boolean, true if the entity is swimming.
 
 Boolean, true if the entity is jumping.
 
+### `query(e, 'swinging')`
+
+Returns `true` if the entity is actively swinging their hand, `false` if not and `null` if swinging is not applicable to
+that entity.
+
 ### `query(e, 'gamemode')`
 
 String with gamemode, or `null` if not a player.

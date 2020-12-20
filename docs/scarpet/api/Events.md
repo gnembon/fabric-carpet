@@ -137,6 +137,11 @@ the slot.
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
 
+### `__on_player_swings_hand(player, hand)`
+Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
+(`player_uses_item`, `player_breaks_block`, etc.), but it triggers also after some failed events, like attacking the air. When
+swinging continues as an effect of an action, no new swinging events will be issued until the swinging is stopped.
+
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
 

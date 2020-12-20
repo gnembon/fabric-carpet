@@ -693,6 +693,18 @@ public class CarpetEventServer
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
             }
         };
+        public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, false)
+        {
+            @Override
+            public void onHandAction(ServerPlayerEntity player, Hand hand)
+            {
+                handler.call( () -> Arrays.asList(
+                            new EntityValue(player),
+                            StringValue.of(hand == Hand.MAIN_HAND ? "mainhand" : "offhand")
+                        )
+                        , player::getCommandSource);
+            }
+        };
         public static final Event PLAYER_TAKES_DAMAGE = new Event("player_takes_damage", 4, false)
         {
             @Override
@@ -938,6 +950,7 @@ public class CarpetEventServer
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+        public void onHandAction(ServerPlayerEntity player, Hand enumhand) { }
         public void onEntityAction(Entity entity) { }
         public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }

@@ -512,6 +512,11 @@ public class EntityValue extends Value
         put("sneaking", (e, a) -> e.isSneaking()?Value.TRUE:Value.FALSE);
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
+        put("swinging", (e, a) -> {
+            if (e instanceof LivingEntity) return new NumericValue(((LivingEntity) e).handSwinging);
+            return Value.NULL;
+        });
+
         put("air", (e, a) -> new NumericValue(e.getAir()));
         put("persistence", (e, a) -> {
             if (e instanceof MobEntity) return new NumericValue(((MobEntity) e).isPersistent());
