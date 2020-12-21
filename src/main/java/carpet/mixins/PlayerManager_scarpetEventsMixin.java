@@ -12,9 +12,9 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_RESPAWNS;
 @Mixin(PlayerManager.class)
 public class PlayerManager_scarpetEventsMixin
 {
-    @Inject(method = "respawnPlayer", at = @At("HEAD"))
+    @Inject(method = "respawnPlayer", at = @At("TAIL"))
     private void onRespawn(ServerPlayerEntity player, boolean olive, CallbackInfoReturnable<ServerPlayerEntity> cir)
     {
-        PLAYER_RESPAWNS.onPlayerEvent(player);
+        PLAYER_RESPAWNS.onPlayerEvent(cir.getReturnValue());
     }
 }
