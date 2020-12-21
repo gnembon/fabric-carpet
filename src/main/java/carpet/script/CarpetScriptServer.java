@@ -51,6 +51,7 @@ public class CarpetScriptServer
     public  Set<String> unloadableModules;
     public long tickStart;
     public boolean stopAll;
+    public int tickDepth;
     private  Set<String> holyMoly;
     public  CarpetEventServer events;
 

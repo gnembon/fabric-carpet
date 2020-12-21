@@ -634,30 +634,40 @@ public class Auxiliary {
 
 
         expression.addLazyFunction("game_tick", -1, (c, t, lv) -> {
-            ServerCommandSource s = ((CarpetContext)c).s;
+            CarpetContext cc = (CarpetContext)c;
+            ServerCommandSource s = cc.s;
             if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
-            ((MinecraftServerInterface)s.getMinecraftServer()).forceTick( () -> System.nanoTime()- CarpetServer.scriptServer.tickStart<50000000L);
-            if (lv.size()>0)
+            if (CarpetServer.scriptServer.tickDepth > 16) throw new InternalExpressionException("'game_tick' function caused other 'game_tick' functions to run. You should not allow that.");
+            try
             {
-                long ms_total = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-                long end_expected = CarpetServer.scriptServer.tickStart+ms_total*1000000L;
-                long wait = end_expected-System.nanoTime();
-                if (wait > 0L)
+                CarpetServer.scriptServer.tickDepth ++;
+                ((MinecraftServerInterface) s.getMinecraftServer()).forceTick(() -> System.nanoTime() - CarpetServer.scriptServer.tickStart < 50000000L);
+                if (lv.size() > 0)
                 {
-                    try
+                    long ms_total = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+                    long end_expected = CarpetServer.scriptServer.tickStart + ms_total * 1000000L;
+                    long wait = end_expected - System.nanoTime();
+                    if (wait > 0L)
                     {
-                        Thread.sleep(wait/1000000L);
-                    }
-                    catch (InterruptedException ignored)
-                    {
+                        try
+                        {
+                            Thread.sleep(wait / 1000000L);
+                        }
+                        catch (InterruptedException ignored)
+                        {
+                        }
                     }
                 }
+                CarpetServer.scriptServer.tickStart = System.nanoTime(); // for the next tick
+                Thread.yield();
             }
-            CarpetServer.scriptServer.tickStart = System.nanoTime(); // for the next tick
-            Thread.yield();
+            finally
+            {
+                CarpetServer.scriptServer.tickDepth --;
+            }
             if(CarpetServer.scriptServer.stopAll)
                 throw new ExitStatement(Value.NULL);
-            return (cc, tt) -> Value.TRUE;
+            return (_c, _t) -> Value.TRUE;
         });
 
         expression.addLazyFunction("seed", -1, (c, t, lv) -> {
