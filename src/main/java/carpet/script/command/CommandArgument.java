@@ -315,13 +315,13 @@ public abstract class CommandArgument
     public static CommandArgument buildFromConfig(String suffix, Map<String, Value> config, CarpetScriptHost host)
     {
         if (!config.containsKey("type"))
-            throw new InternalExpressionException("Custom types should at least specify the type");
+            throw new InternalExpressionException("Custom type "+suffix+" should at least specify the type");
         String baseType = config.get("type").getString();
         if (!builtIns.containsKey(baseType))
-            throw new InternalExpressionException("Unknown base type: "+baseType);
+            throw new InternalExpressionException("Unknown base type "+baseType+" for custom type "+suffix);
         CommandArgument variant = builtIns.get(baseType).factory().get();
-        variant.configure(config, host);
         variant.suffix = suffix;
+        variant.configure(config, host);
         return variant;
     }
 
@@ -334,9 +334,9 @@ public abstract class CommandArgument
         }
         if (config.containsKey("suggest"))
         {
-            if (config.containsKey("suggester")) throw new InternalExpressionException("Attempted to provide 'suggest' list while 'suggester' is present");
+            if (config.containsKey("suggester")) throw new InternalExpressionException("Attempted to provide 'suggest' list while 'suggester' is present"+" for custom type "+suffix);
             Value suggestionValue = config.get("suggest");
-            if (!(suggestionValue instanceof ListValue)) throw new InternalExpressionException("Argument suggestions needs to be a list");
+            if (!(suggestionValue instanceof ListValue)) throw new InternalExpressionException("Argument suggestions needs to be a list"+" for custom type "+suffix);
             examples = ((ListValue) suggestionValue).getItems().stream()
                     .map(Value::getString)
                     .collect(Collectors.toSet());
@@ -378,7 +378,7 @@ public abstract class CommandArgument
             args.add(MapValue.wrap(params));
             args.addAll(customSuggester.args);
             Value response = host.handleCommand(context.getSource(), customSuggester.function, args);
-            if (!(response instanceof ListValue)) throw error("Custom suggester should return a list of options");
+            if (!(response instanceof ListValue)) throw error("Custom suggester should return a list of options"+" for custom type "+suffix);
             return ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
         }
         if (needsMatching) return examples;
@@ -426,7 +426,7 @@ public abstract class CommandArgument
             if (!caseSensitive) choseValue = choseValue.toLowerCase(Locale.ROOT);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
-                throw new SimpleCommandExceptionType(new LiteralText("Incorrect value for "+param+": "+choseValue)).create();
+                throw new SimpleCommandExceptionType(new LiteralText("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
             }
             return StringValue.of(choseValue);
         }
@@ -438,7 +438,7 @@ public abstract class CommandArgument
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
-                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom string type requires options passed as a list");
+                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom string type requires options passed as a list"+" for custom type "+suffix);
                 validOptions = ((ListValue) optionsValue).getItems().stream()
                         .map(v -> caseSensitive?v.getString():(v.getString().toLowerCase(Locale.ROOT)))
                         .collect(Collectors.toSet());
@@ -577,7 +577,7 @@ public abstract class CommandArgument
             if (!single) return ListValue.wrap(founds.stream().map(EntityValue::new).collect(Collectors.toList()));
             if (founds.size() == 0) return Value.NULL;
             if (founds.size() == 1) return new EntityValue(founds.iterator().next());
-            throw new SimpleCommandExceptionType(new LiteralText("Multiple entities returned while only one was requested")).create();
+            throw new SimpleCommandExceptionType(new LiteralText("Multiple entities returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -618,7 +618,7 @@ public abstract class CommandArgument
             int size = profiles.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(profiles.iterator().next().getName());
-            throw new SimpleCommandExceptionType(new LiteralText("Multiple game profiles returned while only one was requested")).create();
+            throw new SimpleCommandExceptionType(new LiteralText("Multiple game profiles returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -659,7 +659,7 @@ public abstract class CommandArgument
             int size = holders.size();
             if (size == 0) return Value.NULL;
             if (size == 1) return StringValue.of(holders.iterator().next());
-            throw new SimpleCommandExceptionType(new LiteralText("Multiple score holders returned while only one was requested")).create();
+            throw new SimpleCommandExceptionType(new LiteralText("Multiple score holders returned while only one was requested"+" for custom type "+suffix)).create();
         }
 
         @Override
@@ -734,7 +734,7 @@ public abstract class CommandArgument
             Identifier choseValue = IdentifierArgumentType.getIdentifier(context, param);
             if (!validOptions.isEmpty() && !validOptions.contains(choseValue))
             {
-                throw new SimpleCommandExceptionType(new LiteralText("Incorrect value for "+param+": "+choseValue)).create();
+                throw new SimpleCommandExceptionType(new LiteralText("Incorrect value for "+param+": "+choseValue+" for custom type "+suffix)).create();
             }
             return ValueConversions.of(choseValue);
         }
@@ -752,7 +752,7 @@ public abstract class CommandArgument
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
-                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom sting type requires options passed as a list");
+                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom sting type requires options passed as a list"+" for custom type "+suffix);
                 validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> new Identifier(v.getString())).collect(Collectors.toSet());
             }
         }
@@ -799,7 +799,7 @@ public abstract class CommandArgument
             {
                 max = NumericValue.asNumber(config.get("max"), "max").getDouble();
             }
-            if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded");
+            if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded"+" for custom type "+suffix);
         }
 
         @Override
@@ -850,7 +850,7 @@ public abstract class CommandArgument
             {
                 max = NumericValue.asNumber(config.get("max"), "max").getLong();
             }
-            if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded");
+            if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded"+" for custom type "+suffix);
         }
 
         @Override
@@ -923,7 +923,7 @@ public abstract class CommandArgument
             int slot = ItemSlotArgumentType.getItemSlot(context, param);
             if (restrict != null && !RESTRICTED_CONTAINERS.get(restrict).getLeft().contains(slot))
             {
-                throw new SimpleCommandExceptionType(new LiteralText("Incorrect slot restricted to "+restrict)).create();
+                throw new SimpleCommandExceptionType(new LiteralText("Incorrect slot restricted to "+restrict+" for custom type "+suffix)).create();
             }
             return ValueConversions.ofVanillaSlotResult(slot);
         }
@@ -937,7 +937,7 @@ public abstract class CommandArgument
                 restrict = config.get("restrict").getString().toLowerCase(Locale.ROOT);
                 needsMatching = true;
                 if (!RESTRICTED_CONTAINERS.containsKey(restrict))
-                    throw new InternalExpressionException("Incorrect slot restriction: "+restrict);
+                    throw new InternalExpressionException("Incorrect slot restriction "+restrict+" for custom type "+suffix);
             }
         }
 
