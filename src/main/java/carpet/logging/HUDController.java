@@ -68,7 +68,7 @@ public class HUDController
         player_huds.clear();
 
         if (LoggerRegistry.__tps)
-            LoggerRegistry.getLogger("tps").log(()-> send_tps_display(server));
+            LoggerRegistry.getLogger("tps").log(send_tps_display(server));
 
         if (LoggerRegistry.__mobcaps)
             LoggerRegistry.getLogger("mobcaps").log((option, player) -> {
@@ -92,7 +92,7 @@ public class HUDController
             LoggerRegistry.getLogger("counter").log((option)->send_counter_info(server, option));
 
         if (LoggerRegistry.__packets)
-            LoggerRegistry.getLogger("packets").log(()-> packetCounter());
+            LoggerRegistry.getLogger("packets").log(packetCounter());
 
         // extensions have time to pitch in.
         HUDListeners.forEach(l -> l.accept(server));
@@ -124,7 +124,7 @@ public class HUDController
         });
         return res.toArray(new BaseText[0]);
     }
-    private static BaseText [] packetCounter()
+    private static BaseText[] packetCounter()
     {
         BaseText [] ret =  new BaseText[]{
                 Messenger.c("w I/" + PacketCounter.totalIn + " O/" + PacketCounter.totalOut),
