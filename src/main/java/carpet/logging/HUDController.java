@@ -124,7 +124,7 @@ public class HUDController
         });
         return res.toArray(new BaseText[0]);
     }
-    private static BaseText[] packetCounter()
+    private static BaseText [] packetCounter()
     {
         BaseText [] ret =  new BaseText[]{
                 Messenger.c("w I/" + PacketCounter.totalIn + " O/" + PacketCounter.totalOut),
