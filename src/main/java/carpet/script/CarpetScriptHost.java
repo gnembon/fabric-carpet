@@ -18,6 +18,8 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
+
+import com.google.gson.JsonElement;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -720,7 +722,7 @@ public class CarpetScriptHost extends ScriptHost
         return Module.listFile(main, resource, type, isShared);
     }
     
-    public Value readJsonFile(String resource, String type, boolean isShared)
+    public JsonElement readJsonFile(String resource, String type, boolean isShared)
     {
         if (getName() == null && !isShared) return null;
         return Module.readJsonFile(main, resource, type, isShared);

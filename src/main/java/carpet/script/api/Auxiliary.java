@@ -35,9 +35,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -72,6 +69,10 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -821,7 +822,8 @@ public class Auxiliary {
             }
             else if (fdesc.getMiddle().equals("json"))
             {
-                Value parsedJson = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                JsonElement json = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                Value parsedJson = gson.fromJson(json, Value.class);
                 if (parsedJson == null)
                     retVal = Value.NULL;
                 else

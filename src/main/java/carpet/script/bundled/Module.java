@@ -1,12 +1,12 @@
 package carpet.script.bundled;
 
 import carpet.CarpetServer;
-import carpet.script.value.Value;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.WorldSavePath;
 import org.apache.commons.io.FilenameUtils;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonElement;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,7 +80,7 @@ public abstract class Module
         synchronized (writeIOSync) { return FileModule.listFileContent(dataFile); }
     }
     
-    public static Value readJsonFile(Module module, String resourceName, String type, boolean isShared) {
+    public static JsonElement readJsonFile(Module module, String resourceName, String type, boolean isShared) {
         Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
         if (dataFile == null) return null;
         if (!dataFile.toFile().exists()) return null;

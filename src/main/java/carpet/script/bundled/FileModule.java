@@ -25,8 +25,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-import carpet.script.api.Auxiliary;
-import carpet.script.value.Value;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 
 public class FileModule extends Module
 {
@@ -180,10 +181,11 @@ public class FileModule extends Module
         }
     }
     
-    public static Value readJsonContent(Path filePath)
+    public static JsonElement readJsonContent(Path filePath)
     {
-    	try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
-            return Auxiliary.gson.fromJson(reader, Value.class);
+    	try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
+        {
+            return new JsonParser().parse(new JsonReader(reader));
         }
         catch (IOException e)
         {
