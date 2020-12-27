@@ -705,7 +705,7 @@ public class CarpetScriptHost extends ScriptHost
     public boolean removeResourceFile(String resource, boolean isShared, String type)
     {
         if (getName() == null && !isShared) return false; //
-        return Module.dropExistingFile(main, resource, type.equals("nbt")?"nbt":"txt", isShared);
+        return Module.dropExistingFile(main, resource, type, isShared);
     }
 
     public boolean appendLogFile(String resource, boolean isShared, String type, List<String> data)
@@ -714,16 +714,22 @@ public class CarpetScriptHost extends ScriptHost
         return Module.appendToTextFile(main, resource, type, isShared, data);
     }
 
-    public List<String> readTextResource(String resource, boolean isShared)
+    public List<String> readTextResource(String resource, String type, boolean isShared)
     {
-        if (getName() == null && !isShared) return null; //
-        return Module.listFile(main, resource, "txt", isShared);
+        if (getName() == null && !isShared) return null;
+        return Module.listFile(main, resource, type, isShared);
+    }
+    
+    public Value readJsonFile(String resource, String type, boolean isShared)
+    {
+        if (getName() == null && !isShared) return null;
+        return Module.readJsonFile(main, resource, type, isShared);
     }
 
-    public Stream<String> listFolder(String resource, String ext, boolean isShared)
+    public Stream<String> listFolder(String resource, String type, boolean isShared)
     {
         if (getName() == null && !isShared) return null; //
-        return Module.listFolder(main, resource, ext, isShared);
+        return Module.listFolder(main, resource, type, isShared);
     }
 
 

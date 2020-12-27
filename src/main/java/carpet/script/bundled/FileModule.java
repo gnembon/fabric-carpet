@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
+import carpet.script.api.Auxiliary;
+import carpet.script.value.Value;
+
 public class FileModule extends Module
 {
     private String name;
@@ -137,11 +140,11 @@ public class FileModule extends Module
         return true;
     }
 
-    public static boolean appendText(File filePath, boolean addNewLines, List<String> data)
+    public static boolean appendText(Path filePath, boolean addNewLines, List<String> data)
     {
         try
         {
-            OutputStream out = Files.newOutputStream(filePath.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            OutputStream out = Files.newOutputStream(filePath, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)))
             {
                 for (String line: data)
@@ -159,9 +162,9 @@ public class FileModule extends Module
     }
 
 
-    public static List<String> listFileContent(File filePath)
+    public static List<String> listFileContent(Path filePath)
     {
-        try (BufferedReader reader = Files.newBufferedReader(filePath.toPath(), StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
             List<String> result = new ArrayList<>();
             for (;;) {
                 String line = reader.readLine();
@@ -170,6 +173,17 @@ public class FileModule extends Module
                 result.add(line.replaceAll("[\n\r]+",""));
             }
             return result;
+        }
+        catch (IOException e)
+        {
+            return null;
+        }
+    }
+    
+    public static Value readJsonContent(Path filePath)
+    {
+    	try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+            return Auxiliary.gson.fromJson(reader, Value.class);
         }
         catch (IOException e)
         {
