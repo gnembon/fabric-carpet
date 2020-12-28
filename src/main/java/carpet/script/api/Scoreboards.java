@@ -137,6 +137,8 @@ public class Scoreboards {
 
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective != null) {
+                if(lv.size() == 1) return (_c, _t) -> StringValue.of(objective.getCriterion().getName());
+                if(objective.getCriterion().equals(criterion) || lv.size() == 1) return LazyValue.NULL;
                 ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriterion()).remove(objective);
                 ((ScoreboardObjective_scarpetMixin) objective).setCriterion(criterion);
                 (((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
