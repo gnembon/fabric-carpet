@@ -39,10 +39,11 @@ public class TickSpeed
     }
 
     /**
+     * Whether or not the game is deeply frozen.
      * This can be used for things that you may not normally want
      * to freeze, but may need to in some situations.
-     * This should be used with {@link #process_entities} to make sure the 
-     * current tick is actually frozen
+     * This should be checked with {@link #process_entities} to make sure the 
+     * current tick is actually frozen, not only the game
      * @return Whether or not the game is deeply frozen.
      */
     public static boolean deeplyFrozen() {
