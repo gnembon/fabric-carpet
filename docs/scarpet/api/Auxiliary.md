@@ -488,7 +488,7 @@ it could either mean your input is wrong, or statistic effectively has a value o
 ### `system_info()`, `system_info(property)`
 Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
 fetch various information, mostly not changing, or only available via low level
-system calls. In all cirumstances, these are only provided as read-only.
+system calls. In all circumstances, these are only provided as read-only.
 
 Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
@@ -506,7 +506,7 @@ Available options in the scarpet app space:
 
 
  Relevant gameplay related properties
-  * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
+  * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
   * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
   * `game_default_gamemode` - default gamemode for new players
@@ -514,6 +514,7 @@ Available options in the scarpet app space:
   * `game_view_distance` - the view distance
   * `game_mod_name` - the name of the base mod. Expect `'fabric'`
   * `game_version` - base version of the game
+  * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   
  Server related properties
  * `server_motd` - the motd of the server visible when joining
