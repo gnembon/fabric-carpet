@@ -9,6 +9,7 @@ import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.AbstractNumberTag;
+import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -67,9 +68,10 @@ public class ClientNetworkHandler
         dataHandlers.put("TickRate", (p, t) -> TickSpeed.tickrate(((AbstractNumberTag)t).getFloat(), false));
         dataHandlers.put("TickingState", (p, t) -> {
             CompoundTag tickingState = (CompoundTag)t;
-            TickSpeed.is_paused = tickingState.getBoolean("is_paused");
-            TickSpeed.deepFreeze = tickingState.getBoolean("deepFreeze");
-            TickSpeed.is_superHot = tickingState.getBoolean("is_superHot");
+            TickSpeed.setFrozenState(tickingState.getBoolean("is_paused"), tickingState.getBoolean("deepFreeze"));
+        });
+        dataHandlers.put("SuperHotState", (p, t) -> {
+            TickSpeed.is_superHot = ((ByteTag) t).equals(ByteTag.ONE);
         });
         dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.player_active_timeout = ((AbstractNumberTag)t).getInt());
         dataHandlers.put("scShape", (p, t) -> { // deprecated

@@ -28,7 +28,7 @@ public class MinecraftClientMixin
         if (this.world != null) {
             if (CarpetServer.minecraft_server == null)
                 TickSpeed.tick();
-            if (!TickSpeed.process_entities && TickSpeed.deepFreeze)
+            if (!TickSpeed.process_entities && TickSpeed.deeplyFrozen())
                 CarpetClient.shapes.renewShapes();
         }
     }

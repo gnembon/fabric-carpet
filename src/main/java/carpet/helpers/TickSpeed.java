@@ -25,9 +25,41 @@ public class TickSpeed
     public static ServerCommandSource tick_warp_sender = null;
     public static int player_active_timeout = 0;
     public static boolean process_entities = true;
-    public static boolean deepFreeze = false;
-    public static boolean is_paused = false;
+    private static boolean deepFreeze = false;
+    private static boolean is_paused = false;
     public static boolean is_superHot = false;
+
+    /**
+     * @return Whether or not the game is in a frozen state.
+     *         You should normally use {@link #process_entities} instead,
+     *         since that one accounts for tick steps and superhot
+     */
+    public static boolean isPaused() {
+	    return is_paused;
+    }
+
+    /**
+     * This can be used for things that you may not normally want
+     * to freeze, but may need to in some situations.
+     * This should be used with {@link #process_entities} to make sure the 
+     * current tick is actually frozen
+     * @return Whether or not the game is deeply frozen.
+     */
+    public static boolean deeplyFrozen() {
+        return deepFreeze;
+    }
+
+    /**
+     * Used to update the frozen state of the game.
+     * Handles connected clients as well.
+     * @param isPaused Whether or not the game is paused
+     * @param isDeepFreeze Whether or not the game is deeply frozen
+     */
+    public static void setFrozenState(boolean isPaused, boolean isDeepFreeze) {
+        is_paused = isPaused;
+        deepFreeze = isPaused ? isDeepFreeze : false;
+        ServerNetworkHandler.updateFrozenStateToConnectedPlayers();
+    }
 
     /**
      * Functional interface that listens for tickrate changes. This is

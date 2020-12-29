@@ -77,7 +77,7 @@ public class ServerNetworkHandler
             CarpetSettings.LOG.info("Player "+playerEntity.getName().getString()+" joined with a matching carpet client");
         else
             CarpetSettings.LOG.warn("Player "+playerEntity.getName().getString()+" joined with another carpet version: "+clientVersion);
-        DataBuilder data = DataBuilder.create().withTickRate().withTickingState().withTickPlayerActiveTimeout();
+        DataBuilder data = DataBuilder.create().withTickRate().withFrozenState().withTickPlayerActiveTimeout(); // .withSuperHotState()
         CarpetServer.settingsManager.getRules().forEach(data::withRule);
         CarpetServer.extensions.forEach(e -> {
             SettingsManager eManager = e.customSettingsManager();
@@ -173,14 +173,26 @@ public class ServerNetworkHandler
         }
     }
 
-    public static void updateTickingStateToConnectedPlayers()
+    public static void updateFrozenStateToConnectedPlayers()
     {
         if (CarpetSettings.superSecretSetting) return;
         for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
         {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
                     CarpetClient.CARPET_CHANNEL,
-                    DataBuilder.create().withTickingState().build()
+                    DataBuilder.create().withFrozenState().build()
+            ));
+        }
+    }
+
+    public static void updateSuperHotStateToConnectedPlayers()
+    {
+        if(CarpetSettings.superSecretSetting) return;
+        for (ServerPlayerEntity player : remoteCarpetPlayers.keySet())
+        {
+            player.networkHandler.sendPacket(new CustomPayloadS2CPacket(
+                    CarpetClient.CARPET_CHANNEL,
+                    DataBuilder.create().withSuperHotState().build()
             ));
         }
     }
@@ -264,14 +276,18 @@ public class ServerNetworkHandler
             tag.putFloat("TickRate", TickSpeed.tickrate);
             return this;
         }
-        private DataBuilder withTickingState()
+        private DataBuilder withFrozenState()
         {
             CompoundTag tickingState = new CompoundTag();
-            tickingState.putBoolean("is_paused", TickSpeed.is_paused);
-            tickingState.putBoolean("deepFreeze", TickSpeed.deepFreeze);
-            tickingState.putBoolean("is_superhot", TickSpeed.is_superHot);
+            tickingState.putBoolean("is_paused", TickSpeed.isPaused());
+            tickingState.putBoolean("deepFreeze", TickSpeed.deeplyFrozen());
             tag.put("TickingState", tickingState);
             return this;
+        }
+        private DataBuilder withSuperHotState()
+        {
+        	tag.putBoolean("SuperHotState", TickSpeed.is_superHot);
+        	return this;
         }
         private DataBuilder withTickPlayerActiveTimeout()
         {
