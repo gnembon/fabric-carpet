@@ -4771,12 +4771,15 @@ for folder listing.
  
 Supported values for resource `type` are:
  * `nbt` - NBT tag
+ * `json` - JSON file
  * `text` - text resource with automatic newlines added
  * `raw` - text resource without implied newlines
- * `folder` - for `list_files` only - indicting folder listing instead of files
- * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
+ * `folder` - for `list_files` only - indicating folder listing instead of files
+ * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder`, `shared_json` - shared versions of the above
  
-NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
+NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. JSON files have `.json` extension, store 
+Scarpet numbers, strings, lists, maps and `null` values. Anything else will be saved as a string (including NBT).  
+Text files have `.txt` extension, 
 stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
 sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
 record to the file. Since files are closed after each write, sending multiple lines of data to
