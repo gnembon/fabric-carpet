@@ -6,6 +6,7 @@ import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.script.bundled.Module;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
@@ -19,6 +20,7 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.FixedCommandSource;
+import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
@@ -33,7 +35,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -69,6 +70,10 @@ import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,12 +91,7 @@ import static java.lang.Math.min;
 public class Auxiliary {
     public static final String MARKER_STRING = "__scarpet_marker";
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
-    private static final Map<String, String> supportedTypes = ImmutableMap.of(
-            "raw", ".txt",
-            "text", ".txt",
-            "nbt", ".nbt",
-            "folder", "folder"
-    );
+    public static final Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
 
     public static String recognizeResource(Value value, boolean isFloder)
     {
@@ -112,7 +112,7 @@ public class Auxiliary {
         String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
         boolean shared = origtype.startsWith("shared_");
         String type = shared ? origtype.substring(7) : origtype; //len(shared_)
-        if (!supportedTypes.containsKey(type))
+        if (!Module.supportedTypes.containsKey(type))
             throw new InternalExpressionException("Unsupported file type: "+origtype);
         if (type.equals("folder") && !isFloder)
             throw new InternalExpressionException("Folder types are no supported for this IO function");
@@ -526,7 +526,7 @@ public class Auxiliary {
             Text title = null;
             if (lv.size() > 2)
             {
-            	pVal = lv.get(2).evalValue(c);
+                pVal = lv.get(2).evalValue(c);
                 if (pVal instanceof FormattedTextValue)
                     title = ((FormattedTextValue) pVal).getText();
                 else
@@ -803,7 +803,7 @@ public class Auxiliary {
         expression.addLazyFunction("list_files", 2, (c, t, lv) ->
         {
             Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, true);
-            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc.getLeft(), supportedTypes.get(fdesc.getMiddle()), fdesc.getRight());
+            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
             if (files == null) return LazyValue.NULL;
             Value ret = ListValue.wrap(files.map(StringValue::of).collect(Collectors.toList()));
             return (cc, tt) -> ret;
@@ -820,9 +820,18 @@ public class Auxiliary {
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
+            else if (fdesc.getMiddle().equals("json"))
+            {
+                JsonElement json = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                Value parsedJson = gson.fromJson(json, Value.class);
+                if (parsedJson == null)
+                    retVal = Value.NULL;
+                else
+                    retVal = parsedJson;
+            }
             else
             {
-                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc.getLeft(), fdesc.getRight());
+                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
                 if (content == null) return LazyValue.NULL;
                 retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
             }
@@ -850,6 +859,12 @@ public class Auxiliary {
                         : new NBTSerializableValue(val.getString());
                 Tag tag = tagValue.getTag();
                 success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc.getLeft(), fdesc.getRight());
+            }
+            else if (fdesc.getMiddle().equals("json"))
+            {
+                List<String> data = Collections.singletonList(gson.toJson(lv.get(2).evalValue(c).toJson()));
+                ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle());
+                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
             }
             else
             {

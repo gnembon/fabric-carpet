@@ -4,7 +4,7 @@ import carpet.script.exception.InternalExpressionException;
 
 import java.util.Iterator;
 
-public abstract class AbstractListValue extends Value
+public abstract class AbstractListValue extends Value implements Iterable<Value>
 {
     public abstract Iterator<Value> iterator();
     public void fatality() { }
