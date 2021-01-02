@@ -673,7 +673,7 @@ public class CarpetSettings
             // Set the field before we apply.
             try
             {
-                currentRule.field.set(null, currentRule.get().intValue());
+                currentRule.field.set(null, newValue.intValue());
             }
             catch (IllegalAccessException e)
             {
