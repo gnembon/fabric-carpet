@@ -44,6 +44,8 @@
 	"BlockLightStorage_scarpetChunkCreationMixin",
 	"SkyLightStorage_scarpetChunkCreationMixin",
 
+    "ServerLightingProvider_lightBatchMixin",
+
     "ChunkTicketManager_spawnChunksMixin",
     "ServerWorld_spawnChunksMixin",
     "ServerLightingProvider_scarpetChunkCreationMixin",
