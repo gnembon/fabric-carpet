@@ -6,7 +6,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 
 public interface ServerLightingProviderInterface
-{    
+{
     void invokeUpdateChunkStatus(ChunkPos pos);
 
     void removeLightData(Chunk chunk);
