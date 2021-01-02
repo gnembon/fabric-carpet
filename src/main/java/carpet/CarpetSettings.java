@@ -690,7 +690,7 @@ public class CarpetSettings
     @Rule(
             desc = "Changes maximum light tasks batch size for the Overworld",
             extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
-            category = CREATIVE,
+            category = {EXPERIMENTAL, OPTIMIZATION},
             strict = false,
             options = {"5", "50", "100", "200"},
             validate = LightBatchValidator.class
@@ -700,7 +700,7 @@ public class CarpetSettings
     @Rule(
             desc = "Changes maximum light tasks batch size for the Nether",
             extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
-            category = CREATIVE,
+            category = {EXPERIMENTAL, OPTIMIZATION},
             strict = false,
             options = {"5", "50", "100", "200"},
             validate = LightBatchValidator.class
@@ -710,7 +710,7 @@ public class CarpetSettings
     @Rule(
             desc = "Changes maximum light tasks batch size for the End",
             extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
-            category = CREATIVE,
+            category = {EXPERIMENTAL, OPTIMIZATION},
             strict = false,
             options = {"5", "50", "100", "200"},
             validate = LightBatchValidator.class
