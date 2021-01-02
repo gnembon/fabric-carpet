@@ -643,17 +643,17 @@ public class CarpetSettings
         {
             ServerWorld overworld = CarpetServer.minecraft_server.getWorld(World.OVERWORLD); // Overworld
             if (overworld != null) {
-                overworld.getChunkManager().getLightingProvider().setTaskBatchSize(lightBathSizeOverworld);
+                overworld.getChunkManager().getLightingProvider().setTaskBatchSize(lightBatchSizeOverworld);
             }
             
             ServerWorld nether = CarpetServer.minecraft_server.getWorld(World.NETHER); // Nether
             if (nether != null) {
-                nether.getChunkManager().getLightingProvider().setTaskBatchSize(lightBathSizeNether);
+                nether.getChunkManager().getLightingProvider().setTaskBatchSize(lightBatchSizeNether);
             }
             
             ServerWorld end = CarpetServer.minecraft_server.getWorld(World.END); // End
             if (end != null) {
-                end.getChunkManager().getLightingProvider().setTaskBatchSize(lightBathSizeEnd);
+                end.getChunkManager().getLightingProvider().setTaskBatchSize(lightBatchSizeEnd);
             }
         }
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
@@ -689,33 +689,33 @@ public class CarpetSettings
     
     @Rule(
             desc = "Changes maximum light tasks batch size for the Overworld",
-            extra = {"Allows for a higher light suppression tolerance", "setting it to 0 - Default limit defined by the game"},
+            extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
             category = CREATIVE,
             strict = false,
-            options = {"0", "50", "100", "200"},
+            options = {"5", "50", "100", "200"},
             validate = LightBatchValidator.class
     )
-    public static int lightBathSizeOverworld = 0;
+    public static int lightBatchSizeOverworld = 5;
     
     @Rule(
             desc = "Changes maximum light tasks batch size for the Nether",
-            extra = {"Allows for a higher light suppression tolerance", "setting it to 0 - Default limit defined by the game"},
+            extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
             category = CREATIVE,
             strict = false,
-            options = {"0", "50", "100", "200"},
+            options = {"5", "50", "100", "200"},
             validate = LightBatchValidator.class
     )
-    public static int lightBathSizeNether = 0;
+    public static int lightBatchSizeNether = 5;
     
     @Rule(
             desc = "Changes maximum light tasks batch size for the End",
-            extra = {"Allows for a higher light suppression tolerance", "setting it to 0 - Default limit defined by the game"},
+            extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
             category = CREATIVE,
             strict = false,
-            options = {"0", "50", "100", "200"},
+            options = {"5", "50", "100", "200"},
             validate = LightBatchValidator.class
     )
-    public static int lightBathSizeEnd = 0;
+    public static int lightBatchSizeEnd = 5;
     
     @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
     public static boolean renewableCoral = false;
