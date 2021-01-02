@@ -7,6 +7,8 @@ import net.minecraft.world.chunk.Chunk;
 
 public interface ServerLightingProviderInterface
 {
+    int getTaskBatchSize();
+    
     void invokeUpdateChunkStatus(ChunkPos pos);
 
     void removeLightData(Chunk chunk);
