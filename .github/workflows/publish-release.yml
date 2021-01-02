@@ -108,6 +108,13 @@ jobs:
           display_name: Carpet Mod v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
           game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.version }} #Fabric,Java 8,[version for the branch]
           release_type: ${{ needs.Get-Properties.outputs.release-type }}
+      - name: Ask Gradle to publish
+        run: ./gradlew publish
+      - name: Save publish folder in action's artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Maven publishing artifacts for ${{ matrix.branch }}
+          path: publish/carpet/fabric-carpet/
   Merge-Scarpet-Docs:
     runs-on: ubuntu-latest
     steps:
