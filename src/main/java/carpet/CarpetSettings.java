@@ -638,7 +638,7 @@ public class CarpetSettings
     )
     public static int spawnChunksSize = 11;
 
-    public static class lightBatchValidator extends Validator<Integer> {
+    public static class LightBatchValidator extends Validator<Integer> {
         public static void applyLightBatchSizes()
         {
             ServerWorld overworld = CarpetServer.minecraft_server.getWorld(World.OVERWORLD); // Overworld
@@ -693,7 +693,7 @@ public class CarpetSettings
             category = CREATIVE,
             strict = false,
             options = {"0", "50", "100", "200"},
-            validate = lightBatchValidator.class
+            validate = LightBatchValidator.class
     )
     public static int lightBathSizeOverworld = 0;
     
@@ -703,7 +703,7 @@ public class CarpetSettings
             category = CREATIVE,
             strict = false,
             options = {"0", "50", "100", "200"},
-            validate = lightBatchValidator.class
+            validate = LightBatchValidator.class
     )
     public static int lightBathSizeNether = 0;
     
@@ -713,7 +713,7 @@ public class CarpetSettings
             category = CREATIVE,
             strict = false,
             options = {"0", "50", "100", "200"},
-            validate = lightBatchValidator.class
+            validate = LightBatchValidator.class
     )
     public static int lightBathSizeEnd = 0;
     
