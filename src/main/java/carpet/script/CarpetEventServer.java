@@ -961,7 +961,7 @@ public class CarpetEventServer
 
     public void tick()
     {
-        if (!TickSpeed.process_entities && TickSpeed.deeplyFrozen())
+        if (!TickSpeed.process_entities)
             return;
         Iterator<ScheduledCall> eventIterator = scheduledCalls.iterator();
         List<ScheduledCall> currentCalls = new ArrayList<>();
