@@ -638,7 +638,7 @@ public class CarpetSettings
     )
     public static int spawnChunksSize = 11;
 
-    public static class LightBatchValidator extends Validator<Integer> {
+    public static class lightBatchValidator extends Validator<Integer> {
         public static void applyLightBatchSizes()
         {
             ServerWorld overworld = CarpetServer.minecraft_server.getWorld(World.OVERWORLD); // Overworld
@@ -671,7 +671,16 @@ public class CarpetSettings
             if (CarpetServer.minecraft_server == null) return newValue;
           
             // Set the field before we apply.
-            currentRule.field.set(null, currentRule.get().intValue());
+            try
+            {
+                currentRule.field.set(null, currentRule.get().intValue());
+            }
+            catch (IllegalAccessException e)
+            {
+                Messenger.m(source, "r Unable to access setting for  "+currentRule.name);
+                return null;
+            }
+            
             applyLightBatchSizes(); // Apply new settings
             
             return newValue;
@@ -684,7 +693,7 @@ public class CarpetSettings
             category = CREATIVE,
             strict = false,
             options = {"0", "50", "100", "200"},
-            validate = LightBatchValidator.class
+            validate = lightBatchValidator.class
     )
     public static int lightBathSizeOverworld = 0;
     
@@ -694,7 +703,7 @@ public class CarpetSettings
             category = CREATIVE,
             strict = false,
             options = {"0", "50", "100", "200"},
-            validate = LightBatchValidator.class
+            validate = lightBatchValidator.class
     )
     public static int lightBathSizeNether = 0;
     
@@ -704,7 +713,7 @@ public class CarpetSettings
             category = CREATIVE,
             strict = false,
             options = {"0", "50", "100", "200"},
-            validate = LightBatchValidator.class
+            validate = lightBatchValidator.class
     )
     public static int lightBathSizeEnd = 0;
     
