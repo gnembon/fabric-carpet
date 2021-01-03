@@ -1010,6 +1010,31 @@ public class Auxiliary {
             Value ret = new NumericValue(counts);
             return (c_, t_) -> ret;
         });
+
+        // storage()
+        // storage(key)
+        // storage(key, nbt)
+        expression.addLazyFunction("storage", -1, (c, t, lv) -> {
+            if (lv.size() > 2) throw new InternalExpressionException("'storage' requires 0, 1 or 2 arguments.");
+            CarpetContext cc = (CarpetContext) c;
+            DataCommandStorage storage = cc.s.getMinecraftServer().getDataCommandStorage();
+            if (lv.size() == 0) {
+                Value ret = ListValue.wrap(storage.getIds().map(i -> new StringValue(nameFromRegistryId(i))).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            String key = lv.get(0).evalValue(c).getString();
+            if (lv.size() == 1) {
+                CompoundTag nbt = storage.get(new Identifier(key));
+                if (nbt == null) return LazyValue.NULL;
+                return (_c, _t) -> new NBTSerializableValue(nbt);
+            } else {
+                Value nbt = lv.get(1).evalValue(c);
+                NBTSerializableValue parsed_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
+                        : NBTSerializableValue.parseString(nbt.getString(), true);
+                storage.set(new Identifier(key), parsed_nbt.getCompoundTag());
+                return (_c, _t) -> parsed_nbt;
+            }
+        });
     }
 
     private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
