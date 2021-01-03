@@ -540,3 +540,7 @@ Available options in the scarpet app space:
  
  Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+
+## Matrix operations
+
+Matrices are important things to have and to be able to manipulate in a programming language

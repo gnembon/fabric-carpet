@@ -28,6 +28,7 @@ import carpet.script.value.FormattedTextValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
+import carpet.script.value.MatrixValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
@@ -1009,6 +1010,47 @@ public class Auxiliary {
             if (counts < 0) return LazyValue.NULL;
             Value ret = new NumericValue(counts);
             return (c_, t_) -> ret;
+        });
+
+        expression.addLazyFunction("matrix",-1,(c,t,lv)->{
+            if(lv.size()==1){
+                Value l=lv.get(0).evalValue(c);
+                if(!(l instanceof ListValue))
+                    throw new InternalExpressionException("Must have a list of lists of numbers to make a matrix");
+                return (c_, t_) -> new MatrixValue((ListValue) l);
+            } else if(lv.size()==2){
+                Value rv = lv.get(0).evalValue(c);
+                Value cv = lv.get(1).evalValue(c);
+                if(!(rv instanceof NumericValue && cv instanceof NumericValue))
+                    throw new InternalExpressionException("Need two numbers to define an empty matrix");
+                return (c_, t_) -> new MatrixValue(((NumericValue) rv).getInt(),((NumericValue) cv).getInt());
+            }
+            throw new InternalExpressionException("Must have a list of lists or two numbers to define a matrix");
+        });
+
+        expression.addLazyFunction("random_matrix",2,(c,t,lv)->{
+            Value rv = lv.get(0).evalValue(c);
+            Value cv = lv.get(1).evalValue(c);
+            if(!(rv instanceof NumericValue && cv instanceof NumericValue))
+                throw new InternalExpressionException("Need two numbers to define a random matrix");
+            return (c_, t_) -> MatrixValue.random(((NumericValue) rv).getInt(),((NumericValue) cv).getInt());
+        });
+
+        expression.addLazyFunction("identity_matrix",1,(c,t,lv)->{
+            Value rcv = lv.get(0).evalValue(c);
+            if(!(rcv instanceof NumericValue))
+                throw new InternalExpressionException("Need a single number to define an identity matrix");
+            return (c_, t_) -> MatrixValue.identity(((NumericValue) rcv).getInt());
+        });
+
+        expression.addLazyFunction("determinant",1,(c,t,lv)->{
+            Value matVal = lv.get(0).evalValue(c);
+            if(matVal instanceof MatrixValue)
+                return (c_, t_) -> new NumericValue(((MatrixValue) matVal).getMatrix().determinant());
+            if(matVal instanceof ListValue)
+                return (c_, t_) -> new NumericValue(new MatrixValue((ListValue) matVal).getMatrix().determinant());
+
+            throw new InternalExpressionException("Cannot take determinant of non-matrix value");
         });
     }
 
