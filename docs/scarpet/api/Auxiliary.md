@@ -540,3 +540,8 @@ Available options in the scarpet app space:
  
  Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+
+## Storage
+
+### `storage()`, `storage(key)`, `storage(key, nbt)`
+Displays or modifies individual storage nbt tags. With no arguments, returns the list of current storages. With specified `key`, returns the `nbt` associated with current `key`, or `null` if storage does not exist. With specified `key` and `nbt`, sets a new `nbt` value, returning previous value associated with the `key`.

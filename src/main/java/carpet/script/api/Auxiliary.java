@@ -1023,17 +1023,15 @@ public class Auxiliary {
                 return (_c, _t) -> ret;
             }
             String key = lv.get(0).evalValue(c).getString();
-            if (lv.size() == 1) {
-                CompoundTag nbt = storage.get(new Identifier(key));
-                if (nbt == null) return LazyValue.NULL;
-                return (_c, _t) -> new NBTSerializableValue(nbt);
-            } else {
+            CompoundTag old_nbt = storage.get(new Identifier(key));
+            if (lv.size() == 2) {
                 Value nbt = lv.get(1).evalValue(c);
-                NBTSerializableValue parsed_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
+                NBTSerializableValue new_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
                         : NBTSerializableValue.parseString(nbt.getString(), true);
-                storage.set(new Identifier(key), parsed_nbt.getCompoundTag());
-                return (_c, _t) -> parsed_nbt;
+                storage.set(new Identifier(key), new_nbt.getCompoundTag());
             }
+            if (old_nbt == null) return LazyValue.NULL;
+            return (_c, _t) -> new NBTSerializableValue(old_nbt);
         });
     }
 
