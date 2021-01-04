@@ -38,19 +38,21 @@ public class Matrix {
 
     //functions for ContainerValueInterface
 
-    public double get(int r, int c) {
+    public Double get(int r, int c) {
+        if(r>=M | c>=N)
+            return null;
         return data[r][c];
     }
 
     public double[] row(int r){
         if(r>=M)
-            throw new InternalExpressionException("Index "+r+" out of bounds for row length "+M);
+            return null;
         return data[r];
     }
 
     public double[] column(int c){
         if(c>=N)
-            throw new InternalExpressionException("Index "+c+" out of bounds for column length "+N);
+            return null;
         double[] ret=new double[N];
         for(int r=0;r<M;r++)
             ret[r]=data[r][c];

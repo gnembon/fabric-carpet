@@ -3,6 +3,7 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.Matrix;
 import net.minecraft.nbt.Tag;
+import org.lwjgl.system.CallbackI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,16 +49,20 @@ public class MatrixValue extends Value implements ContainerValueInterface{
     public int rows(){return this.matrix.rows();}
     public int columns(){return this.matrix.columns();}
 
-    public ListValue row(int r){
+    public Value row(int r){
         double[] row= matrix.row(r);
+        if(row == null)
+            return Value.NULL;
         List<Value> ret = new ArrayList<>();
         for(double i:row)
             ret.add(new NumericValue(i));
         return ListValue.wrap(ret);
     }
 
-    public ListValue column(int c){
+    public Value column(int c){
         double[] col= matrix.column(c);
+        if(col == null)
+            return Value.NULL;
         List<Value> ret = new ArrayList<>();
         for(double i:col)
             ret.add(new NumericValue(i));
@@ -179,7 +184,12 @@ public class MatrixValue extends Value implements ContainerValueInterface{
         if(!(rowVal instanceof NumericValue))
             return column(((NumericValue) columnVal).getInt());
 
-        return new NumericValue(matrix.get(((NumericValue) rowVal).getInt(),((NumericValue) columnVal).getInt()));
+        Double ret = matrix.get(((NumericValue) rowVal).getInt(),((NumericValue) columnVal).getInt());
+
+        if(ret == null)
+            return Value.NULL;
+
+        return new NumericValue(ret);
     }
 
     public boolean has(Value where) {
@@ -194,8 +204,23 @@ public class MatrixValue extends Value implements ContainerValueInterface{
         return matrix.has(((NumericValue) rowVal).getInt(),((NumericValue) columnVal).getInt());
     }
 
-    @Override
-    public boolean delete(Value where) {//cant delete from matrix
-        return false;
+    public boolean delete(Value where) {//setting to 0 cos cant delete from matrix
+        if(!(where instanceof ListValue && where.length()==2))
+            throw new InternalExpressionException("Need a list of row and column to access items in a matrix");
+
+        Value rowVal = ((ListValue) where).items.get(0);
+        Value columnVal = ((ListValue) where).items.get(1);
+        if(!(rowVal instanceof NumericValue && columnVal instanceof NumericValue))
+            throw new InternalExpressionException("Need a list of row and column to access items in a matrix");
+
+        int row=((NumericValue) rowVal).getInt();
+        int col=((NumericValue) columnVal).getInt();
+
+        boolean ret = matrix.has(row,col)&&matrix.get(row,col)!=0;
+
+        if(ret)
+            matrix.put(row,col,0D);
+
+        return ret;
     }
 }

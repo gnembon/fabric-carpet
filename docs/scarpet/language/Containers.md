@@ -1,19 +1,22 @@
 # Lists, Maps and API support for Containers
 
-Scarpet supports basic container types: lists and maps (aka hashmaps, dicts etc..)
+Scarpet supports basic container types: lists, maps (aka hashmaps, dicts etc..), and matrices
 
 ## Container manipulation
 
-Here is a list of operations that work on all types of containers: lists, maps, as well as other Minecraft specific 
-modifyable containers, like NBTs
+Here is a list of operations that work on all types of containers: lists, maps, matrices as well as other Minecraft specific 
+modifiable containers, like NBTs
 
 ### `get(container, address, ...), get(lvalue), ':' operator`
 
-Returns the value at `address` element from the `value`. For lists it indicates an index, use negative numbers to 
-reach elements from the end of the list. `get` call will always be able to find the index. In case there is few 
-items, it will loop over
+Returns the value at `address` element from the `value`. For lists it indicates an index, use negative numbers to reach 
+elements from the end of the list. `get` call will always be able to find the index. In case there are too few items, it
+will loop over.
 
-for maps, retrieves the value under the key specified in the `address` or null otherwise
+For maps, retrieves the value under the key specified in the `address` or null otherwise
+
+For matrices, input a pair of coordinates as `address`, and it will retrieve that value in the matrix, or null if index 
+is out of bounds. Inputting `[number,null]` will return a row, and `[null,number]` will return a column (as a list of numbers).
 
 [Minecraft specific usecase]: In case `value` is of `nbt` type, uses address as the nbt path to query, returning null, 
 if path is not found, one value if there was one match, or list of values if result is a list. Returned elements can 
@@ -33,22 +36,25 @@ get(m( l('foo',2), l('bar',3), l('baz',4) ), 'bar')  => 3
 
 ### `has(container, address, ...), has(lvalue)`
 
-Similar to `get`, but returns boolean value indicating if the given index / key / path is in the container. 
-Can be used to determine if `get(...)==null` means the element doesn't exist, or the stored value for this 
-address is `null`, and is cheaper to run than `get`.
+Similar to `get`, but returns boolean value indicating if the given index / key / path is in the container. Can be used 
+to determine if `get(...)==null` means the element doesn't exist, or the stored value for this address is `null`, and is
+cheaper to run than `get`. For matrices this doesnt apply as they only store numbers, so this just returns whether or not
+the coordinate pair is within the matrix, but it is still cheaper to run that `get(...)`
 
-Like get, it can accept multiple addresses for chains in nested containers. In this case `has(foo:a:b)` is 
-equivalent to `has(get(foo,a), b)` or `has(foo, a, b)`
+Like get, it can accept multiple addresses for chains in nested containers. In this case `has(foo:a:b)` is equivalent to
+`has(get(foo,a), b)` or `has(foo, a, b)`
 
 ### `delete(container, address, ...), delete(lvalue)`
 
-Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it 
-removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous 
-entry at the address, for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.
+Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it removes the 
+key from the map, and for nbt - removes content from a given path. For lists and maps returns previous entry at the address,
+for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.
 
-Like with the `get` and `has`, `delete` can accept chained addresses, as well as l-value container access, removing 
-the value from the leaf of the path provided, so `delete(foo, a, b)` is the 
-same as `delete(get(foo,a),b)` or `delete(foo:a:b)`
+Like with the `get` and `has`, `delete` can accept chained addresses, as well as l-value container access, removing the 
+value from the leaf of the path provided, so `delete(foo, a, b)` is the same as `delete(get(foo,a),b)` or `delete(foo:a:b)`
+
+Exception for matrices: Seen as though you can't really remove a value from a matrix, delete() function just sets that
+value to 0.
 
 Returns true, if container was changed, false, if it was left unchanged, and null if operation was invalid.
 
@@ -79,6 +85,11 @@ Returns true, if container got modified, false otherwise, and null if operation 
 
 For maps there are no modes available (yet, seems there is no reason to). It replaces the value under the supplied 
 key (address), or sets it if not currently present.
+
+<u>**Matrices**</u>
+
+For matrices, there are no modes available (no real need). It still requires address of a coordinate pair. If the coordinate
+is within the matrix, it will set that value to that number, if it's outside, it will return null.
 
 <u>**NBT Tags**</u>
 
