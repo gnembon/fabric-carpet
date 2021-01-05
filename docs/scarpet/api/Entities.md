@@ -246,6 +246,10 @@ Boolean, true if the entity is silent.
 
 Boolean, true if the entity is affected by gravity, like most entities are.
 
+### `query(e, 'invulnerable')`
+
+Boolean, true if the entity is invulnerable.
+
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
@@ -725,6 +729,10 @@ Silences or unsilences the entity.
 ### `modify(e, 'gravity', boolean)`
 
 Toggles gravity for the entity.
+
+### `modify(e, 'invulnerable', boolean)`
+
+Toggles invulnerability for the entity.
 
 ### `modify(e, 'fire', ticks)`
 
