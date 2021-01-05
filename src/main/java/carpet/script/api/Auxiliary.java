@@ -73,6 +73,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,7 +92,7 @@ import static java.lang.Math.min;
 public class Auxiliary {
     public static final String MARKER_STRING = "__scarpet_marker";
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
-    public static final Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
+    public static final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
 
     public static String recognizeResource(Value value, boolean isFloder)
     {
@@ -822,7 +823,18 @@ public class Auxiliary {
             }
             else if (fdesc.getMiddle().equals("json"))
             {
-                JsonElement json = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                JsonElement json;
+                try
+                {
+                    json = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                }
+                catch (JsonParseException e)
+                {
+                    Throwable exception = e;
+                    if(e.getCause() != null)
+                        exception = e.getCause();
+                    throw new InternalExpressionException("Failed to read JSON file: "+exception.getMessage());
+                }
                 Value parsedJson = gson.fromJson(json, Value.class);
                 if (parsedJson == null)
                     retVal = Value.NULL;
