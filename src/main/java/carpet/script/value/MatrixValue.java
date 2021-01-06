@@ -133,12 +133,16 @@ public class MatrixValue extends Value implements ContainerValueInterface{
     public Value add(Value v){
         if(v instanceof MatrixValue)
             return new MatrixValue(matrix.add(((MatrixValue) v).matrix));
+        if(v instanceof ListValue && ((ListValue) v).canBeMatrix())
+            return new MatrixValue(matrix.add(new MatrixValue((ListValue) v).getMatrix()));
         return v.add(this);
     }
 
     public Value subtract(Value v){
         if(v instanceof MatrixValue)
             return new MatrixValue(matrix.subtract(((MatrixValue) v).matrix));
+        if(v instanceof ListValue && ((ListValue) v).canBeMatrix())
+            return new MatrixValue(matrix.subtract(new MatrixValue((ListValue) v).getMatrix()));
         return v.subtract(this);
     }
 

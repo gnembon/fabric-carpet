@@ -144,7 +144,7 @@ public class NumericValue extends Value
             }
             return new NumericValue(value * nv.value);
         }
-        if (v instanceof ListValue)
+        if (v instanceof ListValue | v instanceof MatrixValue)
         {
             return v.multiply(this);
         }

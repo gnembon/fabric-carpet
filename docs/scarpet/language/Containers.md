@@ -274,3 +274,41 @@ reduce(range(10), put(_a, _, _*_); _a, {})
 ### `keys(map), values(map), pairs(map)`
 
 Returns full lists of keys, values and key-value pairs (2-element lists) for all the entries in the map
+
+##Matrix operations
+
+Scarpet supports matrices of numbers, and they can be used to do maths which wasn't possible to do before. Matrix
+multiplication works, and throws appropriate errors if need be, including regarding order, so be careful with that. You
+can also multiply a MxN matrix with a length M or N vector in any order, and it will work, as there is no real way in scarpet
+to distinguish between row and column vectors. 
+
+Matrices and lists of lists of numbers are interchangeable in functions. If a list of lists of numbers is multiplied, added
+or subtracted, it will first try to check if the other value is a list of lists of numbers/another matrix, and will consider
+itself a matrix, and if it does, the operation will return a matrix and throw any appropriate errors.
+
+### `matrix(row1,row2,row3...)`,`matrix(matrix_list)`,`matrix(M, N)`
+
+Creates and initializes a matrix. If one argument is defined as a list of lists of numbers, it will compile then into a
+matrix, with each list being another row of the matrix. You can also input multiple lists of numbers, and they will also
+be interpreted as rows of a matrix. Only the first row is used to determine no. of columns, so subsequent rows that are 
+shorter will be ignored, and if they are longer, the extra ones will not be considered. NB: Matrices are values, so you 
+can still perform operations on them if you copy them to a variable, similar to a map or list, but there is no special 
+bracket for them (we ran out). Running `matrix(M, N)` will return an empty MxN matrix, i.e a matrix with all 0 values.
+
+### `rows(matrix)`,`columns(matrix)`
+
+Returns a list of the rows and the columns in the matrix. You could technically do `matrix(rows(old_matrix))` and get a 
+copy matrix, but it's just easier to do `copy(matrix)`.
+
+### `random_matrix(M, N)`,`random_matrix(M, N, max_range)`,`random_matrix(M, N, min_range, max_range)`
+
+Returns an MxN matrix with values between 0 and 1, or `max_range` and `min_range` if specified
+
+### `identity(M)`
+
+Returns MxM identity matrix.
+
+### `determinant(matrix)`
+
+Returns determinant of the matrix.
+

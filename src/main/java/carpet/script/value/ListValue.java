@@ -129,6 +129,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public Value add(Value other) {
         ListValue output = new ListValue();
+
+        if(this.canBeMatrix()&& (other instanceof MatrixValue || (other instanceof ListValue && ((ListValue) other).canBeMatrix())))//enabling matrix multiplication
+            return new MatrixValue(this).add(other);
+
         if (other instanceof ListValue)
         {
             List<Value> other_list = ((ListValue) other).items;
@@ -161,6 +165,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public Value subtract(Value other)
     {
         ListValue output = new ListValue();
+
+        if(this.canBeMatrix()&& (other instanceof MatrixValue || (other instanceof ListValue && ((ListValue) other).canBeMatrix())))//enabling matrix multiplication
+            return new MatrixValue(this).subtract(other);
+
         if (other instanceof ListValue)
         {
             List<Value> other_list = ((ListValue) other).items;
@@ -194,6 +202,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public Value multiply(Value other)
     {
         ListValue output = new ListValue();
+
+        if(this.canBeMatrix()&& (other instanceof MatrixValue || (other instanceof ListValue && ((ListValue) other).canBeMatrix())))//enabling matrix multiplication
+            return new MatrixValue(this).multiply(other);
+
         if (other instanceof ListValue)
         {
             List<Value> other_list = ((ListValue) other).items;
