@@ -164,9 +164,8 @@ public class MatrixValue extends Value implements ContainerValueInterface{
                 return this.multiply(new MatrixValue(ListValue.wrap(mlv)));
             }
 
-            try{//seeing if its a list of lists of numbers
+            if(((ListValue) v).canBeMatrix())//seeing if its a list of lists of numbers, if not just going to normal string multiplying
                 return this.multiply(new MatrixValue((ListValue)v));
-            } catch (InternalExpressionException ignored){}//just going to normal string multiplying
         }
 
         if(v instanceof NumericValue)

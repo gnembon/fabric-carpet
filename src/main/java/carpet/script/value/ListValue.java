@@ -467,6 +467,10 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         }
     }
 
+    public boolean canBeMatrix(){
+        return this.items.stream().allMatch(lv-> (lv instanceof ListValue)&&
+                ((ListValue) lv).getItems().stream().allMatch(l->l instanceof NumericValue));
+    }
 
     @Override
     public Tag toTag(boolean force)
