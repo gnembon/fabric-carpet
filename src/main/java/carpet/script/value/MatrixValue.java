@@ -3,7 +3,6 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.Matrix;
 import net.minecraft.nbt.Tag;
-import org.lwjgl.system.CallbackI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,6 +87,7 @@ public class MatrixValue extends Value implements ContainerValueInterface{
         }
         return string.toString();
     }
+
     public String getPrettyString() {
         if(matrix.rows()<10&matrix.columns()<10)
             return getString();
@@ -123,23 +123,52 @@ public class MatrixValue extends Value implements ContainerValueInterface{
             return new MatrixValue(matrix.add(((MatrixValue) v).matrix));
         return v.add(this);
     }
+
     public Value subtract(Value v){
         if(v instanceof MatrixValue)
             return new MatrixValue(matrix.subtract(((MatrixValue) v).matrix));
         return v.subtract(this);
     }
+
     public Value multiply(Value v){//todo division
         if(v instanceof MatrixValue)
             return new MatrixValue(matrix.multiply(((MatrixValue) v).matrix));
+
+        if(v instanceof ListValue){//special case for lists which can be vectors or matrices
+
+            if(((ListValue)v).items.stream().allMatch(i->i instanceof NumericValue)){//if its a vector as a list
+                List<Value> lv = ((ListValue) v).items;
+                List<Value> mlv = new ArrayList<>();
+
+                if (lv.size() == this.rows()) {//C=list*this
+                    mlv.add(ListValue.wrap(lv));
+                }
+
+                else if (lv.size() == this.columns()) {//C=this*list
+                    for (Value val : lv)
+                        mlv.add(ListValue.of(val));
+                }
+
+                return this.multiply(new MatrixValue(ListValue.wrap(mlv)));
+            }
+
+            try{//seeing if its a list of lists of numbers
+                return this.multiply(new MatrixValue((ListValue)v));
+            } catch (InternalExpressionException ignored){}//just going to normal string multiplying
+        }
+
         if(v instanceof NumericValue)
             return new MatrixValue(matrix.multiply(((NumericValue) v).getDouble()));
+
         return new StringValue(getPrettyString()+"."+v.getPrettyString());
     }
+
     public boolean equals(final Object o){
         if(o instanceof MatrixValue)
             return matrix.eq(((MatrixValue)o).getMatrix());
         return o.equals(this);
     }
+
     public int length(){
         return matrix.rows()*matrix.columns();
     }
@@ -222,5 +251,12 @@ public class MatrixValue extends Value implements ContainerValueInterface{
             matrix.put(row,col,0D);
 
         return ret;
+    }
+
+    public Value in(Value what){
+        for(int r=0;r<matrix.rows();r++)
+            for(int c=0;c<matrix.columns();c++)
+                if(matrix.get(r,c)==what.readDoubleNumber()) return new NumericValue(what.readDoubleNumber());
+        return Value.NULL;
     }
 }
