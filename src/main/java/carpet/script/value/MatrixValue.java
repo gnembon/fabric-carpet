@@ -5,7 +5,9 @@ import carpet.script.utils.Matrix;
 import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MatrixValue extends Value implements ContainerValueInterface{
 
@@ -48,24 +50,34 @@ public class MatrixValue extends Value implements ContainerValueInterface{
     public int rows(){return this.matrix.rows();}
     public int columns(){return this.matrix.columns();}
 
+    public List<Value> rowList(){
+        List<Value> ret = new ArrayList<>();
+        for(int r=0;r<matrix.rows();r++)
+            ret.add(row(r));
+        return ret;
+    }
+
+    public List<Value> columnList(){
+        List<Value> ret = new ArrayList<>();
+        for(int c=0;r<matrix.columns();c++)
+            ret.add(column(c));
+        return ret;
+    }
+
     public Value row(int r){
         double[] row= matrix.row(r);
         if(row == null)
             return Value.NULL;
-        List<Value> ret = new ArrayList<>();
-        for(double i:row)
-            ret.add(new NumericValue(i));
-        return ListValue.wrap(ret);
+
+        return ListValue.wrap(Arrays.stream(row).mapToObj(NumericValue::new).collect(Collectors.toList()));
     }
 
     public Value column(int c){
         double[] col= matrix.column(c);
         if(col == null)
             return Value.NULL;
-        List<Value> ret = new ArrayList<>();
-        for(double i:col)
-            ret.add(new NumericValue(i));
-        return ListValue.wrap(ret);
+
+        return ListValue.wrap(Arrays.stream(col).mapToObj(NumericValue::new).collect(Collectors.toList()));
     }
 
     public static MatrixValue random(int rows, int columns){
