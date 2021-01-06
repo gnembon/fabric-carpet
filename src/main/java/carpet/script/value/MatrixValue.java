@@ -59,7 +59,7 @@ public class MatrixValue extends Value implements ContainerValueInterface{
 
     public List<Value> columnList(){
         List<Value> ret = new ArrayList<>();
-        for(int c=0;r<matrix.columns();c++)
+        for(int c=0;c<matrix.columns();c++)
             ret.add(column(c));
         return ret;
     }
