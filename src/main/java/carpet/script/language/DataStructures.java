@@ -351,10 +351,13 @@ public class DataStructures {
         expression.addLazyFunction("matrix",-1,(c,t,lv)->{
             if(lv.size()==1){
                 Value l=lv.get(0).evalValue(c);
-                if(!(l instanceof ListValue))
-                    throw new InternalExpressionException("Must have a list of lists of numbers to make a matrix");
-                return (c_, t_) -> new MatrixValue((ListValue) l);
-            } else if(lv.size()==2){
+                if(l instanceof ListValue && ((ListValue) l).getItems().get(0) instanceof ListValue)
+                    return (c_, t_) -> new MatrixValue((ListValue) l);
+
+            } else if(lv.stream().allMatch(i->i.evalValue(c) instanceof ListValue))//gotta do upper check first incase of a list of lists which would bork this
+                return (c_, t_) -> new MatrixValue(ListValue.wrap(lv.stream().map(i -> i.evalValue(c)).collect(Collectors.toList())));
+
+            else if(lv.size()==2){
                 Value rv = lv.get(0).evalValue(c);
                 Value cv = lv.get(1).evalValue(c);
                 if(!(rv instanceof NumericValue && cv instanceof NumericValue))
@@ -362,6 +365,18 @@ public class DataStructures {
                 return (c_, t_) -> new MatrixValue(((NumericValue) rv).getInt(),((NumericValue) cv).getInt());
             }
             throw new InternalExpressionException("Must have a list of lists or two numbers to define a matrix");
+        });
+
+        expression.addUnaryFunction("rows",v->{
+            if(v instanceof MatrixValue)
+                return ListValue.wrap(((MatrixValue) v).rowList());
+            return Value.NULL;
+        });
+
+        expression.addUnaryFunction("columns",v->{
+            if(v instanceof MatrixValue)
+                return ListValue.wrap(((MatrixValue) v).columnList());
+            return Value.NULL;
         });
 
         expression.addLazyFunction("random_matrix",2,(c,t,lv)->{
