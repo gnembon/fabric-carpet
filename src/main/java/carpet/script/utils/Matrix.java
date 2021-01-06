@@ -71,11 +71,11 @@ public class Matrix {
     }
 
     // random M-by-N matrix with values between 0 and 1
-    public static Matrix random(int M, int N) {
+    public static Matrix random(int M, int N, double max, double min) {
         Matrix A = new Matrix(M, N);
         for (int i = 0; i < M; i++)
             for (int j = 0; j < N; j++)
-                A.data[i][j] = Math.random();
+                A.data[i][j] = Math.random()*(max-min)+min;
         return A;
     }
 

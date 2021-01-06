@@ -220,6 +220,9 @@ public class DataStructures {
                 else
                     return (cc, tt) -> Value.NULL;
             Value address = key_lv.evalValue(c);
+            if(container instanceof MatrixValue)
+                return (_c,_t)->((MatrixValue) container).get(address);
+
             if (t != Context.LVALUE)
             {
                 Value retVal = ((ContainerValueInterface) container).get(address);
@@ -379,12 +382,26 @@ public class DataStructures {
             return Value.NULL;
         });
 
-        expression.addLazyFunction("random_matrix",2,(c,t,lv)->{
+        expression.addLazyFunction("random_matrix",-1,(c,t,lv)->{
+            if(lv.size()<2||lv.size()>4)
+                throw new InternalExpressionException("'random_matrix' accepts between 2-4 arguments");
+
             Value rv = lv.get(0).evalValue(c);
             Value cv = lv.get(1).evalValue(c);
+            double min_value=0;
+            double max_value=1;
+
+            if(lv.size()>2)
+                max_value=lv.get(2).evalValue(c).readDoubleNumber();
+
+            if(lv.size()==4)
+                min_value=lv.get(3).evalValue(c).readDoubleNumber();
+
             if(!(rv instanceof NumericValue && cv instanceof NumericValue))
                 throw new InternalExpressionException("Need two numbers to define a random matrix");
-            return (c_, t_) -> MatrixValue.random(((NumericValue) rv).getInt(),((NumericValue) cv).getInt());
+            final double Max_value = max_value;
+            final double Min_value = min_value;
+            return (c_, t_) -> MatrixValue.random(((NumericValue) rv).getInt(),((NumericValue) cv).getInt(), Max_value, Min_value);
         });
 
         expression.addLazyFunction("identity_matrix",1,(c,t,lv)->{

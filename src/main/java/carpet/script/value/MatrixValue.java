@@ -80,8 +80,8 @@ public class MatrixValue extends Value implements ContainerValueInterface{
         return ListValue.wrap(Arrays.stream(col).mapToObj(NumericValue::new).collect(Collectors.toList()));
     }
 
-    public static MatrixValue random(int rows, int columns){
-        return new MatrixValue(Matrix.random(rows,columns));
+    public static MatrixValue random(int rows, int columns, double max, double min){
+        return new MatrixValue(Matrix.random(rows,columns, max, min));
     }
 
     public static MatrixValue identity(int rows){
