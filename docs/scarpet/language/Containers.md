@@ -275,7 +275,7 @@ reduce(range(10), put(_a, _, _*_); _a, {})
 
 Returns full lists of keys, values and key-value pairs (2-element lists) for all the entries in the map
 
-##Matrix operations
+## Matrix operations
 
 Scarpet supports matrices of numbers, and they can be used to do maths which wasn't possible to do before. Matrix
 multiplication works, and throws appropriate errors if need be, including regarding order, so be careful with that. You
@@ -311,4 +311,3 @@ Returns MxM identity matrix.
 ### `determinant(matrix)`
 
 Returns determinant of the matrix.
-
