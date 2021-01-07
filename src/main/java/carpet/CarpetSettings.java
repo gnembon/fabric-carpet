@@ -511,7 +511,7 @@ public class CarpetSettings
 
     @Rule(
             desc = "Customizable structure block limit",
-            options = {"48", "124", "256"},
+            options = {"48", "128", "256"},
             category = CREATIVE,
             strict = false
     )
