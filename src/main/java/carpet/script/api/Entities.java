@@ -45,10 +45,17 @@ public class Entities {
     {
         expression.addLazyFunction("player", -1, (c, t, lv) ->
         {
-            if (lv.size() ==0)
+            if (lv.size() == 0)
             {
-
-                Entity callingEntity = ((CarpetContext)c).s.getEntity();
+                CarpetContext cc = (CarpetContext)c;
+                if (cc.host.user != null)
+                {
+                    ServerPlayerEntity player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(cc.host.user);
+                    if (player == null) return LazyValue.NULL;
+                    Value ret = new EntityValue(player);
+                    return (_c, _t) -> ret;
+                }
+                Entity callingEntity = cc.s.getEntity();
                 if (callingEntity instanceof PlayerEntity)
                 {
                     Value retval = new EntityValue(callingEntity);
@@ -108,7 +115,7 @@ public class Entities {
                     retval = new EntityValue(player);
             }
             Value finalVar = retval;
-            return (cc, tt) -> finalVar;
+            return (_c, _t) -> finalVar;
         });
 
         expression.addLazyFunction("spawn", -1, (c, t, lv) ->

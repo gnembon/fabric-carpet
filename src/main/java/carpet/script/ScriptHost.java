@@ -91,7 +91,7 @@ public abstract class ScriptHost
 
     protected ScriptHost parent;
     protected boolean perUser;
-    protected String user;
+    public String user;
 
     public String getName() {return main ==null?null: main.getName();}
 

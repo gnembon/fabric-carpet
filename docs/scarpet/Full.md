@@ -1665,14 +1665,21 @@ split('\\.','foo.bar')  => [foo, bar]
 ### `slice(expr, from, to?)`
 
 extracts a substring, or sublist (based on the type of the result of the expression under expr with 
-starting index of `from`, and ending at `to` if provided, or the end, if omitted
+starting index of `from`, and ending at `to` if provided, or the end, if omitted. Can use negative indices to 
+indicate counting form the back of the list, so `-1 <=> length(_)`.
+
+Special case is made for iterators (`range`, `rect` etc), which does require non-negative indices (negative `from` is treated as
+`0`, and negative `to` as `inf`), but allows retrieving parts of the sequence and ignore
+other parts. In that case consecutive calls to `slice` will refer to index `0` the current iteration position since iterators
+cannot go back nor track where they are in the sequence (see examples).
 
 <pre>
-slice(l(0,1,2,3,4,5), 1, 3)  => [1, 2, 3]
+slice([0,1,2,3,4,5], 1, 3)  => [1, 2, 3]
 slice('foobar', 0, 1)  => 'f'
 slice('foobar', 3)  => 'bar'
 slice(range(10), 3, 5)  => [3, 4, 5]
 slice(range(10), 5)  => [5, 6, 7, 8, 9]
+r = range(100); [slice(r, 5, 7), slice(r, 1, 3)]  => [[5, 6], [8, 9]]
 </pre>
 
 ### `sort(list), sort(values ...)`
@@ -2893,7 +2900,10 @@ In this case - entities would need to be re-fetched, or the code should account 
 
 ### `player(), player(type), player(name)`
 
-With no arguments, it returns the calling player or the player closest to the caller. Note that the main context 
+With no arguments, it returns the calling player or the player closest to the caller. 
+For player-scoped apps (which is a default) its always the owning player or `null` if it not present even if some code
+still runs in their name.
+Note that the main context 
 will receive `p` variable pointing to this player. With `type` or `name` specified, it will try first to match a type, 
 returning a list of players matching a type, and if this fails, will assume its player name query retuning player with 
 that name, or `null` if no player was found. With `'all'`, list of all players in the game, in all dimensions, so end 
@@ -4109,8 +4119,10 @@ about players death and applying external effects (like mob anger etc).
 
 ### `__on_player_respawns(player)`
 Triggered when a player respawns. This includes spawning after death, or landing in the overworld after leaving the end. 
-When the event is handled, a player is still in its previous location and dimension - will be repositioned right after.
-
+When the event is handled, a player is still in its previous location and dimension - will be repositioned right after. In 
+case player died, its previous inventory as already been scattered, and its current inventory will not be copied to the respawned
+entity, so any manipulation to player data is
+best to be scheduled at the end of the tick, but you can still use its current reference to query its status as of the respawn event.
 
 ### `__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)`
 Called when a player moves from one dimension to another. Event is handled still when the player is in its previous
@@ -4299,8 +4311,9 @@ With specified `objective` and
  
 ### `scoreboard_add(objective, criterion?)`
 
-Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`. Returns `false` if objective 
-already existed, `true` otherwise.
+Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`.
+If the objective already exists, changes the criterion of that objective and returns `false`. If the criterion was not specified but the objective already exists, returns the current criterion.
+If the objective was added, returns `true`. If nothing is affected, returns `null`
 
 <pre>
 scoreboard_add('counter')
@@ -4447,7 +4460,6 @@ bossbar('script:test','add_player',player('Alex'))  -> Add Alex to the list of p
 bossbar('script:test','remove')  -> remove bossbar 'script:test'
 for(bossbar(),bossbar(_,'remove'))  -> remove all bossbars
 ```
-
 
 
 
@@ -4759,12 +4771,15 @@ for folder listing.
  
 Supported values for resource `type` are:
  * `nbt` - NBT tag
+ * `json` - JSON file
  * `text` - text resource with automatic newlines added
  * `raw` - text resource without implied newlines
- * `folder` - for `list_files` only - indicting folder listing instead of files
- * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
+ * `folder` - for `list_files` only - indicating folder listing instead of files
+ * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder`, `shared_json` - shared versions of the above
  
-NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
+NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. JSON files have `.json` extension, store 
+Scarpet numbers, strings, lists, maps and `null` values. Anything else will be saved as a string (including NBT).  
+Text files have `.txt` extension, 
 stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
 sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
 record to the file. Since files are closed after each write, sending multiple lines of data to
@@ -4942,7 +4957,7 @@ it could either mean your input is wrong, or statistic effectively has a value o
 ### `system_info()`, `system_info(property)`
 Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
 fetch various information, mostly not changing, or only available via low level
-system calls. In all cirumstances, these are only provided as read-only.
+system calls. In all circumstances, these are only provided as read-only.
 
 Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
@@ -4960,7 +4975,7 @@ Available options in the scarpet app space:
 
 
  Relevant gameplay related properties
-  * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
+  * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
   * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
   * `game_default_gamemode` - default gamemode for new players
@@ -4968,6 +4983,7 @@ Available options in the scarpet app space:
   * `game_view_distance` - the view distance
   * `game_mod_name` - the name of the base mod. Expect `'fabric'`
   * `game_version` - base version of the game
+  * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   
  Server related properties
  * `server_motd` - the motd of the server visible when joining

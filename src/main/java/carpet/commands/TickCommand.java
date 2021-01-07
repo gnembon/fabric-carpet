@@ -2,6 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
+import carpet.network.ServerNetworkHandler;
 import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
@@ -95,16 +96,13 @@ public class TickCommand
 
     private static int toggleFreeze(ServerCommandSource source, boolean isDeep)
     {
-        TickSpeed.is_paused = !TickSpeed.is_paused;
-        if (TickSpeed.is_paused)
+        TickSpeed.setFrozenState(!TickSpeed.isPaused(), isDeep);
+        if (TickSpeed.isPaused())
         {
-            TickSpeed.deepFreeze = isDeep;
             Messenger.m(source, "gi Game is "+(isDeep?"deeply ":"")+"frozen");
-
         }
         else
         {
-            TickSpeed.deepFreeze = false;
             Messenger.m(source, "gi Game runs normally");
         }
         return 1;
@@ -119,9 +117,10 @@ public class TickCommand
     private static int toggleSuperHot(ServerCommandSource source)
     {
         TickSpeed.is_superHot = !TickSpeed.is_superHot;
+        ServerNetworkHandler.updateSuperHotStateToConnectedPlayers();
         if (TickSpeed.is_superHot)
         {
-            Messenger.m(source,"gi Superhot enabled");
+            Messenger.m(source, "gi Superhot enabled");
         }
         else
         {

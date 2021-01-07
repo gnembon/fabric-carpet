@@ -13,6 +13,7 @@ import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.GameRules;
 
@@ -56,6 +57,7 @@ public class SystemInfo {
         put("game_view_distance", c -> new NumericValue(c.s.getMinecraftServer().getPlayerManager().getViewDistance()));
         put("game_mod_name", c -> StringValue.of(c.s.getMinecraftServer().getServerModName()));
         put("game_version", c -> StringValue.of(c.s.getMinecraftServer().getVersion()));
+        put("game_data_version", c->NumericValue.of(SharedConstants.getGameVersion().getWorldVersion()));
 
         put("server_ip", c -> StringValue.of(c.s.getMinecraftServer().getServerIp()));
         put("server_whitelisted", c -> new NumericValue(c.s.getMinecraftServer().isEnforceWhitelist()));

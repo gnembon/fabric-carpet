@@ -87,7 +87,7 @@ public class DataStructures {
                 throw new InternalExpressionException("'slice' takes 2 or 3 arguments");
             Value hwat = lv.get(0);
             long from = NumericValue.asNumber(lv.get(1)).getLong();
-            long to = -1;
+            Long to = null;
             if (lv.size()== 3)
                 to = NumericValue.asNumber(lv.get(2)).getLong();
             return hwat.slice(from, to);

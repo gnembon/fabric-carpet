@@ -198,7 +198,7 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Value slice(long from, long to)
+    public Value slice(long from, Long to)
     {
         throw new InternalExpressionException("Cannot slice a map value");
     }

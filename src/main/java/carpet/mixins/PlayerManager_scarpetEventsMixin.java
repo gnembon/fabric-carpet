@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.fakes.ServerPlayerEntityInterface;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,4 +18,11 @@ public class PlayerManager_scarpetEventsMixin
     {
         PLAYER_RESPAWNS.onPlayerEvent(player);
     }
+
+    @Inject(method = "respawnPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;onSpawn()V"))
+    private void invalidatePreviousInstance(ServerPlayerEntity player, boolean alive, CallbackInfoReturnable<ServerPlayerEntity> cir)
+    {
+        ((ServerPlayerEntityInterface)player).invalidateEntityObjectReference();
+    }
+
 }

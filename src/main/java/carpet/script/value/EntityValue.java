@@ -7,6 +7,7 @@ import carpet.fakes.LivingEntityInterface;
 import carpet.fakes.MemoryInterface;
 import carpet.fakes.MobEntityInterface;
 import carpet.fakes.HungerManagerInterface;
+import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
 import carpet.network.ServerNetworkHandler;
@@ -91,7 +92,7 @@ import static carpet.utils.MobAI.genericJump;
 // TODO: decide whether copy(entity) should duplicate entity in the world.
 public class EntityValue extends Value
 {
-    private final Entity entity;
+    private Entity entity;
 
     public EntityValue(Entity e)
     {
@@ -120,6 +121,11 @@ public class EntityValue extends Value
 
     public Entity getEntity()
     {
+        if (entity instanceof ServerPlayerEntity && ((ServerPlayerEntityInterface)entity).isInvalidEntityObject())
+        {
+            ServerPlayerEntity newPlayer = entity.getServer().getPlayerManager().getPlayer(entity.getUuid());
+            if (newPlayer != null) entity = newPlayer;
+        }
         return entity;
     }
 
@@ -171,7 +177,7 @@ public class EntityValue extends Value
     @Override
     public String getString()
     {
-        return entity.getName().getString();
+        return getEntity().getName().getString();
     }
 
     @Override
@@ -185,7 +191,7 @@ public class EntityValue extends Value
     {
         if (v instanceof EntityValue)
         {
-            return entity.getEntityId()==((EntityValue) v).entity.getEntityId();
+            return getEntity().getEntityId()==((EntityValue) v).getEntity().getEntityId();
         }
         return super.equals((Value)v);
     }
@@ -221,7 +227,7 @@ public class EntityValue extends Value
     @Override
     public int hashCode()
     {
-        return entity.hashCode();
+        return getEntity().hashCode();
     }
 
     public static EntityClassDescriptor getEntityDescriptor(String who, MinecraftServer server)
@@ -389,7 +395,7 @@ public class EntityValue extends Value
             throw new InternalExpressionException("Unknown entity feature: "+what);
         try
         {
-            return featureAccessors.get(what).apply(entity, arg);
+            return featureAccessors.get(what).apply(getEntity(), arg);
         }
         catch (NullPointerException npe)
         {
@@ -850,7 +856,7 @@ public class EntityValue extends Value
             throw new InternalExpressionException("Unknown entity action: " + what);
         try
         {
-            featureModifiers.get(what).accept(entity, toWhat);
+            featureModifiers.get(what).accept(getEntity(), toWhat);
         }
         catch (NullPointerException npe)
         {
@@ -1483,7 +1489,7 @@ public class EntityValue extends Value
         EntityEventsGroup.Event event = EntityEventsGroup.Event.byName.get(eventName);
         if (event == null)
             throw new InternalExpressionException("Unknown entity event: " + eventName);
-        ((EntityInterface)entity).getEventContainer().addEvent(event, cc.host, fun, args);
+        ((EntityInterface)getEntity()).getEventContainer().addEvent(event, cc.host, fun, args);
     }
 
     @Override
@@ -1492,7 +1498,7 @@ public class EntityValue extends Value
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         CompoundTag tag = new CompoundTag();
         tag.put("Data", getEntity().toTag( new CompoundTag()));
-        tag.put("Name", StringTag.of(Registry.ENTITY_TYPE.getId(entity.getType()).toString()));
+        tag.put("Name", StringTag.of(Registry.ENTITY_TYPE.getId(getEntity().getType()).toString()));
         return tag;
     }
 }
