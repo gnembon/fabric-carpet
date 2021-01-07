@@ -8,12 +8,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ServerWorldAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Random;
 
 @Mixin(StructureBlockBlockEntity.class)
-public abstract class StructureBlockBlockEntity_fillUpdatesMixin
+public abstract class StructureBlockBlockEntityMixin
 {
     @Redirect(method = "place", at = @At(
             value = "INVOKE",
@@ -31,5 +33,21 @@ public abstract class StructureBlockBlockEntity_fillUpdatesMixin
         {
             CarpetSettings.impendingFillSkipUpdates = false;
         }
+    }
+
+    @ModifyConstant(
+        method = "fromTag",
+        constant = @Constant(intValue = 48)
+    )
+    private int positiveLimit(int original) {
+        return CarpetSettings.structureBlockLimit;
+    }
+
+    @ModifyConstant(
+        method = "fromTag",
+        constant = @Constant(intValue = -48)
+    )
+    private int negativeLimit(int original) {
+        return -CarpetSettings.structureBlockLimit;
     }
 }

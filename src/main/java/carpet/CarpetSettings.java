@@ -509,6 +509,13 @@ public class CarpetSettings
     )
     public static int fillLimit = 32768;
 
+    @Rule(
+            desc = "Customizable structure block limit",
+            options = {"48", "124", "256"},
+            category = CREATIVE,
+            strict = false
+    )
+    public static int structureBlockLimit = 48;
 
     @Rule(
             desc = "Customizable forceload chunk limit",
