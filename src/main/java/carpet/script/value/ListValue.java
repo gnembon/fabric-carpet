@@ -334,11 +334,13 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value slice(long fromDesc, long toDesc)
+    public Value slice(long fromDesc, Long toDesc)
     {
         List<Value> items = getItems();
         int size = items.size();
         int from = normalizeIndex(fromDesc, size);
+        if (toDesc == null)
+            return new ListValue((Collection<? extends Value>) getItems().subList(from, size));
         int to = normalizeIndex(toDesc, size);
         if (from > to)
             return ListValue.of();

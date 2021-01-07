@@ -129,9 +129,9 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public Value slice(long from, long to)
+    public Value slice(long from, Long to)
     {
-        if (to < 0) to = Integer.MAX_VALUE;
+        if (to == null || to < 0) to = (long) Integer.MAX_VALUE;
         if (from < 0) from = 0;
         if (from > to)
             return ListValue.of();

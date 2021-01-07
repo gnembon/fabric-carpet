@@ -133,7 +133,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     }
 
     @Override
-    public Value slice(long from, long to)
+    public Value slice(long from, Long to)
     {
         throw new InternalExpressionException("Cannot slice a function");
     }

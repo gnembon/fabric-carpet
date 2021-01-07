@@ -178,11 +178,12 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return getString().length();
     }
 
-    public Value slice(long fromDesc, long toDesc)
+    public Value slice(long fromDesc, Long toDesc)
     {
         String value = this.getString();
         int size = value.length();
         int from = ListValue.normalizeIndex(fromDesc, size);
+        if (toDesc == null) return new StringValue(value.substring(from));
         int to = ListValue.normalizeIndex(toDesc, size);
         if (from > to) return StringValue.EMPTY;
         return new StringValue(value.substring(from, to));
