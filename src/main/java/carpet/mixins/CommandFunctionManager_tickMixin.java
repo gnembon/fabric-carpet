@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.helpers.TickSpeed;
 import carpet.utils.CarpetProfiler;
 import net.minecraft.server.function.CommandFunctionManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,9 +13,11 @@ public class CommandFunctionManager_tickMixin
 {
     CarpetProfiler.ProfilerToken currentSection;
 
-    @Inject(method = "tick", at = @At("HEAD"))
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void beforeDatapacks(CallbackInfo ci)
     {
+    	if (!TickSpeed.process_entities) ci.cancel();
+    	else
         currentSection = CarpetProfiler.start_section(null, "Datapacks", CarpetProfiler.TYPE.GENERAL);
     }
 
