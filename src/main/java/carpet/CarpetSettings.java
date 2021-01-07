@@ -518,6 +518,20 @@ public class CarpetSettings
     public static int structureBlockLimit = 48;
 
     @Rule(
+            desc = "Makes air ignored when saving a structure",
+            extra = {"If true, the ignored block will be",
+                    "set to air instead of structure void,",
+                    "and air will not be saved to the NBT file.",
+                    "Remember, that it will also make structure",
+                    "void save to the NBT file.",
+                    "This setting can save a lot of disk space without",
+                    "replacing all of the air with structure void"
+            },
+            category = CREATIVE
+    )
+    public static boolean structureBlockIgnoreAir = false;
+
+    @Rule(
             desc = "Customizable forceload chunk limit",
             options = {"256"},
             category = CREATIVE,
