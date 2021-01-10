@@ -11,10 +11,12 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -739,6 +741,25 @@ public class CarpetSettings
             category = {SURVIVAL, CLIENT}
     )
     public static boolean cleanLogs = false;
+
+    public static class StructureBlockIgnoredValidator extends Validator<String> {
+
+        @Override
+        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            if (!Registry.BLOCK.getIds().contains(Identifier.tryParse(newValue))) {
+                Messenger.m(source, "Unknown block '" + newValue + "'.");
+                return null;
+            }
+            return newValue;
+        }
+    }
+    @Rule(
+            desc = "Changes the block ignored by the Structure Block",
+            options = {"minecraft:structure_void", "minecraft:air"},
+            category = {CREATIVE},
+            validate = StructureBlockIgnoredValidator.class
+    )
+    public static String structureBlockIgnored = "minecraft:structure_void";
 
     @Rule(
             desc = "Customizable Structure Block outline render distance",
