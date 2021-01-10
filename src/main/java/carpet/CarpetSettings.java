@@ -739,4 +739,14 @@ public class CarpetSettings
             category = {SURVIVAL, CLIENT}
     )
     public static boolean cleanLogs = false;
+
+    @Rule(
+            desc = "Customizable Structure Block outline render distance",
+            extra = "Required on client to work properly",
+            options = {"48", "96", "192"}, // 48 is the default structure block limit, and 192 is 12 chunks
+            category = {CREATIVE, CLIENT},
+            strict = false,
+            validate = Validator.NONNEGATIVE_NUMBER.class
+    )
+    public static double structureBlockOutlineDistance = 96d;
 }

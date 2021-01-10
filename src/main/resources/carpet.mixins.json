@@ -17,7 +17,7 @@
     "BlockStateArgument_fillUpdatesMixin",
     "World_fillUpdatesMixin",
     "WorldChunk_fillUpdatesMixin",
-    "StructureBlockBlockEntity_fillUpdatesMixin",
+    "StructureBlockBlockEntityMixin",
     "Structure_fillUpdatesMixin",
     "ServerPlayNetworkHandler_interactionUpdatesMixin",
 
