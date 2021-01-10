@@ -37,13 +37,21 @@ public abstract class StructureBlockBlockEntityMixin
         }
     }
 
-    @Environment(EnvType.CLIENT)
+
     @ModifyConstant(
-            method = "getSquaredRenderDistance",
-            constant = @Constant(doubleValue = 96d)
+            method = "fromTag",
+            constant = @Constant(intValue = 48)
     )
-    private double outlineRenderDistanceLimit(double original) {
-        return CarpetSettings.structureBlockOutlineDistance;
+    private int positiveLimit(int original) {
+        return CarpetSettings.structureBlockLimit;
+    }
+
+    @ModifyConstant(
+            method = "fromTag",
+            constant = @Constant(intValue = -48)
+    )
+    private int negativeLimit(int original) {
+        return -CarpetSettings.structureBlockLimit;
     }
 
     @ModifyArg(
@@ -56,5 +64,14 @@ public abstract class StructureBlockBlockEntityMixin
     )
     private Block ignoredBlock(Block original) {
         return Registry.BLOCK.get(Identifier.tryParse(CarpetSettings.structureBlockIgnored));
+    }
+
+    @Environment(EnvType.CLIENT)
+    @ModifyConstant(
+            method = "getSquaredRenderDistance",
+            constant = @Constant(doubleValue = 96d)
+    )
+    private double outlineRenderDistanceLimit(double original) {
+        return CarpetSettings.structureBlockOutlineDistance;
     }
 }

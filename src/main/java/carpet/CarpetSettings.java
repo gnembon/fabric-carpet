@@ -742,6 +742,20 @@ public class CarpetSettings
     )
     public static boolean cleanLogs = false;
 
+    @Rule(
+            desc = "Customizable structure block limit of each axis",
+            extra = {"WARNING: Needs to be permanent for correct loading.",
+                    "Setting 'structureBlockIgnored' to air is recommended",
+                    "when saving massive structures.",
+                    "Required on client of player editing the Structure Block.",
+                    "'structureBlockOutlineDistance' may be required for",
+                    "correct rendering of long structures."},
+            options = {"48", "96", "192", "256"},
+            category = {CREATIVE, CLIENT},
+            strict = false
+    )
+    public static int structureBlockLimit = 48;
+
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 
         @Override
