@@ -86,6 +86,8 @@
 
                 load_app_data store_app_data read_file write_file delete_file list_files
                 escape_nbt parse_nbt encode_nbt tag_matches statistic
+
+                nbt_storage
             </Keywords>
             <Keywords name="Keywords3">euler pi null true false</Keywords>
             <Keywords name="Keywords4">x y z p</Keywords>

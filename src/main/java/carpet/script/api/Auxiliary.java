@@ -1014,11 +1014,11 @@ public class Auxiliary {
             return (c_, t_) -> ret;
         });
 
-        // storage()
-        // storage(key)
-        // storage(key, nbt)
-        expression.addLazyFunction("storage", -1, (c, t, lv) -> {
-            if (lv.size() > 2) throw new InternalExpressionException("'storage' requires 0, 1 or 2 arguments.");
+        // nbt_storage()
+        // nbt_storage(key)
+        // nbt_storage(key, nbt)
+        expression.addLazyFunction("nbt_storage", -1, (c, t, lv) -> {
+            if (lv.size() > 2) throw new InternalExpressionException("'nbt_storage' requires 0, 1 or 2 arguments.");
             CarpetContext cc = (CarpetContext) c;
             DataCommandStorage storage = cc.s.getMinecraftServer().getDataCommandStorage();
             if (lv.size() == 0) {
