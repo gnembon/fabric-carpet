@@ -14,6 +14,8 @@ Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'d
 If the objective already exists, changes the criterion of that objective and returns `false`. If the criterion was not specified but the objective already exists, returns the current criterion.
 If the objective was added, returns `true`. If nothing is affected, returns `null`
 
+Throws `unknown_criterion` if criterion doesn't exist.
+
 <pre>
 scoreboard_add('counter')
 scoreboard_add('lvl','level')

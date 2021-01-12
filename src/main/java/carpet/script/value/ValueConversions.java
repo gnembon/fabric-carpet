@@ -2,6 +2,7 @@ package carpet.script.value;
 
 import carpet.fakes.BlockPredicateInterface;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
 import carpet.utils.BlockInfo;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.MaterialColor;
@@ -158,7 +159,7 @@ public class ValueConversions
                         }
                     }
                     if (dim == null)
-                        throw new InternalExpressionException("Incorrect dimension string: "+dimString);
+                        throw new ThrowStatement("Incorrect dimension string: "+dimString, ThrowStatement.UNKNOWN_DIMENSION);
                     return server.getWorld(dim);
             }
         }

@@ -5,7 +5,9 @@ import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ProcessedThrowStatement;
 import carpet.script.exception.ThrowStatement;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
 public class ControlFlow {
@@ -42,7 +44,20 @@ public class ControlFlow {
 
         expression.addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
 
-        expression.addFunction("throw", (lv)-> {throw new ThrowStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        expression.addLazyFunction("throw", -1, (c, t, lv)-> 
+        {
+            switch (lv.size()) 
+            {
+                case 0:
+                    throw new ThrowStatement("No further information", Value.NULL);
+                case 1:
+                    throw new ThrowStatement(lv.get(0).evalValue(c));
+                case 2:
+                    throw new ThrowStatement(lv.get(1).evalValue(c).getString(), lv.get(0).evalValue(c));
+                default:
+                    throw new InternalExpressionException("throw() can't accept more than 2 parameters");
+            }
+        });
 
         expression.addLazyFunction("try", -1, (c, t, lv) ->
         {
@@ -53,14 +68,27 @@ public class ControlFlow {
                 Value retval = lv.get(0).evalValue(c, t);
                 return (c_, t_) -> retval;
             }
-            catch (ThrowStatement ret)
+            catch (ProcessedThrowStatement ret)
             {
                 if (lv.size() == 1)
                     return (c_, t_) -> Value.NULL;
                 LazyValue __ = c.getVariable("_");
-                c.setVariable("_", (__c, __t) -> ret.retval.reboundedTo("_"));
-                Value val = lv.get(1).evalValue(c, t);
+                c.setVariable("_", (__c, __t) -> ret.exceptionName.reboundedTo("_"));
+                LazyValue __msg = c.getVariable("_msg");
+                c.setVariable("_msg", (__c, __t) -> StringValue.of(ret.message).reboundedTo("_msg"));
+                Value val;
+                if (lv.size() == 3)
+                {
+                    if (!ret.exceptionName.equals(lv.get(1).evalValue(c)))
+                        throw ret;
+                    val = lv.get(2).evalValue(c, t);
+                }
+                else
+                {
+                    val = lv.get(1).evalValue(c, t);
+                }
                 c.setVariable("_",__);
+                c.setVariable("_msg", __msg);
                 return (c_, t_) -> val;
             }
         });

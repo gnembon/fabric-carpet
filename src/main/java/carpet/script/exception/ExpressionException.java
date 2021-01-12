@@ -8,28 +8,32 @@ import carpet.script.value.FunctionValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /* The expression evaluators exception class. */
 public class ExpressionException extends RuntimeException implements ResolvedException
 {
     public final Context context;
     public final List<FunctionValue> stack = new ArrayList<>();
+    private final Supplier<String> lazyStacktrace;
+    private String cachedMessage = null;
 
     public ExpressionException(Context c, Expression e, String message)
     {
-        super(makeMessage(c, e, null, message));
-        context = c;
+        this(c, e, null, message);
     }
 
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message)
     {
-        super(makeMessage(c, e, t, message));
+        super("Error");
+        lazyStacktrace = () -> makeMessage(c, e, t, message);
         context = c;
     }
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
     {
-        super(makeMessage(c, e, t, message));
+        super("Error");
         this.stack.addAll(stack);
+        lazyStacktrace = () -> makeMessage(c, e, t, message); 
         context = c;
     }
 
@@ -67,5 +71,14 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
             }
         }
         return String.join("\n", errorMaker.apply(e, t, message));
+    }
+    
+    @Override
+    public String getMessage() {
+        if (cachedMessage == null)
+        {
+        	cachedMessage = lazyStacktrace.get();
+        }
+        return cachedMessage;
     }
 }

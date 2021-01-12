@@ -19,6 +19,7 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
 import carpet.script.utils.FixedCommandSource;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
@@ -62,6 +63,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
+import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.EulerAngle;
@@ -130,7 +132,7 @@ public class Auxiliary {
             Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
-                throw new InternalExpressionException("No such sound: "+soundName.getPath());
+                throw new ThrowStatement("No such sound: "+soundName.getPath(), ThrowStatement.UNKNOWN_SOUND);
             float volume = 1.0F;
             float pitch = 1.0F;
             SoundCategory mixer = SoundCategory.MASTER;
@@ -820,7 +822,15 @@ public class Auxiliary {
             Value retVal;
             if (fdesc.getMiddle().equals("nbt"))
             {
-                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
+                Tag state;
+                try
+                {
+                    state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
+                } catch (CrashException e)
+                {
+                    throw new ThrowStatement("Couldn't read NBT data", ThrowStatement.NBT_READ_EXCEPTION); 
+                }
+
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
@@ -833,10 +843,10 @@ public class Auxiliary {
                 }
                 catch (JsonParseException e)
                 {
-                    Throwable exception = e;
+                    Throwable exc = e;
                     if(e.getCause() != null)
-                        exception = e.getCause();
-                    throw new InternalExpressionException("Failed to read JSON file: "+exception.getMessage());
+                        exc = e.getCause();
+                    throw new ThrowStatement("Failed to read JSON file: "+exc.getMessage(), ThrowStatement.JSON_READ_EXCEPTION);
                 }
                 Value parsedJson = gson.fromJson(json, Value.class);
                 if (parsedJson == null)
@@ -924,7 +934,14 @@ public class Auxiliary {
                     shared = lv.get(1).evalValue(c).getBoolean();
                 }
             }
-            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
+            Tag state;
+            try
+            {
+                state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
+            } catch (CrashException e)
+            {
+                throw new ThrowStatement("Failed to read App data", ThrowStatement.NBT_READ_EXCEPTION);
+            }
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);

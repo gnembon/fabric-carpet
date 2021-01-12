@@ -234,15 +234,41 @@ returns everywhere, but it would often lead to a messy code.
 
 It terminates entire program passing `expr` as the result of the program execution, or null if omitted.
 
-### `try(expr, catch_expr(_)?) ... throw(value?)`
+### `try(expr, id_filter?, catch_expr(_, _msg)?)`
 
-`try` function evaluates expression, and continues further unless `throw` function is called anywhere 
-inside `expr`. In that case the `catch_expr` is evaluates with `_` set to the argument `throw` was called with. 
-This mechanic accepts skipping thrown value - it throws null instead, and catch expression - then try returns 
-null as well This mechanism allows to terminate large portion of a convoluted call stack and continue program 
-execution. There is only one level of exceptions currently in carpet, so if the inner function also defines 
-the `try` catchment area, it will received the exception first, but it can technically rethrow the value its 
-getting for the outer scope. Unhandled throw acts like an exit statement.
+`try` function evaluates expression, and continues further unless an exception is thrown anywhere inside `expr`, 
+it being produced by `throw` or a catchable exception is thrown by Carpet. In that case the `catch_expr` is evaluated with 
+`_` set to the id of the exception and `_msg` set to the exception message. If `id_filter` is present, only exceptions
+with an id equal to that value will be catched, and any other exception will continue up the stack. It is recommended to filter
+the exceptions to catch to be able to distinguish from an exception that is known that may happen from one that shouldn't.
+This mechanic accepts skipping catch expression - then try returns `null`. This mechanism allows to terminate large 
+portion of a convoluted call stack and continue program  execution. There is only one level of exceptions currently in carpet, 
+so if the inner function also defines the `try` catchment area, it will received the exception first, but it can technically 
+rethrow the value its getting for the outer scope.
+
+The `try` function allows you to catch some Scarpet exceptions for those cases when trying to get things like items,
+blocks, biomes or dimensions from registries, that may have been modified by resourcepacks or mods, or when an error that
+is out of the scope of the programmer occurs, like problems when reading a file.
+
+In this documentation, those are documented in at least most of the functions that throw them, and the current list of exceptions
+is the following:
+- `unknown_item`: Happens when a specified item doesn't exist
+- `unknown_block`: Happens when a specified block doesn't exist
+- `unknown_biome`: Happens when a specified biome doesn't exist
+- `unknown_sound`: Happens when a specified sound doesn't exist
+- `unknown_particle`: Happens when a specified particle doesn't exist
+- `unknown_poi_type`: Happens when a specified POI type doesn't exist
+- `unknown_dimension`: Happens when a specified dimension doesn't exist
+- `unknown_structure`: Happens when a specified structure doesn't exist
+- `unknown_criterion`: Happens when a specified scoreboard criterion doesn't exist
+- `nbt_read_exception`: Happens when there is an exception while reading an NBT file
+- `json_read_exception`: Happens when there is an exception while reading a JSON file
+
+### `throw(id?, message?)`
+
+Throws an exception that can be catched in a `try` block (see above). If ran without arguments, it will pass `null`
+as the value to the `catch_expr`. `message` is the message to show to chat or console in case the `throw` is 
+unhandled.
 
 ### `if(cond, expr, cond?, expr?, ..., default?)`
 

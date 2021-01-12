@@ -4,6 +4,7 @@ import carpet.CarpetSettings;
 import carpet.network.ServerNetworkHandler;
 import carpet.script.CarpetContext;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
 import carpet.script.language.Sys;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
@@ -156,7 +157,7 @@ public class ShapeDispatcher
         }
         catch (CommandSyntaxException e)
         {
-            throw new InternalExpressionException("No such particle: "+name);
+            throw new ThrowStatement("No such particle: "+name, ThrowStatement.UNKNOWN_PARTICLE);
         }
         particleCache.put(name, particle);
         return particle;

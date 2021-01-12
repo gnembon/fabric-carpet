@@ -11,6 +11,8 @@ optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1
 Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
 and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
  corresponding `playsound` command.
+ 
+Throws `unknown_sound` if sound doesn't exist.
 
 ## Particles
 
@@ -21,18 +23,23 @@ of 0, and to all players nearby, but these options can be changed via optional a
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
 
+Throws `unknown_particle` if particle doesn't exist.
+
 ### `particle_line(name, pos, pos2, density?, player?)`
 
 Renders a line of particles from point `pos` to `pos2` with supplied density (defaults to 1), which indicates how far 
 apart you would want particles to appear, so `0.1` means one every 10cm. If a player (or player name) is supplied, only
 that player will receive particles.
 
+Throws `unknown_particle` if particle doesn't exist.
 
 ### `particle_box(name, pos, pos2, density?, player?)`
 ### `particle_rect` (deprecated)
 
 Renders a cuboid of particles between points `pos` and `pos2` with supplied density. If a player (or player name) is 
 supplied, only that player will receive particles.
+
+Throws `unknown_particle` if particle doesn't exist.
 
 ## Markers
 
@@ -320,6 +327,10 @@ record to the file. Since files are closed after each write, sending multiple li
 write is beneficial for writing speed. To send multiple packs of data, either provide them flat or as a list in the
 third argument.
 
+Throws:
+- `nbt_read_exception`: When failed to read NBT file
+- `json_read_exception`: When failed to read JSON file. The `_msg` variable will contain details about the problem
+
 <pre>
 write_file('foo', 'shared_text, ['one', 'two']);
 write_file('foo', 'shared_text', 'three\n', 'four\n');
@@ -370,6 +381,8 @@ specific data directory is under `world/scripts/foo.data/bar/../baz.nbt`, and sh
 `world/scripts/shared/bar/../baz.nbt`.
 
 You can use app data to save non-vanilla information separately from the world and other scripts.
+
+Throws `nbt_read_exception` if failed to read app data.
 
 ### `store_app_data(tag)`
 
@@ -447,6 +460,8 @@ Returns current dimension that the script runs in.
 Evaluates the expression `expr` with different dimension execution context. `smth` can be an entity, 
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
+ 
+Throws `unknown_dimension` if given a dimension as a String and it can't be found.
  
 ### `view_distance()`
 Returns the view distance of the server.
