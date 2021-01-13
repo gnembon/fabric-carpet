@@ -182,23 +182,38 @@ public class CarpetEventServer
 
         public final List<Callback> callList;
         public final int reqArgs;
+        final boolean isSystem;
+        final boolean isGlobalOnly;
+        final boolean perPlayerDistribution;
 
-        public CallbackList(int reqArgs)
+        public CallbackList(int reqArgs, boolean isSystem, boolean isGlobalOnly)
         {
             this.callList = new ArrayList<>();
             this.reqArgs = reqArgs;
+            this.isSystem = isSystem;
+            this.isGlobalOnly = isGlobalOnly;
+            perPlayerDistribution = isSystem && !isGlobalOnly;
         }
 
+        /**
+         * Handles only built-in events from the events system
+         * @param argumentSupplier
+         * @param cmdSourceSupplier
+         */
         public void call(Supplier<List<Value>> argumentSupplier, Supplier<ServerCommandSource> cmdSourceSupplier)
         {
             if (callList.size() > 0)
             {
                 List<Value> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source = cmdSourceSupplier.get();
+                String nameCheck = perPlayerDistribution?source.getName():null;
                 assert argv.size() == reqArgs;
                 List<Callback> fails = new ArrayList<>();
                 for (Callback call: callList)
                 {
+                    // supressing calls where target player hosts simply don't match
+                    // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
+                    if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
                     if (!call.execute(source, argv)) fails.add(call);
                 }
                 for (Callback call : fails) callList.remove(call);
@@ -876,7 +891,7 @@ public class CarpetEventServer
         public Event(String name, int reqArgs, boolean isGlobalOnly, boolean isPublic)
         {
             this.name = name;
-            this.handler = new CallbackList(reqArgs);
+            this.handler = new CallbackList(reqArgs, true, isGlobalOnly);
             this.globalOnly = isGlobalOnly;
             this.isPublic = isPublic;
             byName.put(name, this);
@@ -924,7 +939,7 @@ public class CarpetEventServer
         private Event(String name, CarpetScriptServer server)
         {
             this.name = name;
-            this.handler = new CallbackList(1);
+            this.handler = new CallbackList(1, false, false);
             this.globalOnly = false;
             this.isPublic = true;
             server.events.customEvents.put(name, this);
