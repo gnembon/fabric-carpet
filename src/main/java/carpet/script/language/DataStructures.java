@@ -58,13 +58,11 @@ public class DataStructures {
             String hwat;
             if (lv.size() == 1)
             {
-                if(lv.get(0).isNull()) return new ListValue(new ArrayList<>());
                 hwat = lv.get(0).getString();
                 delimiter = "";
             }
             else if (lv.size() == 2)
             {
-                if(lv.get(1).isNull()) return new ListValue(new ArrayList<>());
                 delimiter = lv.get(0).getString();
                 hwat = lv.get(1).getString();
             }
