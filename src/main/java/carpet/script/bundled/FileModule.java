@@ -76,9 +76,14 @@ public class FileModule extends Module
         }
         catch (IOException e)
         {
-            try
+            // Copy of NbtIo.read(File) because that's now client-side only
+            if (!file.exists())
             {
-                return NbtIo.read(file);
+                return null;
+            }
+            try (DataInputStream in = new DataInputStream(new FileInputStream(file)))
+            {
+                return NbtIo.read(in);
             }
             catch (IOException ioException)
             {
