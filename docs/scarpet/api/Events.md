@@ -58,9 +58,10 @@ at the same time.
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
-### `__on_explosion(pos, power, source, create_fire, blocks)`
+### `__on_explosion(pos, power, source, create_fire, blocks, entities)`
 Triggered right before an explosion blows up, right before any changes to the world are done, but the decision to blow up is already made.  
 The parameter `blocks` contains the list of blocks that will blow up (empty if `explosionNoBlockDamage` is set to `true`).
+The parameter `entities` contains the list of entities that will be affected by the explosion.
 
 ### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
