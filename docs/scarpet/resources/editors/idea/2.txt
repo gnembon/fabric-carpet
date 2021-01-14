@@ -67,6 +67,7 @@ map_colour
 material
 modify
 nbt
+nbt_storage
 neighbours
 opacity
 parse_nbt

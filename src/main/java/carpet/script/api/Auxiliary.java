@@ -36,12 +36,14 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
+import net.minecraft.command.DataCommandStorage;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -86,6 +88,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -1021,6 +1024,29 @@ public class Auxiliary {
             if (counts < 0) return LazyValue.NULL;
             Value ret = new NumericValue(counts);
             return (c_, t_) -> ret;
+        });
+
+        // nbt_storage()
+        // nbt_storage(key)
+        // nbt_storage(key, nbt)
+        expression.addLazyFunction("nbt_storage", -1, (c, t, lv) -> {
+            if (lv.size() > 2) throw new InternalExpressionException("'nbt_storage' requires 0, 1 or 2 arguments.");
+            CarpetContext cc = (CarpetContext) c;
+            DataCommandStorage storage = cc.s.getMinecraftServer().getDataCommandStorage();
+            if (lv.size() == 0) {
+                Value ret = ListValue.wrap(storage.getIds().map(i -> new StringValue(nameFromRegistryId(i))).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            String key = lv.get(0).evalValue(c).getString();
+            CompoundTag old_nbt = storage.get(new Identifier(key));
+            if (lv.size() == 2) {
+                Value nbt = lv.get(1).evalValue(c);
+                NBTSerializableValue new_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
+                        : NBTSerializableValue.parseString(nbt.getString(), true);
+                storage.set(new Identifier(key), new_nbt.getCompoundTag());
+            }
+            if (old_nbt == null) return LazyValue.NULL;
+            return (_c, _t) -> new NBTSerializableValue(old_nbt);
         });
     }
 
