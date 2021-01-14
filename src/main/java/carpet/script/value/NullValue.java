@@ -45,6 +45,11 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
+    public Value in(Value value) {
+        return Value.NULL;
+    }
+
+    @Override
     public String getTypeString()
     {
         return "null";
