@@ -809,10 +809,10 @@ public class CarpetEventServer
                 );
             }
         };
-        public static final Event EXPLOSION = new Event("explosion", 5, true)
+        public static final Event EXPLOSION = new Event("explosion", 6, true)
         {
             @Override
-            public void onExplosion(ServerWorld world, double x, double y, double z, float power, DamageSource source, boolean createFire, List<BlockPos> affectedBlocks)
+            public void onExplosion(ServerWorld world, double x, double y, double z, float power, DamageSource source, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities)
             {
                 handler.call(
                         () -> Arrays.asList(
@@ -821,8 +821,9 @@ public class CarpetEventServer
                                 source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker()),
                                 createFire?Value.TRUE:Value.FALSE,
                                 new ListValue(affectedBlocks.stream().map(
-                                        a -> new BlockValue(world.getBlockState(a),world,a)
-                                ).collect(Collectors.toList()))
+                                        b -> new BlockValue(world.getBlockState(b),world,b)
+                                ).collect(Collectors.toList())),
+                                new ListValue(affectedEntities.stream().map(EntityValue::new).collect(Collectors.toList()))
                         ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
                 );
             }
@@ -945,7 +946,7 @@ public class CarpetEventServer
         public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}
         public void onSlotSwitch(ServerPlayerEntity player, int from, int to) {}
 
-        public void onExplosion(ServerWorld world, double x, double y, double z, float power, DamageSource source, boolean createFire, List<BlockPos> affectedBlocks) { }
+        public void onExplosion(ServerWorld world, double x, double y, double z, float power, DamageSource source, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities) { }
 
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
