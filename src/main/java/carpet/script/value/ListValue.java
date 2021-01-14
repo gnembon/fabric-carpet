@@ -355,7 +355,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         for (Value val : this.items)
         {
             index++;
-            if (val.equals(delimiter))
+            if (val.equals(delimiter) || delimiter == null)
             {
                 result.items.add(ListValue.wrap(this.items.subList(startIndex, index-1)));
                 startIndex = index;

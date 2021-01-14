@@ -193,7 +193,11 @@ public abstract class Value implements Comparable<Value>, Cloneable
     
     public Value split(Value delimiter)
     {
-    	try
+        if (delimiter == null)
+        {
+            delimiter = StringValue.EMPTY;
+        }
+        try
         {
             return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new).collect(Collectors.toList()));
         }
