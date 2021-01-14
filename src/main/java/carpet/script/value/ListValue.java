@@ -350,12 +350,17 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public Value split(Value delimiter) {
         ListValue result = new ListValue();
+        if (delimiter == null)
+        {
+            this.forEach(item -> result.items.add(of(item)));
+            return result;
+        }
         int startIndex = 0;
         int index = 0;
         for (Value val : this.items)
         {
             index++;
-            if (val.equals(delimiter) || delimiter == null)
+            if (val.equals(delimiter))
             {
                 result.items.add(ListValue.wrap(this.items.subList(startIndex, index-1)));
                 startIndex = index;
