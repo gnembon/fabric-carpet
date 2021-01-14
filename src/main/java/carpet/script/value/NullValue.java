@@ -41,6 +41,26 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
+    public Value multiply(Value v) {
+        return Value.NULL;
+    }
+
+    @Override
+    public Value add(Value v) {
+        return Value.NULL;
+    }
+
+    @Override
+    public Value subtract(Value v) {
+        return Value.NULL;
+    }
+
+    @Override
+    public Value divide(Value v) {
+        return Value.NULL;
+    }
+
+    @Override
     public int compareTo(Value o)
     {
         return  o instanceof NullValue ? 0 : -1;
