@@ -204,6 +204,11 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
+    public Value split(Value delimiter) {
+    	throw new InternalExpressionException("Cannot split a map value");
+    }
+
+    @Override
     public double readDoubleNumber()
     {
         return (double)map.size();
