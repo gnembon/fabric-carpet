@@ -348,6 +348,24 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
+    public Value split(Value delimiter) {
+        ListValue result = new ListValue();
+        int startIndex = 0;
+        int index = 0;
+        for (Value val : this.items)
+        {
+            index++;
+            if (val.equals(delimiter))
+            {
+                result.items.add(ListValue.wrap(this.items.subList(startIndex, index-1)));
+                startIndex = index;
+            }
+        }
+        result.items.add(ListValue.wrap(this.items.subList(startIndex, length())));
+        return result;
+    }
+
+    @Override
     public double readDoubleNumber()
     {
         return (double)items.size();

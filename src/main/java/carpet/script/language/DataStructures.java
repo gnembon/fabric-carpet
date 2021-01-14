@@ -14,10 +14,8 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public class DataStructures {
@@ -54,30 +52,23 @@ public class DataStructures {
 
         expression.addFunction("split", (lv) ->
         {
-            String delimiter;
-            String hwat;
+            Value delimiter;
+            Value hwat;
             if (lv.size() == 1)
             {
-                hwat = lv.get(0).getString();
-                delimiter = "";
+                hwat = lv.get(0);
+                delimiter = StringValue.EMPTY;
             }
             else if (lv.size() == 2)
             {
-                delimiter = lv.get(0).getString();
-                hwat = lv.get(1).getString();
+                delimiter = lv.get(0);
+                hwat = lv.get(1);
             }
             else
             {
                 throw new InternalExpressionException("'split' takes 1 or 2 arguments");
             }
-            try
-            {
-                return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
-            }
-            catch (PatternSyntaxException pse)
-            {
-                throw new InternalExpressionException("Incorrect pattern for 'split': "+pse.getMessage());
-            }
+            return hwat.split(delimiter);
         });
 
         expression.addFunction("slice", (lv) ->

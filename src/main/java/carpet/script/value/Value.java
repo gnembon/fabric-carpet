@@ -6,10 +6,12 @@ import com.google.gson.JsonPrimitive;
 import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
@@ -188,6 +190,19 @@ public abstract class Value implements Comparable<Value>, Cloneable
         if (from > to) return StringValue.EMPTY;
         return new StringValue(value.substring(from, to));
     }
+    
+    public Value split(Value delimiter)
+    {
+    	try
+        {
+            return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new).collect(Collectors.toList()));
+        }
+        catch (PatternSyntaxException pse)
+        {
+            throw new InternalExpressionException("Incorrect pattern for 'split': "+pse.getMessage());
+        }
+    }
+    
     public double readDoubleNumber()
     {
         String s = getString();

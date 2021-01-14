@@ -1655,11 +1655,19 @@ join('-', 'foo', 'bar')  => foo-bar
 Splits a string under `expr` by `delim` which can be a regular expression. If no delimiter is specified, it splits
 by characters.
 
+If `expr` is a list, it will split the list into multiple sublists by the element (s) which equal `delim`, or which equal the empty string
+in case no delimiter is specified.
+
+Splitting a `null` value will return an empty list.
+
 <pre>
 split('foo') => [f, o, o]
 split('','foo')  => [f, o, o]
 split('.','foo.bar')  => []
 split('\\.','foo.bar')  => [foo, bar]
+split(1,[2,5,1,2,3,1,5,6]) => [[2,5],[2,3],[5,6]]
+split(1,[1,2,3,1,4,5,1] => [[], [2,3], [4,5], []]
+split(null) => []
 </pre>
 
 ### `slice(expr, from, to?)`
@@ -3138,6 +3146,10 @@ Boolean, true if the entity is silent.
 
 Boolean, true if the entity is affected by gravity, like most entities are.
 
+### `query(e, 'invulnerable')`
+
+Boolean, true if the entity is invulnerable.
+
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
@@ -3617,6 +3629,10 @@ Silences or unsilences the entity.
 ### `modify(e, 'gravity', boolean)`
 
 Toggles gravity for the entity.
+
+### `modify(e, 'invulnerable', boolean)`
+
+Toggles invulnerability for the entity.
 
 ### `modify(e, 'fire', ticks)`
 
@@ -5006,6 +5022,12 @@ Available options in the scarpet app space:
  
  Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+
+## NBT Storage
+
+### `nbt_storage()`, `nbt_storage(key)`, `nbt_storage(key, nbt)`
+Displays or modifies individual storage NBT tags. With no arguments, returns the list of current NBT storages. With specified `key`, returns the `nbt` associated with current `key`, or `null` if storage does not exist. With specified `key` and `nbt`, sets a new `nbt` value, returning previous value associated with the `key`.
+NOTE: This NBT storage is shared with all vanilla datapacks and scripts of the entire server and is persistent between restarts and reloads. You can also access this NBT storage with vanilla `/data <get|modify|merge> storage <key> ...` command.
 # `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 
