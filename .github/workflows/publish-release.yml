@@ -10,7 +10,7 @@ jobs:
       release-type: ${{ steps.type.outputs.release-type }}
       carpet-version: ${{ steps.properties.outputs.mod_version }}
       minecraft-version: ${{ steps.properties.outputs.minecraft_version }}
-      # extra-branch: ${{ steps.properties.outputs.release-extra-branch }} Not needed anymore
+      curse-versions: ${{ steps.properties.outputs.release-curse-versions }}
       matrix-exclude-branch: ${{ steps.processmatrix.outputs.matrix-to-exclude }}
       extra-branch-name: ${{ steps.properties.outputs.release-extra-branch-name }}
       extra-branch-curse-version: ${{ steps.properties.outputs.release-extra-curse-version }}
@@ -29,7 +29,7 @@ jobs:
         id: properties
         run: | # From christian-draeger/read-properties, using the action makes it extremely messy until christian-draeger/read-properties#2
           path='./gradle.properties'
-          for property in mod_version minecraft_version release-extra-branch release-extra-branch-name release-extra-curse-version
+          for property in mod_version minecraft_version release-curse-versions release-extra-branch release-extra-branch-name release-extra-curse-version
           do
             result=$(sed -n "/^[[:space:]]*$property[[:space:]]*=[[:space:]]*/s/^[[:space:]]*$property[[:space:]]*=[[:space:]]*//p" "$path")
             echo "$property: $result"
@@ -56,8 +56,10 @@ jobs:
           if ${{ matrix.branch == 'Snapshots'}}; then
             echo "::set-output name=branchname::${{ needs.Get-Properties.outputs.extra-branch-name }}"
             echo "::set-output name=version::${{ needs.Get-Properties.outputs.extra-branch-curse-version }}"
+            echo "::set-output name=curse-versions::${{ needs.Get-Properties.outputs.extra-branch-curse-version }}"
           else
             echo "::set-output name=version::${{ needs.Get-Properties.outputs.minecraft-version }}"
+            echo "::set-output name=curse-versions::${{ needs.Get-Properties.outputs.curse-versions }}"
           fi
       - name: Checkout the sources
         uses: actions/checkout@v2
@@ -106,11 +108,11 @@ jobs:
           changelog_type: markdown
           changelog: ${{ github.event.release.body }}
           display_name: Carpet Mod v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
-          game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.version }} #Fabric,Java 8,[version for the branch]
+          game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
           release_type: ${{ needs.Get-Properties.outputs.release-type }}
       - name: Ask Gradle to publish
         run: ./gradlew publish
-      - name: Save publish folder in action's artifacts
+      - name: Save publish folder in action's artifacts # Remove when automated
         uses: actions/upload-artifact@v2
         with:
           name: Maven publishing artifacts for ${{ matrix.branch }}
