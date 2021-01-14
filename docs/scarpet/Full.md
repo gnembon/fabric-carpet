@@ -1655,24 +1655,39 @@ join('-', 'foo', 'bar')  => foo-bar
 Splits a string under `expr` by `delim` which can be a regular expression. If no delimiter is specified, it splits
 by characters.
 
+If `expr` is a list, it will split the list into multiple sublists by the element (s) which equal `delim`, or which equal the empty string
+in case no delimiter is specified.
+
+Splitting a `null` value will return an empty list.
+
 <pre>
 split('foo') => [f, o, o]
 split('','foo')  => [f, o, o]
 split('.','foo.bar')  => []
 split('\\.','foo.bar')  => [foo, bar]
+split(1,[2,5,1,2,3,1,5,6]) => [[2,5],[2,3],[5,6]]
+split(1,[1,2,3,1,4,5,1] => [[], [2,3], [4,5], []]
+split(null) => []
 </pre>
 
 ### `slice(expr, from, to?)`
 
 extracts a substring, or sublist (based on the type of the result of the expression under expr with 
-starting index of `from`, and ending at `to` if provided, or the end, if omitted
+starting index of `from`, and ending at `to` if provided, or the end, if omitted. Can use negative indices to 
+indicate counting form the back of the list, so `-1 <=> length(_)`.
+
+Special case is made for iterators (`range`, `rect` etc), which does require non-negative indices (negative `from` is treated as
+`0`, and negative `to` as `inf`), but allows retrieving parts of the sequence and ignore
+other parts. In that case consecutive calls to `slice` will refer to index `0` the current iteration position since iterators
+cannot go back nor track where they are in the sequence (see examples).
 
 <pre>
-slice(l(0,1,2,3,4,5), 1, 3)  => [1, 2, 3]
+slice([0,1,2,3,4,5], 1, 3)  => [1, 2, 3]
 slice('foobar', 0, 1)  => 'f'
 slice('foobar', 3)  => 'bar'
 slice(range(10), 3, 5)  => [3, 4, 5]
 slice(range(10), 5)  => [5, 6, 7, 8, 9]
+r = range(100); [slice(r, 5, 7), slice(r, 1, 3)]  => [[5, 6], [8, 9]]
 </pre>
 
 ### `sort(list), sort(values ...)`
@@ -1710,6 +1725,8 @@ map(range(10),_*_)  => [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
 reduce(range(10),_a+_, 0)  => 45
 range(5,10)  => [5, 6, 7, 8, 9]
 range(20, 10, -2)  => [20, 18, 16, 14, 12]
+range(-0.3, 0.3, 0.1)  => [-0.3, -0.2, -0.1, 0, 0.1, 0.2]
+range(0.3, -0.3, -0.1) => [0.3, 0.2, 0.1, -0, -0.1, -0.2]
 </pre>
 
 ## Map operations
@@ -2070,18 +2087,19 @@ print(b); // 'stone', block was evaluated 'eagerly' but call to `block`
 All the functions below can be used with block value, queried with coord triple, or 3-long list. All `pos` in the 
 functions referenced below refer to either method of passing block position.
 
-### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, l(property?, value?, ...), block_data?)`
+### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, [property?, value?, ...], block_data?)`, `set(pos, block, {property? -> value?, ...}, block_data?)`
 
-First part of the `set` function is either a coord triple, list of three numbers, or other block with coordinates. 
-Second part, `block` is either block value as a result of `block()` function string value indicating the block name, 
-and optional `property - value` pairs for extra block properties. Optional `block_data` include the block data to 
+First argument for the `set` function is either a coord triple, list of three numbers, or a world localized block value. 
+Second argument, `block`, is either an existing block value, a result of `block()` function, or a string value indicating the block name
+with optional state and block data. It is then followed by an optional 
+`property - value` pairs for extra block state (which can also be provided in a list or a map). Optional `block_data` include the block data to 
 be set for the target block.
 
 If `block` is specified only by name, then if a 
 destination block is the same the `set` operation is skipped, otherwise is executed, for other potential extra
-properties.
+properties that the original source block may have contained.
 
-The returned value is either the block state that has been set, or `false` if block setting was skipped
+The returned value is either the block state that has been set, or `false` if block setting was skipped, or failed
 
 <pre>
 set(0,5,0,'bedrock')  => bedrock
@@ -2097,11 +2115,15 @@ scan(0,100,0,20,20,20,set(_,block('glass')))
 b = block('glass'); scan(0,100,0,20,20,20,set(_,b))
     // yet another option, skips all parsing
 set(x,y,z,'iron_trapdoor')  // sets bottom iron trapdoor
-set(x,y,z,'iron_trapdoor[half=top]')  // Incorrect. sets bottom iron trapdoor - no parsing of properties
-set(x,y,z,'iron_trapdoor','half','top') // correct - top trapdoor
-set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
+
+set(x,y,z,'iron_trapdoor[half=top]')  // sets the top trapdoor
+set(x,y,z,'iron_trapdoor','half','top') // also correct - top trapdoor
+set(x,y,z,'iron_trapdoor', ['half','top']) // same
+set(x,y,z,'iron_trapdoor', {'half' -> 'top'}) // same
+set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing of block state
+
 set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
-set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
+set(x,y,z,'hopper', {'facing' -> 'north'}, nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
 </pre>
 
 ### `without_updates(expr)`
@@ -2886,7 +2908,10 @@ In this case - entities would need to be re-fetched, or the code should account 
 
 ### `player(), player(type), player(name)`
 
-With no arguments, it returns the calling player or the player closest to the caller. Note that the main context 
+With no arguments, it returns the calling player or the player closest to the caller. 
+For player-scoped apps (which is a default) its always the owning player or `null` if it not present even if some code
+still runs in their name.
+Note that the main context 
 will receive `p` variable pointing to this player. With `type` or `name` specified, it will try first to match a type, 
 returning a list of players matching a type, and if this fails, will assume its player name query retuning player with 
 that name, or `null` if no player was found. With `'all'`, list of all players in the game, in all dimensions, so end 
@@ -3121,6 +3146,10 @@ Boolean, true if the entity is silent.
 
 Boolean, true if the entity is affected by gravity, like most entities are.
 
+### `query(e, 'invulnerable')`
+
+Boolean, true if the entity is invulnerable.
+
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
@@ -3221,6 +3250,11 @@ Boolean, true if the entity is swimming.
 ### `query(e, 'jumping')`
 
 Boolean, true if the entity is jumping.
+
+### `query(e, 'swinging')`
+
+Returns `true` if the entity is actively swinging their hand, `false` if not and `null` if swinging is not applicable to
+that entity.
 
 ### `query(e, 'gamemode')`
 
@@ -3595,6 +3629,10 @@ Silences or unsilences the entity.
 ### `modify(e, 'gravity', boolean)`
 
 Toggles gravity for the entity.
+
+### `modify(e, 'invulnerable', boolean)`
+
+Toggles invulnerability for the entity.
 
 ### `modify(e, 'fire', ticks)`
 
@@ -4051,7 +4089,12 @@ adjusted.
 ### `__on_player_interacts_with_entity(player, entity, hand)`
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
-with that interaction
+with that interaction.
+
+### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
+Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
+changes and merchant updates its trade-uses counter.
+The parameter `entity` can be `null` if the merchant is not an entity.
 
 ### `__on_player_collides_with_entity(player, entity)`
 Triggered every time a player - entity collisions are calculated, before effects of collisions are applied in the game. 
@@ -4068,6 +4111,11 @@ the slot.
 
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
+
+### `__on_player_swings_hand(player, hand)`
+Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
+(`player_uses_item`, `player_breaks_block`, etc.), but it triggers also after some failed events, like attacking the air. When
+swinging continues as an effect of an action, no new swinging events will be issued until the swinging is stopped.
 
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
@@ -4087,8 +4135,10 @@ about players death and applying external effects (like mob anger etc).
 
 ### `__on_player_respawns(player)`
 Triggered when a player respawns. This includes spawning after death, or landing in the overworld after leaving the end. 
-When the event is handled, a player is still in its previous location and dimension - will be repositioned right after.
-
+When the event is handled, a player is still in its previous location and dimension - will be repositioned right after. In 
+case player died, its previous inventory as already been scattered, and its current inventory will not be copied to the respawned
+entity, so any manipulation to player data is
+best to be scheduled at the end of the tick, but you can still use its current reference to query its status as of the respawn event.
 
 ### `__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)`
 Called when a player moves from one dimension to another. Event is handled still when the player is in its previous
@@ -4277,8 +4327,9 @@ With specified `objective` and
  
 ### `scoreboard_add(objective, criterion?)`
 
-Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`. Returns `false` if objective 
-already existed, `true` otherwise.
+Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`.
+If the objective already exists, changes the criterion of that objective and returns `false`. If the criterion was not specified but the objective already exists, returns the current criterion.
+If the objective was added, returns `true`. If nothing is affected, returns `null`
 
 <pre>
 scoreboard_add('counter')
@@ -4425,7 +4476,6 @@ bossbar('script:test','add_player',player('Alex'))  -> Add Alex to the list of p
 bossbar('script:test','remove')  -> remove bossbar 'script:test'
 for(bossbar(),bossbar(_,'remove'))  -> remove all bossbars
 ```
-
 
 
 
@@ -4737,12 +4787,15 @@ for folder listing.
  
 Supported values for resource `type` are:
  * `nbt` - NBT tag
+ * `json` - JSON file
  * `text` - text resource with automatic newlines added
  * `raw` - text resource without implied newlines
- * `folder` - for `list_files` only - indicting folder listing instead of files
- * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
+ * `folder` - for `list_files` only - indicating folder listing instead of files
+ * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder`, `shared_json` - shared versions of the above
  
-NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
+NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. JSON files have `.json` extension, store 
+Scarpet numbers, strings, lists, maps and `null` values. Anything else will be saved as a string (including NBT).  
+Text files have `.txt` extension, 
 stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
 sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
 record to the file. Since files are closed after each write, sending multiple lines of data to
@@ -4838,9 +4891,24 @@ averaging.
 
 ### `game_tick(mstime?)`
 
-Causes game to run for one tick. By default runs it and returns control to the program, but can optionally 
-accept expected tick length, in milliseconds. You can't use it to permanently change the game speed, but setting 
-longer commands with custom tick speeds can be interrupted via `/script stop` command
+Causes game to run for one tick. By default, it runs it and returns control to the program, but can optionally 
+accept expected tick length, in milliseconds, waits that extra remaining time and then returns the control to the program.
+You can't use it to permanently change the game speed, but setting 
+longer commands with custom tick speeds can be interrupted via `/script stop` command - if you can get access to the 
+command terminal.
+
+Running `game_tick()` as part of the code that runs within the game tick itself is generally a bad idea, 
+unless you know what this entails. Triggering the `game_tick()` will cause the current (shoulder) tick to pause, then run the internal tick, 
+then run the rest of the shoulder tick, which may lead to artifacts in between regular code execution and your game simulation code.
+If you need to break
+up your execution into chunks, you could queue the rest of the work into the next task using `schedule`, or perform your actions
+defining `__on_tick()` event handler, but in case you need to take a full control over the game loop and run some simulations using 
+`game_tick()` as the way to advance the game progress, that might be the simplest way to do it, 
+and triggering the script in a 'proper' way (there is not 'proper' way, but via commmand line, or server chat is the most 'proper'),
+would be the safest way to do it. For instance, running `game_tick()` from a command block triggered with a button, or in an entity
+ event triggered in an entity tick, may technically
+cause the game to run and encounter that call again, causing stack to overflow. Thankfully it doesn't happen in vanilla running 
+carpet, but may happen with other modified (modded) versions of the game.
 
 <pre>
 loop(1000,game_tick())  // runs the game as fast as it can for 1000 ticks
@@ -4905,7 +4973,7 @@ it could either mean your input is wrong, or statistic effectively has a value o
 ### `system_info()`, `system_info(property)`
 Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
 fetch various information, mostly not changing, or only available via low level
-system calls. In all cirumstances, these are only provided as read-only.
+system calls. In all circumstances, these are only provided as read-only.
 
 Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
@@ -4923,7 +4991,7 @@ Available options in the scarpet app space:
 
 
  Relevant gameplay related properties
-  * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
+  * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
   * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
   * `game_default_gamemode` - default gamemode for new players
@@ -4931,6 +4999,7 @@ Available options in the scarpet app space:
   * `game_view_distance` - the view distance
   * `game_mod_name` - the name of the base mod. Expect `'fabric'`
   * `game_version` - base version of the game
+  * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   
  Server related properties
  * `server_motd` - the motd of the server visible when joining
@@ -4953,6 +5022,12 @@ Available options in the scarpet app space:
  
  Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+
+## NBT Storage
+
+### `nbt_storage()`, `nbt_storage(key)`, `nbt_storage(key, nbt)`
+Displays or modifies individual storage NBT tags. With no arguments, returns the list of current NBT storages. With specified `key`, returns the `nbt` associated with current `key`, or `null` if storage does not exist. With specified `key` and `nbt`, sets a new `nbt` value, returning previous value associated with the `key`.
+NOTE: This NBT storage is shared with all vanilla datapacks and scripts of the entire server and is persistent between restarts and reloads. You can also access this NBT storage with vanilla `/data <get|modify|merge> storage <key> ...` command.
 # `/script run` command
 
 Primary way to input commands. The command executes in the context, position, and dimension of the executing player, 

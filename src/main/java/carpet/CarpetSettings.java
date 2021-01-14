@@ -19,6 +19,7 @@ import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Iterator;
 import java.util.Locale;
 
 import static carpet.settings.RuleCategory.BUGFIX;
@@ -36,7 +37,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.20+v201202";
+    public static final String carpetVersion = "1.4.22+v210113";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -638,6 +639,58 @@ public class CarpetSettings
     )
     public static int spawnChunksSize = 11;
 
+    public static class LightBatchValidator extends Validator<Integer> {
+        public static void applyLightBatchSizes()
+        {
+            Iterator<ServerWorld> iterator = CarpetServer.minecraft_server.getWorlds().iterator();
+            
+            while (iterator.hasNext()) 
+            {
+                ServerWorld serverWorld = iterator.next();
+                serverWorld.getChunkManager().getLightingProvider().setTaskBatchSize(lightEngineMaxBatchSize);
+            }
+        }
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            if (source == null) return newValue;
+            if (newValue < 0)
+            {
+                Messenger.m(source, "r light batch size has to be at least 0");
+                return null;
+            }
+            if (currentRule.get().intValue() == newValue.intValue())
+            {
+                //must been some startup thing
+                return newValue;
+            }
+            if (CarpetServer.minecraft_server == null) return newValue;
+          
+            // Set the field before we apply.
+            try
+            {
+                currentRule.field.set(null, newValue.intValue());
+            }
+            catch (IllegalAccessException e)
+            {
+                Messenger.m(source, "r Unable to access setting for  "+currentRule.name);
+                return null;
+            }
+            
+            applyLightBatchSizes(); // Apply new settings
+            
+            return newValue;
+        }
+    }
+    
+    @Rule(
+            desc = "Changes maximum light tasks batch size",
+            extra = {"Allows for a higher light suppression tolerance", "setting it to 5 - Default limit defined by the game"},
+            category = {EXPERIMENTAL, OPTIMIZATION},
+            strict = false,
+            options = {"5", "50", "100", "200"},
+            validate = LightBatchValidator.class
+    )
+    public static int lightEngineMaxBatchSize = 5;
+    
     @Rule(desc = "Coral structures will grow with bonemeal from coral plants", category = FEATURE)
     public static boolean renewableCoral = false;
 

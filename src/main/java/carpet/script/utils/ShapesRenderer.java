@@ -167,6 +167,15 @@ public class ShapesRenderer
         }
     }
 
+    public void renewShapes()
+    {
+        synchronized (shapes)
+        {
+            shapes.values().forEach(el -> el.values().forEach(shape -> {
+                shape.expiryTick++;
+            }));
+        }
+    }
 
     public abstract static class RenderedShape<T extends ShapeDispatcher.ExpiringShape>
     {

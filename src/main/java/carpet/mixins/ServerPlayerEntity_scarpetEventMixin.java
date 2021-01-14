@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.EntityInterface;
+import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.script.EntityEventsGroup;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.Entity;
@@ -28,8 +29,11 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_FINISHED_USING_ITEM;
 import static carpet.script.CarpetEventServer.Event.STATISTICS;
 
 @Mixin(ServerPlayerEntity.class)
-public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
+public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity implements ServerPlayerEntityInterface
 {
+    // to denote if the player reference is valid
+
+    private boolean isInvalidReference = false;
 
     public ServerPlayerEntity_scarpetEventMixin(World world, BlockPos blockPos, float f, GameProfile gameProfile)
     {
@@ -109,6 +113,17 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity
             }
             PLAYER_CHANGES_DIMENSION.onDimensionChange(player, previousLocation, to, previousDimension, destination.getRegistryKey());
         }
+    };
+
+    @Override
+    public void invalidateEntityObjectReference()
+    {
+        isInvalidReference = true;
     }
 
+    @Override
+    public boolean isInvalidEntityObject()
+    {
+        return isInvalidReference;
+    }
 }

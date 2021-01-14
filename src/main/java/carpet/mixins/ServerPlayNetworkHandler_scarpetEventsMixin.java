@@ -1,9 +1,9 @@
 package carpet.mixins;
 
-import carpet.CarpetSettings;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.ButtonClickC2SPacket;
 import net.minecraft.network.packet.c2s.play.CraftRequestC2SPacket;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -40,6 +40,7 @@ import static carpet.script.CarpetEventServer.Event.PLAYER_STARTS_SPRINTING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SNEAKING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_STOPS_SPRINTING;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWAPS_HANDS;
+import static carpet.script.CarpetEventServer.Event.PLAYER_SWINGS_HAND;
 import static carpet.script.CarpetEventServer.Event.PLAYER_SWITCHES_SLOT;
 import static carpet.script.CarpetEventServer.Event.PLAYER_USES_ITEM;
 import static carpet.script.CarpetEventServer.Event.PLAYER_WAKES_UP;
@@ -264,6 +265,19 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
         if (PLAYER_SWITCHES_SLOT.isNeeded() && player.getServer() != null && player.getServer().isOnThread())
         {
             PLAYER_SWITCHES_SLOT.onSlotSwitch(player, player.inventory.selectedSlot, packet.getSelectedSlot());
+        }
+    }
+
+    @Inject(method = "onHandSwing", at = @At(
+            value = "INVOKE", target =
+            "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V",
+            shift = At.Shift.BEFORE)
+    )
+    private void onSwing(HandSwingC2SPacket packet, CallbackInfo ci)
+    {
+        if (PLAYER_SWINGS_HAND.isNeeded() && !player.handSwinging)
+        {
+            PLAYER_SWINGS_HAND.onHandAction(player, packet.getHand());
         }
     }
 }

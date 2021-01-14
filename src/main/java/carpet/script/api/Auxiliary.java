@@ -6,6 +6,7 @@ import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.script.bundled.Module;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
@@ -19,6 +20,7 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.FixedCommandSource;
+import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.EntityValue;
@@ -33,14 +35,15 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.block.BlockState;
+import net.minecraft.command.DataCommandStorage;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -69,6 +72,11 @@ import net.minecraft.world.World;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,18 +88,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static carpet.script.value.NBTSerializableValue.nameFromRegistryId;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 public class Auxiliary {
     public static final String MARKER_STRING = "__scarpet_marker";
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
-    private static final Map<String, String> supportedTypes = ImmutableMap.of(
-            "raw", ".txt",
-            "text", ".txt",
-            "nbt", ".nbt",
-            "folder", "folder"
-    );
+    public static final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
 
     public static String recognizeResource(Value value, boolean isFloder)
     {
@@ -112,7 +116,7 @@ public class Auxiliary {
         String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
         boolean shared = origtype.startsWith("shared_");
         String type = shared ? origtype.substring(7) : origtype; //len(shared_)
-        if (!supportedTypes.containsKey(type))
+        if (!Module.supportedTypes.containsKey(type))
             throw new InternalExpressionException("Unsupported file type: "+origtype);
         if (type.equals("folder") && !isFloder)
             throw new InternalExpressionException("Folder types are no supported for this IO function");
@@ -526,7 +530,7 @@ public class Auxiliary {
             Text title = null;
             if (lv.size() > 2)
             {
-            	pVal = lv.get(2).evalValue(c);
+                pVal = lv.get(2).evalValue(c);
                 if (pVal instanceof FormattedTextValue)
                     title = ((FormattedTextValue) pVal).getText();
                 else
@@ -634,30 +638,40 @@ public class Auxiliary {
 
 
         expression.addLazyFunction("game_tick", -1, (c, t, lv) -> {
-            ServerCommandSource s = ((CarpetContext)c).s;
+            CarpetContext cc = (CarpetContext)c;
+            ServerCommandSource s = cc.s;
             if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
-            ((MinecraftServerInterface)s.getMinecraftServer()).forceTick( () -> System.nanoTime()- CarpetServer.scriptServer.tickStart<50000000L);
-            if (lv.size()>0)
+            if (CarpetServer.scriptServer.tickDepth > 16) throw new InternalExpressionException("'game_tick' function caused other 'game_tick' functions to run. You should not allow that.");
+            try
             {
-                long ms_total = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
-                long end_expected = CarpetServer.scriptServer.tickStart+ms_total*1000000L;
-                long wait = end_expected-System.nanoTime();
-                if (wait > 0L)
+                CarpetServer.scriptServer.tickDepth ++;
+                ((MinecraftServerInterface) s.getMinecraftServer()).forceTick(() -> System.nanoTime() - CarpetServer.scriptServer.tickStart < 50000000L);
+                if (lv.size() > 0)
                 {
-                    try
+                    long ms_total = NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
+                    long end_expected = CarpetServer.scriptServer.tickStart + ms_total * 1000000L;
+                    long wait = end_expected - System.nanoTime();
+                    if (wait > 0L)
                     {
-                        Thread.sleep(wait/1000000L);
-                    }
-                    catch (InterruptedException ignored)
-                    {
+                        try
+                        {
+                            Thread.sleep(wait / 1000000L);
+                        }
+                        catch (InterruptedException ignored)
+                        {
+                        }
                     }
                 }
+                CarpetServer.scriptServer.tickStart = System.nanoTime(); // for the next tick
+                Thread.yield();
             }
-            CarpetServer.scriptServer.tickStart = System.nanoTime(); // for the next tick
-            Thread.yield();
+            finally
+            {
+                CarpetServer.scriptServer.tickDepth --;
+            }
             if(CarpetServer.scriptServer.stopAll)
                 throw new ExitStatement(Value.NULL);
-            return (cc, tt) -> Value.TRUE;
+            return (_c, _t) -> Value.TRUE;
         });
 
         expression.addLazyFunction("seed", -1, (c, t, lv) -> {
@@ -793,7 +807,7 @@ public class Auxiliary {
         expression.addLazyFunction("list_files", 2, (c, t, lv) ->
         {
             Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, true);
-            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc.getLeft(), supportedTypes.get(fdesc.getMiddle()), fdesc.getRight());
+            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
             if (files == null) return LazyValue.NULL;
             Value ret = ListValue.wrap(files.map(StringValue::of).collect(Collectors.toList()));
             return (cc, tt) -> ret;
@@ -810,9 +824,29 @@ public class Auxiliary {
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
+            else if (fdesc.getMiddle().equals("json"))
+            {
+                JsonElement json;
+                try
+                {
+                    json = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                }
+                catch (JsonParseException e)
+                {
+                    Throwable exception = e;
+                    if(e.getCause() != null)
+                        exception = e.getCause();
+                    throw new InternalExpressionException("Failed to read JSON file: "+exception.getMessage());
+                }
+                Value parsedJson = gson.fromJson(json, Value.class);
+                if (parsedJson == null)
+                    retVal = Value.NULL;
+                else
+                    retVal = parsedJson;
+            }
             else
             {
-                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc.getLeft(), fdesc.getRight());
+                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
                 if (content == null) return LazyValue.NULL;
                 retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
             }
@@ -840,6 +874,12 @@ public class Auxiliary {
                         : new NBTSerializableValue(val.getString());
                 Tag tag = tagValue.getTag();
                 success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc.getLeft(), fdesc.getRight());
+            }
+            else if (fdesc.getMiddle().equals("json"))
+            {
+                List<String> data = Collections.singletonList(gson.toJson(lv.get(2).evalValue(c).toJson()));
+                ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle());
+                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
             }
             else
             {
@@ -984,6 +1024,29 @@ public class Auxiliary {
             if (counts < 0) return LazyValue.NULL;
             Value ret = new NumericValue(counts);
             return (c_, t_) -> ret;
+        });
+
+        // nbt_storage()
+        // nbt_storage(key)
+        // nbt_storage(key, nbt)
+        expression.addLazyFunction("nbt_storage", -1, (c, t, lv) -> {
+            if (lv.size() > 2) throw new InternalExpressionException("'nbt_storage' requires 0, 1 or 2 arguments.");
+            CarpetContext cc = (CarpetContext) c;
+            DataCommandStorage storage = cc.s.getMinecraftServer().getDataCommandStorage();
+            if (lv.size() == 0) {
+                Value ret = ListValue.wrap(storage.getIds().map(i -> new StringValue(nameFromRegistryId(i))).collect(Collectors.toList()));
+                return (_c, _t) -> ret;
+            }
+            String key = lv.get(0).evalValue(c).getString();
+            CompoundTag old_nbt = storage.get(new Identifier(key));
+            if (lv.size() == 2) {
+                Value nbt = lv.get(1).evalValue(c);
+                NBTSerializableValue new_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
+                        : NBTSerializableValue.parseString(nbt.getString(), true);
+                storage.set(new Identifier(key), new_nbt.getCompoundTag());
+            }
+            if (old_nbt == null) return LazyValue.NULL;
+            return (_c, _t) -> new NBTSerializableValue(old_nbt);
         });
     }
 

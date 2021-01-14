@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.helpers.TickSpeed;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
@@ -18,6 +19,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
@@ -35,6 +37,8 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.village.Merchant;
+import net.minecraft.village.TradeOffer;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import org.apache.commons.lang3.tuple.Pair;
@@ -178,23 +182,38 @@ public class CarpetEventServer
 
         public final List<Callback> callList;
         public final int reqArgs;
+        final boolean isSystem;
+        final boolean isGlobalOnly;
+        final boolean perPlayerDistribution;
 
-        public CallbackList(int reqArgs)
+        public CallbackList(int reqArgs, boolean isSystem, boolean isGlobalOnly)
         {
             this.callList = new ArrayList<>();
             this.reqArgs = reqArgs;
+            this.isSystem = isSystem;
+            this.isGlobalOnly = isGlobalOnly;
+            perPlayerDistribution = isSystem && !isGlobalOnly;
         }
 
+        /**
+         * Handles only built-in events from the events system
+         * @param argumentSupplier
+         * @param cmdSourceSupplier
+         */
         public void call(Supplier<List<Value>> argumentSupplier, Supplier<ServerCommandSource> cmdSourceSupplier)
         {
             if (callList.size() > 0)
             {
                 List<Value> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source = cmdSourceSupplier.get();
+                String nameCheck = perPlayerDistribution?source.getName():null;
                 assert argv.size() == reqArgs;
                 List<Callback> fails = new ArrayList<>();
                 for (Callback call: callList)
                 {
+                    // supressing calls where target player hosts simply don't match
+                    // handling global hosts with player targets is left to when the host is resolved (few calls deeper).
+                    if (nameCheck != null && call.optionalTarget != null && !nameCheck.equals(call.optionalTarget)) continue;
                     if (!call.execute(source, argv)) fails.add(call);
                 }
                 for (Callback call : fails) callList.remove(call);
@@ -548,6 +567,20 @@ public class CarpetEventServer
                 ), player::getCommandSource);
             }
         };
+        public static final Event PLAYER_TRADES = new Event("player_trades", 5, false)
+        {
+            @Override
+            public void onTrade(ServerPlayerEntity player, Merchant merchant, TradeOffer tradeOffer)
+            {
+                handler.call( () -> Arrays.asList(
+                        new EntityValue(player),
+                        merchant instanceof MerchantEntity ? new EntityValue((MerchantEntity) merchant) : Value.NULL,
+                        ValueConversions.of(tradeOffer.getOriginalFirstBuyItem()),
+                        ValueConversions.of(tradeOffer.getSecondBuyItem()),
+                        ValueConversions.of(tradeOffer.getSellItem())
+                ), player::getCommandSource);
+            }
+        };
         public static final Event PLAYER_PICKS_UP_ITEM = new Event("player_picks_up_item", 2, false)
         {
             @Override
@@ -674,6 +707,18 @@ public class CarpetEventServer
             public void onPlayerEvent(ServerPlayerEntity player)
             {
                 handler.call( () -> Collections.singletonList(new EntityValue(player)), player::getCommandSource);
+            }
+        };
+        public static final Event PLAYER_SWINGS_HAND = new Event("player_swings_hand", 2, false)
+        {
+            @Override
+            public void onHandAction(ServerPlayerEntity player, Hand hand)
+            {
+                handler.call( () -> Arrays.asList(
+                            new EntityValue(player),
+                            StringValue.of(hand == Hand.MAIN_HAND ? "mainhand" : "offhand")
+                        )
+                        , player::getCommandSource);
             }
         };
         public static final Event PLAYER_TAKES_DAMAGE = new Event("player_takes_damage", 4, false)
@@ -865,7 +910,7 @@ public class CarpetEventServer
         public Event(String name, int reqArgs, boolean isGlobalOnly, boolean isPublic)
         {
             this.name = name;
-            this.handler = new CallbackList(reqArgs);
+            this.handler = new CallbackList(reqArgs, true, isGlobalOnly);
             this.globalOnly = isGlobalOnly;
             this.isPublic = isPublic;
             byName.put(name, this);
@@ -913,7 +958,7 @@ public class CarpetEventServer
         private Event(String name, CarpetScriptServer server)
         {
             this.name = name;
-            this.handler = new CallbackList(1);
+            this.handler = new CallbackList(1, false, false);
             this.globalOnly = false;
             this.isPublic = true;
             server.events.customEvents.put(name, this);
@@ -940,11 +985,13 @@ public class CarpetEventServer
         public void onBlockBroken(ServerPlayerEntity player, BlockPos pos, BlockState previousBS) { }
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
+        public void onHandAction(ServerPlayerEntity player, Hand enumhand) { }
         public void onEntityAction(Entity entity) { }
         public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }
         public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}
         public void onSlotSwitch(ServerPlayerEntity player, int from, int to) {}
+        public void onTrade(ServerPlayerEntity player, Merchant merchant, TradeOffer tradeOffer) {}
 
         public void onExplosion(ServerWorld world, double x, double y, double z, float power, DamageSource source, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities) { }
 
@@ -962,6 +1009,8 @@ public class CarpetEventServer
 
     public void tick()
     {
+        if (!TickSpeed.process_entities)
+            return;
         Iterator<ScheduledCall> eventIterator = scheduledCalls.iterator();
         List<ScheduledCall> currentCalls = new ArrayList<>();
         while(eventIterator.hasNext())

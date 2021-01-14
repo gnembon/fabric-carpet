@@ -119,7 +119,12 @@ adjusted.
 ### `__on_player_interacts_with_entity(player, entity, hand)`
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
-with that interaction
+with that interaction.
+
+### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
+Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
+changes and merchant updates its trade-uses counter.
+The parameter `entity` can be `null` if the merchant is not an entity.
 
 ### `__on_player_collides_with_entity(player, entity)`
 Triggered every time a player - entity collisions are calculated, before effects of collisions are applied in the game. 
@@ -136,6 +141,11 @@ the slot.
 
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
+
+### `__on_player_swings_hand(player, hand)`
+Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
+(`player_uses_item`, `player_breaks_block`, etc.), but it triggers also after some failed events, like attacking the air. When
+swinging continues as an effect of an action, no new swinging events will be issued until the swinging is stopped.
 
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
@@ -155,8 +165,10 @@ about players death and applying external effects (like mob anger etc).
 
 ### `__on_player_respawns(player)`
 Triggered when a player respawns. This includes spawning after death, or landing in the overworld after leaving the end. 
-When the event is handled, a player is still in its previous location and dimension - will be repositioned right after.
-
+When the event is handled, a player is still in its previous location and dimension - will be repositioned right after. In 
+case player died, its previous inventory as already been scattered, and its current inventory will not be copied to the respawned
+entity, so any manipulation to player data is
+best to be scheduled at the end of the tick, but you can still use its current reference to query its status as of the respawn event.
 
 ### `__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)`
 Called when a player moves from one dimension to another. Event is handled still when the player is in its previous

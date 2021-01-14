@@ -15,6 +15,7 @@ import java.math.RoundingMode;
 import java.util.Locale;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.signum;
 
 public class NumericValue extends Value
 {
@@ -57,6 +58,7 @@ public class NumericValue extends Value
         {
             if (value.isInfinite()) return "INFINITY";
             if (value.isNaN()) return "NaN";
+            if (abs(value) < epsilon) return (signum(value) < 0)?"-0":"0"; //zero rounding fails with big decimals
             // dobules have 16 point precision, 12 is plenty to display
             return BigDecimal.valueOf(value).round(displayRounding).stripTrailingZeros().toPlainString();
         }
@@ -305,5 +307,10 @@ public class NumericValue extends Value
     public NumericValue opposite() {
         if (longValue != null) return new NumericValue(-longValue);
         return new NumericValue(-value);
+    }
+
+    public boolean isInteger()
+    {
+        return longValue!= null ||  getDouble() == (double)getLong();
     }
 }
