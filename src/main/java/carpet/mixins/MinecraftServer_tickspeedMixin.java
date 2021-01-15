@@ -40,7 +40,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
 
     @Shadow protected abstract boolean shouldKeepTicking();
 
-    @Shadow private long field_19248;
+    @Shadow private long nextTickTimestamp;
 
     @Shadow protected abstract void method_16208();
 
@@ -127,7 +127,7 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
                 while(this.runEveryTask()) {Thread.yield();}
             }
             this.waitingForNextTick = true;
-            this.field_19248 = Math.max(Util.getMeasuringTimeMs() + /*50L*/ msThisTick, this.timeReference);
+            this.nextTickTimestamp = Math.max(Util.getMeasuringTimeMs() + /*50L*/ msThisTick, this.timeReference);
             // run all tasks (this will not do a lot when warping), but that's fine since we already run them
             this.method_16208();
             this.profiler.pop();

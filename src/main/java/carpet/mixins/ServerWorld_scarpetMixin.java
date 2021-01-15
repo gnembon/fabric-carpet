@@ -3,16 +3,17 @@ package carpet.mixins;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerWorldInterface;
 import carpet.script.CarpetEventServer;
-import net.minecraft.class_5568;
-import net.minecraft.class_5579;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLike;
 import net.minecraft.entity.LightningEntity;
+import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.level.ServerWorldProperties;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -42,12 +43,12 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
 
     @Redirect(method = "addEntity", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/class_5579;addEntity(Lnet/minecraft/class_5568;)Z"
+            target = "Lnet/minecraft/server/world/ServerEntityManager;addEntity(Lnet/minecraft/entity/EntityLike;)Z"
     ))
-    private boolean onEntityAddedToWorld(class_5579 class_5579, class_5568 arg)
+    private boolean onEntityAddedToWorld(ServerEntityManager serverEntityManager, EntityLike entityLike)
     {
-        Entity entity = (Entity)arg;
-        boolean success = class_5579.addEntity(entity);
+        Entity entity = (Entity)entityLike;
+        boolean success = serverEntityManager.addEntity(entity);
         if (success) {
             CarpetEventServer.Event event = ENTITY_LOAD.get(entity.getType());
             if (event != null) {
@@ -61,6 +62,7 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
         return success;
     }
 
+    @Final
     @Shadow
     private ServerWorldProperties worldProperties;
     public ServerWorldProperties getWorldPropertiesCM(){

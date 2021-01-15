@@ -245,7 +245,7 @@ public class WorldAccess {
                     return true;
                 } else {
                     ItemStack itemStack_1 = player.getMainHandStack();
-                    boolean boolean_2 = player.isUsingEffectiveTool(blockState_1);
+                    boolean boolean_2 = player.canHarvest(blockState_1);
                     itemStack_1.postMine(player.world, blockState_1, blockPos_1, player);
                     if (boolean_1 && boolean_2) {
                         ItemStack itemStack_2 = itemStack_1.isEmpty() ? ItemStack.EMPTY : itemStack_1.copy();
@@ -905,7 +905,7 @@ public class WorldAccess {
             boolean dropLoot = true;
             if (playerBreak)
             {
-                boolean isUsingEffectiveTool = !state.isToolRequired() || tool.isEffectiveOn(state);
+                boolean isUsingEffectiveTool = !state.isToolRequired() || tool.isSuitableFor(state);
                 //postMine() durability from item classes
                 float hardness = state.getHardness(world, where);
                 int damageAmount = 0;
@@ -1109,7 +1109,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             String tag = lv.get(0).evalValue(c).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.method_33164(Registry.BLOCK_KEY).getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(new Identifier(tag));
             if (blockTag == null) return LazyValue.NULL;
             Value ret = ListValue.wrap(blockTag.values().stream().map(b -> ValueConversions.of(Registry.BLOCK.getId(b))).collect(Collectors.toList()));
             return (_c, _t) -> ret;
@@ -1121,17 +1121,17 @@ public class WorldAccess {
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             if (lv.size() == 0)
             {
-                Value ret = ListValue.wrap(tagManager.method_33164(Registry.BLOCK_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
-                Value ret = ListValue.wrap(tagManager.method_33164(Registry.BLOCK_KEY).getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(blockLocator.offset).evalValue(c).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.method_33164(Registry.BLOCK_KEY).getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(new Identifier(tag));
             if (blockTag == null) return LazyValue.NULL;
             return blockLocator.block.getBlockState().isIn(blockTag)?LazyValue.TRUE:LazyValue.FALSE;
         });

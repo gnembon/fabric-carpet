@@ -191,7 +191,7 @@ public class EntityValue extends Value
     {
         if (v instanceof EntityValue)
         {
-            return getEntity().getEntityId()==((EntityValue) v).getEntity().getEntityId();
+            return getEntity().getId()==((EntityValue) v).getEntity().getId();
         }
         return super.equals((Value)v);
     }
@@ -241,7 +241,7 @@ public class EntityValue extends Value
                 positive = false;
                 who = who.substring(1);
             }
-            net.minecraft.tag.Tag<EntityType<?>> eTag = server.getTagManager().method_33164(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(who));
+            net.minecraft.tag.Tag<EntityType<?>> eTag = server.getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(who));
             if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
             if (positive)
             {
@@ -415,7 +415,7 @@ public class EntityValue extends Value
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
         put("removed", (entity, arg) -> new NumericValue(entity.isRemoved()));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
-        put("id",(e, a) -> new NumericValue(e.getEntityId()));
+        put("id",(e, a) -> new NumericValue(e.getId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
         put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.yaw), new NumericValue(e.pitch)));
         put("x", (e, a) -> new NumericValue(e.getX()));
@@ -444,13 +444,13 @@ public class EntityValue extends Value
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
-        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().method_33164(Registry.ENTITY_TYPE_KEY).getTagsFor(e.getType()).stream().map(ValueConversions::of).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTagsFor(e.getType()).stream().map(ValueConversions::of).collect(Collectors.toList())));
         // deprecated
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
 
         put("has_scoreboard_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            net.minecraft.tag.Tag<EntityType<?>> tag = e.getServer().getTagManager().method_33164(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(a.getString()));
+            net.minecraft.tag.Tag<EntityType<?>> tag = e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(a.getString()));
             if (tag == null) return Value.NULL;
             return new NumericValue(e.getType().isIn(tag));
         });

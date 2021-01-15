@@ -2,7 +2,7 @@ package carpet.helpers;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.ParticleArgumentType;
+import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -19,7 +19,7 @@ public class ParticleDisplay
     {
         try
         {
-            return ParticleArgumentType.readParameters(new StringReader(name));
+            return ParticleEffectArgumentType.readParameters(new StringReader(name));
         }
         catch (CommandSyntaxException e)
         {

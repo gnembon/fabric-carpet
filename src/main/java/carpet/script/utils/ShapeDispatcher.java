@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.ParticleArgumentType;
+import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -152,7 +152,7 @@ public class ShapeDispatcher
             return particle;
         try
         {
-            particle = ParticleArgumentType.readParameters(new StringReader(name));
+            particle = ParticleEffectArgumentType.readParameters(new StringReader(name));
         }
         catch (CommandSyntaxException e)
         {
@@ -1225,11 +1225,11 @@ public class ShapeDispatcher
         @Override
         public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
-            if (value instanceof EntityValue) return new NumericValue(((EntityValue) value).getEntity().getEntityId());
+            if (value instanceof EntityValue) return new NumericValue(((EntityValue) value).getEntity().getId());
             ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), value);
             if (player == null)
                 throw new InternalExpressionException(id+" parameter needs to represent an entity or player");
-            return new NumericValue(player.getEntityId());
+            return new NumericValue(player.getId());
         }
 
         public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
