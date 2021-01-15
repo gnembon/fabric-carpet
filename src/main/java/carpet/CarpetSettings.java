@@ -766,6 +766,7 @@ public class CarpetSettings
                     "correct rendering of long structures."},
             options = {"48", "96", "192", "256"},
             category = {CREATIVE, CLIENT},
+            validate = StructureBlockLimitValidator.class,
             strict = false
     )
     public static int structureBlockLimit = 48;
@@ -794,7 +795,7 @@ public class CarpetSettings
     @Rule(
             desc = "Customizable Structure Block outline render distance",
             extra = "Required on client to work properly",
-            options = {"96", "192", "2048"}, // 48 is the default structure block limit, and 192 is 12 chunks
+            options = {"96", "192", "2048"},
             category = {CREATIVE, CLIENT},
             strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
