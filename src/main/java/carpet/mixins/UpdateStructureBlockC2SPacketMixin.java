@@ -23,15 +23,10 @@ public class UpdateStructureBlockC2SPacketMixin {
             at = @At("TAIL")
     )
     private void structureBlockLimitsRead(PacketByteBuf buf, CallbackInfo ci) {
-        BlockPos previousOffset = offset;
-        BlockPos previousSize = size;
-        try {
+        if (buf.readableBytes() > 0) {
             // This will throw an exception if carpet is not installed on client
             offset = new BlockPos(MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit));
             size = new BlockPos(MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit));
-        } catch (Exception exception) {
-            offset = previousOffset;
-            size = previousSize;
         }
     }
 
