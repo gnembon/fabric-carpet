@@ -63,7 +63,7 @@ public abstract class StructureBlockBlockEntityMixin
             index = 4
     )
     private Block ignoredBlock(Block original) {
-        return Registry.BLOCK.get(Identifier.tryParse(CarpetSettings.structureBlockIgnored));
+        return CarpetSettings.structureBlockIgnoredBlock;
     }
 
     @Environment(EnvType.CLIENT)

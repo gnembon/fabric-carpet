@@ -7,6 +7,8 @@ import carpet.settings.Validator;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -47,6 +49,7 @@ public class CarpetSettings
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
+    public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
@@ -742,6 +745,17 @@ public class CarpetSettings
     )
     public static boolean cleanLogs = false;
 
+    public static class StructureBlockLimitValidator extends Validator<Integer> {
+
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            return (newValue >= 46) ? newValue : null;
+        }
+
+        @Override
+        public String description() {
+            return "You have to choose a value greater or equal to 46";
+        }
+    }
     @Rule(
             desc = "Customizable structure block limit of each axis",
             extra = {"WARNING: Needs to be permanent for correct loading.",
@@ -764,21 +778,23 @@ public class CarpetSettings
                 Messenger.m(source, "Unknown block '" + newValue + "'.");
                 return null;
             }
+            structureBlockIgnoredBlock = Registry.BLOCK.get(Identifier.tryParse(newValue));
             return newValue;
         }
     }
     @Rule(
             desc = "Changes the block ignored by the Structure Block",
             options = {"minecraft:structure_void", "minecraft:air"},
-            category = {CREATIVE},
-            validate = StructureBlockIgnoredValidator.class
+            category = CREATIVE,
+            validate = StructureBlockIgnoredValidator.class,
+            strict = false
     )
     public static String structureBlockIgnored = "minecraft:structure_void";
 
     @Rule(
             desc = "Customizable Structure Block outline render distance",
             extra = "Required on client to work properly",
-            options = {"48", "96", "192"}, // 48 is the default structure block limit, and 192 is 12 chunks
+            options = {"96", "192", "2048"}, // 48 is the default structure block limit, and 192 is 12 chunks
             category = {CREATIVE, CLIENT},
             strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
