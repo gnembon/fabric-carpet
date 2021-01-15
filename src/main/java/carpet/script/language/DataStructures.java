@@ -57,7 +57,7 @@ public class DataStructures {
             if (lv.size() == 1)
             {
                 hwat = lv.get(0);
-                delimiter = StringValue.EMPTY;
+                delimiter = null;
             }
             else if (lv.size() == 2)
             {
