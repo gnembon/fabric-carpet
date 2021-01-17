@@ -775,11 +775,12 @@ public class CarpetSettings
 
         @Override
         public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            if (!Registry.BLOCK.getIds().contains(Identifier.tryParse(newValue))) {
+            Optional<Block> ignoredBlock = Registry.BLOCK.getOptional(Identifier.tryParse(newValue));
+            if (!ignoredBlock.isPresent()) {
                 Messenger.m(source, "Unknown block '" + newValue + "'.");
                 return null;
             }
-            structureBlockIgnoredBlock = Registry.BLOCK.get(Identifier.tryParse(newValue));
+            structureBlockIgnoredBlock = ignoredBlock.get();
             return newValue;
         }
     }
