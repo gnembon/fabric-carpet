@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
+import java.util.Optional;
 
 import static carpet.settings.RuleCategory.BUGFIX;
 import static carpet.settings.RuleCategory.COMMAND;
@@ -748,7 +749,7 @@ public class CarpetSettings
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue >= 46) ? newValue : null;
+            return (newValue >= 48) ? newValue : null;
         }
 
         @Override
@@ -775,9 +776,9 @@ public class CarpetSettings
 
         @Override
         public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            Optional<Block> ignoredBlock = Registry.BLOCK.getOptional(Identifier.tryParse(newValue));
+            Optional<Block> ignoredBlock = Registry.BLOCK.getOrEmpty(Identifier.tryParse(newValue));
             if (!ignoredBlock.isPresent()) {
-                Messenger.m(source, "Unknown block '" + newValue + "'.");
+                Messenger.m(source, "r Unknown block '" + newValue + "'.");
                 return null;
             }
             structureBlockIgnoredBlock = ignoredBlock.get();
