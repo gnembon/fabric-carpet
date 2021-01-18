@@ -25,6 +25,7 @@ import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
 import carpet.settings.SettingsManager;
 import carpet.logging.HUDController;
+import carpet.utils.FabricAPIHooks;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
@@ -80,6 +81,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
+        FabricAPIHooks.initialize();
     }
 
     public static void onServerLoaded(MinecraftServer server)

@@ -3,6 +3,7 @@ package carpet.mixins;
 import carpet.network.CarpetClient;
 import carpet.script.utils.ShapesRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilderStorage;
 import net.minecraft.client.render.Camera;
@@ -28,7 +29,7 @@ public class WorldRenderer_scarpetRenderMixin
     @Inject(method = "render", at =  @At(value = "INVOKE", target = "Lnet/minecraft/client/render/debug/DebugRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;DDD)V"))
     private void renderScarpetThings(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci)
     {
-        if (CarpetClient.shapes != null)
+        if (!FabricLoader.getInstance().isModLoaded("fabric") && CarpetClient.shapes != null)
         {
             RenderSystem.pushMatrix();
             CarpetClient.shapes.render(camera, tickDelta);
