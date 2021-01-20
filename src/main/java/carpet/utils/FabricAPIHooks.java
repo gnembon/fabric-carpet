@@ -2,16 +2,15 @@ package carpet.utils;
 
 import carpet.network.CarpetClient;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
-
-import java.util.function.Supplier;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 
 public class FabricAPIHooks {
 
-    private static final boolean CLIENT = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
-    public static final boolean WORLD_RENDER_EVENTS = CLIENT && exists(() -> WorldRenderEvents.class);
+    public static final boolean WORLD_RENDER_EVENTS = hasMod("fabric-rendering-v1", "1.5.0");
 
     private FabricAPIHooks() {
     }
@@ -28,11 +27,18 @@ public class FabricAPIHooks {
         }
     }
 
-    private static boolean exists(Supplier<Class<?>> supplier) {
-        try {
-            return supplier.get() != null;
-        } catch (NoClassDefFoundError error) {
+    private static boolean hasMod(String id, String minimumVersion) {
+        return FabricLoader.getInstance().getModContainer(id).map(m -> {
+            Version version = m.getMetadata().getVersion();
+
+            if (version instanceof SemanticVersion) {
+                try {
+                    return ((SemanticVersion) version).compareTo(SemanticVersion.parse(minimumVersion)) >= 0;
+                } catch (VersionParsingException ignored) {
+                }
+            }
+
             return false;
-        }
+        }).orElse(false);
     }
 }
