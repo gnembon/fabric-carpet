@@ -754,7 +754,7 @@ public class CarpetSettings
 
         @Override
         public String description() {
-            return "You have to choose a value greater or equal to 46";
+            return "You have to choose a value greater or equal to 48";
         }
     }
     @Rule(
