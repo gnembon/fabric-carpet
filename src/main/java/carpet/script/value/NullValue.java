@@ -41,6 +41,21 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     }
 
     @Override
+    public Value slice(long fromDesc, Long toDesc) {
+        return Value.NULL;
+    }
+
+    @Override
+    public NumericValue opposite() {
+        return Value.NULL;
+    }
+
+    @Override
+    public int length() {
+        return 0;
+    }
+
+    @Override
     public int compareTo(Value o)
     {
         return  o instanceof NullValue ? 0 : -1;
