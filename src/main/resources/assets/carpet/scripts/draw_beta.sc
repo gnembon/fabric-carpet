@@ -71,92 +71,35 @@ affected(player) -> (
 length_sq(vec) -> reduce(vec, _a + _*_, 0);
 
 fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->(
-    if(rectangle,
-        fill_flat_square(pos, offset, dr, orientation, block, replacement, hollow),
-        fill_flat_circle(pos, offset, dr, orientation, block, replacement, hollow)
-    )
-);
-
-fill_flat_square(pos, offset, radius, orientation, block, replacement, hollow)->(
-    [cx,cy,cz]=pos;
+    r = floor(dr);
+    drsq = dr^2;
     if(orientation=='x',
-        for(range(-radius,radius+1),
-            r=_;
-            if(hollow,
-                set_block(cx+offset,cy+radius,cz+r,block,replacement);
-                set_block(cx+offset,cy-radius,cz+r,block,replacement);
-                set_block(cx+offset,cy+r,cz+radius,block,replacement);
-                set_block(cx+offset,cy+r,cz-radius,block,replacement),
-                for(range(-radius,radius+1),set_block(cx+offset,cy+_,cz+r,block,replacement))
+        scan(pos,0,-r,-r,
+            if((!hollow && (rectangle || _y^2 + _z^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_y) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_y^2 + _z^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x+offset,_y,_z,block, replacement)
             )
         ),
-        orientation=='y',
-        for(range(-radius,radius+1),
-            r=_;
-            if(hollow,
-                set_block(cx+radius,cy+offset,cz+r,block,replacement);
-                set_block(cx-radius,cy+offset,cz+r,block,replacement);
-                set_block(cx+r,cy+offset,cz+radius,block,replacement);
-                set_block(cx+r,cy+offset,cz-radius,block,replacement),
-                for(range(-radius,radius+1),set_block(cx+_,cy+offset,cz+r,block,replacement))
+    orientation == 'y',
+        scan(pos,-r,0,-r,
+            if((!hollow && (rectangle || _x^2 + _z^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_x) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_x^2 + _z^2 <= drsq && (abs(_x)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x,_y+offset,_z,block, replacement)
             )
         ),
-        orientation=='z',
-        for(range(-radius,radius+1),
-            r=_;
-            if(hollow,
-                set_block(cx+r,cy+radius,cz+offset,block,replacement);
-                set_block(cx+r,cy-radius,cz+offset,block,replacement);
-                set_block(cx+radius,cy+r,cz+offset,block,replacement);
-                set_block(cx-radius,cy+r,cz+offset,block,replacement),
-                for(range(-radius,radius+1),set_block(cx+r,cy+_,cz+offset,block,replacement))
-            )
-        )
-    )
-);
-
-fill_flat_circle(pos, offset, radius, orientation, block, replacement, hollow)->(
-    [cx,cy,cz]=pos;
-    if(orientation=='x',
-        for(range(-90, 90, 45/radius),
-            cpitch = cos(_)*radius;
-            spitch = sin(_)*radius;
-
-            if(hollow,
-                set_block(cx+offset,cy+cpitch,cz+spitch,block,replacement);
-                set_block(cx+offset,cy-cpitch,cz+spitch,block,replacement),
-                for(range(-cpitch,cpitch),
-                    set_block(cx+offset,cy+_,cz+cpitch,block,replacement);
-                )
+    orientation == 'z',
+        scan(pos,-r,-r,0,
+            if((!hollow && (rectangle || _y^2 + _x^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_y) == r || abs(_x) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_y^2 + _x^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_x)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x,_y,_z+offset,block, replacement)
             )
         ),
-        orientation=='y',
-        for(range(-90, 90, round(45/radius)),
-            cpitch = round(cos(_)*radius);
-            spitch = round(sin(_)*radius);
-
-            if(hollow,
-                set_block(cx+cpitch-1,cy+offset,cz+spitch,block,replacement);
-                set_block(cx-cpitch,cy+offset,cz+spitch,block,replacement),
-                for(range(-cpitch,cpitch),
-                    set_block(cx+_,cy+offset,cz+spitch,block,replacement);
-                )
-            )
-        ),
-        orientation=='z',
-        for(range(-90, 90, 45/radius),
-            cpitch = cos(_)*radius;
-            spitch = sin(_)*radius;
-
-            if(hollow,
-                set_block(cx+spitch,cy+cpitch,cz+offset,block,replacement);
-                set_block(cx+spitch,cy-cpitch,cz+offset,block,replacement),
-                for(range(-cpitch,cpitch),
-                    set_block(cx+cpitch,cy+_,cz+offset,block,replacement);
-                )
-            )
-        )
-    )
+        print(player(),format('r Error while running command: orientation can only be "x", "y" or "z", '+orientation+' is invalid.'));
+        global_affected = [];
+    );
 );
 
 //Drawing commands
