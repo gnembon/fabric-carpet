@@ -7,20 +7,25 @@ import carpet.settings.Validator;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Optional;
 
 import static carpet.settings.RuleCategory.BUGFIX;
 import static carpet.settings.RuleCategory.COMMAND;
@@ -46,6 +51,7 @@ public class CarpetSettings
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
+    public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
@@ -796,4 +802,62 @@ public class CarpetSettings
             category = {SURVIVAL, CLIENT}
     )
     public static boolean cleanLogs = false;
+
+    public static class StructureBlockLimitValidator extends Validator<Integer> {
+
+        @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
+            return (newValue >= 48) ? newValue : null;
+        }
+
+        @Override
+        public String description() {
+            return "You have to choose a value greater or equal to 48";
+        }
+    }
+    @Rule(
+            desc = "Customizable structure block limit of each axis",
+            extra = {"WARNING: Needs to be permanent for correct loading.",
+                    "Setting 'structureBlockIgnored' to air is recommended",
+                    "when saving massive structures.",
+                    "Required on client of player editing the Structure Block.",
+                    "'structureBlockOutlineDistance' may be required for",
+                    "correct rendering of long structures."},
+            options = {"48", "96", "192", "256"},
+            category = {CREATIVE, CLIENT},
+            validate = StructureBlockLimitValidator.class,
+            strict = false
+    )
+    public static int structureBlockLimit = 48;
+
+    public static class StructureBlockIgnoredValidator extends Validator<String> {
+
+        @Override
+        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            Optional<Block> ignoredBlock = Registry.BLOCK.getOrEmpty(Identifier.tryParse(newValue));
+            if (!ignoredBlock.isPresent()) {
+                Messenger.m(source, "r Unknown block '" + newValue + "'.");
+                return null;
+            }
+            structureBlockIgnoredBlock = ignoredBlock.get();
+            return newValue;
+        }
+    }
+    @Rule(
+            desc = "Changes the block ignored by the Structure Block",
+            options = {"minecraft:structure_void", "minecraft:air"},
+            category = CREATIVE,
+            validate = StructureBlockIgnoredValidator.class,
+            strict = false
+    )
+    public static String structureBlockIgnored = "minecraft:structure_void";
+
+    @Rule(
+            desc = "Customizable Structure Block outline render distance",
+            extra = "Required on client to work properly",
+            options = {"96", "192", "2048"},
+            category = {CREATIVE, CLIENT},
+            strict = false,
+            validate = Validator.NONNEGATIVE_NUMBER.class
+    )
+    public static double structureBlockOutlineDistance = 96d;
 }
