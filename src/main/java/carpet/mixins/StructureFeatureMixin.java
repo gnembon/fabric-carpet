@@ -7,6 +7,7 @@ import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.BlockBox;
+import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.chunk.Chunk;
@@ -28,7 +29,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
 
     @Shadow public abstract StructureFeature.StructureStartFactory getStructureStartFactory();
 
-    @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, int i, int j, Biome biome, ChunkPos chunkPos, C featureConfig);
+    @Shadow protected abstract boolean shouldStartAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long worldSeed, ChunkRandom random,      int chunkX, int chunkZ, Biome biome, ChunkPos chunkPos, C config, HeightLimitView heightLimitView);
 
     @Override
     public boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly, Biome biome, FeatureConfig config)
@@ -107,7 +108,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
         StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos.x, chunkpos.z, BlockBox.empty(),0,worldIn.getSeed());
         if (config == null)
             config = new DefaultFeatureConfig();
-        structurestart1.init(worldIn.getRegistryManager(), generator, worldIn.getStructureManager() , chunkpos.x, chunkpos.z, biome_1, config);
+        structurestart1.init(worldIn.getRegistryManager(), generator, worldIn.getStructureManager() , chunkpos.x, chunkpos.z, biome_1, config, ichunk);
         structurestart = structurestart1.hasChildren() ? structurestart1 : StructureStart.DEFAULT;
 
         if (structurestart.hasChildren())
@@ -120,8 +121,8 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
     }
 
     @Override
-    public boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, int i, int j, Biome biome, ChunkPos chunkPos, C featureConfig)
+    public boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, int i, int j, Biome biome, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView)
     {
-        return shouldStartAt(chunkGenerator, biomeSource, l, chunkRandom, i, j, biome, chunkPos, featureConfig);
+        return shouldStartAt(chunkGenerator, biomeSource, l, chunkRandom, i, j, biome, chunkPos, featureConfig, heightLimitView);
     }
 }
