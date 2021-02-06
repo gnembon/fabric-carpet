@@ -159,7 +159,8 @@ jobs:
             "id": "carpet",
             "version": "1.4.11",
             "entrypoints": {
-              "server": [ "carpet.utils.RulePrinter" ]
+              "server": [ "carpet.utils.RulePrinter" ],
+              "preLaunch": [ "carpet.utils.RulePrinter" ]
             }
            }' > fabric.mod.json
           cd ../../../
