@@ -13,8 +13,8 @@ import java.lang.System;
  * It is here so it can be managed by the IDE
  *
  */
-public class RulePrinter implements DedicatedServerModInitializer, PreLaunchEntrypoint {
-    private static final PrintStream OLD_OUT = System.out;
+public class CarpetRulePrinter implements DedicatedServerModInitializer, PreLaunchEntrypoint {
+    public static final PrintStream OLD_OUT = System.out;
 
     @Override
     public void onInitializeServer() {
