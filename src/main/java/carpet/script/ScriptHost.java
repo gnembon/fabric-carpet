@@ -322,12 +322,12 @@ public abstract class ScriptHost
         if (oldUserHost != null) return oldUserHost;
         ScriptHost userHost = this.duplicate();
         userHost.user = user;
-        this.transferToChild(userHost);
+        this.setupUserHost(userHost);
         userHosts.put(user, userHost);
         return userHost;
     }
 
-    protected void transferToChild(ScriptHost host)
+    protected void setupUserHost(ScriptHost host)
     {
         // adding imports
         host.modules.putAll(this.modules);

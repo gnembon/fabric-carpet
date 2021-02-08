@@ -129,6 +129,7 @@
                 __on_player_wakes_up
                 __on_player_escapes_sleep
                 __on_statistic
+                __on_start
                 __on_tick
                 __on_tick_ender
                 __on_tick_nether
