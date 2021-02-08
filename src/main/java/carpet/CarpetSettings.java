@@ -532,13 +532,13 @@ public class CarpetSettings
     public static int maxEntityCollisions = 0;
 
     @Rule(
-            desc = "Customizable server list ping (Multiplayer menu) playerlist sample limit, 0 for no limits",
+            desc = "Customizable server list ping (Multiplayer menu) playerlist sample limit",
             options = {"0", "12", "20", "40"},
             category = CREATIVE,
             strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
-    public static int serverListPingPlayerLimit = 0;
+    public static int pingPlayerListLimit = 12;
     /*
 
     @Rule(
