@@ -88,7 +88,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
     {
-    CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
         if (module != null)
         {
@@ -227,11 +227,14 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    protected void transferToChild(ScriptHost host)
+    protected void setupUserHost(ScriptHost host)
     {
-        super.transferToChild(host);
+        super.setupUserHost(host);
         // transfer Events
-        CarpetEventServer.Event.transferAllHostEventsToChild((CarpetScriptHost) host);
+        CarpetScriptHost child = (CarpetScriptHost) host;
+        CarpetEventServer.Event.transferAllHostEventsToChild(child);
+        FunctionValue onStart = child.getFunction("__on_start");
+        if (onStart != null) child.callNow(onStart, Collections.emptyList());
     }
 
     @Override
@@ -261,7 +264,9 @@ public class CarpetScriptHost extends ScriptHost
     {
         try
         {
-            Value ret = callUDF(BlockPos.ORIGIN, scriptServer.server.getCommandSource(), getFunction("__config"), Collections.emptyList());
+            FunctionValue configFunction = getFunction("__config");
+            if (configFunction == null) return false;
+            Value ret = callNow(configFunction, Collections.emptyList());
             if (!(ret instanceof MapValue)) return false;
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
@@ -283,7 +288,7 @@ public class CarpetScriptHost extends ScriptHost
             }
             appConfig = config;
         }
-        catch (NullPointerException | InvalidCallbackException ignored)
+        catch (NullPointerException ignored)
         {
             return false;
         }
@@ -631,23 +636,31 @@ public class CarpetScriptHost extends ScriptHost
         return Value.NULL;
     }
 
+    public Value callNow(FunctionValue fun, List<Value> arguments)
+    {
+        ServerPlayerEntity player = (user==null)?null:scriptServer.server.getPlayerManager().getPlayer(user);
+        ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
+        try
+        {
+            return callUDF(BlockPos.ORIGIN, source, fun, arguments);
+        }
+        catch (InvalidCallbackException ignored)
+        {
+            return Value.NULL;
+        }
+    }
+
 
     @Override
     public void onClose()
     {
         super.onClose();
         FunctionValue closing = getFunction("__on_close");
-        if (closing != null)
+        if (closing != null && (parent != null || !isPerUser()))
+            // either global instance of a global task, or
+            // user host in player scoped app
         {
-            ServerPlayerEntity player = (user==null)?null:scriptServer.server.getPlayerManager().getPlayer(user);
-            ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
-            try
-            {
-                callUDF(BlockPos.ORIGIN, source, closing, Collections.emptyList());
-            }
-            catch (InvalidCallbackException ignored)
-            {
-            }
+            callNow(closing, Collections.emptyList());
         }
         if (user == null)
         {

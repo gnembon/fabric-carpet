@@ -39,7 +39,7 @@ public class CarpetClient
     {
         isServerCarpet = false;
         clientPlayer = null;
-        CarpetServer.disconnect();
+        CarpetServer.onServerClosed(null);
     }
 
     public static void setCarpet()

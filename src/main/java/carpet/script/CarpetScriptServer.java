@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -299,6 +300,12 @@ public class CarpetScriptServer
         {
             // that will provide player hosts right at the startup
             newHost.retrieveForExecution(source, null);
+        }
+        else
+        {
+            // global app - calling start now.
+            FunctionValue onStart = newHost.getFunction("__on_start");
+            if (onStart != null) newHost.callNow(onStart, Collections.emptyList());
         }
         long end = System.nanoTime();
         CarpetSettings.LOG.info("App "+name+" loaded in "+(end-start)/1000000+" ms");

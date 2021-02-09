@@ -312,3 +312,19 @@ __on_player_swings_hand(player, hand) ->
 	print('  - player: '+player);
 	print('  - hand: '+hand);
 );
+
+__on_start() ->
+(
+    print('');
+    print('__on_start(player)');
+    print('App is starting for '+player());
+    logger('starting for '+player());
+);
+
+__on_close() ->
+(
+    print('');
+    print('__on_close(player)');
+    print('App is closing for '+player());
+    logger('App is closing for '+player());
+);

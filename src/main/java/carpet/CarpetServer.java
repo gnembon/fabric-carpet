@@ -171,26 +171,27 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerClosed(MinecraftServer server)
     {
-        if (scriptServer != null) scriptServer.onClose();
-        ServerNetworkHandler.close();
-        currentCommandDispatcher = null;
+        // this for whatever reason gets called multiple times even when joining on SP
+        // so we allow to pass multiple times gating it only on existing server ref
+        if (minecraft_server != null)
+        {
+            if (scriptServer != null) scriptServer.onClose();
+            ServerNetworkHandler.close();
+            currentCommandDispatcher = null;
 
-        LoggerRegistry.stopLoggers();
-        extensions.forEach(e -> e.onServerClosed(server));
-        minecraft_server = null;
-        disconnect();
+            LoggerRegistry.stopLoggers();
+            extensions.forEach(e -> e.onServerClosed(server));
+            minecraft_server = null;
+        }
+
+        // this for whatever reason gets called multiple times even when joining;
+        TickSpeed.reset();
+        settingsManager.detachServer();
     }
 
     public static void registerExtensionLoggers()
     {
         extensions.forEach(CarpetExtension::registerLoggers);
-    }
-
-    public static void disconnect()
-    {
-        // this for whatever reason gets called multiple times even when joining;
-        TickSpeed.reset();
-        settingsManager.detachServer();
     }
 
     public static void onReload(MinecraftServer server)

@@ -13,6 +13,11 @@ When loaded (via `/script load` command, etc.), the game will run the content of
 `__config()` function, if present, which will be executed once. Loading the app will also bind specific 
 events to the event system (check Events section for details).
  
+If an app defines `__on_start()` function, it will be executed once before running anything else. For global scoped apps,
+this is just after they are loaded, and for player scoped apps, before they are used first time by a player.
+Unlike static code (written directly in the body of the app code), that always run once per app, this may run multiple times if
+its a player app nd multiple players are on the server. 
+ 
 Unloading an app removes all of its state from the game, disables commands, removes bounded events, and 
 saves its global state. If more cleanup is needed, one can define `__on_close()` function which will be 
 executed when the module is unloaded, or server is closing or crashing. However, there is no need to do that 
