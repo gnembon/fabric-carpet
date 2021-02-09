@@ -4183,7 +4183,7 @@ ingested by the player. The exact position of these items is unknown as technica
 items could be spread all across the inventory.
 
 ### `__on_player_connects(player)`
-Triggered when the player has successfully logged in and was placed in the gaem.
+Triggered when the player has successfully logged in and was placed in the game.
 
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.
