@@ -205,7 +205,15 @@ public class CarpetEventServer
             if (callList.size() > 0)
             {
                 List<Value> argv = argumentSupplier.get(); // empty for onTickDone
-                ServerCommandSource source = cmdSourceSupplier.get();
+                ServerCommandSource source;
+                try
+                {
+                     source = cmdSourceSupplier.get();
+                }
+                catch (NullPointerException noReference) // todo figure out what happens when closing.
+                {
+                    return;
+                }
                 String nameCheck = perPlayerDistribution?source.getName():null;
                 assert argv.size() == reqArgs;
                 List<Callback> fails = new ArrayList<>();
