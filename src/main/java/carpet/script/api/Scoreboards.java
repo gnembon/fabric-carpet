@@ -116,7 +116,7 @@ public class Scoreboards {
 
         expression.addLazyFunction("scoreboard_add", -1, (c, t, lv)->
         {
-            c.host.issueDeprecation("scoreboard_add() (use scoreboard_set())");
+            c.host.issueDeprecation("scoreboard_add(), (use scoreboard_set())");
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
             if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
