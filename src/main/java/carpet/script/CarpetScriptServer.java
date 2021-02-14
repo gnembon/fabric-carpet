@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,7 @@ public class CarpetScriptServer
     public  Set<String> unloadableModules;
     public long tickStart;
     public boolean stopAll;
+    public int tickDepth;
     private  Set<String> holyMoly;
     public  CarpetEventServer events;
 
@@ -221,7 +223,6 @@ public class CarpetScriptServer
     public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
-        //TODO add per player modules to support player actions better on a server
         if (commandValidator == null) commandValidator = p -> true;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
@@ -300,6 +301,12 @@ public class CarpetScriptServer
             // that will provide player hosts right at the startup
             newHost.retrieveForExecution(source, null);
         }
+        else
+        {
+            // global app - calling start now.
+            FunctionValue onStart = newHost.getFunction("__on_start");
+            if (onStart != null) newHost.callNow(onStart, Collections.emptyList());
+        }
         long end = System.nanoTime();
         CarpetSettings.LOG.info("App "+name+" loaded in "+(end-start)/1000000+" ms");
         return true;
@@ -325,8 +332,19 @@ public class CarpetScriptServer
             return true;
         }
 
+        Function<ServerCommandSource, Boolean> configValidator;
+        try
+        {
+            configValidator = host.getCommandConfigPermissions();
+        }
+        catch (CommandSyntaxException e)
+        {
+            Messenger.m(source, "rb "+e.getMessage());
+            return false;
+        }
+
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player)).
+                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player)).
                 executes( (c) ->
                 {
                     CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());

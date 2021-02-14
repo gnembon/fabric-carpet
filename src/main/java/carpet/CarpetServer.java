@@ -25,6 +25,7 @@ import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
 import carpet.settings.SettingsManager;
 import carpet.logging.HUDController;
+import carpet.utils.FabricAPIHooks;
 import carpet.utils.MobAI;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
@@ -80,6 +81,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         settingsManager = new SettingsManager(CarpetSettings.carpetVersion, "carpet", "Carpet Mod");
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
+        FabricAPIHooks.initialize();
     }
 
     public static void onServerLoaded(MinecraftServer server)
@@ -109,7 +111,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void tick(MinecraftServer server)
     {
-        TickSpeed.tick(server);
+        TickSpeed.tick();
         HUDController.update_hud(server);
         scriptServer.tick();
 
@@ -169,26 +171,27 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerClosed(MinecraftServer server)
     {
-        if (scriptServer != null) scriptServer.onClose();
-        ServerNetworkHandler.close();
-        currentCommandDispatcher = null;
+        // this for whatever reason gets called multiple times even when joining on SP
+        // so we allow to pass multiple times gating it only on existing server ref
+        if (minecraft_server != null)
+        {
+            if (scriptServer != null) scriptServer.onClose();
+            ServerNetworkHandler.close();
+            currentCommandDispatcher = null;
 
-        LoggerRegistry.stopLoggers();
-        extensions.forEach(e -> e.onServerClosed(server));
-        minecraft_server = null;
-        disconnect();
+            LoggerRegistry.stopLoggers();
+            extensions.forEach(e -> e.onServerClosed(server));
+            minecraft_server = null;
+        }
+
+        // this for whatever reason gets called multiple times even when joining;
+        TickSpeed.reset();
+        settingsManager.detachServer();
     }
 
     public static void registerExtensionLoggers()
     {
         extensions.forEach(CarpetExtension::registerLoggers);
-    }
-
-    public static void disconnect()
-    {
-        // this for whatever reason gets called multiple times even when joining;
-        TickSpeed.reset();
-        settingsManager.detachServer();
     }
 
     public static void onReload(MinecraftServer server)

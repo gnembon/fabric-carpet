@@ -91,7 +91,7 @@ public abstract class ScriptHost
 
     protected ScriptHost parent;
     protected boolean perUser;
-    protected String user;
+    public String user;
 
     public String getName() {return main ==null?null: main.getName();}
 
@@ -322,12 +322,12 @@ public abstract class ScriptHost
         if (oldUserHost != null) return oldUserHost;
         ScriptHost userHost = this.duplicate();
         userHost.user = user;
-        this.transferToChild(userHost);
+        this.setupUserHost(userHost);
         userHosts.put(user, userHost);
         return userHost;
     }
 
-    protected void transferToChild(ScriptHost host)
+    protected void setupUserHost(ScriptHost host)
     {
         // adding imports
         host.modules.putAll(this.modules);

@@ -5,6 +5,8 @@ import net.minecraft.nbt.Tag;
 
 public class StringValue extends Value
 {
+    public static Value EMPTY = StringValue.of("");
+
     private String str;
 
     @Override

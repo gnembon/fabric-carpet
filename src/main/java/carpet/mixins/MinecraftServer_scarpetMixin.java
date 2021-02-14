@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
+import carpet.helpers.TickSpeed;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.world.ServerWorld;
@@ -69,6 +70,8 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
     ))
     public void tickTasks(BooleanSupplier booleanSupplier_1, CallbackInfo ci)
     {
+        if (!TickSpeed.process_entities)
+            return;
         TICK.onTick();
         NETHER_TICK.onTick();
         ENDER_TICK.onTick();

@@ -289,26 +289,21 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             items.add(v);
     }
 
-    public void addAtIndex(int index, List<Value> subList)
+    /**
+     * Finds a proper list index >=0 and < len that correspont to the rolling index value of idx
+     *
+     * @param idx
+     * @param len
+     * @return
+     */
+    public static int normalizeIndex(long idx, int len)
     {
-        int numitems = items.size();
-        long range = abs(index)/numitems;
-        index += (range+2)*numitems;
-        index = index % numitems;
-        for (Value v: subList)
-        {
-            if (index < numitems)
-            {
-                items.set(index, v);
-            }
-            else
-            {
-                items.add(v);
-            }
-            index++;
-        }
+        if (idx >=0 && idx < len) return (int)idx;
+        long range = abs(idx)/len;
+        idx += (range+2)*len;
+        idx = idx % len;
+        return (int)idx;
     }
-
 
     public static class ListConstructorValue extends ListValue
     {
@@ -339,15 +334,40 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
 
     @Override
-    public Value slice(long from, long to)
+    public Value slice(long fromDesc, Long toDesc)
     {
         List<Value> items = getItems();
         int size = items.size();
-        if (to < 0 || to > size) to = size;
-        if (from < 0 || from > size) from = size;
+        int from = normalizeIndex(fromDesc, size);
+        if (toDesc == null)
+            return new ListValue((Collection<? extends Value>) getItems().subList(from, size));
+        int to = normalizeIndex(toDesc, size);
         if (from > to)
             return ListValue.of();
-        return new ListValue((Collection<? extends Value>) getItems().subList((int)from, (int) to));
+        return new ListValue((Collection<? extends Value>) getItems().subList(from, to));
+    }
+
+    @Override
+    public Value split(Value delimiter) {
+        ListValue result = new ListValue();
+        if (delimiter == null)
+        {
+            this.forEach(item -> result.items.add(of(item)));
+            return result;
+        }
+        int startIndex = 0;
+        int index = 0;
+        for (Value val : this.items)
+        {
+            index++;
+            if (val.equals(delimiter))
+            {
+                result.items.add(ListValue.wrap(this.items.subList(startIndex, index-1)));
+                startIndex = index;
+            }
+        }
+        result.items.add(ListValue.wrap(this.items.subList(startIndex, length())));
+        return result;
     }
 
     @Override
@@ -395,10 +415,8 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
                 return false;
             int index = (int)((NumericValue) ind).getLong();
             if (index < 0)
-            {
-                long range = abs(index) / numitems;
-                index += (range + 2) * numitems;
-                index = index % numitems;
+            {// only for values < 0
+                index = normalizeIndex(index, numitems);
             }
             if (replace)
             {
@@ -424,11 +442,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     public Value get(Value value)
     {
         long index = NumericValue.asNumber(value, "'address' to a list index").getLong();
-        int numitems = items.size();
-        long range = abs(index)/numitems;
-        index += (range+2)*numitems;
-        index = index % numitems;
-        return items.get((int)index);
+        return items.get(normalizeIndex(index, items.size()));
     }
 
     @Override
@@ -443,11 +457,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     {
         if (!(where instanceof NumericValue) || items.isEmpty()) return false;
         long index = ((NumericValue) where).getLong();
-        int numitems = items.size();
-        long range = abs(index)/numitems;
-        index += (range+2)*numitems;
-        index = index % numitems;
-        items.remove((int)index);
+        items.remove(normalizeIndex(index, items.size()));
         return true;
     }
 

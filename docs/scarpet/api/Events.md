@@ -27,10 +27,31 @@ Here is a list of events that are handled by default in scarpet. This list inclu
 to autoload them, but you can always add any function to any event (using `/script event` command)
 if it accepts required number of parameters.
 
+## Meta-events
+
+These events are not controlled / triggered by the game per se, but are important for the flow of the apps, however for all 
+intent and purpose can be treated as regular events. Unlike regular events, they cannot be hooked up to with 'handle_event',
+but the apps themselves need to have them defined as distinct function definitions, same they cannot be signalled.
+
+### `__on_start()`
+Called once per app in its logical execution run. For `'global'` scope apps its executed right after the app is loaded. For
+`'player'` scope apps, it is triggered once per player before the app can be used by that player. Since each player app acts
+independently from other player apps, this is probably the best location to include some player specific initializations. Static
+code (i.e. code typed directly in the app code that executes immediately, outside of function definitions), will only execute once
+per app, regardless of scope, `'__on_start()'` allows to reliably call player specific initializations.
+
+### `__on_close()`
+
+Called once per app when the app is closing or reloading, right before the app is removed. 
+For player scoped apps, its called once per player. Scarpet app engine will attempt to call `'__on_close()'` even if
+the system is closing down exceptionally. 
+ 
+
 ## Built-in global events
 
 Global events will be handled once per app that is with `'global'` scope. With `player` scoped apps, each player instance
  is responsible independently from handling their events, so a global event may be executed multiple times for each player.
+
 
 ### `__on_server_starts()`
 Event triggers after world is loaded and after all startup apps have started. It won't be triggered with `/reload`.
@@ -114,7 +135,12 @@ adjusted.
 ### `__on_player_interacts_with_entity(player, entity, hand)`
 Triggered when player right clicks (interacts) with an entity, even if the entity has no vanilla interaction with the player or
 the item they are holding. The event is invoked after receiving a packet from the client, before anything happens server side
-with that interaction
+with that interaction.
+
+### `__on_player_trades(player, entity, buy_left, buy_right, sell)`
+Triggered when player trades with a merchant. The event is invoked after the server allow the trade, but before the inventory
+changes and merchant updates its trade-uses counter.
+The parameter `entity` can be `null` if the merchant is not an entity.
 
 ### `__on_player_collides_with_entity(player, entity)`
 Triggered every time a player - entity collisions are calculated, before effects of collisions are applied in the game. 
@@ -131,6 +157,11 @@ the slot.
 
 ### `__on_player_swaps_hands(player)`
 Triggered when a player sends a command to swap their offhand item. Executed before the effect is applied on the server.
+
+### `__on_player_swings_hand(player, hand)`
+Triggered when a player starts swinging their hand. The event typically triggers after a corresponding event that caused it 
+(`player_uses_item`, `player_breaks_block`, etc.), but it triggers also after some failed events, like attacking the air. When
+swinging continues as an effect of an action, no new swinging events will be issued until the swinging is stopped.
 
 ### `__on_player_attacks_entity(player, entity)`
 Triggered when a player attacks entity, right before it happens server side.
@@ -150,8 +181,10 @@ about players death and applying external effects (like mob anger etc).
 
 ### `__on_player_respawns(player)`
 Triggered when a player respawns. This includes spawning after death, or landing in the overworld after leaving the end. 
-When the event is handled, a player is still in its previous location and dimension - will be repositioned right after.
-
+When the event is handled, a player is still in its previous location and dimension - will be repositioned right after. In 
+case player died, its previous inventory as already been scattered, and its current inventory will not be copied to the respawned
+entity, so any manipulation to player data is
+best to be scheduled at the end of the tick, but you can still use its current reference to query its status as of the respawn event.
 
 ### `__on_player_changes_dimension(player, from_pos, from_dimension, to_pos, to_dimension)`
 Called when a player moves from one dimension to another. Event is handled still when the player is in its previous
@@ -196,7 +229,7 @@ ingested by the player. The exact position of these items is unknown as technica
 items could be spread all across the inventory.
 
 ### `__on_player_connects(player)`
-Triggered when the player has successfully logged in and was placed in the gaem.
+Triggered when the player has successfully logged in and was placed in the game.
 
 ### `__on_player_disconnects(player, reason)`
 Triggered when a player sends a disconnect package or is forcefully disconnected from the server.

@@ -6,17 +6,21 @@ import com.google.gson.JsonPrimitive;
 import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
-    public static Value FALSE = new NumericValue(0);
-    public static Value TRUE = new NumericValue(1);
-    public static Value ZERO = FALSE;
-    public static Value NULL = new NullValue();
+    public static NumericValue FALSE = new NumericValue(0);
+    public static NumericValue TRUE = new NumericValue(1);
+    public static NumericValue ZERO = FALSE;
+    public static NumericValue ONE = TRUE;
+
+    public static NullValue NULL = new NullValue();
 
     public String boundVariable;
 
@@ -77,6 +81,10 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public Value add(Value o) {
         String lstr = this.getString();
+        if (o instanceof FormattedTextValue)
+        {
+            return FormattedTextValue.combine(this, o);
+        }
         if (lstr == null) // null
             return new StringValue(o.getString());
         String rstr = o.getString();
@@ -172,17 +180,33 @@ public abstract class Value implements Comparable<Value>, Cloneable
         return getString().length();
     }
 
-    public Value slice(long from, long to)
+    public Value slice(long fromDesc, Long toDesc)
     {
         String value = this.getString();
         int size = value.length();
-        if (to > size) to = -1;
-        if (from < 0) from = 0;
-        if (from > size) from = size;
-        if (to>=0)
-            return new StringValue(value.substring((int)from, (int)to));
-        return new StringValue(value.substring((int)from));
+        int from = ListValue.normalizeIndex(fromDesc, size);
+        if (toDesc == null) return new StringValue(value.substring(from));
+        int to = ListValue.normalizeIndex(toDesc, size);
+        if (from > to) return StringValue.EMPTY;
+        return new StringValue(value.substring(from, to));
     }
+    
+    public Value split(Value delimiter)
+    {
+        if (delimiter == null)
+        {
+            delimiter = StringValue.EMPTY;
+        }
+        try
+        {
+            return ListValue.wrap(Arrays.stream(getString().split(delimiter.getString())).map(StringValue::new).collect(Collectors.toList()));
+        }
+        catch (PatternSyntaxException pse)
+        {
+            throw new InternalExpressionException("Incorrect pattern for 'split': "+pse.getMessage());
+        }
+    }
+    
     public double readDoubleNumber()
     {
         String s = getString();

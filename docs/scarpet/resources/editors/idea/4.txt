@@ -1,7 +1,7 @@
 __command() -> 
 __config() -> 
-__on_chunk_generated(x, z) -> 
-__on_close() -> 
+__on_chunk_generated(x, z) ->
+__on_close() ->
 __on_player_attacks_entity(player, entity) -> 
 __on_player_breaks_block(player, block) -> 
 __on_player_clicks_block(player, block, face) ->
@@ -23,13 +23,17 @@ __on_player_right_clicks_block(player, item_tuple, hand, block, face, hitvec) ->
 __on_player_starts_sneaking(player) -> 
 __on_player_starts_sprinting(player) -> 
 __on_player_stops_sneaking(player) -> 
-__on_player_stops_sprinting(player) -> 
-__on_player_switches_slot(player, from, to) -> 
-__on_player_swaps_hands(player) -> 
+__on_player_stops_sprinting(player) ->
+__on_player_swings_hand(player, hand) ->
+__on_player_switches_slot(player, from, to) ->
+__on_player_swaps_hands(player) ->
+__on_player_takes_damage(player, amount, source, entity) ->
+__on_player_trades(player, entity, buy_left, buy_right, sell) ->
 __on_player_uses_item(player, item_tuple, hand) -> 
 __on_player_wakes_up(player) ->
 __on_player_escapes_sleep(player) ->
-__on_statistic(player, category, event, value) -> 
+__on_statistic(player, category, event, value) ->
+__on_start() ->
 __on_tick() -> 
 __on_tick_ender() -> 
 __on_tick_nether() -> 
@@ -38,4 +42,4 @@ __on_player_deals_damage(player, amount, entity) ->
 __on_player_dies(player) -> 
 __on_player_respawns(player) -> 
 __on_player_disconnects(player, reason) -> 
-__on_player_connects(player) -> 
+__on_player_connects(player) ->

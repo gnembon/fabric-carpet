@@ -11,12 +11,15 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.utils.Messenger;
+
+import com.google.gson.JsonElement;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -38,6 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -84,7 +88,7 @@ public class CarpetScriptHost extends ScriptHost
 
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
     {
-    CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
         if (module != null)
         {
@@ -163,13 +167,57 @@ public class CarpetScriptHost extends ScriptHost
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
+        Function<ServerCommandSource, Boolean> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player));
+               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player));
         for (Pair<List<CommandToken>,FunctionArgument<Value>> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
         }
         return command;
+    }
+
+    public Function<ServerCommandSource, Boolean> getCommandConfigPermissions() throws CommandSyntaxException
+    {
+        Value confValue = appConfig.get(StringValue.of("command_permission"));
+        if (confValue == null) return s -> true;
+        if (confValue instanceof NumericValue)
+        {
+            int level = ((NumericValue) confValue).getInt();
+            if (level < 1 || level > 4) throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
+            return s -> s.hasPermissionLevel(level);
+        }
+        if (!(confValue instanceof FunctionValue))
+        {
+            String perm = confValue.getString().toLowerCase(Locale.ROOT);
+            switch (perm)
+            {
+                case "ops": return s -> s.hasPermissionLevel(2);
+                case "server": return s -> !(s.getEntity() instanceof ServerPlayerEntity);
+                case "players": return s -> s.getEntity() instanceof ServerPlayerEntity;
+                case "all": return s -> true;
+                default: throw CommandArgument.error("Unknown command permission: "+perm);
+            }
+        }
+        FunctionValue fun = (FunctionValue) confValue;
+        if (fun.getNumParams() != 1) throw CommandArgument.error("Custom command permission function should expect 1 argument");
+        String hostName = getName();
+        return s -> {
+            try
+            {
+                CarpetScriptHost cHost = null;
+                cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(s);
+                Value response = cHost.handleCommand(s, fun, Collections.singletonList(
+                        (s.getEntity() instanceof ServerPlayerEntity)?new EntityValue(s.getEntity()):Value.NULL)
+                );
+                return response.getBoolean();
+            }
+            catch (CommandSyntaxException e)
+            {
+                Messenger.m(s, "rb Unable to run app command: "+e.getMessage());
+                return false;
+            }
+        };
     }
 
     @Override
@@ -179,11 +227,14 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    protected void transferToChild(ScriptHost host)
+    protected void setupUserHost(ScriptHost host)
     {
-        super.transferToChild(host);
+        super.setupUserHost(host);
         // transfer Events
-        CarpetEventServer.Event.transferAllHostEventsToChild((CarpetScriptHost) host);
+        CarpetScriptHost child = (CarpetScriptHost) host;
+        CarpetEventServer.Event.transferAllHostEventsToChild(child);
+        FunctionValue onStart = child.getFunction("__on_start");
+        if (onStart != null) child.callNow(onStart, Collections.emptyList());
     }
 
     @Override
@@ -213,7 +264,9 @@ public class CarpetScriptHost extends ScriptHost
     {
         try
         {
-            Value ret = callUDF(BlockPos.ORIGIN, scriptServer.server.getCommandSource(), getFunction("__config"), Collections.emptyList());
+            FunctionValue configFunction = getFunction("__config");
+            if (configFunction == null) return false;
+            Value ret = callNow(configFunction, Collections.emptyList());
             if (!(ret instanceof MapValue)) return false;
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
@@ -235,7 +288,7 @@ public class CarpetScriptHost extends ScriptHost
             }
             appConfig = config;
         }
-        catch (NullPointerException | InvalidCallbackException ignored)
+        catch (NullPointerException ignored)
         {
             return false;
         }
@@ -583,23 +636,31 @@ public class CarpetScriptHost extends ScriptHost
         return Value.NULL;
     }
 
+    public Value callNow(FunctionValue fun, List<Value> arguments)
+    {
+        ServerPlayerEntity player = (user==null)?null:scriptServer.server.getPlayerManager().getPlayer(user);
+        ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
+        try
+        {
+            return callUDF(BlockPos.ORIGIN, source, fun, arguments);
+        }
+        catch (InvalidCallbackException ignored)
+        {
+            return Value.NULL;
+        }
+    }
+
 
     @Override
     public void onClose()
     {
         super.onClose();
         FunctionValue closing = getFunction("__on_close");
-        if (closing != null)
+        if (closing != null && (parent != null || !isPerUser()))
+            // either global instance of a global task, or
+            // user host in player scoped app
         {
-            ServerPlayerEntity player = (user==null)?null:scriptServer.server.getPlayerManager().getPlayer(user);
-            ServerCommandSource source = (player != null)?player.getCommandSource():scriptServer.server.getCommandSource();
-            try
-            {
-                callUDF(BlockPos.ORIGIN, source, closing, Collections.emptyList());
-            }
-            catch (InvalidCallbackException ignored)
-            {
-            }
+            callNow(closing, Collections.emptyList());
         }
         if (user == null)
         {
@@ -659,7 +720,7 @@ public class CarpetScriptHost extends ScriptHost
     public boolean removeResourceFile(String resource, boolean isShared, String type)
     {
         if (getName() == null && !isShared) return false; //
-        return Module.dropExistingFile(main, resource, type.equals("nbt")?"nbt":"txt", isShared);
+        return Module.dropExistingFile(main, resource, type, isShared);
     }
 
     public boolean appendLogFile(String resource, boolean isShared, String type, List<String> data)
@@ -668,16 +729,22 @@ public class CarpetScriptHost extends ScriptHost
         return Module.appendToTextFile(main, resource, type, isShared, data);
     }
 
-    public List<String> readTextResource(String resource, boolean isShared)
+    public List<String> readTextResource(String resource, String type, boolean isShared)
     {
-        if (getName() == null && !isShared) return null; //
-        return Module.listFile(main, resource, "txt", isShared);
+        if (getName() == null && !isShared) return null;
+        return Module.listFile(main, resource, type, isShared);
+    }
+    
+    public JsonElement readJsonFile(String resource, String type, boolean isShared)
+    {
+        if (getName() == null && !isShared) return null;
+        return Module.readJsonFile(main, resource, type, isShared);
     }
 
-    public Stream<String> listFolder(String resource, String ext, boolean isShared)
+    public Stream<String> listFolder(String resource, String type, boolean isShared)
     {
         if (getName() == null && !isShared) return null; //
-        return Module.listFolder(main, resource, ext, isShared);
+        return Module.listFolder(main, resource, type, isShared);
     }
 
 

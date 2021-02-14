@@ -8,7 +8,10 @@ In this case - entities would need to be re-fetched, or the code should account 
 
 ### `player(), player(type), player(name)`
 
-With no arguments, it returns the calling player or the player closest to the caller. Note that the main context 
+With no arguments, it returns the calling player or the player closest to the caller. 
+For player-scoped apps (which is a default) its always the owning player or `null` if it not present even if some code
+still runs in their name.
+Note that the main context 
 will receive `p` variable pointing to this player. With `type` or `name` specified, it will try first to match a type, 
 returning a list of players matching a type, and if this fails, will assume its player name query retuning player with 
 that name, or `null` if no player was found. With `'all'`, list of all players in the game, in all dimensions, so end 
@@ -243,6 +246,10 @@ Boolean, true if the entity is silent.
 
 Boolean, true if the entity is affected by gravity, like most entities are.
 
+### `query(e, 'invulnerable')`
+
+Boolean, true if the entity is invulnerable.
+
 ### `query(e, 'immune_to_fire')`
 
 Boolean, true if the entity is immune to fire.
@@ -343,6 +350,11 @@ Boolean, true if the entity is swimming.
 ### `query(e, 'jumping')`
 
 Boolean, true if the entity is jumping.
+
+### `query(e, 'swinging')`
+
+Returns `true` if the entity is actively swinging their hand, `false` if not and `null` if swinging is not applicable to
+that entity.
 
 ### `query(e, 'gamemode')`
 
@@ -717,6 +729,10 @@ Silences or unsilences the entity.
 ### `modify(e, 'gravity', boolean)`
 
 Toggles gravity for the entity.
+
+### `modify(e, 'invulnerable', boolean)`
+
+Toggles invulnerability for the entity.
 
 ### `modify(e, 'fire', ticks)`
 

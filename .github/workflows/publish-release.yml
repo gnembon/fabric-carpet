@@ -1,0 +1,193 @@
+name: Publish Release
+
+on:
+  release:
+    types: [published]
+jobs:
+  Get-Properties:
+    runs-on: ubuntu-latest
+    outputs:
+      release-type: ${{ steps.type.outputs.release-type }}
+      carpet-version: ${{ steps.properties.outputs.mod_version }}
+      minecraft-version: ${{ steps.properties.outputs.minecraft_version }}
+      curse-versions: ${{ steps.properties.outputs.release-curse-versions }}
+      matrix-exclude-branch: ${{ steps.processmatrix.outputs.matrix-to-exclude }}
+      extra-branch-name: ${{ steps.properties.outputs.release-extra-branch-name }}
+      extra-branch-curse-version: ${{ steps.properties.outputs.release-extra-curse-version }}
+    steps:
+      - name: Checkout the sources
+        uses: actions/checkout@v2
+      - name: Determine release type
+        id: type
+        run: |
+          if ${{ github.event.release.prerelease }}; then
+            echo "::set-output name=release-type::beta"
+          else
+            echo "::set-output name=release-type::release"
+          fi
+      - name: Read relevant fields from gradle.properties
+        id: properties
+        run: | # From christian-draeger/read-properties, using the action makes it extremely messy until christian-draeger/read-properties#2
+          path='./gradle.properties'
+          for property in mod_version minecraft_version release-curse-versions release-extra-branch release-extra-branch-name release-extra-curse-version
+          do
+            result=$(sed -n "/^[[:space:]]*$property[[:space:]]*=[[:space:]]*/s/^[[:space:]]*$property[[:space:]]*=[[:space:]]*//p" "$path")
+            echo "$property: $result"
+            echo ::set-output name=$property::"$result"
+          done
+      - name: Process property for matrix
+        id: processmatrix
+        run: |
+          if ! ${{ steps.properties.outputs.release-extra-branch }}; then
+            echo "::set-output name=matrix-to-exclude::Snapshots"
+          fi
+  Build-And-Publish:
+    runs-on: ubuntu-latest
+    needs: [Get-Properties]
+    strategy:
+      matrix:
+        branch: [Release, Snapshots]
+        exclude:
+          - branch: ${{ needs.Get-Properties.outputs.matrix-exclude-branch }}
+    steps:
+      - name: Get info from branch to run
+        id: getbranchinfo
+        run: |
+          if ${{ matrix.branch == 'Snapshots'}}; then
+            echo "::set-output name=branchname::${{ needs.Get-Properties.outputs.extra-branch-name }}"
+            echo "::set-output name=version::${{ needs.Get-Properties.outputs.extra-branch-curse-version }}"
+            echo "::set-output name=curse-versions::${{ needs.Get-Properties.outputs.extra-branch-curse-version }}"
+          else
+            echo "::set-output name=version::${{ needs.Get-Properties.outputs.minecraft-version }}"
+            echo "::set-output name=curse-versions::${{ needs.Get-Properties.outputs.curse-versions }}"
+          fi
+      - name: Checkout the sources
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ steps.getbranchinfo.outputs.branchname }}
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build
+      - name: Find correct JAR
+        id: findjar
+        run: |
+          output="$(find build/libs/ ! -name "*-dev.jar" ! -name "*-sources.jar" -type f -printf "%f\n")"
+          echo "::set-output name=jarname::$output"
+      - name: Save build artifacts in the action
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts for ${{ matrix.branch }}
+          path: build/libs
+      - name: Upload to the Github release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/libs/${{ steps.findjar.outputs.jarname }}
+          asset_name: ${{ steps.findjar.outputs.jarname }}
+          asset_content_type: application/java-archive
+      - name: Upload to Curseforge
+        uses: itsmeow/curseforge-upload@v3
+        with:
+          token: ${{ secrets.CF_API_TOKEN }}
+          project_id: 349239
+          game_endpoint: minecraft
+          file_path: build/libs/${{ steps.findjar.outputs.jarname }}
+          changelog_type: markdown
+          changelog: ${{ github.event.release.body }}
+          display_name: Carpet Mod v${{ needs.Get-Properties.outputs.carpet-version }} for ${{ steps.getbranchinfo.outputs.version }}
+          game_versions: 7499,4458,${{ steps.getbranchinfo.outputs.curse-versions }} #Fabric,Java 8,[version (s) for the branch]
+          release_type: ${{ needs.Get-Properties.outputs.release-type }}
+      - name: Ask Gradle to publish
+        run: ./gradlew publish
+      - name: Save publish folder in action's artifacts # Remove when automated
+        uses: actions/upload-artifact@v2
+        with:
+          name: Maven publishing artifacts for ${{ matrix.branch }}
+          path: publish/carpet/fabric-carpet/
+  Merge-Scarpet-Docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the sources
+        uses: actions/checkout@v2
+        with:
+          ref: master
+      - name: Merge docs
+        run: |
+          ./mergedoc.sh
+      - name: Commit merged docs
+        continue-on-error: true
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -am "Merge docs for '${{ github.event.release.name }}'" || exit 0
+          git push
+  Update-Rules-Wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Carpet sources
+        uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+      - name: Replace fabric.mod.json
+        run: |
+          cd src/main/resources
+          rm fabric.mod.json
+          echo '
+          {
+            "schemaVersion": 1,
+            "id": "carpet",
+            "version": "1.4.11",
+            "entrypoints": {
+              "server": [ "carpet.utils.CarpetRulePrinter" ],
+              "preLaunch": [ "carpet.utils.CarpetRulePrinter" ]
+            }
+           }' > fabric.mod.json
+          cd ../../../
+      - name: Run solution
+        run: |
+          chmod +x gradlew
+          ./gradlew runServer > settings-toProccess.txt
+      - name: Checkout wiki
+        uses: actions/checkout@v2
+        with:
+          repository: ${{github.repository}}.wiki
+          path: wiki
+      - name: Proccess Gradle log into a pretty wiki page
+        run: |
+          from1="# Carpet";
+          File=settings-toProccess.txt
+          if grep -q "Deprecated Gradle features" "$File"; then # Happens after update to Gradle 6
+            to2="Deprecated Gradle features";
+          else
+            to2="BUILD SUCCESSFUL"
+          fi
+          a="$(cat settings-toProccess.txt)"; a="$(echo "${a#*"$from1"}")"; echo "$from1${a%%"$to2"*}" > wiki/Current-Available-Settings.md
+      - name: Commit updated wiki page
+        continue-on-error: true
+        run: |
+          cd wiki
+          git config --global user.name 'github-actions-bot' # Releases don't have valid commiter info :(
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git commit -am "Update wiki for '${{ github.event.release.name }}'" || exit 0
+          git push

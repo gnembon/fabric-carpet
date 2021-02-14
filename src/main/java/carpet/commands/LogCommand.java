@@ -43,7 +43,7 @@ public class LogCommand
                                 c.getSource(),
                                 c.getSource().getName(),
                                 getString(c, "log name")))).
-                then(CommandManager.argument("option", StringArgumentType.greedyString()).
+                then(CommandManager.argument("option", StringArgumentType.string()).
                         suggests( (c, b) -> suggestMatching(
                                 (LoggerRegistry.getLogger(getString(c, "log name"))==null
                                         ?new String[]{}

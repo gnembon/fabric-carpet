@@ -292,3 +292,39 @@ __on_player_picks_up_item(player, item) ->
     print(' Player '+player+' injects '+item);
 );
 
+__on_player_trades(player, entity, buy_left, buy_right, sell) ->
+(
+    print('');
+    print('__on_player_trades(player, item)');
+    print('player trades:');
+    print('  - player: '+player);
+    print('  - entity: '+ entity);
+    print('  - buy_left: '+ buy_left);
+    print('  - buy_right: '+ buy_right);
+    print('  - sell: '+ sell)
+);
+
+__on_player_swings_hand(player, hand) ->
+(
+	print('');
+	print('__on_player_swings_hand(player, hand)');
+	print('player swings hand:');
+	print('  - player: '+player);
+	print('  - hand: '+hand);
+);
+
+__on_start() ->
+(
+    print('');
+    print('__on_start(player)');
+    print('App is starting for '+player());
+    logger('starting for '+player());
+);
+
+__on_close() ->
+(
+    print('');
+    print('__on_close(player)');
+    print('App is closing for '+player());
+    logger('App is closing for '+player());
+);

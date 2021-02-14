@@ -19,6 +19,7 @@ import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -113,7 +114,7 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
     }
 
     @Inject(method = "interactMob", at = @At("HEAD"), cancellable = true)
-    private void onInteract(PlayerEntity playerEntity_1, Hand hand_1, CallbackInfoReturnable<Boolean> cir)
+    private void onInteract(PlayerEntity playerEntity_1, Hand hand_1, CallbackInfoReturnable<ActionResult> cir)
     {
         if (MobAI.isTracking(this, MobAI.TrackingType.VILLAGER_BREEDING))
         {
@@ -121,7 +122,7 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
             if (itemStack_1.getItem() == Items.EMERALD)
             {
                 GlobalPos bedPos = this.brain.getOptionalMemory(MemoryModuleType.HOME).orElse(null);
-                if (bedPos == null || bedPos.getDimension() != world.getRegistryKey()) // get DImension
+                if (bedPos == null || bedPos.getDimension() != world.getRegistryKey()) // get Dimension
                 {
                     sayNo();
                     ((ServerWorld) getEntityWorld()).spawnParticles(ParticleTypes.BARRIER, getX(), getY() + getStandingEyeHeight() + 1, getZ(), 1, 0.1, 0.1, 0.1, 0.0);
@@ -162,7 +163,7 @@ public abstract class VillagerEntity_aiMixin extends MerchantEntity
                                 1, 0.1, 0.1, 0.1, 0.0);
                 }
             }
-            cir.setReturnValue(false);
+            cir.setReturnValue(ActionResult.FAIL);
             cir.cancel();
         }
     }

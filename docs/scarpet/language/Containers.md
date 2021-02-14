@@ -160,24 +160,39 @@ join('-', 'foo', 'bar')  => foo-bar
 Splits a string under `expr` by `delim` which can be a regular expression. If no delimiter is specified, it splits
 by characters.
 
+If `expr` is a list, it will split the list into multiple sublists by the element (s) which equal `delim`, or which equal the empty string
+in case no delimiter is specified.
+
+Splitting a `null` value will return an empty list.
+
 <pre>
 split('foo') => [f, o, o]
 split('','foo')  => [f, o, o]
 split('.','foo.bar')  => []
 split('\\.','foo.bar')  => [foo, bar]
+split(1,[2,5,1,2,3,1,5,6]) => [[2,5],[2,3],[5,6]]
+split(1,[1,2,3,1,4,5,1] => [[], [2,3], [4,5], []]
+split(null) => []
 </pre>
 
 ### `slice(expr, from, to?)`
 
 extracts a substring, or sublist (based on the type of the result of the expression under expr with 
-starting index of `from`, and ending at `to` if provided, or the end, if omitted
+starting index of `from`, and ending at `to` if provided, or the end, if omitted. Can use negative indices to 
+indicate counting form the back of the list, so `-1 <=> length(_)`.
+
+Special case is made for iterators (`range`, `rect` etc), which does require non-negative indices (negative `from` is treated as
+`0`, and negative `to` as `inf`), but allows retrieving parts of the sequence and ignore
+other parts. In that case consecutive calls to `slice` will refer to index `0` the current iteration position since iterators
+cannot go back nor track where they are in the sequence (see examples).
 
 <pre>
-slice(l(0,1,2,3,4,5), 1, 3)  => [1, 2, 3]
+slice([0,1,2,3,4,5], 1, 3)  => [1, 2, 3]
 slice('foobar', 0, 1)  => 'f'
 slice('foobar', 3)  => 'bar'
 slice(range(10), 3, 5)  => [3, 4, 5]
 slice(range(10), 5)  => [5, 6, 7, 8, 9]
+r = range(100); [slice(r, 5, 7), slice(r, 1, 3)]  => [[5, 6], [8, 9]]
 </pre>
 
 ### `sort(list), sort(values ...)`
@@ -215,6 +230,8 @@ map(range(10),_*_)  => [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
 reduce(range(10),_a+_, 0)  => 45
 range(5,10)  => [5, 6, 7, 8, 9]
 range(20, 10, -2)  => [20, 18, 16, 14, 12]
+range(-0.3, 0.3, 0.1)  => [-0.3, -0.2, -0.1, 0, 0.1, 0.2]
+range(0.3, -0.3, -0.1) => [0.3, 0.2, 0.1, -0, -0.1, -0.2]
 </pre>
 
 ## Map operations

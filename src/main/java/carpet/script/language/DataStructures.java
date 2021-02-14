@@ -14,10 +14,8 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public class DataStructures {
@@ -54,30 +52,23 @@ public class DataStructures {
 
         expression.addFunction("split", (lv) ->
         {
-            String delimiter;
-            String hwat;
+            Value delimiter;
+            Value hwat;
             if (lv.size() == 1)
             {
-                hwat = lv.get(0).getString();
-                delimiter = "";
+                hwat = lv.get(0);
+                delimiter = null;
             }
             else if (lv.size() == 2)
             {
-                delimiter = lv.get(0).getString();
-                hwat = lv.get(1).getString();
+                delimiter = lv.get(0);
+                hwat = lv.get(1);
             }
             else
             {
                 throw new InternalExpressionException("'split' takes 1 or 2 arguments");
             }
-            try
-            {
-                return ListValue.wrap(Arrays.stream(hwat.split(delimiter)).map(StringValue::new).collect(Collectors.toList()));
-            }
-            catch (PatternSyntaxException pse)
-            {
-                throw new InternalExpressionException("Incorrect pattern for 'split': "+pse.getMessage());
-            }
+            return hwat.split(delimiter);
         });
 
         expression.addFunction("slice", (lv) ->
@@ -87,7 +78,7 @@ public class DataStructures {
                 throw new InternalExpressionException("'slice' takes 2 or 3 arguments");
             Value hwat = lv.get(0);
             long from = NumericValue.asNumber(lv.get(1)).getLong();
-            long to = -1;
+            Long to = null;
             if (lv.size()== 3)
                 to = NumericValue.asNumber(lv.get(2)).getLong();
             return hwat.slice(from, to);
@@ -135,23 +126,25 @@ public class DataStructures {
 
         expression.addFunction("range", (lv) ->
         {
-            long from = 0;
-            long to = 0;
-            long step = 1;
+            NumericValue from = Value.ZERO;
+            NumericValue to;
+            NumericValue step = Value.ONE;
             int argsize = lv.size();
             if (argsize == 0 || argsize > 3)
                 throw new InternalExpressionException("'range' accepts from 1 to 3 arguments, not "+argsize);
-            to = NumericValue.asNumber(lv.get(0)).getLong();
+            to = NumericValue.asNumber(lv.get(0));
             if (lv.size() > 1)
             {
                 from = to;
-                to = NumericValue.asNumber(lv.get(1)).getLong();
+                to = NumericValue.asNumber(lv.get(1));
                 if (lv.size() > 2)
                 {
-                    step = NumericValue.asNumber(lv.get(2)).getLong();
+                    step = NumericValue.asNumber(lv.get(2));
                 }
             }
-            return LazyListValue.range(from, to, step);
+            return (from.isInteger() && to.isInteger() && step.isInteger())
+                    ? LazyListValue.rangeLong(from.getLong(), to.getLong(), step.getLong())
+                    : LazyListValue.rangeDouble(from.getDouble(), to.getDouble(), step.getDouble());
         });
 
         expression.addLazyFunction("m", -1, (c, t, llv) ->

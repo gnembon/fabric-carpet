@@ -305,12 +305,15 @@ for folder listing.
  
 Supported values for resource `type` are:
  * `nbt` - NBT tag
+ * `json` - JSON file
  * `text` - text resource with automatic newlines added
  * `raw` - text resource without implied newlines
- * `folder` - for `list_files` only - indicting folder listing instead of files
- * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder` - shared versions of the above
+ * `folder` - for `list_files` only - indicating folder listing instead of files
+ * `shared_nbt`, `shared_text`, `shared_raw`, `shared_folder`, `shared_json` - shared versions of the above
  
-NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. Text files have `.txt` extension, 
+NBT files have extension `.nbt`, store one NBT tag, and return a NBT type value. JSON files have `.json` extension, store 
+Scarpet numbers, strings, lists, maps and `null` values. Anything else will be saved as a string (including NBT).  
+Text files have `.txt` extension, 
 stores multiple lines of text and returns lists of all lines from the file. With `write_file`, multiple lines can be
 sent to the file at once. The only difference between `raw` and `text` types are automatic newlines added after each
 record to the file. Since files are closed after each write, sending multiple lines of data to
@@ -406,9 +409,24 @@ averaging.
 
 ### `game_tick(mstime?)`
 
-Causes game to run for one tick. By default runs it and returns control to the program, but can optionally 
-accept expected tick length, in milliseconds. You can't use it to permanently change the game speed, but setting 
-longer commands with custom tick speeds can be interrupted via `/script stop` command
+Causes game to run for one tick. By default, it runs it and returns control to the program, but can optionally 
+accept expected tick length, in milliseconds, waits that extra remaining time and then returns the control to the program.
+You can't use it to permanently change the game speed, but setting 
+longer commands with custom tick speeds can be interrupted via `/script stop` command - if you can get access to the 
+command terminal.
+
+Running `game_tick()` as part of the code that runs within the game tick itself is generally a bad idea, 
+unless you know what this entails. Triggering the `game_tick()` will cause the current (shoulder) tick to pause, then run the internal tick, 
+then run the rest of the shoulder tick, which may lead to artifacts in between regular code execution and your game simulation code.
+If you need to break
+up your execution into chunks, you could queue the rest of the work into the next task using `schedule`, or perform your actions
+defining `__on_tick()` event handler, but in case you need to take a full control over the game loop and run some simulations using 
+`game_tick()` as the way to advance the game progress, that might be the simplest way to do it, 
+and triggering the script in a 'proper' way (there is not 'proper' way, but via commmand line, or server chat is the most 'proper'),
+would be the safest way to do it. For instance, running `game_tick()` from a command block triggered with a button, or in an entity
+ event triggered in an entity tick, may technically
+cause the game to run and encounter that call again, causing stack to overflow. Thankfully it doesn't happen in vanilla running 
+carpet, but may happen with other modified (modded) versions of the game.
 
 <pre>
 loop(1000,game_tick())  // runs the game as fast as it can for 1000 ticks
@@ -473,7 +491,7 @@ it could either mean your input is wrong, or statistic effectively has a value o
 ### `system_info()`, `system_info(property)`
 Fetches the value of a system property or returns all inforation as a map when called without any arguments. It can be used to 
 fetch various information, mostly not changing, or only available via low level
-system calls. In all cirumstances, these are only provided as read-only.
+system calls. In all circumstances, these are only provided as read-only.
 
 Available options in the scarpet app space:
   * `app_name` - current app name or `null` if its a default app
@@ -491,7 +509,7 @@ Available options in the scarpet app space:
 
 
  Relevant gameplay related properties
-  * `game_difficulty` - current difficulty of the game: `'peacefu'`, `'easy'`, `'normal'`, or `'hard'`
+  * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
   * `game_hardcore` - boolean whether the game is in hardcore mode
   * `game_storage_format` - format of the world save files, either `'McRegion'` or `'Anvil'`
   * `game_default_gamemode` - default gamemode for new players
@@ -499,6 +517,7 @@ Available options in the scarpet app space:
   * `game_view_distance` - the view distance
   * `game_mod_name` - the name of the base mod. Expect `'fabric'`
   * `game_version` - base version of the game
+  * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
   
  Server related properties
  * `server_motd` - the motd of the server visible when joining
@@ -507,6 +526,7 @@ Available options in the scarpet app space:
  * `server_whitelist` - list of players allowed to log in
  * `server_banned_players` - list of banned player names
  * `server_banned_ips` - list of banned IP addresses
+ * `server_dev_environment` - boolean indicating whether this server is in a development environment.
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
@@ -520,3 +540,9 @@ Available options in the scarpet app space:
  
  Scarpet related properties
  * `scarpet_version` - returns the version of the carpet your scarpet comes with.
+
+## NBT Storage
+
+### `nbt_storage()`, `nbt_storage(key)`, `nbt_storage(key, nbt)`
+Displays or modifies individual storage NBT tags. With no arguments, returns the list of current NBT storages. With specified `key`, returns the `nbt` associated with current `key`, or `null` if storage does not exist. With specified `key` and `nbt`, sets a new `nbt` value, returning previous value associated with the `key`.
+NOTE: This NBT storage is shared with all vanilla datapacks and scripts of the entire server and is persistent between restarts and reloads. You can also access this NBT storage with vanilla `/data <get|modify|merge> storage <key> ...` command.
