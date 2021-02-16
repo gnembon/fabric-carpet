@@ -16,9 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(StructureBlockScreen.class)
 public abstract class StructureBlockScreen_structureBlockLimitMixin
 {
-	@Shadow @Final private StructureBlockBlockEntity structureBlock;
+    @Shadow @Final private StructureBlockBlockEntity structureBlock;
 
-	@Inject(method = "method_2516", at = @At(value = "TAIL"), locals = LocalCapture.CAPTURE_FAILHARD)
+    @Inject(method = "method_2516", at = @At(value = "TAIL"), locals = LocalCapture.CAPTURE_FAILHARD)
     private void sendCarpetStructureBlockPacket(StructureBlockBlockEntity.Action action, CallbackInfoReturnable<Boolean> cir, BlockPos blockPos, BlockPos blockPos2)
     {
         if (CarpetSettings.structureBlockLimit != CarpetSettings.VANILLA_STRUCTURE_BLOCK_LIMIT)
