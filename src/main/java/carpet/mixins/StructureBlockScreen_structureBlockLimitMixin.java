@@ -1,7 +1,6 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import carpet.network.CarpetClient;
 import carpet.network.ClientNetworkHandler;
 import net.minecraft.block.entity.StructureBlockBlockEntity;
 import net.minecraft.client.gui.screen.ingame.StructureBlockScreen;
@@ -22,7 +21,7 @@ public abstract class StructureBlockScreen_structureBlockLimitMixin
 	@Inject(method = "method_2516", at = @At(value = "TAIL"), locals = LocalCapture.CAPTURE_FAILHARD)
     private void sendCarpetStructureBlockPacket(StructureBlockBlockEntity.Action action, CallbackInfoReturnable<Boolean> cir, BlockPos blockPos, BlockPos blockPos2)
     {
-        if (CarpetClient.isCarpet() && CarpetSettings.structureBlockLimit != CarpetSettings.VANILLA_STRUCTURE_BLOCK_LIMIT)
+        if (CarpetSettings.structureBlockLimit != CarpetSettings.VANILLA_STRUCTURE_BLOCK_LIMIT)
         {
             ClientNetworkHandler.sendCarpetStructureBlockPacket(this.structureBlock.getPos(), blockPos, blockPos2);
         }
