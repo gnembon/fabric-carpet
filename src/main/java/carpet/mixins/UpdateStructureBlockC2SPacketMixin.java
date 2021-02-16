@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.network.CarpetClient;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.c2s.play.UpdateStructureBlockC2SPacket;
 import net.minecraft.util.math.BlockPos;
@@ -35,11 +36,13 @@ public class UpdateStructureBlockC2SPacketMixin {
             at = @At("TAIL")
     )
     private void structureBlockLimitsWrite(PacketByteBuf buf, CallbackInfo ci) {
-        buf.writeInt(this.offset.getX());
-        buf.writeInt(this.offset.getY());
-        buf.writeInt(this.offset.getZ());
-        buf.writeInt(this.size.getX());
-        buf.writeInt(this.size.getY());
-        buf.writeInt(this.size.getZ());
+        if (CarpetClient.isCarpet()) {
+            buf.writeInt(this.offset.getX());
+            buf.writeInt(this.offset.getY());
+            buf.writeInt(this.offset.getZ());
+            buf.writeInt(this.size.getX());
+            buf.writeInt(this.size.getY());
+            buf.writeInt(this.size.getZ());
+        }
     }
 }
