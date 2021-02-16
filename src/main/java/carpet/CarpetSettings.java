@@ -799,10 +799,12 @@ public class CarpetSettings
     )
     public static boolean cleanLogs = false;
 
+    public static final int VANILLA_STRUCTURE_BLOCK_LIMIT = 48;
+
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue >= 48) ? newValue : null;
+            return (newValue >= VANILLA_STRUCTURE_BLOCK_LIMIT) ? newValue : null;
         }
 
         @Override
@@ -823,7 +825,7 @@ public class CarpetSettings
             validate = StructureBlockLimitValidator.class,
             strict = false
     )
-    public static int structureBlockLimit = 48;
+    public static int structureBlockLimit = VANILLA_STRUCTURE_BLOCK_LIMIT;
 
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 
