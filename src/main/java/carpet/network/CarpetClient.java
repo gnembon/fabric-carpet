@@ -16,6 +16,7 @@ public class CarpetClient
     public static final int HI = 69;
     public static final int HELLO = 420;
     public static final int DATA = 1;
+    public static final int STRUCTURE_BLOCK = 2;
     public static ShapesRenderer shapes = null;
 
     private static ClientPlayerEntity clientPlayer = null;

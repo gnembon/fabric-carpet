@@ -211,7 +211,9 @@
     "WorldRenderer_scarpetRenderMixin",
 
     "SoundEngineInt_cleanLogsMixin",
-    "SoundSystem_cleanLogsMixin"
+    "SoundSystem_cleanLogsMixin",
+
+    "StructureBlockScreen_structureBlockLimitMixin"
   ],
   "server": [
   ],

@@ -6,6 +6,9 @@ import carpet.helpers.TickSpeed;
 import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.StructureBlockBlockEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -17,6 +20,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,10 +47,18 @@ public class ServerNetworkHandler
         if (data != null)
         {
             int id = data.readVarInt();
-            if (id == CarpetClient.HELLO)
-                onHello(player, data);
-            if (id == CarpetClient.DATA)
-                onClientData(player, data);
+            switch (id)
+            {
+                case CarpetClient.HELLO:
+                    onHello(player, data);
+                    break;
+                case CarpetClient.DATA:
+                    onClientData(player, data);
+                    break;
+                case CarpetClient.STRUCTURE_BLOCK:
+                    onCarpetStructureBlockPacket(player, data);
+                    break;
+            }
         }
     }
 
@@ -258,6 +271,43 @@ public class ServerNetworkHandler
         if (remoteCarpetPlayers.containsKey(player)) return "carpet "+remoteCarpetPlayers.get(player);
         if (validCarpetPlayers.contains(player)) return "carpet "+CarpetSettings.carpetVersion;
         return "vanilla";
+    }
+
+    /**
+     * Use for carpet rule {@link CarpetSettings#structureBlockLimit}
+     * Reference: {@link net.minecraft.server.network.ServerPlayNetworkHandler#onStructureBlockUpdate}
+     */
+    public static void onCarpetStructureBlockPacket(ServerPlayerEntity player, PacketByteBuf data)
+    {
+        player.getServerWorld().getServer().execute(() ->
+        {
+            if (player.isCreativeLevelTwoOp())
+            {
+                BlockPos blockPos = data.readBlockPos();
+                BlockPos offset = new BlockPos(
+                        MathHelper.clamp(data.readVarInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit),
+                        MathHelper.clamp(data.readVarInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit),
+                        MathHelper.clamp(data.readVarInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit)
+                );
+                BlockPos size = new BlockPos(
+                        MathHelper.clamp(data.readVarInt(), 0, CarpetSettings.structureBlockLimit),
+                        MathHelper.clamp(data.readVarInt(), 0, CarpetSettings.structureBlockLimit),
+                        MathHelper.clamp(data.readVarInt(), 0, CarpetSettings.structureBlockLimit)
+                );
+
+                BlockState blockState = player.world.getBlockState(blockPos);
+                BlockEntity blockEntity = player.world.getBlockEntity(blockPos);
+                if (blockEntity instanceof StructureBlockBlockEntity)
+                {
+                    StructureBlockBlockEntity structureBlockBlockEntity = (StructureBlockBlockEntity) blockEntity;
+                    structureBlockBlockEntity.setOffset(offset);
+                    structureBlockBlockEntity.setSize(size);
+
+                    structureBlockBlockEntity.markDirty();
+                    player.world.updateListeners(blockPos, blockState, blockState, 3);
+                }
+            }
+        });
     }
 
     private static class DataBuilder

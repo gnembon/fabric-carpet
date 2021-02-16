@@ -15,6 +15,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -150,6 +151,22 @@ public class ClientNetworkHandler
         CarpetClient.getPlayer().networkHandler.sendPacket(new CustomPayloadC2SPacket(
                 CarpetClient.CARPET_CHANNEL,
                 (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.DATA).writeCompoundTag(outer)
+        ));
+    }
+
+    public static void sendCarpetStructureBlockPacket(BlockPos pos, BlockPos offset, BlockPos size)
+    {
+        CarpetClient.getPlayer().networkHandler.sendPacket(new CustomPayloadC2SPacket(
+                CarpetClient.CARPET_CHANNEL,
+                (new PacketByteBuf(Unpooled.buffer())).
+                        writeVarInt(CarpetClient.STRUCTURE_BLOCK).
+                        writeBlockPos(pos).
+                        writeVarInt(offset.getX()).
+                        writeVarInt(offset.getY()).
+                        writeVarInt(offset.getZ()).
+                        writeVarInt(size.getX()).
+                        writeVarInt(size.getY()).
+                        writeVarInt(size.getZ())
         ));
     }
 }

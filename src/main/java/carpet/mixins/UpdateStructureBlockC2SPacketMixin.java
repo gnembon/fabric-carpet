@@ -23,23 +23,11 @@ public class UpdateStructureBlockC2SPacketMixin {
             at = @At("TAIL")
     )
     private void structureBlockLimitsRead(PacketByteBuf buf, CallbackInfo ci) {
+        // fabric-carpet client 1.4.25 ~ 1.4.26 compatibility
         if (buf.readableBytes() > 0) {
             // This will throw an exception if carpet is not installed on client
             offset = new BlockPos(MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit));
             size = new BlockPos(MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit));
         }
-    }
-
-    @Inject(
-            method = "write",
-            at = @At("TAIL")
-    )
-    private void structureBlockLimitsWrite(PacketByteBuf buf, CallbackInfo ci) {
-        buf.writeInt(this.offset.getX());
-        buf.writeInt(this.offset.getY());
-        buf.writeInt(this.offset.getZ());
-        buf.writeInt(this.size.getX());
-        buf.writeInt(this.size.getY());
-        buf.writeInt(this.size.getZ());
     }
 }
