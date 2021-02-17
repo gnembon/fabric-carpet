@@ -114,48 +114,11 @@ public class Scoreboards {
         // objective_add('lvl','level')
         // objective_add('counter')
 
-        expression.addLazyFunction("scoreboard_add", -1, (c, t, lv)->
-        {
-            c.host.issueDeprecation("scoreboard_add(), (use scoreboard_set())");
-            CarpetContext cc = (CarpetContext)c;
-            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
-            if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
-            String objectiveName = lv.get(0).evalValue(c).getString();
-            ScoreboardCriterion criterion;
-            if (lv.size() == 1 )
-            {
-                criterion = ScoreboardCriterion.DUMMY;
-            }
-            else
-            {
-                String critetionName = lv.get(1).evalValue(c).getString();
-                criterion = ScoreboardCriterion.createStatCriterion(critetionName).orElse(null);
-                if (criterion==null)
-                {
-                    throw new InternalExpressionException("Unknown scoreboard criterion: "+critetionName);
-                }
-            }
-
-            ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
-            if (objective != null) {
-                if(lv.size() == 1) return (_c, _t) -> StringValue.of(objective.getCriterion().getName());
-                if(objective.getCriterion().equals(criterion) || lv.size() == 1) return LazyValue.NULL;
-                ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriterion()).remove(objective);
-                ((ScoreboardObjective_scarpetMixin) objective).setCriterion(criterion);
-                (((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
-                scoreboard.updateObjective(objective);
-                return LazyValue.FALSE;
-            }
-
-            scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getCriterionType());
-            return LazyValue.TRUE;
-        });
-
         expression.addLazyFunction("scoreboard_set", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
-            if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
+            if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_set' should have one or two parameters");
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardCriterion criterion;
             if (lv.size() == 1 )
@@ -186,6 +149,9 @@ public class Scoreboards {
             scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getCriterionType());
             return LazyValue.TRUE;
         });
+
+        //deprecated
+        expression.alias("scoreboard_add", "scoreboard_set");
 
         expression.addLazyFunction("scoreboard_display", 2, (c, t, lv) ->
         {
