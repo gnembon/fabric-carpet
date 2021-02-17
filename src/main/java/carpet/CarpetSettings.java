@@ -823,7 +823,7 @@ public class CarpetSettings
                     "'structureBlockOutlineDistance' may be required for",
                     "correct rendering of long structures."},
             options = {"48", "96", "192", "256"},
-            category = {CREATIVE, CLIENT},
+            category = CREATIVE,
             validate = StructureBlockLimitValidator.class,
             strict = false
     )

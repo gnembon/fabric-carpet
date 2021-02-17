@@ -1,6 +1,8 @@
 package carpet.mixins;
 
+import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.network.CarpetClient;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.c2s.play.UpdateStructureBlockC2SPacket;
 import net.minecraft.util.math.BlockPos;
@@ -23,7 +25,7 @@ public class UpdateStructureBlockC2SPacketMixin {
             at = @At("TAIL")
     )
     private void structureBlockLimitsRead(PacketByteBuf buf, CallbackInfo ci) {
-        if (buf.readableBytes() > 0) {
+        if (buf.readableBytes() == 6*4) {
             // This will throw an exception if carpet is not installed on client
             offset = new BlockPos(MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit));
             size = new BlockPos(MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), 0, CarpetSettings.structureBlockLimit));
@@ -35,11 +37,15 @@ public class UpdateStructureBlockC2SPacketMixin {
             at = @At("TAIL")
     )
     private void structureBlockLimitsWrite(PacketByteBuf buf, CallbackInfo ci) {
-        buf.writeInt(this.offset.getX());
-        buf.writeInt(this.offset.getY());
-        buf.writeInt(this.offset.getZ());
-        buf.writeInt(this.size.getX());
-        buf.writeInt(this.size.getY());
-        buf.writeInt(this.size.getZ());
+        //client method, only applicable if with carpet is on the server, or running locally
+        if (CarpetSettings.structureBlockLimit >= 128)
+        {
+            buf.writeInt(this.offset.getX());
+            buf.writeInt(this.offset.getY());
+            buf.writeInt(this.offset.getZ());
+            buf.writeInt(this.size.getX());
+            buf.writeInt(this.size.getY());
+            buf.writeInt(this.size.getZ());
+        }
     }
 }
