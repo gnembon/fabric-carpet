@@ -46,7 +46,6 @@ public class HopperCounter
     {
         this.color = color;
         this.prettyColour = getPrettyColour(color);
-        // pubSubProvider = new PubSubInfoProvider<>(QuickCarpet.PUBSUB, "carpet.counter." + color.getName(), 0, this::getTotalItems);
     }
 
     public void add(MinecraftServer server, ItemStack stack)
