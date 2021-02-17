@@ -1,12 +1,12 @@
 package carpet.mixins;
 
 import carpet.fakes.BiomeArrayInterface;
-import net.minecraft.class_5742;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeArray;
+import net.minecraft.world.biome.source.BiomeCoords;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,9 +30,9 @@ public class BiomeArray_getBiomeArrayMixin implements BiomeArrayInterface
     @Override
     public void setBiomeAtIndex(BlockPos pos, World world, Biome what)
     {
-        int int_4 = class_5742.method_33100(pos.getX()) & HORIZONTAL_BIT_MASK;
-        int int_5 = MathHelper.clamp(class_5742.method_33100(pos.getY())-field_28126, 0, field_28127);
-        int int_6 = class_5742.method_33100(pos.getZ()) & HORIZONTAL_BIT_MASK;
+        int int_4 = BiomeCoords.fromBlock(pos.getX()) & HORIZONTAL_BIT_MASK;
+        int int_5 = MathHelper.clamp(BiomeCoords.fromBlock(pos.getY())-field_28126, 0, field_28127);
+        int int_6 = BiomeCoords.fromBlock(pos.getZ()) & HORIZONTAL_BIT_MASK;
         data[(int_5 << (HORIZONTAL_SECTION_COUNT + HORIZONTAL_SECTION_COUNT)) | (int_6 << HORIZONTAL_SECTION_COUNT) | int_4] = what;
     }
 }

@@ -10,7 +10,7 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.util.math.AffineTransformation;
+import net.minecraft.util.math.AffineTransformation;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.nbt.CompoundTag;

@@ -4,7 +4,7 @@ import carpet.CarpetSettings;
 import carpet.fakes.ServerWorldInterface;
 import carpet.script.CarpetEventServer;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLike;
+import net.minecraft.world.entity.EntityLike;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.server.world.ServerWorld;
@@ -43,7 +43,7 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
 
     @Redirect(method = "addEntity", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/world/ServerEntityManager;addEntity(Lnet/minecraft/entity/EntityLike;)Z"
+            target = "Lnet/minecraft/server/world/ServerEntityManager;addEntity(Lnet/minecraft/world/entity/EntityLike;)Z"
     ))
     private boolean onEntityAddedToWorld(ServerEntityManager serverEntityManager, EntityLike entityLike)
     {
