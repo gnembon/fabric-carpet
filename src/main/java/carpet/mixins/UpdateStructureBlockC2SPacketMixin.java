@@ -38,7 +38,7 @@ public class UpdateStructureBlockC2SPacketMixin {
     )
     private void structureBlockLimitsWrite(PacketByteBuf buf, CallbackInfo ci) {
         //client method, only applicable if with carpet is on the server, or running locally
-        if (CarpetSettings.structureBlockLimit >= 128 && (CarpetClient.isCarpet() || CarpetServer.minecraft_server != null))
+        if (CarpetSettings.structureBlockLimit >= 128)
         {
             buf.writeInt(this.offset.getX());
             buf.writeInt(this.offset.getY());
