@@ -972,11 +972,10 @@ public class WorldAccess {
             return success ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
-        // TODO rename to use_item
-        expression.addLazyFunction("place_item", -1, (c, t, lv) ->
+        expression.addLazyFunction("use_item", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
-                throw new InternalExpressionException("'place_item' takes at least 2 parameters: item and block, or position, to place onto");
+                throw new InternalExpressionException("'use_item' takes at least 2 parameters: item and block, or position, to place onto");
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).evalValue(c).getString();
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
@@ -1026,6 +1025,8 @@ public class WorldAccess {
             }
             return (_c, _t) -> Value.FALSE;
         });
+
+        expression.alias("place_item", "use_item");
 
         expression.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
