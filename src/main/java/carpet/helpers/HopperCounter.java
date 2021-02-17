@@ -1,10 +1,10 @@
 package carpet.helpers;
 
+import carpet.utils.WoolTool;
 import carpet.utils.Messenger;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import net.minecraft.block.MaterialColor;
 import net.minecraft.util.DyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -45,7 +45,7 @@ public class HopperCounter
     private HopperCounter(DyeColor color)
     {
         this.color = color;
-        this.prettyColour = getPrettyColour(color);
+        this.prettyColour = WoolTool.Material2DyeName.get(color.getMaterialColor());//no need for getOrDefault cos I covered all possible options
     }
 
     public void add(MinecraftServer server, ItemStack stack)
@@ -155,45 +155,5 @@ public class HopperCounter
     public long getTotalItems()
     {
         return counter.values().stream().mapToLong(Long::longValue).sum();
-    }
-
-    private static String getPrettyColour(DyeColor colour){
-        return getPrettyColour(colour, "");
-    }
-
-    private static String getPrettyColour(DyeColor colour, String extra){
-        if (MaterialColor.WHITE.equals(colour.getMaterialColor())) {
-            return "w " + colour.getName() + extra;
-        } else if (MaterialColor.ORANGE.equals(colour.getMaterialColor())) {
-            return "#F9801D " + colour.getName();//cos not specific code for orange
-        } else if (MaterialColor.MAGENTA.equals(colour.getMaterialColor())) {
-            return "m " + colour.getName() + extra;
-        } else if (MaterialColor.LIGHT_BLUE.equals(colour.getMaterialColor())) {
-            return "t " + colour.getName() + extra;
-        } else if (MaterialColor.YELLOW.equals(colour.getMaterialColor())) {
-            return "y " + colour.getName() + extra;
-        } else if (MaterialColor.LIME.equals(colour.getMaterialColor())) {
-            return "l " + colour.getName() + extra;
-        } else if (MaterialColor.PINK.equals(colour.getMaterialColor())) {
-            return "#F38BAA " + colour.getName() + extra;
-        } else if (MaterialColor.GRAY.equals(colour.getMaterialColor())) {
-            return "f " + colour.getName() + extra;
-        } else if (MaterialColor.LIGHT_GRAY.equals(colour.getMaterialColor())) {
-            return "g " + colour.getName() + extra;
-        } else if (MaterialColor.CYAN.equals(colour.getMaterialColor())) {
-            return "c " + colour.getName() + extra;
-        } else if (MaterialColor.PURPLE.equals(colour.getMaterialColor())) {
-            return "p " + colour.getName() + extra;
-        } else if (MaterialColor.BLUE.equals(colour.getMaterialColor())) {
-            return "v " + colour.getName() + extra;
-        } else if (MaterialColor.BROWN.equals(colour.getMaterialColor())) {
-            return "#835432 " + colour.getName() + extra;
-        } else if (MaterialColor.GREEN.equals(colour.getMaterialColor())) {
-            return "e " + colour.getName() + extra;
-        } else if (MaterialColor.RED.equals(colour.getMaterialColor())) {
-            return "r " + colour.getName() + extra;
-        } else {//if black
-            return "k " + colour.getName() + extra;
-        }
     }
 }
