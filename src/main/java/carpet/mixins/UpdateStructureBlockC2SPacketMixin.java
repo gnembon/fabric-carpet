@@ -26,6 +26,7 @@ public class UpdateStructureBlockC2SPacketMixin {
     )
     private void structureBlockLimitsRead(PacketByteBuf buf, CallbackInfo ci) {
         // fabric-carpet client 1.4.25 ~ 1.4.26 compatibility
+        // TODO remove at some point with a major MC release as not important
         if (buf.readableBytes() == 6*4) {
             // This will throw an exception if carpet is not installed on client
             offset = new BlockPos(MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit), MathHelper.clamp(buf.readInt(), -CarpetSettings.structureBlockLimit, CarpetSettings.structureBlockLimit));
