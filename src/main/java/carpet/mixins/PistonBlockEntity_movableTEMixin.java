@@ -127,7 +127,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
         }
     }
     
-    @Inject(method = "fromTag", at = @At(value = "TAIL"))
+    @Inject(method = "readNbt", at = @At(value = "TAIL"))
     private void onFromTag(CompoundTag compoundTag_1, CallbackInfo ci)
     {
         if (CarpetSettings.movableBlockEntities && compoundTag_1.contains("carriedTileEntityCM", 10))
@@ -135,18 +135,18 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
             if (this.pushedBlock.getBlock() instanceof BlockEntityProvider)
                 this.carriedBlockEntity = ((BlockEntityProvider) (this.pushedBlock.getBlock())).createBlockEntity(pos, pushedBlock);//   this.world);
             if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
-                this.carriedBlockEntity.fromTag(compoundTag_1.getCompound("carriedTileEntityCM"));
+                this.carriedBlockEntity.readNbt(compoundTag_1.getCompound("carriedTileEntityCM"));
             setCarriedBlockEntity(carriedBlockEntity);
         }
     }
     
-    @Inject(method = "toTag", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
+    @Inject(method = "writeNbt", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
     private void onToTag(CompoundTag compoundTag_1, CallbackInfoReturnable<CompoundTag> cir)
     {
         if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null)
         {
             //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
-            compoundTag_1.put("carriedTileEntityCM", this.carriedBlockEntity.toTag(new CompoundTag()));
+            compoundTag_1.put("carriedTileEntityCM", this.carriedBlockEntity.writeNbt(new CompoundTag()));
         }
     }
 }

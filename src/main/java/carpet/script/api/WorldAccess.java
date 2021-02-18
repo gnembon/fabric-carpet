@@ -836,7 +836,7 @@ public class WorldAccess {
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
-                        be.fromTag(destTag);
+                        be.readNbt(destTag);
                         be.markDirty();
                         success = true;
                     }

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public abstract class StructureBlockBlockEntity_limitsMixin
 {
     @ModifyConstant(
-            method = "fromTag",
+            method = "readNbt",
             constant = @Constant(intValue = 48)
     )
     private int positiveLimit(int original) {
@@ -23,7 +23,7 @@ public abstract class StructureBlockBlockEntity_limitsMixin
     }
 
     @ModifyConstant(
-            method = "fromTag",
+            method = "readNbt",
             constant = @Constant(intValue = -48)
     )
     private int negativeLimit(int original) {
@@ -41,7 +41,7 @@ public abstract class StructureBlockBlockEntity_limitsMixin
     private Block ignoredBlock(Block original) {
         return CarpetSettings.structureBlockIgnoredBlock;
     }
-
+/*
     @Environment(EnvType.CLIENT)
     @ModifyConstant(
             method = "getSquaredRenderDistance",
@@ -50,4 +50,6 @@ public abstract class StructureBlockBlockEntity_limitsMixin
     private double outlineRenderDistanceLimit(double original) {
         return CarpetSettings.structureBlockOutlineDistance;
     }
+
+ */
 }

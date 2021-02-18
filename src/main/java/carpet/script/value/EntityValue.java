@@ -841,7 +841,7 @@ public class EntityValue extends Value
         });
 
         put("nbt",(e, a) -> {
-            CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
+            CompoundTag nbttagcompound = e.writeNbt((new CompoundTag()));
             if (a==null)
                 return new NBTSerializableValue(nbttagcompound);
             return new NBTSerializableValue(nbttagcompound).get(a);
@@ -884,7 +884,7 @@ public class EntityValue extends Value
             EnumSet<PlayerPositionLookS2CPacket.Flag> set  = EnumSet.noneOf(PlayerPositionLookS2CPacket.Flag.class);
             set.add(PlayerPositionLookS2CPacket.Flag.X_ROT);
             set.add(PlayerPositionLookS2CPacket.Flag.Y_ROT);
-            ((ServerPlayerEntity)e).networkHandler.teleportRequest(x, y, z, yaw, pitch, set );
+            ((ServerPlayerEntity)e).networkHandler.requestTeleport(x, y, z, yaw, pitch, set );
         }
         else
         {
@@ -1458,7 +1458,7 @@ public class EntityValue extends Value
                 Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof NBTSerializableValue)
                 {
-                    e.fromTag(((NBTSerializableValue) tagValue).getCompoundTag());
+                    e.readNbt(((NBTSerializableValue) tagValue).getCompoundTag());
                     e.setUuid(uUID);
                 }
             }
@@ -1470,9 +1470,9 @@ public class EntityValue extends Value
                 Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof NBTSerializableValue)
                 {
-                    CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
+                    CompoundTag nbttagcompound = e.writeNbt((new CompoundTag()));
                     nbttagcompound.copyFrom(((NBTSerializableValue) tagValue).getCompoundTag());
-                    e.fromTag(nbttagcompound);
+                    e.readNbt(nbttagcompound);
                     e.setUuid(uUID);
                 }
             }
@@ -1497,7 +1497,7 @@ public class EntityValue extends Value
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         CompoundTag tag = new CompoundTag();
-        tag.put("Data", getEntity().toTag( new CompoundTag()));
+        tag.put("Data", getEntity().writeNbt( new CompoundTag()));
         tag.put("Name", StringTag.of(Registry.ENTITY_TYPE.getId(getEntity().getType()).toString()));
         return tag;
     }

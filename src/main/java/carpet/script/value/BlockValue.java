@@ -121,7 +121,7 @@ public class BlockValue extends Value
                 data = tag;
                 return null;
             }
-            data = be.toTag(tag);
+            data = be.writeNbt(tag);
             return data;
         }
         return null;
