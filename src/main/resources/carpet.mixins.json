@@ -206,6 +206,7 @@
     "InGameHudMixin",
     "PlayerListHudMixin",
     "PistonBlockEntityRenderer_movableTEMixin",
+    "StructureBlockBlockEntityRenderer_mixin",
     "ClientPlayerEntity_clientCommandMixin",
     "WorldRenderer_fogOffMixin",
     "WorldRenderer_creativeNoClipMixin",

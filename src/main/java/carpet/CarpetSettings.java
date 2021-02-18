@@ -859,5 +859,5 @@ public class CarpetSettings
             strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
-    public static double structureBlockOutlineDistance = 96d;
+    public static int structureBlockOutlineDistance = 96;
 }
