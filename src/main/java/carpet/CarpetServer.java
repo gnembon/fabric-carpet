@@ -23,6 +23,8 @@ import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.LoggerRegistry;
 import carpet.script.CarpetScriptServer;
+import carpet.script.annotation.AnnotationParser;
+import carpet.script.annotation.FunctionsTestClass;
 import carpet.settings.SettingsManager;
 import carpet.logging.HUDController;
 import carpet.utils.FabricAPIHooks;
@@ -82,6 +84,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
+        AnnotationParser.parseFunctionClass(FunctionsTestClass.class);
     }
 
     public static void onServerLoaded(MinecraftServer server)
