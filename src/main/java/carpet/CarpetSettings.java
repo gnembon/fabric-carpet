@@ -52,6 +52,7 @@ public class CarpetSettings
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
+    public static final int vanillaStructureBlockLimit = 48;
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
@@ -802,7 +803,7 @@ public class CarpetSettings
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue >= 48) ? newValue : null;
+            return (newValue >= vanillaStructureBlockLimit) ? newValue : null;
         }
 
         @Override
@@ -823,7 +824,7 @@ public class CarpetSettings
             validate = StructureBlockLimitValidator.class,
             strict = false
     )
-    public static int structureBlockLimit = 48;
+    public static int structureBlockLimit = vanillaStructureBlockLimit;
 
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 
