@@ -856,4 +856,11 @@ public class CarpetSettings
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
     public static double structureBlockOutlineDistance = 96d;
+
+    @Rule(
+            desc = "Lightning kills the items that drop when lightning kills an entity",
+            extra = {"Setting to false will prevent lightning from killing drops", "Fixes (https://bugs.mojang.com/browse/MC-195640)."},
+            category = {BUGFIX}
+    )
+    public static boolean lightningKillsDropsFix = false;
 }
