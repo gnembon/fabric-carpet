@@ -6,15 +6,14 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Tokenizer.Token;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.Value;
 
 public class ProcessedThrowStatement extends ExpressionException {
-    public final Value exceptionName;
+    public final Throwables.Exception exception;
     public final String message;
     
-    public ProcessedThrowStatement(Context c, Expression e, Token token, String message, List<FunctionValue> stack, Value exceptionName) {
+    public ProcessedThrowStatement(Context c, Expression e, Token token, String message, List<FunctionValue> stack, Throwables.Exception exception) {
         super(c, e, token, "Unhandled exception: "+message, stack);
-        this.exceptionName = exceptionName;
+        this.exception = exception;
         this.message = message;
     }
 }

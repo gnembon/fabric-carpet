@@ -3,6 +3,7 @@ package carpet.script.value;
 import carpet.script.CarpetContext;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -75,7 +76,7 @@ public class BlockValue extends Value
         catch (CommandSyntaxException ignored)
         {
         }
-        throw new ThrowStatement("Cannot parse block: "+str, ThrowStatement.UNKNOWN_BLOCK);
+        throw new ThrowStatement("Cannot parse block: "+str, Throwables.UNKNOWN_BLOCK);
     }
 
     public static BlockPos locateBlockPos(CarpetContext c, int xpos, int ypos, int zpos)

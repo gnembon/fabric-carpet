@@ -7,6 +7,7 @@ import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
@@ -192,7 +193,7 @@ public class Inventories {
             String itemStr = lv.get(0).evalValue(c).getString();
             Item item;
             Identifier id = new Identifier(itemStr);
-            item = Registry.ITEM.getOrEmpty(id).orElseThrow(() -> new ThrowStatement("Incorrect item: "+itemStr, ThrowStatement.UNKNOWN_ITEM));
+            item = Registry.ITEM.getOrEmpty(id).orElseThrow(() -> new ThrowStatement("Incorrect item: "+itemStr, Throwables.UNKNOWN_ITEM));
 
             if (!item.hasRecipeRemainder()) return LazyValue.NULL;
             Value ret = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getId(item.getRecipeRemainder())));

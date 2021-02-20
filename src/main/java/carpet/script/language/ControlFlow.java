@@ -49,13 +49,15 @@ public class ControlFlow {
             switch (lv.size()) 
             {
                 case 0:
-                    throw new ThrowStatement("No further information", Value.NULL);
+                    throw new ThrowStatement(new StringValue("No further information"), Value.NULL, Value.NULL);
                 case 1:
                     throw new ThrowStatement(lv.get(0).evalValue(c));
                 case 2:
-                    throw new ThrowStatement(lv.get(1).evalValue(c).getString(), lv.get(0).evalValue(c));
+                    throw new ThrowStatement(lv.get(1).evalValue(c), lv.get(0).evalValue(c), Value.NULL);
+                case 3:
+                    throw new ThrowStatement(lv.get(1).evalValue(c), lv.get(0).evalValue(c), lv.get(2).evalValue(c));
                 default:
-                    throw new InternalExpressionException("throw() can't accept more than 2 parameters");
+                    throw new InternalExpressionException("throw() can't accept more than 3 parameters");
             }
         });
 
@@ -70,17 +72,23 @@ public class ControlFlow {
             }
             catch (ProcessedThrowStatement ret)
             {
+                if (ret.exception.isError())
+                    throw ret;
                 if (lv.size() == 1)
                     return (c_, t_) -> Value.NULL;
                 LazyValue __ = c.getVariable("_");
-                c.setVariable("_", (__c, __t) -> ret.exceptionName.reboundedTo("_"));
+                c.setVariable("_", (__c, __t) -> ret.exception.getValue().reboundedTo("_"));
                 LazyValue __msg = c.getVariable("_msg");
                 c.setVariable("_msg", (__c, __t) -> StringValue.of(ret.message).reboundedTo("_msg"));
                 Value val;
                 if (lv.size() == 3)
                 {
-                    if (!ret.exceptionName.equals(lv.get(1).evalValue(c)))
+                    if (!ret.exception.isInstance(lv.get(1).evalValue(c)))
+                    {
+                        c.setVariable("_", __);
+                        c.setVariable("_msg", __msg);
                         throw ret;
+                    }
                     val = lv.get(2).evalValue(c, t);
                 }
                 else

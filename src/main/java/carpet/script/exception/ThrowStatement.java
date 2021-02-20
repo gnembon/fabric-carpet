@@ -3,47 +3,35 @@ package carpet.script.exception;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Tokenizer.Token;
-import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+
+import static carpet.script.exception.Throwables.Exception;
 
 public class ThrowStatement extends InternalExpressionException
 {
-    public static final String UNKNOWN_ITEM        = "unknown_item";
-    public static final String UNKNOWN_BLOCK       = "unknown_block";
-    public static final String UNKNOWN_BIOME       = "unknown_biome";
-    public static final String UNKNOWN_SOUND       = "unknown_sound";
-    public static final String UNKNOWN_PARTICLE    = "unknown_particle";
-    public static final String UNKNOWN_POI_TYPE    = "unknown_poi_type";
-    public static final String UNKNOWN_DIMENSION   = "unknown_dimension";
-    public static final String UNKNOWN_STRUCTURE   = "unknown_structure";
-    public static final String UNKNOWN_CRITERION   = "unknown_criterion";
-    public static final String NBT_READ_EXCEPTION  = "nbt_read_exception";
-    public static final String JSON_READ_EXCEPTION = "json_read_exception";
-    public final Value retval;
+    private final Exception exception;
     /**
      * Creates a throw exception from a value.
      * That value will also be used as the message.<br>
-     * To use when throwing from Scarpet's {@code throw}
+     * To be used when throwing from Scarpet's {@code throw} function with a single argument
      * @param value The value to pass
      */
     public ThrowStatement(Value value)
     {
-        super(value.getString());
-        retval = value;
+        this(value, value, Value.NULL);
     }
     
     /**
-     * Creates a throw exception from a value, and 
-     * assigns it a specified message.<br>
-     * To use when throwing from Scarpet's {@code throw}
-     * function
+     * Creates a throw exception from a value, and assigns it a specified message.
+     * <p>To be used when throwing from Scarpet's {@code throw} function
      * @param message The message to display if uncaught
      * @param value The value to pass
+     * @param parent A parent's name
      */
-    public ThrowStatement(String message, Value value)
+    public ThrowStatement(Value message, Value value, Value parent)
     {
-        super(message);
-        retval = value;
+        super(message.getString());
+        exception = new Exception(value, parent);
     }
 
     /**
@@ -54,15 +42,16 @@ public class ThrowStatement extends InternalExpressionException
      * @param value A String that will be converted 
      *              to a value to pass to {@code catch}
      *              blocks
+     * @param parent This exception's data
      */
-    public ThrowStatement(String message, String value)
+    public ThrowStatement(String message, Exception exception)
     {
         super(message);
-        retval = new StringValue(value);
+        this.exception = exception;
     }
     
     @Override
     public ExpressionException promote(Context c, Expression e, Token token) {
-        return new ProcessedThrowStatement(c, e, token, getMessage(), stack, retval);
+        return new ProcessedThrowStatement(c, e, token, getMessage(), stack, exception);
     }
 }

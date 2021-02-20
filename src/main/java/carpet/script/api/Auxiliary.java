@@ -20,6 +20,7 @@ import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.utils.FixedCommandSource;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
@@ -132,7 +133,7 @@ public class Auxiliary {
             Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
-                throw new ThrowStatement("No such sound: "+soundName.getPath(), ThrowStatement.UNKNOWN_SOUND);
+                throw new ThrowStatement("No such sound: "+soundName.getPath(), Throwables.UNKNOWN_SOUND);
             float volume = 1.0F;
             float pitch = 1.0F;
             SoundCategory mixer = SoundCategory.MASTER;
@@ -828,7 +829,7 @@ public class Auxiliary {
                     state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
                 } catch (CrashException e)
                 {
-                    throw new ThrowStatement("Couldn't read NBT data", ThrowStatement.NBT_READ_EXCEPTION); 
+                    throw new ThrowStatement("Couldn't read NBT data", Throwables.NBT_READ); 
                 }
 
                 if (state == null) return LazyValue.NULL;
@@ -846,7 +847,7 @@ public class Auxiliary {
                     Throwable exc = e;
                     if(e.getCause() != null)
                         exc = e.getCause();
-                    throw new ThrowStatement("Failed to read JSON file: "+exc.getMessage(), ThrowStatement.JSON_READ_EXCEPTION);
+                    throw new ThrowStatement("Failed to read JSON file: "+exc.getMessage(), Throwables.JSON_READ);
                 }
                 Value parsedJson = gson.fromJson(json, Value.class);
                 if (parsedJson == null)
@@ -940,7 +941,7 @@ public class Auxiliary {
                 state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
             } catch (CrashException e)
             {
-                throw new ThrowStatement("Failed to read App data", ThrowStatement.NBT_READ_EXCEPTION);
+                throw new ThrowStatement("Failed to read App data", Throwables.NBT_READ);
             }
             if (state == null)
                 return (cc, tt) -> Value.NULL;

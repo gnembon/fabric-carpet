@@ -237,38 +237,49 @@ It terminates entire program passing `expr` as the result of the program executi
 ### `try(expr, id_filter?, catch_expr(_, _msg)?)`
 
 `try` function evaluates expression, and continues further unless an exception is thrown anywhere inside `expr`, 
-it being produced by `throw` or a catchable exception is thrown by Carpet. In that case the `catch_expr` is evaluated with 
-`_` set to the id of the exception and `_msg` set to the exception message. If `id_filter` is present, only exceptions
-with an id equal to that value will be catched, and any other exception will continue up the stack. It is recommended to filter
+it being produced by `throw` or a catchable exception being thrown by Carpet. In that case the `catch_expr` is evaluated with 
+`_` set to the id of the exception and `_msg` set to the exception message. If an `id_filter` is present, only exceptions
+with an id equal to that value will be caught, and any other exception will continue up the stack. It is recommended to filter
 the exceptions to catch to be able to distinguish from an exception that is known that may happen from one that shouldn't.
 This mechanic accepts skipping catch expression - then try returns `null`. This mechanism allows to terminate large 
-portion of a convoluted call stack and continue program  execution. There is only one level of exceptions currently in carpet, 
-so if the inner function also defines the `try` catchment area, it will received the exception first, but it can technically 
-rethrow the value its getting for the outer scope.
+portion of a convoluted call stack and continue program  execution.
+
+A `try` block will not only catch any exception whose id match the `id_filter`, but also any exception that has a parent with
+their id being that one, recursively.
 
 The `try` function allows you to catch some Scarpet exceptions for those cases when trying to get things like items,
-blocks, biomes or dimensions from registries, that may have been modified by resourcepacks or mods, or when an error that
-is out of the scope of the programmer occurs, like problems when reading a file.
+blocks, biomes or dimensions from registries, that may have been modified by datapacks, resourcepacks or other mods, or when an error that
+is out of the scope of the programmer occurs, such as problems when reading files.
 
-In this documentation, those are documented in at least most of the functions that throw them, and the current list of exceptions
-is the following:
-- `unknown_item`: Happens when a specified item doesn't exist
-- `unknown_block`: Happens when a specified block doesn't exist
-- `unknown_biome`: Happens when a specified biome doesn't exist
-- `unknown_sound`: Happens when a specified sound doesn't exist
-- `unknown_particle`: Happens when a specified particle doesn't exist
-- `unknown_poi_type`: Happens when a specified POI type doesn't exist
-- `unknown_dimension`: Happens when a specified dimension doesn't exist
-- `unknown_structure`: Happens when a specified structure doesn't exist
-- `unknown_criterion`: Happens when a specified scoreboard criterion doesn't exist
-- `nbt_read_exception`: Happens when there is an exception while reading an NBT file
-- `json_read_exception`: Happens when there is an exception while reading a JSON file
+In this documentation, those are documented in at least most of the functions that throw them, and the current exception
+hierarchy is the following:
+- `exception`: This is the base exception. Every exception has this as its top-level parent
+  - `value_exception`: This is the parent for any exception that occurs due to a provided value for something not being present in the game
+    - `unknown_item`: Happens when a specified item doesn't exist
+    - `unknown_block`: Happens when a specified block doesn't exist
+    - `unknown_biome`: Happens when a specified biome doesn't exist
+    - `unknown_sound`: Happens when a specified sound doesn't exist
+    - `unknown_particle`: Happens when a specified particle doesn't exist
+    - `unknown_poi_type`: Happens when a specified POI type doesn't exist
+    - `unknown_dimension`: Happens when a specified dimension doesn't exist
+    - `unknown_structure`: Happens when a specified structure doesn't exist
+    - `unknown_criterion`: Happens when a specified scoreboard criterion doesn't exist
+  - `file_read_exception`: This is the parent for any exception that occurs due to an error while reading a file, including appdata load
+    - `nbt_read_exception`: Happens when there is an exception while reading an NBT file
+    - `json_read_exception`: Happens when there is an exception while reading a JSON file
+  - `user_defined_exception`: This is the parent for any exception thrown by the below `throw` function, except for those that explicitly declare
+                                    their parent to be one of the above
 
-### `throw(id?, message?)`
+### `throw(id?, message?, parent?)`
 
-Throws an exception that can be catched in a `try` block (see above). If ran without arguments, it will pass `null`
+Throws an exception that can be caught in a `try` block (see above). If ran without arguments, it will pass `null`
 as the value to the `catch_expr`. `message` is the message to show to chat or console in case the `throw` is 
 unhandled.
+
+By default, the parent of any exception thrown by this function is `user_defined_exception`.
+You can specify the `parent` to be either an already existing exception from the list above, in which case your exception
+will not inherit from `user_defined_exception`, or specify a custom one, in which case your exception will inherit from
+`exception` > `user_defined_exception` > `parent` > `id`
 
 ### `if(cond, expr, cond?, expr?, ..., default?)`
 
