@@ -234,26 +234,27 @@ returns everywhere, but it would often lead to a messy code.
 
 It terminates entire program passing `expr` as the result of the program execution, or null if omitted.
 
-### `try(expr, id_filter?, catch_expr(_, _msg)?, id_filter2?, catch_expr2(_, _msg), ...)`
+### `try(expr, id_filter, catch_expr(_, _msg), id_filter2?, catch_expr2(_, _msg), ...)`
 
 `try` function evaluates expression, and continues further unless an exception is thrown anywhere inside `expr`, 
 it being produced by `throw` or a catchable exception being thrown by Carpet. In that case the `catch_expr` is evaluated with 
-`_` set to the id of the exception and `_msg` set to the exception message. If an `id_filter` is present, only exceptions
-with an id equal to that value will be caught, and any other exception will continue up the stack. You can specify multiple filters
+`_` set to the id of the exception and `_msg` set to the exception message. Only exceptions with their or their parent's id(recursively) equal 
+to a provided `id_filter` will be caught, and any other exception will continue up the stack. You can specify multiple filters
 and their respective `catch_expr` to be able to catch different exceptions within the same code. When an exception occurs, the script 
 will try to find an equality with every provided filter in order. Therefore, even if the caught exception matches multiple filters, only 
 the first matching block will be executed. It is recommended to filter the exceptions to catch to be able to distinguish from an exception 
 that is known that may happen from one that shouldn't.
 
-This mechanic accepts skipping catch expression - then try returns `null`. This mechanism allows to terminate large 
-portion of a convoluted call stack and continue program  execution.
-
-A `try` block will not only catch any exception whose id match the `id_filter`, but also any exception that has a parent with
-their id being that one, recursively.
+This mechanism allows to terminate large portion of a convoluted call stack and continue program  execution.
 
 The `try` function allows you to catch some Scarpet exceptions for those cases when trying to get things like items,
 blocks, biomes or dimensions from registries, that may have been modified by datapacks, resourcepacks or other mods, or when an error that
 is out of the scope of the programmer occurs, such as problems when reading files.
+
+Deprecated usages:
+- `try(expr)`: Filter the exception you are looking for, and provide something as the `catch_expr` (use `null` if you have nothing to provide).
+                 Example replacement: `try(expr, 'exception', null)`
+- `try(expr, catch_expr)`: Filter the exception you are looking for.
 
 In this documentation, those are documented in at least most of the functions that throw them, and the current exception
 hierarchy is the following:
@@ -274,7 +275,7 @@ hierarchy is the following:
   - `user_defined_exception`: This is the parent for any exception thrown by the below `throw` function, except for those that explicitly declare
                                     their parent to be one of the above
 
-### `throw(id?, message?, parent?)`
+### `throw(id, message?, parent?)`
 
 Throws an exception that can be caught in a `try` block (see above). If ran without arguments, it will pass `null`
 as the value to the `catch_expr`. `message` is the message to show to chat or console in case the `throw` is 
@@ -283,7 +284,9 @@ unhandled.
 By default, the parent of any exception thrown by this function is `user_defined_exception`.
 You can specify the `parent` to be either an already existing exception from the list above, in which case your exception
 will not inherit from `user_defined_exception`, or specify a custom one, in which case your exception will inherit from
-`exception` > `user_defined_exception` > `parent` > `id`
+`exception` > `user_defined_exception` > `parent` > `id`.
+
+Deprecated usage: `throw()` (without id): Specify at least the id of your exception
 
 ### `if(cond, expr, cond?, expr?, ..., default?)`
 

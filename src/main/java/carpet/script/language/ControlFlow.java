@@ -49,6 +49,7 @@ public class ControlFlow {
             switch (lv.size()) 
             {
                 case 0:
+                    c.host.issueDeprecation("throw() (without id)");
                     throw new ThrowStatement(new StringValue("No further information"), Value.NULL, Value.NULL);
                 case 1:
                     throw new ThrowStatement(lv.get(0).evalValue(c));
@@ -64,7 +65,7 @@ public class ControlFlow {
         expression.addLazyFunction("try", -1, (c, t, lv) ->
         {
             if (lv.size()==0)
-                throw new InternalExpressionException("'try' needs at least an expression block");
+                throw new InternalExpressionException("'try' needs at least an expression block, a filter, and a catch_epr");
             try
             {
                 Value retval = lv.get(0).evalValue(c, t);
@@ -75,13 +76,16 @@ public class ControlFlow {
                 if (ret.exception.isError())
                     throw ret;
                 if (lv.size() == 1)
+                {
+                    c.host.issueDeprecation("try(expr) (without filter and catch expression)");
                     return (c_, t_) -> Value.NULL;
-                // This is outside since it is also used in try(expr,catch_expr).
+                }
+                // This is outside since it is used in try(expr,catch_expr)
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.exception.getValue().reboundedTo("_"));
                 LazyValue __msg = c.getVariable("_msg");
                 c.setVariable("_msg", (__c, __t) -> StringValue.of(ret.message).reboundedTo("_msg"));
-                Value val = null; // This is always assigned, just the compiler doesn't know
+                Value val = null; // This is always assigned at some point, just the compiler doesn't know
                 if (lv.size() >= 3)
                 {
                     if (lv.size() % 2 == 0)
@@ -107,6 +111,7 @@ public class ControlFlow {
                 }
                 else
                 {
+                    c.host.issueDeprecation("try(expr, catch_expr) (without filter)");
                     val = lv.get(1).evalValue(c, t);
                 }
                 c.setVariable("_",__);
