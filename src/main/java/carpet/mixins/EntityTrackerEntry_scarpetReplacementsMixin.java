@@ -33,7 +33,7 @@ public class EntityTrackerEntry_scarpetReplacementsMixin {
     @Inject(method = "startTracking", at = @At("HEAD"), cancellable = true)
     public void cancelIfCarpet(ServerPlayerEntity player, CallbackInfo ci)
     {
-        if (isCarpetReplacementEntity && !((CarpetFakeReplacementEntity) entity).getPlayersToSendList().contains(player))
+        if (isCarpetReplacementEntity && !((CarpetFakeReplacementEntity) entity).getPlayersToSend().contains(player))
             ci.cancel();
     }
     

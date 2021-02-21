@@ -1,6 +1,6 @@
 package carpet.script.utils;
 
-import java.util.List;
+import java.util.Set;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -9,14 +9,14 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 
 public class CarpetArmorStandLabel extends ArmorStandEntity implements CarpetFakeReplacementEntity {
-    private final List<ServerPlayerEntity> playersToSendList;
+    private final Set<ServerPlayerEntity> playersToSend;
 
-    public CarpetArmorStandLabel(World world, List<ServerPlayerEntity> playersToSend) {
+    public CarpetArmorStandLabel(World world, Set<ServerPlayerEntity> playersToSend) {
         super(EntityType.ARMOR_STAND, world);
         setCustomNameVisible(true);
         setInvulnerable(true);
         setNoGravity(true);
-        this.playersToSendList = playersToSend;
+        this.playersToSend = playersToSend;
         
         // Cheap setMarker(true) since it's private
         this.dataTracker.set(ARMOR_STAND_FLAGS, (byte)((Byte)this.dataTracker.get(ARMOR_STAND_FLAGS) | 16));
@@ -44,8 +44,8 @@ public class CarpetArmorStandLabel extends ArmorStandEntity implements CarpetFak
     }
     
     @Override
-    public List<ServerPlayerEntity> getPlayersToSendList()
+    public Set<ServerPlayerEntity> getPlayersToSend()
     {
-        return playersToSendList;
+        return playersToSend;
     }
 }

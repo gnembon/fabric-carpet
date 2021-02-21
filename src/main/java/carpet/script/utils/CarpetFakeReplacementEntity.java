@@ -1,6 +1,6 @@
 package carpet.script.utils;
 
-import java.util.List;
+import java.util.Set;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -14,7 +14,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
  */
 public interface CarpetFakeReplacementEntity {
     /**
-     * @return The list of players that this entity should be sent to
+     * @return The {@link Set} of players that this entity should be sent to
      */
-    public List<ServerPlayerEntity> getPlayersToSendList();
+    public Set<ServerPlayerEntity> getPlayersToSend();
 }

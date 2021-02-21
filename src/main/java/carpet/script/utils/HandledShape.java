@@ -1,15 +1,16 @@
 package carpet.script.utils;
 
-import java.util.List;
+import java.util.Set;
+
 import carpet.script.CarpetContext;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 public abstract class HandledShape {
-	protected final List<ServerPlayerEntity> playersList;
+	protected final Set<ServerPlayerEntity> playersSet;
 	
-	public HandledShape(List<ServerPlayerEntity> playersList) {
-		this.playersList = playersList;
+	public HandledShape(Set<ServerPlayerEntity> playersSet) {
+		this.playersSet = playersSet;
 	}
 	
 	/**
@@ -22,8 +23,8 @@ public abstract class HandledShape {
 	 * @return Whether the shape was removed because its player list ended up empty
 	 */
 	public boolean isRemovedOnPlayerLeft(ServerPlayerEntity p) {
-		playersList.remove(p);
-		if (playersList.isEmpty())
+		playersSet.remove(p);
+		if (playersSet.isEmpty())
 		{
 			remove();
 			return true;
@@ -39,10 +40,10 @@ public abstract class HandledShape {
 	public static class HandledLabel extends HandledShape {
 		private final CarpetArmorStandLabel entity;
 
-		public HandledLabel(List<ServerPlayerEntity> playersList, Text text, CarpetContext cc)
+		public HandledLabel(Set<ServerPlayerEntity> playersSet, Text text, CarpetContext cc)
 		{
-			super(playersList);
-			this.entity = new CarpetArmorStandLabel(cc.s.getWorld(), this.playersList);
+			super(playersSet);
+			this.entity = new CarpetArmorStandLabel(cc.s.getWorld(), this.playersSet);
 			entity.setCustomName(text);
 			cc.s.getWorld().spawnEntity(entity);
 		}
