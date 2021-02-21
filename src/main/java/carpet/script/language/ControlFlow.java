@@ -76,20 +76,34 @@ public class ControlFlow {
                     throw ret;
                 if (lv.size() == 1)
                     return (c_, t_) -> Value.NULL;
+                // This is outside since it is also used in try(expr,catch_expr).
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.exception.getValue().reboundedTo("_"));
                 LazyValue __msg = c.getVariable("_msg");
                 c.setVariable("_msg", (__c, __t) -> StringValue.of(ret.message).reboundedTo("_msg"));
-                Value val;
-                if (lv.size() == 3)
+                Value val = null; // This is always assigned, just the compiler doesn't know
+                if (lv.size() >= 3)
                 {
-                    if (!ret.exception.isInstance(lv.get(1).evalValue(c)))
+                    if (lv.size() % 2 == 0)
+                        throw new InternalExpressionException("Multi-catch block needs a catch expression for every filter");
+                    int pointer = 1;
+                    boolean handled = false;
+                    while (pointer < lv.size() -1)
                     {
-                        c.setVariable("_", __);
+                        if (ret.exception.isInstance(lv.get(pointer).evalValue(c)))
+                        {
+                            val = lv.get(pointer + 1).evalValue(c, t);
+                            handled = true;
+                            break;
+                        }
+                        pointer += 2;
+                    }
+                    if (!handled)
+                    {
+                    	c.setVariable("_", __);
                         c.setVariable("_msg", __msg);
                         throw ret;
                     }
-                    val = lv.get(2).evalValue(c, t);
                 }
                 else
                 {
@@ -97,7 +111,8 @@ public class ControlFlow {
                 }
                 c.setVariable("_",__);
                 c.setVariable("_msg", __msg);
-                return (c_, t_) -> val;
+                Value retval = val;
+                return (c_, t_) -> retval;
             }
         });
     }

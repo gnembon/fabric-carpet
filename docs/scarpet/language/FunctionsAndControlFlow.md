@@ -234,13 +234,17 @@ returns everywhere, but it would often lead to a messy code.
 
 It terminates entire program passing `expr` as the result of the program execution, or null if omitted.
 
-### `try(expr, id_filter?, catch_expr(_, _msg)?)`
+### `try(expr, id_filter?, catch_expr(_, _msg)?, id_filter2?, catch_expr2(_, _msg), ...)`
 
 `try` function evaluates expression, and continues further unless an exception is thrown anywhere inside `expr`, 
 it being produced by `throw` or a catchable exception being thrown by Carpet. In that case the `catch_expr` is evaluated with 
 `_` set to the id of the exception and `_msg` set to the exception message. If an `id_filter` is present, only exceptions
-with an id equal to that value will be caught, and any other exception will continue up the stack. It is recommended to filter
-the exceptions to catch to be able to distinguish from an exception that is known that may happen from one that shouldn't.
+with an id equal to that value will be caught, and any other exception will continue up the stack. You can specify multiple filters
+and their respective `catch_expr` to be able to catch different exceptions within the same code. When an exception occurs, the script 
+will try to find an equality with every provided filter in order. Therefore, even if the caught exception matches multiple filters, only 
+the first matching block will be executed. It is recommended to filter the exceptions to catch to be able to distinguish from an exception 
+that is known that may happen from one that shouldn't.
+
 This mechanic accepts skipping catch expression - then try returns `null`. This mechanism allows to terminate large 
 portion of a convoluted call stack and continue program  execution.
 
