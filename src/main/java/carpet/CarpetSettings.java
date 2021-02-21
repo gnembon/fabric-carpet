@@ -860,7 +860,7 @@ public class CarpetSettings
 
     @Rule(
             desc = "Lightning kills the items that drop when lightning kills an entity",
-            extra = {"Setting to true will prevent lightning from killing drops", "Fixes (https://bugs.mojang.com/browse/MC-206922)."},
+            extra = {"Setting to true will prevent lightning from killing drops", "Fixes [MC-206922](https://bugs.mojang.com/browse/MC-206922)."},
             category = {BUGFIX}
     )
     public static boolean lightningKillsDropsFix = false;
