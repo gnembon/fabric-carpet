@@ -286,6 +286,8 @@ You can specify the `parent` to be either an already existing exception from the
 will not inherit from `user_defined_exception`, or specify a custom one, in which case your exception will inherit from
 `exception` > `user_defined_exception` > `parent` > `id`.
 
+If you don't want your exception to be handled, you can use `error` as the `parent` to throw an error which cannot be handled.
+
 Deprecated usage: `throw()` (without id): Specify at least the id of your exception
 
 ### `if(cond, expr, cond?, expr?, ..., default?)`
