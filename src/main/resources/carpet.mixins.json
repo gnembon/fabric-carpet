@@ -158,7 +158,8 @@
     "Projectile_extremeMixin",
 
     "ArmorStandEntity_scarpetMarkerMixin",
-    "EntityTrackerEntry_scarpetLabelMixin",
+    "EntityTrackerEntry_scarpetReplacementsMixin",
+    "EntitySelector_scarpetReplacementsMixin",
     "Entity_scarpetEventsMixin",
     "LivingEntity_scarpetEventsMixin",
     "PlayerEntity_scarpetEventsMixin",
