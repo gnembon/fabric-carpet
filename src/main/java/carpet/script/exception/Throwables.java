@@ -12,10 +12,10 @@ import carpet.script.value.Value;
  * methods to check whether filters are compatible with those.
  * 
  * Exceptions here cannot be thrown as an actual {@link Throwable}, they are just part of the metadata for
- * {@link ThrowStatement}
+ * {@link ThrowStatement} and {@link ProcessedThrowStatement}
  */
 public class Throwables {
-    private static final Map<Value, Exception> byValue = new HashMap<>();
+    protected static final Map<Value, Exception> byValue = new HashMap<>();
     public static final Exception EXCEPTION               = register("exception", null);
     public static final Exception   VALUE_EXCEPTION       = register("value_exception", EXCEPTION);
     public static final Exception     UNKNOWN_ITEM        = register("unknown_item", VALUE_EXCEPTION);
@@ -39,11 +39,11 @@ public class Throwables {
      * Creates an exception and registers it to be used as parent for
      * user defined exceptions in Scarpet's throw function.
      * <p>Scarpet exceptions should, in general, have a top-level parent being {@link Throwables#EXCEPTION} 
-     * @param name The name for the exception. Will be converted into a {@link StringValue}
+     * @param value The value for the exception as a {@link String}. Will be converted into a {@link StringValue}
      * @param parent The parent of the exception being created, or <code>null</code> if top-level
      * @return The created exception
      */
-    protected static Exception register(String value, Exception parent)
+    public static Exception register(String value, Exception parent)
     {
         Exception exc = new Exception(value, parent);
         byValue.put(exc.getValue(), exc);
@@ -65,14 +65,14 @@ public class Throwables {
          * <p>Parent will default to {@link Throwables#USER_DEFINED} if provided
          * parentValue meets Value#isNull, else it will create a new {@link Exception},
          * with its parent being {@link Throwables#USER_DEFINED}.
-         * @param name The name/id of the exception
-         * @param parentValue An optional Value matching the name of a parent exception.
-         *               <br>Accepts a {@link NullValue}, but not a <code>null</code>
+         * @param value The {@link Value} of the exception
+         * @param parentValue An optional {@link Value} matching the name of a parent exception.
+         *               <br>Accepts a {@link NullValue}, but not a {@code null}
          */
         public Exception(Value value, Value parentValue)
         {
             if (byValue.containsKey(value))
-                throw new InternalExpressionException("Exception id can't be the same as existing exception. Use it as parent instead");
+                throw new InternalExpressionException("Exception value can't be the same as existing exception. Use it as parent instead");
             this.value = value;
             if (!parentValue.isNull())
             {
@@ -87,7 +87,7 @@ public class Throwables {
          * Creates a new exception.
          * <p>Not suitable for creating exceptions that can't be caught.
          * Use an {@link InternalExpressionException} for that
-         * @param name The exception's name/id
+         * @param value The exception's value as a {@link String}
          * @param parent The parent exception, or <code>null</code> if no parent is available
          */
         protected Exception(String value, Exception parent)
@@ -100,7 +100,7 @@ public class Throwables {
         /**
          * Checks whether the given filter matches an instance of this exception, including checking equality
          * with itself and possible parents.
-         * @param filter The value to check against
+         * @param filter The {@link Value} to check against
          * @return Whether or not the given value matches this exception's hierarchy
          */
         public boolean isInstance(Value filter) {
