@@ -60,7 +60,7 @@ draw_pyramid(args)->(
     pointup = pointing=='up';
     for(range(height),
         r = if(pointup, radius * ( 1- _ / height) -1, radius * _ / height);
-        positions += fill_flat(pos, _, r, is_square, orientation, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow))//Always close bottom off
+        positions += fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow)//Always close bottom off
     );
     return(positions)
 );
@@ -71,7 +71,7 @@ draw_prism(args)->(
     hollow = fill_type =='hollow';
     radius = rad+0.5;
     for(range(height),
-        positions += fill_flat(pos, _, radius, is_square, orientation, if(_==0 || _==height-1,false,hollow))//Always close ends off
+        positions += fill_flat(pos, _, radius, is_square, orientation, !(_==0 || _==height-1) && hollow)//Always close ends off
     );
     return(positions)
 );
