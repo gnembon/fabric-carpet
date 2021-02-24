@@ -225,16 +225,16 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
         PLAYER_DEPLOYS_ELYTRA.onPlayerEvent(player);
     }
 
-    @Inject(method = "onPlayerInteractEntity", at = @At(
+    /*@Inject(method = "onPlayerInteractEntity", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerPlayerEntity;interact(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/Hand;)Lnet/minecraft/util/ActionResult;"
     ))
     private void onEntityInteract(PlayerInteractEntityC2SPacket playerInteractEntityC2SPacket_1, CallbackInfo ci)
     {
         PLAYER_INTERACTS_WITH_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), playerInteractEntityC2SPacket_1.getHand());
-    }
+    }*/
 
-    @Inject(method = "onPlayerInteractEntity", at = @At(
+    /*@Inject(method = "onPlayerInteractEntity", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/network/ServerPlayerEntity;attack(Lnet/minecraft/entity/Entity;)V"
     ))
@@ -242,7 +242,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
     {
         //todo add hit and hand in the future
         PLAYER_ATTACKS_ENTITY.onEntityHandAction(player, playerInteractEntityC2SPacket_1.getEntity(player.getServerWorld()), null);
-    }
+    }*/
 
     @Inject(method = "onButtonClick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateLastActionTime()V"))
     private void onItemBeingPickedFromInventory(ButtonClickC2SPacket packet, CallbackInfo ci)

@@ -158,12 +158,12 @@ public class FeatureGenerator
         ChunkPos chunkPos2 = structure.getStartChunk(params, seed, chunkRandom, chunkPos.x, chunkPos.z); //find some chunk I guess
         // using here world for heightview, rather than chunk since we - unlike vanilla, want to avoid creating any chunks even on the
         // structure starts level - lets see where would that take us.
-        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos.x, chunkPos.z, biome, chunkPos, configuredFeature.config, world)) // should start at
+        if (chunkPos.x == chunkPos2.x && chunkPos.z == chunkPos2.z && ((StructureFeatureInterface)structure).shouldStartPublicAt(generator, generator.getBiomeSource(), seed, chunkRandom, chunkPos, biome, chunkPos, configuredFeature.config, world)) // should start at
         {
             if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
-            StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, seed);
-            structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos.x, chunkPos.z, biome, (T) configuredFeature.config, world);
+            StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos, BlockBox.empty(), 0, seed);
+            structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos, biome, (T) configuredFeature.config, world);
             if (!structureStart3.hasChildren()) return null;
             return structureStart3;
         }

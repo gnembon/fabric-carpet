@@ -1356,7 +1356,7 @@ public class WorldAccess {
                         return;
                     }
                     StructureStart<?> start = structures.get(structure);
-                    ChunkPos structureChunkPos = new ChunkPos(start.getChunkX(), start.getChunkZ());
+                    ChunkPos structureChunkPos = start.method_34000(); //   new ChunkPos(start.getChunkX(), start.getChunkZ());
                     BlockBox box = start.getBoundingBox();
                     for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
                     {

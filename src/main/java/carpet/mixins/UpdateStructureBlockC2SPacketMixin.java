@@ -21,7 +21,7 @@ public class UpdateStructureBlockC2SPacketMixin {
     private BlockPos size;
 
     @Inject(
-            method = "read",
+            method = "<init>(Lnet/minecraft/network/PacketByteBuf;)V",
             at = @At("TAIL")
     )
     private void structureBlockLimitsRead(PacketByteBuf buf, CallbackInfo ci) {

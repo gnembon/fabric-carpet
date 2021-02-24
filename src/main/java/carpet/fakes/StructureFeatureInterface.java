@@ -13,5 +13,5 @@ import net.minecraft.world.gen.feature.FeatureConfig;
 public interface StructureFeatureInterface<C>
 {
     boolean plopAnywhere(ServerWorld world, BlockPos pos, ChunkGenerator generator, boolean wireOnly,Biome biome, FeatureConfig config);
-    boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, int i, int j, Biome biome, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
+    boolean shouldStartPublicAt(ChunkGenerator chunkGenerator, BiomeSource biomeSource, long l, ChunkRandom chunkRandom, ChunkPos chpos, Biome biome, ChunkPos chunkPos, C featureConfig, HeightLimitView heightLimitView);
 }

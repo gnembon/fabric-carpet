@@ -75,7 +75,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
 
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(playerShadow, (byte) (player.headYaw * 256 / 360)), playerShadow.world.getRegistryKey());
-        server.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, playerShadow));
+        server.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.class_5893.field_29136, playerShadow));
         player.getServerWorld().getChunkManager().updateCameraPosition(playerShadow);
         return playerShadow;
     }
