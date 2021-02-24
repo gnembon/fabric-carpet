@@ -1,4 +1,4 @@
-__command() -> '
+_command() -> '
 ai_tracker allows to display
 some extra information about
 various entities AI activity
@@ -18,72 +18,12 @@ Current supported actions
  - breeding info for villagers
 
 Settings you may want to change
- - toggle_boxes: hides/shows large boxes and spheres
+ - toggle boxes: hides/shows large boxes and spheres
  - update_frequency: changes update speed
  - clear: removes all options
  - transparency: default opacity of shapes, 8 for start
 ';
 
-
-global_duration = 12;
-global_interval = 10;
-
-global_opacity = 8;
-
-global_display_boxes = true;
-
-
-
-global_range = 48;
-
-// list of triples - [entity_type, feature, callback]
-global_active_functions = [];
-global_feature_switches = {};
-global_tracker_running = false;
-
-villager_iron_golem_spawning() -> __toggle('villager_iron_golem_spawning', null);
-pathfinding() -> __toggle('pathfinding', null);
-velocity() -> __toggle('velocity', null);
-villager_breeding() -> __toggle('villager_breeding', null);
-villager_buddy_detection() -> __toggle('villager_buddy_detection', null);
-item_pickup() -> __toggle('item_pickup', null);
-portal_cooldown() -> __toggle('portal_cooldown', null);
-health() -> __toggle('health', null);
-//xpstack() -> __toggle('xpstack', null); //1.17 feature
-
-toggle_boxes() ->
-(
-   global_display_boxes = !global_display_boxes;
-   null;
-);
-
-update_frequency(ticks) ->
-(
-   if (type(ticks) != 'number' || ticks <=0 || ticks > 100, exit('Ticks needs to be a positive number from 1 to 100'));
-   global_interval = ticks;
-   global_duration = ticks + 2;
-   null;
-);
-
-transparency(alpha) ->
-(
-   if (type(alpha) != 'number' || alpha <=0 || alpha > 255, exit('Ticks needs to be a number from 0 to 255'));
-   global_opacity = floor(alpha);
-   null;
-);
-
-
-
-villager_hostile_detection(hostile) ->
-(
-   if (!has(global_hostile_to_villager:hostile),
-      print(player(), 'Unknown hostile that affects villagers, possible options are: '+keys(global_hostile_to_villager));
-      exit(null);
-   );
-   __toggle('villager_hostile_detection', hostile);
-);
-
-global_entity_positions = {};
 
 global_functions = {
    'villager_iron_golem_spawning' -> {
@@ -145,8 +85,9 @@ global_functions = {
                   [10+half_width,10+height,10+half_width],
                   0x65432100, 'buddy detection', false
             );
+            [x,y,z] = pos(e);
             current_id = e~'id';
-            buddies = entity_area('villager', e, 10, 10, 10);
+            buddies = entity_area('villager', x, y+height/2, z, 10+half_width, 10+height/2, 10+half_width);
             nb = length(buddies);
             for (filter(buddies, _~'id' != current_id),
                visuals+=['line', global_duration, 'from', pos(e), 'to', pos(_), 'color', 0xffff00ff];
@@ -381,6 +322,57 @@ global_functions = {
    },
 };
 
+global_hostile_to_villager = {
+   'drowned' -> 8,
+   'evoker'-> 12,
+   'husk' -> 8,
+   'illusioner' -> 12,
+   'pillager' -> 15,
+   'ravager' -> 12,
+   'vex' -> 8,
+   'vindicator' -> 10,
+   'zoglin' -> 10,
+   'zombie' -> 8,
+   'zombie_villager' -> 8
+};
+
+
+__config() ->{
+    'commands'->{
+        ''->'_command',
+        'clear'->'clear',
+        'toggle boxes'->_()->global_display_boxes = !global_display_boxes,
+        'toggle <display>'->['__toggle',null],
+        'toggle villager <villager_display>'->_(d)->__toggle('villager_'+d,null),
+        'toggle villager hostile_detection <hostile>'->_(h)->__toggle('villager_hostile_detection',h),
+        'update_frequency <ticks>'->_(ticks)->(global_interval = ticks;global_duration = ticks + 2),
+        'transparency <alpha>'->_(alpha)->global_opacity = floor(alpha)
+    },
+    'arguments'->{
+        'display'->{'type'->'term','options'->['item_pickup','velocity','portal_cooldown','health','pathfinding','xpstack']},
+        'villager_display'->{'type'->'term','options'->['iron_golem_spawning','buddy_detection','hostile_detection','breeding']},
+        'ticks'->{'type'->'int','min'->0,'max'->100},
+        'alpha'->{'type'->'int','min'->0,'max'->255},
+        'hostile'->{'type'->'term','options'->keys(global_hostile_to_villager)}
+    }
+};
+
+global_duration = 12;
+global_interval = 10;
+
+global_opacity = 8;
+
+global_display_boxes = true;
+
+global_range = 48;
+
+// list of triples - [entity_type, feature, callback]
+global_active_functions = [];
+global_feature_switches = {};
+global_tracker_running = false;
+
+global_entity_positions = {};
+
 global_villager_food = {
    'bread' -> 4,
    'potato' -> 1,
@@ -428,20 +420,6 @@ __mark_path_element(path_element, visuals) ->
       visuals += ['label', global_duration, 'pos', pos(block)+0.5, 'text', 'penalty', 'value', penalty, 'color', color+255]
    )
 );
-
-global_hostile_to_villager = {
-   'drowned' -> 8,
-   'evoker'-> 12,
-   'husk' -> 8,
-   'illusioner' -> 12,
-   'pillager' -> 15,
-   'ravager' -> 12,
-   'vex' -> 8,
-   'vindicator' -> 10,
-   'zoglin' -> 10,
-   'zombie' -> 8,
-   'zombie_villager' -> 8
-};
 
 __is_hostile(v, m) ->
 (
@@ -517,8 +495,9 @@ __tick_tracker() ->
       return()
    );
    p = player();
+   [px, py, pz] = pos(p);
    in_dimension(p,
-      for (entity_area('valid', p, global_range, global_range, global_range),
+      for (entity_area('valid', px, py, pz, global_range, global_range, global_range),
          __handle_entity(_)
       )
    );
@@ -579,5 +558,3 @@ __handle_entity(e) ->
    );
    draw_shape(shapes_to_display);
 );
-
-
