@@ -27,7 +27,6 @@ __config() -> {
         'orientation'->{'type'->'term', 'suggest'->['x','y','z']},
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
-        'mode'->{'type'->'term','options'->['never', 'ingame', 'always']}
     },
     'scope'->'global'
 };
