@@ -477,7 +477,7 @@ public class EntityValue extends Value
             return ListValue.of(new NumericValue(look.x),new NumericValue(look.y),new NumericValue(look.z));
         });
         put("is_burning", (e, a) -> new NumericValue(e.isOnFire()));
-        //put("fire", (e, a) -> new NumericValue(e.getFire())); needs mixing
+        put("fire", (e, a) -> new NumericValue(e.getFireTicks()));
         put("silent", (e, a)-> new NumericValue(e.isSilent()));
         put("gravity", (e, a) -> new NumericValue(!e.hasNoGravity()));
         put("immune_to_fire", (e, a) -> new NumericValue(e.isFireImmune()));
