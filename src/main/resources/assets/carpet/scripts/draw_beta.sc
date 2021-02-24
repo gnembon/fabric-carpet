@@ -28,7 +28,7 @@ __config() -> {
         'pointing'->{'type'->'term','suggest'->['up','down']},
         'hollow'->{'type'->'term','suggest'->['hollow','solid']},
     },
-    'scope'->'global'
+    'scope'->'global'//todo decide whether it rly needs to be global or not...
 };
 
 _block_matches(existing, block_predicate) ->
@@ -48,7 +48,7 @@ draw(what, args, block, replacement)->(//custom setter cos it's easier
 
     for(positions,
         existing = block(_);
-        if(block != existing && (!replacement || _block_matches(existing, replacement) ),
+        if(block != existing && (!replacement || _block_matches(existing, replacement)),
             affected += bool(set(existing,block))
         )
     );
