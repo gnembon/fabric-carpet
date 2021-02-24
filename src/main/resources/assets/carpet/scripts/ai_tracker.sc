@@ -1,3 +1,5 @@
+import('math','_euclidean');
+
 _command() -> '
 ai_tracker allows to display
 some extra information about
@@ -424,11 +426,8 @@ __mark_path_element(path_element, visuals) ->
 __is_hostile(v, m) ->
 (
    mob = m~'type';
-   has(global_hostile_to_villager:mob) && (sqrt(reduce(pos(v)-pos(m), _a+_*_ , 0)) <= global_hostile_to_villager:mob)
+   has(global_hostile_to_villager:mob) && (_euclidean(pos(v)-pos(m)) <= global_hostile_to_villager:mob)
 );
-
-__distance(v1, v2) -> sqrt(reduce(v1-v2,_a+_*_ ,0));
-
 
 
 __toggle(feature, arg) ->
