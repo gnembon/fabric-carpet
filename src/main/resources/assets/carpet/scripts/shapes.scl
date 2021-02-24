@@ -1,0 +1,132 @@
+
+draw_sphere(args)->(
+    if(global_debug, start_time=unix_time());
+
+    [centre, radius, block, replacement, hollow] = args;
+
+    [cx,cy,cz]=centre;
+    for(range(-90, 90, 45/radius),
+        cpitch = cos(_);
+        spitch = sin(_);
+        for(range(0, 180, 45/radius),
+            cyaw = cos(_)*cpitch*radius;
+            syaw = sin(_)*cpitch*radius;
+            if(hollow,
+                set_block(cx+cyaw,cy+spitch*radius,cz+syaw,block,replacement);
+                set_block(cx+cos(_+180)*cpitch*radius,cy+spitch*radius,cz+sin(_+180)*cpitch*radius,block,replacement),
+                for(range(-syaw,syaw+1),
+                    set_block(cx+cyaw*cpitch,cy+spitch*radius,cz+_,block,replacement)
+                )
+            )
+        )
+    );
+
+    if(global_debug,
+        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
+    );
+    return(global_positions)
+);
+
+draw_diamond(args)->(
+    if(global_debug, start_time=unix_time());
+
+    [pos, radius, block, replacement] = args;
+
+    c_for(r=0, r<radius, r+=1,
+        y = r-radius+1;
+        c_for(x=-r,x<=r,x+=1,
+            z=r-abs(x);
+
+            set_block(pos:0+x, pos:1 +y, pos:2+z, block, replacement);
+            set_block(pos:0+x, pos:1 +y, pos:2-z, block, replacement);
+            set_block(pos:0+x, pos:1 -y, pos:2+z, block, replacement);
+            set_block(pos:0+x, pos:1 -y, pos:2-z, block, replacement);
+        )
+    );
+
+    if(global_debug,
+        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
+    );
+    return(global_positions)
+);
+
+draw_filled_diamond(args)->(
+    if(global_debug, start_time=unix_time());
+
+    [pos, radius, block, replacement] = args;
+
+    for(diamond(pos,radius,radius),
+        set_block(_x,_y,_z,block,replacement)
+    );
+
+    if(global_debug,
+        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
+    );
+    return(global_positions)
+);
+
+draw_pyramid(args)->(
+    if(global_debug, start_time=unix_time());
+
+    [pos, radius, height, pointing, orientation, block, fill_type, replacement, is_square] = args;
+
+    hollow = fill_type=='hollow';
+    pointup = pointing=='up';
+    for(range(height),
+        r = if(pointup, radius * ( 1- _ / height) -1, radius * _ / height);
+        fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
+    );
+
+    if(global_debug,
+        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
+    );
+    return(global_positions)
+);
+
+draw_prism(args)->(
+    if(global_debug, start_time=unix_time());
+
+    [pos, rad, height, orientation, block, fill_type, replacement, is_square]=args;
+
+    hollow = fill_type =='hollow';
+    radius = rad+0.5;
+
+    for(range(height),
+        fill_flat(pos, _, radius, is_square, orientation, block, if(_==0 || _==height-1,false,hollow), replacement)//Always close ends off
+    );
+
+    if(global_debug,
+        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
+    );
+    return(global_positions)
+);
+
+fill_flat(pos, offset, dr, rectangle, orientation, block, hollow, replacement)->(
+    r = floor(dr);
+    drsq = dr^2;
+    if(orientation=='x',
+        scan(pos,0,-r,-r,
+            if((!hollow && (rectangle || _y^2 + _z^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_y) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_y^2 + _z^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x+offset,_y,_z,block, replacement)
+            )
+        ),
+    orientation == 'y',
+        scan(pos,-r,0,-r,
+            if((!hollow && (rectangle || _x^2 + _z^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_x) == r || abs(_z) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_x^2 + _z^2 <= drsq && (abs(_x)+1)^ 2 + (abs(_z)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x,_y+offset,_z,block, replacement)
+            )
+        ),
+    orientation == 'z',
+        scan(pos,-r,-r,0,
+            if((!hollow && (rectangle || _y^2 + _x^2 <= drsq))||//if not hollow, vry simple
+                (hollow && ((rectangle && (abs(_y) == r || abs(_x) ==r)) || //If hollow and it's a rectangle
+                (!rectangle && (_y^2 + _x^2 <= drsq && (abs(_y)+1)^ 2 + (abs(_x)+1)^2 >= drsq)))),//If hollow and not rectangle
+                set_block(_x,_y,_z+offset,block, replacement)
+            )
+        )
+    )
+);
