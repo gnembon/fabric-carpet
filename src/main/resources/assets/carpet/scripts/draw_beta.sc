@@ -18,10 +18,6 @@ __config() -> {
         'cuboid <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->_(c,r,h,o,b,ho,rp)->draw('draw_prism', [c,r,h,o,b,ho,rp,true]),
         'cylinder <center> <radius> <height> <orientation> <block> <hollow>'->_(c,r,h,o,b,ho)->draw('draw_prism',[c,r,h,p,o,b,ho,null, false]),
         'cylinder <center> <radius> <height> <orientation> <block> <hollow> replace <replacement>'->_(c,r,h,o,b,ho,rp)->draw('draw_prism', [c,r,h,o,b,ho,rp,false]),
-        if(system_info('server_dev_environment')||system_info('world_carpet_rules'):'superSecretSetting',
-            'debug <bool>'->_(bool)->global_debug=bool,
-            ''->_()->''
-        )
     },
     'arguments'->{
         'center'->{'type'->'pos', 'loaded'->'true'},
@@ -36,7 +32,6 @@ __config() -> {
     'scope'->'global'
 };
 
-global_debug=false;
 
 //"Boilerplate" code
 
@@ -64,7 +59,6 @@ affected(player) -> (
     affected
 );
 
-length_sq(vec) -> reduce(vec, _a + _*_, 0);
 
 //Drawing commands
 

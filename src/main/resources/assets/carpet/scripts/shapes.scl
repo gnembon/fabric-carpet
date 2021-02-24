@@ -1,6 +1,5 @@
 
 draw_sphere(args)->(
-    if(global_debug, start_time=unix_time());
 
     [centre, radius, block, replacement, hollow] = args;
 
@@ -21,14 +20,10 @@ draw_sphere(args)->(
         )
     );
 
-    if(global_debug,
-        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
-    );
     return(global_positions)
 );
 
 draw_diamond(args)->(
-    if(global_debug, start_time=unix_time());
 
     [pos, radius, block, replacement] = args;
 
@@ -44,14 +39,10 @@ draw_diamond(args)->(
         )
     );
 
-    if(global_debug,
-        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
-    );
     return(global_positions)
 );
 
 draw_filled_diamond(args)->(
-    if(global_debug, start_time=unix_time());
 
     [pos, radius, block, replacement] = args;
 
@@ -59,14 +50,10 @@ draw_filled_diamond(args)->(
         set_block(_x,_y,_z,block,replacement)
     );
 
-    if(global_debug,
-        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
-    );
     return(global_positions)
 );
 
 draw_pyramid(args)->(
-    if(global_debug, start_time=unix_time());
 
     [pos, radius, height, pointing, orientation, block, fill_type, replacement, is_square] = args;
 
@@ -77,14 +64,10 @@ draw_pyramid(args)->(
         fill_flat(pos, _, r, is_square, orientation, block, if((pointup&&_==0)||(!pointup && _==height-1),false,hollow),replacement)//Always close bottom off
     );
 
-    if(global_debug,
-        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
-    );
     return(global_positions)
 );
 
 draw_prism(args)->(
-    if(global_debug, start_time=unix_time());
 
     [pos, rad, height, orientation, block, fill_type, replacement, is_square]=args;
 
@@ -95,9 +78,6 @@ draw_prism(args)->(
         fill_flat(pos, _, radius, is_square, orientation, block, if(_==0 || _==height-1,false,hollow), replacement)//Always close ends off
     );
 
-    if(global_debug,
-        print(player(),format('gi Time taken: '+(unix_time()-start_time)+'ms'))
-    );
     return(global_positions)
 );
 
