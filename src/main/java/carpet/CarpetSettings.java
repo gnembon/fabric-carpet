@@ -42,7 +42,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.27+v210217";
+    public static final String carpetVersion = "1.4.28+v210224";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -52,6 +52,7 @@ public class CarpetSettings
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
+    public static final int vanillaStructureBlockLimit = 48;
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
@@ -802,7 +803,7 @@ public class CarpetSettings
     public static class StructureBlockLimitValidator extends Validator<Integer> {
 
         @Override public Integer validate(ServerCommandSource source, ParsedRule<Integer> currentRule, Integer newValue, String string) {
-            return (newValue >= 48) ? newValue : null;
+            return (newValue >= vanillaStructureBlockLimit) ? newValue : null;
         }
 
         @Override
@@ -823,7 +824,7 @@ public class CarpetSettings
             validate = StructureBlockLimitValidator.class,
             strict = false
     )
-    public static int structureBlockLimit = 48;
+    public static int structureBlockLimit = vanillaStructureBlockLimit;
 
     public static class StructureBlockIgnoredValidator extends Validator<String> {
 
@@ -859,7 +860,7 @@ public class CarpetSettings
 
     @Rule(
             desc = "Lightning kills the items that drop when lightning kills an entity",
-            extra = {"Setting to true will prevent lightning from killing drops", "Fixes (https://bugs.mojang.com/browse/MC-195640)."},
+            extra = {"Setting to true will prevent lightning from killing drops", "Fixes [MC-206922](https://bugs.mojang.com/browse/MC-206922)."},
             category = {BUGFIX}
     )
     public static boolean lightningKillsDropsFix = false;
