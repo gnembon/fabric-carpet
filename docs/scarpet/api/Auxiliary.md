@@ -264,9 +264,20 @@ Sends the player (or players if `players` is a list) a title of a specific type,
    Executing with those will set the times to the specified ones.
    Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
+### `display_title(players, 'motd', motd),`
+
+Changes the motd (message of the day) of the server. The `player` value is ignored for the `'motd'` text.
+Note that when the `customMOTD` carpet rule is active, this will not work and instead use the MOTD from the rule.
+
+### `display_title(players, 'header', header, footer),`
+
+Changes the header and footer of the player list.
+Keep in mind this would interfere with carpet's loggers, so if you are using this, you need to keep them off.
+
 ### `logger(msg), logger(type, msg)`
 
-Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
+Prints the message to system logs, and not to chat.
+By default prints an info, unless you specify otherwise in the `type` parameter.
 
 Available output types:
 

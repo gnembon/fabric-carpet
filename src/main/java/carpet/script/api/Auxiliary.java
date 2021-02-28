@@ -6,6 +6,7 @@ import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.mixins.PlayerListHeaderS2CPacketMixin;
 import carpet.script.bundled.Module;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
@@ -48,6 +49,7 @@ import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
@@ -508,7 +510,8 @@ public class Auxiliary {
                 return player;
             });
             TitleS2CPacket.Action action;
-            switch (lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT))
+            String actionString = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            switch (actionString)
             {
                 case "title":
                     action = Action.TITLE;
@@ -522,8 +525,46 @@ public class Auxiliary {
                 case "clear":
                     action = Action.CLEAR;
                     break;
+                case "header":
+                    Text header;
+                    Text footer;
+                    if (lv.size() > 3)
+                    {
+                        pVal = lv.get(2).evalValue(c);
+                        if (pVal instanceof FormattedTextValue)
+                            header = ((FormattedTextValue) pVal).getText();
+                        else
+                            header = new LiteralText(pVal.getString());
+                        pVal = lv.get(3).evalValue(c);
+                        if (pVal instanceof FormattedTextValue)
+                            footer = ((FormattedTextValue) pVal).getText();
+                        else
+                            footer = new LiteralText(pVal.getString());
+                    } else throw new InternalExpressionException("Third and fourth argument of 'display_title' must be present for 'header' type");
+                    PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
+                    ((PlayerListHeaderS2CPacketMixin) packet).setFooter(footer);
+                    ((PlayerListHeaderS2CPacketMixin) packet).setHeader(header);
+                    AtomicInteger total = new AtomicInteger(0);
+                    targets.forEach(p -> {
+                        p.networkHandler.sendPacket(packet);
+                        total.getAndIncrement();
+                    });
+                    Value ret = NumericValue.of(total.get());
+                    return (cc, tt) -> ret;
+                case "motd":
+                    Text title;
+                    if (lv.size() > 2)
+                    {
+                        pVal = lv.get(2).evalValue(c);
+                        if (pVal instanceof FormattedTextValue)
+                            title = ((FormattedTextValue) pVal).getText();
+                        else
+                            title = new LiteralText(pVal.getString());
+                    } else throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
+                    server.getServerMetadata().setDescription(title);
+                    return LazyValue.TRUE;
                 default:
-                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'clear', 'header' or 'motd' as second argument");
             }
             if (action != Action.CLEAR && lv.size() < 3)
                 throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
