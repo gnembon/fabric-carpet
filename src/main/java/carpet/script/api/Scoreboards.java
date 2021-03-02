@@ -114,11 +114,11 @@ public class Scoreboards {
         // objective_add('lvl','level')
         // objective_add('counter')
 
-        expression.addLazyFunction("scoreboard_set", -1, (c, t, lv)->
+        expression.addLazyFunction("scoreboard_add", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
-            if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_set' should have one or two parameters");
+            if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
             String objectiveName = lv.get(0).evalValue(c).getString();
             ScoreboardCriterion criterion;
             if (lv.size() == 1 )
@@ -149,9 +149,6 @@ public class Scoreboards {
             scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getCriterionType());
             return LazyValue.TRUE;
         });
-
-        //deprecated
-        expression.alias("scoreboard_add", "scoreboard_set");
 
         expression.addLazyFunction("scoreboard_display", 2, (c, t, lv) ->
         {
@@ -542,4 +539,3 @@ public class Scoreboards {
         });
     }
 }
-
