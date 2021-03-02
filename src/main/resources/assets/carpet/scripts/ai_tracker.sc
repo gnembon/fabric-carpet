@@ -89,7 +89,7 @@ global_functions = {
             );
             [x,y,z] = pos(e);
             current_id = e~'id';
-            buddies = entity_area('villager', x, y+height/2, z, 10+half_width, 10+height/2, 10+half_width);
+            buddies = entity_area('villager', e, 10, 10, 10);
             nb = length(buddies);
             for (filter(buddies, _~'id' != current_id),
                visuals+=['line', global_duration, 'from', pos(e), 'to', pos(_), 'color', 0xffff00ff];
@@ -348,7 +348,7 @@ __config() ->{
         'toggle villager <villager_display>'->_(d)->__toggle('villager_'+d,null),
         'toggle villager hostile_detection <hostile>'->_(h)->__toggle('villager_hostile_detection',h),
         'update_frequency <ticks>'->_(ticks)->(global_interval = ticks;global_duration = ticks + 2),
-        'transparency <alpha>'->_(alpha)->global_opacity = floor(alpha)
+        'transparency <alpha>'->_(alpha)->global_opacity = alpha
     },
     'arguments'->{
         'display'->{'type'->'term','options'->['item_pickup','velocity','portal_cooldown','health','pathfinding','xpstack']},
@@ -496,7 +496,7 @@ __tick_tracker() ->
    p = player();
    [px, py, pz] = pos(p);
    in_dimension(p,
-      for (entity_area('valid', px, py, pz, global_range, global_range, global_range),
+      for (entity_area('valid', p, global_range, global_range, global_range),
          __handle_entity(_)
       )
    );
