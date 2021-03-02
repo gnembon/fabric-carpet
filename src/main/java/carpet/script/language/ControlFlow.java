@@ -7,6 +7,7 @@ import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ProcessedThrowStatement;
 import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
@@ -49,7 +50,6 @@ public class ControlFlow {
             switch (lv.size()) 
             {
                 case 0:
-                    c.host.issueDeprecation("throw() (without id)");
                     throw new ThrowStatement(new StringValue("No further information"), Value.NULL, Value.NULL);
                 case 1:
                     throw new ThrowStatement(lv.get(0).evalValue(c));
@@ -65,7 +65,7 @@ public class ControlFlow {
         expression.addLazyFunction("try", -1, (c, t, lv) ->
         {
             if (lv.size()==0)
-                throw new InternalExpressionException("'try' needs at least an expression block, a filter, and a catch_epr");
+                throw new InternalExpressionException("'try' needs at least an expression block, and either a catch_epr, or a number of pairs of filters and catch_expr");
             try
             {
                 Value retval = lv.get(0).evalValue(c, t);
@@ -77,21 +77,36 @@ public class ControlFlow {
                     throw ret;
                 if (lv.size() == 1)
                 {
-                    c.host.issueDeprecation("try(expr) (without filter and catch expression)");
+                    if (!ret.exception.isInstance(Throwables.USER_DEFINED.getValue()))
+                        throw ret;
                     return (c_, t_) -> Value.NULL;
                 }
-                // This is outside since it is used in try(expr,catch_expr)
+                if (lv.size() == 0 || lv.size() % 2 == 0)
+                {
+                    throw new InternalExpressionException("Try-catch block needs the code to run, and either a catch_expr or a number of pairs of filters and catch_expr");
+                }
+                
+                Value val = null; // This is always assigned at some point, just the compiler doesn't know
+                
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.exception.getValue().reboundedTo("_"));
                 LazyValue __msg = c.getVariable("_msg");
                 c.setVariable("_msg", (__c, __t) -> StringValue.of(ret.message).reboundedTo("_msg"));
-                Value val = null; // This is always assigned at some point, just the compiler doesn't know
-                if (lv.size() >= 3)
+                
+                boolean handled;
+                if (lv.size() == 2)
                 {
-                    if (lv.size() % 2 == 0)
-                        throw new InternalExpressionException("Multi-catch block needs a catch expression for every filter");
+                    if (!ret.exception.isInstance(Throwables.USER_DEFINED.getValue()))
+                        handled = false;
+                    else {
+                        val = lv.get(1).evalValue(c, t);
+                        handled = true;
+                    }
+                }
+                else
+                {
                     int pointer = 1;
-                    boolean handled = false;
+                    handled = false;
                     while (pointer < lv.size() -1)
                     {
                         if (ret.exception.isInstance(lv.get(pointer).evalValue(c)))
@@ -102,20 +117,14 @@ public class ControlFlow {
                         }
                         pointer += 2;
                     }
-                    if (!handled)
-                    {
-                    	c.setVariable("_", __);
-                        c.setVariable("_msg", __msg);
-                        throw ret;
-                    }
                 }
-                else
-                {
-                    c.host.issueDeprecation("try(expr, catch_expr) (without filter)");
-                    val = lv.get(1).evalValue(c, t);
-                }
-                c.setVariable("_",__);
+                c.setVariable("_", __);
                 c.setVariable("_msg", __msg);
+                
+                if (!handled)
+                {
+                    throw ret;
+                }
                 Value retval = val;
                 return (c_, t_) -> retval;
             }
