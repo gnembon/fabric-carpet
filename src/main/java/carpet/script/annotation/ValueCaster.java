@@ -1,10 +1,14 @@
 package carpet.script.annotation;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
+import carpet.CarpetSettings;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -59,6 +63,14 @@ public class ValueCaster<R extends Value> implements ValueConverter<R> {
 		return (ValueCaster<T>)byResult.get(outputType);
 	}
 	
+	public static <T extends Value> ValueCaster<T> getOrRegister(Class<T> outputType) {
+		ValueCaster<T> out = get(outputType);
+		if (out != null)
+			return get(outputType);
+		autoRegister(outputType);
+		return get(outputType);
+	}
+	
 	/**
 	 * Casts the given {@link Value} to this {@link ValueCaster}'s output type.
 	 * 
@@ -97,5 +109,41 @@ public class ValueCaster<R extends Value> implements ValueConverter<R> {
 	public static <T extends Value> void register(Class<T> valueClass, String typeName) {
 		ValueCaster<T> caster = new ValueCaster<T>(valueClass, typeName);
 		byResult.put(valueClass, caster);
+	}
+	
+	/**
+	 * <p>"Heuristically" tries to get the name of a {@link Value} type by running through its constructors,
+	 * finding one with a single parameter, and trying to create a new instance of it by passing
+	 * a casted null to it everything just to try to call {@link Value#getTypeString()}. Everything 
+	 * uglily wrapped into a big try-catch anything to resort to using the class name without {@code Value}
+	 * in its name.</p>
+	 * 
+	 * <p>The worse thing is it works (tested with {@link StringValue})</p>
+	 * 
+	 * @param <T> The type of the {@link Value} class we are analyzing
+	 * @param valueClass The class of the {@link Value}
+	 */
+	public static <T extends Value> void autoRegister(Class<T> valueClass) {
+		try {
+			CarpetSettings.LOG.warn("Unregistered Value class provided required in function, '" + valueClass.getName() +"', trying to find its name...");
+			if (Modifier.isAbstract(valueClass.getModifiers())) {
+				throw new UnsupportedOperationException();
+			}
+			Constructor<?>[] constructors = valueClass.getConstructors();
+			for (Constructor<?> c : constructors) {
+				try {
+					if (c.getParameterCount() == 1 && Modifier.isPublic(c.getModifiers())) {
+						Class<?> paramClass = c.getParameters()[0].getClass();
+						Object castedNull = paramClass.cast(null);
+						Value val = (Value)c.newInstance(castedNull);
+						register(valueClass, val.getTypeString());
+					}
+				} catch (Exception e) {} // Try next
+			}
+			throw new UnsupportedOperationException();
+		} catch (Exception e) { //Heuristics failed. Just use class name
+			register(valueClass, valueClass.getCanonicalName().toLowerCase(Locale.ROOT).replace("value", ""));
+			CarpetSettings.LOG.warn("Couldn't automagically get type name for '"+valueClass.getName()+"', using class without 'value'. Please register it");
+		}
 	}
 }

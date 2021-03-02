@@ -4,6 +4,13 @@ import org.jetbrains.annotations.Nullable;
 
 import carpet.script.value.Value;
 
+/**
+ * <p>Classes implementing this interface are be able to convert {@link Value} instances into
+ * R, in order to easily use them in parameters for Scarpet functions created using the {@link LazyFunction}
+ * annotation.</p>
+ *
+ * @param <R> The result type passed {@link Value}s will be converted to
+ */
 public interface ValueConverter<R> {
 	
 	/**

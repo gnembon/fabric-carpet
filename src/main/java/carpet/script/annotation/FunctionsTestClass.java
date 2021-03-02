@@ -12,21 +12,24 @@ import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
 import java.util.Locale;
 
-public class FunctionsTestClass {
+public class FunctionsTestClass implements FunctionClass {
+	@Override
+	public String getProvider() {
+		return "altrisi";
+	}
 	
 	@LazyFunction
-	public LazyValue make_noise(Value string, Value string2) {
-		Value retVal = StringValue.of(string.getString()+ " "+string2.getString());
-		return (c, t) -> retVal;
+	public String make_noise(Value string, Value string2) {
+		return string.getString()+ " "+string2.getString();
 	}
 	
 	@LazyFunction(maxParams = 8)
 	public LazyValue multiparams(Value... values) {
 		String str = "";
-		for(Value val : values)
+		for (Value val : values)
 			str += val.getString();
 		Value retval = StringValue.of(str);
-		return (c,t) -> retval;
+		return (c, t) -> retval;
 	}
 	
 	@LazyFunction(maxParams = 6)
@@ -35,7 +38,7 @@ public class FunctionsTestClass {
 		for (Value val : values)
 			str += val.getString();
 		Value retval = StringValue.of(str);
-		return (c,t) -> retval;
+		return (c, t) -> retval;
 	}
 	
 	//@LazyFunction(maxParams = 6) TODO This is a concept
