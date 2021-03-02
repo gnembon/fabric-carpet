@@ -177,7 +177,7 @@ Returns `true` if en entity is standing on firm ground and falling down due to t
 
 ### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
-String of entity name
+String of entity name or formatted text in the case of `display_name`
 
 <pre>
 query(e,'name')  => Leatherworker

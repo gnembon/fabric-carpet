@@ -24,6 +24,7 @@
     "ServerPlayNetworkHandler_interactionUpdatesMixin",
 
     "ServerMetadata_motdMixin",
+    "MinecraftServer_pingPlayerSampleLimit",
 
     "MinecraftServer_coreMixin",
 

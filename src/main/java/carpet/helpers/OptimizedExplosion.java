@@ -107,20 +107,22 @@ public class OptimizedExplosion
 
         explosionSound++;
 
+        Entity explodingEntity = eAccess.getEntity();
         for (int k2 = 0; k2 < entitylist.size(); ++k2) {
             Entity entity = entitylist.get(k2);
 
-            if (entity == eAccess.getEntity()) {
+
+            if (entity == explodingEntity) {
                 // entitylist.remove(k2);
                 removeFast(entitylist, k2);
                 k2--;
                 continue;
             }
 
-            if (entity instanceof TntEntity &&
-                    entity.getX() == eAccess.getEntity().getX() &&
-                    entity.getY() == eAccess.getEntity().getY() &&
-                    entity.getZ() == eAccess.getEntity().getZ()) {
+            if (entity instanceof TntEntity && explodingEntity != null &&
+                    entity.getX() == explodingEntity.getX() &&
+                    entity.getY() == explodingEntity.getY() &&
+                    entity.getZ() == explodingEntity.getZ()) {
                 if (eLogger != null) {
                     eLogger.onEntityImpacted(entity, new Vec3d(0,-0.9923437498509884d, 0));
                 }
