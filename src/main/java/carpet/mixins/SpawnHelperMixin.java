@@ -279,7 +279,7 @@ public class SpawnHelperMixin
 
             for(int var8 = 0; var8 < var7; ++var8) {
                 SpawnGroup entityCategory = var6[var8];
-                if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isAnimal()) )
+                if ((spawnAnimals || !entityCategory.isPeaceful()) && (spawnMonsters || entityCategory.isPeaceful()) && (shouldSpawnAnimals || !entityCategory.isRare()) )
                 {
                     RegistryKey<World> dim = world.getRegistryKey(); // getDimensionType;
                     int newCap = (int) ((double)entityCategory.getCapacity()*(Math.pow(2.0,(SpawnReporter.mobcap_exponent/4))));

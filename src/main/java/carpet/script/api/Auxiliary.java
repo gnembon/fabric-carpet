@@ -36,11 +36,6 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
 import net.minecraft.block.BlockState;
-import net.minecraft.class_5888;
-import net.minecraft.class_5894;
-import net.minecraft.class_5903;
-import net.minecraft.class_5904;
-import net.minecraft.class_5905;
 import net.minecraft.command.DataCommandStorage;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -53,9 +48,14 @@ import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.Packet;
+import net.minecraft.network.packet.s2c.play.ClearTitleS2CPacket;
+import net.minecraft.network.packet.s2c.play.OverlayMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 //import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 //import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
+import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -520,28 +520,28 @@ public class Auxiliary {
             switch (lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT))
             {
                 case "title":
-                    packetGetter = (x) -> new class_5904(x);
+                    packetGetter = TitleS2CPacket::new;
                     //action = Action.TITLE;
                     if (lv.size() < 3)
                         throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
 
                     break;
                 case "subtitle":
-                    packetGetter = (x) -> new class_5903(x);
+                    packetGetter = SubtitleS2CPacket::new;
                     if (lv.size() < 3)
                         throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
 
                     //action = Action.SUBTITLE;
                     break;
                 case "actionbar":
-                    packetGetter = (x) -> new class_5894(x);
+                    packetGetter = OverlayMessageS2CPacket::new;
                     if (lv.size() < 3)
                         throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
 
                     //action = Action.ACTIONBAR;
                     break;
                 case "clear":
-                    packetGetter = (x) -> new class_5888(true); // resetting default fade
+                    packetGetter = (x) -> new ClearTitleS2CPacket(true); // resetting default fade
                     //action = Action.CLEAR;
                     break;
                 default:
@@ -558,13 +558,13 @@ public class Auxiliary {
                 else
                     title = new LiteralText(pVal.getString());
             }
-            class_5905 timesPacket; // TimesPacket
+            TitleFadeS2CPacket timesPacket; // TimesPacket
             if (lv.size() > 3)
             {
                 int in = NumericValue.asNumber(lv.get(3).evalValue(c),"fade in for display_title" ).getInt();
                 int stay = NumericValue.asNumber(lv.get(4).evalValue(c),"stay for display_title" ).getInt();
                 int out = NumericValue.asNumber(lv.get(5).evalValue(c),"fade out for display_title" ).getInt();
-                timesPacket = new class_5905(in, stay, out);
+                timesPacket = new TitleFadeS2CPacket(in, stay, out);
                 //timesPacket = new TitleS2CPacket(Action.TIMES, null, in, stay, out);
             }
             else timesPacket = null;

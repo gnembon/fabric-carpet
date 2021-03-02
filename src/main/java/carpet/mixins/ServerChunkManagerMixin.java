@@ -77,7 +77,7 @@ public abstract class ServerChunkManagerMixin implements ServerChunkManagerInter
                 int spawnTries = SpawnReporter.spawn_tries.get(cat);
                 if (!SpawnReporter.local_spawns.containsKey(cat))
                 {
-                    if (!cat.isAnimal() || boolean_3)
+                    if (!cat.isRare() || boolean_3) // isAnimal
                     {
                         // fill mobcaps for that category so spawn got cancelled
                         SpawnReporter.spawn_ticks_full.put(key,
