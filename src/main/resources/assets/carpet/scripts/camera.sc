@@ -63,7 +63,7 @@ __config() ->{
         '<command>'->'_call',
         'add <seconds>'->'add',
         'prepend <seconds>'->'prepend',
-        'duration <seconds>',
+        'duration <seconds>' -> 'duration',
         'save_as <name>'->'save_as',
         'load <name>'->'load',
         'interpolation <interpolation>'->['__interpolation',true],
@@ -76,8 +76,8 @@ __config() ->{
         'seconds'->{'type'->'int','suggest'->[]},
         'last_delay'->{'type'->'int','suggest'->[]},
         'name'->{'type'->'string','suggest'->[]},
-        'interpolation'->{'type'->'term','options'->['linear','catmull_rom']}
-        'factor'->{'type'->'int','min'->25,'max'->'400'},
+        'interpolation'->{'type'->'term','options'->['linear','catmull_rom']},
+        'factor'->{'type'->'int','min'->25,'max'->400},
         'command'->{'type'->'term','options'->[
             'start',
             'clear',
@@ -212,7 +212,7 @@ __interpolation(method, verbose) ->
    __update();
    if(verbose, 'Interpolation changed to '+method, '');
 );
-__interpolation('cr', false);
+__interpolation('catmull_rom', false);
 
 // adds a point to the end of the path with delay in seconds
 add(delay) ->
