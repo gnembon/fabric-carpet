@@ -187,10 +187,10 @@ other parts. In that case consecutive calls to `slice` will refer to index `0` t
 cannot go back nor track where they are in the sequence (see examples).
 
 <pre>
-slice([0,1,2,3,4,5], 1, 3)  => [1, 2, 3]
+slice([0,1,2,3,4,5], 1, 3)  => [1, 2]
 slice('foobar', 0, 1)  => 'f'
 slice('foobar', 3)  => 'bar'
-slice(range(10), 3, 5)  => [3, 4, 5]
+slice(range(10), 3, 5)  => [3, 4]
 slice(range(10), 5)  => [5, 6, 7, 8, 9]
 r = range(100); [slice(r, 5, 7), slice(r, 1, 3)]  => [[5, 6], [8, 9]]
 </pre>
