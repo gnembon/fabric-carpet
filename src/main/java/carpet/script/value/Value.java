@@ -186,7 +186,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         int size = value.length();
         int from = ListValue.normalizeIndex(fromDesc, size);
         if (toDesc == null) return new StringValue(value.substring(from));
-        int to = ListValue.normalizeIndex(toDesc, size);
+        int to = ListValue.normalizeIndex(toDesc, size+1);
         if (from > to) return StringValue.EMPTY;
         return new StringValue(value.substring(from, to));
     }
