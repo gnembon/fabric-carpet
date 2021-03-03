@@ -9,6 +9,7 @@ import net.minecraft.nbt.Tag;
 
 public class NullValue extends NumericValue // TODO check nonsingleton code
 {
+    public static final NullValue NULL = new NullValue();
     @Override
     public String getString()
     {
@@ -32,7 +33,7 @@ public class NullValue extends NumericValue // TODO check nonsingleton code
     {
         return new NullValue();
     }
-    public NullValue() {super(0.0D);}
+    private NullValue() {super(false);}
 
     @Override
     public boolean equals(final Object o)

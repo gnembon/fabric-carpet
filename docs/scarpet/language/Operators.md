@@ -16,7 +16,7 @@ in [User Defined Functions and Program Control Flow](docs/scarpet/language/Funct
 1357-5 => 1352
 1357-'5' => 137
 3*'foo'-'o' => 'fff'
-l(1,3,5)+7 => l(8,10,12)
+[1,3,5]+7 => [8,10,12]
 </pre>
 
 As you can see, values can behave differently when mixed with other types in the same expression. 
@@ -76,8 +76,8 @@ In Minecraft API portion `entity ~ feature` is a shortcode for `query(entity,fea
 any extra arguments.
 
 <pre>
-l(1,2,3) ~ 2  => 1
-l(1,2,3) ~ 4  => null
+[1,2,3] ~ 2  => 1
+[1,2,3] ~ 4  => null
 
 'foobar' ~ 'baz'  => null
 'foobar' ~ '.b'  => 'ob'
@@ -103,10 +103,10 @@ Or an example to find if a player has specific enchantment on a held axe (either
 
 <pre>
 global_get_enchantment(p, ench) -> (
-$   for(l('main','offhand'),
+$   for(['main','offhand'],
 $      holds = query(p, 'holds', _);
 $      if( holds,
-$         l(what, count, nbt) = holds;
+$         [what, count, nbt] = holds;
 $         if( what ~ '_axe' && nbt ~ ench,
 $            lvl = max(lvl, number(nbt ~ '(?<=lvl:)\\d') )
 $         )
@@ -143,8 +143,8 @@ Examples:
 'foo'*3 => 'foofoofoo'
 'foofoofoo' / 3 => 'foo'
 'foofoofoo'-'o' => 'fff'
-l(1,2,3)+1  => l(2,3,4)
-b = l(100,63,100); b+l(10,0,10)  => l(110,63,110)
+[1,2,3]+1  => [2,3,4]
+b = [100,63,100]; b+[10,0,10]  => [110,63,110]
 {'a' -> 1} + {'b' -> 2} => {'a' -> 1, 'b' -> 2}
 </pre>
 
@@ -186,11 +186,12 @@ second operand is not necessary, it won't be evaluated, which means one can use 
 case of success returns first positive operand (`||`) or last one (`&&`).
 
 <pre>
-true || false  => 1
-null || false => 0
-null != false || run('kill gnembon')  => 1 // gnembon survives
-null != false && run('kill gnembon')  => 0 // when cheats not allowed
-null != false && run('kill gnembon')  => 1 // gnembon dies, cheats allowed
+true || false  => true
+null || false => false
+false || null => null
+null != false || run('kill gnembon')  // gnembon survives
+null != false && run('kill gnembon')  // when cheats not allowed
+null != false && run('kill gnembon')  // gnembon dies, cheats allowed
 </pre>
 
 ### `Assignment Operators = <> +=`
@@ -204,11 +205,11 @@ require rewriting of the array anyways.
 
 <pre>
 a = 5  => a == 5
-l(a,b,c) = l(3,4,5) => a==3, b==4, c==5
-l(minx,maxx) = sort(xi,xj);  // minx assumes min(xi, xj) and maxx, max(xi, xj)
-l(a,b,c,d,e,f) = l(range(6)); l(a,b,c) <> l(d,e,f); l(a,b,c,d,e,f)  => [3,4,5,0,1,2]
-a = l(1,2,3); a += 4  => [1,2,3,4]
-a = l(1,2,3,4); a = filter(a,_!=2)  => [1,3,4]
+[a,b,c] = [3,4,5] => a==3, b==4, c==5
+[minx,maxx] = sort(xi,xj);  // minx assumes min(xi, xj) and maxx, max(xi, xj)
+[a,b,c,d,e,f] = [range(6)]; [a,b,c] <> [d,e,f]; [a,b,c,d,e,f]  => [3,4,5,0,1,2]
+a = [1,2,3]; a += 4  => [1,2,3,4]
+a = [1,2,3,4]; a = filter(a,_!=2)  => [1,3,4]
 </pre>
 
 ### `Unary Operators - +`
@@ -226,10 +227,10 @@ Require a number, flips the sign. One way to assert it's a number is by crashing
 flips boolean condition of the expression. Equivalent of `bool(expr)==false`
 
 <pre>
-!true  => 0
-!false  => 1
-!null  => 1
-!5  => 0
-!l() => 1
-!l(null) => 0
+!true  => false
+!false  => true
+!null  => true
+!5  => false
+!l() => true
+!l(null) => false
 </pre>

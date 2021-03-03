@@ -48,7 +48,7 @@ public class Sys {
                     return (cc, tt) -> Value.FALSE;
                 }
             }
-            Value retval = new NumericValue(v.getBoolean());
+            Value retval = v.getBoolean()?Value.TRUE:Value.FALSE;
             return (cc, tt) -> retval;
         });
 
@@ -56,7 +56,9 @@ public class Sys {
         {
             if (v instanceof NumericValue)
             {
-                return v;
+                NumericValue num = (NumericValue)v;
+                if (num.isInteger()) return new NumericValue(num.getLong());
+                return new NumericValue(num.getDouble());
             }
             try
             {

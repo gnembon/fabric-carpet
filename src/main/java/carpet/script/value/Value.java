@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
-    public static NumericValue FALSE = new NumericValue(0);
-    public static NumericValue TRUE = new NumericValue(1);
-    public static NumericValue ZERO = FALSE;
-    public static NumericValue ONE = TRUE;
+    public static NumericValue FALSE = BooleanValue.FALSE;
+    public static NumericValue TRUE = BooleanValue.TRUE;
+    public static NumericValue ZERO = new NumericValue(0);
+    public static NumericValue ONE = new NumericValue(1);
 
-    public static NullValue NULL = new NullValue();
+    public static NullValue NULL = NullValue.NULL;
 
     public String boundVariable;
 
