@@ -70,9 +70,30 @@ draw_prism(args)->(
     positions = {};
     hollow = fill_type =='hollow';
     radius = rad+0.5;
-    for(range(height),
-        positions += fill_flat(pos, _, radius, is_square, orientation, !(_==0 || _==height-1) && hollow)//Always close ends off
-    );
+    filled_circle_points = fill_flat(pos, 0, radius, is_square, orientation, false); //I dont actually need to generate all the points lol
+    offset_vector = if(orientation=='x', [1,0,0], orientation=='y', [0,1,0],[0,0,1]);
+    if(hollow,
+        hollow_circle_points = fill_flat(pos, 0, radius, is_square, orientation, true);
+
+        for(filled_circle_points,//Always close ends off
+            positions+=_;
+            positions+=_+offset_vector*(height-1)
+        );
+
+        for(range(1, height-1),//cos Im adding ends as filled anyways
+            offset=_;
+            for(hollow_circle_points,
+                positions+= _ + offset_vector * offset
+            )
+        ),
+        
+        for(range(height),
+            offset = _;
+            for(filled_circle_points,
+                positions += _ + offset_vector * offset
+            )
+        );
+    )
     return(positions)
 );
 
