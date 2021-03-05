@@ -94,8 +94,8 @@ scan
 schedule
 scoreboard
 scoreboard_add
-scoreboard_remove
 scoreboard_display
+scoreboard_property
 tag_matches
 team_add
 team_leave
