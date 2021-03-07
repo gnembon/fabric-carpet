@@ -417,6 +417,7 @@ public class CarpetSettings
             if (source != null && !source.hasPermissionLevel(permissionLevel))
                 return null;
             CarpetSettings.runPermissionLevel = permissionLevel;
+            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
             return newValue;
         }
         @Override
