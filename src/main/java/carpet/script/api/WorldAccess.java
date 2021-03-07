@@ -1383,6 +1383,7 @@ public class WorldAccess {
         {
             if (lv.size() == 0) throw new InternalExpressionException("'custom_dimension' requires at least one argument");
             CarpetContext cc = (CarpetContext)c;
+            cc.host.issueDeprecation("custom_dimension()");
             String worldKey = lv.get(0).evalValue(c).getString();
 
             Long seed = null;

@@ -771,7 +771,9 @@ All generated structures will retain their properties, like mob spawning, howeve
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
 
-### `custom_dimension(name, seed?)`
+###  (deprecated) `custom_dimension(name, seed?)`
+
+Deprecated by `create_datapack()` which can be used to setup custom dimensions
 
 Ensures the dimension with the given `'name'` is available and configured with the given seed. It merely sets the world
 generator settings to the overworld, and the optional custom seed (or using current world seed, if not provided). 
