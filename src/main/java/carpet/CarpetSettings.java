@@ -423,9 +423,11 @@ public class CarpetSettings
             desc = "Enables restrictions for arbitrary code execution with scarpet",
             extra = {
                     "Users that don't have this permission level",
-                    "won't be able to load apps or /script run"
+                    "won't be able to load apps or /script run.",
+                    "Also apps will only be able to run() commands",
+                    "up to that permission level."
             },
-            category = {COMMAND, SCARPET},
+            category = {SCARPET},
             validate = ModulePermissionLevel.class
     )
     public static String commandScriptACE = "ops";
