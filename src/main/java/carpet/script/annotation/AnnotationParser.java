@@ -89,7 +89,7 @@ public class AnnotationParser {
 	
 	private static <T> TriFunction<Context, Integer, List<LazyValue>, LazyValue> makeFunction(Method method, FunctionClass instance) {
 		final boolean isVarArgs = method.isVarArgs();
-		//@SuppressWarnings("unchecked") // We are defining T in here
+		@SuppressWarnings("unchecked") // We are defining T in here
 		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>)method.getReturnType());
 		final int minParams = 0; // TODO Populate this. Think about locators
 		return (context, i, lv) -> {

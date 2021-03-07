@@ -10,6 +10,7 @@ import net.minecraft.text.Text;
 
 import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
+import java.util.List;
 import java.util.Locale;
 
 public class FunctionsTestClass implements FunctionClass {
@@ -19,7 +20,7 @@ public class FunctionsTestClass implements FunctionClass {
 	}
 	
 	@LazyFunction
-	public String make_noise(Value string, Value string2) {
+	public String make_noise(Value string, Value string2, List<ServerPlayerEntity> me) {
 		return string.getString()+ " "+string2.getString();
 	}
 	

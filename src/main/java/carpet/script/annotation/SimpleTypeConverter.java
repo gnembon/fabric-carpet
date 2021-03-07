@@ -46,7 +46,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 	private SimpleTypeConverter(Class<T> inputType, Class<R> outputType, Function<T, R> converter) {
 		//this.outputType = outputType;
 		this.converter = converter;
-		this.caster = ValueCaster.get(inputType);
+		this.caster = ValueCaster.getOrRegister(inputType);
 	}
 	
 	@Override //TODO This

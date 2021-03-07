@@ -22,7 +22,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 
-public class ValueCaster<R extends Value> implements ValueConverter<R> {
+public class ValueCaster<R> implements ValueConverter<R> {
 	private static final Map<Class<? extends Value>, ValueCaster<? extends Value>> byResult = new HashMap<>();
 	static {
 		register(Value.class, "value");
@@ -53,21 +53,30 @@ public class ValueCaster<R extends Value> implements ValueConverter<R> {
 	}
 	
 	/**
-	 * Returns the {@link ValueCaster} for the specified outputType.
-	 * @param <T> The type of the {@link ValueCaster} you are looking for
+	 * Returns the registered {@link ValueCaster} for the specified outputType.
+	 * @param <R> The type of the {@link ValueCaster} you are looking for
 	 * @param outputType The class of the {@link Value} the returned {@link ValueCaster} casts to
 	 * @return The {@link ValueCaster} for the specified outputType
+	 * @deprecated Use {@link #getOrRegister(Class)} instead
 	 */
+	@Deprecated
 	@SuppressWarnings("unchecked") // Casters are stored with their exact class, for sure since the map is private (&& class has same generic as caster)
-	public static <T extends Value> ValueCaster<T> get(Class<T> outputType) {
-		return (ValueCaster<T>)byResult.get(outputType);
+	public static <R> ValueCaster<R> get(Class<R> outputType) {
+		return (ValueCaster<R>)byResult.get(outputType);
 	}
 	
-	public static <T extends Value> ValueCaster<T> getOrRegister(Class<T> outputType) {
-		ValueCaster<T> out = get(outputType);
+	/**
+	 * Returns a {@link ValueCaster} for the specified outputType. In case it isn't registered,
+	 * tries to generate one, using (slightly concerning) reflection hacks to get its user-friendly name.
+	 * @param <R> The type of the {@link ValueCaster} you are looking for
+	 * @param outputType The class of the {@link Value} the returned {@link ValueCaster} casts to
+	 * @return A {@link ValueCaster} for the specified outputType
+	 */
+	public static <R> ValueCaster<R> getOrRegister(Class<R> outputType) {
+		ValueCaster<R> out = get(outputType);
 		if (out != null)
-			return get(outputType);
-		autoRegister(outputType);
+			return out;
+		autoRegister((Class<? extends Value>)outputType); // TODO fix this or maybe even yeet this method
 		return get(outputType);
 	}
 	
@@ -88,7 +97,7 @@ public class ValueCaster<R extends Value> implements ValueConverter<R> {
 	@Nullable
 	public R cast(Value value) {
 		if (!outputType.isInstance(value))
-			return null; // TODO Check this null on other places
+			return null; // TODO Check this null in other places
 		return outputType.cast(value);
 	}
 	
@@ -100,14 +109,14 @@ public class ValueCaster<R extends Value> implements ValueConverter<R> {
 	
 	/**
 	 * Registers a new {@link Value} to be able to use it in {@link SimpleTypeConverter}
-	 * @param <T> The {@link Value} subclass
+	 * @param <R> The {@link Value} subclass
 	 * @param valueClass The class of T
 	 * @param typeName A {@link String} representing the name of this type. It will be used in error messages
 	 *                 when there is no higher type required, with the form 
 	 *                 <code>(function name) requires a (typeName) to be passed as (argName, if available)</code>
 	 */
-	public static <T extends Value> void register(Class<T> valueClass, String typeName) {
-		ValueCaster<T> caster = new ValueCaster<T>(valueClass, typeName);
+	public static <R extends Value> void register(Class<R> valueClass, String typeName) {
+		ValueCaster<R> caster = new ValueCaster<R>(valueClass, typeName);
 		byResult.put(valueClass, caster);
 	}
 	
@@ -120,10 +129,14 @@ public class ValueCaster<R extends Value> implements ValueConverter<R> {
 	 * 
 	 * <p>The worse thing is it works (tested with {@link StringValue})</p>
 	 * 
-	 * @param <T> The type of the {@link Value} class we are analyzing
+	 * <p><b>DO NOT MANUALLY USE THIS. IT CAN LEAD TO UNKNOWN BEHAVIOUR IN EXTENSIONS</b></p>
+	 * TODO Delete this before the pr is actually merged and make {@link #get(Class)} throw. It was fun though
+	 * @see #register(Class, String)
+	 * 
+	 * @param <R> The type of the {@link Value} class we are analyzing
 	 * @param valueClass The class of the {@link Value}
 	 */
-	public static <T extends Value> void autoRegister(Class<T> valueClass) {
+	public static <R extends Value> void autoRegister(Class<R> valueClass) {
 		try {
 			CarpetSettings.LOG.warn("Unregistered Value class provided required in function, '" + valueClass.getName() +"', trying to find its name...");
 			if (Modifier.isAbstract(valueClass.getModifiers())) {
@@ -143,7 +156,7 @@ public class ValueCaster<R extends Value> implements ValueConverter<R> {
 			throw new UnsupportedOperationException();
 		} catch (Exception e) { //Heuristics failed. Just use class name
 			register(valueClass, valueClass.getCanonicalName().toLowerCase(Locale.ROOT).replace("value", ""));
-			CarpetSettings.LOG.warn("Couldn't automagically get type name for '"+valueClass.getName()+"', using class without 'value'. Please register it");
+			CarpetSettings.LOG.warn("Couldn't automagically get type name for '"+valueClass.getName()+"', using class without 'value'. Please register it!");
 		}
 	}
 }

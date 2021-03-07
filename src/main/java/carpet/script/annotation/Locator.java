@@ -1,5 +1,6 @@
 package carpet.script.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -18,16 +19,17 @@ import carpet.script.value.Value;
  */
 public final class Locator {
 	/**
-	 * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link BlockArgument} locator.
+	 * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link BlockArgument} locator.</p>
 	 * 
-	 * <p>Must be used in {@link BlockValue} parameters
+	 * <p>Must be used in {@link BlockValue} parameters</p>
 	 */
+	@Documented
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
 	public @interface Block {
 		/**
 		 * <p>Whether or not should the locator accept a single {@link String} as the parameter and
-		 * let parsing to {@link BlockValue}.
+		 * let parsing to {@link BlockValue}.</p>
 		 */
 		boolean acceptString() default false;
 		
@@ -52,6 +54,7 @@ public final class Locator {
 	 * 
 	 * <p>Must be used in {@link net.minecraft.util.math.Vec3d} parameters</p>
 	 */
+	@Documented
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
 	public @interface Vec3d {
