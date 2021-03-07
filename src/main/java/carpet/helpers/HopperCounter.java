@@ -45,7 +45,7 @@ public class HopperCounter
     private HopperCounter(DyeColor color)
     {
         this.color = color;
-        this.prettyColour = WoolTool.Material2DyeName.get(color.getMaterialColor());//no need for getOrDefault cos I covered all possible options
+        this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMaterialColor(),"w ") + color.getName();
     }
 
     public void add(MinecraftServer server, ItemStack stack)

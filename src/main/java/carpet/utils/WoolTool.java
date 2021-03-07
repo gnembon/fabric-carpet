@@ -29,7 +29,7 @@ public class WoolTool
         put(MaterialColor.LIGHT_BLUE, "t ");
         put(MaterialColor.YELLOW, "y ");
         put(MaterialColor.LAPIS, "l ");
-        put(MaterialColor.PINK, "#F38BAA ");
+        put(MaterialColor.PINK, "#FFACCB ");
         put(MaterialColor.GRAY, "f ");
         put(MaterialColor.LIGHT_GRAY, "g ");
         put(MaterialColor.CYAN, "c ");
