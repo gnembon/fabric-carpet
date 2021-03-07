@@ -91,7 +91,7 @@ public class Inventories {
             Item item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString()).getItem();
             if (lv.size() == 1)
             {
-                Value ret = ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTagsFor(item).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(1).evalValue(c).getString();

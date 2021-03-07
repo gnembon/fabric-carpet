@@ -178,6 +178,7 @@
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
+    "ReloadCommand_reloadAppsMixin",
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",

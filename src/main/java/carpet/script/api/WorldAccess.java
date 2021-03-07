@@ -1127,7 +1127,8 @@ public class WorldAccess {
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
-                Value ret = ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Block target = blockLocator.block.getBlockState().getBlock();
+                Value ret = ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTags().entrySet().stream().filter(e -> e.getValue().contains(target)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(blockLocator.offset).evalValue(c).getString();
@@ -1382,6 +1383,7 @@ public class WorldAccess {
         {
             if (lv.size() == 0) throw new InternalExpressionException("'custom_dimension' requires at least one argument");
             CarpetContext cc = (CarpetContext)c;
+            cc.host.issueDeprecation("custom_dimension()");
             String worldKey = lv.get(0).evalValue(c).getString();
 
             Long seed = null;
