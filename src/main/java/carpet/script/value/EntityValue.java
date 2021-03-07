@@ -416,7 +416,7 @@ public class EntityValue extends Value
         put("motion_z", (e, a) -> new NumericValue(e.getVelocity().z));
         put("on_ground", (e, a) -> new NumericValue(e.isOnGround()));
         put("name", (e, a) -> new StringValue(e.getName().getString()));
-        put("display_name", (e, a) -> new StringValue(e.getDisplayName().getString()));
+        put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getEntityName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
         put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getId(e.getType()))));
@@ -429,7 +429,7 @@ public class EntityValue extends Value
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
-        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTagsFor(e.getType()).stream().map(ValueConversions::of).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTags().entrySet().stream().filter(entry -> entry.getValue().contains(e.getType())).map(entry -> ValueConversions.of(entry.getKey())).collect(Collectors.toList())));
         // deprecated
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
 
@@ -462,7 +462,7 @@ public class EntityValue extends Value
             return ListValue.of(new NumericValue(look.x),new NumericValue(look.y),new NumericValue(look.z));
         });
         put("is_burning", (e, a) -> new NumericValue(e.isOnFire()));
-        //put("fire", (e, a) -> new NumericValue(e.getFire())); needs mixing
+        put("fire", (e, a) -> new NumericValue(e.getFireTicks()));
         put("silent", (e, a)-> new NumericValue(e.isSilent()));
         put("gravity", (e, a) -> new NumericValue(!e.hasNoGravity()));
         put("immune_to_fire", (e, a) -> new NumericValue(e.isFireImmune()));

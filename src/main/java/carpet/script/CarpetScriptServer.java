@@ -26,6 +26,7 @@ import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
 
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -136,7 +137,8 @@ public class CarpetScriptServer
     {
         try {
             Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
-            Files.createDirectories(folder);
+            if (!Files.exists(folder)) 
+                Files.createDirectories(folder);
             Optional<Path>
             scriptPath = Files.list(folder)
                 .filter(script -> 
@@ -149,7 +151,8 @@ public class CarpetScriptServer
             if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
                 Path globalFolder = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
-                Files.createDirectories(globalFolder);
+                if (!Files.exists(globalFolder)) 
+                    Files.createDirectories(globalFolder);
                 scriptPath = Files.walk(globalFolder)
                         .filter(script -> script.getFileName().toString().equalsIgnoreCase(name + ".sc") ||
                                 (allowLibraries && script.getFileName().toString().equalsIgnoreCase(name + ".scl")))
@@ -194,7 +197,8 @@ public class CarpetScriptServer
         }
         try {
             Path worldScripts = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
-            Files.createDirectories(worldScripts);
+            if (!Files.exists(worldScripts)) 
+                Files.createDirectories(worldScripts);
             Files.list(worldScripts)
                 .filter(f -> f.toString().endsWith(".sc"))
                 .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
@@ -202,8 +206,9 @@ public class CarpetScriptServer
             if (includeBuiltIns && (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT))
             {
                 Path globalScripts = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
-                Files.createDirectories(globalScripts);
-                Files.walk(globalScripts)
+                if (!Files.exists(globalScripts))
+                    Files.createDirectories(globalScripts);
+                Files.walk(globalScripts, FileVisitOption.FOLLOW_LINKS)
                     .filter(f -> f.toString().endsWith(".sc"))
                     .forEach(f -> moduleNames.add(f.getFileName().toString().replaceFirst("\\.sc$","").toLowerCase(Locale.ROOT)));
             }

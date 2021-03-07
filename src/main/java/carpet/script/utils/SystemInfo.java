@@ -9,6 +9,7 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
@@ -49,6 +50,7 @@ public class SystemInfo {
             String tlf = serverPath.getName(nodeCount-2).toString();
             return StringValue.of(tlf);
         });
+        put("world_dimensions", c -> ListValue.wrap(c.s.getMinecraftServer().getWorldRegistryKeys().stream().map(k -> ValueConversions.of(k.getValue())).collect(Collectors.toList())));
         put("game_difficulty", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getDifficulty().getName()));
         put("game_hardcore", c -> new NumericValue(c.s.getMinecraftServer().getSaveProperties().isHardcore()));
         put("game_storage_format", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getFormatName(c.s.getMinecraftServer().getSaveProperties().getVersion())));

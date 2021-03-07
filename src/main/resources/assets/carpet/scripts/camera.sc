@@ -1,4 +1,4 @@
-__command() ->
+_command() ->
 (
    print('camera: scarpet app.');
    print('-------------------');
@@ -11,7 +11,7 @@ __command() ->
    print(' "/camera place_player - Move player to the selected point');
    print(' "/camera move" - Move the selected point to players location');
    print(' "/camera duration <X>" - Set new selected path duration');
-   print(' "/camera split_point>" - Split selected path in half.');
+   print(' "/camera split_point" - Split selected path in half.');
    print(' "/camera delete_point" - Remove current key point');
    print(' "/camera trim_path" - Remove all key points from selected up');
    print('');
@@ -57,6 +57,47 @@ __command() ->
    print('');
    null
 );
+__config() ->{
+    'commands'->{
+        ''->'_command',
+        '<command>'->'_call',
+        'add <seconds>'->'add',
+        'prepend <seconds>'->'prepend',
+        'duration <seconds>' -> 'duration',
+        'save_as <name>'->'save_as',
+        'load <name>'->'load',
+        'interpolation <interpolation>'->['__interpolation',true],
+        'interpolation gauss'->['__interpolation','gauss',true],
+        'interpolation gauss <float>'->_(float)->(__interpolation('gauss_'+str(float),true)),
+        'repeat <seconds> <last_delay>'->'repeat',
+        'stretch <factor>'->'stretch'
+    },
+    'arguments'->{
+        'seconds'->{'type'->'int','suggest'->[]},
+        'last_delay'->{'type'->'int','suggest'->[]},
+        'name'->{'type'->'string','suggest'->[]},
+        'interpolation'->{'type'->'term','options'->['linear','catmull_rom']},
+        'factor'->{'type'->'int','min'->25,'max'->400},
+        'command'->{'type'->'term','options'->[
+            'start',
+            'clear',
+            'select',
+            'place_player',
+            'move',
+            'split_point',
+            'delete_point',
+            'trim_path',
+            'transpose',
+            'play',
+            'show',
+            'hide',
+            'prefer_smooth_play',
+            'prefer_synced_play'
+        ]}
+    }
+};
+
+_call(command)->call(command);
 
 global_points = null;
 global_dimension = null;
@@ -150,7 +191,6 @@ __assert_point_selected(validator) ->
 );
 
 //select a custom interpolation method
-interpolation(method) -> __interpolation(method, true);
 __interpolation(method, verbose) ->
 (
    __prepare_path_if_needed() -> __prepare_path_if_needed_generic();
@@ -159,7 +199,7 @@ __interpolation(method, verbose) ->
    // or optionally __prepare_path_if_needed, if path is inefficient to compute point by point
    global_interpolator = if (
        method == 'linear', '__interpolator_linear',
-       method == 'cr', '__interpolator_cr',
+       method == 'catmull_rom', '__interpolator_cr',
        method == 'gauss', _(s, p) -> __interpolator_gauB(s, p, 0),
        method ~ '^gauss_',
             (
@@ -167,13 +207,12 @@ __interpolation(method, verbose) ->
                 type = replace(type,'_','.');
                 variance = round(60*number(type));
                 _(s, p, outer(variance)) -> __interpolator_gauB(s, p, variance);
-            ),
-       exit('Choose one of the following methods: linear, gauss, gauss_<deviation>, cr')
+            )
    );
    __update();
    if(verbose, 'Interpolation changed to '+method, '');
 );
-__interpolation('cr', false);
+__interpolation('catmull_rom', false);
 
 // adds a point to the end of the path with delay in seconds
 add(delay) ->
@@ -216,9 +255,6 @@ repeat(times, last_section_delay) ->
 stretch(percentage) ->
 (
    if (err = __is_not_valid_for_motion(), exit(err));
-   if (percentage < 25 || percentage > 400,
-       exit('path speed can only be speed, or slowed down 4 times. Re-call command for larger changes')
-   );
    ratio = percentage/100;
    previous_path_length = global_points:(-1):1;
    for(global_points, _:1 = _:1*ratio );

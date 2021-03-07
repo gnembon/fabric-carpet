@@ -22,6 +22,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.utils.FixedCommandSource;
+import carpet.script.utils.InputValidator;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
@@ -37,6 +38,10 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import net.minecraft.SharedConstants;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.DataCommandStorage;
 import net.minecraft.entity.Entity;
@@ -47,12 +52,18 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtHelper;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
+import net.minecraft.resource.DataPackSettings;
+import net.minecraft.resource.ReloadableResourceManagerImpl;
+import net.minecraft.resource.ResourcePackManager;
+import net.minecraft.resource.ResourcePackProfile;
+import net.minecraft.resource.ServerResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -65,13 +76,27 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.crash.CrashException;
+import net.minecraft.util.Util;
+import net.minecraft.util.WorldSavePath;
+import net.minecraft.util.dynamic.RegistryOps;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.SaveProperties;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.source.BiomeAccess;
+import net.minecraft.world.border.WorldBorderListener;
+import net.minecraft.world.dimension.DimensionOptions;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.gen.GeneratorOptions;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.level.UnmodifiableLevelProperties;
+import net.minecraft.world.level.storage.LevelStorage;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -80,6 +105,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -98,7 +130,7 @@ import static java.lang.Math.min;
 public class Auxiliary {
     public static final String MARKER_STRING = "__scarpet_marker";
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
-    public static final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
 
     public static String recognizeResource(Value value, boolean isFloder)
     {
@@ -849,7 +881,7 @@ public class Auxiliary {
                         exc = e.getCause();
                     throw new ThrowStatement("Failed to read JSON file: "+exc.getMessage(), Throwables.JSON_READ);
                 }
-                Value parsedJson = gson.fromJson(json, Value.class);
+                Value parsedJson = GSON.fromJson(json, Value.class);
                 if (parsedJson == null)
                     retVal = Value.NULL;
                 else
@@ -888,7 +920,7 @@ public class Auxiliary {
             }
             else if (fdesc.getMiddle().equals("json"))
             {
-                List<String> data = Collections.singletonList(gson.toJson(lv.get(2).evalValue(c).toJson()));
+                List<String> data = Collections.singletonList(GSON.toJson(lv.get(2).evalValue(c).toJson()));
                 ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle());
                 success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
             }
@@ -1066,7 +1098,178 @@ public class Auxiliary {
             if (old_nbt == null) return LazyValue.NULL;
             return (_c, _t) -> new NBTSerializableValue(old_nbt);
         });
+
+        // script run create_datapack('foo', {'foo' -> {'bar.json' -> {'c' -> true,'d' -> false,'e' -> {'foo' -> [1,2,3]},'a' -> 'foobar','b' -> 5}}})
+        expression.addLazyFunction("create_datapack", 2, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            String origName = lv.get(0).evalValue(c).getString();
+            String name = InputValidator.validateSimpleString(origName, true);
+            MinecraftServer server = cc.s.getMinecraftServer();
+            for (String dpName : server.getDataPackManager().getNames())
+            {
+                if (dpName.equalsIgnoreCase("file/"+name+".zip") ||
+                        dpName.equalsIgnoreCase("file/"+name))
+                    return LazyValue.NULL;
+
+            }
+            Value dpdata = lv.get(1).evalValue(c);
+            if (!(dpdata instanceof MapValue))
+                throw new InternalExpressionException("datapack data needs to be a valid map type");
+            ResourcePackManager packManager = server.getDataPackManager();
+            Path dbFloder = server.getSavePath(WorldSavePath.DATAPACKS);
+            Path packFloder = dbFloder.resolve(name+".zip");
+            if (Files.exists(packFloder) || Files.exists(dbFloder.resolve(name))) return LazyValue.NULL;
+            Boolean [] successful = new Boolean[]{true};
+            server.submitAndJoin( () ->
+            {
+                try {
+                    //Files.createDirectory(packFloder);
+                    try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + packFloder.toUri().toString()), ImmutableMap.of("create", "true"))) {
+                        Path zipRoot = zipfs.getPath("/");
+                        zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
+                                ImmutableMap.of(StringValue.of("pack"), MapValue.wrap(ImmutableMap.of(
+                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getGameVersion().getPackVersion()),
+                                        StringValue.of("description"), StringValue.of(name),
+                                        StringValue.of("source"), StringValue.of("scarpet")
+                                )))
+                        ));
+                        walkTheDPMap((MapValue) dpdata, zipRoot);
+                    }
+                    packManager.scanPacks();
+                    ResourcePackProfile resourcePackProfile = packManager.getProfile("file/" + name + ".zip");
+                    if (resourcePackProfile == null || packManager.getEnabledProfiles().contains(resourcePackProfile)) {
+                        throw new IOException();
+                    }
+                    List<ResourcePackProfile> list = Lists.newArrayList(packManager.getEnabledProfiles());
+                    resourcePackProfile.getInitialPosition().insert(list, resourcePackProfile, p -> p, false);
+
+
+                    server.reloadResources(list.stream().map(ResourcePackProfile::getName).collect(Collectors.toList())).
+                            exceptionally(exc -> {
+                                successful[0] = false;
+                                return null;
+                            }).join();
+                    if (!successful[0]) {
+                        throw new IOException();
+                    }
+                } catch (IOException e)
+                {
+                    successful[0] = false;
+                    try {
+                        FileUtils.forceDelete(packFloder.toFile());
+                    } catch (IOException ignored) {
+                        throw new InternalExpressionException("Failed to install a datapack and failed to clean up after it");
+                    }
+
+                }
+            });
+            return successful[0]?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
+        expression.addLazyFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            // from minecraft.server.Main.main
+            MinecraftServer server = cc.s.getMinecraftServer();
+            LevelStorage.Session session = ((MinecraftServerInterface)server).getCMSession();
+            DataPackSettings dataPackSettings = session.getDataPackSettings();
+            ResourcePackManager resourcePackManager = server.getDataPackManager();
+            DataPackSettings dataPackSettings2 = MinecraftServer.loadDataPacks(resourcePackManager, dataPackSettings == null ? DataPackSettings.SAFE_MODE : dataPackSettings, false);
+            ServerResourceManager serverRM = ((MinecraftServerInterface)server).getResourceManager();
+            ReloadableResourceManagerImpl resourceManager = (ReloadableResourceManagerImpl) serverRM.getResourceManager();
+
+            //believe the other one will fillup based on the datapacks only.
+            resourceManager.close();
+            resourcePackManager.createResourcePacks().forEach(resourceManager::addPack);
+
+            //not sure its needed, but doesn't seem to have a negative effect and might be used in some custom shtuff
+            serverRM.loadRegistryTags();
+
+            RegistryOps<Tag> registryOps = RegistryOps.of(NbtOps.INSTANCE, serverRM.getResourceManager(), (DynamicRegistryManager.Impl) server.getRegistryManager());
+            SaveProperties saveProperties = session.readLevelProperties(registryOps, dataPackSettings2);
+            if (saveProperties == null) return LazyValue.NULL;
+            //session.backupLevelDataFile(server.getRegistryManager(), saveProperties); // no need
+
+            // MinecraftServer.createWorlds
+            // save properties should now contain dimension settings
+            GeneratorOptions generatorOptions = saveProperties.getGeneratorOptions();
+            boolean bl = generatorOptions.isDebugWorld();
+            long l = generatorOptions.getSeed();
+            long m = BiomeAccess.hashSeed(l);
+            Map<RegistryKey<World>, ServerWorld> existing_worlds = ((MinecraftServerInterface)server).getCMWorlds();
+            List<Value> addeds = new ArrayList<>();
+            for (Map.Entry<RegistryKey<DimensionOptions>, DimensionOptions> entry : generatorOptions.getDimensions().getEntries()) {
+                RegistryKey<DimensionOptions> registryKey = entry.getKey();
+                if (!existing_worlds.containsKey(registryKey))
+                {
+                    addeds.add(ValueConversions.of(registryKey.getValue()));
+                    RegistryKey<World> registryKey2 = RegistryKey.of(Registry.DIMENSION, registryKey.getValue());
+                    DimensionType dimensionType3 = entry.getValue().getDimensionType();
+                    ChunkGenerator chunkGenerator3 = entry.getValue().getChunkGenerator();
+                    UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, saveProperties.getMainWorldProperties());
+                    ServerWorld serverWorld2 = new ServerWorld(server, Util.getMainWorkerExecutor(), session, unmodifiableLevelProperties, registryKey2, dimensionType3, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, ImmutableList.of(), false);
+                    server.getOverworld().getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld2.getWorldBorder()));
+                    existing_worlds.put(registryKey2, serverWorld2);
+                }
+            }
+            Value ret = ListValue.wrap(addeds);
+            return (_c, _t) -> ret;
+        });
     }
+
+    private static void zipValueToJson(Path path, Value output) throws IOException
+    {
+        JsonElement element = output.toJson();
+        if (element == null)
+            throw new InternalExpressionException("Cannot interpret "+output.getPrettyString()+" as a json object");
+        String string = GSON.toJson(element);
+        Files.createDirectories(path.getParent());
+        BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
+        Throwable incident = null;
+        try
+        {
+            bufferedWriter.write(string);
+        }
+        catch (Throwable shitHappened)
+        {
+            incident = shitHappened;
+            throw shitHappened;
+        }
+        finally
+        {
+            if (incident != null) {
+                try {
+                    bufferedWriter.close();
+                } catch (Throwable otherShitHappened) {
+                    incident.addSuppressed(otherShitHappened);
+                }
+            } else {
+                bufferedWriter.close();
+            }
+        }
+    }
+
+    private static void walkTheDPMap(MapValue node, Path path) throws IOException
+    {
+        Map<Value,Value> items = node.getMap();
+        for (Map.Entry<Value, Value> entry : items.entrySet())
+        {
+            Value val = entry.getValue();
+            String strkey = entry.getKey().getString();
+            Path child = path.resolve(strkey);
+            if (strkey.endsWith(".json"))
+            {
+                zipValueToJson(child, val);
+            }
+            else
+            {
+                if (!(val instanceof MapValue)) throw new InternalExpressionException("Value of "+strkey+" should be a map");
+                Files.createDirectory(child);
+                walkTheDPMap((MapValue) val, child);
+            }
+        }
+    }
+
+
 
     private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {

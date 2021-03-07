@@ -398,6 +398,83 @@ Returns `true` if the file was saved successfully, `false` otherwise.
 
 Uses the same file structure for exclusive app data, and shared data folder as `load_app_data`.
 
+### `create_datapack(name, data)`
+
+Creates and loads custom datapack. The data has to be a map representing the file structure and the content of the 
+json files of the target pack.
+
+Returns `null` if the pack with this name already exists or is loaded, meaning no change has been made.
+Returns `false` if adding of the datapack wasn't successful.
+Returns `true` if creation and loading of the datapack was successful. Loading of a datapack results in
+reloading of all other datapacks (vanilla restrictions, identical to /datapack enable), however unlike with `/reload` 
+command, scarpet apps will not be reloaded by adding a datapack using `create_datapack`.
+
+Currently, only json files are supported in the packs. `'pack.mcmeta'` file is added automatically.
+
+Reloading of datapacks that define new dimensions is not implemented in vanilla. Vanilla game only loads 
+dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
+file structure in a datapack file and calling `/datapack enable` on the new datapack with all its quirks and sideeffects
+(like no worldgen changes, reloading all other datapacks, etc.). To enable newly added custom dimensions, call much more
+experimental `check_hidden_dimensions()` after adding a datapack if needed.
+
+Synopsis:
+<pre>
+script run create_datapack('foo', 
+{
+    'foo' -> {
+        'bar.json' -> {
+            'c' -> true,
+            'd' -> false,
+            'e' -> {'foo' -> [1,2,3]},
+            'a' -> 'foobar',
+            'b' -> 5
+        }
+    }
+})
+
+script run create_datapack('funky_world',  {
+    'data' -> {
+        'minecraft' -> {
+            'dimension' -> {
+                'custom_ow.json' -> { 
+                    'type' -> 'minecraft:the_end',
+                    'generator' -> {
+                        'biome_source' -> {
+                             'seed' -> 0,
+                             'large_biomes' -> false,
+                             'type' -> 'minecraft:vanilla_layered'
+                        },
+                        'seed' -> 0,
+                        'settings' -> 'minecraft:nether',
+                        'type' -> 'minecraft:noise'
+                    }
+                }
+            }
+        }
+    }
+});
+check_hidden_dimensions();  => ['funky_world']
+        
+</pre>
+
+### `enable_hidden_dimensions()`
+
+The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
+to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
+datapacks have been added to the game, either with 'create_datapack()' or manually by dropping a datapack file and calling 
+`/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
+
+Fine print: The function should be
+considered experimental. There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
+clients will not see suggestions for commands that use dimensions `/execute in <dim>` (vanilla client limitation) 
+but all commands should work just fine with
+the new dimensions. Existing worlds that have gotten modified settings by the datapacks will not be reloaded or replaced.
+The usability of the dimensions added this way has not been fully tested, but it seems it works just fine. Generator settings
+for the new dimensions will not be added to `'level.dat'` but it will be added there automatically next time the game restarts by 
+vanilla. One could have said to use this method with caution, and the authors take no responsibility of any losses incurred due to 
+mis-handlilng of the temporary added dimensions, yet the feature itself (custom dimensions) is clearly experimental for Mojang 
+themselves, so that's about it.
+
 ### `tick_time()`
 
 Returns server tick counter. Can be used to run certain operations every n-th ticks, or to count in-game time.
@@ -517,6 +594,7 @@ Available options in the scarpet app space:
  Relevant world related properties
   * `world_name` - name of the world
   * `world_seed` - a numeric seed of the world
+  * `world_dimensions` - a list of dimensions in the world
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
