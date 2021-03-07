@@ -413,22 +413,25 @@ public class CarpetSettings
 
     private static class ModulePermissionLevel extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            CarpetSettings.runPermissionLevel = SettingsManager.getCommandLevel(newValue);
+            int permissionLevel = SettingsManager.getCommandLevel(newValue);
+            if (source != null && !source.hasPermissionLevel(permissionLevel))
+                return null;
+            CarpetSettings.runPermissionLevel = permissionLevel;
             return newValue;
         }
         @Override
-        public String description() { return "Also controls permission level of commands executed via `run()`";}
+        public String description() { return "When changing the rule, you must at least have the permission level you are trying to give it";}
     }
     @Rule(
             desc = "Enables restrictions for arbitrary code execution with scarpet",
             extra = {
                     "Users that don't have this permission level",
                     "won't be able to load apps or /script run.",
-                    "Also apps will only be able to run() commands",
-                    "up to that permission level."
+                    "It is also the permission level apps will",
+                    "have when running commands with run()"
             },
             category = {SCARPET},
-            validate = ModulePermissionLevel.class
+            validate = {Validator._COMMAND_LEVEL_VALIDATOR.class, ModulePermissionLevel.class}
     )
     public static String commandScriptACE = "ops";
 
