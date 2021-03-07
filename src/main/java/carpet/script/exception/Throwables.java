@@ -65,6 +65,8 @@ public class Throwables {
          * <p>Parent will default to {@link Throwables#USER_DEFINED} if provided
          * parentValue meets Value#isNull, else it will create a new {@link Exception},
          * with its parent being {@link Throwables#USER_DEFINED}.
+         * <p>If passed parent matches {@link Throwables#ERROR}, it will create an error
+         * exception, which cannot be caught.
          * @param value The {@link Value} of the exception
          * @param parentValue An optional {@link Value} matching the name of a parent exception.
          *               <br>Accepts a {@link NullValue}, but not a {@code null}
@@ -98,7 +100,7 @@ public class Throwables {
         }
         
         /**
-         * Checks whether the given filter matches an instance of this exception, including checking equality
+         * Checks whether the given filter matches an instance of this exception, by checking equality
          * with itself and possible parents.
          * @param filter The {@link Value} to check against
          * @return Whether or not the given value matches this exception's hierarchy

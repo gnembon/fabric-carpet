@@ -39,9 +39,10 @@ public class ThrowStatement extends InternalExpressionException
      * Conveniently creates a value from the {@code value} String
      * to be used easily in Java code
      * @param message The message to display when not handled
-     * @param value A String that will be converted 
-     *              to a value to pass to {@code catch}
-     *              blocks
+     * @param exception An {@link Exception} containing the inheritance data
+     *                  for this exception. When throwing from Java,
+     *                  those exceptions should be pre-registered and used
+     *                  instead of creating new ones each time.
      * @param parent This exception's data
      */
     public ThrowStatement(String message, Exception exception)
