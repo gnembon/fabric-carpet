@@ -37,6 +37,14 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
         context = c;
     }
 
+    public ExpressionException(Context c, Expression e, Tokenizer.Token t, Supplier<String> messageSupplier, List<FunctionValue> stack)
+    {
+        super("Error");
+        this.stack.addAll(stack);
+        lazyStacktrace = messageSupplier;
+        context = c;
+    }
+
     private static final Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorMaker = (expr, /*Nullable*/ token, errmessage) ->
     {
 

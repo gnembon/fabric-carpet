@@ -8,7 +8,6 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ProcessedThrowStatement;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
 public class ControlFlow {
@@ -50,15 +49,13 @@ public class ControlFlow {
             switch (lv.size()) 
             {
                 case 0:
-                    throw new ThrowStatement(new StringValue("No further information"), Value.NULL, Value.NULL);
+                    throw new ThrowStatement(Value.NULL, Throwables.USER_DEFINED);
                 case 1:
-                    throw new ThrowStatement(lv.get(0).evalValue(c));
+                    throw new ThrowStatement(lv.get(0).evalValue(c), Throwables.USER_DEFINED );
                 case 2:
-                    throw new ThrowStatement(lv.get(1).evalValue(c), lv.get(0).evalValue(c), Value.NULL);
-                case 3:
-                    throw new ThrowStatement(lv.get(1).evalValue(c), lv.get(0).evalValue(c), lv.get(2).evalValue(c));
+                    throw new ThrowStatement(lv.get(1).evalValue(c), Throwables.getTypeForException(lv.get(0).evalValue(c).getString()));
                 default:
-                    throw new InternalExpressionException("throw() can't accept more than 3 parameters");
+                    throw new InternalExpressionException("throw() can't accept more than 2 parameters");
             }
         });
 
@@ -73,55 +70,43 @@ public class ControlFlow {
             }
             catch (ProcessedThrowStatement ret)
             {
-                if (ret.exception.isError())
-                    throw ret;
                 if (lv.size() == 1)
                 {
-                    if (!ret.exception.isInstance(Throwables.USER_DEFINED.getValue()))
+                    if (ret.thrownExceptionType != Throwables.USER_DEFINED)
                         throw ret;
                     return (c_, t_) -> Value.NULL;
                 }
-                if (lv.size() == 0 || lv.size() % 2 == 0)
+                if (lv.size() > 3 && lv.size() % 2 == 0)
                 {
-                    throw new InternalExpressionException("Try-catch block needs the code to run, and either a catch_expr or a number of pairs of filters and catch_expr");
+                    throw new InternalExpressionException("Try-catch block needs the code to run, and either a catch expression for user thrown exceptions, or a number of pairs of filters and catch expressions");
                 }
                 
                 Value val = null; // This is always assigned at some point, just the compiler doesn't know
                 
                 LazyValue __ = c.getVariable("_");
-                c.setVariable("_", (__c, __t) -> ret.exception.getValue().reboundedTo("_"));
-                LazyValue __msg = c.getVariable("_msg");
-                c.setVariable("_msg", (__c, __t) -> StringValue.of(ret.message).reboundedTo("_msg"));
-                
-                boolean handled;
+                c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
+
                 if (lv.size() == 2)
                 {
-                    if (!ret.exception.isInstance(Throwables.USER_DEFINED.getValue()))
-                        handled = false;
-                    else {
+                    if (ret.thrownExceptionType == Throwables.USER_DEFINED)
                         val = lv.get(1).evalValue(c, t);
-                        handled = true;
-                    }
                 }
                 else
                 {
                     int pointer = 1;
-                    handled = false;
                     while (pointer < lv.size() -1)
                     {
-                        if (ret.exception.isInstance(lv.get(pointer).evalValue(c)))
+                        if (ret.thrownExceptionType.isRelevantFor(lv.get(pointer).evalValue(c).getString()))
                         {
                             val = lv.get(pointer + 1).evalValue(c, t);
-                            handled = true;
                             break;
                         }
                         pointer += 2;
                     }
                 }
                 c.setVariable("_", __);
-                c.setVariable("_msg", __msg);
                 
-                if (!handled)
+                if (val == null)  // not handled
                 {
                     throw ret;
                 }

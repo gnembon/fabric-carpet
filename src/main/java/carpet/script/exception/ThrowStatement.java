@@ -3,35 +3,25 @@ package carpet.script.exception;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Tokenizer.Token;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-
-import static carpet.script.exception.Throwables.Exception;
 
 public class ThrowStatement extends InternalExpressionException
 {
-    private final Exception exception;
-    /**
-     * Creates a throw exception from a value.
-     * That value will also be used as the message.<br>
-     * To be used when throwing from Scarpet's {@code throw} function with a single argument
-     * @param value The value to pass
-     */
-    public ThrowStatement(Value value)
-    {
-        this(value, value, Value.NULL);
-    }
+    private final Throwables thrownExceptionType;
+    private final Value exceptionData;
     
     /**
      * Creates a throw exception from a value, and assigns it a specified message.
      * <p>To be used when throwing from Scarpet's {@code throw} function
-     * @param message The message to display if uncaught
-     * @param value The value to pass
-     * @param parent A parent's name
+     * @param data The value to pass
+     * @param type Exception type
      */
-    public ThrowStatement(Value message, Value value, Value parent)
+    public ThrowStatement(Value data, Throwables type)
     {
-        super(message.getString());
-        exception = new Exception(value, parent);
+        super(type.getId());
+        exceptionData = data;
+        thrownExceptionType = type;
     }
 
     /**
@@ -39,20 +29,19 @@ public class ThrowStatement extends InternalExpressionException
      * Conveniently creates a value from the {@code value} String
      * to be used easily in Java code
      * @param message The message to display when not handled
-     * @param exception An {@link Exception} containing the inheritance data
+     * @param thrownExceptionType An {@link Throwables} containing the inheritance data
      *                  for this exception. When throwing from Java,
-     *                  those exceptions should be pre-registered and used
-     *                  instead of creating new ones each time.
-     * @param parent This exception's data
+     *                  those exceptions should be pre-registered.
      */
-    public ThrowStatement(String message, Exception exception)
+    public ThrowStatement(String message, Throwables thrownExceptionType)
     {
         super(message);
-        this.exception = exception;
+        this.exceptionData = StringValue.of(message);
+        this.thrownExceptionType = thrownExceptionType;
     }
     
     @Override
     public ExpressionException promote(Context c, Expression e, Token token) {
-        return new ProcessedThrowStatement(c, e, token, getMessage(), stack, exception);
+        return new ProcessedThrowStatement(c, e, token, stack, thrownExceptionType, exceptionData);
     }
 }
