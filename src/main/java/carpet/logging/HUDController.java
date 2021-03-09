@@ -1,5 +1,6 @@
 package carpet.logging;
 
+import carpet.CarpetServer;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.logHelpers.PacketCounter;
@@ -62,7 +63,7 @@ public class HUDController
 
     public static void update_hud(MinecraftServer server)
     {
-        if(server.getTicks() % 20 != 0)
+        if(server.getTicks() % 20 != 0 || CarpetServer.minecraft_server == null)
             return;
 
         player_huds.clear();
