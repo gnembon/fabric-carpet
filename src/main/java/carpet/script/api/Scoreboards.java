@@ -133,7 +133,7 @@ public class Scoreboards {
                 criterion = ScoreboardCriterion.createStatCriterion(critetionName).orElse(null);
                 if (criterion==null)
                 {
-                    throw new ThrowStatement("Unknown scoreboard criterion: "+critetionName, Throwables.UNKNOWN_CRITERION);
+                    throw new ThrowStatement(critetionName, Throwables.UNKNOWN_CRITERION);
                 }
             }
 

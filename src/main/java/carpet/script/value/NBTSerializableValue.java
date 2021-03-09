@@ -299,7 +299,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         catch (CommandSyntaxException e)
         {
-            throw new ThrowStatement("Incorrect item: "+itemString, Throwables.UNKNOWN_ITEM);
+            throw new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM);
         }
     }
 

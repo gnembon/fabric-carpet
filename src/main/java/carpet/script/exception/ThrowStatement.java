@@ -29,15 +29,15 @@ public class ThrowStatement extends InternalExpressionException
      * Conveniently creates a value from the {@code value} String
      * to be used easily in Java code
      * @param message The message to display when not handled
-     * @param thrownExceptionType An {@link Throwables} containing the inheritance data
+     * @param type An {@link Throwables} containing the inheritance data
      *                  for this exception. When throwing from Java,
      *                  those exceptions should be pre-registered.
      */
-    public ThrowStatement(String message, Throwables thrownExceptionType)
+    public ThrowStatement(String message, Throwables type)
     {
-        super(message);
+        super(type.getId());
         this.exceptionData = StringValue.of(message);
-        this.thrownExceptionType = thrownExceptionType;
+        this.thrownExceptionType = type;
     }
     
     @Override

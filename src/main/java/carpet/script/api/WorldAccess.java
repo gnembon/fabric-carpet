@@ -339,7 +339,7 @@ public class WorldAccess {
                 if (!"any".equals(poiType))
                 {
                     PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiType))
-                            .orElseThrow(() -> new ThrowStatement("Unknown POI type", Throwables.UNKNOWN_POI_TYPE));
+                            .orElseThrow(() -> new ThrowStatement(poiType, Throwables.UNKNOWN_POI_TYPE));
                     condition = (tt) -> tt == type;
                 }
                 if (locator.offset + 2 < lv.size())
@@ -394,7 +394,7 @@ public class WorldAccess {
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
             PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiTypeString))
-            		.orElseThrow(() -> new ThrowStatement("Unknown POI type: "+poiTypeString, Throwables.UNKNOWN_POI_TYPE));
+            		.orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI_TYPE));
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
@@ -874,7 +874,7 @@ public class WorldAccess {
                     playerBreak = true;
                     String itemString = val.getString();
                     item = Registry.ITEM.getOrEmpty(new Identifier(itemString))
-                            .orElseThrow(() -> new ThrowStatement("Incorrect item: " + itemString, Throwables.UNKNOWN_ITEM));
+                            .orElseThrow(() -> new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM));
                 }
             }
             CompoundTag tag = null;
@@ -1182,7 +1182,7 @@ public class WorldAccess {
             String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
             // from locatebiome command code
             Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(new Identifier(biomeName))
-                .orElseThrow(() -> new ThrowStatement("Unknown biome: "+biomeName, Throwables.UNKNOWN_BIOME));
+                .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset+1)
             {
@@ -1252,7 +1252,7 @@ public class WorldAccess {
                 {
                     String reqString = requested.getString();
                     structure = Registry.STRUCTURE_FEATURE.getOrEmpty(new Identifier(reqString))
-                            .orElseThrow(() -> new ThrowStatement("Unknown structure: " + reqString, Throwables.UNKNOWN_STRUCTURE));
+                            .orElseThrow(() -> new ThrowStatement(reqString, Throwables.UNKNOWN_STRUCTURE));
                 }
                 if (lv.size() > locator.offset+1)
                 {
@@ -1332,7 +1332,7 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_structure requires at least position and a structure name");
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             ConfiguredStructureFeature<?, ?> configuredStructure = FeatureGenerator.resolveConfiguredStructure(structureName, world, pos);
-            if (configuredStructure == null) throw new ThrowStatement("Unknown structure: "+structureName, Throwables.UNKNOWN_STRUCTURE);
+            if (configuredStructure == null) throw new ThrowStatement(structureName, Throwables.UNKNOWN_STRUCTURE);
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it

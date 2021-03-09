@@ -193,7 +193,7 @@ public class Inventories {
             String itemStr = lv.get(0).evalValue(c).getString();
             Item item;
             Identifier id = new Identifier(itemStr);
-            item = Registry.ITEM.getOrEmpty(id).orElseThrow(() -> new ThrowStatement("Incorrect item: "+itemStr, Throwables.UNKNOWN_ITEM));
+            item = Registry.ITEM.getOrEmpty(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
 
             if (!item.hasRecipeRemainder()) return LazyValue.NULL;
             Value ret = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getId(item.getRecipeRemainder())));

@@ -76,7 +76,7 @@ public class BlockValue extends Value
         catch (CommandSyntaxException ignored)
         {
         }
-        throw new ThrowStatement("Cannot parse block: "+str, Throwables.UNKNOWN_BLOCK);
+        throw new ThrowStatement(str, Throwables.UNKNOWN_BLOCK);
     }
 
     public static BlockPos locateBlockPos(CarpetContext c, int xpos, int ypos, int zpos)

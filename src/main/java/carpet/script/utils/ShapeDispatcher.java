@@ -158,7 +158,7 @@ public class ShapeDispatcher
         }
         catch (CommandSyntaxException e)
         {
-            throw new ThrowStatement("No such particle: "+name, Throwables.UNKNOWN_PARTICLE);
+            throw new ThrowStatement(name, Throwables.UNKNOWN_PARTICLE);
         }
         particleCache.put(name, particle);
         return particle;

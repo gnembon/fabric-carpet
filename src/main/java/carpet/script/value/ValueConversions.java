@@ -160,7 +160,7 @@ public class ValueConversions
                         }
                     }
                     if (dim == null)
-                        throw new ThrowStatement("Incorrect dimension string: "+dimString, Throwables.UNKNOWN_DIMENSION);
+                        throw new ThrowStatement(dimString, Throwables.UNKNOWN_DIMENSION);
                     return server.getWorld(dim);
             }
         }

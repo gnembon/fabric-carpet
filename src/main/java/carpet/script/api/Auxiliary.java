@@ -162,10 +162,11 @@ public class Auxiliary {
     {
         expression.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
+            String rawString = lv.get(0).evalValue(c).getString();
+            Identifier soundName = new Identifier(rawString);
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
-                throw new ThrowStatement("No such sound: "+soundName.getPath(), Throwables.UNKNOWN_SOUND);
+                throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
             float volume = 1.0F;
             float pitch = 1.0F;
             SoundCategory mixer = SoundCategory.MASTER;
@@ -861,7 +862,7 @@ public class Auxiliary {
                     state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
                 } catch (CrashException e)
                 {
-                    throw new ThrowStatement("Couldn't read NBT data", Throwables.NBT_READ); 
+                    throw new ThrowStatement((fdesc.getRight()?"shared/":"")+ fdesc.getLeft(), Throwables.NBT_READ);
                 }
 
                 if (state == null) return LazyValue.NULL;
@@ -879,7 +880,10 @@ public class Auxiliary {
                     Throwable exc = e;
                     if(e.getCause() != null)
                         exc = e.getCause();
-                    throw new ThrowStatement("Failed to read JSON file: "+exc.getMessage(), Throwables.JSON_READ);
+                    throw new ThrowStatement(MapValue.wrap(ImmutableMap.of(
+                            StringValue.of("error"), StringValue.of(exc.getMessage()),
+                            StringValue.of("path"), StringValue.of((fdesc.getRight()?"shared/":"")+ fdesc.getLeft())
+                    )), Throwables.JSON_READ);
                 }
                 Value parsedJson = GSON.fromJson(json, Value.class);
                 if (parsedJson == null)
@@ -973,7 +977,7 @@ public class Auxiliary {
                 state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
             } catch (CrashException e)
             {
-                throw new ThrowStatement("Failed to read App data", Throwables.NBT_READ);
+                throw new ThrowStatement("app data", Throwables.NBT_READ);
             }
             if (state == null)
                 return (cc, tt) -> Value.NULL;
