@@ -295,10 +295,12 @@ Producing:
 {stack: [[<app>, inner_call, 1, 14]], locals: {_a: 0, aaa: booyah, _: 1, _y: 0, _i: 1, _x: 0, _z: 0}, token: [item_tags, 5, 23]}
 ```
 
-### `throw(value?)` `throw(type, value)`
+### `throw(value?)`, `throw(type, value)`, `throw(subtype, type, value)`
 
-Throws an exception that can be caught in a `try` block (see above). If ran without arguments, it will throw `user_exception` 
+Throws an exception that can be caught in a `try` block (see above). If ran without arguments, it will throw a `user_exception` 
 passing `null` as the value to the `catch_expr`. With two arguments you can mimic any other exception type thrown in scarpet.
+With 3 arguments, you can specify a custom exception acting as a `subtype` of a provided `type`, allowing to customize `try` 
+statements with custom exceptions.
 
 ### `if(cond, expr, cond?, expr?, ..., default?)`
 

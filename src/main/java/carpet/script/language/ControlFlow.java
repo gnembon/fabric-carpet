@@ -61,8 +61,10 @@ public class ControlFlow {
                     throw new ThrowStatement(lv.get(0).evalValue(c), Throwables.USER_DEFINED );
                 case 2:
                     throw new ThrowStatement(lv.get(1).evalValue(c), Throwables.getTypeForException(lv.get(0).evalValue(c).getString()));
+                case 3:
+                    throw new ThrowStatement(lv.get(2).evalValue(c), Throwables.getTypeForException(lv.get(1).evalValue(c).getString()), lv.get(0).evalValue(c).getString());
                 default:
-                    throw new InternalExpressionException("throw() can't accept more than 2 parameters");
+                    throw new InternalExpressionException("throw() can't accept more than 3 parameters");
             }
         });
 
@@ -79,7 +81,7 @@ public class ControlFlow {
             {
                 if (lv.size() == 1)
                 {
-                    if (ret.thrownExceptionType != Throwables.USER_DEFINED)
+                    if (!ret.thrownExceptionType.isUserException())
                         throw ret;
                     return (c_, t_) -> Value.NULL;
                 }
@@ -101,7 +103,7 @@ public class ControlFlow {
                                 NumericValue.of(f.getToken().linepos+1)
                         )).collect(Collectors.toList())),
 
-                        StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().collect(Collectors.toMap(
+                        StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().filter(e -> !e.getKey().equals("_trace")).collect(Collectors.toMap(
                                 e -> StringValue.of(e.getKey()),
                                 e -> e.getValue().evalValue(ret.context)
                         ))),
@@ -114,7 +116,7 @@ public class ControlFlow {
 
                 if (lv.size() == 2)
                 {
-                    if (ret.thrownExceptionType == Throwables.USER_DEFINED)
+                    if (ret.thrownExceptionType.isUserException())
                         val = lv.get(1).evalValue(c, t);
                 }
                 else

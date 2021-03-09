@@ -24,6 +24,13 @@ public class ThrowStatement extends InternalExpressionException
         this.type = type;
     }
 
+    public ThrowStatement(Value data, Throwables parent, String subtype)
+    {
+        super(subtype);
+        this.data = data;
+        this.type = new Throwables(subtype, parent);
+    }
+
     /**
      * Creates a throw exception.<br>
      * Conveniently creates a value from the {@code value} String

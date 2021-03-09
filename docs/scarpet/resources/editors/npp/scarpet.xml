@@ -91,7 +91,7 @@
             </Keywords>
             <Keywords name="Keywords3">euler pi null true false</Keywords>
             <Keywords name="Keywords4">x y z p</Keywords>
-            <Keywords name="Keywords5">_ _i _a _x _y _z</Keywords>
+            <Keywords name="Keywords5">_ _i _a _x _y _z _trace</Keywords>
             <Keywords name="Keywords6">global_</Keywords>
             <Keywords name="Keywords7">
                 __command

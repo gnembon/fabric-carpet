@@ -1,9 +1,7 @@
 package carpet.script.exception;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class contains default Scarpet catchable types, as well as their inheritance and
@@ -14,7 +12,6 @@ public class Throwables {
     private final Throwables parent;
 
     private static final Map<String, Throwables> byId = new HashMap<>();
-    private static final Map<String, Set<Throwables>> handles = new HashMap<>();
 
     public static final Throwables THROWN_EXCEPTION_TYPE = register("exception", null);
     public static final Throwables VALUE_EXCEPTION       = register("value_exception", THROWN_EXCEPTION_TYPE);
@@ -44,14 +41,6 @@ public class Throwables {
     {
         Throwables exc = new Throwables(id, parent);
         byId.put(id, exc);
-        Set<Throwables> itHandles = new HashSet<>();
-        itHandles.add(exc);
-        while (parent!=null)
-        {
-            handles.get(parent.id).add(exc);
-            parent = parent.parent;
-        }
-        handles.put(id, itHandles);
         return exc;
     }
 
@@ -61,7 +50,7 @@ public class Throwables {
      * Use an {@link InternalExpressionException} for that
      * @param id The exception's value as a {@link String}
      */
-    protected Throwables(String id, Throwables parent)
+    public Throwables(String id, Throwables parent)
     {
         this.id = id;
         this.parent = parent;
@@ -74,7 +63,6 @@ public class Throwables {
         return properType;
     }
 
-
     /**
      * Checks whether the given filter matches an instance of this exception, by checking equality
      * with itself and possible parents.
@@ -83,9 +71,12 @@ public class Throwables {
      */
     public boolean isRelevantFor(String filter)
     {
-        Set<Throwables> relevantSet = handles.get(filter);
-        if (relevantSet == null) throw new InternalExpressionException("Unknown exception type: "+filter);
-        return relevantSet.contains(this);
+        return (id.equals(filter) || (parent != null && parent.isRelevantFor(filter)));
+    }
+
+    public boolean isUserException()
+    {
+        return this == USER_DEFINED || parent == USER_DEFINED;
     }
 
     /**
