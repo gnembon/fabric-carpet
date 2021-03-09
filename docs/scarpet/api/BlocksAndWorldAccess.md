@@ -21,6 +21,8 @@ when it was used. Block values passed in various places like `scan` functions, e
 its properties are needed. This means that if the block at the location changes before its queried in the program this 
 might result in getting the later state, which might not be desired. Consider the following example:
 
+Throws `unknown_block` if provided input is not valid.
+
 <pre>set(10,10,10,'stone');
 scan(10,10,10,0,0,0, b = _);
 set(10,10,10,'air');
@@ -49,6 +51,8 @@ destination block is the same the `set` operation is skipped, otherwise is execu
 properties that the original source block may have contained.
 
 The returned value is either the block state that has been set, or `false` if block setting was skipped, or failed
+
+Throws `unknown_block` if provided block to set is not valid
 
 <pre>
 set(0,5,0,'bedrock')  => bedrock
@@ -128,6 +132,8 @@ but doesn't open chests / containers, so have no effect on interactive blocks, l
 Returns true if placement/use was 
 successful, false otherwise.
 
+Throws `unknown_item` if `item` doesn't exist
+
 <pre>
 place_item('stone',x,y,z) // places a stone block on x,y,z block
 place_item('piston,x,y,z,'down') // places a piston facing down
@@ -146,6 +152,8 @@ If type is `null`, POI at position is removed. In any case, previous POI is also
 Interestingly, `unemployed`, and `nitwit` are not used in the game, meaning, they could be used as permanent spatial 
 markers for scarpet apps. `meeting` is the only one with increased max occupancy of 32.
 
+Throws `unknown_poi` if the provided point of interest doesn't exist 
+
 ### `set_biome(pos, biome_name, update=true)`
 
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
@@ -155,6 +163,8 @@ Setting a biome is now (as of 1.16) dimension specific. In the overworld and the
 is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
 specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
 noise).
+
+Throws `unknown_biome` if the `biome_name` doesn't exist.
 
 ### `update(pos)`
 
@@ -179,6 +189,8 @@ Without item context it returns `false` if failed to destroy the block and `true
 In item context, `true` means that breaking item has no nbt to use, `null` indicating that the tool should be 
 considered broken in process, and `nbt` type value, for a resulting NBT tag on a hypothetical tool. Its up to the 
 programmer to use that nbt to apply it where it belong
+
+Throws `unknown_item` if `tool` doesn't exist.
 
 Here is a sample code that can be used to mine blocks using items in player inventory, without using player context 
 for mining. Obviously, in this case the use of `harvest` would be much more applicable:
@@ -271,6 +283,8 @@ back in state definition in various applications where block properties are requ
 
 `block_state` can also accept block names as input, returning block's default state.
 
+Throws `unknown_block` if the provided input is not valid.
+
 <pre>
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z,'half')  => top
@@ -290,6 +304,8 @@ Returns list of all blocks. If tag is provided, returns list of blocks that belo
 Without arguments, returns list of available tags, with block supplied (either by coordinates, or via block name), returns lost
 of tags the block belongs to, and if a tag is specified, returns `null` if tag is invalid, `false` if this block doesn't belong 
 to this tag, and `true` if the block belongs to the tag.
+
+Throws `unknown_block` if `block` doesn't exist
 
 ### `block_data(pos)`
 
@@ -325,9 +341,9 @@ poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two
 
 Without arguments, returns the list of biomes in the world.
 
-With block, or name, returns the name of the biome in that position, or null, if provided biome is not valid. 
+With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid. 
 
-With an optional feature, it returns value for the specified attribute for that biome. Available and querable features include:
+With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
 * `'top_material'`: unlocalized block representing the top surface material
 * `'under_material'`: unlocalized block representing what sits below topsoil
 * `'category'`: the parent biome this biome is derived from. Possible values include:
@@ -716,6 +732,7 @@ If structure is not specified, it will return a set of structure names that are 
 as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
 should be generated there.
 
+Throws `unknown_structure` if structure doesn't exist.
 
 ### `structures(pos), structures(pos, structure_name)`
 
@@ -748,6 +765,8 @@ structure starts.
 
 Requires a `Structure Variant` or `Standard Structure` name (see above). If standard name is used, the variant of the 
 structure may depend on the biome, otherwise the default structure for this type will be generated.
+
+Throws `unknown_structure` if structure doesn't exist.
 
 ### `plop(pos, what)`
 

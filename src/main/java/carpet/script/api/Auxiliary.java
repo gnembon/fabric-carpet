@@ -19,6 +19,8 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.utils.FixedCommandSource;
 import carpet.script.utils.InputValidator;
 import carpet.script.utils.ScarpetJsonDeserializer;
@@ -73,6 +75,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
+import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.Util;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.dynamic.RegistryOps;
@@ -159,10 +162,11 @@ public class Auxiliary {
     {
         expression.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
+            String rawString = lv.get(0).evalValue(c).getString();
+            Identifier soundName = new Identifier(rawString);
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
-                throw new InternalExpressionException("No such sound: "+soundName.getPath());
+                throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
             float volume = 1.0F;
             float pitch = 1.0F;
             SoundCategory mixer = SoundCategory.MASTER;
@@ -852,7 +856,15 @@ public class Auxiliary {
             Value retVal;
             if (fdesc.getMiddle().equals("nbt"))
             {
-                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
+                Tag state;
+                try
+                {
+                    state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
+                } catch (CrashException e)
+                {
+                    throw new ThrowStatement((fdesc.getRight()?"shared/":"")+ fdesc.getLeft(), Throwables.NBT_READ);
+                }
+
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
@@ -865,10 +877,13 @@ public class Auxiliary {
                 }
                 catch (JsonParseException e)
                 {
-                    Throwable exception = e;
+                    Throwable exc = e;
                     if(e.getCause() != null)
-                        exception = e.getCause();
-                    throw new InternalExpressionException("Failed to read JSON file: "+exception.getMessage());
+                        exc = e.getCause();
+                    throw new ThrowStatement(MapValue.wrap(ImmutableMap.of(
+                            StringValue.of("error"), StringValue.of(exc.getMessage()),
+                            StringValue.of("path"), StringValue.of((fdesc.getRight()?"shared/":"")+ fdesc.getLeft())
+                    )), Throwables.JSON_READ);
                 }
                 Value parsedJson = GSON.fromJson(json, Value.class);
                 if (parsedJson == null)
@@ -956,7 +971,14 @@ public class Auxiliary {
                     shared = lv.get(1).evalValue(c).getBoolean();
                 }
             }
-            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
+            Tag state;
+            try
+            {
+                state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
+            } catch (CrashException e)
+            {
+                throw new ThrowStatement("app data", Throwables.NBT_READ);
+            }
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);

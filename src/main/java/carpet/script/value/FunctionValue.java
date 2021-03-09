@@ -215,7 +215,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
 
         }
         Value retVal;
-        boolean rethrow = false;
         try
         {
             retVal = body.evalValue(newFrame, type); // todo not sure if we need to propagete type / consider boolean context in defined functions - answer seems ye
@@ -227,15 +226,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         catch (ReturnStatement returnStatement)
         {
             retVal = returnStatement.retval;
-        }
-        catch (ThrowStatement throwStatement) // might not be really necessary
-        {
-            retVal = throwStatement.retval;
-            rethrow = true;
-        }
-        if (rethrow)
-        {
-            throw new ThrowStatement(retVal);
         }
         Value otherRetVal = retVal;
         return (cc, tt) -> otherRetVal;
