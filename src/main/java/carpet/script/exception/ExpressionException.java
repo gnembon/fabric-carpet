@@ -16,7 +16,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     public final Context context;
     public final Tokenizer.Token token;
     public final List<FunctionValue> stack = new ArrayList<>();
-    private final Supplier<String> lazyStacktrace;
+    private final Supplier<String> lazyMessage;
     private String cachedMessage = null;
 
     public ExpressionException(Context c, Expression e, String message)
@@ -27,7 +27,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message)
     {
         super("Error");
-        lazyStacktrace = () -> makeMessage(c, e, t, message);
+        lazyMessage = () -> makeMessage(c, e, t, message);
         token = t;
         context = c;
     }
@@ -35,7 +35,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     {
         super("Error");
         this.stack.addAll(stack);
-        lazyStacktrace = () -> makeMessage(c, e, t, message);
+        lazyMessage = () -> makeMessage(c, e, t, message);
         token = t;
         context = c;
     }
@@ -44,7 +44,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     {
         super("Error");
         this.stack.addAll(stack);
-        lazyStacktrace = () -> makeMessage(c, e, t, messageSupplier.get());
+        lazyMessage = () -> makeMessage(c, e, t, messageSupplier.get());
         token = t;
         context = c;
     }
@@ -89,7 +89,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     public String getMessage() {
         if (cachedMessage == null)
         {
-        	cachedMessage = lazyStacktrace.get();
+        	cachedMessage = lazyMessage.get();
         }
         return cachedMessage;
     }

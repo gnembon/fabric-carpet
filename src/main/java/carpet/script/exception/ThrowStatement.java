@@ -8,8 +8,8 @@ import carpet.script.value.Value;
 
 public class ThrowStatement extends InternalExpressionException
 {
-    private final Throwables thrownExceptionType;
-    private final Value exceptionData;
+    private final Throwables type;
+    private final Value data;
     
     /**
      * Creates a throw exception from a value, and assigns it a specified message.
@@ -20,8 +20,8 @@ public class ThrowStatement extends InternalExpressionException
     public ThrowStatement(Value data, Throwables type)
     {
         super(type.getId());
-        exceptionData = data;
-        thrownExceptionType = type;
+        this.data = data;
+        this.type = type;
     }
 
     /**
@@ -36,12 +36,12 @@ public class ThrowStatement extends InternalExpressionException
     public ThrowStatement(String message, Throwables type)
     {
         super(type.getId());
-        this.exceptionData = StringValue.of(message);
-        this.thrownExceptionType = type;
+        this.data = StringValue.of(message);
+        this.type = type;
     }
     
     @Override
     public ExpressionException promote(Context c, Expression e, Token token) {
-        return new ProcessedThrowStatement(c, e, token, stack, thrownExceptionType, exceptionData);
+        return new ProcessedThrowStatement(c, e, token, stack, type, data);
     }
 }
