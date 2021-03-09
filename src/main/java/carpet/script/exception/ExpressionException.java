@@ -8,28 +8,44 @@ import carpet.script.value.FunctionValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /* The expression evaluators exception class. */
 public class ExpressionException extends RuntimeException implements ResolvedException
 {
     public final Context context;
+    public final Tokenizer.Token token;
     public final List<FunctionValue> stack = new ArrayList<>();
+    private final Supplier<String> lazyMessage;
+    private String cachedMessage = null;
 
     public ExpressionException(Context c, Expression e, String message)
     {
-        super(makeMessage(c, e, null, message));
-        context = c;
+        this(c, e, Tokenizer.Token.NONE, message);
     }
 
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message)
     {
-        super(makeMessage(c, e, t, message));
+        super("Error");
+        lazyMessage = () -> makeMessage(c, e, t, message);
+        token = t;
         context = c;
     }
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
     {
-        super(makeMessage(c, e, t, message));
+        super("Error");
         this.stack.addAll(stack);
+        lazyMessage = () -> makeMessage(c, e, t, message);
+        token = t;
+        context = c;
+    }
+
+    public ExpressionException(Context c, Expression e, Tokenizer.Token t, Supplier<String> messageSupplier, List<FunctionValue> stack)
+    {
+        super("Error");
+        this.stack.addAll(stack);
+        lazyMessage = () -> makeMessage(c, e, t, messageSupplier.get());
+        token = t;
         context = c;
     }
 
@@ -67,5 +83,14 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
             }
         }
         return String.join("\n", errorMaker.apply(e, t, message));
+    }
+    
+    @Override
+    public String getMessage() {
+        if (cachedMessage == null)
+        {
+        	cachedMessage = lazyMessage.get();
+        }
+        return cachedMessage;
     }
 }

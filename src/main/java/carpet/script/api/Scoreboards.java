@@ -6,6 +6,8 @@ import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NullValue;
@@ -131,7 +133,7 @@ public class Scoreboards {
                 criterion = ScoreboardCriterion.getOrCreateStatCriterion(critetionName).orElse(null);
                 if (criterion==null)
                 {
-                    throw new InternalExpressionException("Unknown scoreboard criterion: "+critetionName);
+                    throw new ThrowStatement(critetionName, Throwables.UNKNOWN_CRITERION);
                 }
             }
 
