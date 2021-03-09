@@ -234,61 +234,71 @@ returns everywhere, but it would often lead to a messy code.
 
 It terminates entire program passing `expr` as the result of the program execution, or null if omitted.
 
-### `try(expr, id_filter, catch_expr(_, _msg), id_filter2?, catch_expr2(_, _msg), ...)`
+### `try(expr)` `try(expr, user_catch_expr)` `try(expr, type, catch_expr, type?, catch_expr?, ...)`
 
-`try` function evaluates expression, and continues further unless an exception is thrown anywhere inside `expr`, 
-it being produced by `throw` or a catchable exception being thrown by Carpet. In that case the `catch_expr` is evaluated with 
-`_` set to the id of the exception and `_msg` set to the exception message. Only exceptions with their or their parent's id(recursively) equal 
-to a provided `id_filter` will be caught, and any other exception will continue up the stack. You can specify multiple filters
-and their respective `catch_expr` to be able to catch different exceptions within the same code. When an exception occurs, the script 
-will try to find an equality with every provided filter in order. Therefore, even if the caught exception matches multiple filters, only 
-the first matching block will be executed. It is recommended to filter the exceptions to catch to be able to distinguish from an exception 
-that is known that may happen from one that shouldn't.
+`try` evaluates expression, allowing capturing exceptions that would be thrown inside `expr` statement. The exceptions can be
+thrown explicitly using `throw()` or internally by scarpet where code is correct but detects illegal state. The 2-argument form
+catches only user-thrown exceptions and one argument call `try(expr)` is equivalent to `try(expr, null)`, 
+or `try(expr, 'user_exception', null)`. If multiple `type-catch` pairs are defined, the execution terminates on the first 
+applicable type for the exception thrown. Therefore, even if the caught exception matches multiple filters, only 
+the first matching block will be executed.
 
-This mechanism allows to terminate large portion of a convoluted call stack and continue program  execution.
+Catch expressions are evaluated with 
+`_` set to the value associated with the exception and `_trace` set to contain details about point of error (token, and line and 
+column positions), call stack and local
+variables at the time of failure. The `type` will catch any exception of that type and any subtype of this type.
+  
 
-The `try` function allows you to catch some Scarpet exceptions for those cases when trying to get things like items,
-blocks, biomes or dimensions from registries, that may have been modified by datapacks, resourcepacks or other mods, or when an error that
-is out of the scope of the programmer occurs, such as problems when reading files.
+You can use `try` mechanism to exit from large portion of a convoluted call stack and continue program execution, although catching
+exceptions is typically much more expensive comparing to not throwing them.
 
-Deprecated usages:
-- `try(expr)`: Filter the exception you are looking for, and provide something as the `catch_expr` (use `null` if you have nothing to provide).
-                 Example replacement: `try(expr, 'exception', null)`
-- `try(expr, catch_expr)`: Filter the exception you are looking for.
+The `try` function allows you to catch some scarpet exceptions for cases covering invalid data, like invalid
+blocks, biomes, dimensions and other things, that may have been modified by datapacks, resourcepacks or other mods,
+or when an error is outside of the programmers scope, such as problems when reading or decoding files.
 
-In this documentation, those are documented in at least most of the functions that throw them, and the current exception
-hierarchy is the following:
-- `exception`: This is the base exception. Every exception has this as its top-level parent
-  - `value_exception`: This is the parent for any exception that occurs due to a provided value for something not being present in the game
-    - `unknown_item`: Happens when a specified item doesn't exist
-    - `unknown_block`: Happens when a specified block doesn't exist
-    - `unknown_biome`: Happens when a specified biome doesn't exist
-    - `unknown_sound`: Happens when a specified sound doesn't exist
-    - `unknown_particle`: Happens when a specified particle doesn't exist
-    - `unknown_poi_type`: Happens when a specified POI type doesn't exist
-    - `unknown_dimension`: Happens when a specified dimension doesn't exist
-    - `unknown_structure`: Happens when a specified structure doesn't exist
-    - `unknown_criterion`: Happens when a specified scoreboard criterion doesn't exist
-  - `file_read_exception`: This is the parent for any exception that occurs due to an error while reading a file, including appdata load
-    - `nbt_read_exception`: Happens when there is an exception while reading an NBT file
-    - `json_read_exception`: Happens when there is an exception while reading a JSON file
-  - `user_defined_exception`: This is the parent for any exception thrown by the below `throw` function, except for those that explicitly declare
-                                    their parent to be one of the above
+This is the hierarchy of the exceptions that could be thrown/caught in the with the `try` function:
+- `exception`: This is the base exception. Catching `'exception'` allows to catch everything that can be caught, 
+but like everywhere else, doing that sounds like a bad idea.
+  - `value_exception`: This is the parent for any exception that occurs due to an 
+  incorrect argument value provided to a built-in function
+    - `unknown_item`, `unknown_block`, `unknown_biome`, `unknown_sound`, `unknown_particle`, 
+    `unknown_poi_type`, `unknown_dimension`, `unknown_structure`, `unknown_criterion`: Specific 
+    errors thrown when a specified internal name does not exist or is invalid.
+  - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
+    - `nbt_read_error`: Incorrect input NBT file.
+    - `json_read_error`: Incorrect input JSON data.
+  - `user_exception`: Exception thrown by default with `throw` function.
+  
+Synopsis:
+<pre>
+inner_call() ->
+(
+   aaa = 'booyah';
+   try(
+      for (range(10), item_tags('stick'+_*'k'));
+   ,
+      print(_trace) // not caught, only catching user_exceptions
+   )
+);
 
-### `throw(id, message?, parent?)`
+outer_call() -> 
+( 
+   try(
+      inner_call()
+   , 'exception', // catching everything
+      print(_trace)
+   ) 
+);
+</pre>
+Producing:
+```
+{stack: [[<app>, inner_call, 1, 14]], locals: {_a: 0, aaa: booyah, _: 1, _y: 0, _i: 1, _x: 0, _z: 0}, token: [item_tags, 5, 23]}
+```
 
-Throws an exception that can be caught in a `try` block (see above). If ran without arguments, it will pass `null`
-as the value to the `catch_expr`. `message` is the message to show to chat or console in case the `throw` is 
-unhandled.
+### `throw(value?)` `throw(type, value)`
 
-By default, the parent of any exception thrown by this function is `user_defined_exception`.
-You can specify the `parent` to be either an already existing exception from the list above, in which case your exception
-will not inherit from `user_defined_exception`, or specify a custom one, in which case your exception will inherit from
-`exception` > `user_defined_exception` > `parent` > `id`.
-
-If you don't want your exception to be handled, you can use `error` as the `parent` to throw an error which cannot be handled.
-
-Deprecated usage: `throw()` (without id): Specify at least the id of your exception
+Throws an exception that can be caught in a `try` block (see above). If ran without arguments, it will throw `user_exception` 
+passing `null` as the value to the `catch_expr`. With two arguments you can mimic any other exception type thrown in scarpet.
 
 ### `if(cond, expr, cond?, expr?, ..., default?)`
 

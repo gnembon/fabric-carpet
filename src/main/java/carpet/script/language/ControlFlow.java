@@ -8,7 +8,14 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ProcessedThrowStatement;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
+import carpet.script.value.NumericValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.stream.Collectors;
 
 public class ControlFlow {
     public static void apply(Expression expression) // public just to get the javadoc right
@@ -85,6 +92,25 @@ public class ControlFlow {
                 
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
+                LazyValue _trace = c.getVariable("_trace");
+                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(ImmutableMap.of(
+                        StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
+                                StringValue.of(f.getModule().getName()),
+                                StringValue.of(f.getString()),
+                                NumericValue.of(f.getToken().lineno+1),
+                                NumericValue.of(f.getToken().linepos+1)
+                        )).collect(Collectors.toList())),
+
+                        StringValue.of("locals"), MapValue.wrap(ret.context.variables.entrySet().stream().collect(Collectors.toMap(
+                                e -> StringValue.of(e.getKey()),
+                                e -> e.getValue().evalValue(ret.context)
+                        ))),
+                        StringValue.of("token"), ListValue.of(
+                                StringValue.of(ret.token.surface),
+                                NumericValue.of(ret.token.lineno+1),
+                                NumericValue.of(ret.token.linepos+1)
+                        )
+                )));
 
                 if (lv.size() == 2)
                 {
@@ -105,7 +131,10 @@ public class ControlFlow {
                     }
                 }
                 c.setVariable("_", __);
-                
+                if (_trace != null)
+                    c.setVariable("_trace", _trace);
+                else
+                    c.delVariable("_trace");
                 if (val == null)  // not handled
                 {
                     throw ret;

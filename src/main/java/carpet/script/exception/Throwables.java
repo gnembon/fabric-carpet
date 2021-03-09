@@ -13,24 +13,24 @@ public class Throwables {
     private final String id;
     private final Throwables parent;
 
-    private static final Map<String, Throwables> byValue = new HashMap<>();
+    private static final Map<String, Throwables> byId = new HashMap<>();
     private static final Map<String, Set<Throwables>> handles = new HashMap<>();
 
     public static final Throwables THROWN_EXCEPTION_TYPE = register("exception", null);
     public static final Throwables VALUE_EXCEPTION       = register("value_exception", THROWN_EXCEPTION_TYPE);
-    public static final Throwables UNKNOWN_ITEM        = register("unknown_item", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_BLOCK       = register("unknown_block", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_BIOME       = register("unknown_biome", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_SOUND       = register("unknown_sound", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_PARTICLE    = register("unknown_particle", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_POI_TYPE    = register("unknown_poi_type", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_DIMENSION   = register("unknown_dimension", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_STRUCTURE   = register("unknown_structure", VALUE_EXCEPTION);
-    public static final Throwables UNKNOWN_CRITERION   = register("unknown_criterion", VALUE_EXCEPTION);
-    public static final Throwables FILE_READ_EXCEPTION   = register("file_read_exception", THROWN_EXCEPTION_TYPE);
-    public static final Throwables NBT_READ            = register("nbt_read_exception", FILE_READ_EXCEPTION);
-    public static final Throwables JSON_READ           = register("json_read_exception", FILE_READ_EXCEPTION);
-    public static final Throwables USER_DEFINED          = register("user_defined_exception", THROWN_EXCEPTION_TYPE);
+    public static final Throwables UNKNOWN_ITEM          = register("unknown_item", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_BLOCK         = register("unknown_block", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_BIOME         = register("unknown_biome", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_SOUND         = register("unknown_sound", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_PARTICLE      = register("unknown_particle", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_POI_TYPE      = register("unknown_poi_type", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_DIMENSION     = register("unknown_dimension", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_STRUCTURE     = register("unknown_structure", VALUE_EXCEPTION);
+    public static final Throwables UNKNOWN_CRITERION     = register("unknown_criterion", VALUE_EXCEPTION);
+    public static final Throwables IO_EXCEPTION          = register("io_exception", THROWN_EXCEPTION_TYPE);
+    public static final Throwables NBT_READ              = register("nbt_read_error", IO_EXCEPTION);
+    public static final Throwables JSON_READ             = register("json_read_error", IO_EXCEPTION);
+    public static final Throwables USER_DEFINED          = register("user_exception", THROWN_EXCEPTION_TYPE);
 
     /**
      * Creates an exception and registers it to be used as parent for
@@ -43,7 +43,7 @@ public class Throwables {
     public static Throwables register(String id, Throwables parent)
     {
         Throwables exc = new Throwables(id, parent);
-        byValue.put(id, exc);
+        byId.put(id, exc);
         Set<Throwables> itHandles = new HashSet<>();
         itHandles.add(exc);
         while (parent!=null)
@@ -69,7 +69,7 @@ public class Throwables {
 
     public static Throwables getTypeForException(String type)
     {
-        Throwables properType = byValue.get(type);
+        Throwables properType = byId.get(type);
         if (properType == null) throw new InternalExpressionException("Unknown exception type: "+type);
         return properType;
     }

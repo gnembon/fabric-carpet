@@ -14,26 +14,29 @@ import java.util.function.Supplier;
 public class ExpressionException extends RuntimeException implements ResolvedException
 {
     public final Context context;
+    public final Tokenizer.Token token;
     public final List<FunctionValue> stack = new ArrayList<>();
     private final Supplier<String> lazyStacktrace;
     private String cachedMessage = null;
 
     public ExpressionException(Context c, Expression e, String message)
     {
-        this(c, e, null, message);
+        this(c, e, Tokenizer.Token.NONE, message);
     }
 
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message)
     {
         super("Error");
         lazyStacktrace = () -> makeMessage(c, e, t, message);
+        token = t;
         context = c;
     }
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
     {
         super("Error");
         this.stack.addAll(stack);
-        lazyStacktrace = () -> makeMessage(c, e, t, message); 
+        lazyStacktrace = () -> makeMessage(c, e, t, message);
+        token = t;
         context = c;
     }
 
@@ -41,7 +44,8 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     {
         super("Error");
         this.stack.addAll(stack);
-        lazyStacktrace = messageSupplier;
+        lazyStacktrace = () -> makeMessage(c, e, t, messageSupplier.get());
+        token = t;
         context = c;
     }
 
