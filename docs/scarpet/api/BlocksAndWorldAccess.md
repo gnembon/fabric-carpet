@@ -21,7 +21,7 @@ when it was used. Block values passed in various places like `scan` functions, e
 its properties are needed. This means that if the block at the location changes before its queried in the program this 
 might result in getting the later state, which might not be desired. Consider the following example:
 
-Throws `unknown_block` if block from `state` doesn't exist.
+Throws `unknown_block` if provided input is not valid.
 
 <pre>set(10,10,10,'stone');
 scan(10,10,10,0,0,0, b = _);
@@ -52,7 +52,7 @@ properties that the original source block may have contained.
 
 The returned value is either the block state that has been set, or `false` if block setting was skipped, or failed
 
-Throws `unknown_block` if `block` doesn't exist.
+Throws `unknown_block` if provided block to set is not valid
 
 <pre>
 set(0,5,0,'bedrock')  => bedrock
@@ -152,7 +152,7 @@ If type is `null`, POI at position is removed. In any case, previous POI is also
 Interestingly, `unemployed`, and `nitwit` are not used in the game, meaning, they could be used as permanent spatial 
 markers for scarpet apps. `meeting` is the only one with increased max occupancy of 32.
 
-Throws `unknown_poi_type` if POI type doesn't exist 
+Throws `unknown_poi` if the provided point of interest doesn't exist 
 
 ### `set_biome(pos, biome_name, update=true)`
 
@@ -164,7 +164,7 @@ is only effective if you set it at y=0, and affects the entire column of. In the
 specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
 noise).
 
-Throws `unknown_biome` if biome doesn't exist.
+Throws `unknown_biome` if the `biome_name` doesn't exist.
 
 ### `update(pos)`
 
@@ -283,7 +283,7 @@ back in state definition in various applications where block properties are requ
 
 `block_state` can also accept block names as input, returning block's default state.
 
-Throws `unknown_block` if `block` comes from a String and doesn't exist.
+Throws `unknown_block` if the provided input is not valid.
 
 <pre>
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
@@ -305,7 +305,7 @@ Without arguments, returns list of available tags, with block supplied (either b
 of tags the block belongs to, and if a tag is specified, returns `null` if tag is invalid, `false` if this block doesn't belong 
 to this tag, and `true` if the block belongs to the tag.
 
-Throws `unknown_block` if `block` comes from a String and doesn't exist
+Throws `unknown_block` if `block` doesn't exist
 
 ### `block_data(pos)`
 
@@ -341,9 +341,9 @@ poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two
 
 Without arguments, returns the list of biomes in the world.
 
-With block, or name, returns the name of the biome in that position, or null, if provided biome is not valid. 
+With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid. 
 
-With an optional feature, it returns value for the specified attribute for that biome. Available and querable features include:
+With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
 * `'top_material'`: unlocalized block representing the top surface material
 * `'under_material'`: unlocalized block representing what sits below topsoil
 * `'category'`: the parent biome this biome is derived from. Possible values include:
@@ -363,8 +363,6 @@ and values < 0, below sea level.
 * `'scale'`: float value indicating how flat is the terrain.
 * `'features'`: list of features that generate in the biome, grouped by generation steps
 * `'structures'`: list of structures that generate in the biome.
-
-Throws `unknown_block` if `block` comes from a String and doesn't exist. 
 
 ### `solid(pos)`
 

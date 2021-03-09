@@ -61,7 +61,6 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ChunkTicketType;
@@ -108,7 +107,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -339,7 +337,7 @@ public class WorldAccess {
                 if (!"any".equals(poiType))
                 {
                     PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiType))
-                            .orElseThrow(() -> new ThrowStatement(poiType, Throwables.UNKNOWN_POI_TYPE));
+                            .orElseThrow(() -> new ThrowStatement(poiType, Throwables.UNKNOWN_POI));
                     condition = (tt) -> tt == type;
                 }
                 if (locator.offset + 2 < lv.size())
@@ -394,7 +392,7 @@ public class WorldAccess {
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
             PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiTypeString))
-            		.orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI_TYPE));
+            		.orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
@@ -1152,7 +1150,7 @@ public class WorldAccess {
             if (locator.replacement != null)
             {
                 biome = world.getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(locator.replacement));
-                if (biome == null) return LazyValue.NULL;
+                if (biome == null) throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME) ;
             }
             else
             {

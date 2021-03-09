@@ -328,8 +328,8 @@ write is beneficial for writing speed. To send multiple packs of data, either pr
 third argument.
 
 Throws:
-- `nbt_read_exception`: When failed to read NBT file
-- `json_read_exception`: When failed to read JSON file. The `_msg` variable will contain details about the problem
+- `nbt_read_error`: When failed to read NBT file.
+- `json_read_error`: When failed to read JSON file. The exception data will contain details about the problem.
 
 <pre>
 write_file('foo', 'shared_text, ['one', 'two']);
@@ -382,7 +382,7 @@ specific data directory is under `world/scripts/foo.data/bar/../baz.nbt`, and sh
 
 You can use app data to save non-vanilla information separately from the world and other scripts.
 
-Throws `nbt_read_exception` if failed to read app data.
+Throws `nbt_read_error` if failed to read app data.
 
 ### `store_app_data(tag)`
 
@@ -538,7 +538,7 @@ Evaluates the expression `expr` with different dimension execution context. `smt
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
  
-Throws `unknown_dimension` if given a dimension as a String and it can't be found.
+Throws `unknown_dimension` if provided dimension can't be found.
  
 ### `view_distance()`
 Returns the view distance of the server.
