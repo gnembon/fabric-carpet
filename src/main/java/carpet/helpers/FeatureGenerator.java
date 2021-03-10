@@ -24,7 +24,7 @@ import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.StructureConfig;
-import net.minecraft.world.gen.tree.BeehiveTreeDecorator;
+import net.minecraft.world.gen.treedecorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.ConfiguredFeatures;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
