@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
@@ -21,16 +22,20 @@ import java.util.List;
 public abstract class ContainerMixin
 {
 
-    @Shadow public abstract ItemStack onSlotClick(int int_1, int int_2, SlotActionType slotActionType_1, PlayerEntity playerEntity_1);
+    @Shadow public abstract void onSlotClick(int int_1, int int_2, SlotActionType slotActionType_1, PlayerEntity playerEntity_1);
     
     @Shadow public abstract void sendContentUpdates();
 
     @Shadow @Final public DefaultedList<Slot> slots;
 
+    @Shadow protected abstract void endQuickCraft();
+
+    @Shadow public abstract ItemStack method_34255();
+
     @Inject( method = "internalOnSlotClick", at = @At(value = "HEAD"), cancellable = true)
-    private void onThrowClick( int slotId, int clickData, SlotActionType actionType, PlayerEntity playerEntity, CallbackInfoReturnable<ItemStack> cir)
+    private void onThrowClick(int slotId, int clickData, SlotActionType actionType, PlayerEntity playerEntity, CallbackInfo ci)
     {
-        if (actionType == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && playerEntity.getInventory().getCursorStack().isEmpty() && slotId >= 0)
+        if (actionType == SlotActionType.THROW && CarpetSettings.ctrlQCraftingFix && this.method_34255().isEmpty() /* playerEntity.getInventory().getCursorStack().isEmpty()*/ && slotId >= 0)
         {
             ItemStack itemStack_1 = ItemStack.EMPTY;
             Slot slot_4 = slots.get(slotId);
@@ -44,8 +49,8 @@ public abstract class ContainerMixin
                         this.onSlotClick(slotId, 0, SlotActionType.THROW, playerEntity);
                     }
                     this.sendContentUpdates();
-                    cir.setReturnValue(itemStack_1);
-                    cir.cancel();
+                    this.endQuickCraft();
+                    ci.cancel();
                 }
             }
         }

@@ -34,7 +34,7 @@ public abstract class StructureBlockBlockEntity_limitsMixin
             method = "saveStructure(Z)Z",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/structure/Structure;saveFromWorld(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;ZLnet/minecraft/block/Block;)V"
+                    target = "Lnet/minecraft/structure/Structure;saveFromWorld(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/Vec3i;ZLnet/minecraft/block/Block;)V"
             ),
             index = 4
     )

@@ -19,7 +19,11 @@ public class PlayerManager_scarpetEventsMixin
         PLAYER_RESPAWNS.onPlayerEvent(player);
     }
 
-    @Inject(method = "respawnPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;onSpawn()V"))
+    @Inject(method = "respawnPlayer", at = @At(
+            value = "INVOKE",
+            //target = "Lnet/minecraft/server/network/ServerPlayerEntity;onSpawn()V"
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;method_34225()V"
+    ))
     private void invalidatePreviousInstance(ServerPlayerEntity player, boolean alive, CallbackInfoReturnable<ServerPlayerEntity> cir)
     {
         ((ServerPlayerEntityInterface)player).invalidateEntityObjectReference();

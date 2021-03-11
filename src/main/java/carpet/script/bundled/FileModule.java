@@ -2,7 +2,7 @@ package carpet.script.bundled;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.PositionTracker;
+import net.minecraft.nbt.NbtTagSizeTracker;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagReaders;
 
@@ -97,7 +97,7 @@ public class FileModule extends Module
                     else
                     {
                         dataInput_1.readUTF();
-                        return TagReaders.of(byte_1).read(dataInput_1, 0, PositionTracker.DEFAULT);
+                        return TagReaders.of(byte_1).read(dataInput_1, 0, NbtTagSizeTracker.EMPTY);
                     }
                 }
                 catch (IOException ignored)

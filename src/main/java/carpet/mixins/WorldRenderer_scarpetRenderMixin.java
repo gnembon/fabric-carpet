@@ -40,9 +40,11 @@ public class WorldRenderer_scarpetRenderMixin
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
         if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null && transparencyShader == null)
         {
-            RenderSystem.pushMatrix();
-            CarpetClient.shapes.render(camera, tickDelta);
-            RenderSystem.popMatrix();
+            matrices.push();
+            //RenderSystem.pushMatrix(); ??
+            CarpetClient.shapes.render(matrices, camera, tickDelta);
+            //RenderSystem.popMatrix(); ??
+            matrices.pop();
         }
     }
 
@@ -56,9 +58,11 @@ public class WorldRenderer_scarpetRenderMixin
         // with fabulous graphics - stuff doesn't work this way for some reason - need to render with chunk lines.
         if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null && transparencyShader != null)
         {
-            RenderSystem.pushMatrix();
-            CarpetClient.shapes.render(camera, tickDelta);
-            RenderSystem.popMatrix();
+            matrices.push();
+            //RenderSystem.pushMatrix();
+            CarpetClient.shapes.render(matrices, camera, tickDelta);
+            //RenderSystem.popMatrix();
+            matrices.pop();
         }
     }
 }

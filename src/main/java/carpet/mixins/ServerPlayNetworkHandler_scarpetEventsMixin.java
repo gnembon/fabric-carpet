@@ -51,7 +51,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 {
     @Shadow public ServerPlayerEntity player;
 
-    @Inject(method = "onPlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;method_14218(FFZZ)V"))
+    @Inject(method = "onPlayerInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;updateInput(FFZZ)V"))
     private void checkMoves(PlayerInputC2SPacket p, CallbackInfo ci)
     {
         if (PLAYER_RIDES.isNeeded() && (p.getSideways() != 0.0F || p.getForward() != 0.0F || p.isJumping() || p.isSneaking()))

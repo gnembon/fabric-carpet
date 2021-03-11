@@ -2,6 +2,8 @@ package carpet.script.utils;
 
 import carpet.fakes.MinecraftServerInterface;
 import com.google.common.collect.ImmutableList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldGenerationProgressListener;
@@ -154,6 +156,8 @@ public class WorldTools
     {
         @Override public void start(ChunkPos spawnPos) { }
         @Override public void setChunkStatus(ChunkPos pos, ChunkStatus status) { }
+        @Environment(EnvType.CLIENT)
+        @Override public void start() { }
         @Override public void stop() { }
     }
 

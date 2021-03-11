@@ -113,7 +113,7 @@ public class FeatureGenerator
 
     private static Thing simpleTree(TreeFeatureConfig config)
     {
-        config.ignoreFluidCheck();
+        //config.ignoreFluidCheck();
         return simplePlop(Feature.TREE.configure(config));
     }
 

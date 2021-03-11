@@ -10,6 +10,7 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.AffineTransformation;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.render.VertexFormats;
@@ -48,7 +49,7 @@ public class ShapesRenderer
         shapes = new HashMap<>();
     }
 
-    public void render(Camera camera, float partialTick)
+    public void render(MatrixStack matrices, Camera camera, float partialTick)
     {
         //Camera camera = this.client.gameRenderer.getCamera();
         ClientWorld iWorld = this.client.world;
@@ -62,11 +63,11 @@ public class ShapesRenderer
         RenderSystem.defaultBlendFunc();
         //RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ZERO);
         //RenderSystem.shadeModel(7425);
-        RenderSystem.shadeModel(GL11.GL_FLAT);
-        RenderSystem.enableAlphaTest();
-        RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
+        //////////RenderSystem.shadeModel(GL11.GL_FLAT);
+        //////////RenderSystem.enableAlphaTest();
+        //////////RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
         RenderSystem.disableCull();
-        RenderSystem.disableLighting();
+        //////////RenderSystem.disableLighting();
         RenderSystem.depthMask(false);
         // causes water to vanish
         //RenderSystem.depthMask(true);
@@ -100,7 +101,7 @@ public class ShapesRenderer
 
                     s -> {
                         if (  !s.lastCall() && s.shouldRender(dimensionType))
-                            s.renderLines(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                            s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
             //texts
@@ -109,7 +110,7 @@ public class ShapesRenderer
                     s ->
                     {
                         if ( s.lastCall() && s.shouldRender(dimensionType))
-                            s.renderLines(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
+                            s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
 
@@ -120,7 +121,7 @@ public class ShapesRenderer
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableTexture();
-        RenderSystem.shadeModel(7424);
+        //////////////RenderSystem.shadeModel(7424);
     }
 
     public void addShapes(ListTag tag)
@@ -184,7 +185,7 @@ public class ShapesRenderer
         protected MinecraftClient client;
         long expiryTick;
         double renderEpsilon = 0;
-        public abstract void renderLines(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick );
+        public abstract void renderLines(MatrixStack matrices, Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick );
         public void renderFaces(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick ) {}
         protected RenderedShape(MinecraftClient client, T shape)
         {
@@ -230,8 +231,9 @@ public class ShapesRenderer
         }
 
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick)
+        public void renderLines(MatrixStack matrices, Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick)
         {
+            /*
             if (shape.a == 0.0) return;
             Vec3d v1 = shape.relativiseRender(client.world, shape.pos, partialTick);
             Camera camera1 = client.gameRenderer.getCamera();
@@ -243,13 +245,17 @@ public class ShapesRenderer
                 RenderSystem.disableCull();
             else
                 RenderSystem.enableCull();
-            RenderSystem.pushMatrix();
-            RenderSystem.translatef((float)(v1.x - d), (float)(v1.y - e), (float)(v1.z - f));
-            RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
+            //RenderSystem.pushMatrix();
+            matrices.push();
+            //RenderSystem.translatef((float)(v1.x - d), (float)(v1.y - e), (float)(v1.z - f));
+            matrices.translate(v1.x - d,v1.y - e,v1.z - f);
+            //RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
+            //matrices.
 
             if (shape.facing == null)
             {
-                RenderSystem.multMatrix(new Matrix4f(camera1.getRotation()));
+                matrices.multiply(camera1.getRotation());
+                //RenderSystem.multMatrix(new Matrix4f(camera1.getRotation()));
             }
             else
             {
@@ -258,6 +264,7 @@ public class ShapesRenderer
                     case NORTH:
                         break;
                     case SOUTH:
+                        matrices.
                         RenderSystem.rotatef(180.0f, 0.0f, 1.0f, 0.0f);
                         break;
                     case EAST:
@@ -301,6 +308,8 @@ public class ShapesRenderer
             //RenderSystem.depthFunc(515);
             //RenderSystem.enableAlphaTest();
             //RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
+
+             */
         }
 
         @Override
@@ -333,7 +342,7 @@ public class ShapesRenderer
 
         }
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
+        public void renderLines(MatrixStack matrices, Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.a == 0.0) return;
             Vec3d v1 = shape.relativiseRender(client.world, shape.from, partialTick);
@@ -370,7 +379,7 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Line)shape);
         }
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
+        public void renderLines(MatrixStack matrices, Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             Vec3d v1 = shape.relativiseRender(client.world, shape.from, partialTick);
             Vec3d v2 = shape.relativiseRender(client.world, shape.to, partialTick);
@@ -390,7 +399,7 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Sphere)shape);
         }
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
+        public void renderLines(MatrixStack matrices, Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.a == 0.0) return;
             Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
@@ -420,7 +429,7 @@ public class ShapesRenderer
             super(client, (ShapeDispatcher.Cylinder)shape);
         }
         @Override
-        public void renderLines(Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
+        public void renderLines(MatrixStack matrices, Tessellator tessellator, BufferBuilder bufferBuilder, double cx, double cy, double cz, float partialTick)
         {
             if (shape.a == 0.0) return;
             Vec3d vc = shape.relativiseRender(client.world, shape.center, partialTick);
