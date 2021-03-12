@@ -3,6 +3,7 @@ package carpet.script.api;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -1209,7 +1210,7 @@ public class Auxiliary {
                     RegistryKey<World> registryKey2 = RegistryKey.of(Registry.DIMENSION, registryKey.getValue());
                     DimensionType dimensionType3 = entry.getValue().getDimensionType();
                     ChunkGenerator chunkGenerator3 = entry.getValue().getChunkGenerator();
-                    UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, saveProperties.getMainWorldProperties());
+                    UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, ((ServerWorldInterface) server.getOverworld()).getWorldPropertiesCM());
                     ServerWorld serverWorld2 = new ServerWorld(server, Util.getMainWorkerExecutor(), session, unmodifiableLevelProperties, registryKey2, dimensionType3, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, ImmutableList.of(), false);
                     server.getOverworld().getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld2.getWorldBorder()));
                     existing_worlds.put(registryKey2, serverWorld2);
