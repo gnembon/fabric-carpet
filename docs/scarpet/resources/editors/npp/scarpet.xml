@@ -25,7 +25,7 @@
             <Keywords name="Folders in comment, middle"></Keywords>
             <Keywords name="Folders in comment, close"></Keywords>
             <Keywords name="Keywords1">
-                not fact rand
+                not fact rand reset_seed
                 sin cos tan asin acos atan atan2 sinh cosh tanh sec csc sech csch cot acot coth asinh acosh atanh
                 rad deg
                 log log10 log1p
@@ -46,7 +46,7 @@
 
                 var undef vars if loop map filter first all c_for for while reduce continue break
 
-                import call outer type hash_code bool number str length rand sleep time profile_expr lower upper title replace replace_first
+                import call outer type hash_code bool number str length sleep time profile_expr lower upper title replace replace_first
             </Keywords>
             <Keywords name="Keywords2">
                 block pos pos_offset solid air liquid flammable
