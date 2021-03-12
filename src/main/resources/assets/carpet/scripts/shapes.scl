@@ -25,7 +25,7 @@ draw_sphere(args)->(
             )
         )
     );
-    return(positions)
+    positions
 );
 
 draw_diamond(args)->(
@@ -41,7 +41,7 @@ draw_diamond(args)->(
             positions += [pos:0+x, pos:1 -y, pos:2-z];
         )
     );
-    return(positions)
+    positions
 );
 
 draw_filled_diamond(args)->(
@@ -50,7 +50,7 @@ draw_filled_diamond(args)->(
     for(diamond(pos,radius,radius),
         positions += pos(_)
     );
-    return(positions)
+    positions
 );
 
 draw_pyramid(args)->(
@@ -62,7 +62,7 @@ draw_pyramid(args)->(
         r = if(pointup, radius * ( 1- _ / height) -1, radius * _ / height);
         positions += fill_flat(pos, _, r, is_square, orientation, !((pointup&&_==0)||(!pointup && _==height-1)) && hollow)//Always close bottom off
     );
-    return(positions)
+    positions
 );
 
 draw_prism(args)->(
@@ -94,7 +94,7 @@ draw_prism(args)->(
             )
         );
     )
-    return(positions)
+    positions
 );
 
 fill_flat(pos, offset, dr, rectangle, orientation, hollow)->
@@ -122,7 +122,7 @@ fill_flat_circle(pos, offset, dr, orientation, hollow) ->( //Bresenham circle al
         a+=1;
         positions += fill_flat_circle_points(pos, orientation, offset, hollow, a, b)
     );
-    return(positions)
+    positions
 );
 
 fill_flat_circle_points(pos, orientation, offset, hollow, a, b) ->(
@@ -229,5 +229,5 @@ fill_flat_rectangle(pos, offset, dr, orientation, hollow) -> (
             )
         ),
     );
-    return(positions)
+    positions
 );
