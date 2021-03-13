@@ -165,28 +165,6 @@ public class Scoreboards {
             return LazyValue.TRUE;
         });
 
-        expression.addLazyFunction("scoreboard_remove", -1, (c, t, lv)->
-        {
-            if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
-            CarpetContext cc = (CarpetContext)c;
-            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
-            String objectiveName = lv.get(0).evalValue(c).getString();
-            ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
-            if (objective == null)
-                return LazyValue.FALSE;
-            if (lv.size() == 1)
-            {
-                scoreboard.removeObjective(objective);
-                return LazyValue.TRUE;
-            }
-            String key = getScoreboardKeyFromValue(lv.get(1).evalValue(c));
-            if (!scoreboard.playerHasObjective(key, objective)) return LazyValue.NULL;
-            ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
-            Value previous = new NumericValue(scoreboardPlayerScore.getScore());
-            scoreboard.resetPlayerScore(key, objective);
-            return (c_, t_) -> previous;
-        });
-
         expression.addLazyFunction("scoreboard_property", -1, (c, t, lv) ->
         {
             if(lv.size() < 2) throw new InternalExpressionException("'scoreboard_property' requires at least two parameters");
