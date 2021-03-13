@@ -104,7 +104,6 @@ public class Scoreboards {
 
         expression.addLazyFunction("scoreboard_remove", -1, (c, t, lv)->
         {
-            c.host.issueDeprecation("scoreboard_remove");
             if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
             CarpetContext cc = (CarpetContext)c;
             Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
