@@ -20,8 +20,6 @@ scoreboard_add('lvl','level')
 
 ### `scoreboard_remove(objective)` `scoreboard_remove(objective, key)`
 
-NOTE: This function is deprecated, use `scoreboard(objective, key, null)` and `scoreboard_property(objective, 'remove')` instead.
-
 Removes an entire objective, or an entry in the scoreboard associated with the key. 
 Returns `true` if objective has existed and has been removed, or previous
 value of the scoreboard if players score is removed. Returns `null` if objective didn't exist, or a key was missing
@@ -40,7 +38,6 @@ Reads a property of an `objective` or sets it to a `value` if specified. Availab
 * `display_name` (Formatted text supported)
 * `display_slot`: When reading, returns list of slots, when modifying, displays the objective in the specified slot
 * `rendertype`: Either `'integer'` or `'hearts'`, defaults to `'integer'` if invalid value specified
-* `remove`: Removes the objective, specifying a `value` doesn't matter
 
 # Team
 
