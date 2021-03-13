@@ -240,7 +240,7 @@ public class Scoreboards {
                         }
                     }
                     return (_c, _t) -> ListValue.wrap(slots);
-                case "rendertype":
+                case "render_type":
                     if(modify) {
                         ScoreboardCriterion.RenderType renderType = ScoreboardCriterion.RenderType.getType(setValue.getString().toLowerCase());
                         if(objective.getRenderType().equals(renderType)) return LazyValue.FALSE;

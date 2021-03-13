@@ -36,8 +36,8 @@ Reads a property of an `objective` or sets it to a `value` if specified. Availab
 
 * `criterion`
 * `display_name` (Formatted text supported)
-* `display_slot`: When reading, returns list of slots, when modifying, displays the objective in the specified slot
-* `rendertype`: Either `'integer'` or `'hearts'`, defaults to `'integer'` if invalid value specified
+* `display_slot`: When reading, returns a list of slots this objective is displayed in, when modifying, displays the objective in the specified slot
+* `render_type`: Either `'integer'` or `'hearts'`, defaults to `'integer'` if invalid value specified
 
 # Team
 
