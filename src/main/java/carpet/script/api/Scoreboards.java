@@ -183,7 +183,7 @@ public class Scoreboards {
             switch (property) {
                 case "criterion":
                     if(modify) {
-                        ScoreboardCriterion criterion = ScoreboardCriterion.createStatCriterion(setValue.getString()).orElse(null);
+                        ScoreboardCriterion criterion = ScoreboardCriterion.getOrCreateStatCriterion(setValue.getString()).orElse(null);
                         if (criterion==null) throw new InternalExpressionException("Unknown scoreboard criterion: "+ setValue.getString());
                         if(objective.getCriterion().equals(criterion) || lv.size() == 1) return LazyValue.FALSE;
                         ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriterion()).remove(objective);
