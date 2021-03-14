@@ -210,6 +210,10 @@ public class Sys {
             Value retval = new NumericValue(NumericValue.asNumber(argument).getDouble()*randomizer.nextDouble());
             return (cc, tt) -> retval;
         });
+        expression.addLazyFunction("reset_seed", 1, (c, t, lv) -> {
+            boolean gotIt = c.host.resetRandom(NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
+            return gotIt?LazyValue.TRUE:LazyValue.FALSE;
+        });
 
         expression.addLazyFunction("perlin", -1, (c, t, lv) ->
         {

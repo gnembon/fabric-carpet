@@ -3,6 +3,7 @@ package carpet.script.api;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
@@ -169,6 +170,11 @@ public class Auxiliary {
     {
         expression.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.SOUND_EVENT.getIds().stream().map(ValueConversions::of));
+                return (_c, _t) -> ret;
+            }
             String rawString = lv.get(0).evalValue(c).getString();
             Identifier soundName = new Identifier(rawString);
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
@@ -206,6 +212,12 @@ public class Auxiliary {
         expression.addLazyFunction("particle", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.PARTICLE_TYPE.getIds().stream().map(ValueConversions::of));
+                return (_c, _t) -> ret;
+            }
+
             MinecraftServer ms = cc.s.getMinecraftServer();
             ServerWorld world = cc.s.getWorld();
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
@@ -1233,7 +1245,7 @@ public class Auxiliary {
                     RegistryKey<World> registryKey2 = RegistryKey.of(Registry.DIMENSION, registryKey.getValue());
                     DimensionType dimensionType3 = entry.getValue().getDimensionType();
                     ChunkGenerator chunkGenerator3 = entry.getValue().getChunkGenerator();
-                    UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, saveProperties.getMainWorldProperties());
+                    UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, ((ServerWorldInterface) server.getOverworld()).getWorldPropertiesCM());
                     ServerWorld serverWorld2 = new ServerWorld(server, Util.getMainWorkerExecutor(), session, unmodifiableLevelProperties, registryKey2, dimensionType3, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, ImmutableList.of(), false);
                     server.getOverworld().getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld2.getWorldBorder()));
                     existing_worlds.put(registryKey2, serverWorld2);

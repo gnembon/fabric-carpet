@@ -141,12 +141,12 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public void assertAssignable()
     {
-        if (boundVariable == null || boundVariable.startsWith("_"))
+        if (boundVariable == null)// || boundVariable.startsWith("_"))
         {
-            if (boundVariable != null)
+            /*if (boundVariable != null)
             {
                 throw new InternalExpressionException(boundVariable+ " cannot be assigned a new value");
-            }
+            }*/
             throw new InternalExpressionException(getString()+ " is not a variable");
 
         }

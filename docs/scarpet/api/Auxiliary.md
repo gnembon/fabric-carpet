@@ -4,7 +4,7 @@ Collection of other methods that control smaller, yet still important aspects of
 
 ## Sounds
 
-### `sound(name, pos, volume?, pitch?, mixer?)`
+### `sound()`, `sound(name, pos, volume?, pitch?, mixer?)`
 
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
@@ -12,16 +12,22 @@ Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostil
 and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
  corresponding `playsound` command.
  
+Used with no arguments, return the list of available sound names.
+ 
 Throws `unknown_sound` if sound doesn't exist.
 
 ## Particles
 
-### `particle(name, pos, count?. spread?, speed?, player?)`
+### `particle()`, `particle(name, pos, count?. spread?, speed?, player?)`
 
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
+
+Used with no arguments, return the list of available particle names. Note that some of the names do not correspond to a valid
+particle that can be fed to `particle(...)` function due to a fact that some particles need more configuration
+to be valid, like `dust`, `block` etc. Should be used as a reference only.
 
 Throws `unknown_particle` if particle doesn't exist.
 

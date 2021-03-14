@@ -42,6 +42,10 @@ public abstract class ScriptHost
         return randomizers.computeIfAbsent(aLong, Random::new);
     }
 
+    public boolean resetRandom(long aLong) {
+        return randomizers.remove(aLong) != null;
+    }
+
     public static class ModuleData
     {
         Module parent;

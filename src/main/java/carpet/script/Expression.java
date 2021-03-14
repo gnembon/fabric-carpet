@@ -313,6 +313,11 @@ public class Expression
         addUnaryFunction(name, (v) -> new NumericValue(fun.apply(NumericValue.asNumber(v).getDouble())));
     }
 
+    public void addMathematicalUnaryIntFunction(String name, Function<Double, Long> fun)
+    {
+        addUnaryFunction(name, (v) -> new NumericValue(fun.apply(NumericValue.asNumber(v).getDouble())));
+    }
+
     public void addMathematicalBinaryFunction(String name, BiFunction<Double, Double, Double> fun)
     {
         addBinaryFunction(name, (w, v) ->

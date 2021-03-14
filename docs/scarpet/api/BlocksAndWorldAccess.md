@@ -315,13 +315,13 @@ used to match specific information from it, or use it to copy to another block
 <pre>    block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
 </pre>
 
-### `poi(pos), poi(pos, radius?, type?, status?, column?)`
+### `poi(pos), poi(pos, radius?, type?, status?, column_search?)`
 
 Queries a POI (Point of Interest) at a given position, returning `null` if none is found, or tuple of poi type and its 
 occupancy load. With optional `type`, `radius` and `status`, returns a list of POIs around `pos` within a 
 given `radius`. If the `type` is specified, returns only poi types of that types, or everything if omitted or `'any'`.
 If `status` is specified (either `'any'`, `'available'`, or `'occupied'`) returns only POIs with that status. 
-With `column` set to `true`, it will return all POIs in a cuboid with `radius` blocks away on x and z, in the entire
+With `column_search` set to `true`, it will return all POIs in a cuboid with `radius` blocks away on x and z, in the entire
 block column from 0 to 255. Default (`false`) returns POIs within a spherical area centered on `pos` and with `radius`
 radius. 
 
