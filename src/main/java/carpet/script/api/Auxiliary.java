@@ -163,6 +163,11 @@ public class Auxiliary {
     {
         expression.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.SOUND_EVENT.getIds().stream().map(ValueConversions::of));
+                return (_c, _t) -> ret;
+            }
             String rawString = lv.get(0).evalValue(c).getString();
             Identifier soundName = new Identifier(rawString);
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
@@ -200,6 +205,12 @@ public class Auxiliary {
         expression.addLazyFunction("particle", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.PARTICLE_TYPE.getIds().stream().map(ValueConversions::of));
+                return (_c, _t) -> ret;
+            }
+
             MinecraftServer ms = cc.s.getMinecraftServer();
             ServerWorld world = cc.s.getWorld();
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
