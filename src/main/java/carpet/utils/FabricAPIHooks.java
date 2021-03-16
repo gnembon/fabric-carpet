@@ -20,10 +20,9 @@ public class FabricAPIHooks {
             WorldRenderEvents.BEFORE_DEBUG_RENDER.register(context -> {
                 if (CarpetClient.shapes != null) {
                     context.matrixStack().push();
-                    //RenderSystem.pushMatrix();
                     CarpetClient.shapes.render(context.matrixStack(), context.camera(), context.tickDelta());
-                    //RenderSystem.popMatrix();
                     context.matrixStack().pop();
+                    RenderSystem.applyModelViewMatrix();
                 }
             });
         }

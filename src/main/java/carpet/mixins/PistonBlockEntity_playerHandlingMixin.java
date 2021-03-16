@@ -26,7 +26,7 @@ public abstract class PistonBlockEntity_playerHandlingMixin
 
     @Shadow public abstract Direction getMovementDirection();
 
-    @Inject(method = "method_23672", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "moveEntity", at = @At("HEAD"), cancellable = true)
     private static void dontPushSpectators(Direction direction, Entity entity, double d, Direction direction2, CallbackInfo ci)
     {
         if (CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).getAbilities().flying) ci.cancel();

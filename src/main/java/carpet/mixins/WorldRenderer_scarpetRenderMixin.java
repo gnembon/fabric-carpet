@@ -22,8 +22,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(WorldRenderer.class)
 public class WorldRenderer_scarpetRenderMixin
 {
-    @Shadow private /*@Nullable*/ ShaderEffect transparencyShader;
-
     @Inject(method = "<init>", at = @At("RETURN"))
     private void addRenderers(MinecraftClient client, BufferBuilderStorage bufferBuilders, CallbackInfo ci)
     {
@@ -32,37 +30,23 @@ public class WorldRenderer_scarpetRenderMixin
 
     @Inject(method = "render", at =  @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V",
-            shift = At.Shift.AFTER
+            target = "Lnet/minecraft/client/render/BufferBuilderStorage;getEffectVertexConsumers()Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;", shift = At.Shift.BEFORE
+            //target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V", shift = At.Shift.AFTER
+            //target = "Lnet/minecraft/client/render/BackgroundRenderer;method_23792()V", shift = At.Shift.AFTER
+            //target = "Lnet/minecraft/client/render/BufferBuilderStorage;getEntityVertexConsumers()Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;", shift = At.Shift.AFTER
+            //target = "Lnet/minecraft/client/render/WorldRenderer;renderChunkDebugInfo(Lnet/minecraft/client/render/Camera;)V", shift = At.Shift.AFTER // before return
     ))
     private void renderScarpetThings(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci)
     {
         // in normal circumstances we want to render shapes at the very end so it appears correctly behind stuff.
-        if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null && transparencyShader == null)
+        // we might actually not need to play with render hooks here.
+        if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null )
         {
             matrices.push();
-            //RenderSystem.pushMatrix(); ??
             CarpetClient.shapes.render(matrices, camera, tickDelta);
-            //RenderSystem.popMatrix(); ??
             matrices.pop();
-        }
-    }
+            RenderSystem.applyModelViewMatrix();
 
-    @Inject(method = "render", at =  @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/render/debug/DebugRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;DDD)V",
-            shift = At.Shift.AFTER
-    ))
-    private void renderScarpetThingsFabulously(MatrixStack matrices, float tickDelta, long limitTime, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightmapTextureManager lightmapTextureManager, Matrix4f matrix4f, CallbackInfo ci)
-    {
-        // with fabulous graphics - stuff doesn't work this way for some reason - need to render with chunk lines.
-        if (!FabricAPIHooks.WORLD_RENDER_EVENTS && CarpetClient.shapes != null && transparencyShader != null)
-        {
-            matrices.push();
-            //RenderSystem.pushMatrix();
-            CarpetClient.shapes.render(matrices, camera, tickDelta);
-            //RenderSystem.popMatrix();
-            matrices.pop();
         }
     }
 }

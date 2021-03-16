@@ -10,19 +10,20 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.debug.DebugRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.AffineTransformation;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3f;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.function.BiFunction;
 public class ShapesRenderer
 {
     private final Map<RegistryKey<World>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> shapes;
+    private final Map<RegistryKey<World>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> labels;
     private MinecraftClient client;
 
     private Map<String, BiFunction<MinecraftClient, ShapeDispatcher.ExpiringShape, RenderedShape<? extends ShapeDispatcher.ExpiringShape >>> renderedShapes
@@ -47,6 +49,7 @@ public class ShapesRenderer
     {
         this.client = minecraftClient;
         shapes = new HashMap<>();
+        labels = new HashMap<>();
     }
 
     public void render(MatrixStack matrices, Camera camera, float partialTick)
@@ -54,18 +57,22 @@ public class ShapesRenderer
         //Camera camera = this.client.gameRenderer.getCamera();
         ClientWorld iWorld = this.client.world;
         RegistryKey<World> dimensionType = iWorld.getRegistryKey();
-        if (shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) return;
+        if ((shapes.get(dimensionType) == null || shapes.get(dimensionType).isEmpty()) &&
+                (labels.get(dimensionType) == null || labels.get(dimensionType).isEmpty())) return;
         long currentTime = client.world.getTime();
         RenderSystem.disableTexture();
         RenderSystem.enableDepthTest();
         RenderSystem.depthFunc(515);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+
         //RenderSystem.blendFuncSeparate(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE, GlStateManager.SrcFactor.ONE, GlStateManager.DstFactor.ZERO);
         //RenderSystem.shadeModel(7425);
         //////////RenderSystem.shadeModel(GL11.GL_FLAT);
         //////////RenderSystem.enableAlphaTest();
+        //GL11.glEnable(GL11.GL_ALPHA_TEST);
         //////////RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
+        //GL11.glAlphaFunc(GL11.GL_GREATER, 0.003f);
         RenderSystem.disableCull();
         //////////RenderSystem.disableLighting();
         RenderSystem.depthMask(false);
@@ -83,16 +90,19 @@ public class ShapesRenderer
         double cameraY = camera.getPos().y;
         double cameraZ = camera.getPos().z;
 
-        synchronized (shapes)
-        {
+        if (shapes.size() != 0) { synchronized (shapes) {
             shapes.get(dimensionType).long2ObjectEntrySet().removeIf(
                     entry -> entry.getValue().isExpired(currentTime)
             );
 
+            matrices.push();
+            matrices.method_34425(matrices.peek().getModel());
+            RenderSystem.applyModelViewMatrix();
+
             shapes.get(dimensionType).values().forEach(
                     s ->
                     {
-                        if ( !s.lastCall() && s.shouldRender(dimensionType))
+                        if (s.shouldRender(dimensionType))
                             s.renderFaces(tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
@@ -100,21 +110,29 @@ public class ShapesRenderer
             shapes.get(dimensionType).values().forEach(
 
                     s -> {
-                        if (  !s.lastCall() && s.shouldRender(dimensionType))
+                        if (s.shouldRender(dimensionType))
                             s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
+            matrices.pop();
+            RenderSystem.applyModelViewMatrix();
+        }}
+        if (labels.size() != 0) { synchronized (labels)
+        {
+            labels.get(dimensionType).long2ObjectEntrySet().removeIf(
+                    entry -> entry.getValue().isExpired(currentTime)
+            );
             //texts
             // maybe we can move it laster to lines and makes sure we don't overpass and don't have blinky transparency problems
-            shapes.get(dimensionType).values().forEach(
+            labels.get(dimensionType).values().forEach(
                     s ->
                     {
-                        if ( s.lastCall() && s.shouldRender(dimensionType))
+                        if (s.shouldRender(dimensionType))
                             s.renderLines(matrices, tessellator, bufferBuilder, cameraX, cameraY, cameraZ, partialTick);
                     }
             );
 
-        }
+        }}
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
         RenderSystem.lineWidth(1.0F);
@@ -147,16 +165,18 @@ public class ShapesRenderer
             RenderedShape<?> rshape = shapeFactory.apply(client, shape);
             RegistryKey<World> dim = shape.shapeDimension;
             long key = rshape.key();
-            synchronized (shapes)
+            Map<RegistryKey<World>, Long2ObjectOpenHashMap<RenderedShape<? extends ShapeDispatcher.ExpiringShape>>> container =
+                    rshape.stageDeux()?labels:shapes;
+            synchronized (container)
             {
-                RenderedShape<?> existing = shapes.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
+                RenderedShape<?> existing = container.computeIfAbsent(dim, d -> new Long2ObjectOpenHashMap<>()).get(key);
                 if (existing != null)
                 {   // promoting previous shape
                     existing.promoteWith(rshape);
                 }
                 else
                 {
-                    shapes.get(dim).put(key, rshape);
+                    container.get(dim).put(key, rshape);
                 }
             }
         }
@@ -167,6 +187,10 @@ public class ShapesRenderer
         {
             shapes.values().forEach(Long2ObjectOpenHashMap::clear);
         }
+        synchronized (labels)
+        {
+            labels.values().forEach(Long2ObjectOpenHashMap::clear);
+        }
     }
 
     public void renewShapes()
@@ -174,6 +198,12 @@ public class ShapesRenderer
         synchronized (shapes)
         {
             shapes.values().forEach(el -> el.values().forEach(shape -> {
+                shape.expiryTick++;
+            }));
+        }
+        synchronized (labels)
+        {
+            labels.values().forEach(el -> el.values().forEach(shape -> {
                 shape.expiryTick++;
             }));
         }
@@ -211,7 +241,7 @@ public class ShapesRenderer
             if (client.world.getEntityById(shape.followEntity) == null) return false;
             return true;
         }
-        public boolean lastCall()
+        public boolean stageDeux()
         {
             return false;
         }
@@ -233,7 +263,6 @@ public class ShapesRenderer
         @Override
         public void renderLines(MatrixStack matrices, Tessellator tessellator, BufferBuilder builder, double cx, double cy, double cz, float partialTick)
         {
-            /*
             if (shape.a == 0.0) return;
             Vec3d v1 = shape.relativiseRender(client.world, shape.pos, partialTick);
             Camera camera1 = client.gameRenderer.getCamera();
@@ -250,11 +279,12 @@ public class ShapesRenderer
             //RenderSystem.translatef((float)(v1.x - d), (float)(v1.y - e), (float)(v1.z - f));
             matrices.translate(v1.x - d,v1.y - e,v1.z - f);
             //RenderSystem.normal3f(0.0F, 1.0F, 0.0F);
-            //matrices.
+            // not needed
 
             if (shape.facing == null)
             {
-                matrices.multiply(camera1.getRotation());
+                matrices.method_34425(new Matrix4f(camera1.getRotation()));
+                // or better matrices.multiply(camera1.getRotation());
                 //RenderSystem.multMatrix(new Matrix4f(camera1.getRotation()));
             }
             else
@@ -264,31 +294,40 @@ public class ShapesRenderer
                     case NORTH:
                         break;
                     case SOUTH:
-                        matrices.
-                        RenderSystem.rotatef(180.0f, 0.0f, 1.0f, 0.0f);
+                        matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(180));
+                        //RenderSystem.rotatef(180.0f, 0.0f, 1.0f, 0.0f);
                         break;
                     case EAST:
-                        RenderSystem.rotatef(270.0f, 0.0f, 1.0f, 0.0f);
+                        matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(270));
+                        //RenderSystem.rotatef(270.0f, 0.0f, 1.0f, 0.0f);
                         break;
                     case WEST:
-                        RenderSystem.rotatef(90.0f, 0.0f, 1.0f, 0.0f);
+                        matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(90));
+                        //RenderSystem.rotatef(90.0f, 0.0f, 1.0f, 0.0f);
                         break;
                     case UP:
-                        RenderSystem.rotatef(90.0f, 1.0f, 0.0f, 0.0f);
+                        matrices.multiply(Vec3f.POSITIVE_X.getDegreesQuaternion(90));
+                        //RenderSystem.rotatef(90.0f, 1.0f, 0.0f, 0.0f);
                         break;
                     case DOWN:
-                        RenderSystem.rotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+                        matrices.multiply(Vec3f.POSITIVE_X.getDegreesQuaternion(-90));
+                        //RenderSystem.rotatef(-90.0f, 1.0f, 0.0f, 0.0f);
                         break;
                 }
             }
-            RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
+            matrices.scale(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
+            //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             if (shape.tilt!=0.0f)
             {
-                RenderSystem.rotatef(shape.tilt, 0.0f, 0.0f, 1.0f);
+                matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(shape.tilt));
+                //RenderSystem.rotatef(shape.tilt, 0.0f, 0.0f, 1.0f);
             }
-            RenderSystem.translatef(-10*shape.indent, -10*shape.height-9, (float) (-10*renderEpsilon)-10*shape.raise);
+            matrices.translate(-10*shape.indent, -10*shape.height-9,  (-10*renderEpsilon)-10*shape.raise);
+            //RenderSystem.translatef(-10*shape.indent, -10*shape.height-9, (float) (-10*renderEpsilon)-10*shape.raise);
             //if (visibleThroughWalls) RenderSystem.disableDepthTest();
-            RenderSystem.scalef(-1.0F, 1.0F, 1.0F);
+            //RenderSystem.scalef(-1.0F, 1.0F, 1.0F);
+            matrices.scale(-1, 1, 1);
+            //RenderSystem.applyModelViewMatrix(); // passed matrix directly to textRenderer.draw
 
             float text_x = 0;
             if (shape.align == 0)
@@ -300,20 +339,23 @@ public class ShapesRenderer
                 text_x = (float)(-textRenderer.getWidth(shape.value.getString()));
             }
             VertexConsumerProvider.Immediate immediate = VertexConsumerProvider.immediate(Tessellator.getInstance().getBuffer());
-            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, AffineTransformation.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
+            textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, matrices.peek().getModel(), /*AffineTransformation.identity().getMatrix(),*/ immediate, false, shape.textbck, 15728880);
+            //textRenderer.draw(shape.value, text_x, 0.0F, shape.textcolor, false, AffineTransformation.identity().getMatrix(), immediate, false, shape.textbck, 15728880);
             immediate.draw();
-            RenderSystem.popMatrix();
+            matrices.pop();
+            RenderSystem.applyModelViewMatrix();
+            //RenderSystem.popMatrix();
             RenderSystem.enableCull();
             //RenderSystem.enableDepthTest();
             //RenderSystem.depthFunc(515);
             //RenderSystem.enableAlphaTest();
             //RenderSystem.alphaFunc(GL11.GL_GREATER, 0.003f);
 
-             */
+
         }
 
         @Override
-        public boolean lastCall()
+        public boolean stageDeux()
         {
             return true;
         }
@@ -348,6 +390,7 @@ public class ShapesRenderer
             Vec3d v1 = shape.relativiseRender(client.world, shape.from, partialTick);
             Vec3d v2 = shape.relativiseRender(client.world, shape.to, partialTick);
             RenderSystem.lineWidth(shape.lineWidth);
+            //DebugRenderer.drawBox(new Box(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z), 0.5f, 0.5f, 0.5f, 0.5f);//shape.r, shape.g, shape.b, shape.a);
             drawBoxWireGLLines(tessellator, bufferBuilder,
                     (float)(v1.x-cx-renderEpsilon), (float)(v1.y-cy-renderEpsilon), (float)(v1.z-cz-renderEpsilon),
                     (float)(v2.x-cx+renderEpsilon), (float)(v2.y-cy+renderEpsilon), (float)(v2.z-cz+renderEpsilon),

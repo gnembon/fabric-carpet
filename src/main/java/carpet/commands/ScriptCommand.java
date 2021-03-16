@@ -468,7 +468,7 @@ public class ScriptCommand
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
-        BlockBox area = BlockBox.method_34390(a, b);
+        BlockBox area = BlockBox.create(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
@@ -517,7 +517,7 @@ public class ScriptCommand
     {
         ServerCommandSource source = context.getSource();
         CarpetScriptHost host = getHost(context);
-        BlockBox area = BlockBox.method_34390(a, b); // create
+        BlockBox area = BlockBox.create(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
         int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
