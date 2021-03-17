@@ -2,6 +2,7 @@ package carpet.script.annotation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import carpet.script.LazyValue;
@@ -53,7 +54,6 @@ public class OutputConverter<T> {
 		this.converter = converter;
 	}
 	
-	
 	/**
 	 * Returns the {@link OutputConverter} for the specified returnType.
 	 * @param <T> The type of the {@link OutputConverter} you are looking for
@@ -62,7 +62,7 @@ public class OutputConverter<T> {
 	 */
 	@SuppressWarnings("unchecked") // OutputConverters are stored with their class, for sure since the map is private (&& class has same generic as converter)
 	public static <T> OutputConverter<T> get(Class<T> returnType) {
-		return (OutputConverter<T>) byResult.get(returnType);
+		return (OutputConverter<T>) Objects.requireNonNull(byResult.get(returnType), "Unregistered output type: "+returnType+". Register it in OutputConverter");
 	}
 	
 	/**

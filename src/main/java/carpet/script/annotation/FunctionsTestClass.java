@@ -20,15 +20,15 @@ public class FunctionsTestClass implements FunctionClass {
 	}
 	
 	@LazyFunction
-	public String make_noise(Value string, Value string2, List<ServerPlayerEntity> me) {
-		return string.getString()+ " "+string2.getString();
+	public String make_noise(String string, String string2) {
+		return string + " " + string2;
 	}
 	
 	@LazyFunction(maxParams = 8)
-	public LazyValue multiparams(Value... values) {
+	public LazyValue multiparams(String... values) {
 		String str = "";
-		for (Value val : values)
-			str += val.getString();
+		for (String val : values)
+			str += val;
 		Value retval = StringValue.of(str);
 		return (c, t) -> retval;
 	}
@@ -42,8 +42,8 @@ public class FunctionsTestClass implements FunctionClass {
 		return (c, t) -> retval;
 	}
 	
-	//@LazyFunction(maxParams = 6) TODO This is a concept
-	public Value display_title(ServerPlayerEntity target, String actionString, Text content, Integer... times) {
+	@LazyFunction(maxParams = 6) //TODO This is a concept. Edit: IT WORKS!
+	public Boolean display_title2(@AllowSingleton List<ServerPlayerEntity> targets, String actionString, Text content, Integer... times) {
 	    TitleS2CPacket.Action action;
 	    switch (actionString.toLowerCase(Locale.ROOT))
 	    {
@@ -60,10 +60,8 @@ public class FunctionsTestClass implements FunctionClass {
 	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle' or 'actionbar' as second argument");
 	    }
 	    if (times.length == 3)
-	    {
-	        target.networkHandler.sendPacket(new TitleS2CPacket(Action.TIMES, null, times[0], times[1], times[2]));
-	    }
-	    target.networkHandler.sendPacket(new TitleS2CPacket(action, content));
-	    return Value.TRUE;
+	        targets.forEach(p -> p.networkHandler.sendPacket(new TitleS2CPacket(Action.TIMES, null, times[0], times[1], times[2])));
+	    targets.forEach(p -> p.networkHandler.sendPacket(new TitleS2CPacket(action, content)));
+	    return true;
 	}
 }

@@ -1,25 +1,21 @@
 package carpet.script.annotation;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedParameterizedType;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.AnnotatedType;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import carpet.CarpetSettings;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
 public class ListConverter<T> implements ValueConverter<List<T>> {
-
 	private final ValueConverter<T> itemConverter;
 	private final boolean allowSingletonCreation;
 	
 	@Override
 	public String getTypeName() {
-		return "list of " + itemConverter.getTypeName();
+		return (allowSingletonCreation ? itemConverter.getTypeName() + " or ": "") + "a list of " + itemConverter.getTypeName() + "s"; //TODO Decide if this good
 	}
 
 	@Override
@@ -29,17 +25,16 @@ public class ListConverter<T> implements ValueConverter<List<T>> {
 				: allowSingletonCreation ? Collections.singletonList(itemConverter.convert(value)) : null;
 	}
 	
-	private ListConverter(Class<T> itemType, boolean allowSingletonCreation) {
-		itemConverter = ValueConverter.fromType(itemType);
+	private ListConverter(AnnotatedType itemType, boolean allowSingletonCreation) {
+		itemConverter = ValueConverter.fromAnnotatedType(itemType);
 		this.allowSingletonCreation = allowSingletonCreation;
 	}
 	
-	public static ListConverter<?> fromParameter(Parameter param) { //TODO Actual type-safety (or at least kinda)
-		ParameterizedType type = (ParameterizedType) param.getParameterizedType();
-		AnnotatedParameterizedType annotatedType = (AnnotatedParameterizedType)param.getAnnotatedType();
-		//TODO (AnnotatedParameterizedType) via @Target(TYPE_USE)? Use annotations (+ nested annotations??)
-		boolean allowSingletonCreation = param.isAnnotationPresent(AllowSingleton.class);
-		return new ListConverter<>((Class<?>)type.getActualTypeArguments()[0], allowSingletonCreation);
+	public static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType) { //TODO Check actual type-safety (or at least kinda)
+		AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
+		AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];
+		boolean allowSingletonCreation = annotatedType.isAnnotationPresent(AllowSingleton.class);
+		return new ListConverter<>(itemType, allowSingletonCreation);
 	}
 
 }

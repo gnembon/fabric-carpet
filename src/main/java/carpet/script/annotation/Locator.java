@@ -17,7 +17,7 @@ import carpet.script.value.Value;
 /**
  * Class that holds annotation for {@link Argument} locators to be used in Scarpet functions
  */
-public final class Locator {
+public interface Locator {
 	/**
 	 * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link BlockArgument} locator.</p>
 	 * 
@@ -25,7 +25,7 @@ public final class Locator {
 	 */
 	@Documented
 	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.PARAMETER)
+	@Target({ElementType.PARAMETER, ElementType.TYPE_USE})
 	public @interface Block {
 		/**
 		 * <p>Whether or not should the locator accept a single {@link String} as the parameter and
@@ -56,7 +56,7 @@ public final class Locator {
 	 */
 	@Documented
 	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.PARAMETER)
+	@Target({ElementType.PARAMETER, ElementType.TYPE_USE})
 	public @interface Vec3d {
 		/**
 		 * <p>Whether or not should the {@link Vector3Argument} locator accept an optional direction aside from the {@link net.minecraft.util.math.Vec3d}</p>
@@ -75,5 +75,4 @@ public final class Locator {
 		@Deprecated
 		boolean optionalEntity() default false;
 	}
-	private Locator() {}
 }
