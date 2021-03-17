@@ -594,12 +594,12 @@ public class Scoreboards {
                     return LazyValue.FALSE;
                 case "style":
                     if(propertyValue == null) {
-                        return (_c, _t) -> StringValue.of(bossBar.getOverlay().getName());
+                        return (_c, _t) -> StringValue.of(bossBar.getStyle().getName());
                     }
 
                     BossBar.Style style = BossBar.Style.byName(propertyValue.getString());
                     if(style == null) throw new InternalExpressionException("'" + propertyValue.getString() + "' is not a valid value for property " + property);
-                    bossBar.setOverlay(style);
+                    bossBar.setStyle(style);
                     return LazyValue.TRUE;
                 case "value":
                     if(propertyValue == null) return (_c, _t) -> NumericValue.of(bossBar.getValue());
