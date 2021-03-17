@@ -1,10 +1,12 @@
 package carpet.script.annotation;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE_USE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import javax.swing.text.html.parser.Entity;
 
@@ -24,8 +26,8 @@ public interface Locator {
 	 * <p>Must be used in {@link BlockValue} parameters</p>
 	 */
 	@Documented
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target({ElementType.PARAMETER, ElementType.TYPE_USE})
+	@Retention(RUNTIME)
+	@Target({PARAMETER, TYPE_USE})
 	public @interface Block {
 		/**
 		 * <p>Whether or not should the locator accept a single {@link String} as the parameter and
@@ -55,8 +57,8 @@ public interface Locator {
 	 * <p>Must be used in {@link net.minecraft.util.math.Vec3d} parameters</p>
 	 */
 	@Documented
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target({ElementType.PARAMETER, ElementType.TYPE_USE})
+	@Retention(RUNTIME)
+	@Target({PARAMETER, TYPE_USE})
 	public @interface Vec3d {
 		/**
 		 * <p>Whether or not should the {@link Vector3Argument} locator accept an optional direction aside from the {@link net.minecraft.util.math.Vec3d}</p>

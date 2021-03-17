@@ -41,7 +41,7 @@ public class AnnotationParser {
 		for (Method method : methodz) {
 			if (!method.isAnnotationPresent(LazyFunction.class)) continue;
 			//Checks
-			if (Modifier.isAbstract(method.getModifiers())) {
+			if (Modifier.isAbstract(method.getModifiers())) { //TODO Probably remove since class is already checked to not be abstract
 				throw new IllegalArgumentException("Annotated method '"+method.getName()+"', provided by '"+instance.getProvider()+"' must not be abstract");
 			}
 			if (Modifier.isStatic(method.getModifiers())) {
