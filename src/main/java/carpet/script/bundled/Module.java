@@ -19,7 +19,9 @@ public abstract class Module
     public abstract String getName();
     public abstract String getCode();
     public abstract boolean isLibrary();
+    @Deprecated
     public final static Object writeIOSync = new Object();
+    @Deprecated
     public final static Map<String, String> supportedTypes = ImmutableMap.of(
             "raw", ".txt",
             "text", ".txt",
@@ -28,6 +30,7 @@ public abstract class Module
             "folder", "folder"
     );
 
+    @Deprecated
     private static String getDescriptor(Module module, String file, boolean isShared)
     {
         if (isShared)
@@ -41,6 +44,7 @@ public abstract class Module
         throw  new RuntimeException("Invalid file descriptor: "+file);
     }
 
+    @Deprecated
     public static Tag getData(Module module, String file, boolean isShared)
     {
         Path dataFile = resolveResource(module, file, ".nbt", isShared);
@@ -49,6 +53,7 @@ public abstract class Module
         synchronized (writeIOSync) { return FileModule.read(dataFile.toFile()); }
     }
 
+    @Deprecated
     public static boolean saveData(Module module, String file, Tag globalState, boolean isShared)
     {
         Path dataFile = resolveResource(module, file, ".nbt", isShared);
@@ -57,6 +62,7 @@ public abstract class Module
         synchronized (writeIOSync) { return FileModule.write(globalState, dataFile.toFile()); }
     }
 
+    @Deprecated
     public static boolean appendToTextFile(Module module, String resourceName, String type, boolean isShared, List<String> message)
     {
         Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
@@ -65,6 +71,7 @@ public abstract class Module
         synchronized (writeIOSync) { return FileModule.appendText(dataFile, type.equals("text"), message); }
     }
 
+    @Deprecated
     public static boolean dropExistingFile(Module module, String resourceName, String type, boolean isShared)
     {
         Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
@@ -72,6 +79,7 @@ public abstract class Module
         synchronized (writeIOSync) { return dataFile.toFile().delete(); }
     }
 
+    @Deprecated
     public static List<String> listFile(Module module, String resourceName, String type, boolean isShared)
     {
         Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
@@ -79,7 +87,8 @@ public abstract class Module
         if (!dataFile.toFile().exists()) return null;
         synchronized (writeIOSync) { return FileModule.listFileContent(dataFile); }
     }
-    
+
+    @Deprecated
     public static JsonElement readJsonFile(Module module, String resourceName, String type, boolean isShared) {
         Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
         if (dataFile == null) return null;
@@ -87,6 +96,7 @@ public abstract class Module
         synchronized (writeIOSync) { return FileModule.readJsonContent(dataFile); }
     }
 
+    @Deprecated
     public static Stream<String> listFolder(Module module, String resourceName, String type, boolean isShared)
     {
         Path dir = resolveResource(module, resourceName, null, isShared);
@@ -103,6 +113,7 @@ public abstract class Module
         return strings;
     }
 
+    @Deprecated
     private static Path resolveResource(Module module, String resourceName, String ext, boolean isShared)
     {
         if (!isShared && (module == null || module.getName() == null)) return null;

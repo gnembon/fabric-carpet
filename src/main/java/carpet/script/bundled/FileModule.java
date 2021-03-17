@@ -68,6 +68,7 @@ public class FileModule extends Module
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
     // to read non-compound tags - these won't be compressed
+    @Deprecated
     public static Tag read(File file)
     {
         try
@@ -109,6 +110,7 @@ public class FileModule extends Module
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
+    @Deprecated
     public static boolean write(Tag tag_1, File file)
     {
         File file_2 = new File(file.getAbsolutePath() + "_tmp");
@@ -146,6 +148,7 @@ public class FileModule extends Module
         return true;
     }
 
+    @Deprecated
     public static boolean appendText(Path filePath, boolean addNewLines, List<String> data)
     {
         try
@@ -168,6 +171,7 @@ public class FileModule extends Module
     }
 
 
+    @Deprecated
     public static List<String> listFileContent(Path filePath)
     {
         try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
@@ -185,7 +189,8 @@ public class FileModule extends Module
             return null;
         }
     }
-    
+
+    @Deprecated
     public static JsonElement readJsonContent(Path filePath)
     {
     	try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
@@ -198,6 +203,7 @@ public class FileModule extends Module
         }
     }
 
+    @Deprecated
     public static Stream<Path> listFiles(Path dir, String ext)
     {
         boolean folderListing = ext.equals("folder");
