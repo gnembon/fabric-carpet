@@ -1,14 +1,10 @@
 package carpet.script.annotation;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
-import carpet.CarpetSettings;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -57,29 +53,13 @@ public class ValueCaster<R> implements ValueConverter<R> {
 	 * @param <R> The type of the {@link ValueCaster} you are looking for
 	 * @param outputType The class of the {@link Value} the returned {@link ValueCaster} casts to
 	 * @return The {@link ValueCaster} for the specified outputType
-	 * @deprecated Use {@link #getOrRegister(Class)} instead
+	 * <!--@deprecated Use {@link #getOrRegister(Class)} instead-->
 	 */
-	@Deprecated
 	@SuppressWarnings("unchecked") // Casters are stored with their exact class, for sure since the map is private (&& class has same generic as caster)
 	public static <R> ValueCaster<R> get(Class<R> outputType) {
 		return (ValueCaster<R>)byResult.get(outputType);
 	}
-	
-	/**
-	 * Returns a {@link ValueCaster} for the specified outputType. In case it isn't registered,
-	 * tries to generate one, using (slightly concerning) reflection hacks to get its user-friendly name.
-	 * @param <R> The type of the {@link ValueCaster} you are looking for
-	 * @param outputType The class of the {@link Value} the returned {@link ValueCaster} casts to
-	 * @return A {@link ValueCaster} for the specified outputType
-	 */
-	public static <R> ValueCaster<R> getOrRegister(Class<R> outputType) {
-		ValueCaster<R> out = get(outputType);
-		if (out != null)
-			return out;
-		autoRegister((Class<? extends Value>)outputType); // TODO fix this or maybe even yeet this method
-		return get(outputType);
-	}
-	
+		
 	/**
 	 * Casts the given {@link Value} to this {@link ValueCaster}'s output type.
 	 * 
@@ -120,6 +100,23 @@ public class ValueCaster<R> implements ValueConverter<R> {
 		byResult.put(valueClass, caster);
 	}
 	
+
+	/**
+	 * Returns a {@link ValueCaster} for the specified outputType. In case it isn't registered,
+	 * tries to generate one, using (slightly concerning) reflection hacks to get its user-friendly name.
+	 * @param <R> The type of the {@link ValueCaster} you are looking for
+	 * @param outputType The class of the {@link Value} the returned {@link ValueCaster} casts to
+	 * @return A {@link ValueCaster} for the specified outputType
+	 */
+	/* This was the holder for autoRegister, that is ScheduledForRemoval
+	public static <R> ValueCaster<R> getOrRegister(Class<R> outputType) {
+		ValueCaster<R> out = get(outputType);
+		if (out != null)
+			return out;
+		autoRegister((Class<? extends Value>)outputType); // TODO fix this or maybe even yeet this method
+		return get(outputType);
+	}*/
+	
 	/**
 	 * <p>"Heuristically" tries to get the name of a {@link Value} type by running through its constructors,
 	 * finding one with a single parameter, and trying to create a new instance of it by passing
@@ -135,8 +132,8 @@ public class ValueCaster<R> implements ValueConverter<R> {
 	 * 
 	 * @param <R> The type of the {@link Value} class we are analyzing
 	 * @param valueClass The class of the {@link Value}
-	 */
-	public static <R extends Value> void autoRegister(Class<R> valueClass) {
+	 */ //TODO Remove this. It was cool that it worked, nice entertainment, but it has to go.
+	/*public static <R extends Value> void autoRegister(Class<R> valueClass) {
 		try {
 			CarpetSettings.LOG.warn("Unregistered Value class provided required in function, '" + valueClass.getName() +"', trying to find its name...");
 			if (Modifier.isAbstract(valueClass.getModifiers())) {
@@ -158,5 +155,5 @@ public class ValueCaster<R> implements ValueConverter<R> {
 			register(valueClass, valueClass.getCanonicalName().toLowerCase(Locale.ROOT).replace("value", ""));
 			CarpetSettings.LOG.warn("Couldn't automagically get type name for '"+valueClass.getName()+"', using class without 'value'. Please register it!");
 		}
-	}
+	}*/
 }

@@ -9,9 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import carpet.CarpetServer;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
-import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
-import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import net.minecraft.entity.Entity;
@@ -25,14 +23,12 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		registerType(EntityValue.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val));
 		registerType(EntityValue.class, Entity.class, EntityValue::getEntity);
 		registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server));
-		registerType(FormattedTextValue.class, Text.class, FormattedTextValue::getText);
-		registerType(StringValue.class, String.class, StringValue::getString);
-		// TODO Make this complex converting contents (to the <Generics>). Move outside of here. The generics conversions should use this class though 
-		//registerType(ListValue.class, List.class, ListValue::getItems); Done
-		registerType(MapValue.class, Map.class, MapValue::getMap);
+		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : Text.of(v.getString())); 
+		registerType(Value.class, String.class, Value::getString); // Check out @StrictParam for more specific types
+		
 		// TODO Make sure this doesn't box and unbox primitives. Not sure how to check it, though
-		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong);
-		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble);
+		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong); //TODO Strict numbers? Since some types can be gotten without being NumericValue
+		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble); //Same for booleans
 		registerType(NumericValue.class, Integer.TYPE, NumericValue::getInt);
 		// Non-primitive versions of the above
 		registerType(NumericValue.class, Long.class, NumericValue::getLong);
@@ -49,7 +45,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 	private SimpleTypeConverter(Class<T> inputType, Function<T, R> converter) {
 		//this.outputType = outputType;
 		this.converter = converter;
-		this.caster = ValueCaster.getOrRegister(inputType);
+		this.caster = ValueCaster.get(inputType);
 	}
 	
 	@Override //TODO This

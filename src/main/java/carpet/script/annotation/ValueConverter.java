@@ -13,11 +13,11 @@ import carpet.script.LazyValue;
 import carpet.script.value.Value;
 
 /**
- * <p>Classes implementing this interface are able to convert {@link Value} instances into
- * R, in order to easily use them in parameters for Scarpet functions created using the {@link LazyFunction}
+ * <p>Classes implementing this interface are able to convert {@link LazyValue} and {@link Value} instances into
+ * {@code <R>}, in order to easily use them in parameters for Scarpet functions created using the {@link LazyFunction}
  * annotation.</p>
  *
- * @param <R> The result type passed {@link Value}s will be converted to
+ * @param <R> The result type passed {@link LazyValue} or {@link Value}s will be converted to
  */
 public interface ValueConverter<R> {
 	
@@ -29,8 +29,9 @@ public interface ValueConverter<R> {
 	public String getTypeName();
 	
 	/**
-	 * @return The user-friendly name of the result that this {@link ValueConverter} converts to, prefixed with {@code a} or {@code an},
-	 *         depending on the rules of english (aka starts with aeiou: an)
+	 * Returns the user-friendly name of the result that this {@link ValueConverter} converts to, prefixed with {@code a} or {@code an},
+	 * depending on the rules of English (aka starts with {@code aeiou}: an)
+	 * 
 	 * @implNote This method's default implementation returns the result of {@link #getTypeName()} prefixed depending on whether the first character
 	 *           is one of {@code aeiou} or something else.
 	 * @see #getTypeName() 
@@ -56,6 +57,12 @@ public interface ValueConverter<R> {
 	 * the final type instead.
 	 * @param value The {@link Value} to convert
 	 * @return The converted value, or {@code null} if the conversion failed in the process
+	 * @implSpec <p>While most implementations of this method should and will return the type from this method, 
+	 *           implementations that <b>require</b> parameters from {@link #evalAndConvert(LazyValue, Context)} may
+	 *           decide to throw {@link UnsupportedOperationException} in this method and override {@link #evalAndConvert(LazyValue, Context)}
+	 *           instead. Those implementations, however, should not be available for map or list types, since those can only operate 
+	 *           with {@link Value}.</p>
+	 *           <p>Currently, the only implementation that requires that is {@link #LAZY_VALUE_IDENTITY}</p>
 	 */
 	@Nullable
 	public R convert(Value value);
@@ -83,16 +90,18 @@ public interface ValueConverter<R> {
 		if (type == List.class)
 			return (ValueConverter<R>) ListConverter.fromAnnotatedType(annoType); //Already checked that type is List
 		if (type == Map.class)
-			return null; //TODO Map converter
-		if (annoType.getAnnotations().length != 0)
-			return null; //TODO locators and things
+			return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType);  //Already checked that type is Map
+		if (annoType.getAnnotations().length != 0) { //TODO OptionalParam annotation. Maybe save type to var then wrap into holder?
+			if (annoType.getAnnotation(StrictParam.class) != null)
+				return (ValueConverter<R>)StrictParam.StrictParamHolder.get(annoType);
+		}
 		
-		//Old fromType
+		//Start: Old fromType
 		if (type.isAssignableFrom(Value.class))
-			return ValueCaster.getOrRegister(type);
+			return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
 		if (type == LazyValue.class)
 			return (ValueConverter<R>) LAZY_VALUE_IDENTITY;
-		return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + "is not registered. Register it in SimpleTypeConverter to use it");
+		return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + " is not registered. Register it in SimpleTypeConverter to use it");
 	}
 	
 	/**
@@ -117,7 +126,7 @@ public interface ValueConverter<R> {
 	 * A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(LazyValue, Context)},
 	 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.
 	 */
-	static ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
+	static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
 		@Override
 		public LazyValue convert(Value val) {
 			throw new UnsupportedOperationException("Called convert() with a Value in LazyValue identity converter, where only evalAndConvert is supported");

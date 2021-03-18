@@ -30,7 +30,7 @@ public class ListConverter<T> implements ValueConverter<List<T>> {
 		this.allowSingletonCreation = allowSingletonCreation;
 	}
 	
-	public static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType) { //TODO Check actual type-safety (or at least kinda)
+	public static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType) { //TODO Assert actual type-safety (or at least kinda)
 		AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
 		AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];
 		boolean allowSingletonCreation = annotatedType.isAnnotationPresent(AllowSingleton.class);

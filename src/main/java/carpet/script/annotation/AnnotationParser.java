@@ -113,7 +113,7 @@ public class AnnotationParser {
 		final Class<?> varArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
 		//If using primitives, this is problematic when casting (cannot cast to Object[]). TODO Change if I find a better way.
 		//TODO Option 2: Just not support unboxeds in varargs and ask to use boxed types, would be both simpler and faster, since this method requires creating new array and moving every item to cast Boxed[] -> primitive[]
-		//TODO At least use one of them, since I got lazy and didn't even make this work (idea: ArrayUtils.toPrimitive(boxedArray) )
+		//TODO At least use one of them, since I got lazy and didn't even make this work (current idea: ArrayUtils.toPrimitive(boxedArray) )
 		final Class<?> boxedVarArgsType = ClassUtils.primitiveToWrapper(varArgsType);
 		final int minParams = 0; // TODO Populate this. Think about locators
 		
@@ -145,25 +145,23 @@ public class AnnotationParser {
 	{
 		Object[] params;
 		if (isVarArgs) {
-			List<Value> evaledLv = lv.stream().map(val -> val.evalValue(context)).collect(Collectors.toList()); //TODO Fix this, already changed below
 			int regularRemaining = methodParameterCount - 1;
 			int pointer = 0;
 			Iterator<ValueConverter<?>> converterIterator = valueConverters.iterator(); 
 			params = new Object[regularRemaining + 1];
 			while (regularRemaining > 0) {
-				params[pointer] = converterIterator.next().convert(evaledLv.remove(0));
+				params[pointer] = converterIterator.next().evalAndConvert(lv.remove(0), context);
 				regularRemaining--; pointer++;
 			}
-			params[pointer] = evaledLv.stream().map(varArgsConverter::convert)
-					.collect(Collectors.toList()).toArray((Object[]) Array.newInstance(varArgsType, 0));
-			//TODO More efficient thing of the above ^
+			params[pointer] = lv.stream().map(i-> varArgsConverter.evalAndConvert(i, context)).toArray(size-> (Object[])Array.newInstance(varArgsType, size));
+			//TODO (even) More efficient thing of the above ^
 			//TODO The above, but for primitive varargs
 		} else {
 			params = new Object[lv.size()];
 			for (int i = 0; i < lv.size(); i++)
 				params[i] = valueConverters.get(i).evalAndConvert(lv.get(i), context);
 		}
-		return null;
+		return params;
 	}
 	
 	private AnnotationParser() {}
