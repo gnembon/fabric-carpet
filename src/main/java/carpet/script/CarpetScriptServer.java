@@ -272,35 +272,23 @@ public class CarpetScriptServer
         }
         //addEvents(source, name);
         String action = reload?"reloaded":"loaded";
-        if (newHost.appConfig.get(StringValue.of("commands")) != null)
-        {
-            try
-            {
-                LiteralArgumentBuilder<ServerCommandSource> command = newHost.readCommands(commandValidator);
-                if (command != null)
-                {
-                    if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action+" with /"+name+" command");
-                    server.getCommandManager().getDispatcher().register(command);
-                    CarpetServer.settingsManager.notifyPlayersCommandsChanged();
-                }
-                else {
-                    if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action);
-                }
-            }
-            catch (CommandSyntaxException cse)
-            {
-                removeScriptHost(source, name, false, false);
-                Messenger.m(source, "r Failed to build command system for "+name+" thus failed to load the app ", cse.getRawMessage());
-                return false;
-            }
-
-        }
-        else if (!addLegacyCommand(source, name, reload, !isRuleApp, commandValidator)) // this needs to be moved to config reader, only supporting legacy command here
+        Boolean isCommandAdded = newHost.addAppCommands(s -> {
+            if (!isRuleApp) Messenger.m(source, s);
+        });
+        if (isCommandAdded == null) // error should be dispatched
         {
             removeScriptHost(source, name, false, false);
-            Messenger.m(source, "r Failed to build command system for "+name+" thus failed to load the app");
-            return false;
         }
+        else if (isCommandAdded)
+        {
+            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
+            if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action+" with /"+name+" command");
+        }
+        else
+        {
+            if (!isRuleApp) Messenger.m(source, "gi "+name+" app "+action);
+        }
+
         if (newHost.isPerUser())
         {
             // that will provide player hosts right at the startup
@@ -317,89 +305,9 @@ public class CarpetScriptServer
         return true;
     }
 
-    private boolean addLegacyCommand(ServerCommandSource source, String hostName, boolean isReload, boolean notifySource, Function<ServerCommandSource, Boolean> useValidator)
+    public boolean isValidCommandRoot(String appName)
     {
-        CarpetScriptHost host = modules.get(hostName);
-        String loaded = isReload?"reloaded":"loaded";
-        if (host == null)
-        {
-            return true;
-        }
-        if (host.getFunction("__command") == null)
-        {
-            if (notifySource) Messenger.m(source, "gi "+hostName+" app "+loaded+".");
-            return true;
-        }
-        if (holyMoly.contains(hostName))
-        {
-            Messenger.m(source, "gi "+hostName+" app "+loaded+" with no command.");
-            Messenger.m(source, "gi Tried to mask vanilla command.");
-            return true;
-        }
-
-        Function<ServerCommandSource, Boolean> configValidator;
-        try
-        {
-            configValidator = host.getCommandConfigPermissions();
-        }
-        catch (CommandSyntaxException e)
-        {
-            Messenger.m(source, "rb "+e.getMessage());
-            return false;
-        }
-
-        LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player)).
-                executes( (c) ->
-                {
-                    CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());
-                    Value response = targetHost.handleCommandLegacy(c.getSource(),"__command", null, "");
-                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                    return (int)response.readInteger();
-                });
-
-        for (String function : host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
-        {
-            if (host.appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean())
-            {
-                try
-                {
-                    FunctionValue functionValue = host.getFunction(function);
-                    command = host.addPathToCommand(
-                            command,
-                            CommandToken.parseSpec(CommandToken.specFromSignature(functionValue), host),
-                            FunctionArgument.fromCommandSpec(host, functionValue)
-                    );
-                }
-                catch (CommandSyntaxException e)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                command = command.
-                        then(literal(function).
-                                requires((player) -> modules.containsKey(hostName) && modules.get(hostName).getFunction(function) != null).
-                                executes((c) -> {
-                                    CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());
-                                    Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, "");
-                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi " + response.getString());
-                                    return (int) response.readInteger();
-                                }).
-                                then(argument("args...", StringArgumentType.greedyString()).
-                                        executes( (c) -> {
-                                            CarpetScriptHost targetHost = modules.get(hostName).retrieveOwnForExecution(c.getSource());
-                                            Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, StringArgumentType.getString(c, "args..."));
-                                            if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
-                                            return (int)response.readInteger();
-                                        })));
-            }
-        }
-        if (notifySource) Messenger.m(source, "gi "+hostName+" app "+loaded+" with /"+hostName+" command");
-        server.getCommandManager().getDispatcher().register(command);
-        CarpetServer.settingsManager.notifyPlayersCommandsChanged();
-        return true;
+        return !holyMoly.contains(appName);
     }
 
 
@@ -557,5 +465,10 @@ public class CarpetScriptServer
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
         apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp));
+    }
+
+    public void reAddCommands()
+    {
+        modules.values().forEach(host -> host.addAppCommands(s -> {}));
     }
 }

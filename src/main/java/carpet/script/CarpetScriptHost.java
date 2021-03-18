@@ -20,6 +20,7 @@ import carpet.script.value.Value;
 import carpet.utils.Messenger;
 
 import com.google.gson.JsonElement;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -32,6 +33,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -43,11 +45,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.Math.max;
+import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
 public class CarpetScriptHost extends ScriptHost
@@ -309,6 +313,107 @@ public class CarpetScriptHost extends ScriptHost
             }
             return Integer.compare(o1.size(), o2.size());
         }
+    }
+
+    public Boolean addAppCommands(Consumer<Text> notifier)
+    {
+        if (appConfig.get(StringValue.of("commands")) != null)
+        {
+            try
+            {
+                LiteralArgumentBuilder<ServerCommandSource> command = readCommands(commandValidator);
+                if (command != null)
+                {
+                    scriptServer.server.getCommandManager().getDispatcher().register(command);
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            catch (CommandSyntaxException cse)
+            {
+                // failed
+                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app ", cse.getRawMessage()));
+                return null;
+            }
+
+        }
+        return addLegacyCommand(notifier);
+    }
+
+    private Boolean addLegacyCommand(Consumer<Text> notifier)
+    {
+        if (main == null) return false;
+        if (getFunction("__command") == null) return false;
+
+        if (scriptServer.isValidCommandRoot(getName()))
+        {
+            notifier.accept(Messenger.c("gi Tried to mask vanilla command."));
+            return null;
+        }
+
+        Function<ServerCommandSource, Boolean> configValidator;
+        try
+        {
+            configValidator = getCommandConfigPermissions();
+        }
+        catch (CommandSyntaxException e)
+        {
+            notifier.accept(Messenger.c("rb "+e.getMessage()));
+            return null;
+        }
+        String hostName = getName();
+        LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
+                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.apply(player) && configValidator.apply(player)).
+                executes( (c) ->
+                {
+                    CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                    Value response = targetHost.handleCommandLegacy(c.getSource(),"__command", null, "");
+                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                    return (int)response.readInteger();
+                });
+
+        for (String function : globaFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        {
+            if (appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean())
+            {
+                try
+                {
+                    FunctionValue functionValue = getFunction(function);
+                    command = addPathToCommand(
+                            command,
+                            CommandToken.parseSpec(CommandToken.specFromSignature(functionValue), this),
+                            FunctionArgument.fromCommandSpec(this, functionValue)
+                    );
+                }
+                catch (CommandSyntaxException e)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                command = command.
+                        then(literal(function).
+                                requires((player) -> scriptServer.modules.containsKey(hostName) && scriptServer.modules.get(hostName).getFunction(function) != null).
+                                executes((c) -> {
+                                    CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                    Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, "");
+                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi " + response.getString());
+                                    return (int) response.readInteger();
+                                }).
+                                then(argument("args...", StringArgumentType.greedyString()).
+                                        executes( (c) -> {
+                                            CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                            Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, StringArgumentType.getString(c, "args..."));
+                                            if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                                            return (int)response.readInteger();
+                                        })));
+            }
+        }
+        scriptServer.server.getCommandManager().getDispatcher().register(command);
+        return true;
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> readCommands(Function<ServerCommandSource, Boolean> useValidator) throws CommandSyntaxException
