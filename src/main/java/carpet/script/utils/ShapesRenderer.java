@@ -278,6 +278,14 @@ public class ShapesRenderer
             {
                 RenderSystem.rotatef(shape.tilt, 0.0f, 0.0f, 1.0f);
             }
+            if (shape.lean!=0.0f)
+            {
+                RenderSystem.rotatef(shape.lean, 1.0f, 0.0f, 0.0f);
+            }
+            if (shape.turn!=0.0f)
+            {
+                RenderSystem.rotatef(shape.turn, 0.0f, 1.0f, 0.0f);
+            }
             RenderSystem.translatef(-10*shape.indent, -10*shape.height-9, (float) (-10*renderEpsilon)-10*shape.raise);
             //if (visibleThroughWalls) RenderSystem.disableDepthTest();
             RenderSystem.scalef(-1.0F, 1.0F, 1.0F);
