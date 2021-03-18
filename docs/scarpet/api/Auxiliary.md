@@ -114,7 +114,7 @@ Available shapes:
      * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
      centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
      indicates the end of text).
-     * `tilt` - additional rotation of the text on the canvas
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
      * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
      with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
      can be used to display multiple lines of text bound to the same `pos` 

@@ -418,6 +418,8 @@ public class ShapeDispatcher
                 put("facing", new StringValue("player")).
                 put("raise", new NumericValue(0)).
                 put("tilt", new NumericValue(0)).
+                put("lean", new NumericValue(0)).
+                put("turn", new NumericValue(0)).
                 put("indent", new NumericValue(0)).
                 put("height", new NumericValue(0)).
                 put("align", new StringValue("center")).
@@ -439,6 +441,8 @@ public class ShapeDispatcher
         Direction facing;
         float raise;
         float tilt;
+        float lean;
+        float turn;
         float size;
         float indent;
         int align;
@@ -487,6 +491,8 @@ public class ShapeDispatcher
 
             raise = NumericValue.asNumber(options.getOrDefault("raise", optional.get("raise"))).getFloat();
             tilt = NumericValue.asNumber(options.getOrDefault("tilt", optional.get("tilt"))).getFloat();
+            lean = NumericValue.asNumber(options.getOrDefault("lean", optional.get("lean"))).getFloat();
+            turn = NumericValue.asNumber(options.getOrDefault("turn", optional.get("turn"))).getFloat();
             indent = NumericValue.asNumber(options.getOrDefault("indent", optional.get("indent"))).getFloat();
             height = NumericValue.asNumber(options.getOrDefault("height", optional.get("height"))).getFloat();
 
@@ -519,6 +525,8 @@ public class ShapeDispatcher
             if (facing!= null) hash ^= facing.hashCode(); hash *= 1099511628211L;
             hash ^= Float.hashCode(raise); hash *= 1099511628211L;
             hash ^= Float.hashCode(tilt); hash *= 1099511628211L;
+            hash ^= Float.hashCode(lean); hash *= 1099511628211L;
+            hash ^= Float.hashCode(turn); hash *= 1099511628211L;
             hash ^= Float.hashCode(indent); hash *= 1099511628211L;
             hash ^= Float.hashCode(height); hash *= 1099511628211L;
             hash ^= Float.hashCode(size); hash *= 1099511628211L;

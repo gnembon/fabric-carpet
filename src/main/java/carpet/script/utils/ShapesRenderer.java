@@ -278,11 +278,11 @@ public class ShapesRenderer
             }
             matrices.scale(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
             //RenderSystem.scalef(shape.size* 0.0025f, -shape.size*0.0025f, shape.size*0.0025f);
-            if (shape.tilt!=0.0f)
-            {
-                matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(shape.tilt));
-            }
+            if (shape.tilt!=0.0f) matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(shape.tilt));
+            if (shape.lean!=0.0f) matrices.multiply(Vec3f.POSITIVE_X.getDegreesQuaternion(shape.lean));
+            if (shape.turn!=0.0f) matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(shape.turn));
             matrices.translate(-10*shape.indent, -10*shape.height-9,  (-10*renderEpsilon)-10*shape.raise);
+            RenderSystem.translatef(-10*shape.indent, -10*shape.height-9, (float) (-10*renderEpsilon)-10*shape.raise);
             //if (visibleThroughWalls) RenderSystem.disableDepthTest();
             matrices.scale(-1, 1, 1);
             //RenderSystem.applyModelViewMatrix(); // passed matrix directly to textRenderer.draw, not AffineTransformation.identity().getMatrix(),
