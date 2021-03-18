@@ -45,7 +45,7 @@ import carpet.script.value.Value;
 @Retention(RUNTIME)
 public @interface LazyFunction {
 	/**
-	 * <p>If the function can accept a variable number of parameters,
+	 * <p>If the function can accept a variable number of parameters (varargs),
 	 * this must define the maximum number of params this function can take.</p>
 	 * 
 	 * <p>The parser will throw in case a function is defined with varargs

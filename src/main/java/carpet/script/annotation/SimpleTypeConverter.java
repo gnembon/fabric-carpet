@@ -14,6 +14,7 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
@@ -23,7 +24,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		registerType(EntityValue.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val));
 		registerType(EntityValue.class, Entity.class, EntityValue::getEntity);
 		registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server));
-		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : Text.of(v.getString())); 
+		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : new LiteralText(v.getString())); 
 		registerType(Value.class, String.class, Value::getString); // Check out @StrictParam for more specific types
 		
 		// TODO Make sure this doesn't box and unbox primitives. Not sure how to check it, though
@@ -42,7 +43,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 	private final Function<T, R> converter;
 	private final ValueCaster<T> caster;
 	
-	private SimpleTypeConverter(Class<T> inputType, Function<T, R> converter) {
+	SimpleTypeConverter(Class<T> inputType, Function<T, R> converter) {
 		//this.outputType = outputType;
 		this.converter = converter;
 		this.caster = ValueCaster.get(inputType);

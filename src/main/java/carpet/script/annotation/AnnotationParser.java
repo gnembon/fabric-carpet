@@ -8,7 +8,6 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -41,9 +40,6 @@ public class AnnotationParser {
 		for (Method method : methodz) {
 			if (!method.isAnnotationPresent(LazyFunction.class)) continue;
 			//Checks
-			if (Modifier.isAbstract(method.getModifiers())) { //TODO Probably remove since class is already checked to not be abstract
-				throw new IllegalArgumentException("Annotated method '"+method.getName()+"', provided by '"+instance.getProvider()+"' must not be abstract");
-			}
 			if (Modifier.isStatic(method.getModifiers())) {
 				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided by '"+instance.getProvider()+"' must not be static");
 			}
