@@ -20,7 +20,7 @@ import carpet.script.value.Value;
  * passed to the method as the expected type. Functions will automatically fail if given parameters are
  * not compatible with the specified ones, or if the number of provided arguments is either too large or too small.</p>
  * 
- * <p>Types to be used in those functions are already registered in their respective {@link ValueConverter} implementations.<br>
+ * <p>Types to be used in those functions must be already registered in their respective {@link ValueConverter} implementations.<br>
  * In order to register a new type to convert to, you can do so in {@link SimpleTypeConverter#registerType(Class, Class, java.util.function.Function)},
  * and in order to register a new variant of {@link Value}, use {@link ValueCaster#register(Class, String)}.<br>
  * In order to convert the output of your method to a {@link LazyValue} you will also need to register its conversion in {@link OutputConverter}</p>
@@ -38,6 +38,7 @@ import carpet.script.value.Value;
  * @see AllowSingleton
  * @see Locator.Block
  * @see Locator.Vec3d
+ * @see StrictParam
  * @see TheLazyT
  */
 @Documented

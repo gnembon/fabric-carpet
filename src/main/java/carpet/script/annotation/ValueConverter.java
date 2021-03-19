@@ -93,14 +93,16 @@ public interface ValueConverter<R> {
 			return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType);  //Already checked that type is Map
 		if (annoType.getAnnotations().length != 0) { //TODO OptionalParam annotation. Maybe save type to var then wrap into holder?
 			if (annoType.getAnnotation(StrictParam.class) != null)
-				return (ValueConverter<R>)StrictParam.StrictParamHolder.get(annoType);
+				return (ValueConverter<R>)StrictParam.StrictParams.get(annoType); // Already throws if incorrect usage
 		}
 		
-		//Start: Old fromType
+		//Start: Old fromType. TODO: Move before annotations when OptionalParam exists
 		if (type.isAssignableFrom(Value.class))
 			return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
 		if (type == LazyValue.class)
 			return (ValueConverter<R>) LAZY_VALUE_IDENTITY;
+		//if (type == Context.class) //TODO Use and consume lists of lv instead of single lazyvalues, allowing locators and things to get as many as they want
+			//return (ValueConverter<R>) CONTEXT_PROVIDER;    //Or iterators...
 		return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + " is not registered. Register it in SimpleTypeConverter to use it");
 	}
 	
@@ -137,7 +139,26 @@ public interface ValueConverter<R> {
 		}
 		@Override
 		public String getTypeName() {
-			return "something"; //TODO Decide between "something" or "value" and use it in SimpleTypeConverter too
+			return "something"; //TODO Decide between "something" or "value" and use it in ValueCaster too
+		}
+	};
+	
+	/**
+	 * A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
+	 * {@link #evalAndConvert(LazyValue, Context)}, and throws {@link UnsupportedOperationException} when trying to
+	 * convert a {@link Value} directly. Requires system modifying to work properly.
+	 */
+	static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
+		@Override public String getTypeName() {return null;}
+
+		@Override
+		public @Nullable Context convert(Value value) {
+			throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");
+		}
+		
+		@Override
+		public Context evalAndConvert(LazyValue lazyValue, Context context) {
+			return context;
 		}
 	};
 }

@@ -49,7 +49,7 @@ public class AnnotationParser {
 			List<Pair<String, Class<?>>> params = new ArrayList<>(); //TODO (yet unused)
 			
 			Parameter[] paramz = method.getParameters();
-			boolean passContext = false;
+			boolean passContext = false; // TODO Get rid of this
 			if (paramz.length > 0 && paramz[0].getType() == Context.class)
 				passContext = true;
 			

@@ -40,7 +40,7 @@ public @interface StrictParam {
 	 * 
 	 * <p>Without shallow mode, it would only accept from specifically a {@link FormattedTextValue}.
 	 * 
-	 * <p>Using this in an unsupported type will throw {@link UnsupportedOperationException}, just as if you used the
+	 * <p>Using this in an unsupported type will throw {@link IllegalArgumentException}, just as if you used the
 	 * annotation in an unsupported type.</p>
 	 * 
 	 * <p>This is {@code false} by default.</p>
@@ -48,7 +48,7 @@ public @interface StrictParam {
 	boolean shallow() default false;
 	
 	
-	static class StrictParamHolder {
+	static class StrictParams {
 		/**
 		 * {@code <Pair<Type, shallow?>, Converter>}
 		 */
@@ -77,6 +77,6 @@ public @interface StrictParam {
 			throw new IllegalArgumentException("Incorrect use of @StrictParam annotation");
 		}
 		
-		private StrictParamHolder(){}
+		private StrictParams() {}
 	}
 }
