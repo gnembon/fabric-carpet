@@ -59,32 +59,18 @@ public class ValueCaster<R> implements ValueConverter<R> {
 	public static <R> ValueCaster<R> get(Class<R> outputType) {
 		return (ValueCaster<R>)byResult.get(outputType);
 	}
-		
-	/**
-	 * Casts the given {@link Value} to this {@link ValueCaster}'s output type.
-	 * 
-	 * <p> In case the given {@link Value} isn't an instance of this type, it
-	 * returns {@code null}. Functions using the caster can use {@link #getTypeName()}
-	 * to get the name of the type this was trying to cast to, in case they are not trying
-	 * to cast to anything else, where it would be recommended to tell the user the name of
-	 * the final type instead.
-	 * @param value The value to cast
-	 * @return The value casted to the outputType, or {@code null} if it's not an instance of it
-	 * @deprecated Use {@link #convert(Value)}, which is the interface method. Not sure why am I deprecating my own functions that 
-	 *             aren't used elsewhere. Maybe since I made a long javadoc for it.
-	 */
-	@Deprecated
-	@Nullable
-	public R cast(Value value) {
-		if (!outputType.isInstance(value))
-			return null;
-		return outputType.cast(value);
-	}
 	
+	/**
+	 * @implNote This implementation just casts the given {@link Value} to this {@link ValueCaster}'s output type.
+	 * 
+	 * {@inheritDoc}
+	 */
 	@Override
 	@Nullable
 	public R convert(Value value) {
-		return cast(value);
+		if (!outputType.isInstance(value))
+			return null;
+		return outputType.cast(value);
 	}
 	
 	/**

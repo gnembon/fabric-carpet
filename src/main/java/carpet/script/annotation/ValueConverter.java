@@ -116,8 +116,8 @@ public interface ValueConverter<R> {
 		if (type == Map.class)
 			return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType);  //Already checked that type is Map
 		if (annoType.getAnnotations().length != 0) { //TODO OptionalParam annotation. Maybe save type to var then wrap into holder?
-			if (annoType.getAnnotation(StrictParam.class) != null)
-				return (ValueConverter<R>)StrictParam.StrictParams.get(annoType); // Already throws if incorrect usage
+			if (annoType.getAnnotation(Param.Strict.class) != null)
+				return (ValueConverter<R>)Param.Params.getStrictParam(annoType); // Already throws if incorrect usage
 		}
 		
 		//Start: Old fromType. TODO: Move before annotations when OptionalParam exists

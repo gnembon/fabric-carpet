@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import carpet.script.Context;
 import carpet.script.LazyValue;
 import carpet.script.value.Value;
 
@@ -31,15 +32,15 @@ import carpet.script.value.Value;
  * 
  * <p>Methods annotated with this annotation must not be static and must not be declared to throw any checked exceptions.</p>
  * 
- * <p>If the first parameter of a method annotated with this annotation is {@link carpet.script.Context} or a subclass of it,
- * Carpet will pass the Context of the expression to the method. In order to get <em>The lazy t</em>, annotate an {@link Integer}
- * with {@link TheLazyT}. See that class for more details.</p>
+ * <p>If one of the method's parameters is {@link Context}, Carpet will pass the actual Carpet will pass the {@link Context} of the 
+ * expression to the method. In order to get <em>The lazy t</em>, annotate an {@link Integer} with {@link Param.TheLazyT}.
+ * See that class for more details.</p>
  * 
- * @see AllowSingleton
+ * @see Param.Strict
+ * @see Param.TheLazyT
+ * @see Param.AllowSingleton
  * @see Locator.Block
  * @see Locator.Vec3d
- * @see StrictParam
- * @see TheLazyT
  */
 @Documented
 @Target(METHOD)

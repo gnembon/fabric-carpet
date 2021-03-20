@@ -1,6 +1,7 @@
 package carpet.script.annotation;
 
 import carpet.script.LazyValue;
+import carpet.script.annotation.Param.AllowSingleton;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;

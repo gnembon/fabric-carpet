@@ -28,13 +28,15 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		registerType(Value.class, String.class, Value::getString); // Check out @StrictParam for more specific types
 		
 		// TODO Make sure this doesn't box and unbox primitives. Not sure how to check it, though
-		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong); //TODO Strict numbers? Since some types can be gotten without being NumericValue
-		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble); //Same for booleans
+		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong);
+		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble);
 		registerType(NumericValue.class, Integer.TYPE, NumericValue::getInt);
+		registerType(NumericValue.class, Boolean.TYPE, NumericValue::getBoolean); //TODO Strict booleans? Allow any value for boolean by default?
 		// Non-primitive versions of the above
 		registerType(NumericValue.class, Long.class, NumericValue::getLong);
 		registerType(NumericValue.class, Double.class, NumericValue::getDouble);
 		registerType(NumericValue.class, Integer.class, NumericValue::getInt);
+		registerType(NumericValue.class, Boolean.class, NumericValue::getBoolean);
 		//TODO What to do with function/block locators and the like
 	}
 	
@@ -67,7 +69,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 	
 	@Nullable
 	public R convert(Value value) {
-		T castedValue = caster.cast(value);
+		T castedValue = caster.convert(value);
 		return castedValue == null ? null : converter.apply(castedValue);
 	}
 	
