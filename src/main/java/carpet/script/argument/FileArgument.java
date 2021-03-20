@@ -15,7 +15,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import com.sun.nio.zipfs.ZipPath;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.PositionTracker;
@@ -368,7 +367,7 @@ public class FileArgument
             Path dataFile = toPath(module);
             if (dataFile == null) return false;
             createPaths(dataFile);
-            return writeTagDisk(tag, dataFile);
+            return writeTagDisk(tag, dataFile, zipContainer != null);
         } }
         finally
         {
@@ -377,12 +376,11 @@ public class FileArgument
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static boolean writeTagDisk(Tag tag_1, Path path)
+    public static boolean writeTagDisk(Tag tag_1, Path path, boolean zipped)
     {
         Path original = path;
         try
         {
-            boolean zipped = path instanceof ZipPath;
             if (!zipped)
             {
                 path = new File(path.toFile().getAbsolutePath() + "_tmp").toPath();

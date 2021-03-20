@@ -27,7 +27,7 @@ public abstract class Module
         Path dataFile = resolveResource(module);
         if (dataFile == null) return;
         if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return;
-        synchronized (FileArgument.writeIOSync) { FileArgument.writeTagDisk(globalState, dataFile); }
+        synchronized (FileArgument.writeIOSync) { FileArgument.writeTagDisk(globalState, dataFile, false); }
     }
 
     private static Path resolveResource(Module module)
