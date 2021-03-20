@@ -69,19 +69,26 @@ public interface ValueConverter<R> {
 	public R convert(Value value);
 	
 	/**
-	 * TODO Document this, but basically returns whether the converter accepts a variable number of args
-	 * @return
+	 * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator}
+	 * passed to it via {@link #evalAndConvert(Iterator, Context)}.</p>
+	 * @implNote The default implementation returns {@code false} by default
+	 * @see #howManyValuesDoesThisEat()
 	 */
-	default public boolean acceptsVariableArgs() {
+	default public boolean consumesVariableArgs() {
 		return false;
 	}
 	
 	/**
-	 * TODO Better name and document this. Basically returns how many values does this converter will eat or -1 if variable
-	 * @return
+	 * <p>Declares the number of {@link LazyValue}s this method consumes from the {@link Iterator} passed to it in
+	 * {@link #evalAndConvert(Iterator, Context)}.
+	 * <p>Returns {@code -1} if this {@link ValueConverter} can accepts a variable number of arguments <b>and</b>
+	 * {@link #consumesVariableArgs()} is {@code true}</p>
+	 * @implNote The default implementation returns {@code 1} if {@link #consumesVariableArgs()} is {@code false},
+	 *           or {@code -1} if it's {@code true}
+	 * TODO Better name
 	 */
 	default public int howManyValuesDoesThisEat() {
-		return acceptsVariableArgs() ? -1 : 1;
+		return consumesVariableArgs() ? -1 : 1;
 	}
 	
 	/**
@@ -118,8 +125,8 @@ public interface ValueConverter<R> {
 			return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
 		if (type == LazyValue.class)
 			return (ValueConverter<R>) LAZY_VALUE_IDENTITY;
-		//if (type == Context.class) //TODO Use and consume lists of lv instead of single lazyvalues, allowing locators and things to get as many as they want
-			//return (ValueConverter<R>) CONTEXT_PROVIDER;    //Or iterators...
+		if (type == Context.class)
+			return (ValueConverter<R>) CONTEXT_PROVIDER;
 		return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + " is not registered. Register it in SimpleTypeConverter to use it");
 	}
 	

@@ -27,8 +27,8 @@ import carpet.script.value.Value;
  * 
  * <p>In order for Carpet to find methods annotated with this annotation, you must add your function class(es) to Carpet
  * by running {@link AnnotationParser#parseFunctionClass(Class)}. The provided {@link Class} must be concrete and provide
- * the default constructor, and implement the {@link FunctionClass} interface.</p>
- * //TODO Decide whether to actually require implementing FunctionClass
+ * the default constructor or an equivalent to it.</p>
+ * 
  * <p>Methods annotated with this annotation must not be static and must not be declared to throw any checked exceptions.</p>
  * 
  * <p>If the first parameter of a method annotated with this annotation is {@link carpet.script.Context} or a subclass of it,

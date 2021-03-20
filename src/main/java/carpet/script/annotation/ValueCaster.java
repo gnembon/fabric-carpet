@@ -77,7 +77,7 @@ public class ValueCaster<R> implements ValueConverter<R> {
 	@Nullable
 	public R cast(Value value) {
 		if (!outputType.isInstance(value))
-			return null; // TODO Check this null in other places
+			return null;
 		return outputType.cast(value);
 	}
 	

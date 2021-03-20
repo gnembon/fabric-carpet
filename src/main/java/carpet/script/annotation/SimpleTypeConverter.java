@@ -21,7 +21,7 @@ import net.minecraft.world.World;
 public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R> {
 	private static final Map<Class<?>, SimpleTypeConverter<? extends Value, ?>> byResult = new HashMap<>();
 	static {
-		registerType(EntityValue.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val));
+		registerType(Value.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val));
 		registerType(EntityValue.class, Entity.class, EntityValue::getEntity);
 		registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server));
 		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : new LiteralText(v.getString())); 

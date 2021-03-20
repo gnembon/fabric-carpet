@@ -50,9 +50,6 @@ public class AnnotationParser {
 			List<Pair<String, Class<?>>> params = new ArrayList<>(); //TODO (yet unused)
 			
 			Parameter[] paramz = method.getParameters();
-			boolean passContext = false; // TODO Get rid of this
-			if (paramz.length > 0 && paramz[0].getType() == Context.class)
-				passContext = true;
 			
 			for (Parameter param : paramz) {
 				if (!param.isVarArgs() && param.getType() != Context.class)
@@ -77,8 +74,8 @@ public class AnnotationParser {
 					}
 				}
 			}
-			// TODO Replace this with the argument checker/converter
-			int parameterCount = method.isVarArgs() ? -1 : passContext ? method.getParameterCount() -1 : method.getParameterCount();
+			// TODO Replace this with the argument checker/converter. Edit: With a stream mapping all required things via howManyValuesDoesThisEat
+			int parameterCount = method.isVarArgs() ? -1 : method.getParameterCount();
 			String functionName = method.getName();
 			
 			TriFunction<Context, Integer, List<LazyValue>, LazyValue> function = makeFunction(method, instance);
@@ -150,10 +147,10 @@ public class AnnotationParser {
 			while (regularRemaining > 0) {
 				params[pointer] = converterIterator.next().evalAndConvert(lvIterator, context);
 				regularRemaining--; pointer++;
-			} //TODO Make sure the following fully works
+			} //TODO Assert the following fully works. Seems to, missing testing acceptsVariableArgs
 			int remaining = lv.size() - lvIterator.nextIndex();
 			Object[] varArgs;
-			if (varArgsConverter.acceptsVariableArgs()) {
+			if (varArgsConverter.consumesVariableArgs()) {
 				List<Object> varArgsList = new ObjectArrayList<>();
 				while (lvIterator.hasNext())
 					varArgsList.add(varArgsConverter.evalAndConvert(lvIterator, context));
