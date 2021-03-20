@@ -175,7 +175,7 @@ public interface ValueConverter<R> {
 	 * convert a {@link Value} directly.
 	 */
 	static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
-		@Override public String getTypeName() {return null;}
+		@Override public String getTypeName() {return "";}
 
 		@Override
 		public @Nullable Context convert(Value value) {

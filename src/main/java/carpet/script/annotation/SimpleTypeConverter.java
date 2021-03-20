@@ -31,7 +31,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong);
 		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble);
 		registerType(NumericValue.class, Integer.TYPE, NumericValue::getInt);
-		registerType(NumericValue.class, Boolean.TYPE, NumericValue::getBoolean); //TODO Strict booleans? Allow any value for boolean by default?
+		registerType(Value.class, Boolean.TYPE, Value::getBoolean);
 		// Non-primitive versions of the above
 		registerType(NumericValue.class, Long.class, NumericValue::getLong);
 		registerType(NumericValue.class, Double.class, NumericValue::getDouble);
@@ -51,7 +51,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		this.caster = ValueCaster.get(inputType);
 	}
 	
-	@Override //TODO This
+	@Override //TODO? This
 	public String getTypeName() {
 		return caster.getTypeName();
 	}
