@@ -305,9 +305,9 @@ public class CarpetScriptServer
         return true;
     }
 
-    public boolean isValidCommandRoot(String appName)
+    public boolean isInvalidCommandRoot(String appName)
     {
-        return !holyMoly.contains(appName);
+        return holyMoly.contains(appName);
     }
 
 

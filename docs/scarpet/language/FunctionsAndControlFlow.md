@@ -265,8 +265,8 @@ but like everywhere else, doing that sounds like a bad idea.
     `unknown_poi_type`, `unknown_dimension`, `unknown_structure`, `unknown_criterion`: Specific 
     errors thrown when a specified internal name does not exist or is invalid.
   - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
-    - `nbt_read_error`: Incorrect input NBT file.
-    - `json_read_error`: Incorrect input JSON data.
+    - `nbt_error`: Incorrect input/output NBT file.
+    - `json_error`: Incorrect input/output JSON data.
   - `user_exception`: Exception thrown by default with `throw` function.
   
 Synopsis:

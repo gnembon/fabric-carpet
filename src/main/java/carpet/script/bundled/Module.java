@@ -1,123 +1,39 @@
 package carpet.script.bundled;
 
 import carpet.CarpetServer;
+import carpet.script.argument.FileArgument;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.WorldSavePath;
-import org.apache.commons.io.FilenameUtils;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonElement;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 public abstract class Module
 {
     public abstract String getName();
     public abstract String getCode();
     public abstract boolean isLibrary();
-    @Deprecated
-    public final static Object writeIOSync = new Object();
-    @Deprecated
-    public final static Map<String, String> supportedTypes = ImmutableMap.of(
-            "raw", ".txt",
-            "text", ".txt",
-            "nbt", ".nbt",
-            "json", ".json",
-            "folder", "folder"
-    );
 
-    @Deprecated
-    private static String getDescriptor(Module module, String file, boolean isShared)
+    public static Tag getData(Module module)
     {
-        if (isShared)
-        {
-            return file.isEmpty()?"shared":"shared/"+file;
-        }
-        if (module != null && module.getName() != null) // appdata
-        {
-            return module.getName()+".data"+(file==null || file.isEmpty()?"":"/"+file);
-        }
-        throw  new RuntimeException("Invalid file descriptor: "+file);
-    }
-
-    @Deprecated
-    public static Tag getData(Module module, String file, boolean isShared)
-    {
-        Path dataFile = resolveResource(module, file, ".nbt", isShared);
+        Path dataFile = resolveResource(module);
         if (dataFile == null) return null;
         if (!Files.exists(dataFile) || !(dataFile.toFile().isFile())) return null;
-        synchronized (writeIOSync) { return FileModule.read(dataFile.toFile()); }
+        synchronized (FileArgument.writeIOSync) { return FileArgument.readTag(dataFile); }
     }
 
-    @Deprecated
-    public static boolean saveData(Module module, String file, Tag globalState, boolean isShared)
+    public static void saveData(Module module, Tag globalState)
     {
-        Path dataFile = resolveResource(module, file, ".nbt", isShared);
-        if (dataFile == null) return false;
-        if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return false;
-        synchronized (writeIOSync) { return FileModule.write(globalState, dataFile.toFile()); }
+        Path dataFile = resolveResource(module);
+        if (dataFile == null) return;
+        if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return;
+        synchronized (FileArgument.writeIOSync) { FileArgument.writeTagDisk(globalState, dataFile); }
     }
 
-    @Deprecated
-    public static boolean appendToTextFile(Module module, String resourceName, String type, boolean isShared, List<String> message)
+    private static Path resolveResource(Module module)
     {
-        Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
-        if (dataFile == null) return false;
-        if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return false;
-        synchronized (writeIOSync) { return FileModule.appendText(dataFile, type.equals("text"), message); }
-    }
-
-    @Deprecated
-    public static boolean dropExistingFile(Module module, String resourceName, String type, boolean isShared)
-    {
-        Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
-        if (dataFile == null) return false;
-        synchronized (writeIOSync) { return dataFile.toFile().delete(); }
-    }
-
-    @Deprecated
-    public static List<String> listFile(Module module, String resourceName, String type, boolean isShared)
-    {
-        Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
-        if (dataFile == null) return null;
-        if (!dataFile.toFile().exists()) return null;
-        synchronized (writeIOSync) { return FileModule.listFileContent(dataFile); }
-    }
-
-    @Deprecated
-    public static JsonElement readJsonFile(Module module, String resourceName, String type, boolean isShared) {
-        Path dataFile = resolveResource(module, resourceName, supportedTypes.get(type), isShared);
-        if (dataFile == null) return null;
-        if (!dataFile.toFile().exists()) return null;
-        synchronized (writeIOSync) { return FileModule.readJsonContent(dataFile); }
-    }
-
-    @Deprecated
-    public static Stream<String> listFolder(Module module, String resourceName, String type, boolean isShared)
-    {
-        Path dir = resolveResource(module, resourceName, null, isShared);
-        String ext = supportedTypes.get(type);
-        if (dir == null) return null;
-        if (!Files.exists(dir)) return null;
-        Stream<Path> result;
-        synchronized (writeIOSync) { result = FileModule.listFiles(dir, ext); }
-        if (result == null) return null;
-        Path rootPath = resolveResource(module, "", null, isShared);
-        Stream<String> strings = result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]","/"));
-        if (!ext.equals("folder"))
-            return strings.map(FilenameUtils::removeExtension);
-        return strings;
-    }
-
-    @Deprecated
-    private static Path resolveResource(Module module, String resourceName, String ext, boolean isShared)
-    {
-        if (!isShared && (module == null || module.getName() == null)) return null;
-        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+getDescriptor(module, resourceName, isShared)+(ext==null?"":ext));
+        if (module == null || module.getName() == null) return null; // commandline app
+        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+module.getName()+".data.nbt");
     }
 
     @Override

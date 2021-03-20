@@ -7,7 +7,7 @@ import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.script.bundled.Module;
+import carpet.script.argument.FileArgument;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
@@ -99,7 +99,6 @@ import net.minecraft.world.level.UnmodifiableLevelProperties;
 import net.minecraft.world.level.storage.LevelStorage;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -133,6 +132,7 @@ public class Auxiliary {
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
 
+    @Deprecated
     public static String recognizeResource(Value value, boolean isFloder)
     {
         String origfile = value.getString();
@@ -143,20 +143,6 @@ public class Auxiliary {
             throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
         }
         return file;
-    }
-
-    public static Triple<String, String, Boolean> getFileDescriptor(List<LazyValue> lv, Context c, boolean isFloder)
-    {
-        if (lv.size() < 2) throw new InternalExpressionException("File functions require path and type as first two arguments");
-        String resource = recognizeResource(lv.get(0).evalValue(c), isFloder);
-        String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
-        boolean shared = origtype.startsWith("shared_");
-        String type = shared ? origtype.substring(7) : origtype; //len(shared_)
-        if (!Module.supportedTypes.containsKey(type))
-            throw new InternalExpressionException("Unsupported file type: "+origtype);
-        if (type.equals("folder") && !isFloder)
-            throw new InternalExpressionException("Folder types are no supported for this IO function");
-        return Triple.of(resource, type, shared);
     }
 
     public static void apply(Expression expression)
@@ -854,49 +840,27 @@ public class Auxiliary {
 
         expression.addLazyFunction("list_files", 2, (c, t, lv) ->
         {
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, true);
-            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+            FileArgument fdesc = FileArgument.from(lv, c, true, FileArgument.Reason.READ);
+            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc);
             if (files == null) return LazyValue.NULL;
             Value ret = ListValue.wrap(files.map(StringValue::of).collect(Collectors.toList()));
             return (cc, tt) -> ret;
         });
 
-
         expression.addLazyFunction("read_file", 2, (c, t, lv) ->
         {
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
+            FileArgument fdesc = FileArgument.from(lv, c, false, FileArgument.Reason.READ);
             Value retVal;
-            if (fdesc.getMiddle().equals("nbt"))
+            if (fdesc.type == FileArgument.Type.NBT)
             {
-                Tag state;
-                try
-                {
-                    state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
-                } catch (CrashException e)
-                {
-                    throw new ThrowStatement((fdesc.getRight()?"shared/":"")+ fdesc.getLeft(), Throwables.NBT_READ);
-                }
-
+                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
-            else if (fdesc.getMiddle().equals("json"))
+            else if (fdesc.type == FileArgument.Type.JSON)
             {
                 JsonElement json;
-                try
-                {
-                    json = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
-                }
-                catch (JsonParseException e)
-                {
-                    Throwable exc = e;
-                    if(e.getCause() != null)
-                        exc = e.getCause();
-                    throw new ThrowStatement(MapValue.wrap(ImmutableMap.of(
-                            StringValue.of("error"), StringValue.of(exc.getMessage()),
-                            StringValue.of("path"), StringValue.of((fdesc.getRight()?"shared/":"")+ fdesc.getLeft())
-                    )), Throwables.JSON_READ);
-                }
+                json = ((CarpetScriptHost) c.host).readJsonFile(fdesc);
                 Value parsedJson = GSON.fromJson(json, Value.class);
                 if (parsedJson == null)
                     retVal = Value.NULL;
@@ -905,7 +869,7 @@ public class Auxiliary {
             }
             else
             {
-                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc);
                 if (content == null) return LazyValue.NULL;
                 retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
             }
@@ -913,32 +877,29 @@ public class Auxiliary {
         });
 
         expression.addLazyFunction("delete_file", 2, (c, t, lv) -> {
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
-            return ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle())
-                    ? LazyValue.TRUE
-                    : LazyValue.FALSE;
+            FileArgument fdesc = FileArgument.from(lv, c, false, FileArgument.Reason.DELETE);
+            return ((CarpetScriptHost) c.host).removeResourceFile(fdesc) ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
         expression.addLazyFunction("write_file", -1, (c, t, lv) -> {
             if (lv.size() < 3) throw new InternalExpressionException("'write_file' requires three or more arguments");
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
-
+            FileArgument fdesc = FileArgument.from(lv, c, false, FileArgument.Reason.CREATE);
 
             boolean success;
-            if (fdesc.getMiddle().equals("nbt"))
+            if (fdesc.type == FileArgument.Type.NBT)
             {
                 Value val = lv.get(2).evalValue(c);
                 NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                         ? (NBTSerializableValue) val
                         : new NBTSerializableValue(val.getString());
                 Tag tag = tagValue.getTag();
-                success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc.getLeft(), fdesc.getRight());
+                success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             }
-            else if (fdesc.getMiddle().equals("json"))
+            else if (fdesc.type == FileArgument.Type.JSON)
             {
                 List<String> data = Collections.singletonList(GSON.toJson(lv.get(2).evalValue(c).toJson()));
-                ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle());
-                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
+                ((CarpetScriptHost) c.host).removeResourceFile(fdesc);
+                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc, data);
             }
             else
             {
@@ -963,34 +924,22 @@ public class Auxiliary {
                         data.add(lv.get(i).evalValue(c).getString());
                     }
                 }
-                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
+                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc, data);
             }
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
-        //write_file
-
         expression.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
-            String file = null;
-            boolean shared = false;
+            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ);
             if (lv.size()>0)
             {
                 c.host.issueDeprecation("load_app_data(...) with arguments");
-                file = recognizeResource(lv.get(0).evalValue(c), false);
-                if (lv.size() > 1)
-                {
-                    shared = lv.get(1).evalValue(c).getBoolean();
-                }
+                String resource = recognizeResource(lv.get(0).evalValue(c), false);
+                boolean shared = lv.size() > 1 && lv.get(1).evalValue(c).getBoolean();
+                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ);
             }
-            Tag state;
-            try
-            {
-                state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
-            } catch (CrashException e)
-            {
-                throw new ThrowStatement("app data", Throwables.NBT_READ);
-            }
+            Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -1002,22 +951,19 @@ public class Auxiliary {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             Value val = lv.get(0).evalValue(c);
-            String file = null;
-            boolean shared = false;
+            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE);
             if (lv.size()>1)
             {
                 c.host.issueDeprecation("store_app_data(...) with more than one argument");
-                file = recognizeResource(lv.get(1).evalValue(c), false);
-                if (lv.size() > 2)
-                {
-                    shared = lv.get(2).evalValue(c).getBoolean();
-                }
+                String resource = recognizeResource(lv.get(1).evalValue(c), false);
+                boolean shared = lv.size() > 2 && lv.get(2).evalValue(c).getBoolean();
+                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.CREATE);
             }
             NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
             Tag tag = tagValue.getTag();
-            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).writeTagFile(tag, file, shared);
+            boolean success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 

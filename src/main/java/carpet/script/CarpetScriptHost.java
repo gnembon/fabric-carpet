@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.script.api.Auxiliary;
+import carpet.script.argument.FileArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.Module;
 import carpet.script.command.CommandArgument;
@@ -347,7 +348,7 @@ public class CarpetScriptHost extends ScriptHost
         if (main == null) return false;
         if (getFunction("__command") == null) return false;
 
-        if (scriptServer.isValidCommandRoot(getName()))
+        if (scriptServer.isInvalidCommandRoot(getName()))
         {
             notifier.accept(Messenger.c("gi Tried to mask vanilla command."));
             return null;
@@ -785,31 +786,31 @@ public class CarpetScriptHost extends ScriptHost
 
     private void dumpState()
     {
-        Module.saveData(main, null, globalState, false);
+        Module.saveData(main, globalState);
     }
 
     private Tag loadState()
     {
-        return Module.getData(main, null, false);
+        return Module.getData(main);
     }
 
-    public Tag readFileTag(String file, boolean isShared)
+    public Tag readFileTag(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null;
-        if (file != null)
-            return Module.getData(main, file, isShared);
+        if (getName() == null && !fdesc.isShared) return null;
+        if (fdesc.resource != null)
+            return fdesc.getNbtData(main);
         if (parent == null)
             return globalState;
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public boolean writeTagFile(Tag tag, String file, boolean isShared)
+    public boolean writeTagFile(Tag tag, FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
+        if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
 
-        if (file!= null)
+        if (fdesc.resource != null)
         {
-            return Module.saveData(main, file, tag, isShared);
+            return fdesc.saveNbtData(main, tag);
         }
 
         CarpetScriptHost responsibleHost = (parent != null)?(CarpetScriptHost) parent:this;
@@ -822,34 +823,34 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
-    public boolean removeResourceFile(String resource, boolean isShared, String type)
+    public boolean removeResourceFile(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return false; //
-        return Module.dropExistingFile(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return false; //
+        return fdesc.dropExistingFile(main);
     }
 
-    public boolean appendLogFile(String resource, boolean isShared, String type, List<String> data)
+    public boolean appendLogFile(FileArgument fdesc, List<String> data)
     {
-        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
-        return Module.appendToTextFile(main, resource, type, isShared, data);
+        if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
+        return fdesc.appendToTextFile(main, data);
     }
 
-    public List<String> readTextResource(String resource, String type, boolean isShared)
+    public List<String> readTextResource(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null;
-        return Module.listFile(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return null;
+        return fdesc.listFile(main);
     }
     
-    public JsonElement readJsonFile(String resource, String type, boolean isShared)
+    public JsonElement readJsonFile(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null;
-        return Module.readJsonFile(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return null;
+        return fdesc.readJsonFile(main);
     }
 
-    public Stream<String> listFolder(String resource, String type, boolean isShared)
+    public Stream<String> listFolder(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null; //
-        return Module.listFolder(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return null; //
+        return fdesc.listFolder(main);
     }
 
 
