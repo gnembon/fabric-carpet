@@ -69,7 +69,7 @@ public interface Locator {
 		boolean optionalDirection() default false;
 		
 		/**
-		 * Whether or not should the {@link Vector3Argument} locator accept an entity aside to get the {@link Vec3d} from and return that entity too</p>
+		 * <p>Whether or not should the {@link Vector3Argument} locator accept an entity aside to get the {@link Vec3d} from and return that entity too</p>
 		 * @deprecated This is NOT currently supported, since it would mean returning an {@link Entity} aside from the {@link net.minecraft.util.math.Vec3d},
 		 *             which is impossible in a single argument. In a future, this may be used to allow passing an entity, but the 
 		 *             {@link net.minecraft.entity.Entity} is probably not coming

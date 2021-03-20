@@ -13,7 +13,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>This has no parameters, since The Lazy `t` is The Lazy `t`, without
  * further discussion
  *
- * <p><code>expression.addLazyFunction("name", -1, (context, t <-- HERE, lv)</code>
+ * <p>{@code expression.addLazyFunction("name", -1, (context, t <-- HERE, lv)}
  */
 @Documented
 @Target(PARAMETER)

@@ -2,6 +2,7 @@ package carpet.script.annotation;
 
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.ParameterizedType;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,15 +58,31 @@ public interface ValueConverter<R> {
 	 * the final type instead.
 	 * @param value The {@link Value} to convert
 	 * @return The converted value, or {@code null} if the conversion failed in the process
-	 * @implSpec <p>While most implementations of this method should and will return the type from this method, 
-	 *           implementations that <b>require</b> parameters from {@link #evalAndConvert(LazyValue, Context)} may
-	 *           decide to throw {@link UnsupportedOperationException} in this method and override {@link #evalAndConvert(LazyValue, Context)}
+	 * @apiNote <p>While most implementations of this method should and will return the type from this method, 
+	 *           implementations that <b>require</b> parameters from {@link #evalAndConvert(Iterator, Context)} may
+	 *           decide to throw {@link UnsupportedOperationException} in this method and override {@link #evalAndConvert(Iterator, Context)}
 	 *           instead. Those implementations, however, should not be available for map or list types, since those can only operate 
 	 *           with {@link Value}.</p>
 	 *           <p>Currently, the only implementation that requires that is {@link #LAZY_VALUE_IDENTITY}</p>
 	 */
 	@Nullable
 	public R convert(Value value);
+	
+	/**
+	 * TODO Document this, but basically returns whether the converter accepts a variable number of args
+	 * @return
+	 */
+	default public boolean acceptsVariableArgs() {
+		return false;
+	}
+	
+	/**
+	 * TODO Better name and document this. Basically returns how many values does this converter will eat or -1 if variable
+	 * @return
+	 */
+	default public int howManyValuesDoesThisEat() {
+		return acceptsVariableArgs() ? -1 : 1;
+	}
 	
 	/**
 	 * <p>Gets the proper {@link ValueConverter} for the given {@link AnnotatedType}, considering the type of {@code R[]} as {@code R}.</p>
@@ -107,25 +124,27 @@ public interface ValueConverter<R> {
 	}
 	
 	/**
-	 * <p>Evaluates the given {@link LazyValue} with context {@link Context} and then converts the type
+	 * <p>Evaluates the next {@link LazyValue} in the given {@link Iterator} with the given {@link Context} and then converts the type
 	 * using this {@link ValueConverter}'s {@link #convert(Value)} function.</p>
 	 * 
 	 * <p>This should be the preferred way to call the converter, since it allows some conversions that
-	 * may not be supported by using directly a {@link Value}</p>
+	 * may not be supported by using directly a {@link Value}, allows multi-param converters and allows
+	 * meta converters (such as the {@link Context} provider)</p>
 	 * 
-	 * @implSpec Implementations of this method don't need to evaluate the lazyValue if they are not supposed to,
-	 *           such as in the case of a {@link LazyValue} to {@link LazyValue} identity  
-	 * @param lazyValue The {@link LazyValue} to convert
+	 * @implSpec Implementations of this method are not required to evaluate the next {@link LazyValue} if they are not supposed to,
+	 *           such as in the case of a {@link LazyValue} to {@link LazyValue} identity, neither move the {@link Iterator} to
+	 *           the next position, such as in the case of meta providers like {@link Context}
+	 * @param lazyValueIterator An {@link Iterator} holding the {@link LazyValue} to convert in next position
 	 * @param context The {@link Context} to convert with
-	 * @return The given {@link LazyValue}, evaluated with the given {@link Context}, and converted to the type <R> of
+	 * @return The given {@link LazyValue}, evaluated with the given {@link Context}, and converted to the type {@code <R>} of
 	 *         this {@link ValueConverter}
 	 */
-	default public R evalAndConvert(LazyValue lazyValue, Context context) {
-		return convert(lazyValue.evalValue(context));
+	default public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+		return convert(lazyValueIterator.next().evalValue(context));
 	}
 	
 	/**
-	 * A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(LazyValue, Context)},
+	 * A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context)},
 	 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.
 	 */
 	static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
@@ -134,8 +153,8 @@ public interface ValueConverter<R> {
 			throw new UnsupportedOperationException("Called convert() with a Value in LazyValue identity converter, where only evalAndConvert is supported");
 		}
 		@Override
-		public LazyValue evalAndConvert(LazyValue lazyValue, Context c) {
-			return lazyValue;
+		public LazyValue evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context c) {
+			return lazyValueIterator.next();
 		}
 		@Override
 		public String getTypeName() {
@@ -145,8 +164,8 @@ public interface ValueConverter<R> {
 	
 	/**
 	 * A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
-	 * {@link #evalAndConvert(LazyValue, Context)}, and throws {@link UnsupportedOperationException} when trying to
-	 * convert a {@link Value} directly. Requires system modifying to work properly.
+	 * {@link #evalAndConvert(Iterator, Context)}, and throws {@link UnsupportedOperationException} when trying to
+	 * convert a {@link Value} directly.
 	 */
 	static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
 		@Override public String getTypeName() {return null;}
@@ -157,8 +176,13 @@ public interface ValueConverter<R> {
 		}
 		
 		@Override
-		public Context evalAndConvert(LazyValue lazyValue, Context context) {
+		public Context evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
 			return context;
+		}
+		
+		@Override
+		public int howManyValuesDoesThisEat() {
+			return 0;
 		}
 	};
 }

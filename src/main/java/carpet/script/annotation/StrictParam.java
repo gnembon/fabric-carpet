@@ -13,18 +13,23 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import carpet.CarpetServer;
+import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import net.minecraft.text.Text;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 
 /**
- * <p>Defines that a parameter of type {@link String} or {@link Text} <b>must</b> be
- * of its corresponding {@link Value} in order to be accepted ({@link StringValue} or {@link FormattedTextValue}.</p>
+ * <p>Defines that a parameter of type {@link String}, {@link Text} or {@link ServerPlayerEntity} <b>must</b> be
+ * of its corresponding {@link Value} in order to be accepted ({@link StringValue} or {@link FormattedTextValue} for
+ * the first two ones, {@link EntityValue} for the last).</p>
  * 
  * <p>If this annotation is not specified, Carpet will accept any other {@link Value} and call their respective
- * {@link Value#getString()} or call {@code Text#of(Value#getString())}.</p>
+ * {@link Value#getString()}, {@code new LiteralText(Value#getString())} or 
+ * {@link EntityValue#getPlayerByValue(net.minecraft.server.MinecraftServer, Value)}.</p>
  * 
  * <p>You can define "shallow strictness" if you want to allow passing either a {@link StringValue} or {@link FormattedTextValue}
  * to a {@link Text} parameter, but not any {@link Value}.</p>
@@ -54,10 +59,12 @@ public @interface StrictParam {
 		 */
 		private static Map<Pair<Class<?>, Boolean>, ValueConverter<?>> byClassAndShallowness = new HashMap<>();
 		static {
-			byClassAndShallowness.put(Pair.of(Text.class, false), new SimpleTypeConverter<>(StringValue.class, StringValue::getString));
+			byClassAndShallowness.put(Pair.of(String.class, false), new SimpleTypeConverter<>(StringValue.class, StringValue::getString));
 			byClassAndShallowness.put(Pair.of(Text.class, false), new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText));
 			byClassAndShallowness.put(Pair.of(Text.class, true), new SimpleTypeConverter<>(StringValue.class, 
 								v -> v instanceof FormattedTextValue ? ((FormattedTextValue) v).getText() : new LiteralText(v.getString())));
+			byClassAndShallowness.put(Pair.of(ServerPlayerEntity.class, false), new SimpleTypeConverter<>(EntityValue.class, 
+								v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v)));
 		}//Accommodating for new types. I think I won't allow Value::getDoubleValue as default, so maybe reconsider taking this back to an if-chain?
 		
 		/**

@@ -13,12 +13,7 @@ import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import java.util.List;
 import java.util.Locale;
 
-public class FunctionsTestClass implements FunctionClass {
-	@Override
-	public String getProvider() {
-		return "altrisi";
-	}
-	
+public class FunctionsTestClass {
 	@LazyFunction
 	public String make_noise(String string, String string2) {
 		return string + " " + string2;

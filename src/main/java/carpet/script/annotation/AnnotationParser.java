@@ -8,6 +8,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,15 +26,15 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 public class AnnotationParser {
 	private static final List<Triple<String, Integer, TriFunction<Context, Integer, List<LazyValue>, LazyValue>>> functionList = new ArrayList<>();
 	
-	public static <T extends FunctionClass> void parseFunctionClass(Class<T> clazz) {
+	public static <T> void parseFunctionClass(Class<T> clazz) {
 		if (Modifier.isAbstract(clazz.getModifiers())) {
-			throw new IllegalArgumentException("Function class must be concrete! Class: " + clazz.getSimpleName()); //Provider not available yet
+			throw new IllegalArgumentException("Function class must be concrete! Class: " + clazz.getSimpleName());
 		}
 		T instance;
 		try {
 			instance = clazz.getConstructor().newInstance();
 		} catch (ReflectiveOperationException e) {
-			throw new IllegalArgumentException("Couldn't create instance of given " + clazz.toString() + ". Make sure default constructor is available", e);
+			throw new IllegalArgumentException("Couldn't create instance of given " + clazz + ". Make sure default constructor is available", e);
 		}
 		
 		Method[] methodz = clazz.getDeclaredMethods();
@@ -41,10 +42,10 @@ public class AnnotationParser {
 			if (!method.isAnnotationPresent(LazyFunction.class)) continue;
 			//Checks
 			if (Modifier.isStatic(method.getModifiers())) {
-				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided by '"+instance.getProvider()+"' must not be static");
+				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided in '" + clazz + "' must not be static");
 			}
 			if (method.getExceptionTypes().length != 0) {
-				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided by '"+instance.getProvider()+"' must not declare checked exceptions");
+				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided in '"+ clazz +"' must not declare checked exceptions");
 			}
 			List<Pair<String, Class<?>>> params = new ArrayList<>(); //TODO (yet unused)
 			
@@ -62,12 +63,12 @@ public class AnnotationParser {
 				int maxParams = method.getAnnotation(LazyFunction.class).maxParams();
 				if (maxParams == -2) 
 					throw new IllegalArgumentException("No maximum number of params specified for " + method.getName() + ", use -1 for unlimited. "
-							+ "Provided by " + instance.getProvider());
+							+ "Provided in " + clazz);
 				else if (maxParams == -1)
 					unlimitedParams = true;
 				else if (maxParams < method.getParameterCount()) //TODO Locators and the like?
 					throw new IllegalArgumentException("Provided maximum number of params for " + method.getName() + " is smaller than method's param count."
-							+ "Provided by " + instance.getProvider());
+							+ "Provided in " + clazz);
 				else {
 					int pointer = params.size();
 					while (maxParams - pointer > 0) {
@@ -81,7 +82,7 @@ public class AnnotationParser {
 			String functionName = method.getName();
 			
 			TriFunction<Context, Integer, List<LazyValue>, LazyValue> function = makeFunction(method, instance);
-			CarpetSettings.LOG.info("Adding fname: "+functionName+". Expression paramcount: "+parameterCount+". Provided by '"+instance.getProvider()+"'");
+			CarpetSettings.LOG.info("Adding fname: "+functionName+". Expression paramcount: "+parameterCount+". Provided in '" + clazz + "'");
 			functionList.add(Triple.of(functionName, parameterCount, function));
 			
 		}
@@ -93,7 +94,7 @@ public class AnnotationParser {
 
 	}
 	
-	private static <T> TriFunction<Context, Integer, List<LazyValue>, LazyValue> makeFunction(final Method method, final FunctionClass instance) {
+	private static <T> TriFunction<Context, Integer, List<LazyValue>, LazyValue> makeFunction(final Method method, final Object instance) {
 		final boolean isVarArgs = method.isVarArgs();
 		@SuppressWarnings("unchecked") // We are "defining" T in here
 		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>) method.getReturnType());
@@ -124,13 +125,13 @@ public class AnnotationParser {
 				return ret;
 			} catch (IllegalAccessException | IllegalArgumentException e) { // Some are Runtime, but are TODO s
 				CarpetSettings.LOG.error("Reflection error during execution of method " + method.getName() + ", with params " + params + ". "
-						+ "Provided by '" + instance.getProvider() + "'", e);
+						+ "Provided in '" + instance.getClass() + "'", e);
 				throw new InternalExpressionException("Something bad happened, check logs and report to Carpet with log and program: " + e.getMessage());
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 				if (cause instanceof RuntimeException)
 					throw (RuntimeException) cause;
-				throw (Error) cause; // Stackoverflow or something. Methods are guaranteed not to throw checked exceptions
+				throw (Error) cause; // Stack overflow or something. Methods are guaranteed not to throw checked exceptions
 			}
 		};
 	}
@@ -140,22 +141,39 @@ public class AnnotationParser {
 											Context context, int methodParameterCount)
 	{
 		Object[] params;
+		ListIterator<LazyValue> lvIterator = lv.listIterator();
 		if (isVarArgs) {
 			int regularRemaining = methodParameterCount - 1;
 			int pointer = 0;
 			Iterator<ValueConverter<?>> converterIterator = valueConverters.iterator(); 
 			params = new Object[regularRemaining + 1];
 			while (regularRemaining > 0) {
-				params[pointer] = converterIterator.next().evalAndConvert(lv.remove(0), context);
+				params[pointer] = converterIterator.next().evalAndConvert(lvIterator, context);
 				regularRemaining--; pointer++;
+			} //TODO Make sure the following fully works
+			int remaining = lv.size() - lvIterator.nextIndex();
+			Object[] varArgs;
+			if (varArgsConverter.acceptsVariableArgs()) {
+				List<Object> varArgsList = new ObjectArrayList<>();
+				while (lvIterator.hasNext())
+					varArgsList.add(varArgsConverter.evalAndConvert(lvIterator, context));
+				varArgs = varArgsList.toArray((Object[])Array.newInstance(varArgsType, 0));
+			} else {
+				varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.howManyValuesDoesThisEat());
+				pointer = 0;
+				while (lvIterator.hasNext()) {
+					varArgs[pointer] = varArgsConverter.evalAndConvert(lvIterator, context);
+					pointer++;
+				}
 			}
-			params[pointer] = lv.stream().map(i-> varArgsConverter.evalAndConvert(i, context)).toArray(size-> (Object[])Array.newInstance(varArgsType, size));
+			
+			params[methodParameterCount - 1] = varArgs;
 			//TODO (even) More efficient thing of the above ^
 			//TODO The above, but for primitive varargs
 		} else {
 			params = new Object[lv.size()];
 			for (int i = 0; i < lv.size(); i++)
-				params[i] = valueConverters.get(i).evalAndConvert(lv.get(i), context);
+				params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
 		}
 		return params;
 	}

@@ -18,7 +18,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
-public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R> { //TODO remove all the assignments, just register
+public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R> {
 	private static final Map<Class<?>, SimpleTypeConverter<? extends Value, ?>> byResult = new HashMap<>();
 	static {
 		registerType(EntityValue.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val));
