@@ -3,14 +3,19 @@ package carpet.script.annotation;
 import java.lang.reflect.AnnotatedParameterizedType;
 import java.lang.reflect.AnnotatedType;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+import carpet.script.Context;
+import carpet.script.LazyValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.Value;
 
 public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
-	private final ValueConverter<K> keyConverter;
-	private final ValueConverter<V> valueConverter;
+	protected final ValueConverter<K> keyConverter;
+	protected final ValueConverter<V> valueConverter;
 	
 	@Override
 	public String getTypeName() {
@@ -42,10 +47,72 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 	 *          technically accept a non-{@link Map} {@link AnnotatedType}, it will fail if it doesn't has at least
 	 *          two generic parameters with an {@link ArrayIndexOutOfBoundsException}. 
 	 * @param annotatedType The type to get generics information from
-	 * @return A new {@link ListConverter} for the data specified in the {@link AnnotatedType}
+	 * @return A new {@link MapConverter} for the data specified in the {@link AnnotatedType}
 	 */
 	public static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType) { //TODO Assert actual type-safety (or at least kinda)
-		AnnotatedType[] annotatedParams = ((AnnotatedParameterizedType) annotatedType).getAnnotatedActualTypeArguments();
-		return new MapConverter<>(annotatedParams[0], annotatedParams[1]);
+		AnnotatedType[] annotatedGenerics = ((AnnotatedParameterizedType) annotatedType).getAnnotatedActualTypeArguments();
+		return annotatedType.isAnnotationPresent(Param.KeyValuePairs.class) 
+				? new PairConverter<>(annotatedGenerics[0], annotatedGenerics[1], annotatedType.getAnnotation(Param.KeyValuePairs.class))
+				: new MapConverter<>(annotatedGenerics[0], annotatedGenerics[1]);
+	}
+	
+	private static class PairConverter<K, V> extends MapConverter<K, V> {
+		private final boolean acceptMultiParam;
+		private PairConverter(AnnotatedType keyType, AnnotatedType valueType, Param.KeyValuePairs config) {
+			super(keyType, valueType);
+			acceptMultiParam = config.allowMultiparam();
+		}
+		@Override
+		public boolean consumesVariableArgs() {
+			return acceptMultiParam;
+		}
+		
+		@Override
+		public Map<K, V> convert(Value value) {
+			return value instanceof MapValue ? super.convert(value)
+					: value instanceof ListValue ? convertList(((ListValue)value).getItems())
+							: null; // Multiparam mode can only be used in evalAndConvert 
+		}
+		
+		private Map<K, V> convertList(List<Value> valueList) {
+			if (valueList.size() % 2 == 1 )
+				return null;
+			Map<K, V> map = new HashMap<>();
+			Iterator<Value> val = valueList.iterator();
+			while (val.hasNext())
+				map.put(keyConverter.convert(val.next()), valueConverter.convert(val.next()));
+			return map;
+		}
+		
+		@Override
+		public Map<K, V> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+			if (!acceptMultiParam) return super.evalAndConvert(lazyValueIterator, context);
+			Value val = lazyValueIterator.next().evalValue(context);
+			if (val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
+				return convert(val);                                   // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
+			Map<K, V> map = new HashMap<>();
+			if (lazyValueIterator.hasNext())
+				map.put(keyConverter.convert(val), valueConverter.evalAndConvert(lazyValueIterator, context));
+			else return null;
+			while (lazyValueIterator.hasNext()) {
+				K key = keyConverter.evalAndConvert(lazyValueIterator, context);
+				if (lazyValueIterator.hasNext())
+					map.put(key, valueConverter.evalAndConvert(lazyValueIterator, context));
+				else return null;
+			}
+			return map;
+		}
+		
+		@Override
+		public String getTypeName() {
+			return "either a map of key-value pairs"+(acceptMultiParam ? ",":" or")+" a list in the form of [key, value, key2, value2,...]" +
+					(acceptMultiParam ? " or those key-value pairs in the function" : "") + " (keys being "
+					+ keyConverter.getTypeName() + "s and values being " + valueConverter.getTypeName() + "s)";
+		}
+		
+		@Override
+		public String getPrefixedTypeName() {
+			return getTypeName();
+		}
 	}
 }

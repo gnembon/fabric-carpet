@@ -5,12 +5,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.reflect.AnnotatedType;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import carpet.CarpetServer;
+import carpet.script.Context;
+import carpet.script.LazyValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -53,15 +57,43 @@ public interface Param {
 	}
 	
 	/**
-	 * <p>Determines that this parameter allows passing a value directly instead of a list of those values.</p>
+	 * <p>Determines that this parameter accepts being passing a value directly instead of a list of those values.</p>
 	 * 
-	 * <p>Can be used both in {@link List} parameters and in the generic types of those (eg {@code List<@AllowSingleton List<Entity>>}</p>
+	 * <p>Can only be used in {@link List} parameters.</p>
 	 *
+	 * <p>The function method will receive a singleton of the item in question if there's a single value.</p>
 	 */
 	@Documented
 	@Retention(RUNTIME)
 	@Target({PARAMETER, TYPE_USE})
 	public @interface AllowSingleton {
+	}
+	
+	/**
+	 * <p>Determines that this (and optionally the following parameters) accept either a map of the specified key-value pairs,
+	 * a list type [key, value, key2, value2,...] or the same as the list but directly in the parameters (can be disabled in {@link #allowMultiparam()}).</p>
+	 * 
+	 * <p>Can only be used in {@link Map} types, and {@link #allowMultiparam()} requires it to not be in a type parameter
+	 * (since lists and maps contains groups of single items)</p>
+	 *
+	 * <p><b>IMPORTANT:</b> Using this annotation with {@link #allowMultiparam()} will make this element consume each and every remaining 
+	 * value in the function call, therefore it will cause any other parameters (that are not varargs) to throw as if they were not present,
+	 * unless they are optional. They could only be accessed if the parameter at this location is specifically a list or map.<br>
+	 * Having it as {@code true} will also cause the function to be considered of variable arguments even if it doesn't have varargs.</p>
+	 * //TODO Link optional mode above when available
+	 */
+	@Documented
+	@Retention(RUNTIME)
+	@Target({PARAMETER, TYPE_USE})
+	public @interface KeyValuePairs {
+		/**
+		 * <p>Whether or not this accepts the key-value pairs directly in the function call as myFunction(..., key, value, key2, value2)</p>
+		 * 
+		 * <p>Having this set to {@code true} (as it is by default) has the side effects of effectively converting the method in a variable
+		 * parameter count method, and consuming everything remaining in the parameter list unless it finds as first parameter a map or list
+		 * to generate the map from, causing any following parameters (except varargs) to throw as if they were not present, unless they are optional.</p>
+		 */
+		boolean allowMultiparam() default true;
 	}
 	
 	/**
@@ -101,6 +133,49 @@ public interface Param {
 	 *
 	 */
 	public static class Params {
+		/**
+		 * A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context)},
+		 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.
+		 */
+		public static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
+			@Override
+			public LazyValue convert(Value val) {
+				throw new UnsupportedOperationException("Called convert() with a Value in LazyValue identity converter, where only evalAndConvert is supported");
+			}
+			@Override
+			public LazyValue evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context c) {
+				return lazyValueIterator.next();
+			}
+			@Override
+			public String getTypeName() {
+				return "something"; //TODO Decide between "something" or "value" and use it in ValueCaster too
+			}
+		};
+		
+		/**
+		 * A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
+		 * {@link #evalAndConvert(Iterator, Context)}, and throws {@link UnsupportedOperationException} when trying to
+		 * convert a {@link Value} directly.
+		 */
+		public static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
+			@Override public String getTypeName() {return "";}
+		
+			@Override
+			public @Nullable Context convert(Value value) {
+				throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");
+			}
+			
+			@Override
+			public Context evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+				return context;
+			}
+			
+			@Override
+			public int howManyValuesDoesThisEat() {
+				return 0;
+			}
+		};
+		
 		/**
 		 * {@code <Pair<Type, shallow?>, Converter>}
 		 */

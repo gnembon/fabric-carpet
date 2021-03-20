@@ -76,6 +76,7 @@ public class AnnotationParser {
 			}
 			// TODO Replace this with the argument checker/converter. Edit: With a stream mapping all required things via howManyValuesDoesThisEat
 			int parameterCount = method.isVarArgs() ? -1 : method.getParameterCount();
+			// TODO ^^ This no longer works with current multiparam providers, such as MapConverter$PairConverter
 			String functionName = method.getName();
 			
 			TriFunction<Context, Integer, List<LazyValue>, LazyValue> function = makeFunction(method, instance);
@@ -140,10 +141,10 @@ public class AnnotationParser {
 		Object[] params;
 		ListIterator<LazyValue> lvIterator = lv.listIterator();
 		if (isVarArgs) {
-			int regularRemaining = methodParameterCount - 1;
+			int regularRemaining = methodParameterCount - 1; //TODO Get rid of this and use methodParamCount and pointer
 			int pointer = 0;
 			Iterator<ValueConverter<?>> converterIterator = valueConverters.iterator(); 
-			params = new Object[regularRemaining + 1];
+			params = new Object[methodParameterCount];
 			while (regularRemaining > 0) {
 				params[pointer] = converterIterator.next().evalAndConvert(lvIterator, context);
 				regularRemaining--; pointer++;
@@ -154,7 +155,7 @@ public class AnnotationParser {
 				List<Object> varArgsList = new ObjectArrayList<>();
 				while (lvIterator.hasNext())
 					varArgsList.add(varArgsConverter.evalAndConvert(lvIterator, context));
-				varArgs = varArgsList.toArray((Object[])Array.newInstance(varArgsType, 0));
+				varArgs = varArgsList.toArray();
 			} else {
 				varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.howManyValuesDoesThisEat());
 				pointer = 0;
@@ -168,8 +169,8 @@ public class AnnotationParser {
 			//TODO (even) More efficient thing of the above ^
 			//TODO The above, but for primitive varargs
 		} else {
-			params = new Object[lv.size()];
-			for (int i = 0; i < lv.size(); i++)
+			params = new Object[methodParameterCount];
+			for (int i = 0; i < methodParameterCount; i++)
 				params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
 		}
 		return params;
