@@ -258,7 +258,7 @@ public class FileArgument
             close();
         }
         if (type == Type.FOLDER)
-            return strings.map(s -> s.endsWith("/")?s.substring(0, s.length()-2):s);
+            return strings.map(s -> s.endsWith("/")?s.substring(0, s.length()-1):s);
         return strings.map(FilenameUtils::removeExtension);
     }
 
