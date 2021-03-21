@@ -5,8 +5,14 @@ import carpet.script.Context;
 import carpet.script.LazyValue;
 import carpet.script.bundled.Module;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
+import carpet.script.value.MapValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import net.minecraft.nbt.CompoundTag;
@@ -15,24 +21,30 @@ import net.minecraft.nbt.NbtTagSizeTracker;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagReaders;
 import net.minecraft.util.WorldSavePath;
+import net.minecraft.util.crash.CrashException;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -47,8 +59,21 @@ public class FileArgument
     public boolean isFolder;
     public boolean isShared;
     public Reason reason;
+    private FileSystem zfs;
+    private Path zipPath;
 
     public final static Object writeIOSync = new Object();
+
+    public void close() {
+        if (zfs != null && zfs.isOpen()) {
+            try {
+                zfs.close();
+            } catch (IOException e) {
+                throw new InternalExpressionException("Unable to close zip container: "+zipContainer);
+            }
+            zfs = null;
+        }
+    }
 
     public enum Type
     {
@@ -75,7 +100,7 @@ public class FileArgument
         READ, CREATE, DELETE
     }
 
-    private FileArgument(String resource, Type type, String zipContainer, boolean isFolder, boolean isShared, Reason reason)
+    public FileArgument(String resource, Type type, String zipContainer, boolean isFolder, boolean isShared, Reason reason)
     {
         this.resource = resource;
         this.type = type;
@@ -83,47 +108,103 @@ public class FileArgument
         this.isFolder = isFolder;
         this.isShared = isShared;
         this.reason = reason;
+        this.zfs = null;
+        this.zipPath = null;
+    }
+
+    @Override
+    public String toString() {
+        return "path: "+resource+" zip: "+zipContainer+" type: "+type.id+" folder: "+isFolder+" shared: "+isShared+" reason: "+reason.toString();
     }
 
     public static FileArgument from(List<LazyValue> lv, Context c, boolean isFolder, Reason reason)
     {
         if (lv.size() < 2) throw new InternalExpressionException("File functions require path and type as first two arguments");
-        String resource = recognizeResource(lv.get(0).evalValue(c), isFolder);
+        Pair<String, String> resource = recognizeResource(lv.get(0).evalValue(c), isFolder);
         String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
         boolean shared = origtype.startsWith("shared_");
         String typeString = shared ? origtype.substring(7) : origtype; //len(shared_)
         Type type = Type.of.get(typeString);
-        if (!Type.of.containsKey(typeString))
+        if (type==null)
             throw new InternalExpressionException("Unsupported file type: "+origtype);
-
         if (type==Type.FOLDER && !isFolder)
             throw new InternalExpressionException("Folder types are no supported for this IO function");
-        return  new FileArgument(resource, type,null, isFolder, shared, reason);
+        return  new FileArgument(resource.getLeft(), type,resource.getRight(), isFolder, shared, reason);
 
     }
 
-    public static String recognizeResource(Value value, boolean isFolder)
+    public static Pair<String,String> recognizeResource(Value value, boolean isFolder)
     {
         String origfile = value.getString();
-        String file = origfile.toLowerCase(Locale.ROOT).replaceAll("[^A-Za-z0-9\\-+_/]", "");
-        file = Arrays.stream(file.split("/+")).filter(s -> !s.isEmpty()).collect(Collectors.joining("/"));
-        if (file.isEmpty() && !isFolder)
+        String[] pathElements = origfile.toLowerCase(Locale.ROOT).split("[/\\\\]+");
+        List<String> path = new ArrayList<>();
+        String zipPath = null;
+        for (String token : pathElements)
         {
-            throw new InternalExpressionException("Cannot use "+origfile+" as resource name - must have some letters and numbers");
+            boolean isZip = token.endsWith(".zip");
+            if (zipPath != null && isZip) throw new InternalExpressionException(token+" indicates zip access in an already zipped location "+zipPath);
+            if (isZip) token = token.substring(0, token.length()-4);
+            token = token.replaceAll("[^A-Za-z0-9\\-+_]", "");
+            if (token.isEmpty()) continue;
+            if (isZip) token = token + ".zip";
+            path.add(token);
+            if (isZip)
+            {
+                zipPath = String.join("/", path);
+                path.clear();
+            }
         }
-        return file;
+        if (path.isEmpty() && !isFolder)
+            throw new InternalExpressionException(
+                    "Cannot use "+origfile+" as resource name: indicated path is empty"+((zipPath==null)?"":" in zip container "+zipPath)
+            );
+        return Pair.of(String.join("/", path), zipPath);
+    }
+
+    private Path resolve(String suffix)
+    {
+        if (CarpetServer.minecraft_server == null)
+            throw new InternalExpressionException("Accessing world files without server running");
+        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+suffix);
     }
 
     private Path toPath(Module module)
     {
         if (!isShared && (module == null || module.getName() == null)) return null;
-        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+getDescriptor(module, resource)+type.extension);
+        if (zipContainer == null)
+            return resolve(getDescriptor(module, resource)+(isFolder?"":type.extension));
+        else
+        {
+            if (zfs == null)
+            {
+                Map<String, String> env = new HashMap<>();
+                if (reason == Reason.CREATE) env.put("create", "true");
+                zipPath = resolve(getDescriptor(module, zipContainer));
+                try {
+                    zfs = FileSystems.newFileSystem(URI.create("jar:"+ zipPath.toUri().toString()), env);
+                }
+                catch (FileSystemNotFoundException fsnfe)
+                {
+                    return null;
+                }
+                catch (IOException e)
+                {
+                    throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
+                }
+            }
+            return zfs.getPath(resource+(isFolder?"/":type.extension));
+        }
     }
 
     private Path moduleRootPath(Module module)
     {
         if (!isShared && (module == null || module.getName() == null)) return null;
-        return CarpetServer.minecraft_server.getSavePath(WorldSavePath.ROOT).resolve("scripts/"+getDescriptor(module, ""));
+        return resolve(isShared?"shared":module.getName()+".data");
+    }
+
+    public String getDisplayPath()
+    {
+        return (isShared?"shared/":"")+(zipContainer!=null?zipContainer+"/":"")+resource+type.extension;
     }
 
     private String getDescriptor(Module module, String res)
@@ -136,7 +217,7 @@ public class FileArgument
         {
             return module.getName()+".data"+(res==null || res.isEmpty()?"":"/"+res);
         }
-        throw  new RuntimeException("Invalid file descriptor: "+res);
+        throw new InternalExpressionException("Invalid file descriptor: "+res);
     }
 
     public Stream<Path> listFiles(Module module)
@@ -146,8 +227,7 @@ public class FileArgument
         String ext = type.extension;
         try
         {
-            return Files.list(dir).
-                    filter(path -> isFolder?Files.isDirectory(path):path.toString().endsWith(ext));
+            return Files.list(dir).filter(path -> (type==Type.FOLDER)?path.toString().endsWith("/"):path.toString().endsWith(ext));
         }
         catch (IOException ignored)
         {
@@ -157,73 +237,106 @@ public class FileArgument
 
     public Stream<String> listFolder(Module module)
     {
-        Stream<Path> result;
-        synchronized (writeIOSync) { result = listFiles(module); }
-        if (result == null) return null;
-        Path rootPath = moduleRootPath(module);
-        Stream<String> strings = result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]","/"));
-        if (type != Type.FOLDER)
-            return strings.map(FilenameUtils::removeExtension);
-        return strings;
+        Stream<String> strings;
+        try { synchronized (writeIOSync)
+        {
+            Stream<Path> result;
+            result = listFiles(module);
+            if (result == null) return null;
+            Path rootPath = moduleRootPath(module);
+            if (rootPath == null) return null;
+            String zipComponent = (zipContainer != null) ? rootPath.relativize(zipPath).toString() : null;
+            strings = result.map(p -> {
+                if (zipContainer == null)
+                    return rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/");
+                return (zipComponent + p.toString()).replaceAll("[\\\\/]+", "/");
+            });
+        } }
+        finally
+        {
+            close();
+        }
+        if (type == Type.FOLDER)
+            return strings.map(s -> s.endsWith("/")?s.substring(0, s.length()-1):s);
+        return strings.map(FilenameUtils::removeExtension);
+    }
+
+    private void createPaths(Path file)
+    {
+        try {
+            if ((zipContainer == null || file.getParent() != null) &&
+                    !Files.exists(file.getParent()) &&
+                    Files.createDirectories(file.getParent()) == null
+            ) throw new IOException();
+        } catch (IOException e) {
+            throw new ThrowStatement("Unable to create paths for "+file.toString(), Throwables.IO_EXCEPTION);
+        }
+
     }
 
     public boolean appendToTextFile(Module module, List<String> message)
     {
-        Path dataFile = toPath(module);//, resourceName, supportedTypes.get(type), isShared);
-        if (dataFile == null) return false;
-        if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return false;
-        synchronized (writeIOSync)
+        try { synchronized (writeIOSync)
         {
-            try
+            Path dataFile = toPath(module);//, resourceName, supportedTypes.get(type), isShared);
+            if (dataFile == null) return false;
+            createPaths(dataFile);
+            OutputStream out = Files.newOutputStream(dataFile, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)))
             {
-                OutputStream out = Files.newOutputStream(dataFile, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)))
+                for (String line: message)
                 {
-                    for (String line: message)
-                    {
-                        writer.append(line);
-                        if (type == Type.TEXT) writer.newLine();
-                    }
+                    writer.append(line);
+                    if (type == Type.TEXT) writer.newLine();
                 }
             }
-            catch (IOException e)
-            {
-                return false;
-            }
-            return true;
+        } }
+        catch (IOException e)
+        {
+            throw new ThrowStatement("Error when writing to the file: "+e, Throwables.IO_EXCEPTION);
         }
+        finally
+        {
+            close();
+        }
+        return true;
     }
 
     public Tag getNbtData(Module module) // aka getData
     {
-        Path dataFile = toPath(module);
-        if (dataFile == null) return null;
-        if (!Files.exists(dataFile) || !(dataFile.toFile().isFile())) return null;
-        synchronized (writeIOSync) { return readTag(dataFile.toFile()); }
+        try { synchronized (writeIOSync) {
+            Path dataFile = toPath(module);
+            if (dataFile == null || !Files.exists(dataFile)) return null;
+            return readTag(dataFile);
+        } }
+        finally {
+            close();
+        }
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
     // to read non-compound tags - these won't be compressed
-    public static Tag readTag(File file)
+    public static Tag readTag(Path path)
     {
         try
         {
-            return NbtIo.readCompressed(file);
+            return NbtIo.readCompressed(Files.newInputStream(path));
         }
         catch (IOException e)
         {
             // Copy of NbtIo.read(File) because that's now client-side only
-            if (!file.exists())
+            if (!Files.exists(path))
             {
                 return null;
             }
-            try (DataInputStream in = new DataInputStream(new FileInputStream(file)))
+            try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(path))))
             {
                 return NbtIo.read(in);
             }
             catch (IOException ioException)
             {
-                try (DataInputStream dataInput_1 = new DataInputStream(new FileInputStream(file)))
+                // not compressed compound tag neither uncompressed compound tag - trying any type of a tag
+                try (DataInputStream dataInput_1 = new DataInputStream(new BufferedInputStream(Files.newInputStream(path))))
                 {
                     byte byte_1 = dataInput_1.readByte();
                     if (byte_1 == 0)
@@ -238,71 +351,101 @@ public class FileArgument
                 }
                 catch (IOException ignored)
                 {
+                    throw new ThrowStatement("Not a valid NBT tag in "+path.toString(), Throwables.NBT_ERROR);
                 }
-                return null;
             }
+        }
+        catch (CrashException e)
+        {
+            throw new ThrowStatement("Error when reading NBT file "+path.toString(), Throwables.NBT_ERROR);
         }
     }
 
     public boolean saveNbtData(Module module, Tag tag) // aka saveData
     {
-        Path dataFile = toPath(module);
-        if (dataFile == null) return false;
-        if (!Files.exists(dataFile.getParent()) && !dataFile.toFile().getParentFile().mkdirs()) return false;
-        synchronized (writeIOSync) { return writeTag(tag, dataFile.toFile()); }
+        try { synchronized (writeIOSync) {
+            Path dataFile = toPath(module);
+            if (dataFile == null) return false;
+            createPaths(dataFile);
+            return writeTagDisk(tag, dataFile, zipContainer != null);
+        } }
+        finally
+        {
+            close();
+        }
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static boolean writeTag(Tag tag_1, File file)
+    public static boolean writeTagDisk(Tag tag_1, Path path, boolean zipped)
     {
-        File file_2 = new File(file.getAbsolutePath() + "_tmp");
-        if (file_2.exists()) file_2.delete();
+        Path original = path;
+        try
+        {
+            if (!zipped)
+            {
+                path = new File(path.toFile().getAbsolutePath() + "_tmp").toPath();
+                Files.deleteIfExists(path);
+            }
 
-        if (tag_1 instanceof CompoundTag)
-        {
-            try
+            if (tag_1 instanceof CompoundTag)
             {
-                NbtIo.writeCompressed((CompoundTag) tag_1, file_2);
+                NbtIo.writeCompressed((CompoundTag) tag_1, Files.newOutputStream(path));
             }
-            catch (IOException e)
+            else
             {
-                return false;
-            }
-        }
-        else
-        {
-            try (DataOutputStream dataOutputStream_1 = new DataOutputStream(new FileOutputStream(file_2)))
-            {
-                dataOutputStream_1.writeByte(tag_1.getType());
-                if (tag_1.getType() != 0)
+                try (DataOutputStream dataOutputStream_1 = new DataOutputStream(Files.newOutputStream(path)))
                 {
-                    dataOutputStream_1.writeUTF("");
-                    tag_1.write(dataOutputStream_1);
+                    dataOutputStream_1.writeByte(tag_1.getType());
+                    if (tag_1.getType() != 0)
+                    {
+                        dataOutputStream_1.writeUTF("");
+                        tag_1.write(dataOutputStream_1);
+                    }
                 }
             }
-            catch (IOException e)
+            if (!zipped)
             {
-                return false;
+                Files.deleteIfExists(original);
+                Files.move(path, original);
             }
+            return true;
         }
-        if (file.exists()) file.delete();
-        if (!file.exists()) file_2.renameTo(file);
-        return true;
+        catch (IOException e)
+        {
+            throw new ThrowStatement("Unable to write tag to "+original.toString(), Throwables.IO_EXCEPTION);
+        }
     }
 
     public boolean dropExistingFile(Module module)
     {
-        Path dataFile = toPath(module);
-        if (dataFile == null) return false;
-        synchronized (writeIOSync) { return dataFile.toFile().delete(); }
+
+        try { synchronized (writeIOSync)
+        {
+            Path dataFile = toPath(module);
+            if (dataFile == null) return false;
+            return Files.deleteIfExists(dataFile);
+        } }
+        catch (IOException e)
+        {
+            throw new ThrowStatement("Error while removing file: "+getDisplayPath(), Throwables.IO_EXCEPTION);
+        }
+        finally
+        {
+            close();
+        }
     }
 
     public List<String> listFile(Module module)
     {
-        Path dataFile = toPath(module);
-        if (dataFile == null) return null;
-        if (!dataFile.toFile().exists()) return null;
-        synchronized (writeIOSync) { return listFileContent(dataFile); }
+        try { synchronized (writeIOSync) {
+            Path dataFile = toPath(module);
+            if (dataFile == null) return null;
+            if (!Files.exists(dataFile)) return null;
+            return listFileContent(dataFile);
+        } }
+        finally {
+            close();
+        }
     }
 
     public static List<String> listFileContent(Path filePath)
@@ -319,15 +462,19 @@ public class FileArgument
         }
         catch (IOException e)
         {
-            return null;
+            throw new ThrowStatement("Failed to read text file "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }
 
     public JsonElement readJsonFile(Module module) {
-        Path dataFile = toPath(module);
-        if (dataFile == null) return null;
-        if (!dataFile.toFile().exists()) return null;
-        synchronized (writeIOSync) { return readJsonContent(dataFile); }
+        try { synchronized (writeIOSync) {
+            Path dataFile = toPath(module);
+            if (dataFile == null || !Files.exists(dataFile)) return null;
+            return readJsonContent(dataFile);
+        } }
+        finally {
+            close();
+        }
     }
 
     public static JsonElement readJsonContent(Path filePath)
@@ -336,9 +483,19 @@ public class FileArgument
         {
             return new JsonParser().parse(new JsonReader(reader));
         }
+        catch (JsonParseException e)
+        {
+            Throwable exc = e;
+            if(e.getCause() != null)
+                exc = e.getCause();
+            throw new ThrowStatement(MapValue.wrap(ImmutableMap.of(
+                    StringValue.of("error"), StringValue.of(exc.getMessage()),
+                    StringValue.of("path"), StringValue.of(filePath.toString())
+            )), Throwables.JSON_ERROR);
+        }
         catch (IOException e)
         {
-            return null;
+            throw new ThrowStatement("Failed to read json file content "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }
 

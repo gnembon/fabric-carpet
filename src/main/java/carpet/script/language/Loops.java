@@ -119,7 +119,7 @@ public class Loops {
                 c.setVariable("_i", (cc, tt) -> new NumericValue(doYouReally).bindTo("_i"));
                 try
                 {
-                    result.add(expr.evalValue(c));
+                    result.add(expr.evalValue(c, t));
                 }
                 catch (BreakStatement | ContinueStatement stmt)
                 {

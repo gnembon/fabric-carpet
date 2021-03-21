@@ -298,7 +298,8 @@ Resource is identified by a path to the file.
 A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid, except for `list_files` where it means the root folder.
  Do not add file extensions to the descriptor - extensions are inferred
-based on the `type` of the file.
+based on the `type` of the file. A path can have one `'.zip'` component indicating a zip folder allowing to read / write to and from
+zip files, although you cannot nest zip files in other zip files. 
  
 Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
 resources is guaranteed to be isolated from other apps. Shared resources are... well, shared across all apes, meaning
@@ -312,7 +313,7 @@ specific data directory is under `world/scripts/foo.data/...`, and shared data s
 
 The default no-name app, via `/script run` command can only save/load/read files from the shared space.
 
-Functions return `null` if an error is encounter or no file is present (for read, list and delete operations). Returns `true`
+Functions return `null` if no file is present (for read, list and delete operations). Returns `true`
 for success writes and deletes, and requested data, based on the file type, for read operations. It returns list of files 
 for folder listing.
  
@@ -336,6 +337,10 @@ third argument.
 Throws:
 - `nbt_read_error`: When failed to read NBT file.
 - `json_read_error`: When failed to read JSON file. The exception data will contain details about the problem.
+- `io_exception`: For all other errors when handling data on disk not related to encoding issues
+
+All other errors resulting of improper use of input arguments should result in `null` returned from the function, rather than exception
+thrown.
 
 <pre>
 write_file('foo', 'shared_text, ['one', 'two']);
@@ -616,7 +621,13 @@ Available options in the scarpet app space:
   * `game_view_distance` - the view distance
   * `game_mod_name` - the name of the base mod. Expect `'fabric'`
   * `game_version` - base version of the game
+  * `game_target` - target release version
+  * `game_major_target` - major release target. For 1.12.2, that would be 12
+  * `game_minor_reease` - minor release target. For 1.12.2, that woudl be 2
+  * `game_protocol` - protocol version number
+  * `game_pack_version` - datapack version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
+  * `game_stable` - indicating if its a production release or a snapshot
   
  Server related properties
  * `server_motd` - the motd of the server visible when joining

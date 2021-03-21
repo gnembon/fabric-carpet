@@ -16,6 +16,11 @@ public class BooleanValue extends NumericValue
         boolValue = boolval;
     }
 
+    public static BooleanValue of(boolean value)
+    {
+        return value?TRUE:FALSE;
+    }
+
     @Override
     public String getString() {
         return boolValue?"true":"false";
