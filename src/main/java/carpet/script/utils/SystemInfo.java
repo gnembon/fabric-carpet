@@ -61,7 +61,7 @@ public class SystemInfo {
         put("game_mod_name", c -> StringValue.of(c.s.getMinecraftServer().getServerModName()));
         put("game_version", c -> StringValue.of(c.s.getMinecraftServer().getVersion()));
         put("game_target", c -> StringValue.of(SharedConstants.getGameVersion().getReleaseTarget()));
-        put("game_protocol", c -> NumericValue.of(SharedConstants.method_31372()));
+        put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> {
             String [] vers = SharedConstants.getGameVersion().getReleaseTarget().split("\\.");
             return NumericValue.of((vers.length > 1)?Integer.parseInt(vers[1]):0);
