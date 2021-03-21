@@ -23,9 +23,69 @@ import carpet.script.LazyValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
+/**
+ * <p>This class parses methods annotated with the {@link LazyFunction} annotation in a given {@link Class}, generating
+ * fully-featured, automatically parsed and converted functions to be used in the Scarpet language.</p>
+ * 
+ * <p>This class and the rest in this package will try to ensure that the annotated method receives the proper parameters
+ * directly, without all the always-repeated code of evaluating {@link Value}s, checking and casting them to their respective
+ * types, and converting them to the final needed object.</p>
+ * 
+ * <p>To do that, functions will save a list of {@link ValueConverter}s to convert all their parameters. {@link ValueConverter}s
+ * are able to convert from any compatible {@link Value} (or {@link LazyValue}) instance into the requested parameter type,
+ * as long as they are registered using their respective {@code register} functions.</p>
+ * 
+ * <p>Built-in {@link ValueConverter}s include converters to convert {@link List}s to actual Java lists while also converting every item
+ * inside of the {@link List} to the specified generic parameter ({@code <>}), with the same applying for maps</p>
+ * 
+ * <p>Parameters can be given the annotations (present in {@link Locator} and {@link Param} interfaces) in order to restrict them or 
+ * make them more permissive to accept types, such as {@link Param.AllowSingleton} for lists.</p>
+ * 
+ * <p>Output of the annotated methods will also be converted to a compatible {@link LazyValue} using the registered {@link OutputConverter}s,
+ * allowing to remove the need of explicitly converting to a {@link Value} and then to a {@link LazyValue} just to end the method.</p>
+ * 
+ * <p>For a variable argument count, the Java varargs notation can be used in the last parameter, converting the function into a variable argument
+ * function that will pass all the rest of parameters to that last varargs parameter, also converted into the specified type.</p>
+ * 
+ * <p>To begin, use the {@link #parseFunctionClass(Class)} method.</p>
+ *
+ * @see LazyFunction
+ * @see Locator.Block
+ * @see Locator.Vec3d
+ * @see Param.Strict
+ * @see Param.AllowSingleton
+ * @see Param.KeyValuePairs
+ * @see OutputConverter#register(Class, java.util.function.Function)
+ * @see ValueCaster#register(Class, String)
+ * @see SimpleTypeConverter#registerType(Class, Class, java.util.function.Function)
+ * @see Param.Params#registerStrictParam(Class, boolean, ValueConverter)
+ */
 public class AnnotationParser {
 	private static final List<Triple<String, Integer, TriFunction<Context, Integer, List<LazyValue>, LazyValue>>> functionList = new ArrayList<>();
 	
+	/**
+	 * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link LazyFunction} annotation, to be used
+	 * in the Scarpet language.</p>
+	 * 
+	 * <p>There is a set of requirements for the class in order to get the best experience (and to work, at all):</p>
+	 * <ul>
+	 * <li>Class must be concrete. That is, no interfaces or abstract classes</li>
+	 * <li>Class must have the default constructor (or an equivalent) available. That is done in order to not need the {@code static} modifier
+	 * in every method, making them faster to code and simpler to look at.</li>
+	 * <li>Annotated methods must not be {@code static}. See claim above</li>
+	 * <li>Annotated methods must not throw checked exceptions. They can throw regular {@link RuntimeException}s (including but not limited to
+	 * {@link InternalExpressionException}). Basically, it's fine as long as you don't add a {@code throws} declaration to it.</li>
+	 * <li>Varargs (or effectively varargs) annotated methods must explicitly declare a maximum number of parameters to ingest in the {@link LazyFunction}
+	 * annotation. They can still declare an unlimited amount by setting that maximum to {@code -1}. "Effectively varargs" means a function that has
+	 * a parameter using/requiring a {@link ValueConverter} that has declared {@link ValueConverter#consumesVariableArgs()}.</li>
+	 * <li>Annotated methods must not have a parameter with generics as the varargs parameter. This is just because it was painful for me (altrisi) and
+	 * didn't want to support it. Those will crash with a {@code ClassCastException}</li>
+	 * </ul>
+	 * 
+	 * @see LazyFunction
+	 * @param <T> The generic type of the class to parse.
+	 * @param clazz The class to parse
+	 */
 	public static <T> void parseFunctionClass(Class<T> clazz) {
 		if (Modifier.isAbstract(clazz.getModifiers())) {
 			throw new IllegalArgumentException("Function class must be concrete! Class: " + clazz.getSimpleName());
@@ -94,7 +154,7 @@ public class AnnotationParser {
 	
 	private static <T> TriFunction<Context, Integer, List<LazyValue>, LazyValue> makeFunction(final Method method, final Object instance) {
 		final boolean isVarArgs = method.isVarArgs();
-		@SuppressWarnings("unchecked") // We are "defining" T in here
+		@SuppressWarnings("unchecked") // We are "defining" T in here. TODO Decide whether to just use <Object>
 		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>) method.getReturnType());
 		final List<ValueConverter<?>> valueConverters = new ObjectArrayList<>(); //Testing (at least slightly) more performant things
 		int methodParamCount = method.getParameterCount(); // Not capturing since it's fast, just verbose
