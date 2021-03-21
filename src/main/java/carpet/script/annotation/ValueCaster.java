@@ -53,18 +53,12 @@ public class ValueCaster<R> implements ValueConverter<R> {
 	 * @param <R> The type of the {@link ValueCaster} you are looking for
 	 * @param outputType The class of the {@link Value} the returned {@link ValueCaster} casts to
 	 * @return The {@link ValueCaster} for the specified outputType
-	 * <!--@deprecated Use {@link #getOrRegister(Class)} instead-->
 	 */
 	@SuppressWarnings("unchecked") // Casters are stored with their exact class, for sure since the map is private (&& class has same generic as caster)
 	public static <R> ValueCaster<R> get(Class<R> outputType) {
 		return (ValueCaster<R>)byResult.get(outputType);
 	}
 	
-	/**
-	 * @implNote This implementation just casts the given {@link Value} to this {@link ValueCaster}'s output type.
-	 * 
-	 * {@inheritDoc}
-	 */
 	@Override
 	@Nullable
 	public R convert(Value value) {
@@ -83,7 +77,7 @@ public class ValueCaster<R> implements ValueConverter<R> {
 	 */
 	public static <R extends Value> void register(Class<R> valueClass, String typeName) {
 		ValueCaster<R> caster = new ValueCaster<R>(valueClass, typeName);
-		byResult.put(valueClass, caster);
+		byResult.putIfAbsent(valueClass, caster);
 	}
 	
 
@@ -99,7 +93,7 @@ public class ValueCaster<R> implements ValueConverter<R> {
 		ValueCaster<R> out = get(outputType);
 		if (out != null)
 			return out;
-		autoRegister((Class<? extends Value>)outputType); // TODO fix this or maybe even yeet this method
+		autoRegister((Class<? extends Value>)outputType); // TODO yeet this method
 		return get(outputType);
 	}*/
 	

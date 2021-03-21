@@ -17,7 +17,9 @@ import carpet.script.value.BlockValue;
 import carpet.script.value.Value;
 
 /**
- * Class that holds annotation for {@link Argument} locators to be used in Scarpet functions
+ * Class that holds annotation for {@link Argument} locators to be used in Scarpet functions.
+ * 
+ * (TODO) Note: Nothing in this class has been implemented yet
  */
 public interface Locator {
 	/**

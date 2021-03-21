@@ -13,6 +13,20 @@ import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.Value;
 
+/**
+ * <p>Converts a {@link MapValue} to a {@link Map}, converting all of its contents to 
+ * their respective types.</p>
+ * 
+ * <p>If the {@link Param.KeyValuePairs} annotation is specified, uses its subclass at {@link PairConverter} and
+ * allows passing either a map, a list like [key, value, key2, value2,...] or the same as the list inlined in the
+ * function's body, unless {@link Param.KeyValuePairs#allowMultiparam()} is set to {@code false}.</p>
+ * 
+ * <p>Maps provided by this converter are <b>not</b> linked to the initial map, and therefore will not
+ * reflect changes in either of them.</p>
+ *
+ * @param <K> The type of the map's keys
+ * @param <V> The type of the map's values
+ */
 public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 	protected final ValueConverter<K> keyConverter;
 	protected final ValueConverter<V> valueConverter;

@@ -26,6 +26,8 @@ public interface ValueConverter<R> {
 	/**
 	 * @return The user-friendly name of the result this {@link ValueConverter} converts to, without {@code a} or {@code an},
 	 *         and without capitalizing the first letter.
+	 * @apiNote This method is intended to only be called when an error has occurred and therefore there is a need to print a 
+	 *           stacktrace with some helpful usage instructions. 
 	 * @see #getPrefixedTypeName()
 	 */
 	public String getTypeName();
@@ -65,12 +67,12 @@ public interface ValueConverter<R> {
 	 *           parameters may decide to throw {@link UnsupportedOperationException} in this method and override {@link #evalAndConvert(Iterator, Context)}
 	 *           instead. Those implementations, however, should not be available for map or list types, since those can only operate 
 	 *           with {@link Value}.</p>
-	 *           <p>Currently, the only implementation that requires that is {@link Params#LAZY_VALUE_IDENTITY} and {@link Params#CONTEXT_PROVIDER}</p>
+	 *           <p>Currently, the only implementations requiring that are {@link Params#LAZY_VALUE_IDENTITY} and {@link Params#CONTEXT_PROVIDER}</p>
 	 *           <p>Implementations can also provide different implementations for this and {@link #evalAndConvert(Iterator, Context)}, in case
 	 *           they can support it in some situations that can't be used else, such as inside of lists or maps, although they should try to provide
 	 *           in {@link #evalAndConvert(Iterator, Context)} at least the same conversion as the one from this method.</p>
-	 *           <p>Due to the above reasons, {@link ValueConverter} users should try to use {@link #evalAndConvert(Iterator, Context)} whenever
-	 *           possible instead of {@link #convert(Value)}, since it allows more flexibility and features.</p>
+	 *           <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value)} whenever
+	 *           possible instead of {@link #evalAndConvert(Iterator, Context)}, since it allows its usage in generics of lists and maps.</p>
 	 */
 	@Nullable
 	public R convert(Value value);
@@ -78,7 +80,7 @@ public interface ValueConverter<R> {
 	/**
 	 * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator}
 	 * passed to it via {@link #evalAndConvert(Iterator, Context)}.</p>
-	 * @implNote The default implementation returns {@code false} by default
+	 * @implNote The default implementation returns {@code false} 
 	 * @see #howManyValuesDoesThisEat()
 	 */
 	default public boolean consumesVariableArgs() {
@@ -87,7 +89,8 @@ public interface ValueConverter<R> {
 	
 	/**
 	 * <p>Declares the number of {@link LazyValue}s this method consumes from the {@link Iterator} passed to it in
-	 * {@link #evalAndConvert(Iterator, Context)}.
+	 * {@link #evalAndConvert(Iterator, Context)}.</p>
+	 * 
 	 * <p>If this {@link ValueConverter} can accepts a variable number of arguments (therefore the result of calling
 	 * {@link #consumesVariableArgs()} <b>must</b> return {@code true}), it will return the minimum number of arguments
 	 * it will consume.</p>
@@ -120,7 +123,8 @@ public interface ValueConverter<R> {
 				// I (altrisi) won't implement generics in varargs. Those are just PAINFUL. They have like 3-4 nested types and don't have the generics
 				// and annotations in the same place, plus they have a different "conversion hierarchy" than the rest, making everything require
 				// special methods to get the class from type, generics from type and annotations from type. Not worth the effort for me.
-				// Those will just fail with a ClassCastException
+				// Example: AnnotatedGenericTypeArray (or similar) being (@Paran.KeyValuePairs Map<String, String>... name)
+				// Those will just fail with a ClassCastException.
 		if (type.isArray()) type = (Class<R>) type.getComponentType(); // Varargs
 		
 		if (type == List.class)
@@ -129,7 +133,7 @@ public interface ValueConverter<R> {
 			return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType);  //Already checked that type is Map
 		if (annoType.getAnnotations().length != 0) { //TODO OptionalParam annotation. Maybe save type to var then wrap into holder?
 			if (annoType.getAnnotation(Param.Strict.class) != null)
-				return (ValueConverter<R>)Param.Params.getStrictParam(annoType); // Already throws if incorrect usage
+				return (ValueConverter<R>)Param.Params.getStrictConverter(annoType); // Already throws if incorrect usage
 		}
 		
 		//Start: Old fromType. TODO: Move before annotations when OptionalParam exists
@@ -150,16 +154,19 @@ public interface ValueConverter<R> {
 	 * may not be supported by using directly a {@link Value}, allows multi-param converters and allows
 	 * meta converters (such as the {@link Context} provider)</p>
 	 * 
-	 * @implSpec <p>Implementations of this method are not required to evaluate the next {@link LazyValue} if they are not supposed to,
+	 * @implSpec Implementations of this method are not required to evaluate the next {@link LazyValue} if they are not supposed to,
 	 *           such as in the case of a {@link LazyValue} to {@link LazyValue} identity, neither move the {@link Iterator} to
-	 *           the next position, such as in the case of meta providers like {@link Context}.</p>
+	 *           the next position, such as in the case of meta providers like {@link Context}.
 	 *           <p>Implementations can also evaluate more than a single parameter when being called with this function, 
-	 *           but in such case they must implement {@link #howManyValuesDoesThisEat()} to return how many parameters does it
-	 *           consume, and, if it accepts variable arguments, implement {@link #consumesVariableArgs()}</p>
+	 *           but in such case they must implement {@link #howManyValuesDoesThisEat()} to return how many parameters do they
+	 *           consume at minimum, and, if they may consume variable arguments, implement {@link #consumesVariableArgs()}</p>
+	 *           <p>This method holds the same nullability constraints as {@link #convert(Value)}</p>
 	 * @param lazyValueIterator An {@link Iterator} holding the {@link LazyValue} to convert in next position
 	 * @param context The {@link Context} to convert with
 	 * @return The given {@link LazyValue}, evaluated with the given {@link Context}, and converted to the type {@code <R>} of
 	 *         this {@link ValueConverter}
+	 * @apiNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link LazyValue} evaluated with
+	 *          the given context.
 	 */
 	default public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
 		return convert(lazyValueIterator.next().evalValue(context));

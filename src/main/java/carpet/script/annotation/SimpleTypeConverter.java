@@ -18,6 +18,18 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
+/**
+ * <p>A simple {@link ValueConverter} implementation that converts from a specified subclass of {@link Value} into {@code <R>}
+ * by using a given function.</p>
+ * 
+ * <p>This class uses a {@link ValueCaster} in order to check and cast the {@link Value} to its required type, and then converts it
+ * using the given function.</p>
+ *
+ * @see #registerType(Class, Class, Function)
+ * 
+ * @param <T> The type of the required input {@link Value}
+ * @param <R> The type that this converter converts to
+ */
 public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R> {
 	private static final Map<Class<?>, SimpleTypeConverter<? extends Value, ?>> byResult = new HashMap<>();
 	static {
@@ -37,16 +49,23 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		registerType(NumericValue.class, Double.class, NumericValue::getDouble);
 		registerType(NumericValue.class, Integer.class, NumericValue::getInt);
 		registerType(NumericValue.class, Boolean.class, NumericValue::getBoolean);
-		//TODO What to do with function/block locators and the like
 	}
 	
 	
-	//private final Class<R> outputType;
 	private final Function<T, R> converter;
 	private final ValueCaster<T> caster;
 	
-	SimpleTypeConverter(Class<T> inputType, Function<T, R> converter) {
-		//this.outputType = outputType;
+	/**
+	 * <p>The default constructor for {@link SimpleTypeConverter}.</p>
+	 * 
+	 * <p>This is public in order to provide an implementation to use when registering {@link ValueConverter}s
+	 * for the {@link Param.Strict} annotation registry, and it's not intended way to register new {@link SimpleTypeConverter}</p>
+	 * <p>Use {@link #registerType(Class, Class, Function)} for that.</p>
+	 * 
+	 * @param inputType The required type for the input {@link Value}
+	 * @param converter The function to convert an instance of inputType into R.
+	 */
+	public SimpleTypeConverter(Class<T> inputType, Function<T, R> converter) {
 		this.converter = converter;
 		this.caster = ValueCaster.get(inputType);
 	}
@@ -67,6 +86,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		return (SimpleTypeConverter<Value, R>) byResult.get(outputType);
 	}
 	
+	@Override
 	@Nullable
 	public R convert(Value value) {
 		T castedValue = caster.convert(value);

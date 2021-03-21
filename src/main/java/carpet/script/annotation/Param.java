@@ -129,7 +129,11 @@ public interface Param {
 	}
 	
 	/**
-	 * <p>Class that holds the actual converters and converter getting logic for those annotated types and things.</p> 
+	 * <p>Class that holds the actual converters and converter getting logic for those annotated types and things.</p>
+	 * 
+	 * <p>It also holds the registry for strict {@link ValueConverter}s.</p>
+	 * 
+	 * @see #registerStrictConverter(Class, boolean, ValueConverter)
 	 *
 	 */
 	public static class Params {
@@ -159,17 +163,14 @@ public interface Param {
 		 */
 		public static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
 			@Override public String getTypeName() {return "";}
-		
 			@Override
 			public @Nullable Context convert(Value value) {
 				throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");
 			}
-			
 			@Override
 			public Context evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
 				return context;
 			}
-			
 			@Override
 			public int howManyValuesDoesThisEat() {
 				return 0;
@@ -177,19 +178,21 @@ public interface Param {
 		};
 		
 		/**
-		 * {@code <Pair<Type, shallow?>, Converter>}
+		 * <p>Strict converters</p>
+		 * <p>Stored as {@code <Pair<Type, shallow?>, Converter>}</p>
 		 */
 		private static Map<Pair<Class<?>, Boolean>, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
 		static {
-			registerStrictParam(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString));
-			registerStrictParam(Text.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText));
-			registerStrictParam(Text.class, true, new SimpleTypeConverter<>(StringValue.class, 
+			registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString));
+			registerStrictConverter(Text.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText));
+			registerStrictConverter(Text.class, true, new SimpleTypeConverter<>(StringValue.class, 
 								v -> v instanceof FormattedTextValue ? ((FormattedTextValue) v).getText() : new LiteralText(v.getString())));
-			registerStrictParam(ServerPlayerEntity.class, false, new SimpleTypeConverter<>(EntityValue.class, 
+			registerStrictConverter(ServerPlayerEntity.class, false, new SimpleTypeConverter<>(EntityValue.class, 
 								v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v)));
-			registerStrictParam(Boolean.TYPE, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean));
-			registerStrictParam(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean));
-			registerStrictParam(Boolean.TYPE, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean));
+			registerStrictConverter(Boolean.TYPE, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean));
+			registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean));
+			registerStrictConverter(Boolean.TYPE, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean));
+			registerStrictConverter(Boolean.class, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean));
 		}
 		
 		/**
@@ -199,7 +202,7 @@ public interface Param {
 		 * @throws IllegalArgumentException If the type doesn't accept the {@link Strict} annotation
 		 *                                  or if it has been used incorrectly (shallow in unsupported places)
 		 */
-		public static ValueConverter<?> getStrictParam(AnnotatedType type) { //TODO Check this new method works
+		public static ValueConverter<?> getStrictConverter(AnnotatedType type) { //TODO Check this new method works
 			boolean shallow = type.getAnnotation(Strict.class).shallow();
 			Class<?> clazz = (Class<?>) type.getType();
 			Pair<Class<?>, Boolean> key = Pair.of(clazz, shallow);
@@ -222,8 +225,10 @@ public interface Param {
 		 * @param shallow {@code true} if you are registering a shallow-strict parameter, {@code false} if a "fully" strict one
 		 * @param converter The {@link ValueConverter} for the given type and shallowness.
 		 */
-		public static <T> void registerStrictParam(Class<T> type, boolean shallow, ValueConverter<T> converter) {
+		public static <T> void registerStrictConverter(Class<T> type, boolean shallow, ValueConverter<T> converter) {
 			Pair<Class<?>, Boolean> key = Pair.of(type, shallow);
+			if (strictParamsByClassAndShallowness.containsKey(key))
+				throw new IllegalArgumentException(type + " already has a registered " + (shallow ? "" : "non-") + "shallow StrictConverter");
 			strictParamsByClassAndShallowness.put(key, converter);
 		}
 	}

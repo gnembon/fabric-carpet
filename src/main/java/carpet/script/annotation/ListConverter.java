@@ -9,6 +9,17 @@ import java.util.stream.Collectors;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
+/**
+ * <p>Converts a given {@link ListValue} into a {@link List} of values converted to {@code <T>}.</p>
+ * 
+ * <p>If the {@link Param.AllowSingleton} annotation is specified, allows creating a singleton from
+ * a loose element compatible with the type conversion.</p> 
+ * 
+ * <p>Lists provided by this converter are <b>not</b> linked to the initial list, and therefore will not
+ * reflect changes in either of them</p>
+ *
+ * @param <T> The type of the element that will be inside the list
+ */
 public class ListConverter<T> implements ValueConverter<List<T>> {
 	private final ValueConverter<T> itemConverter;
 	private final boolean allowSingletonCreation;

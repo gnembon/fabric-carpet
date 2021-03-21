@@ -36,6 +36,8 @@ import carpet.script.value.Value;
  * expression to the method. In order to get <em>The lazy t</em>, annotate an {@link Integer} with {@link Param.TheLazyT}.
  * See that class for more details.</p>
  * 
+ * @see AnnotationParser
+ * @see AnnotationParser#parseFunctionClass(Class)
  * @see Param.Strict
  * @see Param.TheLazyT
  * @see Param.AllowSingleton
@@ -47,15 +49,23 @@ import carpet.script.value.Value;
 @Retention(RUNTIME)
 public @interface LazyFunction {
 	/**
-	 * <p>If the function can accept a variable number of parameters (varargs),
-	 * this must define the maximum number of params this function can take.</p>
+	 * <p>If the function can accept a variable number of parameters, either by
+	 * declaring its last parameter as a varargs parameter or by having one of
+	 * their parameters use a converter that consumes a variable number of arguments,
+	 * this must define the maximum number of parameters this function can take.</p>
 	 * 
-	 * <p>The parser will throw in case a function is defined with varargs
-	 * but no maxParams value has been specified in this annotation.
-	 * <br>The value, however, will be ignored if the function has fixed args</p>
+	 * <p>The parser will throw in case a function can accept a variable number of parameters
+	 * but no maxParams value has been specified in its {@link LazyFunction} annotation.
+	 * <br>The value, however, will be ignored if the function has a fixed number of parameters.</p>
 	 * 
-	 * <p>Use -1 for unlimited number of params.</p>
-	 * @return The maximum of parameters this function can accept
+	 * <p>Note that this maximum number of parameters refers to the limit of parameters that can be passed
+	 * to a function from Scarpet, not the maximum number of parameters the method will receive in its
+	 * varargs parameter. Therefore, if using, for example, a locator argument, you should consider
+	 * that those can take either a single triple of values or 3 independent values, that would be counted
+	 * in the maximum number of parameters.</p>
+	 * 
+	 * <p>Use -1 to specify an unlimited number of parameters.</p>
+	 * @return The maximum number of parameters this function can accept
 	 */
     int maxParams() default -2;
 }

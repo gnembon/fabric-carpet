@@ -10,8 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.apache.commons.lang3.ClassUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import carpet.CarpetSettings;
@@ -58,7 +56,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * @see OutputConverter#register(Class, java.util.function.Function)
  * @see ValueCaster#register(Class, String)
  * @see SimpleTypeConverter#registerType(Class, Class, java.util.function.Function)
- * @see Param.Params#registerStrictParam(Class, boolean, ValueConverter)
+ * @see Param.Params#registerStrictConverter(Class, boolean, ValueConverter)
  */
 public class AnnotationParser {
 	private static final List<Triple<String, Integer, TriFunction<Context, Integer, List<LazyValue>, LazyValue>>> functionList = new ArrayList<>();
@@ -107,39 +105,29 @@ public class AnnotationParser {
 			if (method.getExceptionTypes().length != 0) {
 				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided in '"+ clazz +"' must not declare checked exceptions");
 			}
-			List<Pair<String, Class<?>>> params = new ArrayList<>(); //TODO (yet unused)
 			
-			Parameter[] paramz = method.getParameters();
+			String functionName = method.getName();
+			List<ValueConverter<?>> valueConverters = new ObjectArrayList<>(); //Out here to get effectively varargs and paramCount
 			
-			for (Parameter param : paramz) {
-				if (!param.isVarArgs() && param.getType() != Context.class)
-					params.add(Pair.of(param.getName(), param.getType()));
-			}
-			boolean unlimitedParams = false;
-			if (method.isVarArgs()) {
-				int maxParams = method.getAnnotation(LazyFunction.class).maxParams();
-				if (maxParams == -2) 
+			TriFunction<Context, Integer, List<LazyValue>, LazyValue> function = makeFunction(method, instance, valueConverters);
+			
+			boolean isEffectivelyVarArgs = method.isVarArgs() ? true : valueConverters.stream().anyMatch(ValueConverter::consumesVariableArgs);
+			int actualParameterCount = valueConverters.stream().mapToInt(ValueConverter::howManyValuesDoesThisEat).sum(); //Note: In varargs, this is minimum
+			
+			int maxParams; // Unlimited == Integer.MAX_VALUE
+			if (isEffectivelyVarArgs) {
+				maxParams = method.getAnnotation(LazyFunction.class).maxParams();
+				if (maxParams == -2)
 					throw new IllegalArgumentException("No maximum number of params specified for " + method.getName() + ", use -1 for unlimited. "
 							+ "Provided in " + clazz);
-				else if (maxParams == -1)
-					unlimitedParams = true;
-				else if (maxParams < method.getParameterCount()) //TODO Locators and the like?
+				if (maxParams < actualParameterCount)
 					throw new IllegalArgumentException("Provided maximum number of params for " + method.getName() + " is smaller than method's param count."
 							+ "Provided in " + clazz);
-				else {
-					int pointer = params.size();
-					while (maxParams - pointer > 0) {
-						params.add(Pair.of("arg" + pointer + 1, Value.class));
-						pointer++;
-					}
-				}
+				if (maxParams == -1)
+					maxParams = Integer.MAX_VALUE;
 			}
-			// TODO Replace this with the argument checker/converter. Edit: With a stream mapping all required things via howManyValuesDoesThisEat
-			int parameterCount = method.isVarArgs() ? -1 : method.getParameterCount();
-			// TODO ^^ This no longer works with current multiparam providers, such as MapConverter$PairConverter
-			String functionName = method.getName();
 			
-			TriFunction<Context, Integer, List<LazyValue>, LazyValue> function = makeFunction(method, instance);
+			int parameterCount = isEffectivelyVarArgs ? -1 : actualParameterCount;
 			CarpetSettings.LOG.info("Adding fname: "+functionName+". Expression paramcount: "+parameterCount+". Provided in '" + clazz + "'");
 			functionList.add(Triple.of(functionName, parameterCount, function));
 			
@@ -152,31 +140,31 @@ public class AnnotationParser {
 
 	}
 	
-	private static <T> TriFunction<Context, Integer, List<LazyValue>, LazyValue> makeFunction(final Method method, final Object instance) {
+	private static <T> TriFunction<Context, Integer, List<LazyValue>, LazyValue> makeFunction(final Method method, final Object instance, final List<ValueConverter<?>> valueConverters) {
 		final boolean isVarArgs = method.isVarArgs();
-		@SuppressWarnings("unchecked") // We are "defining" T in here. TODO Decide whether to just use <Object>
+		@SuppressWarnings("unchecked") // We are "defining" T in here. TODO Decide whether to just use <Object> && get rid of T
 		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>) method.getReturnType());
-		final List<ValueConverter<?>> valueConverters = new ObjectArrayList<>(); //Testing (at least slightly) more performant things
 		int methodParamCount = method.getParameterCount(); // Not capturing since it's fast, just verbose
 		Parameter param;
 		for (int i = 0; i < methodParamCount; i++) {
 			param = method.getParameters()[i];
-			if (!isVarArgs || i != methodParamCount -1 )
+			if (!isVarArgs || i != methodParamCount -1 ) // Varargs converter goes separate
 				valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
 		}
 		final ValueConverter<?> varArgsConverter = ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType());
 		final Class<?> varArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
 		//If using primitives, this is problematic when casting (cannot cast to Object[]). TODO Change if I find a better way.
-		//TODO Option 2: Just not support unboxeds in varargs and ask to use boxed types, would be both simpler and faster, since this method requires creating new array and moving every item to cast Boxed[] -> primitive[]
+		//TODO Option 2: Just not support unboxeds in varargs and ask to use boxed types, would be both simpler and faster, since this 
+		//              method requires creating new array and moving every item to cast Boxed[] -> primitive[]
 		//TODO At least use one of them, since I got lazy and didn't even make this work (current idea: ArrayUtils.toPrimitive(boxedArray) )
-		final Class<?> boxedVarArgsType = ClassUtils.primitiveToWrapper(varArgsType);
-		final int minParams = 0; // TODO Populate this. Think about locators
+		//final Class<?> boxedVarArgsType = ClassUtils.primitiveToWrapper(varArgsType);
+		
+		final int minParams = valueConverters.stream().mapToInt(ValueConverter::howManyValuesDoesThisEat).sum(); //TODO This is duplicated
 		
 		return (context, i, lv) -> {
 			if (isVarArgs && lv.size() < minParams)
 				throw new InternalExpressionException(method.getName() + " expects at least " + minParams + "arguments"); 
 			Object[] params = getMethodParams(lv, valueConverters, varArgsConverter, varArgsType, isVarArgs, context, method.getParameterCount());
-			// ^ TODO Decide whether it's a good idea to have this outside or just take it back here
 			try {
 				@SuppressWarnings("unchecked") // T is the return type of the method. Why doesn't Method have generics for the output?
 				LazyValue ret = outputConverter.convert((T) method.invoke(instance, params)); 
@@ -195,20 +183,20 @@ public class AnnotationParser {
 	}
 	
 	private static Object[] getMethodParams(List<LazyValue> lv, List<ValueConverter<?>> valueConverters,
-											ValueConverter<?> varArgsConverter, Class<?> varArgsType, boolean isVarArgs, 
+											ValueConverter<?> varArgsConverter, Class<?> varArgsType, boolean isMethodVarArgs, 
 											Context context, int methodParameterCount)
 	{
 		Object[] params;
 		ListIterator<LazyValue> lvIterator = lv.listIterator();
-		if (isVarArgs) {
-			int regularRemaining = methodParameterCount - 1; //TODO Get rid of this and use methodParamCount and pointer
+		if (isMethodVarArgs) {
+			int regularRemaining = methodParameterCount - 1; //TODO Get rid of this and just use methodParamCount and pointer
 			int pointer = 0;
 			Iterator<ValueConverter<?>> converterIterator = valueConverters.iterator(); 
 			params = new Object[methodParameterCount];
 			while (regularRemaining > 0) {
 				params[pointer] = converterIterator.next().evalAndConvert(lvIterator, context);
 				regularRemaining--; pointer++;
-			} //TODO Assert the following fully works. Seems to, missing testing acceptsVariableArgs
+			}
 			int remaining = lv.size() - lvIterator.nextIndex();
 			Object[] varArgs;
 			if (varArgsConverter.consumesVariableArgs()) {
@@ -226,7 +214,7 @@ public class AnnotationParser {
 			}
 			
 			params[methodParameterCount - 1] = varArgs;
-			//TODO (even) More efficient thing of the above ^
+			//TODO (even) More efficient thing of the above? ^
 			//TODO The above, but for primitive varargs
 		} else {
 			params = new Object[methodParameterCount];

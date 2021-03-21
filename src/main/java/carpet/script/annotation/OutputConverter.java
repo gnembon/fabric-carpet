@@ -76,13 +76,14 @@ public class OutputConverter<T> {
 	}
 	
 	/**
-	 * Registers a new type to be able to use it as the return value of methods
+	 * Registers a new type to be able to be used as the return value of methods
 	 * @param <T> The type of the return value
 	 * @param outputClass The class of T
 	 * @param converter The function that converts the an instance of T to a {@link LazyValue}
 	 */
 	public static <T> void register(Class<T> outputClass, Function<T, LazyValue> converter) {
 		OutputConverter<T> instance = new OutputConverter<T>(converter);
-		byResult.putIfAbsent(outputClass, instance);
+		if (byResult.containsKey(outputClass)) throw new IllegalArgumentException(outputClass + " already has a registered OutputConverter");
+		byResult.put(outputClass, instance);
 	}
 }
