@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
@@ -59,7 +60,19 @@ public class SystemInfo {
         put("game_view_distance", c -> new NumericValue(c.s.getMinecraftServer().getPlayerManager().getViewDistance()));
         put("game_mod_name", c -> StringValue.of(c.s.getMinecraftServer().getServerModName()));
         put("game_version", c -> StringValue.of(c.s.getMinecraftServer().getVersion()));
+        put("game_target", c -> StringValue.of(SharedConstants.getGameVersion().getReleaseTarget()));
+        put("game_protocol", c -> NumericValue.of(SharedConstants.method_31372()));
+        put("game_major_target", c -> {
+            String [] vers = SharedConstants.getGameVersion().getReleaseTarget().split("\\.");
+            return NumericValue.of((vers.length > 1)?Integer.parseInt(vers[1]):0);
+        });
+        put("game_minor_target", c -> {
+            String [] vers = SharedConstants.getGameVersion().getReleaseTarget().split("\\.");
+            return NumericValue.of((vers.length > 2)?Integer.parseInt(vers[2]):0);
+        });
+        put("game_stable", c -> BooleanValue.of(SharedConstants.getGameVersion().isStable()));
         put("game_data_version", c->NumericValue.of(SharedConstants.getGameVersion().getWorldVersion()));
+        put("game_pack_version", c->NumericValue.of(SharedConstants.getGameVersion().getPackVersion()));
 
         put("server_ip", c -> StringValue.of(c.s.getMinecraftServer().getServerIp()));
         put("server_whitelisted", c -> new NumericValue(c.s.getMinecraftServer().isEnforceWhitelist()));
