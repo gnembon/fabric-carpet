@@ -1307,7 +1307,7 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                if (lv.size() >= 1 && lv.size() <= 5)
+                if (lv.size() >= 1 && lv.size() <= 6)
                 {
                     String effectName = lv.get(0).getString();
                     StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
