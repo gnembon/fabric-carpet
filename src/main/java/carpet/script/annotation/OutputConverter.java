@@ -24,9 +24,9 @@ import net.minecraft.util.math.Vec3d;
 
 public class OutputConverter<T> {
 	private static final Map<Class<?>, OutputConverter<?>> byResult = new HashMap<>();
+	private static OutputConverter<Value> VALUE = new OutputConverter<>(v -> (c, t) -> v);
 	static {
 		register(LazyValue.class, Function.identity());
-		register(Value.class, v -> (c, t) -> v);
 		register(Boolean.TYPE, v -> (v ? LazyValue.TRUE : LazyValue.FALSE)); // Boxed and unboxed. Things are boxed in the process anyway, therefore
 		register(Boolean.class, v -> (v ? LazyValue.TRUE : LazyValue.FALSE));                 // would recommend boxed outputs, so you can use null
 		register(Integer.TYPE, v -> (c, t) -> NumericValue.of(v));
@@ -62,6 +62,8 @@ public class OutputConverter<T> {
 	 */
 	@SuppressWarnings("unchecked") // OutputConverters are stored with their class, for sure since the map is private (&& class has same generic as converter)
 	public static <T> OutputConverter<T> get(Class<T> returnType) {
+		if (Value.class.isAssignableFrom(returnType))
+			return (OutputConverter<T>) VALUE;
 		return (OutputConverter<T>) Objects.requireNonNull(byResult.get(returnType), "Unregistered output type: "+returnType+". Register it in OutputConverter");
 	}
 	
