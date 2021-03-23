@@ -54,8 +54,12 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 	/**
 	 * <p>Returns a new {@link MapConverter} to convert to the given {@link AnnotatedType}.</p>
 	 * 
-	 * <p>The given {@link ValueConverter} will convert the objects inside the map (keys and values) to the
+	 * <p>The returned {@link ValueConverter} will convert the objects inside the map (keys and values) to the
 	 * generics specified in the {@link AnnotatedType}.</p>
+	 * 
+	 * <p>If the provided {@link AnnotatedType} is annotated with {@link Param.KeyValuePairs}, it will return an implementation of
+	 * {@link MapConverter} that provides extra checks in order to allow inputs of either {@code {k->v,k2->v2,...}}, {@code [k,v,k2,v2,...]} 
+	 * or {@code fn(...,k,v,k2,v2,...)}</p>
 	 * 
 	 * @apiNote This method expects the {@link AnnotatedType} to already be of {@link Map} type, and, while it will
 	 *          technically accept a non-{@link Map} {@link AnnotatedType}, it will fail if it doesn't has at least

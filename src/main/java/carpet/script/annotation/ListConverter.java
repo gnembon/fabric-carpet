@@ -44,7 +44,7 @@ public class ListConverter<T> implements ValueConverter<List<T>> {
 	/**
 	 * <p>Returns a new {@link ListConverter} to convert to the given {@link AnnotatedType}.</p>
 	 * 
-	 * <p>The given {@link ValueConverter} will convert the objects inside the list to the
+	 * <p>The returned {@link ValueConverter} will convert the objects inside the list to the
 	 * generics specified in the {@link AnnotatedType}, and the {@link ValueConverter} will
 	 * be set to accept non-list (but correct) items and make a singleton out of them     //TODO "Correct" part
 	 * if the {@link Param.AllowSingleton} annotation has been specified.</p>

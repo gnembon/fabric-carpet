@@ -9,10 +9,10 @@ import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
-import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
-
 import java.util.List;
 import java.util.Locale;
+
+import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
 public class FunctionsTestClass {
 	@LazyFunction

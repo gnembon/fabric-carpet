@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.Nullable;
 
 import carpet.CarpetServer;
 import carpet.script.Context;
@@ -164,7 +163,7 @@ public interface Param {
 		public static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
 			@Override public String getTypeName() {return "";}
 			@Override
-			public @Nullable Context convert(Value value) {
+			public Context convert(Value value) {
 				throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");
 			}
 			@Override
