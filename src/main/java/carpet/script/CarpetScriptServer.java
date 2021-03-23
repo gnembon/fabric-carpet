@@ -94,6 +94,7 @@ public class CarpetScriptServer
         registerBuiltInScript(BundledModule.carpetNative("chunk_display", false));
         registerBuiltInScript(BundledModule.carpetNative("ai_tracker", false));
         registerBuiltInScript(BundledModule.carpetNative("draw_beta", false));
+        registerBuiltInScript(BundledModule.carpetNative("shapes", true));
         registerBuiltInScript(BundledModule.carpetNative("distance_beta", false));
     }
 
