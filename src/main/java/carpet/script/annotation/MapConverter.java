@@ -105,6 +105,8 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 		@Override
 		public Map<K, V> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
 			if (!acceptMultiParam) return super.evalAndConvert(lazyValueIterator, context);
+			if (!lazyValueIterator.hasNext())
+				return null;
 			Value val = lazyValueIterator.next().evalValue(context);
 			if (val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
 				return convert(val);                                   // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption

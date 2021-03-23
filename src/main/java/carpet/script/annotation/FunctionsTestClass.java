@@ -11,6 +11,7 @@ import net.minecraft.text.Text;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
@@ -38,8 +39,8 @@ public class FunctionsTestClass {
 		return (c, t) -> retval;
 	}
 	
-	@LazyFunction(maxParams = 6) //TODO This is a concept. Edit: IT WORKS!
-	public Boolean display_title2(@AllowSingleton List<ServerPlayerEntity> targets, String actionString, Text content, Integer... times) {
+	@LazyFunction(maxParams = 6)
+	public Integer display_title2(@AllowSingleton List<ServerPlayerEntity> targets, String actionString, Optional<Text> content, Integer... times) {
 	    TitleS2CPacket.Action action;
 	    switch (actionString.toLowerCase(Locale.ROOT))
 	    {
@@ -52,12 +53,15 @@ public class FunctionsTestClass {
 	        case "actionbar":
 	            action = Action.ACTIONBAR;
 	            break;
+	        case "clear":
+	        	action = Action.CLEAR;
+	        	break;
 	        default:
-	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle' or 'actionbar' as second argument");
+	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
 	    }
 	    if (times.length == 3)
 	        targets.forEach(p -> p.networkHandler.sendPacket(new TitleS2CPacket(Action.TIMES, null, times[0], times[1], times[2])));
-	    targets.forEach(p -> p.networkHandler.sendPacket(new TitleS2CPacket(action, content)));
-	    return true;
+	    targets.forEach(p -> p.networkHandler.sendPacket(new TitleS2CPacket(action, content.orElse(null))));
+	    return targets.size();
 	}
 }

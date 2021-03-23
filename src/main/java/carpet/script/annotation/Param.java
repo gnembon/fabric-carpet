@@ -147,7 +147,7 @@ public interface Param {
 			}
 			@Override
 			public LazyValue evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context c) {
-				return lazyValueIterator.next();
+				return lazyValueIterator.hasNext() ? lazyValueIterator.next() : null;
 			}
 			@Override
 			public String getTypeName() {

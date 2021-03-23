@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +132,9 @@ public interface ValueConverter<R> {
 			return (ValueConverter<R>) ListConverter.fromAnnotatedType(annoType); //Already checked that type is List
 		if (type == Map.class)
 			return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType);  //Already checked that type is Map
-		if (annoType.getAnnotations().length != 0) { //TODO OptionalParam annotation. Maybe save type to var then wrap into holder?
+		if (type == Optional.class)
+			return (ValueConverter<R>) OptionalConverter.fromAnnotatedType(annoType);
+		if (annoType.getAnnotations().length != 0) {
 			if (annoType.getAnnotation(Param.Strict.class) != null)
 				return (ValueConverter<R>)Param.Params.getStrictConverter(annoType); // Already throws if incorrect usage
 		}
@@ -147,8 +150,8 @@ public interface ValueConverter<R> {
 	}
 	
 	/**
-	 * <p>Evaluates the next {@link LazyValue} in the given {@link Iterator} with the given {@link Context} and then converts the type
-	 * using this {@link ValueConverter}'s {@link #convert(Value)} function.</p>
+	 * <p>Checks for the presence of the next {@link LazyValue} in the given {@link Iterator}, evaluates it with the given {@link Context} and 
+	 * then converts it to this {@link ValueConverter}'s output type.</p>
 	 * 
 	 * <p>This should be the preferred way to call the converter, since it allows some conversions that
 	 * may not be supported by using directly a {@link Value}, allows multi-param converters and allows
@@ -169,6 +172,8 @@ public interface ValueConverter<R> {
 	 *          the given context.
 	 */
 	default public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+		if (!lazyValueIterator.hasNext())
+			return null;
 		return convert(lazyValueIterator.next().evalValue(context));
 	}
 }
