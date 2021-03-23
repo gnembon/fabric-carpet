@@ -54,8 +54,8 @@ public class FunctionsTestClass {
 	            action = Action.ACTIONBAR;
 	            break;
 	        case "clear":
-	        	action = Action.CLEAR;
-	        	break;
+	            action = Action.CLEAR;
+	            break;
 	        default:
 	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
 	    }

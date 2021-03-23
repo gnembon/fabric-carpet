@@ -3,6 +3,7 @@ package carpet.script.annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.util.Optional;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -43,6 +44,7 @@ import carpet.script.value.Value;
  * @see Param.AllowSingleton
  * @see Locator.Block
  * @see Locator.Vec3d
+ * @see Optional
  */
 @Documented
 @Target(METHOD)

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import carpet.script.Context;
 import carpet.script.LazyValue;
@@ -40,7 +41,13 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 	public Map<K, V> convert(Value value) {
 		Map<K, V> result = new HashMap<>(); //Would love a way to get this directly in a one-line stream. Also TODO check nulls from converters
 		if (value instanceof MapValue) {
-			((MapValue) value).getMap().forEach((k, v) -> result.put(keyConverter.convert(k), valueConverter.convert(v)));
+			for (Entry<Value, Value> entry : ((MapValue) value).getMap().entrySet()) {
+				K key = keyConverter.convert(entry.getKey());
+				V val = valueConverter.convert(entry.getValue());
+				if (key == null || val == null)
+					return null;
+				result.put(key, val);
+			}
 			return result;
 		}
 		return null;
@@ -97,8 +104,13 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 				return null;
 			Map<K, V> map = new HashMap<>();
 			Iterator<Value> val = valueList.iterator();
-			while (val.hasNext())
-				map.put(keyConverter.convert(val.next()), valueConverter.convert(val.next()));
+			while (val.hasNext()) {
+				K key = keyConverter.convert(val.next());
+				V value = valueConverter.convert(val.next());
+				if (key == null || value == null)
+					return null;
+				map.put(key, value);
+			}
 			return map;
 		}
 		
@@ -111,14 +123,17 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 			if (val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
 				return convert(val);                                   // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
 			Map<K, V> map = new HashMap<>();
-			if (lazyValueIterator.hasNext())
-				map.put(keyConverter.convert(val), valueConverter.evalAndConvert(lazyValueIterator, context));
-			else return null;
+			K key = keyConverter.convert(val);
+			V value = valueConverter.evalAndConvert(lazyValueIterator, context);
+			if (key == null || value == null)
+				return null;
+			map.put(key, value);
 			while (lazyValueIterator.hasNext()) {
-				K key = keyConverter.evalAndConvert(lazyValueIterator, context);
-				if (lazyValueIterator.hasNext())
-					map.put(key, valueConverter.evalAndConvert(lazyValueIterator, context));
-				else return null;
+				key = keyConverter.evalAndConvert(lazyValueIterator, context);
+				value = valueConverter.evalAndConvert(lazyValueIterator, context);
+				if (key == null || value == null)
+					return null;
+				map.put(key, value);
 			}
 			return map;
 		}

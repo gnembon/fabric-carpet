@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -39,13 +40,16 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * <p>Parameters can be given the annotations (present in {@link Locator} and {@link Param} interfaces) in order to restrict them or 
  * make them more permissive to accept types, such as {@link Param.AllowSingleton} for lists.</p>
  * 
+ * <p>You can also declare optional parameters by using Java's {@link Optional} as the type of one of your parameters, though it must be
+ * at the end of the function, just before varargs if present and/or any other {@link Optional} parameters.</p>
+ * 
  * <p>Output of the annotated methods will also be converted to a compatible {@link LazyValue} using the registered {@link OutputConverter}s,
  * allowing to remove the need of explicitly converting to a {@link Value} and then to a {@link LazyValue} just to end the method.</p>
  * 
  * <p>For a variable argument count, the Java varargs notation can be used in the last parameter, converting the function into a variable argument
  * function that will pass all the rest of parameters to that last varargs parameter, also converted into the specified type.</p>
  * 
- * <p>To begin, use the {@link #parseFunctionClass(Class)} method.</p>
+ * <p>To begin, use the {@link #parseFunctionClass(Class)} method in a class with methods annotated with the {@link LazyFunction} annotation.</p>
  *
  * @see LazyFunction
  * @see Locator.Block
@@ -53,6 +57,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * @see Param.Strict
  * @see Param.AllowSingleton
  * @see Param.KeyValuePairs
+ * @see Optional
  * @see OutputConverter#register(Class, java.util.function.Function)
  * @see ValueCaster#register(Class, String)
  * @see SimpleTypeConverter#registerType(Class, Class, java.util.function.Function)

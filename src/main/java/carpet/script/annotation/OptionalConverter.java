@@ -75,7 +75,7 @@ public class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	
 	@Override
 	public boolean consumesVariableArgs() {
-		return typeConverter.consumesVariableArgs();
+		return true;
 	}
 	
 	@Override

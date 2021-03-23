@@ -2,9 +2,9 @@ package carpet.script.annotation;
 
 import java.lang.reflect.AnnotatedParameterizedType;
 import java.lang.reflect.AnnotatedType;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
@@ -30,10 +30,29 @@ public class ListConverter<T> implements ValueConverter<List<T>> {
 	}
 
 	@Override
-	public List<T> convert(Value value) { //TODO Actual checks. Singleton maker should return null if not instance, list value should not allow other things
+	public List<T> convert(Value value) {
 		return value instanceof ListValue 
-				? ((ListValue)value).getItems().stream().map(itemConverter::convert).collect(Collectors.toList())
-				: allowSingletonCreation ? Collections.singletonList(itemConverter.convert(value)) : null;
+				? convertListValue((ListValue) value)
+				: allowSingletonCreation ? convertSingleton(value) : null;
+	}
+	
+	private List<T> convertListValue(ListValue values) {
+		List<T> list = new ArrayList<>(values.getItems().size());
+		for (Value value : values) {
+			T converted = itemConverter.convert(value);
+			if (converted == null)
+				return null;
+			list.add(converted);
+		}
+		return list;
+	}
+	
+	private List<T> convertSingleton(Value val) {
+		T converted = itemConverter.convert(val);
+		if (converted == null)
+			return null;
+		return Collections.singletonList(converted);
+
 	}
 	
 	private ListConverter(AnnotatedType itemType, boolean allowSingletonCreation) {

@@ -136,10 +136,10 @@ public interface ValueConverter<R> {
 			return (ValueConverter<R>) OptionalConverter.fromAnnotatedType(annoType);
 		if (annoType.getAnnotations().length != 0) {
 			if (annoType.getAnnotation(Param.Strict.class) != null)
-				return (ValueConverter<R>)Param.Params.getStrictConverter(annoType); // Already throws if incorrect usage
+				return (ValueConverter<R>)Params.getStrictConverter(annoType); // Already throws if incorrect usage
 		}
 		
-		//Start: Old fromType. TODO: Move before annotations when OptionalParam exists
+		//Start: Old fromType.
 		if (type.isAssignableFrom(Value.class))
 			return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
 		if (type == LazyValue.class)
