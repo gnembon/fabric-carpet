@@ -10,7 +10,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.PistonBlockEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -128,25 +128,25 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
     }
     
     @Inject(method = "readNbt", at = @At(value = "TAIL"))
-    private void onFromTag(CompoundTag compoundTag_1, CallbackInfo ci)
+    private void onFromTag(NbtCompound NbtCompound_1, CallbackInfo ci)
     {
-        if (CarpetSettings.movableBlockEntities && compoundTag_1.contains("carriedTileEntityCM", 10))
+        if (CarpetSettings.movableBlockEntities && NbtCompound_1.contains("carriedTileEntityCM", 10))
         {
             if (this.pushedBlock.getBlock() instanceof BlockEntityProvider)
                 this.carriedBlockEntity = ((BlockEntityProvider) (this.pushedBlock.getBlock())).createBlockEntity(pos, pushedBlock);//   this.world);
             if (carriedBlockEntity != null) //Can actually be null, as BlockPistonMoving.createNewTileEntity(...) returns null
-                this.carriedBlockEntity.readNbt(compoundTag_1.getCompound("carriedTileEntityCM"));
+                this.carriedBlockEntity.readNbt(NbtCompound_1.getCompound("carriedTileEntityCM"));
             setCarriedBlockEntity(carriedBlockEntity);
         }
     }
     
     @Inject(method = "writeNbt", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-    private void onToTag(CompoundTag compoundTag_1, CallbackInfoReturnable<CompoundTag> cir)
+    private void onToTag(NbtCompound NbtCompound_1, CallbackInfoReturnable<NbtCompound> cir)
     {
         if (CarpetSettings.movableBlockEntities && this.carriedBlockEntity != null)
         {
             //Leave name "carriedTileEntityCM" instead of "carriedBlockEntityCM" for upgrade compatibility with 1.13.2 movable TE
-            compoundTag_1.put("carriedTileEntityCM", this.carriedBlockEntity.writeNbt(new CompoundTag()));
+            NbtCompound_1.put("carriedTileEntityCM", this.carriedBlockEntity.writeNbt(new NbtCompound()));
         }
     }
 }

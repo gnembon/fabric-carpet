@@ -21,7 +21,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -140,7 +140,7 @@ public class Entities {
             Vector3Argument position = Vector3Argument.findIn(cc, lv, 1);
             if (position.fromBlock)
                 position.vec = position.vec.subtract(0, 0.5, 0);
-            CompoundTag tag = new CompoundTag();
+            NbtCompound tag = new NbtCompound();
             boolean hasTag = false;
             if (lv.size() > position.offset)
             {

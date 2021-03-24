@@ -1,7 +1,7 @@
 package carpet.mixins;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
@@ -31,7 +31,7 @@ public abstract class PlayerManager_fakePlayersMixin
     private MinecraftServer server;
 
     @Inject(method = "loadPlayerData", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-    private void fixStartingPos(ServerPlayerEntity serverPlayerEntity_1, CallbackInfoReturnable<CompoundTag> cir)
+    private void fixStartingPos(ServerPlayerEntity serverPlayerEntity_1, CallbackInfoReturnable<NbtCompound> cir)
     {
         if (serverPlayerEntity_1 instanceof EntityPlayerMPFake)
         {

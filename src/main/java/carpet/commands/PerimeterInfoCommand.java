@@ -13,7 +13,7 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.EntitySummonArgumentType;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -46,7 +46,7 @@ public class PerimeterInfoCommand
 
     private static int perimeterDiagnose(ServerCommandSource source, BlockPos pos, String mobId)
     {
-        CompoundTag nbttagcompound = new CompoundTag();
+        NbtCompound nbttagcompound = new NbtCompound();
         MobEntity entityliving = null;
         if (mobId != null)
         {

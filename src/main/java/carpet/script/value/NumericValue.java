@@ -3,10 +3,10 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.LongTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtDouble;
+import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.NbtLong;
+import net.minecraft.nbt.NbtElement;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
@@ -271,20 +271,20 @@ public class NumericValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (longValue != null)
-            return LongTag.of(longValue);
+            return NbtLong.of(longValue);
         long lv = getLong();
         if (value == (double)lv)
         {
             if (abs(value) < Integer.MAX_VALUE-2)
-                return IntTag.of((int)lv);
-            return LongTag.of(getLong());
+                return NbtInt.of((int)lv);
+            return NbtLong.of(getLong());
         }
         else
         {
-            return DoubleTag.of(value);
+            return NbtDouble.of(value);
         }
     }
 

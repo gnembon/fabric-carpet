@@ -8,7 +8,7 @@ import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.mob.ElderGuardianEntity;
 import net.minecraft.entity.mob.GuardianEntity;
 import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,7 +28,7 @@ public abstract class GuardianEntityMixin extends HostileEntity
         {
             ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
             elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.yaw, this.pitch);
-            elderGuardian.initialize(serverWorld ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnReason.CONVERSION, (EntityData)null, (CompoundTag)null);
+            elderGuardian.initialize(serverWorld ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnReason.CONVERSION, (EntityData)null, (NbtCompound)null);
             elderGuardian.setAiDisabled(this.isAiDisabled());
             
             if (this.hasCustomName())

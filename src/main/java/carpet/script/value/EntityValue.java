@@ -27,8 +27,8 @@ import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.packet.s2c.play.EntityPassengersSetS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
@@ -49,12 +49,13 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.tag.Tag;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
@@ -241,7 +242,7 @@ public class EntityValue extends Value
                 positive = false;
                 who = who.substring(1);
             }
-            net.minecraft.tag.Tag<EntityType<?>> eTag = server.getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(who));
+            Tag<EntityType<?>> eTag = server.getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(who));
             if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
             if (positive)
             {
@@ -450,7 +451,7 @@ public class EntityValue extends Value
 
         put("has_scoreboard_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            net.minecraft.tag.Tag<EntityType<?>> tag = e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(a.getString()));
+            Tag<EntityType<?>> tag = e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(a.getString()));
             if (tag == null) return Value.NULL;
             return new NumericValue(e.getType().isIn(tag));
         });
@@ -841,7 +842,7 @@ public class EntityValue extends Value
         });
 
         put("nbt",(e, a) -> {
-            CompoundTag nbttagcompound = e.writeNbt((new CompoundTag()));
+            NbtCompound nbttagcompound = e.writeNbt((new NbtCompound()));
             if (a==null)
                 return new NBTSerializableValue(nbttagcompound);
             return new NBTSerializableValue(nbttagcompound).get(a);
@@ -1470,7 +1471,7 @@ public class EntityValue extends Value
                 Value tagValue = NBTSerializableValue.fromValue(v);
                 if (tagValue instanceof NBTSerializableValue)
                 {
-                    CompoundTag nbttagcompound = e.writeNbt((new CompoundTag()));
+                    NbtCompound nbttagcompound = e.writeNbt((new NbtCompound()));
                     nbttagcompound.copyFrom(((NBTSerializableValue) tagValue).getCompoundTag());
                     e.readNbt(nbttagcompound);
                     e.setUuid(uUID);
@@ -1493,12 +1494,12 @@ public class EntityValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        CompoundTag tag = new CompoundTag();
-        tag.put("Data", getEntity().writeNbt( new CompoundTag()));
-        tag.put("Name", StringTag.of(Registry.ENTITY_TYPE.getId(getEntity().getType()).toString()));
+        NbtCompound tag = new NbtCompound();
+        tag.put("Data", getEntity().writeNbt( new NbtCompound()));
+        tag.put("Name", NbtString.of(Registry.ENTITY_TYPE.getId(getEntity().getType()).toString()));
         return tag;
     }
 }

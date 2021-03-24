@@ -41,7 +41,7 @@ public abstract class PistonHandler_customStickyMixin
     @Shadow protected abstract boolean tryMove(BlockPos blockPos_1, Direction direction_1);
     @Shadow private static boolean isBlockSticky(BlockState block_1) { return false; }
     @Shadow private static boolean isAdjacentBlockStuck(BlockState block, BlockState block2) {return false;}
-    @Shadow protected abstract boolean canMoveAdjacentBlock(BlockPos pos);
+    @Shadow protected abstract boolean tryMoveAdjacentBlock(BlockPos pos);
 
     // collects information about sticking block when backtracking.
     private BlockPos currentPos;
@@ -169,7 +169,7 @@ public abstract class PistonHandler_customStickyMixin
             BlockState chainState = world.getBlockState(pos);
             // chain is sideways
             if (chainState.getBlock() == Blocks.CHAIN && !isChainOnAxis(chainState, motionDirection)
-                    && !this.canMoveAdjacentBlock(pos))
+                    && !this.tryMoveAdjacentBlock(pos))
             {
                 cir.setReturnValue(false);
             }
@@ -217,7 +217,7 @@ public abstract class PistonHandler_customStickyMixin
         if (CarpetSettings.doChainStone)
         {
             BlockState chainState = world.getBlockState(blockPos3);
-            if (chainState.getBlock() == Blocks.CHAIN && !isChainOnAxis(chainState, motionDirection) && !canMoveAdjacentBlock(blockPos3))
+            if (chainState.getBlock() == Blocks.CHAIN && !isChainOnAxis(chainState, motionDirection) && !tryMoveAdjacentBlock(blockPos3))
             {
                 cir.setReturnValue(false);
             }
@@ -228,7 +228,7 @@ public abstract class PistonHandler_customStickyMixin
     /**
      * Custom movement of blocks stuck to the sides of blocks other than slimeblocks like chains
      */
-    @Inject(method = "canMoveAdjacentBlock", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true, at = @At(
+    @Inject(method = "tryMoveAdjacentBlock", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true, at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/piston/PistonHandler;isAdjacentBlockStuck(Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)Z",
             shift = At.Shift.BEFORE
@@ -264,7 +264,7 @@ public abstract class PistonHandler_customStickyMixin
      * @param block2
      * @return
      */
-    @Redirect(method = "canMoveAdjacentBlock", at = @At(
+    @Redirect(method = "tryMoveAdjacentBlock", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/block/piston/PistonHandler;isAdjacentBlockStuck(Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)Z")
     )

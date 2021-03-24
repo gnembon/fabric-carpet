@@ -3,7 +3,7 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -251,7 +251,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         }
     }
 
-    public abstract Tag toTag(boolean force);
+    public abstract NbtElement toTag(boolean force);
 
     public JsonElement toJson()
     {

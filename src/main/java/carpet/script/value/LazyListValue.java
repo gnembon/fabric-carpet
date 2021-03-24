@@ -1,8 +1,8 @@
 package carpet.script.value;
 
 import carpet.script.exception.InternalExpressionException;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -199,9 +199,9 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        return StringTag.of(getString());
+        return NbtString.of(getString());
     }
 }

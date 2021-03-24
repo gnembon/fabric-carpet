@@ -1,7 +1,7 @@
 package carpet.script.value;
 
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 
 public class StringValue extends Value
 {
@@ -43,8 +43,8 @@ public class StringValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
-        return StringTag.of(str);
+        return NbtString.of(str);
     }
 }

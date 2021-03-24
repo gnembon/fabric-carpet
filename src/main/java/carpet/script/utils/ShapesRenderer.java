@@ -14,8 +14,8 @@ import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.render.VertexFormats;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -60,7 +60,7 @@ public class ShapesRenderer
         long currentTime = client.world.getTime();
         RenderSystem.disableTexture();
         RenderSystem.enableDepthTest();
-        RenderSystem.setShader(GameRenderer::method_34540);
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.depthFunc(515);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -122,7 +122,7 @@ public class ShapesRenderer
         RenderSystem.enableTexture();
     }
 
-    public void addShapes(ListTag tag)
+    public void addShapes(NbtList tag)
     {
         for (int i=0, count = tag.size(); i < count; i++)
         {
@@ -130,7 +130,7 @@ public class ShapesRenderer
         }
     }
 
-    public void addShape(CompoundTag tag)
+    public void addShape(NbtCompound tag)
     {
         ShapeDispatcher.ExpiringShape shape = ShapeDispatcher.fromTag(tag);
         if (shape == null) return;

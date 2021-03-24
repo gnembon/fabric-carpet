@@ -6,7 +6,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,15 +24,15 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     
     @Shadow protected abstract void dropShoulderEntities();
     
-    @Shadow public abstract CompoundTag getShoulderEntityLeft();
+    @Shadow public abstract NbtCompound getShoulderEntityLeft();
     
-    @Shadow protected abstract void setShoulderEntityLeft(CompoundTag compoundTag_1);
+    @Shadow protected abstract void setShoulderEntityLeft(NbtCompound NbtCompound_1);
     
-    @Shadow protected abstract void setShoulderEntityRight(CompoundTag compoundTag_1);
+    @Shadow protected abstract void setShoulderEntityRight(NbtCompound NbtCompound_1);
     
-    @Shadow public abstract CompoundTag getShoulderEntityRight();
+    @Shadow public abstract NbtCompound getShoulderEntityRight();
 
-    @Shadow protected abstract void dropShoulderEntity(CompoundTag entityNbt);
+    @Shadow protected abstract void dropShoulderEntity(NbtCompound entityNbt);
 
     protected PlayerEntity_parrotMixin(EntityType<? extends LivingEntity> entityType_1, World world_1)
     {
@@ -47,7 +47,7 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     }
     
     @Inject(method = "tickMovement", at = @At(value = "INVOKE", shift = At.Shift.AFTER, ordinal = 1,
-            target = "Lnet/minecraft/entity/player/PlayerEntity;updateShoulderEntity(Lnet/minecraft/nbt/CompoundTag;)V"))
+            target = "Lnet/minecraft/entity/player/PlayerEntity;updateShoulderEntity(Lnet/minecraft/nbt/NbtCompound;)V"))
     private void onTickMovement(CallbackInfo ci)
     {
         boolean parrots_will_drop = !CarpetSettings.persistentParrots || this.abilities.invulnerable;
@@ -67,13 +67,13 @@ public abstract class PlayerEntity_parrotMixin extends LivingEntity
     protected void dismount_left()
     {
         dropShoulderEntity(this.getShoulderEntityLeft());
-        this.setShoulderEntityLeft(new CompoundTag());
+        this.setShoulderEntityLeft(new NbtCompound());
     }
     
     protected void dismount_right()
     {
         dropShoulderEntity(this.getShoulderEntityRight());
-        this.setShoulderEntityRight(new CompoundTag());
+        this.setShoulderEntityRight(new NbtCompound());
     }
     
     @Inject(method = "damage", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,

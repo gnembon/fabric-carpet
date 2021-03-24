@@ -25,13 +25,13 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.AbstractListTag;
-import net.minecraft.nbt.AbstractNumberTag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.AbstractNbtList;
+import net.minecraft.nbt.AbstractNbtNumber;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.StringNbtReader;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -53,8 +53,8 @@ import java.util.stream.Collectors;
 public class NBTSerializableValue extends Value implements ContainerValueInterface
 {
     private String nbtString = null;
-    private Tag nbtTag = null;
-    private Supplier<Tag> nbtSupplier = null;
+    private NbtElement nbtTag = null;
+    private Supplier<NbtElement> nbtSupplier = null;
     private boolean owned = false;
 
     private NBTSerializableValue() {}
@@ -65,7 +65,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         {
             try
             {
-                return (new StringNbtReader(new StringReader(nbtString))).parseTag();
+                return (new StringNbtReader(new StringReader(nbtString))).parseElement();
             }
             catch (CommandSyntaxException e)
             {
@@ -75,13 +75,13 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         owned = true;
     }
 
-    public NBTSerializableValue(Tag tag)
+    public NBTSerializableValue(NbtElement tag)
     {
         nbtTag = tag;
         owned = true;
     }
 
-    public NBTSerializableValue(Supplier<Tag> tagSupplier)
+    public NBTSerializableValue(Supplier<NbtElement> tagSupplier)
     {
         nbtSupplier = tagSupplier;
     }
@@ -108,10 +108,10 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     public static NBTSerializableValue parseString(String nbtString, boolean fail)
     {
-        Tag tag;
+        NbtElement tag;
         try
         {
-            tag = (new StringNbtReader(new StringReader(nbtString))).parseTag();
+            tag = (new StringNbtReader(new StringReader(nbtString))).parseElement();
         }
         catch (CommandSyntaxException e)
         {
@@ -276,7 +276,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return parseItem(itemString, null);
     }
 
-    public static ItemStackArgument parseItem(String itemString, CompoundTag customTag)
+    public static ItemStackArgument parseItem(String itemString, NbtCompound customTag)
     {
         try
         {
@@ -313,12 +313,12 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return slot;
     }
 
-    private static Value decodeTag(Tag t)
+    private static Value decodeTag(NbtElement t)
     {
-        if (t instanceof CompoundTag)
+        if (t instanceof NbtCompound)
             return new NBTSerializableValue(() -> t);
-        if (t instanceof AbstractNumberTag)
-            return new NumericValue(((AbstractNumberTag) t).getDouble());
+        if (t instanceof AbstractNbtNumber)
+            return new NumericValue(((AbstractNbtNumber) t).doubleValue());
         // more can be done here
         return new StringValue(t.asString());
     }
@@ -338,35 +338,35 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
 
-    private static Value decodeTagDeep(Tag t)
+    private static Value decodeTagDeep(NbtElement t)
     {
-        if (t instanceof CompoundTag)
+        if (t instanceof NbtCompound)
         {
             Map<Value, Value> pairs = new HashMap<>();
-            CompoundTag ctag = (CompoundTag)t;
+            NbtCompound ctag = (NbtCompound)t;
             for (String key: ctag.getKeys())
             {
                 pairs.put(new StringValue(key), decodeTagDeep(ctag.get(key)));
             }
             return MapValue.wrap(pairs);
         }
-        if (t instanceof AbstractListTag)
+        if (t instanceof AbstractNbtList)
         {
             List<Value> elems = new ArrayList<>();
-            AbstractListTag<? extends Tag> ltag = (AbstractListTag<? extends Tag>)t;
-            for (Tag elem: ltag)
+            AbstractNbtList<? extends NbtElement> ltag = (AbstractNbtList<? extends NbtElement>)t;
+            for (NbtElement elem: ltag)
             {
                 elems.add(decodeTagDeep(elem));
             }
             return ListValue.wrap(elems);
         }
-        if (t instanceof AbstractNumberTag)
-            return new NumericValue(((AbstractNumberTag) t).getDouble());
+        if (t instanceof AbstractNbtNumber)
+            return new NumericValue(((AbstractNbtNumber) t).doubleValue());
         // more can be done here
         return new StringValue(t.asString());
     }
 
-    public Tag getTag()
+    public NbtElement getTag()
     {
         if (nbtTag == null)
             nbtTag = nbtSupplier.get();
@@ -392,24 +392,24 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     @Override
     public boolean getBoolean()
     {
-        Tag tag = getTag();
-        if (tag instanceof CompoundTag)
-            return !((CompoundTag) tag).isEmpty();
-        if (tag instanceof AbstractListTag)
-            return ((AbstractListTag) tag).isEmpty();
-        if (tag instanceof AbstractNumberTag)
-            return ((AbstractNumberTag) tag).getDouble()!=0.0;
-        if (tag instanceof StringTag)
+        NbtElement tag = getTag();
+        if (tag instanceof NbtCompound)
+            return !((NbtCompound) tag).isEmpty();
+        if (tag instanceof AbstractNbtList)
+            return ((AbstractNbtList) tag).isEmpty();
+        if (tag instanceof AbstractNbtNumber)
+            return ((AbstractNbtNumber) tag).doubleValue()!=0.0;
+        if (tag instanceof NbtString)
             return tag.asString().isEmpty();
         return true;
     }
 
-    public CompoundTag getCompoundTag()
+    public NbtCompound getCompoundTag()
     {
         try
         {
             ensureOwnership();
-            return (CompoundTag) getTag();
+            return (NbtCompound) getTag();
         }
         catch (ClassCastException e)
         {
@@ -429,7 +429,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         /// WIP
         ensureOwnership();
         NbtPathArgumentType.NbtPath path = cachePath(where.getString());
-        Tag tagToInsert = value instanceof NBTSerializableValue ?
+        NbtElement tagToInsert = value instanceof NBTSerializableValue ?
                 ((NBTSerializableValue) value).getTag() :
                 new NBTSerializableValue(value.getString()).getTag();
         boolean modifiedTag;
@@ -459,17 +459,17 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
 
 
-    private boolean modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, Tag newElement)
+    private boolean modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, NbtElement newElement)
     {
         return modify_insert(index, nbtPath, newElement, this.getTag());
     }
 
-    private boolean modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, Tag newElement, Tag currentTag)
+    private boolean modify_insert(int index, NbtPathArgumentType.NbtPath nbtPath, NbtElement newElement, NbtElement currentTag)
     {
-        Collection<Tag> targets;
+        Collection<NbtElement> targets;
         try
         {
-            targets = nbtPath.getOrInit(currentTag, ListTag::new);
+            targets = nbtPath.getOrInit(currentTag, NbtList::new);
         }
         catch (CommandSyntaxException e)
         {
@@ -477,16 +477,16 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
 
         boolean modified = false;
-        for (Tag target : targets)
+        for (NbtElement target : targets)
         {
-            if (!(target instanceof AbstractListTag))
+            if (!(target instanceof AbstractNbtList))
             {
                 continue;
             }
             try
             {
-                AbstractListTag<?> targetList = (AbstractListTag) target;
-                if (!targetList.addTag(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
+                AbstractNbtList<?> targetList = (AbstractNbtList) target;
+                if (!targetList.addElement(index < 0 ? targetList.size() + index + 1 : index, newElement.copy()))
                     return false;
                 modified = true;
             }
@@ -498,22 +498,22 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     }
 
 
-    private boolean modify_merge(NbtPathArgumentType.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    private boolean modify_merge(NbtPathArgumentType.NbtPath nbtPath, NbtElement replacement) //nbtPathArgumentType$NbtPath_1, list_1)
     {
-        if (!(replacement instanceof CompoundTag))
+        if (!(replacement instanceof NbtCompound))
         {
             return false;
         }
-        Tag ownTag = getTag();
+        NbtElement ownTag = getTag();
         try
         {
-            for (Tag target : nbtPath.getOrInit(ownTag, CompoundTag::new))
+            for (NbtElement target : nbtPath.getOrInit(ownTag, NbtCompound::new))
             {
-                if (!(target instanceof CompoundTag))
+                if (!(target instanceof NbtCompound))
                 {
                     continue;
                 }
-                ((CompoundTag) target).copyFrom((CompoundTag) replacement);
+                ((NbtCompound) target).copyFrom((NbtCompound) replacement);
             }
         }
         catch (CommandSyntaxException ignored)
@@ -523,9 +523,9 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return true;
     }
 
-    private boolean modify_replace(NbtPathArgumentType.NbtPath nbtPath, Tag replacement) //nbtPathArgumentType$NbtPath_1, list_1)
+    private boolean modify_replace(NbtPathArgumentType.NbtPath nbtPath, NbtElement replacement) //nbtPathArgumentType$NbtPath_1, list_1)
     {
-        Tag tag = getTag();
+        NbtElement tag = getTag();
         String pathText = nbtPath.toString();
         if (pathText.endsWith("]")) // workaround for array replacement or item in the array replacement
         {
@@ -572,7 +572,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         NbtPathArgumentType.NbtPath path = cachePath(value.getString());
         try
         {
-            List<Tag> tags = path.get(getTag());
+            List<NbtElement> tags = path.get(getTag());
             if (tags.size()==0)
                 return Value.NULL;
             if (tags.size()==1)
@@ -669,7 +669,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         ensureOwnership();

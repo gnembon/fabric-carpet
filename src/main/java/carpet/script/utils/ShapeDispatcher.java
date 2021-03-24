@@ -22,14 +22,14 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.entity.Entity;
-import net.minecraft.nbt.ByteTag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.FloatTag;
-import net.minecraft.nbt.IntTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtByte;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtDouble;
+import net.minecraft.nbt.NbtFloat;
+import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -123,7 +123,7 @@ public class ShapeDispatcher
         if (!clientPlayers.isEmpty())
         {
 
-            ListTag tag = new ListTag();
+            NbtList tag = new NbtList();
             int tagcount = 0;
             for (Pair<ExpiringShape, Map<String, Value>> s : shapes)
             {
@@ -131,12 +131,12 @@ public class ShapeDispatcher
                 if (tagcount++>1000)
                 {
                     tagcount = 0;
-                    Tag finalTag = tag;
+                    NbtElement finalTag = tag;
                     clientPlayers.forEach( p -> ServerNetworkHandler.sendCustomCommand(p, "scShapes", finalTag));
-                    tag = new ListTag();
+                    tag = new NbtList();
                 }
             }
-            Tag finalTag = tag;
+            NbtElement finalTag = tag;
             if (tag.size() > 0) clientPlayers.forEach( p -> ServerNetworkHandler.sendCustomCommand(p, "scShapes", finalTag));
         }
         if (!alternativePlayers.isEmpty())
@@ -194,7 +194,7 @@ public class ShapeDispatcher
     }
 
     // client
-    public static ExpiringShape fromTag(CompoundTag tag)
+    public static ExpiringShape fromTag(NbtCompound tag)
     {
         Map<String, Value> options = new HashMap<>();
         for (String key : tag.getKeys())
@@ -265,11 +265,11 @@ public class ShapeDispatcher
 
         protected ExpiringShape() { }
 
-        public static CompoundTag toTag(Map<String, Value> params)
+        public static NbtCompound toTag(Map<String, Value> params)
         {
-            CompoundTag tag = new CompoundTag();
+            NbtCompound tag = new NbtCompound();
             params.forEach((k, v) -> {
-                Tag valTag = Param.of.get(k).toTag(v);
+                NbtElement valTag = Param.of.get(k).toTag(v);
                 if (valTag != null) tag.put(k, valTag);
             });
             return tag;
@@ -890,9 +890,9 @@ public class ShapeDispatcher
             this.id = id;
         }
 
-        public abstract Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
+        public abstract NbtElement toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
         public abstract Value validate(Map<String, Value> options, CarpetContext cc, Value value); // makes sure the value is proper
-        public abstract Value decode(Tag tag);
+        public abstract Value decode(NbtElement tag);
     }
 
     public abstract static class StringParam extends Param
@@ -900,8 +900,8 @@ public class ShapeDispatcher
         protected StringParam(String id) { super(id); }
 
         @Override
-        public Tag toTag(Value value) { return StringTag.of(value.getString()); }
-        public Value decode(Tag tag) { return new StringValue(tag.asString()); }
+        public NbtElement toTag(Value value) { return NbtString.of(value.getString()); }
+        public Value decode(NbtElement tag) { return new StringValue(tag.asString()); }
     }
     public static class TextParam extends StringParam
     {
@@ -931,15 +931,15 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public NbtElement toTag(Value value)
         {
             if (!(value instanceof FormattedTextValue))
                 value = new FormattedTextValue(new LiteralText(value.getString()));
-            return StringTag.of(((FormattedTextValue)value).serialize());
+            return NbtString.of(((FormattedTextValue)value).serialize());
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(NbtElement tag)
         {
             return FormattedTextValue.deserialize(tag.asString());
         }
@@ -1004,24 +1004,24 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Tag toTag(Value value)
+        public NbtElement toTag(Value value)
         {
-            return ByteTag.of(value.getBoolean());
+            return NbtByte.of(value.getBoolean());
         }
 
         @Override
-        public Value decode(Tag tag)
+        public Value decode(NbtElement tag)
         {
-            return new NumericValue(((ByteTag) tag).getByte() > 0);
+            return new NumericValue(((NbtByte) tag).byteValue() > 0);
         }
     }
     public static class FloatParam extends NumericParam
     {
         protected FloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
+        public Value decode(NbtElement tag) { return new NumericValue(((NbtFloat)tag).floatValue()); }
         @Override
-        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value, id).getFloat()); }
+        public NbtElement toTag(Value value) { return NbtFloat.of(NumericValue.asNumber(value, id).getFloat()); }
     }
 
     public static abstract class PositiveParam extends NumericParam
@@ -1038,27 +1038,27 @@ public class ShapeDispatcher
     {
         protected PositiveFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
+        public Value decode(NbtElement tag) { return new NumericValue(((NbtFloat)tag).floatValue()); }
         @Override
-        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value, id).getFloat()); }
+        public NbtElement toTag(Value value) { return NbtFloat.of(NumericValue.asNumber(value, id).getFloat()); }
 
     }
     public static class PositiveIntParam extends PositiveParam
     {
         protected PositiveIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
+        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value, id).getInt()); }
+        public NbtElement toTag(Value value) { return NbtInt.of(NumericValue.asNumber(value, id).getInt()); }
 
     }
     public static class NonNegativeIntParam extends NumericParam
     {
         protected NonNegativeIntParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
+        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value, id).getInt()); }
+        public NbtElement toTag(Value value) { return NbtInt.of(NumericValue.asNumber(value, id).getInt()); }
         @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             Value ret = super.validate(options, cc, value);
@@ -1070,9 +1070,9 @@ public class ShapeDispatcher
     {
         protected NonNegativeFloatParam(String id) { super(id); }
         @Override
-        public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
+        public Value decode(NbtElement tag) { return new NumericValue(((NbtFloat)tag).floatValue()); }
         @Override
-        public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value, id).getFloat()); }
+        public NbtElement toTag(Value value) { return NbtFloat.of(NumericValue.asNumber(value, id).getFloat()); }
         @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
         {
             Value ret = super.validate(options, cc, value);
@@ -1137,9 +1137,9 @@ public class ShapeDispatcher
             throw new InternalExpressionException("'"+p.id+"' requires a triple, block or entity to indicate position");
         }
 
-        public Value decode(Tag tag)
+        public Value decode(NbtElement tag)
         {
-            ListTag ctag = (ListTag)tag;
+            NbtList ctag = (NbtList)tag;
             return ListValue.of(
                     new NumericValue(ctag.getDouble(0)),
                     new NumericValue(ctag.getDouble(1)),
@@ -1147,13 +1147,13 @@ public class ShapeDispatcher
             );
         }
         @Override
-        public Tag toTag(Value value)
+        public NbtElement toTag(Value value)
         {
             List<Value> lv = ((ListValue)value).getItems();
-            ListTag tag = new ListTag();
-            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
-            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
-            tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
+            NbtList tag = new NbtList();
+            tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
+            tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
+            tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
             return tag;
         }
     }
@@ -1175,13 +1175,13 @@ public class ShapeDispatcher
             return ListValue.wrap(points);
         }
 
-        public Value decode(Tag tag)
+        public Value decode(NbtElement tag)
         {
-            ListTag ltag = (ListTag)tag;
+            NbtList ltag = (NbtList)tag;
             List<Value> points = new ArrayList<>();
             for (int i=0, ll = ltag.size(); i<ll; i++)
             {
-                ListTag ptag = ltag.getList(i);
+                NbtList ptag = ltag.getList(i);
                 points.add(ListValue.of(
                         new NumericValue(ptag.getDouble(0)),
                         new NumericValue(ptag.getDouble(1)),
@@ -1191,17 +1191,17 @@ public class ShapeDispatcher
             return ListValue.wrap(points);
         }
         @Override
-        public Tag toTag(Value pointsValue)
+        public NbtElement toTag(Value pointsValue)
         {
             List<Value> lv = ((ListValue)pointsValue).getItems();
-            ListTag ltag = new ListTag();
+            NbtList ltag = new NbtList();
             for (Value value : lv)
             {
                 List<Value> coords = ((ListValue)value).getItems();
-                ListTag tag = new ListTag();
-                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
-                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
-                tag.add(DoubleTag.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
+                NbtList tag = new NbtList();
+                tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(0), "x").getDouble()));
+                tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(1), "y").getDouble()));
+                tag.add(NbtDouble.of(NumericValue.asNumber(lv.get(2), "z").getDouble()));
                 ltag.add(tag);
             }
             return ltag;
@@ -1216,9 +1216,9 @@ public class ShapeDispatcher
             super(id);
         }
 
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
+        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
         @Override
-        public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value, id).getInt()); }
+        public NbtElement toTag(Value value) { return NbtInt.of(NumericValue.asNumber(value, id).getInt()); }
     }
 
     public static class EntityParam extends Param
@@ -1227,9 +1227,9 @@ public class ShapeDispatcher
         protected EntityParam(String id) { super(id); }
 
         @Override
-        public Tag toTag(Value value)
+        public NbtElement toTag(Value value)
         {
-            return IntTag.of(NumericValue.asNumber(value, id).getInt());
+            return NbtInt.of(NumericValue.asNumber(value, id).getInt());
         }
 
         @Override
@@ -1242,7 +1242,7 @@ public class ShapeDispatcher
             return new NumericValue(player.getId());
         }
 
-        public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
+        public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
     }
 
     private static boolean isStraight(Vec3d from, Vec3d to, double density)

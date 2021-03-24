@@ -25,7 +25,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.recipe.AbstractCookingRecipe;
 import net.minecraft.recipe.CuttingRecipe;
@@ -35,6 +35,7 @@ import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.recipe.ShapelessRecipe;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.tag.Tag;
 import net.minecraft.tag.TagManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
@@ -97,7 +98,7 @@ public class Inventories {
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(1).evalValue(c).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTag(new Identifier(tag));
+            Tag<Item> itemTag = tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTag(new Identifier(tag));
             if (itemTag == null) return LazyValue.NULL;
             return itemTag.contains(item)?LazyValue.TRUE:LazyValue.FALSE;
         });
@@ -277,7 +278,7 @@ public class Inventories {
                 syncPlayerInventory(inventoryLocator, slot);
                 return (_c, _t) -> ListValue.fromItemStack(previousStack);
             }
-            CompoundTag nbt = null; // skipping one argument
+            NbtCompound nbt = null; // skipping one argument
             if (lv.size() > inventoryLocator.offset+3)
             {
                 Value nbtValue = lv.get(inventoryLocator.offset+3).evalValue(c);

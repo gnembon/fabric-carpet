@@ -59,8 +59,8 @@ import net.minecraft.item.MiningToolItem;
 import net.minecraft.item.ShearsItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ChunkTicketType;
@@ -70,6 +70,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.tag.Tag;
 import net.minecraft.tag.TagManager;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
@@ -289,7 +290,7 @@ public class WorldAccess {
             {
                 throw new InternalExpressionException("Block requires at least one parameter");
             }
-            CompoundTag tag = BlockArgument.findIn(cc, lv, 0, true).block.getData();
+            NbtCompound tag = BlockArgument.findIn(cc, lv, 0, true).block.getData();
             if (tag == null)
                 return (c_, t_) -> Value.NULL;
             Value retval = new NBTSerializableValue(tag);
@@ -756,7 +757,7 @@ public class WorldAccess {
             BlockArgument sourceLocator = BlockArgument.findIn(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
-            CompoundTag data = null;
+            NbtCompound data = null;
             if (lv.size() > sourceLocator.offset)
             {
                 List<Value> args = new ArrayList<>();
@@ -815,7 +816,7 @@ public class WorldAccess {
             }
 
             if (data == null) data = sourceLocator.block.getData();
-            CompoundTag finalData = data;
+            NbtCompound finalData = data;
 
             if (sourceBlockState == targetBlockState && data == null)
                 return (c_, t_) -> Value.FALSE;
@@ -831,7 +832,7 @@ public class WorldAccess {
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
                     {
-                        CompoundTag destTag = finalData.copy();
+                        NbtCompound destTag = finalData.copy();
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
@@ -875,7 +876,7 @@ public class WorldAccess {
                             .orElseThrow(() -> new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM));
                 }
             }
-            CompoundTag tag = null;
+            NbtCompound tag = null;
             if (lv.size() > locator.offset+1)
             {
                 if (!playerBreak) throw new InternalExpressionException("tag is not necessary with 'destroy' with no item");
@@ -937,7 +938,7 @@ public class WorldAccess {
                 return (c_, t_) -> Value.TRUE;
             if (toolBroke)
                 return LazyValue.NULL;
-            Tag outtag = tool.getTag();
+            NbtElement outtag = tool.getTag();
             if (outtag == null)
                 return LazyValue.TRUE;
             Value ret = new NBTSerializableValue(() -> outtag);
@@ -1130,7 +1131,7 @@ public class WorldAccess {
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(blockLocator.offset).evalValue(c).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(new Identifier(tag));
+            Tag<Block> blockTag = tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(new Identifier(tag));
             if (blockTag == null) return LazyValue.NULL;
             return blockLocator.block.getBlockState().isIn(blockTag)?LazyValue.TRUE:LazyValue.FALSE;
         });
@@ -1354,7 +1355,7 @@ public class WorldAccess {
                         return;
                     }
                     StructureStart<?> start = structures.get(structure);
-                    ChunkPos structureChunkPos = start.method_34000(); //   new ChunkPos(start.getChunkX(), start.getChunkZ());
+                    ChunkPos structureChunkPos = start.getPos(); //   new ChunkPos(start.getChunkX(), start.getChunkZ());
                     BlockBox box = start.getBoundingBox();
                     for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
                     {

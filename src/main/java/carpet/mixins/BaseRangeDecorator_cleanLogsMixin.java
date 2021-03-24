@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(BaseRangeDecorator.class)
 public class BaseRangeDecorator_cleanLogsMixin {
+
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "getY(Lnet/minecraft/world/gen/decorator/DecoratorContext;Ljava/util/Random;Lnet/minecraft/world/gen/decorator/RangeDecoratorConfig;I)I",
      at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V")
     )

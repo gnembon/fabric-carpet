@@ -12,8 +12,8 @@ import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.exception.ThrowStatement;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -246,10 +246,10 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     public String getVarArgs() {return varArgs; }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
-        return StringTag.of(getString());
+        return NbtString.of(getString());
     }
 
     public void assertArgsOk(List<?> list, Consumer<Boolean> feedback)

@@ -15,11 +15,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtTagSizeTracker;
-import net.minecraft.nbt.Tag;
-import net.minecraft.nbt.TagReaders;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtTypes;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.crash.CrashException;
 import org.apache.commons.io.FilenameUtils;
@@ -302,7 +302,7 @@ public class FileArgument
         return true;
     }
 
-    public Tag getNbtData(Module module) // aka getData
+    public NbtElement getNbtData(Module module) // aka getData
     {
         try { synchronized (writeIOSync) {
             Path dataFile = toPath(module);
@@ -316,7 +316,7 @@ public class FileArgument
 
     //copied private method from net.minecraft.nbt.NbtIo.read()
     // to read non-compound tags - these won't be compressed
-    public static Tag readTag(Path path)
+    public static NbtElement readTag(Path path)
     {
         try
         {
@@ -346,7 +346,7 @@ public class FileArgument
                     else
                     {
                         dataInput_1.readUTF();
-                        return TagReaders.of(byte_1).read(dataInput_1, 0, NbtTagSizeTracker.EMPTY);
+                        return NbtTypes.byId(byte_1).read(dataInput_1, 0, NbtTagSizeTracker.EMPTY);
                     }
                 }
                 catch (IOException ignored)
@@ -361,7 +361,7 @@ public class FileArgument
         }
     }
 
-    public boolean saveNbtData(Module module, Tag tag) // aka saveData
+    public boolean saveNbtData(Module module, NbtElement tag) // aka saveData
     {
         try { synchronized (writeIOSync) {
             Path dataFile = toPath(module);
@@ -376,7 +376,7 @@ public class FileArgument
     }
 
     //copied private method from net.minecraft.nbt.NbtIo.write() and client method safe_write
-    public static boolean writeTagDisk(Tag tag_1, Path path, boolean zipped)
+    public static boolean writeTagDisk(NbtElement tag_1, Path path, boolean zipped)
     {
         Path original = path;
         try
@@ -387,9 +387,9 @@ public class FileArgument
                 Files.deleteIfExists(path);
             }
 
-            if (tag_1 instanceof CompoundTag)
+            if (tag_1 instanceof NbtCompound)
             {
-                NbtIo.writeCompressed((CompoundTag) tag_1, Files.newOutputStream(path));
+                NbtIo.writeCompressed((NbtCompound) tag_1, Files.newOutputStream(path));
             }
             else
             {

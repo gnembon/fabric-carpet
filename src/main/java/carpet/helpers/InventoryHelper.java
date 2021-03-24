@@ -1,11 +1,11 @@
 package carpet.helpers;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 public class InventoryHelper
 {
-    // From nbt/Tag.java createTag()
+    // From nbt/NbtElement.java createTag()
     public static final int TAG_END         = 0;
     public static final int TAG_BYTE        = 1;
     public static final int TAG_SHORT       = 2;
@@ -23,12 +23,12 @@ public class InventoryHelper
     public static boolean cleanUpShulkerBoxTag(ItemStack stack)
     {
         boolean changed = false;
-        CompoundTag tag = stack.getTag();
+        NbtCompound tag = stack.getTag();
 
         if (tag == null || !tag.contains("BlockEntityTag", TAG_COMPOUND))
             return false;
 
-        CompoundTag bet = tag.getCompound("BlockEntityTag");
+        NbtCompound bet = tag.getCompound("BlockEntityTag");
         if (bet.contains("Items", TAG_LIST) && bet.getList("Items", TAG_COMPOUND).isEmpty())
         {
             bet.remove("Items");
@@ -50,12 +50,12 @@ public class InventoryHelper
 
     public static boolean shulkerBoxHasItems(ItemStack stack)
     {
-        CompoundTag tag = stack.getTag();
+        NbtCompound tag = stack.getTag();
 
         if (tag == null || !tag.contains("BlockEntityTag", TAG_COMPOUND))
             return false;
 
-        CompoundTag bet = tag.getCompound("BlockEntityTag");
+        NbtCompound bet = tag.getCompound("BlockEntityTag");
         return bet.contains("Items", TAG_LIST) && !bet.getList("Items", TAG_COMPOUND).isEmpty();
     }
 }

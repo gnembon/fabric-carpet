@@ -29,7 +29,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -60,7 +60,7 @@ public class CarpetScriptHost extends ScriptHost
     private final CarpetScriptServer scriptServer;
     ServerCommandSource responsibleSource;
 
-    private Tag globalState;
+    private NbtElement globalState;
     private int saveTimeout;
     public boolean persistenceRequired;
 
@@ -789,12 +789,12 @@ public class CarpetScriptHost extends ScriptHost
         Module.saveData(main, globalState);
     }
 
-    private Tag loadState()
+    private NbtElement loadState()
     {
         return Module.getData(main);
     }
 
-    public Tag readFileTag(FileArgument fdesc)
+    public NbtElement readFileTag(FileArgument fdesc)
     {
         if (getName() == null && !fdesc.isShared) return null;
         if (fdesc.resource != null)
@@ -804,7 +804,7 @@ public class CarpetScriptHost extends ScriptHost
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public boolean writeTagFile(Tag tag, FileArgument fdesc)
+    public boolean writeTagFile(NbtElement tag, FileArgument fdesc)
     {
         if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
 

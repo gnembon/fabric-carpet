@@ -51,11 +51,11 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.ClearTitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.OverlayMessageS2CPacket;
@@ -459,7 +459,7 @@ public class Auxiliary {
         expression.addLazyFunction("escape_nbt", 1, (c, t, lv) -> {
             Value v = lv.get(0).evalValue(c);
             String string = v.getString();
-            Value ret = new StringValue(StringTag.escape(string));
+            Value ret = new StringValue(NbtString.escape(string));
             return (cc, tt) -> ret;
         });
 
@@ -482,8 +482,8 @@ public class Auxiliary {
             if (numParam != 2 && numParam != 3) throw new InternalExpressionException("'tag_matches' requires 2 or 3 arguments");
             if (lv.get(1).isNull()) return Value.TRUE;
             if (lv.get(0).isNull()) return Value.FALSE;
-            Tag source = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(0)))).getTag();
-            Tag match = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(1)))).getTag();
+            NbtElement source = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(0)))).getTag();
+            NbtElement match = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(1)))).getTag();
             return new NumericValue(NbtHelper.matches(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
@@ -492,7 +492,7 @@ public class Auxiliary {
             if (argSize==0 || argSize > 2) throw new InternalExpressionException("'encode_nbt' requires 1 or 2 parameters");
             Value v = lv.get(0).evalValue(c);
             boolean force = (argSize > 1) && lv.get(1).evalValue(c).getBoolean();
-            Tag tag;
+            NbtElement tag;
             try
             {
                 tag = v.toTag(force);
@@ -877,7 +877,7 @@ public class Auxiliary {
             Value retVal;
             if (fdesc.type == FileArgument.Type.NBT)
             {
-                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
+                NbtElement state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
@@ -916,7 +916,7 @@ public class Auxiliary {
                 NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                         ? (NBTSerializableValue) val
                         : new NBTSerializableValue(val.getString());
-                Tag tag = tagValue.getTag();
+                NbtElement tag = tagValue.getTag();
                 success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             }
             else if (fdesc.type == FileArgument.Type.JSON)
@@ -963,7 +963,7 @@ public class Auxiliary {
                 boolean shared = lv.size() > 1 && lv.get(1).evalValue(c).getBoolean();
                 fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ);
             }
-            Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
+            NbtElement state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -986,7 +986,7 @@ public class Auxiliary {
             NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
-            Tag tag = tagValue.getTag();
+            NbtElement tag = tagValue.getTag();
             boolean success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
@@ -1074,7 +1074,7 @@ public class Auxiliary {
                 return (_c, _t) -> ret;
             }
             String key = lv.get(0).evalValue(c).getString();
-            CompoundTag old_nbt = storage.get(new Identifier(key));
+            NbtCompound old_nbt = storage.get(new Identifier(key));
             if (lv.size() == 2) {
                 Value nbt = lv.get(1).evalValue(c);
                 NBTSerializableValue new_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
@@ -1170,7 +1170,7 @@ public class Auxiliary {
             //not sure its needed, but doesn't seem to have a negative effect and might be used in some custom shtuff
             serverRM.loadRegistryTags();
 
-            RegistryOps<Tag> registryOps = RegistryOps.of(NbtOps.INSTANCE, serverRM.getResourceManager(), (DynamicRegistryManager.Impl) server.getRegistryManager());
+            RegistryOps<NbtElement> registryOps = RegistryOps.of(NbtOps.INSTANCE, serverRM.getResourceManager(), (DynamicRegistryManager.Impl) server.getRegistryManager());
             SaveProperties saveProperties = session.readLevelProperties(registryOps, dataPackSettings2);
             if (saveProperties == null) return LazyValue.NULL;
             //session.backupLevelDataFile(server.getRegistryManager(), saveProperties); // no need
