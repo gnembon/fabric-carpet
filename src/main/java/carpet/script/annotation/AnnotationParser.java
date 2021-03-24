@@ -1,7 +1,8 @@
 package carpet.script.annotation;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -138,7 +139,7 @@ public class AnnotationParser {
 			TriFunction<Context, Integer, List<LazyValue>, LazyValue> function = makeFunction(method, instance, valueConverters, actualMinParams, maxParams);
 			
 			int parameterCount = isEffectivelyVarArgs ? -1 : actualMinParams;
-			CarpetSettings.LOG.info("Adding fname: "+functionName+". Expression paramcount: "+parameterCount+". Provided in '" + clazz + "'");
+			CarpetSettings.LOG.info("Adding fname: "+functionName+". Expression paramcount: "+parameterCount+". Provided in '" + clazz.getName() + "'");
 			functionList.add(Triple.of(functionName, parameterCount, function));
 			
 		}
@@ -155,8 +156,8 @@ public class AnnotationParser {
 	{
 		final boolean isVarArgs = method.isVarArgs();
 		@SuppressWarnings("unchecked") // We are "defining" T in here. TODO Decide whether to just use <Object> && get rid of T
-		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>) method.getReturnType());
-		int methodParamCount = method.getParameterCount(); // Not capturing since it's fast, just verbose
+		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>)method.getReturnType());
+		int methodParamCount = method.getParameterCount();
 		
 		final ValueConverter<?> varArgsConverter = ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType());
 		final Class<?> varArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
@@ -167,6 +168,21 @@ public class AnnotationParser {
 		//final Class<?> boxedVarArgsType = ClassUtils.primitiveToWrapper(varArgsType);
 		
 		
+		// MethodHandles are blazing fast (in some situations they can even compile to a single invokeVirtual), but slightly complex to work with.
+		// Their "polymorphic signature" makes them (by default) require the exact signature of the method and return type, in order to call the
+		// functions directly, not even accepting Objects. Therefore we change them to spreaders (accept array instead), return type of Object,
+		// and we also bind them to our instance. That makes them ever-so-slightly slower, since they have to cast the params, but it's not
+		// noticeable, and comparing the overhead that reflection's #invoke had over this, the difference is substantial
+		// (checking access at invoke vs create).
+		// Note: there is also MethodHandle#invoke and #invokeWithArguments, but those run #asType at every invocation, which is quite slow, so we
+		//       are basically running it here.
+		final MethodHandle handle;
+		try {
+			MethodHandle tempHandle = MethodHandles.publicLookup().unreflect(method).asFixedArity().asSpreader(Object[].class, methodParamCount);
+			handle = tempHandle.asType(tempHandle.type().changeReturnType(Object.class)).bindTo(instance);
+		} catch (IllegalAccessException e) {
+			throw new IllegalArgumentException(e);
+		}
 		return (context, i, lv) -> {
 			if (isVarArgs) {
 				if (lv.size() < minParams) //TODO More descriptive messages using ValueConverter#getTypeName (or even param.getName()?)
@@ -176,18 +192,12 @@ public class AnnotationParser {
 			}
 			Object[] params = getMethodParams(lv, valueConverters, varArgsConverter, varArgsType, isVarArgs, context, method.getParameterCount());
 			try {
-				@SuppressWarnings("unchecked") // T is the return type of the method. Why doesn't Method have generics for the output?
-				LazyValue ret = outputConverter.convert((T) method.invoke(instance, params)); 
-				return ret;
-			} catch (IllegalAccessException | IllegalArgumentException e) { // Some are Runtime, but are TODO s
-				CarpetSettings.LOG.error("Reflection error during execution of method " + method.getName() + ", with params " + params + ". "
-						+ "Provided in '" + instance.getClass() + "'", e);
-				throw new InternalExpressionException("Something bad happened, check logs and report to Carpet with log and program: " + e.getMessage());
-			} catch (InvocationTargetException e) {
-				Throwable cause = e.getCause();
-				if (cause instanceof RuntimeException)
-					throw (RuntimeException) cause;
-				throw (Error) cause; // Stack overflow or something. Methods are guaranteed not to throw checked exceptions
+				return outputConverter.convert((T) handle.invokeExact(params));
+			} catch (Throwable e) {
+				//Throwable cause = e.getCause();
+				if (e instanceof RuntimeException)
+					throw (RuntimeException) e;
+				throw (Error) e; // Stack overflow or something. Methods are guaranteed not to throw checked exceptions
 			}
 		};
 	}
@@ -200,12 +210,11 @@ public class AnnotationParser {
 		Object[] params = new Object[methodParameterCount];
 		ListIterator<LazyValue> lvIterator = lv.listIterator();
 		if (isMethodVarArgs) {
-			int regularRemaining = methodParameterCount - 1; //TODO Get rid of this and just use methodParamCount and pointer
 			int pointer = 0;
 			Iterator<ValueConverter<?>> converterIterator = valueConverters.iterator();
-			while (regularRemaining > 0) {
+			while (methodParameterCount - 1 > pointer) {
 				params[pointer] = converterIterator.next().evalAndConvert(lvIterator, context);
-				regularRemaining--; pointer++;
+				pointer++;
 			}
 			int remaining = lv.size() - lvIterator.nextIndex();
 			Object[] varArgs;
@@ -224,7 +233,6 @@ public class AnnotationParser {
 			}
 			
 			params[methodParameterCount - 1] = varArgs;
-			//TODO (even) More efficient thing of the above? ^
 			//TODO The above, but for primitive varargs
 		} else {
 			for (int i = 0; i < methodParameterCount; i++)
