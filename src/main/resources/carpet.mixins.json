@@ -197,8 +197,8 @@
     "PlayerEntity_creativeNoClipMixin",
     "PistonBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
-    "LivingEntity_creativeFlyMixin"
-
+    "LivingEntity_creativeFlyMixin",
+    "BaseRangeDecorator_cleanLogsMixin"
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",
