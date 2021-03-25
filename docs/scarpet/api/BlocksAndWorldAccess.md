@@ -325,6 +325,8 @@ With `column_search` set to `true`, it will return all POIs in a cuboid with `ra
 block column from 0 to 255. Default (`false`) returns POIs within a spherical area centered on `pos` and with `radius`
 radius. 
 
+All results of `poi` calls are returned in sorted order with respect to the euclidean distance to the requested center of `pos`.
+
 The return format of the results is a list of poi type, occupancy load, and extra triple of coordinates.
 
 Querying for POIs using the radius is the intended use of POI mechanics, and the ability of accessing individual POIs 
