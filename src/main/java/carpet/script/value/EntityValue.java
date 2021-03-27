@@ -56,6 +56,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -1373,6 +1374,19 @@ public class EntityValue extends Value
             else
             {
                 genericJump(e);
+            }
+        });
+
+        put("swing", (e, v) -> {
+            if (e instanceof LivingEntity)
+            {
+                Hand hand = Hand.MAIN_HAND;
+                if (v != null)
+                {
+                    String handString = v.getString().toLowerCase(Locale.ROOT);
+                    if (handString.equals("offhand") || handString.equals("off_hand")) hand = Hand.OFF_HAND;
+                }
+                ((LivingEntity)e).swingHand(hand, true);
             }
         });
 
