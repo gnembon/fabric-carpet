@@ -722,6 +722,10 @@ Requires a living entity as an argument.
 
 Will make the entity jump once.
 
+### `modify(e, 'swing')` `modify(e, 'swing', 'offhand')`
+
+Makes the living entity swing their required limb.
+
 ### `modify(e, 'silent', boolean)`
 
 Silences or unsilences the entity.
