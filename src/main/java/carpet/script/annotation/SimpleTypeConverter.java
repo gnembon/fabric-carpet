@@ -37,20 +37,19 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		registerType(EntityValue.class, Entity.class, EntityValue::getEntity);
 		registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server));
 		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : new LiteralText(v.getString())); 
-		registerType(Value.class, String.class, Value::getString); // Check out @StrictParam for more specific types
+		registerType(Value.class, String.class, Value::getString); // Check out @Param.Strict for more specific types
 		
-		// TODO Make sure this doesn't box and unbox primitives. Not sure how to check it, though
+		// TODO Make sure this doesn't box and unbox primitives. Not sure how to check it, though. EDIT: I think they do, and have to
 		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong);
 		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble);
 		registerType(NumericValue.class, Integer.TYPE, NumericValue::getInt);
-		registerType(Value.class, Boolean.TYPE, Value::getBoolean);
+		registerType(Value.class, Boolean.TYPE, Value::getBoolean); // Check out @Param.Strict for more specific types
 		// Non-primitive versions of the above
 		registerType(NumericValue.class, Long.class, NumericValue::getLong);
 		registerType(NumericValue.class, Double.class, NumericValue::getDouble);
 		registerType(NumericValue.class, Integer.class, NumericValue::getInt);
-		registerType(NumericValue.class, Boolean.class, NumericValue::getBoolean);
+		registerType(Value.class, Boolean.class, Value::getBoolean); // Check out @Param.Strict for more specific types
 	}
-	
 	
 	private final Function<T, R> converter;
 	private final ValueCaster<T> caster;

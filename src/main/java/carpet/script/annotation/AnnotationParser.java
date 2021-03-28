@@ -155,7 +155,7 @@ public class AnnotationParser {
 														final List<ValueConverter<?>> valueConverters, final int minParams, final int maxParams)
 	{
 		final boolean isVarArgs = method.isVarArgs();
-		@SuppressWarnings("unchecked") // We are "defining" T in here. TODO Decide whether to just use <Object> && get rid of T
+		@SuppressWarnings("unchecked") // We are "defining" T in here.
 		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>)method.getReturnType());
 		int methodParamCount = method.getParameterCount();
 		
@@ -209,13 +209,12 @@ public class AnnotationParser {
 	{
 		Object[] params = new Object[methodParameterCount];
 		ListIterator<LazyValue> lvIterator = lv.listIterator();
+		
+		int regularArgs = isMethodVarArgs ? methodParameterCount -1 : methodParameterCount;
+		for (int i = 0; i < regularArgs; i++) {
+			params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
+		}
 		if (isMethodVarArgs) {
-			int pointer = 0;
-			Iterator<ValueConverter<?>> converterIterator = valueConverters.iterator();
-			while (methodParameterCount - 1 > pointer) {
-				params[pointer] = converterIterator.next().evalAndConvert(lvIterator, context);
-				pointer++;
-			}
 			int remaining = lv.size() - lvIterator.nextIndex();
 			Object[] varArgs;
 			if (varArgsConverter.consumesVariableArgs()) {
@@ -225,7 +224,7 @@ public class AnnotationParser {
 				varArgs = varArgsList.toArray();
 			} else {
 				varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.howManyValuesDoesThisEat());
-				pointer = 0;
+				int pointer = 0;
 				while (lvIterator.hasNext()) {
 					varArgs[pointer] = varArgsConverter.evalAndConvert(lvIterator, context);
 					pointer++;
@@ -234,9 +233,6 @@ public class AnnotationParser {
 			
 			params[methodParameterCount - 1] = varArgs;
 			//TODO The above, but for primitive varargs
-		} else {
-			for (int i = 0; i < methodParameterCount; i++)
-				params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
 		}
 		return params;
 	}

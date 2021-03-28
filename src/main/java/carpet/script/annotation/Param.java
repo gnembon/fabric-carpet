@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -77,9 +78,9 @@ public interface Param {
 	 *
 	 * <p><b>IMPORTANT:</b> Using this annotation with {@link #allowMultiparam()} will make this element consume each and every remaining 
 	 * value in the function call, therefore it will cause any other parameters (that are not varargs) to throw as if they were not present,
-	 * unless they are optional. They could only be accessed if the parameter at this location is specifically a list or map.<br>
+	 * unless they are optional (defined by using Java's {@link Optional} type). They could only be accessed if the parameter at this 
+	 * location is specifically a list or map.<br>
 	 * Having it as {@code true} will also cause the function to be considered of variable arguments even if it doesn't have varargs.</p>
-	 * //TODO Link optional mode above when available
 	 */
 	@Documented
 	@Retention(RUNTIME)
@@ -151,7 +152,7 @@ public interface Param {
 			}
 			@Override
 			public String getTypeName() {
-				return "something"; //TODO Decide between "something" or "value" and use it in ValueCaster too
+				return "something"; //TODO Decide between "something" or "value" and use it in ValueCaster too. If first, change prefixedTypeName
 			}
 		};
 		

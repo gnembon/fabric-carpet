@@ -5,7 +5,9 @@ import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
+import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.FunctionValue;
@@ -28,10 +30,12 @@ public class ValueCaster<R> implements ValueConverter<R> {
 		register(FunctionValue.class, "function");
 		register(ListValue.class, "list");
 		register(MapValue.class, "map");
+		register(AbstractListValue.class, "list or similar"); // For LazyListValue basically? Not sure what should use this
 		register(NBTSerializableValue.class, "nbt object");
 		register(NullValue.class, "null"); // Potentially unnecessary
 		register(NumericValue.class, "number");
-		register(StringValue.class, "string"); // May not be necessary given that everything has getString
+		register(BooleanValue.class, "boolean");
+		register(StringValue.class, "string");
 		register(ThreadValue.class, "thread");
 	}
 	

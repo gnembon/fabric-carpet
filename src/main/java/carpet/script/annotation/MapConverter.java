@@ -39,7 +39,7 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 
 	@Override
 	public Map<K, V> convert(Value value) {
-		Map<K, V> result = new HashMap<>(); //Would love a way to get this directly in a one-line stream. Also TODO check nulls from converters
+		Map<K, V> result = new HashMap<>();
 		if (value instanceof MapValue) {
 			for (Entry<Value, Value> entry : ((MapValue) value).getMap().entrySet()) {
 				K key = keyConverter.convert(entry.getKey());
@@ -74,7 +74,7 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 	 * @param annotatedType The type to get generics information from
 	 * @return A new {@link MapConverter} for the data specified in the {@link AnnotatedType}
 	 */
-	public static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType) { //TODO Assert actual type-safety (or at least kinda)
+	public static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType) {
 		AnnotatedType[] annotatedGenerics = ((AnnotatedParameterizedType) annotatedType).getAnnotatedActualTypeArguments();
 		return annotatedType.isAnnotationPresent(Param.KeyValuePairs.class) 
 				? new PairConverter<>(annotatedGenerics[0], annotatedGenerics[1], annotatedType.getAnnotation(Param.KeyValuePairs.class))
