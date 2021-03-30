@@ -216,8 +216,5 @@
     "SoundSystem_cleanLogsMixin"
   ],
   "server": [
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+  ]
 }
