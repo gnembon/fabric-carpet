@@ -138,7 +138,7 @@ public class ServerNetworkHandler
 
     private static void onClientData(ServerPlayerEntity player, PacketByteBuf data)
     {
-        NbtCompound compound = data.readCompoundTag();
+        NbtCompound compound = data.readCompound();
         if (compound == null) return;
         for (String key: compound.getKeys())
         {
@@ -323,7 +323,7 @@ public class ServerNetworkHandler
         {
             PacketByteBuf packetBuf = new PacketByteBuf(Unpooled.buffer());
             packetBuf.writeVarInt(CarpetClient.DATA);
-            packetBuf.writeCompoundTag(tag);
+            packetBuf.writeCompound(tag);
             return packetBuf;
         }
 

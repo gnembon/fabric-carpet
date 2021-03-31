@@ -52,7 +52,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         instance.interactionManager.changeGameMode(gamemode);
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), dimensionId);//instance.dimension);
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), dimensionId);//instance.dimension);
-        instance.getServerWorld().getChunkManager().updateCameraPosition(instance);
+        instance.getServerWorld().getChunkManager().updatePosition(instance);
         instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
         return instance;
     }
@@ -76,7 +76,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(playerShadow, (byte) (player.headYaw * 256 / 360)), playerShadow.world.getRegistryKey());
         server.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, playerShadow));
-        player.getServerWorld().getChunkManager().updateCameraPosition(playerShadow);
+        player.getServerWorld().getChunkManager().updatePosition(playerShadow);
         return playerShadow;
     }
 
@@ -111,7 +111,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         if (this.getServer().getTicks() % 10 == 0)
         {
             this.networkHandler.syncWithPlayerPosition();
-            this.getServerWorld().getChunkManager().updateCameraPosition(this);
+            this.getServerWorld().getChunkManager().updatePosition(this);
             onTeleportationDone(); //<- causes hard crash but would need to be done to enable portals // not as of 1.17
         }
         super.tick();

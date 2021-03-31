@@ -36,7 +36,7 @@ public abstract class PlayerEntity_creativeNoClipMixin extends LivingEntity
         return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.getAbilities().flying);
     }
 
-    @Redirect(method = "updateSize", at = @At(
+    @Redirect(method = "updatePose", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/PlayerEntity;isSpectator()Z")
     )

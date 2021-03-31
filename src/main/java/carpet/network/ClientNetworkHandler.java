@@ -129,7 +129,7 @@ public class ClientNetworkHandler
 
     private static void onSyncData(PacketByteBuf data, ClientPlayerEntity player)
     {
-        NbtCompound compound = data.readCompoundTag();
+        NbtCompound compound = data.readCompound();
         if (compound == null) return;
         for (String key: compound.getKeys())
         {
@@ -149,7 +149,7 @@ public class ClientNetworkHandler
         outer.put("clientCommand", tag);
         CarpetClient.getPlayer().networkHandler.sendPacket(new CustomPayloadC2SPacket(
                 CarpetClient.CARPET_CHANNEL,
-                (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.DATA).writeCompoundTag(outer)
+                (new PacketByteBuf(Unpooled.buffer())).writeVarInt(CarpetClient.DATA).writeCompound(outer)
         ));
     }
 }
