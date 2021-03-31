@@ -494,7 +494,6 @@ __tick_tracker() ->
       return()
    );
    p = player();
-   [px, py, pz] = pos(p);
    in_dimension(p,
       for (entity_area('valid', p, global_range, global_range, global_range),
          __handle_entity(_)
