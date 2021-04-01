@@ -3,8 +3,6 @@ package carpet.script.annotation;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jetbrains.annotations.Nullable;
-
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -14,7 +12,6 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NBTSerializableValue;
-import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
@@ -32,7 +29,6 @@ public class ValueCaster<R> implements ValueConverter<R> {
 		register(MapValue.class, "map");
 		register(AbstractListValue.class, "list or similar"); // For LazyListValue basically? Not sure what should use this
 		register(NBTSerializableValue.class, "nbt object");
-		register(NullValue.class, "null"); // Potentially unnecessary
 		register(NumericValue.class, "number");
 		register(BooleanValue.class, "boolean");
 		register(StringValue.class, "string");
@@ -64,7 +60,6 @@ public class ValueCaster<R> implements ValueConverter<R> {
 	}
 	
 	@Override
-	@Nullable
 	public R convert(Value value) {
 		if (!outputType.isInstance(value))
 			return null;

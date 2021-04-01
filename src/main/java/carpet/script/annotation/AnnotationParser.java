@@ -7,10 +7,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -71,14 +71,14 @@ public class AnnotationParser {
 	 * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link LazyFunction} annotation, to be used
 	 * in the Scarpet language.</p>
 	 * 
-	 * <p>There is a set of requirements for the class in order to get the best experience (and to work, at all):</p>
+	 * <p>There is a set of requirements for the class in order to be accepted:</p>
 	 * <ul>
-	 * <li>Class must be concrete. That is, no interfaces or abstract classes</li>
+	 * <li>Class must be concrete. That is, no interfaces or abstract classes should be passed</li>
 	 * <li>Class must have the default constructor (or an equivalent) available. That is done in order to not need the {@code static} modifier
 	 * in every method, making them faster to code and simpler to look at.</li>
 	 * <li>Annotated methods must not be {@code static}. See claim above</li>
 	 * <li>Annotated methods must not throw checked exceptions. They can throw regular {@link RuntimeException}s (including but not limited to
-	 * {@link InternalExpressionException}). Basically, it's fine as long as you don't add a {@code throws} declaration to it.</li>
+	 * {@link InternalExpressionException}). Basically, it's fine as long as you don't add a {@code throws} declaration to your methods.</li>
 	 * <li>Varargs (or effectively varargs) annotated methods must explicitly declare a maximum number of parameters to ingest in the {@link LazyFunction}
 	 * annotation. They can still declare an unlimited amount by setting that maximum to {@code -1}. "Effectively varargs" means a function that has
 	 * a parameter using/requiring a {@link ValueConverter} that has declared {@link ValueConverter#consumesVariableArgs()}.</li>
@@ -121,7 +121,7 @@ public class AnnotationParser {
 					valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
 			}
 			boolean isEffectivelyVarArgs = method.isVarArgs() ? true : valueConverters.stream().anyMatch(ValueConverter::consumesVariableArgs);
-			int actualMinParams = valueConverters.stream().mapToInt(ValueConverter::howManyValuesDoesThisEat).sum(); //Note: In !varargs, this is params
+			int actualMinParams = valueConverters.stream().mapToInt(ValueConverter::valueConsumption).sum(); //Note: In !varargs, this is params
 			
 			int maxParams = actualMinParams; // Unlimited == Integer.MAX_VALUE
 			if (isEffectivelyVarArgs) {
@@ -157,9 +157,11 @@ public class AnnotationParser {
 		final boolean isVarArgs = method.isVarArgs();
 		@SuppressWarnings("unchecked") // We are "defining" T in here.
 		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>)method.getReturnType());
-		int methodParamCount = method.getParameterCount();
+		final int methodParamCount = method.getParameterCount();
+		final String name = method.getName();
 		
-		final ValueConverter<?> varArgsConverter = ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType());
+		final ValueConverter<?> varArgsConverter = 
+				isVarArgs ? ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType()) : null;
 		final Class<?> varArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
 		//If using primitives, this is problematic when casting (cannot cast to Object[]). TODO Change if I find a better way.
 		//TODO Option 2: Just not support unboxeds in varargs and ask to use boxed types, would be both simpler and faster, since this 
@@ -186,15 +188,14 @@ public class AnnotationParser {
 		return (context, i, lv) -> {
 			if (isVarArgs) {
 				if (lv.size() < minParams) //TODO More descriptive messages using ValueConverter#getTypeName (or even param.getName()?)
-					throw new InternalExpressionException(method.getName() + " expects at least " + minParams + "arguments");
+					throw new InternalExpressionException(name + " expects at least " + minParams + " arguments. "+getUsage(valueConverters, varArgsConverter, name));
 				if (lv.size() > maxParams)
-					throw new InternalExpressionException(method.getName() + " expects up to " + maxParams + " arguments");
+					throw new InternalExpressionException(name + " expects up to " + maxParams + " arguments. "+getUsage(valueConverters, varArgsConverter, name));
 			}
-			Object[] params = getMethodParams(lv, valueConverters, varArgsConverter, varArgsType, isVarArgs, context, method.getParameterCount());
+			Object[] params = getMethodParams(lv, valueConverters, varArgsConverter, varArgsType, isVarArgs, context, methodParamCount, name);
 			try {
 				return outputConverter.convert((T) handle.invokeExact(params));
 			} catch (Throwable e) {
-				//Throwable cause = e.getCause();
 				if (e instanceof RuntimeException)
 					throw (RuntimeException) e;
 				throw (Error) e; // Stack overflow or something. Methods are guaranteed not to throw checked exceptions
@@ -203,9 +204,9 @@ public class AnnotationParser {
 	}
 	
 	// Hot code: Must be optimized
-	private static Object[] getMethodParams(List<LazyValue> lv, List<ValueConverter<?>> valueConverters,
-											ValueConverter<?> varArgsConverter, Class<?> varArgsType, boolean isMethodVarArgs, 
-											Context context, int methodParameterCount)
+	private static Object[] getMethodParams(final List<LazyValue> lv, final List<ValueConverter<?>> valueConverters,
+											final ValueConverter<?> varArgsConverter, final Class<?> varArgsType, final boolean isMethodVarArgs, 
+											final Context context, final int methodParameterCount, final String name)
 	{
 		Object[] params = new Object[methodParameterCount];
 		ListIterator<LazyValue> lvIterator = lv.listIterator();
@@ -213,21 +214,27 @@ public class AnnotationParser {
 		int regularArgs = isMethodVarArgs ? methodParameterCount -1 : methodParameterCount;
 		for (int i = 0; i < regularArgs; i++) {
 			params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
+			if (params[i] == null)
+				throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n"+getUsage(valueConverters, varArgsConverter, name));
 		}
 		if (isMethodVarArgs) {
 			int remaining = lv.size() - lvIterator.nextIndex();
 			Object[] varArgs;
 			if (varArgsConverter.consumesVariableArgs()) {
 				List<Object> varArgsList = new ObjectArrayList<>();
-				while (lvIterator.hasNext())
-					varArgsList.add(varArgsConverter.evalAndConvert(lvIterator, context));
+				while (lvIterator.hasNext()) {
+					Object obj = varArgsConverter.evalAndConvert(lvIterator, context);
+					if (obj == null)
+						throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n"+getUsage(valueConverters, varArgsConverter, name));
+					varArgsList.add(obj);
+				}
 				varArgs = varArgsList.toArray();
 			} else {
-				varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.howManyValuesDoesThisEat());
-				int pointer = 0;
-				while (lvIterator.hasNext()) {
-					varArgs[pointer] = varArgsConverter.evalAndConvert(lvIterator, context);
-					pointer++;
+				varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.valueConsumption());
+				for (int i = 0; lvIterator.hasNext(); i++) {
+					varArgs[i] = varArgsConverter.evalAndConvert(lvIterator, context);
+					if (varArgs[i] == null)
+						throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n"+getUsage(valueConverters, varArgsConverter, name));
 				}
 			}
 			
@@ -235,6 +242,19 @@ public class AnnotationParser {
 			//TODO The above, but for primitive varargs
 		}
 		return params;
+	}
+	
+	private static String getUsage(List<ValueConverter<?>> valueConverters, ValueConverter<?> varArgsConverter, String functionName) {
+		StringBuilder builder = new StringBuilder("Usage: ");
+		builder.append(functionName);
+		builder.append('(');
+		builder.append(valueConverters.stream().map(ValueConverter::getTypeName).collect(Collectors.joining(", ")));
+		if (varArgsConverter != null) {
+			builder.append(", ");
+			builder.append(varArgsConverter.getTypeName());
+			builder.append("s...)");
+		}
+		return builder.toString();
 	}
 	
 	private AnnotationParser() {}

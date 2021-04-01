@@ -172,7 +172,7 @@ public interface Param {
 				return context;
 			}
 			@Override
-			public int howManyValuesDoesThisEat() {
+			public int valueConsumption() {
 				return 0;
 			}
 		};
@@ -182,17 +182,17 @@ public interface Param {
 		 * <p>Stored as {@code <Pair<Type, shallow?>, Converter>}</p>
 		 */
 		private static Map<Pair<Class<?>, Boolean>, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
-		static {
-			registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString));
-			registerStrictConverter(Text.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText));
+		static { //TODO Specify strictness in name?
+			registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString, "string"));
+			registerStrictConverter(Text.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText, "text"));
 			registerStrictConverter(Text.class, true, new SimpleTypeConverter<>(StringValue.class, 
-								v -> v instanceof FormattedTextValue ? ((FormattedTextValue) v).getText() : new LiteralText(v.getString())));
+								v -> v instanceof FormattedTextValue ? ((FormattedTextValue) v).getText() : new LiteralText(v.getString()), "text"));
 			registerStrictConverter(ServerPlayerEntity.class, false, new SimpleTypeConverter<>(EntityValue.class, 
-								v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v)));
-			registerStrictConverter(Boolean.TYPE, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean));
-			registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean));
-			registerStrictConverter(Boolean.TYPE, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean));
-			registerStrictConverter(Boolean.class, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean));
+								v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v), "online player entity"));
+			registerStrictConverter(Boolean.TYPE, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
+			registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
+			registerStrictConverter(Boolean.TYPE, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean, "boolean"));
+			registerStrictConverter(Boolean.class, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean, "boolean"));
 		}
 		
 		/**
@@ -202,7 +202,7 @@ public interface Param {
 		 * @throws IllegalArgumentException If the type doesn't accept the {@link Strict} annotation
 		 *                                  or if it has been used incorrectly (shallow in unsupported places)
 		 */
-		public static ValueConverter<?> getStrictConverter(AnnotatedType type) { //TODO Check this new method works
+		public static ValueConverter<?> getStrictConverter(AnnotatedType type) {
 			boolean shallow = type.getAnnotation(Strict.class).shallow();
 			Class<?> clazz = (Class<?>) type.getType();
 			Pair<Class<?>, Boolean> key = Pair.of(clazz, shallow);

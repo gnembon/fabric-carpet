@@ -60,8 +60,8 @@ public class FunctionsTestClass {
 	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
 	    }
 	    targets.forEach(p -> {
-	    	if (times.length == 3) p.networkHandler.sendPacket(new TitleS2CPacket(Action.TIMES, null, times[0], times[1], times[2]));
-	    	p.networkHandler.sendPacket(new TitleS2CPacket(action, content.orElse(null)));
+	        if (times.length == 3) p.networkHandler.sendPacket(new TitleS2CPacket(Action.TIMES, null, times[0], times[1], times[2]));
+	        p.networkHandler.sendPacket(new TitleS2CPacket(action, content.orElse(null)));
 	    });
 	    return targets.size();
 	}

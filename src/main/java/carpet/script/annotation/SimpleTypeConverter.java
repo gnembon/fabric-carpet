@@ -33,26 +33,27 @@ import net.minecraft.world.World;
 public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R> {
 	private static final Map<Class<?>, SimpleTypeConverter<? extends Value, ?>> byResult = new HashMap<>();
 	static {
-		registerType(Value.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val));
-		registerType(EntityValue.class, Entity.class, EntityValue::getEntity);
-		registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server));
-		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : new LiteralText(v.getString())); 
-		registerType(Value.class, String.class, Value::getString); // Check out @Param.Strict for more specific types
+		registerType(Value.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val), "online player");
+		registerType(EntityValue.class, Entity.class, EntityValue::getEntity, "entity");
+		registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server), "dimension");
+		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : new LiteralText(v.getString()), "text"); 
+		registerType(Value.class, String.class, Value::getString, "string"); // Check out @Param.Strict for more specific types
 		
 		// TODO Make sure this doesn't box and unbox primitives. Not sure how to check it, though. EDIT: I think they do, and have to
-		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong);
-		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble);
-		registerType(NumericValue.class, Integer.TYPE, NumericValue::getInt);
-		registerType(Value.class, Boolean.TYPE, Value::getBoolean); // Check out @Param.Strict for more specific types
+		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong, "number");
+		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble, "number");
+		registerType(NumericValue.class, Integer.TYPE, NumericValue::getInt, "number");
+		registerType(Value.class, Boolean.TYPE, Value::getBoolean, "boolean"); // Check out @Param.Strict for more specific types
 		// Non-primitive versions of the above
-		registerType(NumericValue.class, Long.class, NumericValue::getLong);
-		registerType(NumericValue.class, Double.class, NumericValue::getDouble);
-		registerType(NumericValue.class, Integer.class, NumericValue::getInt);
-		registerType(Value.class, Boolean.class, Value::getBoolean); // Check out @Param.Strict for more specific types
+		registerType(NumericValue.class, Long.class, NumericValue::getLong, "number");
+		registerType(NumericValue.class, Double.class, NumericValue::getDouble, "number");
+		registerType(NumericValue.class, Integer.class, NumericValue::getInt, "number");
+		registerType(Value.class, Boolean.class, Value::getBoolean, "boolean"); // Check out @Param.Strict for more specific types
 	}
 	
 	private final Function<T, R> converter;
 	private final ValueCaster<T> caster;
+	private final String typeName;
 	
 	/**
 	 * <p>The default constructor for {@link SimpleTypeConverter}.</p>
@@ -64,14 +65,15 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 	 * @param inputType The required type for the input {@link Value}
 	 * @param converter The function to convert an instance of inputType into R.
 	 */
-	public SimpleTypeConverter(Class<T> inputType, Function<T, R> converter) {
+	public SimpleTypeConverter(Class<T> inputType, Function<T, R> converter, String typeName) {
 		this.converter = converter;
 		this.caster = ValueCaster.get(inputType);
+		this.typeName = typeName;
 	}
 	
-	@Override //TODO? This
+	@Override
 	public String getTypeName() {
-		return caster.getTypeName();
+		return typeName;
 	}
 	
 	/**
@@ -92,8 +94,8 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 		return castedValue == null ? null : converter.apply(castedValue);
 	}
 	
-	public static <T extends Value, R> SimpleTypeConverter<T, R> registerType(Class<T> requiredInputType, Class<R> outputType, Function<T, R> converter) {
-		SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter);
+	public static <T extends Value, R> SimpleTypeConverter<T, R> registerType(Class<T> requiredInputType, Class<R> outputType, Function<T, R> converter, String typeName) {
+		SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
 		byResult.put(outputType, type);
 		return type;
 	}

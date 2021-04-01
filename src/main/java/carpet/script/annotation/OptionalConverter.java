@@ -79,7 +79,7 @@ public class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	}
 	
 	@Override
-	public int howManyValuesDoesThisEat() {
+	public int valueConsumption() {
 		return 0; // Optional parameters therefore require a minimum of 0
 	}
 	

@@ -82,7 +82,7 @@ public interface ValueConverter<R> {
 	 * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator}
 	 * passed to it via {@link #evalAndConvert(Iterator, Context)}.</p>
 	 * @implNote The default implementation returns {@code false} 
-	 * @see #howManyValuesDoesThisEat()
+	 * @see #valueConsumption()
 	 */
 	default public boolean consumesVariableArgs() {
 		return false;
@@ -92,14 +92,14 @@ public interface ValueConverter<R> {
 	 * <p>Declares the number of {@link LazyValue}s this method consumes from the {@link Iterator} passed to it in
 	 * {@link #evalAndConvert(Iterator, Context)}.</p>
 	 * 
-	 * <p>If this {@link ValueConverter} can accepts a variable number of arguments (therefore the result of calling
+	 * <p>If this {@link ValueConverter} can accept a variable number of arguments (therefore the result of calling
 	 * {@link #consumesVariableArgs()} <b>must</b> return {@code true}), it will return the minimum number of arguments
 	 * it will consume.</p>
 	 * 
 	 * @implNote The default implementation returns {@code 1}
-	 * TODO Better name
+	 * 
 	 */
-	default public int howManyValuesDoesThisEat() {
+	default public int valueConsumption() {
 		return 1;
 	}
 	
@@ -117,10 +117,11 @@ public interface ValueConverter<R> {
 	 * @param annoType The {@link AnnotatedType} to search a {@link ValueConverter}.
 	 * @return A usable {@link ValueConverter} to convert from a {@link LazyValue} or {@link Value} to {@code <R>}
 	 */
+	@SuppressWarnings("unchecked")
 	public static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType) {
-		Class<R> type = annoType.getType() instanceof ParameterizedType ?
+		Class<R> type = annoType.getType() instanceof ParameterizedType ?  // We are defining R here.
 				(Class<R>) ((ParameterizedType)annoType.getType()).getRawType() :
-				(Class<R>) annoType.getType(); // We are defining R here.
+				(Class<R>) annoType.getType();
 				// I (altrisi) won't implement generics in varargs. Those are just PAINFUL. They have like 3-4 nested types and don't have the generics
 				// and annotations in the same place, plus they have a different "conversion hierarchy" than the rest, making everything require
 				// special methods to get the class from type, generics from type and annotations from type. Not worth the effort for me.
@@ -161,7 +162,7 @@ public interface ValueConverter<R> {
 	 *           such as in the case of a {@link LazyValue} to {@link LazyValue} identity, neither move the {@link Iterator} to
 	 *           the next position, such as in the case of meta providers like {@link Context}.
 	 *           <p>Implementations can also evaluate more than a single parameter when being called with this function, 
-	 *           but in such case they must implement {@link #howManyValuesDoesThisEat()} to return how many parameters do they
+	 *           but in such case they must implement {@link #valueConsumption()} to return how many parameters do they
 	 *           consume at minimum, and, if they may consume variable arguments, implement {@link #consumesVariableArgs()}</p>
 	 *           <p>This method holds the same nullability constraints as {@link #convert(Value)}</p>
 	 * @param lazyValueIterator An {@link Iterator} holding the {@link LazyValue} to convert in next position
