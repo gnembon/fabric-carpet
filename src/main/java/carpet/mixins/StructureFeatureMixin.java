@@ -50,13 +50,13 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
             }
             world.getChunk(j, k).addStructureReference((StructureFeature) (Object)this, chId);
 
-            BlockBox box = structurestart.getBoundingBox();
+            BlockBox box = structurestart.setBoundingBoxFromChildren();  // getBB
             if (!wireOnly)
             {
                 structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand,box, new ChunkPos(j, k));
             }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
-            int i = Math.max(box.getBlockCountX(),box.getBlockCountZ())/16+1;  //size
+            int i = Math.max(box.getBlockCountY(),box.getBlockCountX())/16+1;  // X Z
 
             //int i = getRadius();
             for (int k1 = j - i; k1 <= j + i; ++k1)
@@ -105,7 +105,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
         if (biome == null)
             biome_1 = generator.getBiomeSource().getBiomeForNoiseGen((chunkpos.getStartX() + 9) >> 2, 0, (chunkpos.getStartZ() + 9) >> 2 );
 
-        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos, BlockBox.empty(),0,worldIn.getSeed());
+        StructureStart structurestart1 = getStructureStartFactory().create((StructureFeature)(Object)this, chunkpos,0,worldIn.getSeed());
         if (config == null)
             config = new DefaultFeatureConfig();
         structurestart1.init(worldIn.getRegistryManager(), generator, worldIn.getStructureManager() , chunkpos, biome_1, config, ichunk);

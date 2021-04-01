@@ -36,7 +36,7 @@ public abstract class HopperBlockEntityMixin extends LootableContainerBlockEntit
         if (CarpetSettings.hopperCounters) {
             DyeColor wool_color = WoolTool.getWoolColorAtPosition(
                     world,
-                    blockPos.offset(blockState.get(HopperBlock.FACING)));
+                    blockPos.method_35851(blockState.get(HopperBlock.FACING))); // offset
             if (wool_color != null)
             {
                 for (int i = 0; i < inventory.size(); ++i)

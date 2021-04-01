@@ -226,7 +226,7 @@ public class BlockRotator
     {
         Direction sourceFace = source.getBlockState().get(DispenserBlock.FACING);
         World world = source.getWorld();
-        BlockPos blockpos = source.getBlockPos().offset(sourceFace);
+        BlockPos blockpos = source.getBlockPos().method_35851(sourceFace); // offset
         BlockState iblockstate = world.getBlockState(blockpos);
         Block block = iblockstate.getBlock();
 

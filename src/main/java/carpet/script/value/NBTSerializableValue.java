@@ -15,12 +15,14 @@ import net.minecraft.block.ChestBlock;
 import net.minecraft.block.InventoryProvider;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.class_6067;
 import net.minecraft.command.argument.ItemStackArgument;
 import net.minecraft.command.argument.ItemStringReader;
 import net.minecraft.command.argument.NbtPathArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.MerchantEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
@@ -224,7 +226,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 Entity e = ((EntityValue) v1).getEntity();
                 if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).getInventory();
                 else if (e instanceof Inventory) inv = (Inventory) e;
-                else if (e instanceof VillagerEntity) inv = ((VillagerEntity) e).getInventory();
+                else if (e instanceof class_6067) inv = ((class_6067) e).method_35199(); // getInentory // now covers pillagers
                 else if (e instanceof InventoryBearerInterface) inv = ((InventoryBearerInterface)e).getCMInventory();
                 else if (e instanceof LivingEntity) return new InventoryLocator(e, e.getBlockPos(), new EquipmentInventory((MobEntity) e), offset+1);
                 if (inv == null)

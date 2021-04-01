@@ -216,10 +216,10 @@ public class BlockIterators {
             List<Value> neighbours = new ArrayList<>();
             neighbours.add(new BlockValue(null, world, center.up()));
             neighbours.add(new BlockValue(null, world, center.down()));
-            neighbours.add(new BlockValue(null, world, center.north()));
-            neighbours.add(new BlockValue(null, world, center.south()));
-            neighbours.add(new BlockValue(null, world, center.east()));
-            neighbours.add(new BlockValue(null, world, center.west()));
+            neighbours.add(new BlockValue(null, world, center.method_35861())); // north
+            neighbours.add(new BlockValue(null, world, center.method_35859())); // sourh
+            neighbours.add(new BlockValue(null, world, center.method_35855())); // east
+            neighbours.add(new BlockValue(null, world, center.method_35857())); // west
             Value retval = ListValue.wrap(neighbours);
             return (c_, t_) -> retval;
         });

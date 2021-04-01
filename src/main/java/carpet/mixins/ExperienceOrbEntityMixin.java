@@ -84,22 +84,4 @@ public abstract class ExperienceOrbEntityMixin implements ExperienceOrbInterface
             playerEntity.addExperience(experience);
         }
     }
-
-    // temporary until gets fixed game-side
-    @Inject(method = "onPlayerCollision", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true, at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/entity/ExperienceOrbEntity;getMendingRepairAmount(I)I"
-    ))
-    void cancelApplication(PlayerEntity player, CallbackInfo ci, Map.Entry<EquipmentSlot, ItemStack> entry, ItemStack itemStack)
-    {
-        if (CarpetSettings.xpfix && pickingCount > 1)
-        {
-            int i = Math.min(getMendingRepairAmount(this.amount), itemStack.getDamage());
-            pickingCount--;
-            itemStack.setDamage(itemStack.getDamage() - i);
-            // cancel effects of mending application
-            ci.cancel();
-        }
-    }
-
 }
