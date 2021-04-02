@@ -1,6 +1,5 @@
 package carpet.fakes;
 
-import net.minecraft.class_6067;
 import net.minecraft.inventory.Inventory;
 
 public interface InventoryBearerInterface

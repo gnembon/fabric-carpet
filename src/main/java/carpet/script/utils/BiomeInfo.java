@@ -34,7 +34,7 @@ public class BiomeInfo
         put("scale", (w, b) -> NumericValue.of(b.getScale()));
         put("features", (w, b) -> {
 
-            Registry<ConfiguredFeature<?,?>> registry = w.getRegistryManager().get(Registry.CONFIGURED_FEATURE_WORLDGEN);
+            Registry<ConfiguredFeature<?,?>> registry = w.getRegistryManager().get(Registry.CONFIGURED_FEATURE_KEY);
             return ListValue.wrap(
                     b.getGenerationSettings().getFeatures().stream().map(step ->
                             ListValue.wrap(step.stream().map(cfp ->
@@ -44,7 +44,7 @@ public class BiomeInfo
             );
         });
         put("structures", (w, b) -> {
-            Registry<ConfiguredStructureFeature<?,?>> registry = w.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN);
+            Registry<ConfiguredStructureFeature<?,?>> registry = w.getRegistryManager().get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY);
             return ListValue.wrap(b.getGenerationSettings().getStructureFeatures().stream().map(str -> ValueConversions.of(registry.getId(str.get()))));
         });
     }};

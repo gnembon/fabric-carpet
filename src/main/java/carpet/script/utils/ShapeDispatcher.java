@@ -314,7 +314,7 @@ public class ShapeDispatcher
 
             key = 0;
             followEntity = -1;
-            shapeDimension = RegistryKey.of(Registry.DIMENSION, new Identifier(options.get("dim").getString()));
+            shapeDimension = RegistryKey.of(Registry.WORLD_KEY, new Identifier(options.get("dim").getString()));
             if (options.containsKey("follow"))
             {
                 followEntity = NumericValue.asNumber(options.getOrDefault("follow", optional.get("follow"))).getInt();

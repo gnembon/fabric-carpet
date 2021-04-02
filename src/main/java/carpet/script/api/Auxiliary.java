@@ -788,13 +788,13 @@ public class Auxiliary {
                         ListValue.wrap(Registry.FEATURE.getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("configured_features"),
-                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_FEATURE_WORLDGEN).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_FEATURE_KEY).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("structures"),
                         ListValue.wrap(Registry.STRUCTURE_FEATURE.getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 plopData.put(StringValue.of("configured_structures"),
-                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_WORLDGEN).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
+                        ListValue.wrap(registryManager.get(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY).getIds().stream().sorted().map(ValueConversions::of).collect(Collectors.toList()))
                 );
                 Value ret = MapValue.wrap(plopData);
                 return (_c, _t) -> ret;
@@ -1188,7 +1188,7 @@ public class Auxiliary {
                 if (!existing_worlds.containsKey(registryKey))
                 {
                     addeds.add(ValueConversions.of(registryKey.getValue()));
-                    RegistryKey<World> registryKey2 = RegistryKey.of(Registry.DIMENSION, registryKey.getValue());
+                    RegistryKey<World> registryKey2 = RegistryKey.of(Registry.WORLD_KEY, registryKey.getValue());
                     DimensionType dimensionType3 = entry.getValue().getDimensionType();
                     ChunkGenerator chunkGenerator3 = entry.getValue().getChunkGenerator();
                     UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, ((ServerWorldInterface) server.getOverworld()).getWorldPropertiesCM());

@@ -186,7 +186,6 @@
     "StatePredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
-    "PillagerEntity_scarpetMixin",
 
     "BlockEntity_movableBEMixin",
     "PistonBlock_movableTEMixin",

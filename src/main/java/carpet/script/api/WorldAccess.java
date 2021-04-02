@@ -1307,7 +1307,7 @@ public class WorldAccess {
                     BlockBox box = start.setBoundingBoxFromChildren();
                     structureList.put(
                             new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(entry.getKey()))),
-                            ListValue.of(ListValue.fromTriple(box.method_35420(), box.method_35415(), box.method_35416()), ListValue.fromTriple(box.method_35417(), box.method_35418(), box.method_35419()))
+                            ListValue.of(ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()), ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ()))
                     );
                 }
                 Value ret = MapValue.wrap(structureList);
@@ -1357,9 +1357,9 @@ public class WorldAccess {
                     StructureStart<?> start = structures.get(structure);
                     ChunkPos structureChunkPos = start.getPos(); //   new ChunkPos(start.getChunkX(), start.getChunkZ());
                     BlockBox box = start.setBoundingBoxFromChildren();
-                    for (int chx = box.method_35420() / 16; chx <= box.method_35417() / 16; chx++)  // minx maxx
+                    for (int chx = box.getMinX() / 16; chx <= box.getMaxX() / 16; chx++)  // minx maxx
                     {
-                        for (int chz = box.method_35416() / 16; chz <= box.method_35419() / 16; chz++) //minZ maxZ
+                        for (int chz = box.getMinZ() / 16; chz <= box.getMaxZ() / 16; chz++) //minZ maxZ
                         {
                             ChunkPos chpos = new ChunkPos(chx, chz);
                             // getting a chunk will convert it to full, allowing to modify references

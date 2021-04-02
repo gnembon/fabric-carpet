@@ -196,7 +196,7 @@ public abstract class PistonHandler_customStickyMixin
         //    stickyDirection = blockState_1.get(FacingBlock.FACING);
         //}
 
-        return stickyDirection == null || this.tryMove(blockPos_1.method_35851(stickyDirection), stickyDirection);  //offset
+        return stickyDirection == null || this.tryMove(blockPos_1.offset(stickyDirection), stickyDirection);  //offset
     }
 
 

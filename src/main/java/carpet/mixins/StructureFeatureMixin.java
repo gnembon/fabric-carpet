@@ -56,7 +56,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
                 structurestart.generateStructure(world, world.getStructureAccessor(), generator, rand,box, new ChunkPos(j, k));
             }
             //structurestart.notifyPostProcessAt(new ChunkPos(j, k));
-            int i = Math.max(box.getBlockCountY(),box.getBlockCountX())/16+1;  // X Z
+            int i = Math.max(box.getBlockCountX(),box.getBlockCountZ())/16+1;
 
             //int i = getRadius();
             for (int k1 = j - i; k1 <= j + i; ++k1)

@@ -184,7 +184,7 @@ public class BlockInfo
         put(Material.REPAIR_STATION , "anvil"        );
         put(Material.BARRIER        , "barrier"      );
         put(Material.PISTON         , "piston"       );
-        put(Material.UNUSED_PLANT   , "coral"        );
+        put(Material.MOSS_BLOCK     , "moss"         );
         put(Material.GOURD          , "gourd"        );
         put(Material.EGG            , "dragon_egg"   );
         put(Material.CAKE           , "cake"         );

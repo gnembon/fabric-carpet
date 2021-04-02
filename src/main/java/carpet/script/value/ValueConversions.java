@@ -302,27 +302,32 @@ public class ValueConversions
         );
     }
 
+    public static Value of(BlockBox box)
+    {
+        return ListValue.of(
+                ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()),
+                ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ())
+        );
+    }
+
     public static Value of(StructureStart<?> structure)
     {
         if (structure == null || structure == StructureStart.DEFAULT) return Value.NULL;
         BlockBox boundingBox = structure.setBoundingBoxFromChildren();
-        if (boundingBox.method_35417() < boundingBox.method_35420() || boundingBox.method_35418() < boundingBox.method_35415() || boundingBox.method_35419() < boundingBox.method_35416()) return Value.NULL;
+        if (boundingBox.getMaxX() < boundingBox.getMinX() || boundingBox.getMaxY() < boundingBox.getMinY() || boundingBox.getMaxZ() < boundingBox.getMinZ()) return Value.NULL;
         Map<Value, Value> ret = new HashMap<>();
-        ret.put(new StringValue("box"), ListValue.of(
-                ListValue.fromTriple(boundingBox.method_35420(), boundingBox.method_35415(), boundingBox.method_35416()),
-                ListValue.fromTriple(boundingBox.method_35417(), boundingBox.method_35418(), boundingBox.method_35419())
-        ));
+        ret.put(new StringValue("box"), of(boundingBox));
         List<Value> pieces = new ArrayList<>();
         for (StructurePiece piece : structure.getChildren())
         {
             BlockBox box = piece.getBoundingBox();
-            if (box.method_35417() >= box.method_35420() && box.method_35418() >= box.method_35415() && box.method_35419() >= box.method_35416())
+            if (box.getMaxX() >= box.getMinX() && box.getMaxY() >= box.getMinY() && box.getMaxZ() >= box.getMinZ())
             {
                 pieces.add(ListValue.of(
                         new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_PIECE.getId(piece.getType()))),
                         (piece.getFacing() == null) ? Value.NULL : new StringValue(piece.getFacing().getName()),
-                        ListValue.fromTriple(box.method_35420(), box.method_35415(), box.method_35416()),
-                        ListValue.fromTriple(box.method_35417(), box.method_35418(), box.method_35419())
+                        ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()),
+                        ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ())
                 ));
             }
         }

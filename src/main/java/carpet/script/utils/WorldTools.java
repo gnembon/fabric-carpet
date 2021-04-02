@@ -100,20 +100,20 @@ public class WorldTools
         DimensionType dimensionType2;
         if (dimensionOptions == null) {
             dimensionType2 = server.getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY).getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
-            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (new Random()).nextLong());
+            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY), (new Random()).nextLong());
         } else {
             dimensionType2 = dimensionOptions.getDimensionType();
             chunkGenerator2 = dimensionOptions.getChunkGenerator();
         }
 
-        RegistryKey<World> customWorld = RegistryKey.of(Registry.DIMENSION, worldId);
+        RegistryKey<World> customWorld = RegistryKey.of(Registry.WORLD_KEY, worldId);
 
         //chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
 
         chunkGenerator2 = new NoiseChunkGenerator(
                 new VanillaLayeredBiomeSource((seed==null)?l:seed, false, false, server.getRegistryManager().get(Registry.BIOME_KEY)),
                 (seed==null)?l:seed,
-                () -> server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN).getOrThrow(ChunkGeneratorSettings.OVERWORLD)
+                () -> server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD)
         );
 
         ServerWorld serverWorld = new ServerWorld(

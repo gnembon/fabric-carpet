@@ -470,7 +470,7 @@ public class ScriptCommand
         CarpetScriptHost host = getHost(context);
         BlockBox area = BlockBox.create(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
-        int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.method_35414(); // X Y Z
+        int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ(); // X Y Z
         if (int_1 > CarpetSettings.fillLimit)
         {
             Messenger.m(source, "r too many blocks to evaluate: " + int_1);
@@ -480,11 +480,11 @@ public class ScriptCommand
         CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
         try
         {
-            for (int x = area.method_35420(); x <= area.method_35417(); x++) //minx maxx
+            for (int x = area.getMinX(); x <= area.getMaxX(); x++)
             {
-                for (int y = area.method_35415(); y <= area.method_35418(); y++) // miny maxy
+                for (int y = area.getMinY(); y <= area.getMaxY(); y++)
                 {
-                    for (int z = area.method_35416(); z <= area.method_35419(); z++) // minz maxz
+                    for (int z = area.getMinZ(); z <= area.getMaxZ(); z++)
                     {
                         try
                         {
@@ -519,29 +519,29 @@ public class ScriptCommand
         CarpetScriptHost host = getHost(context);
         BlockBox area = BlockBox.create(a, b);
         CarpetExpression cexpr = new CarpetExpression(host.main, expr, source, origin);
-        int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.method_35414();
+        int int_1 = area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ();
         if (int_1 > CarpetSettings.fillLimit)
         {
             Messenger.m(source, "r too many blocks to evaluate: "+ int_1);
             return 1;
         }
 
-        boolean[][][] volume = new boolean[area.getBlockCountY()][area.method_35414()][area.getBlockCountX()]; //X then Y then Z got messedup
+        boolean[][][] volume = new boolean[area.getBlockCountX()][area.getBlockCountY()][area.getBlockCountZ()]; //X then Y then Z got messedup
 
         BlockPos.Mutable mbpos = origin.mutableCopy();
         ServerWorld world = source.getWorld();
 
-        for (int x = area.method_35420(); x <= area.method_35417(); x++) //minx maxx
+        for (int x = area.getMinX(); x <= area.getMaxX(); x++)
         {
-            for (int y = area.method_35415(); y <= area.method_35418(); y++) // miny maxy
+            for (int y = area.getMinY(); y <= area.getMaxY(); y++)
             {
-                for (int z = area.method_35416(); z <= area.method_35419(); z++) // minz maxz
+                for (int z = area.getMinZ(); z <= area.getMaxZ(); z++)
                 {
                     try
                     {
                         if (cexpr.fillAndScanCommand(host, x, y, z))
                         {
-                            volume[x-area.method_35420()][y-area.method_35415()][z-area.method_35416()]=true;
+                            volume[x-area.getMinX()][y-area.getMinY()][z-area.getMinZ()]=true;
                         }
                     }
                     catch (CarpetExpressionException e)
@@ -555,12 +555,12 @@ public class ScriptCommand
                 }
             }
         }
-        final int maxx = area.getBlockCountY()-1;  //x
-        final int maxy = area.method_35414()-1;    //y
-        final int maxz = area.getBlockCountX()-1;  //z
+        final int maxx = area.getBlockCountX()-1;
+        final int maxy = area.getBlockCountY()-1;
+        final int maxz = area.getBlockCountZ()-1;
         if ("outline".equalsIgnoreCase(mode))
         {
-            boolean[][][] newVolume = new boolean[area.getBlockCountY()][area.method_35414()][area.getBlockCountX()]; //X then Y then Z got messedup
+            boolean[][][] newVolume = new boolean[area.getBlockCountX()][area.getBlockCountY()][area.getBlockCountZ()];
             for (int x = 0; x <= maxx; x++)
             {
                 for (int y = 0; y <= maxy; y++)
@@ -596,7 +596,7 @@ public class ScriptCommand
                 {
                     if (volume[x][y][z])
                     {
-                        mbpos.set(x+area.method_35420(), y+area.method_35415(), z+area.method_35416());
+                        mbpos.set(x+area.getMinX(), y+area.getMinY(), z+area.getMinZ());
                         if (replacement == null || replacement.test(
                                 new CachedBlockPosition( world, mbpos, true)))
                         {
@@ -624,7 +624,7 @@ public class ScriptCommand
                     {
                         if (volume[x][y][z])
                         {
-                            mbpos.set(x+area.method_35420(), y+area.method_35415(), z+area.method_35416());
+                            mbpos.set(x+area.getMinX(), y+area.getMinY(), z+area.getMinZ());
                             Block blokc = world.getBlockState(mbpos).getBlock();
                             world.updateNeighbors(mbpos, blokc);
                         }
@@ -632,7 +632,7 @@ public class ScriptCommand
                 }
             }
         }
-        Messenger.m(source, "gi Affected "+affected+" blocks in "+area.getBlockCountX() * area.getBlockCountY() * area.method_35414()+" block volume");
+        Messenger.m(source, "gi Affected "+affected+" blocks in "+area.getBlockCountX() * area.getBlockCountY() * area.getBlockCountZ()+" block volume");
         return 1;
     }
 }
