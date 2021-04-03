@@ -922,6 +922,11 @@ map(range(10), bool(rand(2))) => [false, false, true, false, false, false, true,
 map(range(10), str('%.1f',rand(_))) => [0.0, 0.4, 0.6, 1.9, 2.8, 3.8, 5.3, 2.2, 1.6, 5.6]
 </pre>
 
+## `reset_seed(seed)`
+
+Resets the sequence of the randomizer used by `rand` for this seed to its initial state. Returns a boolean value
+indicating if the given seed has been used or not.
+
 ### `perlin(x), perlin(x, y), perlin(x, y, z), perlin(x, y, z, seed)`
 
 returns a noise value from `0.0` to `1.0` (roughly) for 1, 2 or 3 dimensional coordinate. The default seed it samples 
@@ -1508,8 +1513,8 @@ but like everywhere else, doing that sounds like a bad idea.
     `unknown_poi_type`, `unknown_dimension`, `unknown_structure`, `unknown_criterion`: Specific 
     errors thrown when a specified internal name does not exist or is invalid.
   - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
-    - `nbt_read_error`: Incorrect input NBT file.
-    - `json_read_error`: Incorrect input JSON data.
+    - `nbt_error`: Incorrect input/output NBT file.
+    - `json_error`: Incorrect input/output JSON data.
   - `user_exception`: Exception thrown by default with `throw` function.
   
 Synopsis:
@@ -2431,15 +2436,17 @@ used to match specific information from it, or use it to copy to another block
 <pre>    block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
 </pre>
 
-### `poi(pos), poi(pos, radius?, type?, status?, column?)`
+### `poi(pos), poi(pos, radius?, type?, status?, column_search?)`
 
 Queries a POI (Point of Interest) at a given position, returning `null` if none is found, or tuple of poi type and its 
 occupancy load. With optional `type`, `radius` and `status`, returns a list of POIs around `pos` within a 
 given `radius`. If the `type` is specified, returns only poi types of that types, or everything if omitted or `'any'`.
 If `status` is specified (either `'any'`, `'available'`, or `'occupied'`) returns only POIs with that status. 
-With `column` set to `true`, it will return all POIs in a cuboid with `radius` blocks away on x and z, in the entire
+With `column_search` set to `true`, it will return all POIs in a cuboid with `radius` blocks away on x and z, in the entire
 block column from 0 to 255. Default (`false`) returns POIs within a spherical area centered on `pos` and with `radius`
 radius. 
+
+All results of `poi` calls are returned in sorted order with respect to the euclidean distance to the requested center of `pos`.
 
 The return format of the results is a list of poi type, occupancy load, and extra triple of coordinates.
 
@@ -3708,6 +3715,10 @@ Requires a living entity as an argument.
 
 Will make the entity jump once.
 
+### `modify(e, 'swing')` `modify(e, 'swing', 'offhand')`
+
+Makes the living entity swing their required limb.
+
 ### `modify(e, 'silent', boolean)`
 
 Silences or unsilences the entity.
@@ -4438,13 +4449,12 @@ Displays or modifies individual scoreboard values. With no arguments, returns th
 With specified `objective`, lists all keys (players) associated with current objective, or `null` if objective does not exist.
 With specified `objective` and
 `key`, returns current value of the objective for a given player (key). With additional `value` sets a new scoreboard
- value, returning previous value associated with the `key`.
+ value, returning previous value associated with the `key`. If the `value` is null, resets the scoreboard value.
  
 ### `scoreboard_add(objective, criterion?)`
 
 Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`.
-If the objective already exists, changes the criterion of that objective and returns `false`. If the criterion was not specified but the objective already exists, returns the current criterion.
-If the objective was added, returns `true`. If nothing is affected, returns `null`
+Returns `true` if the objective was created, or `null` if an objective with the specified name already exists.
 
 Throws `unknown_criterion` if criterion doesn't exist.
 
@@ -4464,6 +4474,15 @@ for the objective.
 
 Sets display location for a specified `objective`. If `objective` is `null`, then display is cleared. If objective is invalid,
 returns `null`.
+
+### `scoreboard_property(objective, property)` `scoreboard_property(objective, property, value)`
+
+Reads a property of an `objective` or sets it to a `value` if specified. Available properties are:
+
+* `criterion`
+* `display_name` (Formatted text supported)
+* `display_slot`: When reading, returns a list of slots this objective is displayed in, when modifying, displays the objective in the specified slot
+* `render_type`: Either `'integer'` or `'hearts'`, defaults to `'integer'` if invalid value specified
 
 # Team
 
@@ -4603,7 +4622,7 @@ Collection of other methods that control smaller, yet still important aspects of
 
 ## Sounds
 
-### `sound(name, pos, volume?, pitch?, mixer?)`
+### `sound()`, `sound(name, pos, volume?, pitch?, mixer?)`
 
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
@@ -4611,16 +4630,22 @@ Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostil
 and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
  corresponding `playsound` command.
  
+Used with no arguments, return the list of available sound names.
+ 
 Throws `unknown_sound` if sound doesn't exist.
 
 ## Particles
 
-### `particle(name, pos, count?. spread?, speed?, player?)`
+### `particle()`, `particle(name, pos, count?. spread?, speed?, player?)`
 
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
+
+Used with no arguments, return the list of available particle names. Note that some of the names do not correspond to a valid
+particle that can be fed to `particle(...)` function due to a fact that some particles need more configuration
+to be valid, like `dust`, `block` etc. Should be used as a reference only.
 
 Throws `unknown_particle` if particle doesn't exist.
 
@@ -4673,7 +4698,7 @@ Optional shared shape attributes:
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
  * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
  player, otherwise it will be send to all players in the dimension.
- * `line` - line thickness, defaults to 2.0pt
+ * `line` - (Deprecated) line thickness, defaults to 2.0pt. Not supported in 1.17's 3.2 core GL renderer.
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
    Follow attribute requires all positional arguments to be relative to the entity and disallow
@@ -4707,7 +4732,7 @@ Available shapes:
      * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
      centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
      indicates the end of text).
-     * `tilt` - additional rotation of the text on the canvas
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
      * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
      with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
      can be used to display multiple lines of text bound to the same `pos` 
@@ -4891,7 +4916,8 @@ Resource is identified by a path to the file.
 A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid, except for `list_files` where it means the root folder.
  Do not add file extensions to the descriptor - extensions are inferred
-based on the `type` of the file.
+based on the `type` of the file. A path can have one `'.zip'` component indicating a zip folder allowing to read / write to and from
+zip files, although you cannot nest zip files in other zip files. 
  
 Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
 resources is guaranteed to be isolated from other apps. Shared resources are... well, shared across all apes, meaning
@@ -4905,7 +4931,7 @@ specific data directory is under `world/scripts/foo.data/...`, and shared data s
 
 The default no-name app, via `/script run` command can only save/load/read files from the shared space.
 
-Functions return `null` if an error is encounter or no file is present (for read, list and delete operations). Returns `true`
+Functions return `null` if no file is present (for read, list and delete operations). Returns `true`
 for success writes and deletes, and requested data, based on the file type, for read operations. It returns list of files 
 for folder listing.
  
@@ -4929,6 +4955,10 @@ third argument.
 Throws:
 - `nbt_read_error`: When failed to read NBT file.
 - `json_read_error`: When failed to read JSON file. The exception data will contain details about the problem.
+- `io_exception`: For all other errors when handling data on disk not related to encoding issues
+
+All other errors resulting of improper use of input arguments should result in `null` returned from the function, rather than exception
+thrown.
 
 <pre>
 write_file('foo', 'shared_text, ['one', 'two']);
@@ -5209,7 +5239,13 @@ Available options in the scarpet app space:
   * `game_view_distance` - the view distance
   * `game_mod_name` - the name of the base mod. Expect `'fabric'`
   * `game_version` - base version of the game
+  * `game_target` - target release version
+  * `game_major_target` - major release target. For 1.12.2, that would be 12
+  * `game_minor_reease` - minor release target. For 1.12.2, that woudl be 2
+  * `game_protocol` - protocol version number
+  * `game_pack_version` - datapack version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
+  * `game_stable` - indicating if its a production release or a snapshot
   
  Server related properties
  * `server_motd` - the motd of the server visible when joining
