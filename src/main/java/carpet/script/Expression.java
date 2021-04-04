@@ -765,7 +765,7 @@ public class Expression
                     {
                         if (token.surface.equals(";"))
                         {
-                            throw new ExpressionException(c, this, token, "Unnecessary semicolon");
+                            throw new ExpressionException(c, this, token, "Empty expression found with ';'");
                         }
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }
