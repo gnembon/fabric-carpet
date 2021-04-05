@@ -18,6 +18,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.WorldProperties;
 
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
@@ -52,6 +53,11 @@ public class SystemInfo {
             return StringValue.of(tlf);
         });
         put("world_dimensions", c -> ListValue.wrap(c.s.getMinecraftServer().getWorldRegistryKeys().stream().map(k -> ValueConversions.of(k.getValue())).collect(Collectors.toList())));
+        put("world_spawn_point", c -> {
+            WorldProperties prop = c.s.getMinecraftServer().getOverworld().getLevelProperties();
+            return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
+        });
+
         put("game_difficulty", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getDifficulty().getName()));
         put("game_hardcore", c -> new NumericValue(c.s.getMinecraftServer().getSaveProperties().isHardcore()));
         put("game_storage_format", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getFormatName(c.s.getMinecraftServer().getSaveProperties().getVersion())));

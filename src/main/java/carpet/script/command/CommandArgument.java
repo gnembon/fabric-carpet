@@ -14,6 +14,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
+import carpet.utils.CarpetProfiler;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -365,6 +366,7 @@ public abstract class CommandArgument
     {
         if (customSuggester != null)
         {
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
             Map<Value, Value> params = new HashMap<>();
             for(ParsedCommandNode<ServerCommandSource> pnode : context.getNodes())
             {
@@ -379,7 +381,9 @@ public abstract class CommandArgument
             args.addAll(customSuggester.args);
             Value response = host.handleCommand(context.getSource(), customSuggester.function, args);
             if (!(response instanceof ListValue)) throw error("Custom suggester should return a list of options"+" for custom type "+suffix);
-            return ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            Collection<String> res = ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            CarpetProfiler.end_current_section(currentSection);
+            return res;
         }
         if (needsMatching) return examples;
         //return Lists.newArrayList("");

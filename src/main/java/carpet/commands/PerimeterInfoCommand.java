@@ -57,8 +57,8 @@ public class PerimeterInfoCommand
             });
             if (!(baseEntity instanceof  MobEntity))
             {
-                Messenger.m(source, "r Failed to spawn test entity");
-                if (baseEntity != null) baseEntity.discard(); // discard //remove();
+                Messenger.m(source, "r /perimeterinfo requires a mob entity to test agains.");
+                if (baseEntity != null) baseEntity.discard();
                 return 0;
             }
             entityliving = (MobEntity) baseEntity;

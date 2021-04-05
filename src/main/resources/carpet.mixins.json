@@ -196,6 +196,7 @@
     "PlayerEntity_creativeNoClipMixin",
     "PistonBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
+    "WallStandingBlockItem_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin",
     "BaseRangeDecorator_cleanLogsMixin"
   ],

@@ -13,6 +13,7 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import carpet.settings.SettingsManager;
+import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -396,6 +397,7 @@ public class ScriptCommand
     {
         try
         {
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet ace", CarpetProfiler.TYPE.GENERAL);
             host.setChatErrorSnooper(source);
             long start = System.nanoTime();
             Value result = call.get();
@@ -412,7 +414,9 @@ public class ScriptCommand
                 metric = "s";
             }
             Messenger.m(source, "wi  = ", "wb "+result.getString(), "gi  ("+time+metric+")");
-            return (int)result.readInteger();
+            int intres = (int)result.readInteger();
+            CarpetProfiler.end_current_section(currentSection);
+            return intres;
         }
         catch (CarpetExpressionException e)
         {
