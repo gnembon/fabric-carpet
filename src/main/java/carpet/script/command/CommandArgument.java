@@ -1,5 +1,6 @@
 package carpet.script.command;
 
+import carpet.CarpetServer;
 import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
@@ -277,7 +278,12 @@ public abstract class CommandArgument
     {
         CommandArgument arg = getTypeForArgument(param, host);
         if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType()).suggests(arg.suggestionProvider);
-        return arg.needsMatching? argument(param, arg.getArgumentType()).suggests((c, b) -> arg.suggest(c, b, host)) : argument(param, arg.getArgumentType());
+        if (!arg.needsMatching) return argument(param, arg.getArgumentType());
+        String hostName = host.getName();
+        return argument(param, arg.getArgumentType()).suggests((ctx, b) -> {
+            CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
+            return arg.suggest(ctx, b, cHost);
+        });
     }
 
     protected String suffix;
