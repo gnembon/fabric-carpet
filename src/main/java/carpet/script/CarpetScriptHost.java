@@ -18,6 +18,7 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 
 import com.google.gson.JsonElement;
@@ -127,6 +128,7 @@ public class CarpetScriptHost extends ScriptHost
 
     private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument<Value> funcSpec, List<String> paramNames) throws CommandSyntaxException
     {
+        CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
         CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
         List<String> argNames = funcSpec.function.getArguments();
         if ((argNames.size()-funcSpec.args.size()) != paramNames.size())
@@ -140,7 +142,9 @@ public class CarpetScriptHost extends ScriptHost
         Value response = cHost.handleCommand(ctx.getSource(), funcSpec.function, args);
         // will skip prints for new
         //if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
-        return (int) response.readInteger();
+        int intres = (int) response.readInteger();
+        CarpetProfiler.end_current_section(currentSection);
+        return intres;
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> addPathToCommand(
@@ -210,12 +214,15 @@ public class CarpetScriptHost extends ScriptHost
         return s -> {
             try
             {
+                CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
                 CarpetScriptHost cHost = null;
                 cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(s);
                 Value response = cHost.handleCommand(s, fun, Collections.singletonList(
                         (s.getEntity() instanceof ServerPlayerEntity)?new EntityValue(s.getEntity()):Value.NULL)
                 );
-                return response.getBoolean();
+                boolean res = response.getBoolean();
+                CarpetProfiler.end_current_section(currentSection);
+                return res;
             }
             catch (CommandSyntaxException e)
             {
@@ -546,7 +553,10 @@ public class CarpetScriptHost extends ScriptHost
     {
         try
         {
-            return callLegacy(source, call, coords, arg);
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet legacy", CarpetProfiler.TYPE.GENERAL);
+            Value res = callLegacy(source, call, coords, arg);
+            CarpetProfiler.end_current_section(currentSection);
+            return res;
         }
         catch (CarpetExpressionException exc)
         {

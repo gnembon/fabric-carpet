@@ -31,7 +31,9 @@ public class CarpetProfiler
     private static int tick_health_elapsed = 0;
     private static TYPE test_type = TYPE.NONE; //1 for ticks, 2 for entities;
     private static long current_tick_start = 0;
-    private static final String[] GENERAL_SECTIONS = {"Network", "Autosave", "Async Tasks", "Datapacks",};
+    private static final String[] GENERAL_SECTIONS = {"Network", "Autosave", "Async Tasks", "Datapacks",
+            "Scarpet ace", "Scarpet legacy", "Scarpet events", "Scarpet schedule",
+            "Scarpet command", "Scarpet loading", "Scarpet app data"};
     private static final String[] SECTIONS = {
             "Spawning and Random Ticks", "Ticket Manager","Unloading",
             "Blocks", "Entities", "Block Entities",

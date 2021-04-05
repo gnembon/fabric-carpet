@@ -14,6 +14,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.settings.ParsedRule;
+import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
@@ -204,6 +205,7 @@ public class CarpetEventServer
         {
             if (callList.size() > 0)
             {
+                CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
                 List<Value> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source;
                 try
@@ -225,6 +227,7 @@ public class CarpetEventServer
                     if (!call.execute(source, argv)) fails.add(call);
                 }
                 for (Callback call : fails) callList.remove(call);
+                CarpetProfiler.end_current_section(currentSection);
             }
         }
 

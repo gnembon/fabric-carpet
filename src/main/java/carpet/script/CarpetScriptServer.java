@@ -1,19 +1,15 @@
 package carpet.script;
 
 import carpet.CarpetSettings;
-import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
-import carpet.script.command.CommandToken;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 
@@ -229,6 +225,7 @@ public class CarpetScriptServer
     public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
+        CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet loading", CarpetProfiler.TYPE.GENERAL);
         if (commandValidator == null) commandValidator = p -> true;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
@@ -301,6 +298,7 @@ public class CarpetScriptServer
             FunctionValue onStart = newHost.getFunction("__on_start");
             if (onStart != null) newHost.callNow(onStart, Collections.emptyList());
         }
+        CarpetProfiler.end_current_section(currentSection);
         long end = System.nanoTime();
         CarpetSettings.LOG.info("App "+name+" loaded in "+(end-start)/1000000+" ms");
         return true;
@@ -412,11 +410,16 @@ public class CarpetScriptServer
 
     public void tick()
     {
+        CarpetProfiler.ProfilerToken token;
+        token = CarpetProfiler.start_section(null, "Scarpet schedule", CarpetProfiler.TYPE.GENERAL);
         events.tick();
+        CarpetProfiler.end_current_section(token);
+        token = CarpetProfiler.start_section(null, "Scarpet app data", CarpetProfiler.TYPE.GENERAL);
         for (CarpetScriptHost host : modules.values())
         {
             host.tick();
         }
+        CarpetProfiler.end_current_section(token);
     }
 
     public void onClose()
