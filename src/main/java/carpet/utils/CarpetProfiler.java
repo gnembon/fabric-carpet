@@ -149,12 +149,7 @@ public class CarpetProfiler
         {
             String current_section = (tok.world == null) ? (String) tok.section :
                     getSectionString(tok.world, (String)tok.section);
-            if (SECTION_STATS.get(current_section) == null)
-            {
-                CarpetSettings.LOG.error("Current section: "+current_section);
-            }
-            else
-                SECTION_STATS.put(current_section, SECTION_STATS.get(current_section) + end_time - tok.start);
+            SECTION_STATS.put(current_section, SECTION_STATS.getOrDefault(current_section, 0L) + end_time - tok.start);
         }
     }
 
@@ -236,7 +231,8 @@ public class CarpetProfiler
             boolean hasSomethin = false;
             for (String section : SECTIONS)
             {
-                double amount = divider * SECTION_STATS.get(dimension + "." + section);
+
+                double amount = divider * SECTION_STATS.getOrDefault(dimension + "." + section, 0L);
                 if (amount > 0.01)
                 {
                     hasSomethin = true;
@@ -250,7 +246,7 @@ public class CarpetProfiler
             Messenger.m(currentRequester, "gi "+dimension + ":");
             for (String section : SECTIONS)
             {
-                double amount = divider * SECTION_STATS.get(dimension + "." + section);
+                double amount = divider * SECTION_STATS.getOrDefault(dimension + "." + section, 0L);
                 if (amount > 0.01)
                 {
                     if (!(section.endsWith("(Client)")))
