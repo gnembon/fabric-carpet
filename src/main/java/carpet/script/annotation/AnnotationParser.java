@@ -12,8 +12,6 @@ import java.util.ListIterator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Triple;
-
 import carpet.CarpetSettings;
 import carpet.script.Context;
 import carpet.script.Expression;
@@ -65,7 +63,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * @see Param.Params#registerStrictConverter(Class, boolean, ValueConverter)
  */
 public class AnnotationParser {
-	private static final List<Triple<String, Integer, TriFunction<Context, Integer, List<LazyValue>, LazyValue>>> functionList = new ArrayList<>();
+	private static final List<ParsedFunction> functionList = new ArrayList<>();
 	
 	/**
 	 * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link LazyFunction} annotation, to be used
@@ -112,149 +110,170 @@ public class AnnotationParser {
 				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided in '"+ clazz +"' must not declare checked exceptions");
 			}
 			
-			String functionName = method.getName();
-			List<ValueConverter<?>> valueConverters = new ObjectArrayList<>();
-			Parameter param;
-			for (int i = 0; i < method.getParameterCount(); i++) {
-				param = method.getParameters()[i];
-				if (!method.isVarArgs() || i != method.getParameterCount() -1 ) // Varargs converter is separate, inside #makeFunction
-					valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
-			}
-			boolean isEffectivelyVarArgs = method.isVarArgs() ? true : valueConverters.stream().anyMatch(ValueConverter::consumesVariableArgs);
-			int actualMinParams = valueConverters.stream().mapToInt(ValueConverter::valueConsumption).sum(); //Note: In !varargs, this is params
+			ParsedFunction function = new ParsedFunction(method, instance);
 			
-			int maxParams = actualMinParams; // Unlimited == Integer.MAX_VALUE
+			CarpetSettings.LOG.info("Adding fname: "+function.name()+". Expr paramcount: "+function.scarpetParamCount()+". Provided in " + clazz.getName());
+			functionList.add(function);
+		}
+	}
+	
+	/**
+	 * <p>Adds all parsed functions to the given {@link Expression}.</p>
+	 * <p>This is handled automatically by Carpet</p>
+	 * @param expr The expression to add every function to
+	 */
+	public static void apply(Expression expr) {
+		for (ParsedFunction function : functionList)
+			expr.addLazyFunction(function.name(), function.scarpetParamCount(), function);
+	}
+	
+	private static class ParsedFunction implements TriFunction<Context, Integer, List<LazyValue>, LazyValue> {
+		private final String name;
+		private final boolean isVarArgs;
+		private final int methodParamCount;
+		private final List<ValueConverter<?>> valueConverters;
+		private final Class<?> varArgsType;
+		private final ValueConverter<?> varArgsConverter;
+		private final OutputConverter<Object> outputConverter;
+		private final int minParams;
+		private final int maxParams;
+		private final MethodHandle handle;
+		private final int scarpetParamCount;
+		
+		private ParsedFunction(final Method method, final Object instance) {
+			this.name = method.getName();
+			this.isVarArgs = method.isVarArgs();
+			this.methodParamCount = method.getParameterCount();
+			
+			this.valueConverters = new ObjectArrayList<>();
+			for (int i = 0; i < this.methodParamCount; i++) {
+				Parameter param = method.getParameters()[i];
+				if (!isVarArgs || i != this.methodParamCount -1 ) // Varargs converter is separate, inside #makeFunction
+					this.valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
+			}
+			this.varArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
+			this.varArgsConverter = isVarArgs ? ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType()) : null;
+			@SuppressWarnings("unchecked") // Yes. Making a T is not worth
+			OutputConverter<Object> converter = OutputConverter.get((Class<Object>)method.getReturnType());
+			this.outputConverter = converter;
+			
+			//If using primitives, this is problematic when casting (cannot cast to Object[]). TODO Change if I find a better way.
+			//TODO Option 2: Just not support unboxeds in varargs and ask to use boxed types, would be both simpler and faster, since this 
+			//              method requires creating new array and moving every item to cast Boxed[] -> primitive[]
+			//TODO At least use one of them, since I got lazy and didn't even make this work (current idea: ArrayUtils.toPrimitive(boxedArray) )
+			//final Class<?> boxedVarArgsType = ClassUtils.primitiveToWrapper(varArgsType);
+			//TODO Find a better place for this TODO (this talks about varArgsConverter)
+			
+			boolean isEffectivelyVarArgs = isVarArgs ? true : valueConverters.stream().anyMatch(ValueConverter::consumesVariableArgs);
+			this.minParams = valueConverters.stream().mapToInt(ValueConverter::valueConsumption).sum(); //Note: In !varargs, this is params
+			int maxParams = this.minParams; // Unlimited == Integer.MAX_VALUE
 			if (isEffectivelyVarArgs) {
 				maxParams = method.getAnnotation(LazyFunction.class).maxParams();
 				if (maxParams == -2)
-					throw new IllegalArgumentException("No maximum number of params specified for " + method.getName() + ", use -1 for unlimited. "
-							+ "Provided in " + clazz);
-				if (maxParams < actualMinParams)
-					throw new IllegalArgumentException("Provided maximum number of params for " + method.getName() + " is smaller than method's param count."
-							+ "Provided in " + clazz);
+					throw new IllegalArgumentException("No maximum number of params specified for " + name + ", use -1 for unlimited. "
+							+ "Provided in " + instance.getClass());
+				if (maxParams < this.minParams)
+					throw new IllegalArgumentException("Provided maximum number of params for " + name + " is smaller than method's param count."
+							+ "Provided in " + instance.getClass());
 				if (maxParams == -1)
 					maxParams = Integer.MAX_VALUE;
 			}
+			this.maxParams = maxParams;
 			
-			TriFunction<Context, Integer, List<LazyValue>, LazyValue> function = makeFunction(method, instance, valueConverters, actualMinParams, maxParams);
+			// Why MethodHandles?
+			// MethodHandles are blazing fast (in some situations they can even compile to a single invokeVirtual), but slightly complex to work with.
+			// Their "polymorphic signature" makes them (by default) require the exact signature of the method and return type, in order to call the
+			// functions directly, not even accepting Objects. Therefore we change them to spreaders (accept array instead), return type of Object,
+			// and we also bind them to our instance. That makes them ever-so-slightly slower, since they have to cast the params, but it's not
+			// noticeable, and comparing the overhead that reflection's #invoke had over this, the difference is substantial
+			// (checking access at invoke vs create).
+			// Note: there is also MethodHandle#invoke and #invokeWithArguments, but those run #asType at every invocation, which is quite slow, so we
+			//       are basically running it here.
+			try {
+				MethodHandle tempHandle = MethodHandles.publicLookup().unreflect(method).asFixedArity().asSpreader(Object[].class, this.methodParamCount);
+				this.handle = tempHandle.asType(tempHandle.type().changeReturnType(Object.class)).bindTo(instance);
+			} catch (IllegalAccessException e) {
+				throw new IllegalArgumentException(e);
+			}
 			
-			int parameterCount = isEffectivelyVarArgs ? -1 : actualMinParams;
-			CarpetSettings.LOG.info("Adding fname: "+functionName+". Expression paramcount: "+parameterCount+". Provided in '" + clazz.getName() + "'");
-			functionList.add(Triple.of(functionName, parameterCount, function));
+			this.scarpetParamCount = isEffectivelyVarArgs ? -1 : this.minParams;
 			
 		}
-	}
-	
-	public static void apply(Expression expr) {
-		for (Triple<String, Integer, TriFunction<Context, Integer, List<LazyValue>, LazyValue>> t : functionList)
-			expr.addLazyFunction(t.getLeft(), t.getMiddle(), t.getRight());
-
-	}
-	
-	private static <T> TriFunction<Context, Integer, List<LazyValue>, LazyValue> makeFunction(final Method method, final Object instance, 
-														final List<ValueConverter<?>> valueConverters, final int minParams, final int maxParams)
-	{
-		final boolean isVarArgs = method.isVarArgs();
-		@SuppressWarnings("unchecked") // We are "defining" T in here.
-		final OutputConverter<T> outputConverter = OutputConverter.get((Class<T>)method.getReturnType());
-		final int methodParamCount = method.getParameterCount();
-		final String name = method.getName();
 		
-		final ValueConverter<?> varArgsConverter = 
-				isVarArgs ? ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType()) : null;
-		final Class<?> varArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
-		//If using primitives, this is problematic when casting (cannot cast to Object[]). TODO Change if I find a better way.
-		//TODO Option 2: Just not support unboxeds in varargs and ask to use boxed types, would be both simpler and faster, since this 
-		//              method requires creating new array and moving every item to cast Boxed[] -> primitive[]
-		//TODO At least use one of them, since I got lazy and didn't even make this work (current idea: ArrayUtils.toPrimitive(boxedArray) )
-		//final Class<?> boxedVarArgsType = ClassUtils.primitiveToWrapper(varArgsType);
-		
-		
-		// MethodHandles are blazing fast (in some situations they can even compile to a single invokeVirtual), but slightly complex to work with.
-		// Their "polymorphic signature" makes them (by default) require the exact signature of the method and return type, in order to call the
-		// functions directly, not even accepting Objects. Therefore we change them to spreaders (accept array instead), return type of Object,
-		// and we also bind them to our instance. That makes them ever-so-slightly slower, since they have to cast the params, but it's not
-		// noticeable, and comparing the overhead that reflection's #invoke had over this, the difference is substantial
-		// (checking access at invoke vs create).
-		// Note: there is also MethodHandle#invoke and #invokeWithArguments, but those run #asType at every invocation, which is quite slow, so we
-		//       are basically running it here.
-		final MethodHandle handle;
-		try {
-			MethodHandle tempHandle = MethodHandles.publicLookup().unreflect(method).asFixedArity().asSpreader(Object[].class, methodParamCount);
-			handle = tempHandle.asType(tempHandle.type().changeReturnType(Object.class)).bindTo(instance);
-		} catch (IllegalAccessException e) {
-			throw new IllegalArgumentException(e);
-		}
-		return (context, i, lv) -> {
+		@Override
+		public LazyValue apply(Context context, Integer t, List<LazyValue> lv) {
 			if (isVarArgs) {
 				if (lv.size() < minParams) //TODO More descriptive messages using ValueConverter#getTypeName (or even param.getName()?)
-					throw new InternalExpressionException(name + " expects at least " + minParams + " arguments. "+getUsage(valueConverters, varArgsConverter, name));
+					throw new InternalExpressionException(name + " expects at least " + minParams + " arguments. " + getUsage());
 				if (lv.size() > maxParams)
-					throw new InternalExpressionException(name + " expects up to " + maxParams + " arguments. "+getUsage(valueConverters, varArgsConverter, name));
+					throw new InternalExpressionException(name + " expects up to " + maxParams + " arguments. " + getUsage());
 			}
-			Object[] params = getMethodParams(lv, valueConverters, varArgsConverter, varArgsType, isVarArgs, context, methodParamCount, name);
+			Object[] params = getMethodParams(lv, context);
 			try {
-				return outputConverter.convert((T) handle.invokeExact(params));
+				return outputConverter.convert(handle.invokeExact(params));
 			} catch (Throwable e) {
 				if (e instanceof RuntimeException)
 					throw (RuntimeException) e;
 				throw (Error) e; // Stack overflow or something. Methods are guaranteed not to throw checked exceptions
 			}
-		};
-	}
-	
-	// Hot code: Must be optimized
-	private static Object[] getMethodParams(final List<LazyValue> lv, final List<ValueConverter<?>> valueConverters,
-											final ValueConverter<?> varArgsConverter, final Class<?> varArgsType, final boolean isMethodVarArgs, 
-											final Context context, final int methodParameterCount, final String name)
-	{
-		Object[] params = new Object[methodParameterCount];
-		ListIterator<LazyValue> lvIterator = lv.listIterator();
-		
-		int regularArgs = isMethodVarArgs ? methodParameterCount -1 : methodParameterCount;
-		for (int i = 0; i < regularArgs; i++) {
-			params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
-			if (params[i] == null)
-				throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n"+getUsage(valueConverters, varArgsConverter, name));
 		}
-		if (isMethodVarArgs) {
-			int remaining = lv.size() - lvIterator.nextIndex();
-			Object[] varArgs;
-			if (varArgsConverter.consumesVariableArgs()) {
-				List<Object> varArgsList = new ObjectArrayList<>();
-				while (lvIterator.hasNext()) {
-					Object obj = varArgsConverter.evalAndConvert(lvIterator, context);
-					if (obj == null)
-						throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n"+getUsage(valueConverters, varArgsConverter, name));
-					varArgsList.add(obj);
-				}
-				varArgs = varArgsList.toArray();
-			} else {
-				varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.valueConsumption());
-				for (int i = 0; lvIterator.hasNext(); i++) {
-					varArgs[i] = varArgsConverter.evalAndConvert(lvIterator, context);
-					if (varArgs[i] == null)
-						throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n"+getUsage(valueConverters, varArgsConverter, name));
-				}
-			}
+
+		// Hot code: Must be optimized
+		private Object[] getMethodParams(final List<LazyValue> lv, final Context context) {
+			Object[] params = new Object[methodParamCount];
+			ListIterator<LazyValue> lvIterator = lv.listIterator();
 			
-			params[methodParameterCount - 1] = varArgs;
-			//TODO The above, but for primitive varargs
+			int regularArgs = isVarArgs ? methodParamCount -1 : methodParamCount;
+			for (int i = 0; i < regularArgs; i++) {
+				params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
+				if (params[i] == null)
+					throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n" + getUsage());
+			}
+			if (isVarArgs) {
+				int remaining = lv.size() - lvIterator.nextIndex();
+				Object[] varArgs;
+				if (varArgsConverter.consumesVariableArgs()) {
+					List<Object> varArgsList = new ObjectArrayList<>();
+					while (lvIterator.hasNext()) {
+						Object obj = varArgsConverter.evalAndConvert(lvIterator, context);
+						if (obj == null)
+							throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n" + getUsage());
+						varArgsList.add(obj);
+					}
+					varArgs = varArgsList.toArray();
+				} else {
+					varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.valueConsumption());
+					for (int i = 0; lvIterator.hasNext(); i++) {
+						varArgs[i] = varArgsConverter.evalAndConvert(lvIterator, context);
+						if (varArgs[i] == null)
+							throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n" + getUsage());
+					}
+				}
+				params[methodParamCount - 1] = varArgs;
+				//TODO The above, but for primitive varargs
+			}
+			return params;
 		}
-		return params;
-	}
-	
-	private static String getUsage(List<ValueConverter<?>> valueConverters, ValueConverter<?> varArgsConverter, String functionName) {
-		StringBuilder builder = new StringBuilder("Usage: ");
-		builder.append(functionName);
-		builder.append('(');
-		builder.append(valueConverters.stream().map(ValueConverter::getTypeName).collect(Collectors.joining(", ")));
-		if (varArgsConverter != null) {
-			builder.append(", ");
-			builder.append(varArgsConverter.getTypeName());
-			builder.append("s...)");
+		
+		private String getUsage() {
+			StringBuilder builder = new StringBuilder("Usage: ");
+			builder.append(name);
+			builder.append('(');
+			builder.append(valueConverters.stream().map(ValueConverter::getTypeName).collect(Collectors.joining(", ")));
+			if (varArgsConverter != null) {
+				builder.append(", ");
+				builder.append(varArgsConverter.getTypeName());
+				builder.append("s...)");
+			}
+			return builder.toString();
 		}
-		return builder.toString();
+		
+		private int scarpetParamCount() {
+			return scarpetParamCount;
+		}
+		private String name() {
+			return name;
+		}
 	}
 	
 	private AnnotationParser() {}
