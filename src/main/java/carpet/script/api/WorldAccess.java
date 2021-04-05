@@ -122,8 +122,7 @@ public class WorldAccess {
         put("unknown", ChunkTicketType.UNKNOWN);  // unknown
     }};
     // dummy entity for dummy requirements in the loot tables (see snowball)
-    private static FallingBlockEntity DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
-
+    private static FallingBlockEntity DUMMY_ENTITY = null;
     private static LazyValue booleanStateTest(
             Context c,
             String name,
@@ -931,6 +930,7 @@ public class WorldAccess {
                 {
                     if (how > 0)
                         tool.addEnchantment(Enchantments.FORTUNE, (int) how);
+                    if (DUMMY_ENTITY == null) DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
                     Block.dropStacks(state, world, where, be, DUMMY_ENTITY, tool);
                 }
             }
