@@ -9,6 +9,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -259,7 +260,7 @@ public class AnnotationParser {
 			StringBuilder builder = new StringBuilder("Usage: ");
 			builder.append(name);
 			builder.append('(');
-			builder.append(valueConverters.stream().map(ValueConverter::getTypeName).collect(Collectors.joining(", ")));
+			builder.append(valueConverters.stream().map(ValueConverter::getTypeName).filter(Objects::nonNull).collect(Collectors.joining(", ")));
 			if (varArgsConverter != null) {
 				builder.append(", ");
 				builder.append(varArgsConverter.getTypeName());

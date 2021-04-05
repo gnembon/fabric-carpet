@@ -164,7 +164,7 @@ public interface Param {
 		 * convert a {@link Value} directly.</p>
 		 */
 		static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
-			@Override public String getTypeName() {return "";}
+			@Override public String getTypeName() {return null;}
 			@Override
 			public Context convert(Value value) {
 				throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");

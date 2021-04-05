@@ -25,8 +25,13 @@ import carpet.script.value.Value;
 public interface ValueConverter<R> {
 	
 	/**
-	 * @return The user-friendly name of the result this {@link ValueConverter} converts to, without {@code a} or {@code an},
-	 *         and without capitalizing the first letter.
+	 * <p>Returns the the user-friendly name of the result this {@link ValueConverter} converts to, without {@code a} or {@code an},
+	 * and without capitalizing the first letter.</p>
+	 * 
+	 * <p>This method can return {@code null}, in which case users of this function should hide this {@link ValueConverter}
+	 * from any aids or usages of the function, meaning that the {@link ValueConverter} is only providing some meta information
+	 * that isn't directly provided through the Scarpet language.</p>
+	 * 
 	 * @apiNote This method is intended to only be called when an error has occurred and therefore there is a need to print a 
 	 *           stacktrace with some helpful usage instructions. 
 	 * @see #getPrefixedTypeName()
@@ -34,15 +39,17 @@ public interface ValueConverter<R> {
 	public String getTypeName();
 	
 	/**
-	 * Returns the user-friendly name of the result that this {@link ValueConverter} converts to, prefixed with {@code a} or {@code an},
-	 * depending on the rules of English (aka starts with {@code aeiou}: an)
+	 * <p>Returns the user-friendly name of the result that this {@link ValueConverter} converts to, prefixed with {@code a} or {@code an},
+	 * depending on the rules of English (aka starts with {@code aeiou}: an)</p>
+	 * 
+	 * <p>This method holds the same nullability constraints as {@link #getTypeName()}</p>
 	 * 
 	 * @implNote This method's default implementation returns the result of {@link #getTypeName()} prefixed depending on whether the first character
 	 *           is one of {@code aeiou} or something else.
 	 * @see #getTypeName() 
 	 */ //TODO Decide whether to keep
 	default public String getPrefixedTypeName() {
-		if (getTypeName().isEmpty()) return "";
+		if (getTypeName() == null) return null;
 		switch (getTypeName().charAt(0)) {
 			case 'a': case 'e': case 'i': case 'o': case 'u':
 				return "an " + getTypeName();
