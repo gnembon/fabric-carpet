@@ -28,7 +28,7 @@ import carpet.script.value.Value;
  * @param <K> The type of the map's keys
  * @param <V> The type of the map's values
  */
-public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
+class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 	protected final ValueConverter<K> keyConverter;
 	protected final ValueConverter<V> valueConverter;
 	
@@ -74,14 +74,14 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 	 * @param annotatedType The type to get generics information from
 	 * @return A new {@link MapConverter} for the data specified in the {@link AnnotatedType}
 	 */
-	public static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType) {
+	static MapConverter<?, ?> fromAnnotatedType(AnnotatedType annotatedType) {
 		AnnotatedType[] annotatedGenerics = ((AnnotatedParameterizedType) annotatedType).getAnnotatedActualTypeArguments();
 		return annotatedType.isAnnotationPresent(Param.KeyValuePairs.class) 
 				? new PairConverter<>(annotatedGenerics[0], annotatedGenerics[1], annotatedType.getAnnotation(Param.KeyValuePairs.class))
 				: new MapConverter<>(annotatedGenerics[0], annotatedGenerics[1]);
 	}
 	
-	private static class PairConverter<K, V> extends MapConverter<K, V> {
+	private static final class PairConverter<K, V> extends MapConverter<K, V> {
 		private final boolean acceptMultiParam;
 		private PairConverter(AnnotatedType keyType, AnnotatedType valueType, Param.KeyValuePairs config) {
 			super(keyType, valueType);
@@ -116,11 +116,10 @@ public class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 		
 		@Override
 		public Map<K, V> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
-			if (!acceptMultiParam) return super.evalAndConvert(lazyValueIterator, context);
 			if (!lazyValueIterator.hasNext())
 				return null;
 			Value val = lazyValueIterator.next().evalValue(context);
-			if (val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
+			if (!acceptMultiParam || val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
 				return convert(val);                                   // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
 			Map<K, V> map = new HashMap<>();
 			K key = keyConverter.convert(val);

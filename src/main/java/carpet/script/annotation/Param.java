@@ -138,8 +138,10 @@ public interface Param {
 	 */
 	public static class Params {
 		/**
-		 * A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context)},
-		 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.
+		 * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context)},
+		 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.</p>
+		 * 
+		 * <p>Public in order to allow custom {@link ValueConverter} to check whether values should be evaluated while testing conditions.</p>
 		 */
 		public static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
 			@Override
@@ -157,11 +159,11 @@ public interface Param {
 		};
 		
 		/**
-		 * A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
+		 * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
 		 * {@link #evalAndConvert(Iterator, Context)}, and throws {@link UnsupportedOperationException} when trying to
-		 * convert a {@link Value} directly.
+		 * convert a {@link Value} directly.</p>
 		 */
-		public static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
+		static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
 			@Override public String getTypeName() {return "";}
 			@Override
 			public Context convert(Value value) {
@@ -202,7 +204,7 @@ public interface Param {
 		 * @throws IllegalArgumentException If the type doesn't accept the {@link Strict} annotation
 		 *                                  or if it has been used incorrectly (shallow in unsupported places)
 		 */
-		public static ValueConverter<?> getStrictConverter(AnnotatedType type) {
+		static ValueConverter<?> getStrictConverter(AnnotatedType type) {
 			boolean shallow = type.getAnnotation(Strict.class).shallow();
 			Class<?> clazz = (Class<?>) type.getType();
 			Pair<Class<?>, Boolean> key = Pair.of(clazz, shallow);

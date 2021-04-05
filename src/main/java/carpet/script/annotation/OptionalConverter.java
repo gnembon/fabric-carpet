@@ -29,7 +29,7 @@ import carpet.script.value.Value;
  *
  * @param <R> The type of the internal {@link ValueConverter}, basically the generic type of the {@link Optional}
  */
-public class OptionalConverter<R> implements ValueConverter<Optional<R>> {
+final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	private final ValueConverter<R> typeConverter;
 	
 	@Override
@@ -97,7 +97,7 @@ public class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	 * @param annotatedType The type to get generics information from
 	 * @return A new {@link OptionalConverter} for the data specified in the {@link AnnotatedType}
 	 */
-	public static OptionalConverter<?> fromAnnotatedType(AnnotatedType annotatedType) {
+	static OptionalConverter<?> fromAnnotatedType(AnnotatedType annotatedType) {
 		AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
 		AnnotatedType wrappedType = paramType.getAnnotatedActualTypeArguments()[0];
 		return new OptionalConverter<>(wrappedType);

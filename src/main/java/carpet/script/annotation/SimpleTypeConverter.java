@@ -30,7 +30,7 @@ import net.minecraft.world.World;
  * @param <T> The type of the required input {@link Value}
  * @param <R> The type that this converter converts to
  */
-public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R> {
+public final class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R> {
 	private static final Map<Class<?>, SimpleTypeConverter<? extends Value, ?>> byResult = new HashMap<>();
 	static {
 		registerType(Value.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val), "online player");
@@ -83,7 +83,7 @@ public class SimpleTypeConverter<T extends Value, R> implements ValueConverter<R
 	 * @return The {@link SimpleTypeConverter} for the specified outputType
 	 */
 	@SuppressWarnings("unchecked") //Seems safe. T always extends Value, R is always the same as map's key, since map is private. Not 100% sure about T->Value
-	public static <R> SimpleTypeConverter<Value, R> get(Class<R> outputType) {
+	static <R> SimpleTypeConverter<Value, R> get(Class<R> outputType) {
 		return (SimpleTypeConverter<Value, R>) byResult.get(outputType);
 	}
 	

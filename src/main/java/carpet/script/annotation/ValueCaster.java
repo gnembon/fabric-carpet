@@ -17,7 +17,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 
-public class ValueCaster<R> implements ValueConverter<R> {
+public final class ValueCaster<R> implements ValueConverter<R> {
 	private static final Map<Class<? extends Value>, ValueCaster<? extends Value>> byResult = new HashMap<>();
 	static {
 		register(Value.class, "value");

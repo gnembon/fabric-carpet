@@ -20,13 +20,13 @@ import carpet.script.value.Value;
  *
  * @param <T> The type of the element that will be inside the list
  */
-public class ListConverter<T> implements ValueConverter<List<T>> {
+final class ListConverter<T> implements ValueConverter<List<T>> {
 	private final ValueConverter<T> itemConverter;
 	private final boolean allowSingletonCreation;
 	
 	@Override
 	public String getTypeName() {
-		return (allowSingletonCreation ? itemConverter.getTypeName() + " or a ": "") + "list of " + itemConverter.getTypeName() + "s";
+		return (allowSingletonCreation ? itemConverter.getTypeName() + " or ": "") + "list of " + itemConverter.getTypeName() + "s";
 	}
 
 	@Override
@@ -74,7 +74,7 @@ public class ListConverter<T> implements ValueConverter<List<T>> {
 	 * @param annotatedType The type to get generics information from
 	 * @return A new {@link ListConverter} for the data specified in the {@link AnnotatedType}
 	 */
-	public static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType) {
+	static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType) {
 		AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
 		AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];
 		boolean allowSingletonCreation = annotatedType.isAnnotationPresent(Param.AllowSingleton.class);
