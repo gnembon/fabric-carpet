@@ -28,6 +28,12 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.Tag;
@@ -47,6 +53,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -348,6 +356,71 @@ public class CarpetScriptHost extends ScriptHost
 
         }
         return addLegacyCommand(notifier);
+    }
+    
+    public boolean meetsModVersionRequirements(ServerCommandSource source) {
+        Value reqs = appConfig.get(StringValue.of("requires"));
+        if (reqs == null)
+            return true;
+        if (!(reqs instanceof MapValue))
+        {
+            Messenger.m(source, "r `requires` field in app config for "+getName()+" isn't a map, thus failed to load the app");
+            return false;
+        }
+        Map<Value, Value> requirements = ((MapValue)reqs).getMap();
+        for (Entry<Value, Value> requirement : requirements.entrySet())
+        {
+            boolean successful = false;
+            String requiredModId = requirement.getKey().getString();
+            String requirementString = requirement.getValue().getString();
+            
+            SemanticVersion requiredVersion = null;
+            if (!requirementString.equals("*"))
+            {
+                try
+                {
+                    requiredVersion = SemanticVersion.parse(requirementString);
+                } catch (VersionParsingException e) {
+                    Messenger.m(source, "r Failed to add " + getName() + " app");
+                    Messenger.m(source, "r Failed to parse semantic version for '" + requiredModId + "' in " + getName() + "'s config: " + e.getMessage());
+                    return false;
+                }
+            }
+            ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
+            if (mod != null)
+            {
+                if (requirementString.equals("*"))
+                    continue;
+                Version presentVersion = mod.getMetadata().getVersion();
+                if (presentVersion instanceof SemanticVersion)
+                {
+                    if (((SemanticVersion) presentVersion).compareTo(requiredVersion) >= 0)
+                        successful = true;
+                }
+                else
+                {
+                    if (FabricLoader.getInstance().isDevelopmentEnvironment())
+                    {
+                        successful = true; // Autoversioning breaks semver in dev (loads as ${version})
+                    }
+                    else
+                    {
+                        CarpetSettings.LOG.info(mod.getMetadata().getName()+" does not support semver: Comparison suport is limited to exact");
+                        if (presentVersion.getFriendlyString().equals(requirementString)) {
+                            successful = true;
+                        }
+                    }
+                }
+            }
+            if (!successful)
+            {
+                Messenger.m(source, "r Failed to add "+getName()+" app");
+                Messenger.m(source, "r "+getName()+" requires " + requiredModId + " with at least version " + requirementString);
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     private Boolean addLegacyCommand(Consumer<Text> notifier)

@@ -270,12 +270,20 @@ public class CarpetScriptServer
         }
         //addEvents(source, name);
         String action = reload?"reloaded":"loaded";
+        
+        if (!newHost.meetsModVersionRequirements(source))
+        {
+            removeScriptHost(source, name, false, isRuleApp); //already notified
+            return false;
+        }
+        
         Boolean isCommandAdded = newHost.addAppCommands(s -> {
             if (!isRuleApp) Messenger.m(source, s);
         });
         if (isCommandAdded == null) // error should be dispatched
         {
-            removeScriptHost(source, name, false, false);
+            removeScriptHost(source, name, false, isRuleApp);
+            return false;
         }
         else if (isCommandAdded)
         {
