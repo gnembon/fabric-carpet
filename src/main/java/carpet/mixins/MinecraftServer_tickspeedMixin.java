@@ -208,7 +208,8 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
     {
         if (CarpetProfiler.tick_health_requested != 0L)
         {
-            CarpetProfiler.end_tick_profiling((MinecraftServer) (Object)this, currentSection);
+            CarpetProfiler.end_current_section(currentSection);
+            CarpetProfiler.end_tick_profiling((MinecraftServer) (Object)this);
         }
     }
 

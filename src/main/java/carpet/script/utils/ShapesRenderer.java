@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import carpet.CarpetSettings;
+import carpet.utils.CarpetProfiler;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.client.MinecraftClient;
@@ -52,6 +53,7 @@ public class ShapesRenderer
 
     public void render(MatrixStack matrices, Camera camera, float partialTick)
     {
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
         //Camera camera = this.client.gameRenderer.getCamera();
         ClientWorld iWorld = this.client.world;
         RegistryKey<World> dimensionType = iWorld.getRegistryKey();
@@ -120,14 +122,17 @@ public class ShapesRenderer
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableTexture();
+        CarpetProfiler.end_current_section(token);
     }
 
     public void addShapes(NbtList tag)
     {
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
         for (int i=0, count = tag.size(); i < count; i++)
         {
             addShape(tag.getCompound(i));
         }
+        CarpetProfiler.end_current_section(token);
     }
 
     public void addShape(NbtCompound tag)
@@ -175,6 +180,7 @@ public class ShapesRenderer
 
     public void renewShapes()
     {
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
         synchronized (shapes)
         {
             shapes.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
@@ -183,6 +189,7 @@ public class ShapesRenderer
         {
             labels.values().forEach(el -> el.values().forEach(shape -> shape.expiryTick++));
         }
+        CarpetProfiler.end_current_section(token);
     }
 
     public abstract static class RenderedShape<T extends ShapeDispatcher.ExpiringShape>

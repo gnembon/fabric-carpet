@@ -553,7 +553,7 @@ public class CarpetScriptHost extends ScriptHost
     {
         try
         {
-            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet legacy", CarpetProfiler.TYPE.GENERAL);
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
             Value res = callLegacy(source, call, coords, arg);
             CarpetProfiler.end_current_section(currentSection);
             return res;

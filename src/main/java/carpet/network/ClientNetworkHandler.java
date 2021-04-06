@@ -74,7 +74,7 @@ public class ClientNetworkHandler
             TickSpeed.is_superHot = ((NbtByte) t).equals(NbtByte.ONE);
         });
         dataHandlers.put("TickPlayerActiveTimeout", (p, t) -> TickSpeed.player_active_timeout = ((AbstractNbtNumber)t).intValue());
-        dataHandlers.put("scShape", (p, t) -> { // deprecated
+        dataHandlers.put("scShape", (p, t) -> { // deprecated // and unused // should remove for 1.17
             if (CarpetClient.shapes != null)
                 CarpetClient.shapes.addShape((NbtCompound)t);
         });
