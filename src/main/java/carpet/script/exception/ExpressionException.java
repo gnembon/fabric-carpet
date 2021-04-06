@@ -7,6 +7,7 @@ import carpet.script.Tokenizer;
 import carpet.script.value.FunctionValue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -26,10 +27,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
 
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message)
     {
-        super("Error");
-        lazyMessage = () -> makeMessage(c, e, t, message);
-        token = t;
-        context = c;
+        this(c, e, t, message, Collections.emptyList());
     }
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
     {
