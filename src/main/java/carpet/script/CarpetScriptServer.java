@@ -109,7 +109,7 @@ public class CarpetScriptServer
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
-        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false);
+        globalHost = CarpetScriptHost.create(this, null, false, null, false);
     }
 
     public void initializeForWorld()
@@ -124,7 +124,7 @@ public class CarpetScriptServer
         {
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);
+                addScriptHost(server.getCommandSource(), moduleName, true, true, false);
             }
         }
         CarpetEventServer.Event.START.onTick();
@@ -222,11 +222,9 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
-                                 boolean perPlayer, boolean autoload, boolean isRuleApp)
+    public boolean addScriptHost(ServerCommandSource source, String name, boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet loading", CarpetProfiler.TYPE.GENERAL);
-        if (commandValidator == null) commandValidator = p -> true;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
         boolean reload = false;
@@ -242,7 +240,7 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to add "+name+" app");
             return false;
         }
-        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp);
+        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, isRuleApp);
         if (newHost == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -456,7 +454,6 @@ public class CarpetScriptServer
         private TransferData(CarpetScriptHost host)
         {
             perUser = host.perUser;
-            commandValidator = host.commandValidator;
             isRuleApp = host.isRuleApp;
         }
     }
@@ -468,7 +465,7 @@ public class CarpetScriptServer
         apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp));
+        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.perUser,false, data.isRuleApp));
     }
 
     public void reAddCommands()
