@@ -249,7 +249,7 @@ public class FileArgument
             strings = result.map(p -> {
                 if (zipContainer == null)
                     return rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/");
-                return (zipComponent + p.toString()).replaceAll("[\\\\/]+", "/");
+                return (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/");
             });
         } }
         finally
