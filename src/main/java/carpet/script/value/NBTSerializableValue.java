@@ -290,7 +290,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return new ItemStackArgument(res.getItem(), customTag);
 
             ItemStringReader parser = (new ItemStringReader(new StringReader(itemString), false)).consume();
-            res = new ItemStackArgument(parser.getItem(), parser.getTag());
+            res = new ItemStackArgument(parser.getItem(), parser.getNbt());
             itemCache.put(itemString, res);
             if (itemCache.size()>64000)
                 itemCache.clear();
