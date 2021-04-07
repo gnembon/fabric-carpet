@@ -56,7 +56,7 @@ import net.minecraft.command.argument.MessageArgumentType;
 import net.minecraft.command.argument.StatusEffectArgumentType;
 import net.minecraft.command.argument.NbtCompoundTagArgumentType;
 import net.minecraft.command.argument.NbtPathArgumentType;
-import net.minecraft.command.argument.NbtTagArgumentType;
+import net.minecraft.command.argument.NbtElementArgumentType;
 import net.minecraft.command.argument.NumberRangeArgumentType;
 import net.minecraft.command.argument.ScoreboardObjectiveArgumentType;
 import net.minecraft.command.argument.ScoreboardCriterionArgumentType;
@@ -697,16 +697,16 @@ public abstract class CommandArgument
         @Override
         protected ArgumentType<?> getArgumentType()
         {
-            return mapRequired?NbtCompoundTagArgumentType.nbtCompound(): NbtTagArgumentType.nbtTag();
+            return mapRequired?NbtCompoundTagArgumentType.nbtCompound(): NbtElementArgumentType.nbtElement();
         }
 
         @Override
         protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
         {
             if (mapRequired)
-                return new NBTSerializableValue(NbtCompoundTagArgumentType.getCompoundTag(context, param));
+                return new NBTSerializableValue(NbtCompoundTagArgumentType.getNbtCompound(context, param));
             else
-                return new NBTSerializableValue(NbtTagArgumentType.getTag(context, param));
+                return new NBTSerializableValue(NbtElementArgumentType.getNbtElement(context, param));
         }
 
         @Override
