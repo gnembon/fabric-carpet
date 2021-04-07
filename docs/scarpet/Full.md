@@ -910,11 +910,12 @@ length('foo') => 3
 ### `rand(expr), rand(expr, seed)`
 
 returns a random number from `0.0` (inclusive) to `expr` (exclusive). In boolean context (in conditions, 
-boolean functions, or `bool`), returns false if the randomly selected value is less than 1\. This means 
-that `rand(2)` returns true half of the time and `rand(5)` returns true for 80% (4/5) of the time. If seed is not 
-provided, uses a random seed. If seed is provided, each consecutive call to rand() will act like 'next' call to the 
-same random object. Scarpet keeps track of up to 1024 custom random number generators, so if you exceed this number 
-(per app), then your random sequence will revert to the beginning.
+boolean functions, or `bool`), returns false if the randomly selected value is less than 1. This means 
+that `bool(rand(2))` returns true half of the time and `!rand(5)` returns true for 20% (1/5) of the time. If seed is not 
+provided, uses a random seed that's shared across all scarpet apps. 
+If seed is provided, each consecutive call to rand() will act like 'next' call to the 
+same random object. Scarpet keeps track of up to 65536 custom random number generators (custom seeds, per app), 
+so if you exceed this number, your random sequences will revert to the beginning and start over.
 
 <pre>
 map(range(10), floor(rand(10))) => [5, 8, 0, 6, 9, 3, 9, 9, 1, 8]
@@ -5228,7 +5229,7 @@ Available options in the scarpet app space:
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
-
+  * `world_spawn_point` - world spawn point
 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
