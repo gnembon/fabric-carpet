@@ -77,7 +77,7 @@ public class OptimizedExplosion
         ExplosionAccessor eAccess = (ExplosionAccessor) e;
         
         entityList.clear();
-
+boolean eventNeeded = EXPLOSION.isNeeded();
         blastCalc(e);
 
         if (!CarpetSettings.explosionNoBlockDamage) {
