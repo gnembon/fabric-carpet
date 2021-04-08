@@ -87,7 +87,6 @@ global_functions = {
                   [10+half_width,10+height,10+half_width],
                   0x65432100, 'buddy detection', false
             );
-            [x,y,z] = pos(e);
             current_id = e~'id';
             buddies = entity_area('villager', e, 10, 10, 10);
             nb = length(buddies);
