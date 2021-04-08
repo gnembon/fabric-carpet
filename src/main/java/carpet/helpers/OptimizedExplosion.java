@@ -162,7 +162,7 @@ boolean eventNeeded = EXPLOSION.isNeeded();
                         }
 
                         // If it is needed, it saves the entity
-                        if (EXPLOSION.isNeeded()) {
+                        if (eventNeeded) {
                             entityList.add(entity);
                         }
 
