@@ -52,7 +52,7 @@ public abstract class Explosion_scarpetEventMixin
     @Inject(method = "collectBlocksAndDamageEntities", locals= LocalCapture.CAPTURE_FAILHARD, at=@At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;damage(Lnet/minecraft/entity/damage/DamageSource;F)Z"))
     private void onExplosion(CallbackInfo ci, Set<BlockPos> s1, float f1, int i1, int i2, int i3, int i4, int i5, int i6, List<Entity> l1, Vec3d v1, int i7, Entity entity)
     {
-        if (EXPLOSION.isNeeded())
+        if (affectedEntities != null)
         {
             affectedEntities.add(entity);
         }
