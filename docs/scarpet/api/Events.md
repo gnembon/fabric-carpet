@@ -59,7 +59,7 @@ Triggered right after a lightning strikes. Lightning entity as well as potential
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
 ### `__on_explosion(pos, power, source, create_fire, blocks, entities)`
-Triggered right before an explosion blows up, right before any changes to the world are done, but the decision to blow up is already made.  
+Triggered right before an explosion blows up and any changes to the blocks are done, but the decision to blow up is already made and entities are already affected.  
 The parameter `blocks` contains the list of blocks that will blow up (empty if `explosionNoBlockDamage` is set to `true`).
 The parameter `entities` contains the list of entities that have been affected by the explosion.
 
