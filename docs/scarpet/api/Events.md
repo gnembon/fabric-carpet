@@ -79,6 +79,11 @@ at the same time.
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
+### `__on_explosion(pos, power, source, create_fire, blocks, entities)`
+Triggered right before an explosion blows up and any changes to the blocks are done, but the decision to blow up is already made and entities are already affected.  
+The parameter `blocks` contains the list of blocks that will blow up (empty if `explosionNoBlockDamage` is set to `true`).
+The parameter `entities` contains the list of entities that have been affected by the explosion.
+
 ### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.
@@ -107,7 +112,7 @@ Example events that may cause it to happen is releasing a bow. The event is trig
 the request, however the `item_tuple` is provided representing the item that the player started with. You can use that and
 compare with the currently held item for a delta.
 
-### `__on_player_finishes_using_item(player, item_tuple, hand))`
+### `__on_player_finishes_using_item(player, item_tuple, hand)`
 Player using of an item is done. This is controlled server side and is responsible for such events as finishing
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.

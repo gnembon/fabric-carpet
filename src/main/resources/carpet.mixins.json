@@ -129,6 +129,7 @@
     "TntBlockMixin",
     "ExplosionMixin",
     "ExplosionAccessor",
+    "Explosion_scarpetEventMixin",
 
     "TntEntityMixin",
     "ProjectileEntityMixin",
