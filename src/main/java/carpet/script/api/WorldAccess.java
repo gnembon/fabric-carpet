@@ -50,6 +50,7 @@ import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.FallingBlockEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -61,6 +62,7 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ChunkTicketType;
@@ -80,6 +82,7 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
@@ -89,6 +92,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
@@ -97,6 +101,7 @@ import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -969,6 +974,88 @@ public class WorldAccess {
             if (success)
                 world.syncWorldEvent(null, 2001, where, Block.getRawIdFromState(state));
             return success ? LazyValue.TRUE : LazyValue.FALSE;
+        });
+
+        expression.addLazyFunction("create_explosion", -1, (c, t, lv) ->
+        {
+            if (lv.isEmpty())
+                throw new InternalExpressionException("'create_explosion' requires at least a position to explode");
+            CarpetContext cc = (CarpetContext)c;
+            float powah = 4.0f;
+            Explosion.DestructionType mode = Explosion.DestructionType.BREAK;
+            boolean createFire = false;
+            Entity source = null;
+            LivingEntity attacker = null;
+            Vector3Argument location = Vector3Argument.findIn(cc, lv, 0, false, true);
+            Vec3d pos = location.vec;
+            if (lv.size() > location.offset)
+            {
+                powah = NumericValue.asNumber(lv.get(location.offset).evalValue(c), "explosion power").getFloat();
+                if (powah < 0) throw new InternalExpressionException("Explosion power cannot be negative");
+                if (lv.size() > location.offset+1)
+                {
+                    String strval = lv.get(location.offset+1).evalValue(c).getString();
+                    try {
+                        mode = Explosion.DestructionType.valueOf(strval.toUpperCase(Locale.ROOT));
+                    }
+                    catch (IllegalArgumentException ile) { throw new InternalExpressionException("Illegal explosions block behaviour: "+strval); }
+                    if (lv.size() > location.offset+2)
+                    {
+                        createFire = lv.get(location.offset+2).evalValue(c, Context.BOOLEAN).getBoolean();
+                        if (lv.size() > location.offset+3)
+                        {
+                            Value enVal= lv.get(location.offset+3).evalValue(c);
+                            if (enVal.isNull()) {} // is null already
+                            else if (enVal instanceof EntityValue)
+                            {
+                                source = ((EntityValue) enVal).getEntity();
+                            }
+                            else
+                            {
+                                throw new InternalExpressionException("Fourth parameter of the explosion has to be an entity, not "+enVal.getTypeString());
+                            }
+                            if (lv.size() > location.offset+4)
+                            {
+                                enVal = lv.get(location.offset+4).evalValue(c);
+                                if (enVal.isNull()) {} // is null already
+                                else if (enVal instanceof EntityValue)
+                                {
+                                    Entity attackingEntity =  ((EntityValue) enVal).getEntity();
+                                    if (attackingEntity instanceof LivingEntity)
+                                    {
+                                        attacker = (LivingEntity) attackingEntity;
+                                    }
+                                    else throw new InternalExpressionException("Attacking entity needs to be a living thing, "+
+                                            ValueConversions.of(Registry.ENTITY_TYPE.getId(attackingEntity.getType())).getString() +" ain't it.");
+
+                                }
+                                else
+                                {
+                                    throw new InternalExpressionException("Fifth parameter of the explosion has to be a living entity, not "+enVal.getTypeString());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            LivingEntity theAttacker = attacker;
+            float thePowah = powah;
+
+            // copy of ServerWorld.createExplosion #TRACK#
+            Explosion explosion = new Explosion(cc.s.getWorld(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode){
+                @Override
+                public @Nullable LivingEntity getCausingEntity() {
+                    return theAttacker;
+                }
+            };
+            explosion.collectBlocksAndDamageEntities();
+            explosion.affectWorld(false);
+            if (mode == Explosion.DestructionType.NONE) explosion.clearAffectedBlocks();
+            cc.s.getWorld().getPlayers().forEach(spe -> {
+                if (spe.squaredDistanceTo(pos) < 4096.0D)
+                    spe.networkHandler.sendPacket(new ExplosionS2CPacket(pos.x, pos.y, pos.z, thePowah, explosion.getAffectedBlocks(), explosion.getAffectedPlayers().get(spe)));
+            });
+            return LazyValue.TRUE;
         });
 
         // TODO rename to use_item
