@@ -14,7 +14,6 @@ import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.explosion.ExplosionBehavior;
 import net.minecraft.world.level.ServerWorldProperties;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -65,7 +64,7 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
     }
 
     @Inject(method = "createExplosion", at = @At("HEAD"))
-    private void handleExplosion(@Nullable Entity entity, @Nullable DamageSource damageSource, @Nullable ExplosionBehavior explosionBehavior, double d, double e, double f, float g, boolean bl, Explosion.DestructionType destructionType, CallbackInfoReturnable<Explosion> cir)
+    private void handleExplosion(/*@Nullable*/ Entity entity, /*@Nullable*/ DamageSource damageSource, /*@Nullable*/ ExplosionBehavior explosionBehavior, double d, double e, double f, float g, boolean bl, Explosion.DestructionType destructionType, CallbackInfoReturnable<Explosion> cir)
     {
         if (EXPLOSION.isNeeded())
             EXPLOSION.onExplosion((ServerWorld) (Object)this, entity, null, d, e, f, g, bl, null, null, destructionType);
