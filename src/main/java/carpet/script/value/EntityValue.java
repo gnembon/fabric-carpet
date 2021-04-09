@@ -99,6 +99,12 @@ public class EntityValue extends Value
         entity = e;
     }
 
+    public static Value of(Entity e)
+    {
+        if (e == null) return Value.NULL;
+        return new EntityValue(e);
+    }
+
     private static final Map<String, EntitySelector> selectorCache = new HashMap<>();
     public static Collection<? extends Entity > getEntitiesFromSelector(ServerCommandSource source, String selector)
     {

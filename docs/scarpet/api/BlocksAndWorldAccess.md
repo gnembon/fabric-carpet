@@ -229,6 +229,13 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
+
+Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
+`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
+`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
+endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
 If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will

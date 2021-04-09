@@ -10,13 +10,10 @@ import java.util.List;
 import carpet.logging.logHelpers.ExplosionLogHelper;
 import carpet.mixins.ExplosionAccessor;
 import carpet.CarpetSettings;
-import carpet.mixins.ExplosionMixin;
 import carpet.utils.Messenger;
-import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -48,7 +45,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
-import static carpet.script.CarpetEventServer.Event.EXPLOSION;
+import static carpet.script.CarpetEventServer.Event.EXPLOSION_OUTCOME;
 
 public class OptimizedExplosion
 {
@@ -77,7 +74,7 @@ public class OptimizedExplosion
         ExplosionAccessor eAccess = (ExplosionAccessor) e;
         
         entityList.clear();
-boolean eventNeeded = EXPLOSION.isNeeded();
+        boolean eventNeeded = EXPLOSION_OUTCOME.isNeeded() && !eAccess.getWorld().isClient();
         blastCalc(e);
 
         if (!CarpetSettings.explosionNoBlockDamage) {
@@ -208,8 +205,8 @@ boolean eventNeeded = EXPLOSION.isNeeded();
         double posZ = eAccess.getZ();
 
         // If it is needed, calls scarpet event
-        if (EXPLOSION.isNeeded()) {
-            EXPLOSION.onExplosion((ServerWorld) world, eAccess.getX(), eAccess.getY(), eAccess.getZ(), eAccess.getPower(), e.getDamageSource(), eAccess.isCreateFire(), e.getAffectedBlocks(), entityList);
+        if (EXPLOSION_OUTCOME.isNeeded() && !world.isClient()) {
+            EXPLOSION_OUTCOME.onExplosion((ServerWorld) world, eAccess.getEntity(), e::getCausingEntity,  eAccess.getX(), eAccess.getY(), eAccess.getZ(), eAccess.getPower(), eAccess.isCreateFire(), e.getAffectedBlocks(), entityList, eAccess.getDestructionType());
         }
 
         boolean damagesTerrain = eAccess.getDestructionType() != Explosion.DestructionType.NONE;

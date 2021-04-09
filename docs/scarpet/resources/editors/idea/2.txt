@@ -18,6 +18,7 @@ chunk_tickets
 convert_date
 crafting_remaining_item
 create_datapack
+create_explosion
 create_marker
 current_dimension
 day_time

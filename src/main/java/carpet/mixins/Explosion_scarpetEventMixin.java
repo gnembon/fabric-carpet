@@ -1,9 +1,7 @@
 package carpet.mixins;
 
-import carpet.logging.LoggerRegistry;
-import carpet.logging.logHelpers.ExplosionLogHelper;
-import carpet.script.value.EntityValue;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -11,6 +9,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.explosion.ExplosionBehavior;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,11 +19,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static carpet.script.CarpetEventServer.Event.EXPLOSION;
+import static carpet.script.CarpetEventServer.Event.EXPLOSION_OUTCOME;
 
 @Mixin(value = Explosion.class, priority = 990)
 public abstract class Explosion_scarpetEventMixin
@@ -34,16 +32,20 @@ public abstract class Explosion_scarpetEventMixin
     @Shadow @Final private double y;
     @Shadow @Final private double z;
     @Shadow @Final private float power;
-    @Shadow @Final private DamageSource damageSource;
     @Shadow @Final private boolean createFire;
     @Shadow @Final private List<BlockPos> affectedBlocks;
+    @Shadow @Final private Explosion.DestructionType destructionType;
+    @Shadow @Final private @Nullable Entity entity;
+
+    @Shadow /*@Nullable*/ public abstract /*@Nullable*/ LivingEntity getCausingEntity();
+
     private List<Entity> affectedEntities;
 
     @Inject(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/entity/damage/DamageSource;Lnet/minecraft/world/explosion/ExplosionBehavior;DDDFZLnet/minecraft/world/explosion/Explosion$DestructionType;)V",
             at = @At(value = "RETURN"))
     private void onExplosionCreated(World world, Entity entity, DamageSource damageSource, ExplosionBehavior explosionBehavior, double x, double y, double z, float power, boolean createFire, Explosion.DestructionType destructionType, CallbackInfo ci)
     {
-        if (EXPLOSION.isNeeded())
+        if (EXPLOSION_OUTCOME.isNeeded() && !world.isClient())
         {
             affectedEntities = new ArrayList<>();
         }
@@ -61,9 +63,9 @@ public abstract class Explosion_scarpetEventMixin
     @Inject(method = "affectWorld", at = @At("HEAD"))
     private void onExplosion(boolean spawnParticles, CallbackInfo ci)
     {
-        if (EXPLOSION.isNeeded())
+        if (EXPLOSION_OUTCOME.isNeeded() && !world.isClient())
         {
-            EXPLOSION.onExplosion((ServerWorld) world, x, y, z, power, damageSource, createFire, affectedBlocks, affectedEntities);
+            EXPLOSION_OUTCOME.onExplosion((ServerWorld) world, entity, this::getCausingEntity, x, y, z, power, createFire, affectedBlocks, affectedEntities, destructionType);
         }
     }
 }
