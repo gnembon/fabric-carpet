@@ -442,7 +442,10 @@ script run create_datapack('foo',
         }
     }
 })
+</pre>
 
+Custom dimension example:
+<pre>
 script run create_datapack('funky_world',  {
     'data' -> {
         'minecraft' -> {
@@ -465,7 +468,66 @@ script run create_datapack('funky_world',  {
     }
 });
 check_hidden_dimensions();  => ['funky_world']
-        
+</pre>
+
+Loot table example:
+<pre>
+script run create_datapack('silverfishes_drop_gravel', {
+    'data' -> {
+        'minecraft' -> {
+            'loot_tables' -> {
+                'entities' -> {
+                    'silverfish.json' -> {
+                        'type' -> 'minecraft:entity',
+                        'pools' -> [
+                            {
+                                'rolls' -> {
+                                    'min' -> 0,
+                                    'max' -> 1
+                                },
+                                'entries' -> [
+                                    {
+                                        'type' -> 'minecraft:item',
+                                        'name' -> 'minecraft:gravel'
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+});
+</pre>
+
+Recipe example:
+<pre>
+script run create_datapack('craftable_cobwebs', {
+    'data' -> {
+        'scarpet' -> {
+            'recipes' -> {
+                'cobweb.json' -> {
+                    'type' -> 'crafting_shaped',
+                    'pattern' -> [
+                        'SSS',
+                        'SSS',
+                        'SSS'
+                    ],
+                    'key' -> {
+                        'S' -> {
+                            'item' -> 'minecraft:string'
+                        }
+                    },
+                    'result' -> {
+                        'item' -> 'minecraft:cobweb',
+                        'count' -> 1
+                    }
+                }
+            }
+        }
+    }
+});
 </pre>
 
 ### `enable_hidden_dimensions()`
