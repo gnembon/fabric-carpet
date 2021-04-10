@@ -9,7 +9,9 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.World;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -24,6 +26,7 @@ import java.util.function.Consumer;
 @Mixin(World.class)
 public abstract class World_tickMixin implements WorldInterface
 {
+    @Shadow @Final public boolean isClient;
     CarpetProfiler.ProfilerToken currentSection;
     CarpetProfiler.ProfilerToken entitySection;
 
@@ -79,7 +82,7 @@ public abstract class World_tickMixin implements WorldInterface
     @Inject(method = "tickEntity", at = @At("HEAD"), cancellable = true)
     private void startEntity(Consumer<Entity> consumer_1, Entity e, CallbackInfo ci)
     {
-        if (!TickSpeed.process_entities && !(e instanceof PlayerEntity))
+        if (!(TickSpeed.process_entities || (e instanceof PlayerEntity) || (TickSpeed.is_superHot && isClient && e.getPrimaryPassenger() instanceof PlayerEntity)))
             ci.cancel();
         entitySection =  CarpetProfiler.start_entity_section((World) (Object) this, e, CarpetProfiler.TYPE.ENTITY);
     }
