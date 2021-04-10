@@ -31,18 +31,14 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
     }
     public ExpressionException(Context c, Expression e, Tokenizer.Token t, String message, List<FunctionValue> stack)
     {
-        super("Error");
-        this.stack.addAll(stack);
-        lazyMessage = () -> makeMessage(c, e, t, message);
-        token = t;
-        context = c;
+        this(c, e, t, () -> makeMessage(c, e, t, message), stack);
     }
 
-    public ExpressionException(Context c, Expression e, Tokenizer.Token t, Supplier<String> messageSupplier, List<FunctionValue> stack)
+    public ExpressionException(Context c, Expression e, Tokenizer.Token t, Supplier<String> lazyMessage, List<FunctionValue> stack)
     {
         super("Error");
         this.stack.addAll(stack);
-        lazyMessage = () -> makeMessage(c, e, t, messageSupplier.get());
+        this.lazyMessage = lazyMessage;
         token = t;
         context = c;
     }
