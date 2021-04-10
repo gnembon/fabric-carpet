@@ -1,7 +1,6 @@
 
 package carpet.utils;
 
-import carpet.mixins.WeightedPickerEntryMixin;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -520,7 +519,7 @@ public class SpawnReporter
                     
                     String creature_name = mob.getType().getName().getString();
                     String pack_size = String.format("%d", mob.getLimitPerChunk());//String.format("%d-%d", animal.minGroupCount, animal.maxGroupCount);
-                    int weight = ((WeightedPickerEntryMixin) spawnEntry).getWeight();
+                    int weight =   spawnEntry.getWeight().getValue();// ((WeightedPickerEntryMixin) spawnEntry).getWeight();
                     if (canspawn)
                     {
                         String c = (fits_true && will_spawn>0)?"e":"gi";
