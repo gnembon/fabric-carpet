@@ -19,7 +19,6 @@ import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ResolvedException;
 import carpet.script.exception.ReturnStatement;
-import carpet.script.exception.ThrowStatement;
 import carpet.script.language.Arithmetic;
 import carpet.script.language.ControlFlow;
 import carpet.script.language.DataStructures;
@@ -232,7 +231,7 @@ public class Expression
         if (exc instanceof ExitStatement)
             return exc;
         if (exc instanceof InternalExpressionException)
-            return new ExpressionException(c, e, token, exc.getMessage(), ((InternalExpressionException) exc).stack);
+            return ((InternalExpressionException) exc).promote(c, e, token);
         if (exc instanceof ArithmeticException)
             return new ExpressionException(c, e, token, "Your math is wrong, "+exc.getMessage());
         if (exc instanceof ResolvedException)
@@ -310,6 +309,11 @@ public class Expression
     }
 
     public void addMathematicalUnaryFunction(String name, Function<Double, Double> fun)
+    {
+        addUnaryFunction(name, (v) -> new NumericValue(fun.apply(NumericValue.asNumber(v).getDouble())));
+    }
+
+    public void addMathematicalUnaryIntFunction(String name, Function<Double, Long> fun)
     {
         addUnaryFunction(name, (v) -> new NumericValue(fun.apply(NumericValue.asNumber(v).getDouble())));
     }
@@ -624,9 +628,9 @@ public class Expression
         {
             return exprProvider.get().evalValue(c, expectedType);
         }
-        catch (ContinueStatement | BreakStatement | ReturnStatement | ThrowStatement exc)
+        catch (ContinueStatement | BreakStatement | ReturnStatement exc)
         {
-            throw new ExpressionException(c, this, "Control flow functions, like continue, break, throw or return, should only be used in loops, try blocks, and functions respectively.");
+            throw new ExpressionException(c, this, "Control flow functions, like continue, break or return, should only be used in loops, and functions respectively.");
         }
         catch (ExitStatement exit)
         {
@@ -761,7 +765,7 @@ public class Expression
                     {
                         if (token.surface.equals(";"))
                         {
-                            throw new ExpressionException(c, this, token, "Unnecessary semicolon");
+                            throw new ExpressionException(c, this, token, "Empty expression found for ';'");
                         }
                         throw new ExpressionException(c, this, token, "Missing parameter(s) for operator " + token);
                     }

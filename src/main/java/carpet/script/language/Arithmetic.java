@@ -60,9 +60,9 @@ public class Arithmetic {
         expression.addMathematicalUnaryFunction("log1p", x -> Math.log1p(x)/Math.log(2));
         expression.addMathematicalUnaryFunction("sqrt", Math::sqrt);
         expression.addMathematicalUnaryFunction("abs", Math::abs);
-        expression.addMathematicalUnaryFunction("round", (d) -> (double)Math.round(d));
-        expression.addMathematicalUnaryFunction("floor", Math::floor);
-        expression.addMathematicalUnaryFunction("ceil", Math::ceil);
+        expression.addMathematicalUnaryIntFunction("round", Math::round);
+        expression.addMathematicalUnaryIntFunction("floor", n -> (long)Math.floor(n));
+        expression.addMathematicalUnaryIntFunction("ceil",  n -> (long)Math.ceil(n));
 
         expression.addLazyFunction("mandelbrot", 3, (c, t, lv) -> {
             double a0 = NumericValue.asNumber(lv.get(0).evalValue(c)).getDouble();

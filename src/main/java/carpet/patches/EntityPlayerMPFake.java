@@ -2,6 +2,8 @@ package carpet.patches;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
@@ -102,6 +104,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
     public void kill(Text reason)
     {
+        shakeOff();
         this.server.send(new ServerTask(this.server.getTicks(), () -> {
             this.networkHandler.onDisconnected(reason);
         }));
@@ -120,9 +123,19 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         this.playerTick();
     }
 
+    private void shakeOff()
+    {
+        if (getVehicle() instanceof PlayerEntity) stopRiding();
+        for (Entity passenger : getPassengersDeep())
+        {
+            if (passenger instanceof PlayerEntity) passenger.stopRiding();
+        }
+    }
+
     @Override
     public void onDeath(DamageSource cause)
     {
+        shakeOff();
         super.onDeath(cause);
         setHealth(20);
         this.hungerManager = new HungerManager();

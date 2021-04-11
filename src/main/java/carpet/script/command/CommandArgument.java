@@ -1,5 +1,6 @@
 package carpet.script.command;
 
+import carpet.CarpetServer;
 import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
@@ -14,6 +15,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
+import carpet.utils.CarpetProfiler;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -276,7 +278,12 @@ public abstract class CommandArgument
     {
         CommandArgument arg = getTypeForArgument(param, host);
         if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType()).suggests(arg.suggestionProvider);
-        return arg.needsMatching? argument(param, arg.getArgumentType()).suggests((c, b) -> arg.suggest(c, b, host)) : argument(param, arg.getArgumentType());
+        if (!arg.needsMatching) return argument(param, arg.getArgumentType());
+        String hostName = host.getName();
+        return argument(param, arg.getArgumentType()).suggests((ctx, b) -> {
+            CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
+            return arg.suggest(ctx, b, cHost);
+        });
     }
 
     protected String suffix;
@@ -365,6 +372,7 @@ public abstract class CommandArgument
     {
         if (customSuggester != null)
         {
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
             Map<Value, Value> params = new HashMap<>();
             for(ParsedCommandNode<ServerCommandSource> pnode : context.getNodes())
             {
@@ -379,7 +387,9 @@ public abstract class CommandArgument
             args.addAll(customSuggester.args);
             Value response = host.handleCommand(context.getSource(), customSuggester.function, args);
             if (!(response instanceof ListValue)) throw error("Custom suggester should return a list of options"+" for custom type "+suffix);
-            return ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            Collection<String> res = ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            CarpetProfiler.end_current_section(currentSection);
+            return res;
         }
         if (needsMatching) return examples;
         //return Lists.newArrayList("");

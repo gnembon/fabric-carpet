@@ -48,7 +48,7 @@ public class Sys {
                     return (cc, tt) -> Value.FALSE;
                 }
             }
-            Value retval = new NumericValue(v.getBoolean());
+            Value retval = v.getBoolean()?Value.TRUE:Value.FALSE;
             return (cc, tt) -> retval;
         });
 
@@ -56,7 +56,9 @@ public class Sys {
         {
             if (v instanceof NumericValue)
             {
-                return v;
+                NumericValue num = (NumericValue)v;
+                if (num.isInteger()) return new NumericValue(num.getLong());
+                return new NumericValue(num.getDouble());
             }
             try
             {
@@ -207,6 +209,10 @@ public class Sys {
             }
             Value retval = new NumericValue(NumericValue.asNumber(argument).getDouble()*randomizer.nextDouble());
             return (cc, tt) -> retval;
+        });
+        expression.addLazyFunction("reset_seed", 1, (c, t, lv) -> {
+            boolean gotIt = c.host.resetRandom(NumericValue.asNumber(lv.get(0).evalValue(c)).getLong());
+            return gotIt?LazyValue.TRUE:LazyValue.FALSE;
         });
 
         expression.addLazyFunction("perlin", -1, (c, t, lv) ->

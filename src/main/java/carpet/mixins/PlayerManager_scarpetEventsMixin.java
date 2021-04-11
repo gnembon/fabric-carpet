@@ -1,11 +1,13 @@
 package carpet.mixins;
 
+import carpet.CarpetServer;
 import carpet.fakes.ServerPlayerEntityInterface;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static carpet.script.CarpetEventServer.Event.PLAYER_RESPAWNS;
@@ -25,4 +27,9 @@ public class PlayerManager_scarpetEventsMixin
         ((ServerPlayerEntityInterface)player).invalidateEntityObjectReference();
     }
 
+    @Inject(method = "onDataPacksReloaded", at = @At("HEAD"))
+    private void reloadCommands(CallbackInfo ci)
+    {
+        CarpetServer.scriptServer.reAddCommands();
+    }
 }

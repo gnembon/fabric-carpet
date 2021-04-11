@@ -56,6 +56,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
@@ -96,6 +97,12 @@ public class EntityValue extends Value
     public EntityValue(Entity e)
     {
         entity = e;
+    }
+
+    public static Value of(Entity e)
+    {
+        if (e == null) return Value.NULL;
+        return new EntityValue(e);
     }
 
     private static final Map<String, EntitySelector> selectorCache = new HashMap<>();
@@ -416,7 +423,7 @@ public class EntityValue extends Value
         put("motion_z", (e, a) -> new NumericValue(e.getVelocity().z));
         put("on_ground", (e, a) -> new NumericValue(e.isOnGround()));
         put("name", (e, a) -> new StringValue(e.getName().getString()));
-        put("display_name", (e, a) -> new StringValue(e.getDisplayName().getString()));
+        put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getEntityName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
         put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getId(e.getType()))));
@@ -429,7 +436,7 @@ public class EntityValue extends Value
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
-        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTagsFor(e.getType()).stream().map(ValueConversions::of).collect(Collectors.toList())));
+        put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTags().entrySet().stream().filter(entry -> entry.getValue().contains(e.getType())).map(entry -> ValueConversions.of(entry.getKey())).collect(Collectors.toList())));
         // deprecated
         put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
 
@@ -1307,7 +1314,7 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                if (lv.size() >= 1 && lv.size() <= 5)
+                if (lv.size() >= 1 && lv.size() <= 6)
                 {
                     String effectName = lv.get(0).getString();
                     StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
@@ -1373,6 +1380,19 @@ public class EntityValue extends Value
             else
             {
                 genericJump(e);
+            }
+        });
+
+        put("swing", (e, v) -> {
+            if (e instanceof LivingEntity)
+            {
+                Hand hand = Hand.MAIN_HAND;
+                if (v != null)
+                {
+                    String handString = v.getString().toLowerCase(Locale.ROOT);
+                    if (handString.equals("offhand") || handString.equals("off_hand")) hand = Hand.OFF_HAND;
+                }
+                ((LivingEntity)e).swingHand(hand, true);
             }
         });
 

@@ -57,7 +57,7 @@ public class PerimeterInfoCommand
             });
             if (!(baseEntity instanceof  MobEntity))
             {
-                Messenger.m(source, "r Failed to spawn test entity");
+                Messenger.m(source, "r /perimeterinfo requires a mob entity to test agains.");
                 if (baseEntity != null) baseEntity.remove();
                 return 0;
             }

@@ -177,7 +177,7 @@ Returns `true` if en entity is standing on firm ground and falling down due to t
 
 ### `query(e, 'name'), query(e, 'display_name'), query(e, 'custom_name'), query(e, 'type')`
 
-String of entity name
+String of entity name or formatted text in the case of `display_name`
 
 <pre>
 query(e,'name')  => Leatherworker
@@ -721,6 +721,10 @@ Requires a living entity as an argument.
 ### `modify(e, 'jump')`
 
 Will make the entity jump once.
+
+### `modify(e, 'swing')` `modify(e, 'swing', 'offhand')`
+
+Makes the living entity swing their required limb.
 
 ### `modify(e, 'silent', boolean)`
 

@@ -24,6 +24,7 @@
     "ServerPlayNetworkHandler_interactionUpdatesMixin",
 
     "ServerMetadata_motdMixin",
+    "MinecraftServer_pingPlayerSampleLimit",
 
     "MinecraftServer_coreMixin",
 
@@ -128,6 +129,7 @@
     "TntBlockMixin",
     "ExplosionMixin",
     "ExplosionAccessor",
+    "Explosion_scarpetEventMixin",
 
     "TntEntityMixin",
     "ProjectileEntityMixin",
@@ -175,6 +177,7 @@
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
+    "ReloadCommand_reloadAppsMixin",
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
@@ -192,6 +195,7 @@
     "PlayerEntity_creativeNoClipMixin",
     "PistonBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
+    "WallStandingBlockItem_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin"
 
   ],

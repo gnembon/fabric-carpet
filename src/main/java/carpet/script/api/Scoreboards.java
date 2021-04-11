@@ -6,6 +6,8 @@ import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NullValue;
@@ -33,6 +35,8 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Scoreboards {
@@ -77,16 +81,27 @@ public class Scoreboards {
                 Value ret = ListValue.wrap(scoreboard.getAllPlayerScores(objective).stream().map(s -> new StringValue(s.getPlayerName())).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
+
             String key = getScoreboardKeyFromValue(lv.get(1).evalValue(c));
-            if (!scoreboard.playerHasObjective(key, objective) && lv.size()==2)
+            if(lv.size()==2) {
+                if(scoreboard.playerHasObjective(key, objective)) {
+                    return (_c,_t) -> NumericValue.of(scoreboard.getPlayerScore(key,objective).getScore());
+                }
                 return LazyValue.NULL;
-            ScoreboardPlayerScore scoreboardPlayerScore = scoreboard.getPlayerScore(key, objective);
-            Value retval = new NumericValue(scoreboardPlayerScore.getScore());
-            if (lv.size() > 2)
-            {
-                scoreboardPlayerScore.setScore(NumericValue.asNumber(lv.get(2).evalValue(c)).getInt());
             }
-            return (_c, _t) -> retval;
+
+            Value value = lv.get(2).evalValue(c);
+            if(value.isNull()) {
+                ScoreboardPlayerScore score = scoreboard.getPlayerScore(key, objective);
+                scoreboard.resetPlayerScore(key,objective);
+                return (_c,_t) -> NumericValue.of(score.getScore());
+            }
+            if (value instanceof NumericValue) {
+                ScoreboardPlayerScore score = scoreboard.getPlayerScore(key, objective);
+                score.setScore(NumericValue.asNumber(value).getInt());
+                return (_c,_t) -> NumericValue.of(score.getScore());
+            }
+            throw new InternalExpressionException("'scoreboard' requires a number or null as the third parameter");
         });
 
         expression.addLazyFunction("scoreboard_remove", -1, (c, t, lv)->
@@ -131,12 +146,13 @@ public class Scoreboards {
                 criterion = ScoreboardCriterion.createStatCriterion(critetionName).orElse(null);
                 if (criterion==null)
                 {
-                    throw new InternalExpressionException("Unknown scoreboard criterion: "+critetionName);
+                    throw new ThrowStatement(critetionName, Throwables.UNKNOWN_CRITERION);
                 }
             }
 
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective != null) {
+                c.host.issueDeprecation("reading or modifying an objective's criterion with scoreboard_add");
                 if(lv.size() == 1) return (_c, _t) -> StringValue.of(objective.getCriterion().getName());
                 if(objective.getCriterion().equals(criterion) || lv.size() == 1) return LazyValue.NULL;
                 ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriterion()).remove(objective);
@@ -148,6 +164,72 @@ public class Scoreboards {
 
             scoreboard.addObjective(objectiveName, criterion, new LiteralText(objectiveName), criterion.getCriterionType());
             return LazyValue.TRUE;
+        });
+
+        expression.addLazyFunction("scoreboard_property", -1, (c, t, lv) ->
+        {
+            if(lv.size() < 2) throw new InternalExpressionException("'scoreboard_property' requires at least two parameters");
+            CarpetContext cc = (CarpetContext)c;
+            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            ScoreboardObjective objective = scoreboard.getObjective(lv.get(0).evalValue(c).getString());
+            if(objective == null) return LazyValue.NULL;
+
+            boolean modify = lv.size() > 2;
+            Value setValue = null;
+            if(modify) {
+                setValue = lv.get(2).evalValue(c);
+            }
+            String property = lv.get(1).evalValue(c).getString();
+            switch (property) {
+                case "criterion":
+                    if(modify) {
+                        ScoreboardCriterion criterion = ScoreboardCriterion.createStatCriterion(setValue.getString()).orElse(null);
+                        if (criterion==null) throw new InternalExpressionException("Unknown scoreboard criterion: "+ setValue.getString());
+                        if(objective.getCriterion().equals(criterion) || lv.size() == 1) return LazyValue.FALSE;
+                        ((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().get(objective.getCriterion()).remove(objective);
+                        ((ScoreboardObjective_scarpetMixin) objective).setCriterion(criterion);
+                        (((Scoreboard_scarpetMixin)scoreboard).getObjectivesByCriterion().computeIfAbsent(criterion, (criterion1) -> Lists.newArrayList())).add(objective);
+                        scoreboard.updateObjective(objective);
+                        return LazyValue.TRUE;
+                    }
+                    return (_c, _t) -> StringValue.of(objective.getCriterion().getName());
+                case "display_name":
+                    if(modify) {
+                        Text text = (setValue instanceof FormattedTextValue)?((FormattedTextValue) setValue).getText():new LiteralText(setValue.getString());
+                        objective.setDisplayName(text);
+                        return LazyValue.TRUE;
+                    }
+                    return (_c, _t) -> new FormattedTextValue(objective.getDisplayName());
+                case "display_slot":
+                    if(modify) {
+                        int slotId = Scoreboard.getDisplaySlotId(setValue.getString());
+                        if(slotId == -1) throw new InternalExpressionException("Unknown scoreboard display slot: " + setValue.getString());
+                        if(objective.equals(scoreboard.getObjectiveForSlot(slotId))) {
+                            return LazyValue.FALSE;
+                        }
+                        scoreboard.setObjectiveSlot(slotId,objective);
+                        return LazyValue.TRUE;
+                    }
+
+                    List<Value> slots = new ArrayList<>();
+                    for(int i = 0; i < 19; i++) {
+                        if (scoreboard.getObjectiveForSlot(i) == objective) {
+                            String slotName = Scoreboard.getDisplaySlotName(i);
+                            slots.add(StringValue.of(slotName));
+                        }
+                    }
+                    return (_c, _t) -> ListValue.wrap(slots);
+                case "render_type":
+                    if(modify) {
+                        ScoreboardCriterion.RenderType renderType = ScoreboardCriterion.RenderType.getType(setValue.getString().toLowerCase());
+                        if(objective.getRenderType().equals(renderType)) return LazyValue.FALSE;
+                        objective.setRenderType(renderType);
+                        return LazyValue.TRUE;
+                    }
+                    return (_c, _t) -> StringValue.of(objective.getRenderType().getName());
+                default:
+                    throw new InternalExpressionException("scoreboard property '" + property + "' is not a valid property");
+            }
         });
 
         expression.addLazyFunction("scoreboard_display", 2, (c, t, lv) ->
@@ -408,7 +490,7 @@ public class Scoreboards {
                     team.setSuffix(suffix);
                     break;
                 default:
-                    throw new InternalExpressionException("team property " + propertyVal.getString() + " is not a valid property");
+                    throw new InternalExpressionException("team property '" + propertyVal.getString() + "' is not a valid property");
             }
             return LazyValue.TRUE;
         });

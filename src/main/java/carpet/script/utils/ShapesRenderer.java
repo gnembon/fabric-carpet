@@ -1,6 +1,7 @@
 package carpet.script.utils;
 
 import carpet.CarpetSettings;
+import carpet.utils.CarpetProfiler;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.client.MinecraftClient;
@@ -49,6 +50,7 @@ public class ShapesRenderer
 
     public void render(Camera camera, float partialTick)
     {
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
         //Camera camera = this.client.gameRenderer.getCamera();
         ClientWorld iWorld = this.client.world;
         RegistryKey<World> dimensionType = iWorld.getRegistryKey();
@@ -120,14 +122,17 @@ public class ShapesRenderer
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableTexture();
         RenderSystem.shadeModel(7424);
+        CarpetProfiler.end_current_section(token);
     }
 
     public void addShapes(ListTag tag)
     {
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
         for (int i=0, count = tag.size(); i < count; i++)
         {
             addShape(tag.getCompound(i));
         }
+        CarpetProfiler.end_current_section(token);
     }
 
     public void addShape(CompoundTag tag)
@@ -169,12 +174,14 @@ public class ShapesRenderer
 
     public void renewShapes()
     {
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Scarpet client", CarpetProfiler.TYPE.GENERAL);
         synchronized (shapes)
         {
             shapes.values().forEach(el -> el.values().forEach(shape -> {
                 shape.expiryTick++;
             }));
         }
+        CarpetProfiler.end_current_section(token);
     }
 
     public abstract static class RenderedShape<T extends ShapeDispatcher.ExpiringShape>
@@ -277,6 +284,14 @@ public class ShapesRenderer
             if (shape.tilt!=0.0f)
             {
                 RenderSystem.rotatef(shape.tilt, 0.0f, 0.0f, 1.0f);
+            }
+            if (shape.lean!=0.0f)
+            {
+                RenderSystem.rotatef(shape.lean, 1.0f, 0.0f, 0.0f);
+            }
+            if (shape.turn!=0.0f)
+            {
+                RenderSystem.rotatef(shape.turn, 0.0f, 1.0f, 0.0f);
             }
             RenderSystem.translatef(-10*shape.indent, -10*shape.height-9, (float) (-10*renderEpsilon)-10*shape.raise);
             //if (visibleThroughWalls) RenderSystem.disableDepthTest();

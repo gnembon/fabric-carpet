@@ -37,9 +37,13 @@ public abstract class ScriptHost
 
     public Random getRandom(long aLong)
     {
-        if (randomizers.size() > 1024)
+        if (randomizers.size() > 65536)
             randomizers.clear();
         return randomizers.computeIfAbsent(aLong, Random::new);
+    }
+
+    public boolean resetRandom(long aLong) {
+        return randomizers.remove(aLong) != null;
     }
 
     public static class ModuleData

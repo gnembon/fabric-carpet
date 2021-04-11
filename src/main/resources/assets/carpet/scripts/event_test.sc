@@ -328,3 +328,32 @@ __on_close() ->
     print('App is closing for '+player());
     logger('App is closing for '+player());
 );
+
+__on_explosion(pos, power, source, causer, mode, fire) ->
+(
+    print('');
+    print('__on_explosion(pos, power, source, causer, mode, fire)');
+    print('explosion:');
+    print('  - pos: '+pos);
+    print('  - power: '+power);
+    print('  - source: '+source);
+    print('  - causer: '+causer);
+    print('  - mode: '+mode);
+    print('  - fire: '+fire);
+
+);
+
+__on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities) ->
+(
+    print('');
+    print('__on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities)');
+    print('explosion outcome:');
+    print('  - pos: '+pos);
+    print('  - power: '+power);
+    print('  - source: '+source);
+    print('  - causer: '+causer);
+    print('  - mode: '+mode);
+    print('  - fire: '+fire);
+    print('  - number or affected blocks: '+length(blocks));
+    print('  - number of affected entities: '+length(entities));
+);

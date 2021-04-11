@@ -3,6 +3,7 @@ package carpet.script;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.script.api.Auxiliary;
+import carpet.script.argument.FileArgument;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.bundled.Module;
 import carpet.script.command.CommandArgument;
@@ -17,9 +18,11 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 
 import com.google.gson.JsonElement;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -32,6 +35,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -43,11 +47,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.Math.max;
+import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
 public class CarpetScriptHost extends ScriptHost
@@ -122,6 +128,7 @@ public class CarpetScriptHost extends ScriptHost
 
     private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument<Value> funcSpec, List<String> paramNames) throws CommandSyntaxException
     {
+        CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
         CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
         List<String> argNames = funcSpec.function.getArguments();
         if ((argNames.size()-funcSpec.args.size()) != paramNames.size())
@@ -135,7 +142,9 @@ public class CarpetScriptHost extends ScriptHost
         Value response = cHost.handleCommand(ctx.getSource(), funcSpec.function, args);
         // will skip prints for new
         //if (!response.isNull()) Messenger.m(ctx.getSource(), "gi " + response.getString());
-        return (int) response.readInteger();
+        int intres = (int) response.readInteger();
+        CarpetProfiler.end_current_section(currentSection);
+        return intres;
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> addPathToCommand(
@@ -205,12 +214,15 @@ public class CarpetScriptHost extends ScriptHost
         return s -> {
             try
             {
+                CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
                 CarpetScriptHost cHost = null;
                 cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(s);
                 Value response = cHost.handleCommand(s, fun, Collections.singletonList(
                         (s.getEntity() instanceof ServerPlayerEntity)?new EntityValue(s.getEntity()):Value.NULL)
                 );
-                return response.getBoolean();
+                boolean res = response.getBoolean();
+                CarpetProfiler.end_current_section(currentSection);
+                return res;
             }
             catch (CommandSyntaxException e)
             {
@@ -309,6 +321,107 @@ public class CarpetScriptHost extends ScriptHost
             }
             return Integer.compare(o1.size(), o2.size());
         }
+    }
+
+    public Boolean addAppCommands(Consumer<Text> notifier)
+    {
+        if (appConfig.get(StringValue.of("commands")) != null)
+        {
+            try
+            {
+                LiteralArgumentBuilder<ServerCommandSource> command = readCommands(commandValidator);
+                if (command != null)
+                {
+                    scriptServer.server.getCommandManager().getDispatcher().register(command);
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+            catch (CommandSyntaxException cse)
+            {
+                // failed
+                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app ", cse.getRawMessage()));
+                return null;
+            }
+
+        }
+        return addLegacyCommand(notifier);
+    }
+
+    private Boolean addLegacyCommand(Consumer<Text> notifier)
+    {
+        if (main == null) return false;
+        if (getFunction("__command") == null) return false;
+
+        if (scriptServer.isInvalidCommandRoot(getName()))
+        {
+            notifier.accept(Messenger.c("gi Tried to mask vanilla command."));
+            return null;
+        }
+
+        Function<ServerCommandSource, Boolean> configValidator;
+        try
+        {
+            configValidator = getCommandConfigPermissions();
+        }
+        catch (CommandSyntaxException e)
+        {
+            notifier.accept(Messenger.c("rb "+e.getMessage()));
+            return null;
+        }
+        String hostName = getName();
+        LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
+                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.apply(player) && configValidator.apply(player)).
+                executes( (c) ->
+                {
+                    CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                    Value response = targetHost.handleCommandLegacy(c.getSource(),"__command", null, "");
+                    if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                    return (int)response.readInteger();
+                });
+
+        for (String function : globaFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        {
+            if (appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean())
+            {
+                try
+                {
+                    FunctionValue functionValue = getFunction(function);
+                    command = addPathToCommand(
+                            command,
+                            CommandToken.parseSpec(CommandToken.specFromSignature(functionValue), this),
+                            FunctionArgument.fromCommandSpec(this, functionValue)
+                    );
+                }
+                catch (CommandSyntaxException e)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                command = command.
+                        then(literal(function).
+                                requires((player) -> scriptServer.modules.containsKey(hostName) && scriptServer.modules.get(hostName).getFunction(function) != null).
+                                executes((c) -> {
+                                    CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                    Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, "");
+                                    if (!response.isNull()) Messenger.m(c.getSource(), "gi " + response.getString());
+                                    return (int) response.readInteger();
+                                }).
+                                then(argument("args...", StringArgumentType.greedyString()).
+                                        executes( (c) -> {
+                                            CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
+                                            Value response = targetHost.handleCommandLegacy(c.getSource(),function, null, StringArgumentType.getString(c, "args..."));
+                                            if (!response.isNull()) Messenger.m(c.getSource(), "gi "+response.getString());
+                                            return (int)response.readInteger();
+                                        })));
+            }
+        }
+        scriptServer.server.getCommandManager().getDispatcher().register(command);
+        return true;
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> readCommands(Function<ServerCommandSource, Boolean> useValidator) throws CommandSyntaxException
@@ -440,7 +553,10 @@ public class CarpetScriptHost extends ScriptHost
     {
         try
         {
-            return callLegacy(source, call, coords, arg);
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
+            Value res = callLegacy(source, call, coords, arg);
+            CarpetProfiler.end_current_section(currentSection);
+            return res;
         }
         catch (CarpetExpressionException exc)
         {
@@ -680,31 +796,31 @@ public class CarpetScriptHost extends ScriptHost
 
     private void dumpState()
     {
-        Module.saveData(main, null, globalState, false);
+        Module.saveData(main, globalState);
     }
 
     private Tag loadState()
     {
-        return Module.getData(main, null, false);
+        return Module.getData(main);
     }
 
-    public Tag readFileTag(String file, boolean isShared)
+    public Tag readFileTag(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null;
-        if (file != null)
-            return Module.getData(main, file, isShared);
+        if (getName() == null && !fdesc.isShared) return null;
+        if (fdesc.resource != null)
+            return fdesc.getNbtData(main);
         if (parent == null)
             return globalState;
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public boolean writeTagFile(Tag tag, String file, boolean isShared)
+    public boolean writeTagFile(Tag tag, FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
+        if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
 
-        if (file!= null)
+        if (fdesc.resource != null)
         {
-            return Module.saveData(main, file, tag, isShared);
+            return fdesc.saveNbtData(main, tag);
         }
 
         CarpetScriptHost responsibleHost = (parent != null)?(CarpetScriptHost) parent:this;
@@ -717,34 +833,34 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
-    public boolean removeResourceFile(String resource, boolean isShared, String type)
+    public boolean removeResourceFile(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return false; //
-        return Module.dropExistingFile(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return false; //
+        return fdesc.dropExistingFile(main);
     }
 
-    public boolean appendLogFile(String resource, boolean isShared, String type, List<String> data)
+    public boolean appendLogFile(FileArgument fdesc, List<String> data)
     {
-        if (getName() == null && !isShared) return false; // if belongs to an app, cannot be default host.
-        return Module.appendToTextFile(main, resource, type, isShared, data);
+        if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
+        return fdesc.appendToTextFile(main, data);
     }
 
-    public List<String> readTextResource(String resource, String type, boolean isShared)
+    public List<String> readTextResource(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null;
-        return Module.listFile(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return null;
+        return fdesc.listFile(main);
     }
     
-    public JsonElement readJsonFile(String resource, String type, boolean isShared)
+    public JsonElement readJsonFile(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null;
-        return Module.readJsonFile(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return null;
+        return fdesc.readJsonFile(main);
     }
 
-    public Stream<String> listFolder(String resource, String type, boolean isShared)
+    public Stream<String> listFolder(FileArgument fdesc)
     {
-        if (getName() == null && !isShared) return null; //
-        return Module.listFolder(main, resource, type, isShared);
+        if (getName() == null && !fdesc.isShared) return null; //
+        return fdesc.listFolder(main);
     }
 
 

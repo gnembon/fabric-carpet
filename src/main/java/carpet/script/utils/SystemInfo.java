@@ -4,11 +4,13 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetScriptHost;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
@@ -16,6 +18,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.WorldProperties;
 
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
@@ -49,6 +52,12 @@ public class SystemInfo {
             String tlf = serverPath.getName(nodeCount-2).toString();
             return StringValue.of(tlf);
         });
+        put("world_dimensions", c -> ListValue.wrap(c.s.getMinecraftServer().getWorldRegistryKeys().stream().map(k -> ValueConversions.of(k.getValue())).collect(Collectors.toList())));
+        put("world_spawn_point", c -> {
+            WorldProperties prop = c.s.getMinecraftServer().getOverworld().getLevelProperties();
+            return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
+        });
+
         put("game_difficulty", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getDifficulty().getName()));
         put("game_hardcore", c -> new NumericValue(c.s.getMinecraftServer().getSaveProperties().isHardcore()));
         put("game_storage_format", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getFormatName(c.s.getMinecraftServer().getSaveProperties().getVersion())));
@@ -57,7 +66,19 @@ public class SystemInfo {
         put("game_view_distance", c -> new NumericValue(c.s.getMinecraftServer().getPlayerManager().getViewDistance()));
         put("game_mod_name", c -> StringValue.of(c.s.getMinecraftServer().getServerModName()));
         put("game_version", c -> StringValue.of(c.s.getMinecraftServer().getVersion()));
+        put("game_target", c -> StringValue.of(SharedConstants.getGameVersion().getReleaseTarget()));
+        put("game_protocol", c -> NumericValue.of(SharedConstants.method_31372()));
+        put("game_major_target", c -> {
+            String [] vers = SharedConstants.getGameVersion().getReleaseTarget().split("\\.");
+            return NumericValue.of((vers.length > 1)?Integer.parseInt(vers[1]):0);
+        });
+        put("game_minor_target", c -> {
+            String [] vers = SharedConstants.getGameVersion().getReleaseTarget().split("\\.");
+            return NumericValue.of((vers.length > 2)?Integer.parseInt(vers[2]):0);
+        });
+        put("game_stable", c -> BooleanValue.of(SharedConstants.getGameVersion().isStable()));
         put("game_data_version", c->NumericValue.of(SharedConstants.getGameVersion().getWorldVersion()));
+        put("game_pack_version", c->NumericValue.of(SharedConstants.getGameVersion().getPackVersion()));
 
         put("server_ip", c -> StringValue.of(c.s.getMinecraftServer().getServerIp()));
         put("server_whitelisted", c -> new NumericValue(c.s.getMinecraftServer().isEnforceWhitelist()));

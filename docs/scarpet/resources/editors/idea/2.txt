@@ -17,9 +17,10 @@ brightness
 chunk_tickets
 convert_date
 crafting_remaining_item
+create_datapack
+create_explosion
 create_marker
 current_dimension
-custom_dimension
 day_time
 delete_file
 destroy
@@ -28,6 +29,7 @@ display_title
 draw_shape
 drop_item
 emitted_light
+enable_hidden_dimensions
 encode_nbt
 entity_area
 entity_event
@@ -96,6 +98,7 @@ scoreboard
 scoreboard_add
 scoreboard_remove
 scoreboard_display
+scoreboard_property
 tag_matches
 team_add
 team_leave

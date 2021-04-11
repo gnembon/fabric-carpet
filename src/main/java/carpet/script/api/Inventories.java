@@ -6,6 +6,8 @@ import carpet.script.CarpetContext;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
@@ -91,7 +93,7 @@ public class Inventories {
             Item item = NBTSerializableValue.parseItem(lv.get(0).evalValue(c).getString()).getItem();
             if (lv.size() == 1)
             {
-                Value ret = ListValue.wrap(tagManager.getItems().getTagsFor(item).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Value ret = ListValue.wrap(tagManager.getItems().getTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(1).evalValue(c).getString();
@@ -119,14 +121,7 @@ public class Inventories {
                 }
             }
             List<Recipe<?>> recipes;
-            try
-            {
-                recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, new Identifier(recipeName));
-            }
-            catch (InvalidIdentifierException ignored)
-            {
-                return LazyValue.NULL;
-            }
+            recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, new Identifier(recipeName));
             if (recipes.isEmpty())
                 return LazyValue.NULL;
             List<Value> recipesOutput = new ArrayList<>();
@@ -197,17 +192,9 @@ public class Inventories {
         {
             String itemStr = lv.get(0).evalValue(c).getString();
             Item item;
-            try
-            {
-                Identifier id = new Identifier(itemStr);
-                item = Registry.ITEM.get(id);
-                if (item == Items.AIR && !id.getPath().equalsIgnoreCase("air"))
-                    throw new InvalidIdentifierException("boo");
-            }
-            catch (InvalidIdentifierException ignored)
-            {
-                throw new InternalExpressionException("Incorrect item: "+itemStr);
-            }
+            Identifier id = new Identifier(itemStr);
+            item = Registry.ITEM.getOrEmpty(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
+
             if (!item.hasRecipeRemainder()) return LazyValue.NULL;
             Value ret = new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getId(item.getRecipeRemainder())));
             return (_c, _t ) -> ret;

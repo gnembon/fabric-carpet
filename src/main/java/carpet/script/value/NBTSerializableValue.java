@@ -4,6 +4,8 @@ import carpet.fakes.InventoryBearerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.utils.EquipmentInventory;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -297,7 +299,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         catch (CommandSyntaxException e)
         {
-            throw new InternalExpressionException("Incorrect item: "+itemString);
+            throw new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM);
         }
     }
 
