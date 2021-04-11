@@ -86,6 +86,8 @@
     "CoralBlockMixin",
     "CoralFeatureMixin",
     "FluidBlock_renewableBlackstoneMixin",
+    "FluidBlock_renewableDeepslateMixin",
+    "LavaFluid_renewableDeepslateMixin",
     "StructureFeatureMixin",
     "World_scarpetPlopMixin",
     "ChunkRegion_scarpetPlopMixin",

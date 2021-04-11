@@ -723,6 +723,12 @@ public class CarpetSettings
     )
     public static boolean renewableBlackstone = false;
 
+    @Rule(
+            desc = "Lava and water generate deepslate and cobbled deepslate instead below y0",
+            category = FEATURE
+    )
+    public static boolean renewableDeepslate = false;
+
     @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = BUGFIX)
     public static boolean placementRotationFix = false;
 
