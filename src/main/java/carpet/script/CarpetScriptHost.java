@@ -283,21 +283,7 @@ public class CarpetScriptHost extends ScriptHost
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
-            // read custom arguments
-            Value arguments = config.get(StringValue.of("arguments"));
-            if (arguments != null)
-            {
-                if (!(arguments instanceof MapValue))
-                    throw new InternalExpressionException("'arguments' element in config should be a map");
-                for (Map.Entry<Value, Value> typeData : ((MapValue)arguments).getMap().entrySet())
-                {
-                    String argument = typeData.getKey().getString();
-                    Value spec = typeData.getValue();
-                    if (!(spec instanceof MapValue)) throw new InternalExpressionException("Spec for '"+argument+"' should be a map");
-                    Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
-                    appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
-                }
-            }
+
             appConfig = config;
         }
         catch (NullPointerException ignored)
@@ -323,8 +309,37 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
+    public void readCustomArgumentTypes() throws CommandSyntaxException
+    {
+        // read custom arguments
+        Value arguments = appConfig.get(StringValue.of("arguments"));
+        if (arguments != null)
+        {
+            if (!(arguments instanceof MapValue))
+                throw CommandArgument.error("'arguments' element in config should be a map");
+            appArgTypes.clear();
+            for (Map.Entry<Value, Value> typeData : ((MapValue)arguments).getMap().entrySet())
+            {
+                String argument = typeData.getKey().getString();
+                Value spec = typeData.getValue();
+                if (!(spec instanceof MapValue)) throw CommandArgument.error("Spec for '"+argument+"' should be a map");
+                Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
+                appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
+            }
+        }
+    }
+
     public Boolean addAppCommands(Consumer<Text> notifier)
     {
+        try
+        {
+            readCustomArgumentTypes();
+        }
+        catch (CommandSyntaxException e)
+        {
+            notifier.accept(Messenger.c("Error when handling of setting up custom argument types: "+e.getMessage()));
+            return false;
+        }
         if (appConfig.get(StringValue.of("commands")) != null)
         {
             try
@@ -342,7 +357,7 @@ public class CarpetScriptHost extends ScriptHost
             catch (CommandSyntaxException cse)
             {
                 // failed
-                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app ", cse.getRawMessage()));
+                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app: ", cse.getRawMessage()));
                 return null;
             }
 
@@ -382,9 +397,11 @@ public class CarpetScriptHost extends ScriptHost
                     return (int)response.readInteger();
                 });
 
+        boolean hasTypeSupport = appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean();
+
         for (String function : globaFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
-            if (appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean())
+            if (hasTypeSupport)
             {
                 try
                 {

@@ -338,6 +338,8 @@ public class Auxiliary {
         expression.addLazyFunction("draw_shape", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+            ServerWorld world = cc.s.getWorld();
+            MinecraftServer server = world.getServer();
             ServerPlayerEntity player[] = {null};
             List<Pair<ShapeDispatcher.ExpiringShape, Map<String,Value>>> shapes = new ArrayList<>();
             if (lv.size() == 1) // bulk
@@ -347,14 +349,14 @@ public class Auxiliary {
                 for (Value list : ((ListValue) specLoad).getItems())
                 {
                     if (!(list instanceof ListValue))  throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
-                    shapes.add( ShapeDispatcher.fromFunctionArgs(cc, ((ListValue) list).getItems(), player));
+                    shapes.add( ShapeDispatcher.fromFunctionArgs(server, world, ((ListValue) list).getItems(), player));
                 }
             }
             else
             {
                 List<Value> params = new ArrayList<>();
                 for (LazyValue v : lv) params.add(v.evalValue(c));
-                shapes.add(ShapeDispatcher.fromFunctionArgs(cc, params, player));
+                shapes.add(ShapeDispatcher.fromFunctionArgs(server, world, params, player));
             }
 
             ShapeDispatcher.sendShape(
