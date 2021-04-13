@@ -130,7 +130,7 @@ public class Inventories {
             {
                 ItemStack result = recipe.getOutput();
                 List<Value> ingredientValue = new ArrayList<>();
-                recipe.getPreviewInputs().forEach(
+                recipe.getIngredients().forEach(
                         ingredient ->
                         {
                             // I am flattening ingredient lists per slot.

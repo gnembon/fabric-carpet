@@ -206,7 +206,7 @@ public class ValueConversions
         {
             PathNode node = path.getNode(i);
             nodes.add( ListValue.of(
-                    new BlockValue(null, world, node.getPos()),
+                    new BlockValue(null, world, node.getBlockPos()),
                     new StringValue(node.type.name().toLowerCase(Locale.ROOT)),
                     new NumericValue(node.penalty),
                     new NumericValue(node.visited)
