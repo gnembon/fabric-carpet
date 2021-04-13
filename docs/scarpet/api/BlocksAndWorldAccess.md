@@ -59,7 +59,7 @@ set(0,5,0,'bedrock')  => bedrock
 set(l(0,5,0), 'bedrock')  => bedrock
 set(block(0,5,0), 'bedrock')  => bedrock
 scan(0,5,0,0,0,0,set(_,'bedrock'))  => 1
-set(pos(players()), 'bedrock')  => bedrock
+set(pos(player()), 'bedrock')  => bedrock
 set(0,0,0,'bedrock')  => 0   // or 1 in overworlds generated in 1.8 and before
 scan(0,100,0,20,20,20,set(_,'glass'))
     // filling the area with glass
@@ -255,7 +255,7 @@ and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos
 
 <pre>
 pos(block(0,5,0)) => l(0,5,0)
-pos(players()) => l(12.3, 45.6, 32.05)
+pos(player()) => l(12.3, 45.6, 32.05)
 pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
@@ -513,7 +513,7 @@ To check if a block is truly loaded, I mean in memory, use `generation_status(x)
 outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
-loaded(pos(players()))  => 1
+loaded(pos(player()))  => 1
 loaded(100000,100,1000000)  => 0
 </pre>
 
