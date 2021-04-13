@@ -432,40 +432,31 @@ Synopsis:
 <pre>
 script run create_datapack('foo', 
 {
-    'foo' -> {
-        'bar.json' -> {
-            'c' -> true,
-            'd' -> false,
-            'e' -> {'foo' -> [1,2,3]},
-            'a' -> 'foobar',
-            'b' -> 5
-        }
-    }
+    'foo' -> { 'bar.json' -> {
+        'c' -> true,
+        'd' -> false,
+        'e' -> {'foo' -> [1,2,3]},
+        'a' -> 'foobar',
+        'b' -> 5
+    } }
 })
 </pre>
 
 Custom dimension example:
 <pre>
 script run create_datapack('funky_world',  {
-    'data' -> {
-        'minecraft' -> {
-            'dimension' -> {
-                'custom_ow.json' -> { 
-                    'type' -> 'minecraft:the_end',
-                    'generator' -> {
-                        'biome_source' -> {
-                             'seed' -> 0,
-                             'large_biomes' -> false,
-                             'type' -> 'minecraft:vanilla_layered'
-                        },
-                        'seed' -> 0,
-                        'settings' -> 'minecraft:nether',
-                        'type' -> 'minecraft:noise'
-                    }
-                }
-            }
-        }
-    }
+    'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+        'type' -> 'minecraft:the_end',
+        'generator' -> {
+            'biome_source' -> {
+                 'seed' -> 0,
+                 'large_biomes' -> false,
+                 'type' -> 'minecraft:vanilla_layered'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:nether',
+            'type' -> 'minecraft:noise'
+    } } } } }
 });
 check_hidden_dimensions();  => ['funky_world']
 </pre>
@@ -473,60 +464,46 @@ check_hidden_dimensions();  => ['funky_world']
 Loot table example:
 <pre>
 script run create_datapack('silverfishes_drop_gravel', {
-    'data' -> {
-        'minecraft' -> {
-            'loot_tables' -> {
-                'entities' -> {
-                    'silverfish.json' -> {
-                        'type' -> 'minecraft:entity',
-                        'pools' -> [
-                            {
-                                'rolls' -> {
-                                    'min' -> 0,
-                                    'max' -> 1
-                                },
-                                'entries' -> [
-                                    {
-                                        'type' -> 'minecraft:item',
-                                        'name' -> 'minecraft:gravel'
-                                    }
-                                ]
-                            }
-                        ]
+    'data' -> { 'minecraft' -> { 'loot_tables' -> { 'entities' -> { 'silverfish.json' -> {
+        'type' -> 'minecraft:entity',
+        'pools' -> [
+            {
+                'rolls' -> {
+                    'min' -> 0,
+                    'max' -> 1
+                },
+                'entries' -> [
+                    {
+                        'type' -> 'minecraft:item',
+                        'name' -> 'minecraft:gravel'
                     }
-                }
+                ]
             }
-        }
-    }
+        ]
+    } } } } }
 });
 </pre>
 
 Recipe example:
 <pre>
 script run create_datapack('craftable_cobwebs', {
-    'data' -> {
-        'scarpet' -> {
-            'recipes' -> {
-                'cobweb.json' -> {
-                    'type' -> 'crafting_shaped',
-                    'pattern' -> [
-                        'SSS',
-                        'SSS',
-                        'SSS'
-                    ],
-                    'key' -> {
-                        'S' -> {
-                            'item' -> 'minecraft:string'
-                        }
-                    },
-                    'result' -> {
-                        'item' -> 'minecraft:cobweb',
-                        'count' -> 1
-                    }
-                }
+    'data' -> { 'scarpet' -> { 'recipes' -> { 'cobweb.json' -> {
+        'type' -> 'crafting_shaped',
+        'pattern' -> [
+            'SSS',
+            'SSS',
+            'SSS'
+        ],
+        'key' -> {
+            'S' -> {
+                'item' -> 'minecraft:string'
             }
+        },
+        'result' -> {
+            'item' -> 'minecraft:cobweb',
+            'count' -> 1
         }
-    }
+    } } } }
 });
 </pre>
 
@@ -534,7 +511,7 @@ script run create_datapack('craftable_cobwebs', {
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
-datapacks have been added to the game, either with 'create_datapack()' or manually by dropping a datapack file and calling 
+datapacks have been added to the game, either with `create_datapack()` or manually by dropping a datapack file and calling 
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
