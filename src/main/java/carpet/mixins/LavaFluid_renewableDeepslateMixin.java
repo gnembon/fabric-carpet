@@ -20,7 +20,7 @@ public abstract class LavaFluid_renewableDeepslateMixin {
 
     @Inject(method = "flow", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getDefaultState()Lnet/minecraft/block/BlockState;"), cancellable = true)
     private void generateDeepslate(WorldAccess world, BlockPos pos, BlockState state, Direction direction, FluidState fluidState, CallbackInfo ci) {
-        if(CarpetSettings.renewableDeepslate && pos.getY() < 0) {
+        if(CarpetSettings.renewableDeepslate && pos.getY() < 0 && ((World)world).getRegistryKey() == World.OVERWORLD) {
             world.setBlockState(pos, Blocks.DEEPSLATE.getDefaultState(), 3);
             this.playExtinguishEvent(world, pos);
             ci.cancel();
