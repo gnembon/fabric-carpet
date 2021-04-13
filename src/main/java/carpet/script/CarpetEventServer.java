@@ -1048,6 +1048,37 @@ public class CarpetEventServer
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
         public void onCarpetRuleChanges(ParsedRule<?> rule, ServerCommandSource source) { }
+        public void onCustomPlayerEvent(ServerPlayerEntity player, Object ... args)
+        {
+            if (handler.reqArgs != (args.length+1))
+                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+(args.length+1));
+            handler.call(
+                    () -> {
+                        List<Value> valArgs = new ArrayList<>();
+                        valArgs.add(EntityValue.of(player));
+                        for (Object o: args)
+                        {
+                            valArgs.add(ValueConversions.guess(player.getServerWorld(), o));
+                        }
+                        return valArgs;
+                    }, player::getCommandSource
+            );
+        }
+        public void onCustomWorldEvent(ServerWorld world, Object ... args)
+        {
+            if (handler.reqArgs != args.length)
+                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+args.length);
+            handler.call(
+                    () -> {
+                        List<Value> valArgs = new ArrayList<>();
+                        for (Object o: args)
+                        {
+                            valArgs.add(ValueConversions.guess(world, o));
+                        }
+                        return valArgs;
+                    }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+            );
+        }
     }
 
 
