@@ -25,6 +25,8 @@ import net.minecraft.entity.ai.brain.Memory;
 import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
+import net.minecraft.entity.attribute.AttributeContainer;
+import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.nbt.NbtString;
@@ -846,6 +848,22 @@ public class EntityValue extends Value
                 case ENTITY: return new EntityValue(((EntityHitResult)hitres).getEntity());
             }
             return Value.NULL;
+        });
+
+        put("attribute", (e, a) ->{
+            if (!(e instanceof LivingEntity)) return Value.NULL;
+            LivingEntity el = (LivingEntity)e;
+            if (a == null)
+            {
+                AttributeContainer container = el.getAttributes();
+                return MapValue.wrap(Registry.ATTRIBUTE.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(Registry.ATTRIBUTE.getId(aa)), aa -> NumericValue.of(container.getValue(aa)))));
+            }
+            Identifier id =  new Identifier(a.getString());
+            EntityAttribute attrib = Registry.ATTRIBUTE.getOrEmpty(id).orElseThrow(
+                    () -> new InternalExpressionException("Unknown attribute: "+a.getString())
+            );
+            if (!el.getAttributes().hasAttribute(attrib)) return Value.NULL;
+            return NumericValue.of(el.getAttributeValue(attrib));
         });
 
         put("nbt",(e, a) -> {

@@ -519,6 +519,12 @@ Regardless of the options selected, the result could be:
  - block value if block is in reach, or
  - a coordinate triple if `'exact'` option was used and hit was successful.
 
+### `query(e, 'attribute')` `query(e, 'attribute', name)`
+
+returns the value of an attribute of the living entity. If the name is not provided, 
+returns a map of all attributes and values of this entity. If an attribute doesn't apply to the entity,
+or the entity is not a living entity, `null` is returned.
+
 ### `query(e, 'brain', memory)`
 
 Retrieves brain memory for entity. Possible memory units highly depend on the game version. Brain is availalble
