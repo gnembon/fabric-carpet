@@ -114,7 +114,7 @@ $      )
 $   );
 $   lvl
 $);
-/script run global_get_enchantment(players(), 'sharpness')
+/script run global_get_enchantment(player(), 'sharpness')
 </pre>
 
 ### `Basic Arithmetic Operators + - * /`
