@@ -3,7 +3,7 @@
   "id": "carpet",
   "version": "${version}",
 
-  "name": "Carpet Mod in Fabric",
+  "name": "Carpet Mod",
   "description": "Carpet made out of fabric",
   "authors": [
     "gnembon, ..."
@@ -34,8 +34,5 @@
   "depends": {
     "minecraft": "1.16.x",
     "fabricloader": ">=0.7.1"
-  },
-  "suggests": {
-    "flamingo": "*"
   }
 }
