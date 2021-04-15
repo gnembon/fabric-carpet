@@ -81,12 +81,6 @@ public class FixedCommandSource extends ServerCommandSource
     }
 
     @Override
-    public ServerCommandSource mergeConsumers(ResultConsumer<ServerCommandSource> consumer, BinaryOperator<ResultConsumer<ServerCommandSource>> binaryOperator)
-    {
-        return this.withConsumer(binaryOperator.apply(this.resultConsumer, consumer));
-    }
-
-    @Override
     public ServerCommandSource withSilent()
     {
         return this;
@@ -190,6 +184,7 @@ public class FixedCommandSource extends ServerCommandSource
     @Override
     public void onCommandComplete(CommandContext<ServerCommandSource> context, boolean success, int result)
     {
+        if (this.resultConsumer != null) resultConsumer.onCommandComplete(context, success, result);
     }
 
     @Override

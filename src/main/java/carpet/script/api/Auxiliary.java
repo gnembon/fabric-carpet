@@ -3,10 +3,11 @@ package carpet.script.api;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.fakes.MinecraftServerInterface;
+import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.script.bundled.Module;
+import carpet.script.argument.FileArgument;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
@@ -19,7 +20,10 @@ import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.utils.FixedCommandSource;
+import carpet.script.utils.InputValidator;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
 import carpet.script.utils.WorldTools;
@@ -35,6 +39,10 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import net.minecraft.SharedConstants;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.DataCommandStorage;
 import net.minecraft.entity.Entity;
@@ -45,12 +53,18 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtHelper;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
+import net.minecraft.resource.DataPackSettings;
+import net.minecraft.resource.ReloadableResourceManagerImpl;
+import net.minecraft.resource.ResourcePackManager;
+import net.minecraft.resource.ResourcePackProfile;
+import net.minecraft.resource.ServerResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -62,21 +76,42 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
+import net.minecraft.util.crash.CrashException;
+import net.minecraft.util.Util;
+import net.minecraft.util.WorldSavePath;
+import net.minecraft.util.dynamic.RegistryOps;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.EulerAngle;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.SaveProperties;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.source.BiomeAccess;
+import net.minecraft.world.border.WorldBorderListener;
+import net.minecraft.world.dimension.DimensionOptions;
+import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.gen.GeneratorOptions;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.level.UnmodifiableLevelProperties;
+import net.minecraft.world.level.storage.LevelStorage;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -95,8 +130,9 @@ import static java.lang.Math.min;
 public class Auxiliary {
     public static final String MARKER_STRING = "__scarpet_marker";
     private static final Map<String, SoundCategory> mixerMap = Arrays.stream(SoundCategory.values()).collect(Collectors.toMap(SoundCategory::getName, k -> k));
-    public static final Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(Value.class, new ScarpetJsonDeserializer()).create();
 
+    @Deprecated
     public static String recognizeResource(Value value, boolean isFloder)
     {
         String origfile = value.getString();
@@ -109,28 +145,20 @@ public class Auxiliary {
         return file;
     }
 
-    public static Triple<String, String, Boolean> getFileDescriptor(List<LazyValue> lv, Context c, boolean isFloder)
-    {
-        if (lv.size() < 2) throw new InternalExpressionException("File functions require path and type as first two arguments");
-        String resource = recognizeResource(lv.get(0).evalValue(c), isFloder);
-        String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
-        boolean shared = origtype.startsWith("shared_");
-        String type = shared ? origtype.substring(7) : origtype; //len(shared_)
-        if (!Module.supportedTypes.containsKey(type))
-            throw new InternalExpressionException("Unsupported file type: "+origtype);
-        if (type.equals("folder") && !isFloder)
-            throw new InternalExpressionException("Folder types are no supported for this IO function");
-        return Triple.of(resource, type, shared);
-    }
-
     public static void apply(Expression expression)
     {
         expression.addLazyFunction("sound", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
-            Identifier soundName = new Identifier(lv.get(0).evalValue(c).getString());
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.SOUND_EVENT.getIds().stream().map(ValueConversions::of));
+                return (_c, _t) -> ret;
+            }
+            String rawString = lv.get(0).evalValue(c).getString();
+            Identifier soundName = new Identifier(rawString);
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
-                throw new InternalExpressionException("No such sound: "+soundName.getPath());
+                throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
             float volume = 1.0F;
             float pitch = 1.0F;
             SoundCategory mixer = SoundCategory.MASTER;
@@ -163,6 +191,12 @@ public class Auxiliary {
         expression.addLazyFunction("particle", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+            if (lv.size() == 0)
+            {
+                Value ret = ListValue.wrap(Registry.PARTICLE_TYPE.getIds().stream().map(ValueConversions::of));
+                return (_c, _t) -> ret;
+            }
+
             MinecraftServer ms = cc.s.getMinecraftServer();
             ServerWorld world = cc.s.getWorld();
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
@@ -297,6 +331,8 @@ public class Auxiliary {
         expression.addLazyFunction("draw_shape", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+            ServerWorld world = cc.s.getWorld();
+            MinecraftServer server = world.getServer();
             ServerPlayerEntity player[] = {null};
             List<Pair<ShapeDispatcher.ExpiringShape, Map<String,Value>>> shapes = new ArrayList<>();
             if (lv.size() == 1) // bulk
@@ -306,14 +342,14 @@ public class Auxiliary {
                 for (Value list : ((ListValue) specLoad).getItems())
                 {
                     if (!(list instanceof ListValue))  throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
-                    shapes.add( ShapeDispatcher.fromFunctionArgs(cc, ((ListValue) list).getItems(), player));
+                    shapes.add( ShapeDispatcher.fromFunctionArgs(server, world, ((ListValue) list).getItems(), player));
                 }
             }
             else
             {
                 List<Value> params = new ArrayList<>();
                 for (LazyValue v : lv) params.add(v.evalValue(c));
-                shapes.add(ShapeDispatcher.fromFunctionArgs(cc, params, player));
+                shapes.add(ShapeDispatcher.fromFunctionArgs(server, world, params, player));
             }
 
             ShapeDispatcher.sendShape(
@@ -806,39 +842,28 @@ public class Auxiliary {
 
         expression.addLazyFunction("list_files", 2, (c, t, lv) ->
         {
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, true);
-            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+            FileArgument fdesc = FileArgument.from(lv, c, true, FileArgument.Reason.READ);
+            Stream<String> files = ((CarpetScriptHost) c.host).listFolder(fdesc);
             if (files == null) return LazyValue.NULL;
             Value ret = ListValue.wrap(files.map(StringValue::of).collect(Collectors.toList()));
             return (cc, tt) -> ret;
         });
 
-
         expression.addLazyFunction("read_file", 2, (c, t, lv) ->
         {
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
+            FileArgument fdesc = FileArgument.from(lv, c, false, FileArgument.Reason.READ);
             Value retVal;
-            if (fdesc.getMiddle().equals("nbt"))
+            if (fdesc.type == FileArgument.Type.NBT)
             {
-                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc.getLeft(), fdesc.getRight());
+                Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
                 if (state == null) return LazyValue.NULL;
                 retVal = new NBTSerializableValue(state);
             }
-            else if (fdesc.getMiddle().equals("json"))
+            else if (fdesc.type == FileArgument.Type.JSON)
             {
                 JsonElement json;
-                try
-                {
-                    json = ((CarpetScriptHost) c.host).readJsonFile(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
-                }
-                catch (JsonParseException e)
-                {
-                    Throwable exception = e;
-                    if(e.getCause() != null)
-                        exception = e.getCause();
-                    throw new InternalExpressionException("Failed to read JSON file: "+exception.getMessage());
-                }
-                Value parsedJson = gson.fromJson(json, Value.class);
+                json = ((CarpetScriptHost) c.host).readJsonFile(fdesc);
+                Value parsedJson = GSON.fromJson(json, Value.class);
                 if (parsedJson == null)
                     retVal = Value.NULL;
                 else
@@ -846,7 +871,7 @@ public class Auxiliary {
             }
             else
             {
-                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc.getLeft(), fdesc.getMiddle(), fdesc.getRight());
+                List<String> content = ((CarpetScriptHost) c.host).readTextResource(fdesc);
                 if (content == null) return LazyValue.NULL;
                 retVal = ListValue.wrap(content.stream().map(StringValue::new).collect(Collectors.toList()));
             }
@@ -854,32 +879,29 @@ public class Auxiliary {
         });
 
         expression.addLazyFunction("delete_file", 2, (c, t, lv) -> {
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
-            return ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle())
-                    ? LazyValue.TRUE
-                    : LazyValue.FALSE;
+            FileArgument fdesc = FileArgument.from(lv, c, false, FileArgument.Reason.DELETE);
+            return ((CarpetScriptHost) c.host).removeResourceFile(fdesc) ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
         expression.addLazyFunction("write_file", -1, (c, t, lv) -> {
             if (lv.size() < 3) throw new InternalExpressionException("'write_file' requires three or more arguments");
-            Triple<String, String, Boolean> fdesc = getFileDescriptor(lv, c, false);
-
+            FileArgument fdesc = FileArgument.from(lv, c, false, FileArgument.Reason.CREATE);
 
             boolean success;
-            if (fdesc.getMiddle().equals("nbt"))
+            if (fdesc.type == FileArgument.Type.NBT)
             {
                 Value val = lv.get(2).evalValue(c);
                 NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                         ? (NBTSerializableValue) val
                         : new NBTSerializableValue(val.getString());
                 Tag tag = tagValue.getTag();
-                success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc.getLeft(), fdesc.getRight());
+                success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             }
-            else if (fdesc.getMiddle().equals("json"))
+            else if (fdesc.type == FileArgument.Type.JSON)
             {
-                List<String> data = Collections.singletonList(gson.toJson(lv.get(2).evalValue(c).toJson()));
-                ((CarpetScriptHost) c.host).removeResourceFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle());
-                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
+                List<String> data = Collections.singletonList(GSON.toJson(lv.get(2).evalValue(c).toJson()));
+                ((CarpetScriptHost) c.host).removeResourceFile(fdesc);
+                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc, data);
             }
             else
             {
@@ -904,27 +926,22 @@ public class Auxiliary {
                         data.add(lv.get(i).evalValue(c).getString());
                     }
                 }
-                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc.getLeft(), fdesc.getRight(), fdesc.getMiddle(), data);
+                success = ((CarpetScriptHost) c.host).appendLogFile(fdesc, data);
             }
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
-        //write_file
-
         expression.addLazyFunction("load_app_data", -1, (c, t, lv) ->
         {
-            String file = null;
-            boolean shared = false;
+            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.READ);
             if (lv.size()>0)
             {
                 c.host.issueDeprecation("load_app_data(...) with arguments");
-                file = recognizeResource(lv.get(0).evalValue(c), false);
-                if (lv.size() > 1)
-                {
-                    shared = lv.get(1).evalValue(c).getBoolean();
-                }
+                String resource = recognizeResource(lv.get(0).evalValue(c), false);
+                boolean shared = lv.size() > 1 && lv.get(1).evalValue(c).getBoolean();
+                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.READ);
             }
-            Tag state = ((CarpetScriptHost)((CarpetContext)c).host).readFileTag(file, shared);
+            Tag state = ((CarpetScriptHost) c.host).readFileTag(fdesc);
             if (state == null)
                 return (cc, tt) -> Value.NULL;
             Value retVal = new NBTSerializableValue(state);
@@ -936,22 +953,19 @@ public class Auxiliary {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'store_app_data' needs NBT tag and an optional file");
             Value val = lv.get(0).evalValue(c);
-            String file = null;
-            boolean shared = false;
+            FileArgument fdesc = new FileArgument(null, FileArgument.Type.NBT, null, false, false, FileArgument.Reason.CREATE);
             if (lv.size()>1)
             {
                 c.host.issueDeprecation("store_app_data(...) with more than one argument");
-                file = recognizeResource(lv.get(1).evalValue(c), false);
-                if (lv.size() > 2)
-                {
-                    shared = lv.get(2).evalValue(c).getBoolean();
-                }
+                String resource = recognizeResource(lv.get(1).evalValue(c), false);
+                boolean shared = lv.size() > 2 && lv.get(2).evalValue(c).getBoolean();
+                fdesc = new FileArgument(resource, FileArgument.Type.NBT, null, false, shared, FileArgument.Reason.CREATE);
             }
             NBTSerializableValue tagValue =  (val instanceof NBTSerializableValue)
                     ? (NBTSerializableValue) val
                     : new NBTSerializableValue(val.getString());
             Tag tag = tagValue.getTag();
-            boolean success = ((CarpetScriptHost)((CarpetContext)c).host).writeTagFile(tag, file, shared);
+            boolean success = ((CarpetScriptHost) c.host).writeTagFile(tag, fdesc);
             return success?LazyValue.TRUE:LazyValue.FALSE;
         });
 
@@ -1048,7 +1062,178 @@ public class Auxiliary {
             if (old_nbt == null) return LazyValue.NULL;
             return (_c, _t) -> new NBTSerializableValue(old_nbt);
         });
+
+        // script run create_datapack('foo', {'foo' -> {'bar.json' -> {'c' -> true,'d' -> false,'e' -> {'foo' -> [1,2,3]},'a' -> 'foobar','b' -> 5}}})
+        expression.addLazyFunction("create_datapack", 2, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            String origName = lv.get(0).evalValue(c).getString();
+            String name = InputValidator.validateSimpleString(origName, true);
+            MinecraftServer server = cc.s.getMinecraftServer();
+            for (String dpName : server.getDataPackManager().getNames())
+            {
+                if (dpName.equalsIgnoreCase("file/"+name+".zip") ||
+                        dpName.equalsIgnoreCase("file/"+name))
+                    return LazyValue.NULL;
+
+            }
+            Value dpdata = lv.get(1).evalValue(c);
+            if (!(dpdata instanceof MapValue))
+                throw new InternalExpressionException("datapack data needs to be a valid map type");
+            ResourcePackManager packManager = server.getDataPackManager();
+            Path dbFloder = server.getSavePath(WorldSavePath.DATAPACKS);
+            Path packFloder = dbFloder.resolve(name+".zip");
+            if (Files.exists(packFloder) || Files.exists(dbFloder.resolve(name))) return LazyValue.NULL;
+            Boolean [] successful = new Boolean[]{true};
+            server.submitAndJoin( () ->
+            {
+                try {
+                    //Files.createDirectory(packFloder);
+                    try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + packFloder.toUri().toString()), ImmutableMap.of("create", "true"))) {
+                        Path zipRoot = zipfs.getPath("/");
+                        zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
+                                ImmutableMap.of(StringValue.of("pack"), MapValue.wrap(ImmutableMap.of(
+                                        StringValue.of("pack_format"), new NumericValue(SharedConstants.getGameVersion().getPackVersion()),
+                                        StringValue.of("description"), StringValue.of(name),
+                                        StringValue.of("source"), StringValue.of("scarpet")
+                                )))
+                        ));
+                        walkTheDPMap((MapValue) dpdata, zipRoot);
+                    }
+                    packManager.scanPacks();
+                    ResourcePackProfile resourcePackProfile = packManager.getProfile("file/" + name + ".zip");
+                    if (resourcePackProfile == null || packManager.getEnabledProfiles().contains(resourcePackProfile)) {
+                        throw new IOException();
+                    }
+                    List<ResourcePackProfile> list = Lists.newArrayList(packManager.getEnabledProfiles());
+                    resourcePackProfile.getInitialPosition().insert(list, resourcePackProfile, p -> p, false);
+
+
+                    server.reloadResources(list.stream().map(ResourcePackProfile::getName).collect(Collectors.toList())).
+                            exceptionally(exc -> {
+                                successful[0] = false;
+                                return null;
+                            }).join();
+                    if (!successful[0]) {
+                        throw new IOException();
+                    }
+                } catch (IOException e)
+                {
+                    successful[0] = false;
+                    try {
+                        FileUtils.forceDelete(packFloder.toFile());
+                    } catch (IOException ignored) {
+                        throw new InternalExpressionException("Failed to install a datapack and failed to clean up after it");
+                    }
+
+                }
+            });
+            return successful[0]?LazyValue.TRUE:LazyValue.FALSE;
+        });
+
+        expression.addLazyFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
+            CarpetContext cc = (CarpetContext)c;
+            // from minecraft.server.Main.main
+            MinecraftServer server = cc.s.getMinecraftServer();
+            LevelStorage.Session session = ((MinecraftServerInterface)server).getCMSession();
+            DataPackSettings dataPackSettings = session.getDataPackSettings();
+            ResourcePackManager resourcePackManager = server.getDataPackManager();
+            DataPackSettings dataPackSettings2 = MinecraftServer.loadDataPacks(resourcePackManager, dataPackSettings == null ? DataPackSettings.SAFE_MODE : dataPackSettings, false);
+            ServerResourceManager serverRM = ((MinecraftServerInterface)server).getResourceManager();
+            ReloadableResourceManagerImpl resourceManager = (ReloadableResourceManagerImpl) serverRM.getResourceManager();
+
+            //believe the other one will fillup based on the datapacks only.
+            resourceManager.close();
+            resourcePackManager.createResourcePacks().forEach(resourceManager::addPack);
+
+            //not sure its needed, but doesn't seem to have a negative effect and might be used in some custom shtuff
+            serverRM.loadRegistryTags();
+
+            RegistryOps<Tag> registryOps = RegistryOps.of(NbtOps.INSTANCE, serverRM.getResourceManager(), (DynamicRegistryManager.Impl) server.getRegistryManager());
+            SaveProperties saveProperties = session.readLevelProperties(registryOps, dataPackSettings2);
+            if (saveProperties == null) return LazyValue.NULL;
+            //session.backupLevelDataFile(server.getRegistryManager(), saveProperties); // no need
+
+            // MinecraftServer.createWorlds
+            // save properties should now contain dimension settings
+            GeneratorOptions generatorOptions = saveProperties.getGeneratorOptions();
+            boolean bl = generatorOptions.isDebugWorld();
+            long l = generatorOptions.getSeed();
+            long m = BiomeAccess.hashSeed(l);
+            Map<RegistryKey<World>, ServerWorld> existing_worlds = ((MinecraftServerInterface)server).getCMWorlds();
+            List<Value> addeds = new ArrayList<>();
+            for (Map.Entry<RegistryKey<DimensionOptions>, DimensionOptions> entry : generatorOptions.getDimensions().getEntries()) {
+                RegistryKey<DimensionOptions> registryKey = entry.getKey();
+                if (!existing_worlds.containsKey(registryKey))
+                {
+                    addeds.add(ValueConversions.of(registryKey.getValue()));
+                    RegistryKey<World> registryKey2 = RegistryKey.of(Registry.DIMENSION, registryKey.getValue());
+                    DimensionType dimensionType3 = entry.getValue().getDimensionType();
+                    ChunkGenerator chunkGenerator3 = entry.getValue().getChunkGenerator();
+                    UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, ((ServerWorldInterface) server.getOverworld()).getWorldPropertiesCM());
+                    ServerWorld serverWorld2 = new ServerWorld(server, Util.getMainWorkerExecutor(), session, unmodifiableLevelProperties, registryKey2, dimensionType3, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, ImmutableList.of(), false);
+                    server.getOverworld().getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld2.getWorldBorder()));
+                    existing_worlds.put(registryKey2, serverWorld2);
+                }
+            }
+            Value ret = ListValue.wrap(addeds);
+            return (_c, _t) -> ret;
+        });
     }
+
+    private static void zipValueToJson(Path path, Value output) throws IOException
+    {
+        JsonElement element = output.toJson();
+        if (element == null)
+            throw new InternalExpressionException("Cannot interpret "+output.getPrettyString()+" as a json object");
+        String string = GSON.toJson(element);
+        Files.createDirectories(path.getParent());
+        BufferedWriter bufferedWriter = Files.newBufferedWriter(path);
+        Throwable incident = null;
+        try
+        {
+            bufferedWriter.write(string);
+        }
+        catch (Throwable shitHappened)
+        {
+            incident = shitHappened;
+            throw shitHappened;
+        }
+        finally
+        {
+            if (incident != null) {
+                try {
+                    bufferedWriter.close();
+                } catch (Throwable otherShitHappened) {
+                    incident.addSuppressed(otherShitHappened);
+                }
+            } else {
+                bufferedWriter.close();
+            }
+        }
+    }
+
+    private static void walkTheDPMap(MapValue node, Path path) throws IOException
+    {
+        Map<Value,Value> items = node.getMap();
+        for (Map.Entry<Value, Value> entry : items.entrySet())
+        {
+            Value val = entry.getValue();
+            String strkey = entry.getKey().getString();
+            Path child = path.resolve(strkey);
+            if (strkey.endsWith(".json"))
+            {
+                zipValueToJson(child, val);
+            }
+            else
+            {
+                if (!(val instanceof MapValue)) throw new InternalExpressionException("Value of "+strkey+" should be a map");
+                Files.createDirectory(child);
+                walkTheDPMap((MapValue) val, child);
+            }
+        }
+    }
+
+
 
     private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {

@@ -4,10 +4,12 @@ import carpet.script.Context;
 import carpet.script.LazyValue;
 import carpet.script.ScriptHost;
 import carpet.script.bundled.Module;
+import carpet.script.command.CommandArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.Value;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,14 +72,13 @@ public class FunctionArgument<T> extends Argument
         return new FunctionArgument<>(fun, offset + 1 + argsize, lvargs);
     }
 
-    public static FunctionArgument<Value> fromCommandSpec(ScriptHost host, Value funSpec)
-    {
+    public static FunctionArgument<Value> fromCommandSpec(ScriptHost host, Value funSpec) throws CommandSyntaxException {
         FunctionValue function;
         List<Value> args = Collections.emptyList();
         if (!(funSpec instanceof ListValue))
             funSpec = ListValue.of(funSpec);
         List<Value> params = ((ListValue) funSpec).getItems();
-        if (params.isEmpty()) throw new InternalExpressionException("Function has empty spec");
+        if (params.isEmpty()) throw CommandArgument.error("Function has empty spec");
         Value first = params.get(0);
         if (first instanceof FunctionValue)
         {
@@ -86,7 +87,8 @@ public class FunctionArgument<T> extends Argument
         else
         {
             String name = first.getString();
-            function = host.getAssertFunction(host.main, name);
+            function = host.getFunction(name);
+            if (function == null) throw CommandArgument.error("Function "+name+" is not defined yet");
         }
         if (params.size() > 1) args = params.subList(1,params.size());
 

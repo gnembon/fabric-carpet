@@ -5,6 +5,7 @@ import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
@@ -14,12 +15,16 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.settings.ParsedRule;
+import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.TntEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.MerchantEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.Entity;
@@ -41,6 +46,7 @@ import net.minecraft.village.Merchant;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.explosion.Explosion;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -51,6 +57,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -204,6 +211,7 @@ public class CarpetEventServer
         {
             if (callList.size() > 0)
             {
+                CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet events", CarpetProfiler.TYPE.GENERAL);
                 List<Value> argv = argumentSupplier.get(); // empty for onTickDone
                 ServerCommandSource source;
                 try
@@ -225,6 +233,7 @@ public class CarpetEventServer
                     if (!call.execute(source, argv)) fails.add(call);
                 }
                 for (Callback call : fails) callList.remove(call);
+                CarpetProfiler.end_current_section(currentSection);
             }
         }
 
@@ -862,6 +871,59 @@ public class CarpetEventServer
                 );
             }
         };
+        //copy of Explosion.getCausingEntity() #TRACK#
+        private static LivingEntity getExplosionCausingEntity(Entity entity)
+        {
+            if (entity == null)  return null;
+            else if (entity instanceof TntEntity) return ((TntEntity)entity).getCausingEntity();
+            else if (entity instanceof LivingEntity) return (LivingEntity)entity;
+            else if (entity instanceof ProjectileEntity) {
+                Entity owner = ((ProjectileEntity)entity).getOwner();
+                if (owner instanceof LivingEntity) return (LivingEntity)owner;
+            }
+            return null;
+        }
+
+        public static final Event EXPLOSION_OUTCOME = new Event("explosion_outcome", 8, true)
+        {
+            @Override
+            public void onExplosion(ServerWorld world, Entity e,  Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.DestructionType type)
+            {
+                handler.call(
+                        () -> Arrays.asList(
+                                ListValue.fromTriple(x, y, z),
+                                NumericValue.of(power),
+                                EntityValue.of(e),
+                                EntityValue.of(attacker!= null?attacker.get():Event.getExplosionCausingEntity(e)),
+                                StringValue.of(type.name().toLowerCase(Locale.ROOT)),
+                                BooleanValue.of(createFire),
+                                new ListValue(affectedBlocks.stream().filter(b -> !world.isAir(b)). map( // da heck they send air blocks
+                                        b -> new BlockValue(world.getBlockState(b),world,b)
+                                ).collect(Collectors.toList())),
+                                new ListValue(affectedEntities.stream().map(EntityValue::of).collect(Collectors.toList()))
+                        ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                );
+            }
+        };
+
+
+        public static final Event EXPLOSION = new Event("explosion", 6, true)
+        {
+            @Override
+            public void onExplosion(ServerWorld world, Entity e, Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.DestructionType type)
+            {
+                handler.call(
+                        () -> Arrays.asList(
+                                ListValue.fromTriple(x, y, z),
+                                NumericValue.of(power),
+                                EntityValue.of(e),
+                                EntityValue.of(attacker!= null?attacker.get():Event.getExplosionCausingEntity(e)),
+                                StringValue.of(type.name().toLowerCase(Locale.ROOT)),
+                                BooleanValue.of(createFire)
+                        ), () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                );
+            }
+        };
 
         public static String getEntityLoadEventName(EntityType<? extends Entity> et)
         {
@@ -982,10 +1044,41 @@ public class CarpetEventServer
         public void onSlotSwitch(ServerPlayerEntity player, int from, int to) {}
         public void onTrade(ServerPlayerEntity player, Merchant merchant, TradeOffer tradeOffer) {}
 
-
+        public void onExplosion(ServerWorld world, Entity e,  Supplier<LivingEntity> attacker, double x, double y, double z, float power, boolean createFire, List<BlockPos> affectedBlocks, List<Entity> affectedEntities, Explosion.DestructionType type) { }
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
         public void onCarpetRuleChanges(ParsedRule<?> rule, ServerCommandSource source) { }
+        public void onCustomPlayerEvent(ServerPlayerEntity player, Object ... args)
+        {
+            if (handler.reqArgs != (args.length+1))
+                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+(args.length+1));
+            handler.call(
+                    () -> {
+                        List<Value> valArgs = new ArrayList<>();
+                        valArgs.add(EntityValue.of(player));
+                        for (Object o: args)
+                        {
+                            valArgs.add(ValueConversions.guess(player.getServerWorld(), o));
+                        }
+                        return valArgs;
+                    }, player::getCommandSource
+            );
+        }
+        public void onCustomWorldEvent(ServerWorld world, Object ... args)
+        {
+            if (handler.reqArgs != args.length)
+                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+args.length);
+            handler.call(
+                    () -> {
+                        List<Value> valArgs = new ArrayList<>();
+                        for (Object o: args)
+                        {
+                            valArgs.add(ValueConversions.guess(world, o));
+                        }
+                        return valArgs;
+                    }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+            );
+        }
     }
 
 

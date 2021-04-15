@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.utils.CarpetProfiler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldGenerationProgressListener;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +27,9 @@ public abstract class MinecraftServer_coreMixin
             )
     )
     private void onTick(BooleanSupplier booleanSupplier_1, CallbackInfo ci) {
+        CarpetProfiler.ProfilerToken token = CarpetProfiler.start_section(null, "Carpet", CarpetProfiler.TYPE.GENERAL);
         CarpetServer.tick((MinecraftServer) (Object) this);
+        CarpetProfiler.end_current_section(token);
     }
 
     @Inject(method = "loadWorld", at = @At("HEAD"))

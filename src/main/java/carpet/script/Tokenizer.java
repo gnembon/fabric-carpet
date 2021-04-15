@@ -406,6 +406,7 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
         public int pos;
         public int linepos;
         public int lineno;
+        public static final Token NONE = new Token();
         public Token morphedInto(TokenType newType, String newSurface)
         {
             Token created = new Token();

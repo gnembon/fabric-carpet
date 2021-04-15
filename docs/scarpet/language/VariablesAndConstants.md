@@ -3,8 +3,8 @@
 `scarpet` provides a number of constants that can be used literally in scripts
 
 *   `null`: nothing, zilch, not even false
-*   `true`: pure true, or just 1 (one)
-*   `false`: false truth, or true falsth, 0 (zero) actually
+*   `true`: pure true, can act as `1`
+*   `false`: false truth, or true falsth, equals to `0`
 *   `pi`: for the fans of perimeters, its a perimeter of an apple pi of diameter 1\. About 3.14
 *   `euler`: clever guy. Derivative of its exponent is goto 1\. About 2.72
 

@@ -28,13 +28,15 @@ an inventory, all API functions typically do nothing and return null.
 
 Most items returned are in the form of a triple of item name, count, and nbt or the extra data associated with an item. 
 
-### item_list(tag?)
+### `item_list(tag?)`
 
 With no arguments, returns a list of all items in the game. With an item tag provided, list items matching the tag, or `null` if tag is not valid.
 
-### item_tags(item, tag?)
+### `item_tags(item, tag?)`
 
 Returns list of tags the item belongs to, or, if tag is provided, `true` if an item maches the tag, `false` if it doesn't and `null` if that's not a valid tag
+
+Throws `unknown_item` if item doesn't exist.
 
 ### `stack_limit(item)`
 
@@ -42,6 +44,8 @@ Returns number indicating what is the stack limit for the item. Its typically 1 
 or 64 - rest. It is recommended to consult this, as other inventory API functions ignore normal stack limits, and 
 it is up to the programmer to keep it at bay. As of 1.13, game checks for negative numbers and setting an item to 
 negative is the same as empty.
+
+Throws `unknown_item` if item doesn't exist.
 
 <pre>
 stack_limit('wooden_axe') => 1
@@ -52,6 +56,8 @@ stack_limit('stone') => 64
 ### `item_category(item)`
 
 Returns the string representing the category of a given item, like `building_blocks`, `combat`, or `tools`.
+
+Throws `unknown_item` if item doesn't exist.
 
 <pre>
 item_category('wooden_axe') => tools
@@ -174,6 +180,8 @@ while( (slot = inventory_find(p, 'diamond', slot)) != null, 41, drop_item(p, slo
     // spits all diamonds from player inventory wherever they are
 inventory_drop(x,y,z, 0) => 64 // removed and spawned in the world a full stack of items
 </pre>
+
+Throws `unknown_item` if item doesn't exist.
 
 ### `inventory_remove(inventory, item, amount?)`
 

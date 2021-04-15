@@ -1,5 +1,6 @@
 package carpet.script.command;
 
+import carpet.CarpetServer;
 import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
@@ -14,6 +15,7 @@ import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
+import carpet.utils.CarpetProfiler;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -276,7 +278,12 @@ public abstract class CommandArgument
     {
         CommandArgument arg = getTypeForArgument(param, host);
         if (arg.suggestionProvider != null) return argument(param, arg.getArgumentType()).suggests(arg.suggestionProvider);
-        return arg.needsMatching? argument(param, arg.getArgumentType()).suggests((c, b) -> arg.suggest(c, b, host)) : argument(param, arg.getArgumentType());
+        if (!arg.needsMatching) return argument(param, arg.getArgumentType());
+        String hostName = host.getName();
+        return argument(param, arg.getArgumentType()).suggests((ctx, b) -> {
+            CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
+            return arg.suggest(ctx, b, cHost);
+        });
     }
 
     protected String suffix;
@@ -312,20 +319,20 @@ public abstract class CommandArgument
         return suffix;
     }
 
-    public static CommandArgument buildFromConfig(String suffix, Map<String, Value> config, CarpetScriptHost host)
+    public static CommandArgument buildFromConfig(String suffix, Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
     {
         if (!config.containsKey("type"))
-            throw new InternalExpressionException("Custom type "+suffix+" should at least specify the type");
+            throw CommandArgument.error("Custom type "+suffix+" should at least specify the type");
         String baseType = config.get("type").getString();
         if (!builtIns.containsKey(baseType))
-            throw new InternalExpressionException("Unknown base type "+baseType+" for custom type "+suffix);
+            throw CommandArgument.error("Unknown base type "+baseType+" for custom type "+suffix);
         CommandArgument variant = builtIns.get(baseType).factory().get();
         variant.suffix = suffix;
         variant.configure(config, host);
         return variant;
     }
 
-    protected void configure(Map<String, Value> config, CarpetScriptHost host)
+    protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
     {
         caseSensitive = config.getOrDefault("case_sensitive", Value.TRUE).getBoolean();
         if (config.containsKey("suggester"))
@@ -334,9 +341,9 @@ public abstract class CommandArgument
         }
         if (config.containsKey("suggest"))
         {
-            if (config.containsKey("suggester")) throw new InternalExpressionException("Attempted to provide 'suggest' list while 'suggester' is present"+" for custom type "+suffix);
+            if (config.containsKey("suggester")) throw error("Attempted to provide 'suggest' list while 'suggester' is present"+" for custom type "+suffix);
             Value suggestionValue = config.get("suggest");
-            if (!(suggestionValue instanceof ListValue)) throw new InternalExpressionException("Argument suggestions needs to be a list"+" for custom type "+suffix);
+            if (!(suggestionValue instanceof ListValue)) throw error("Argument suggestions needs to be a list"+" for custom type "+suffix);
             examples = ((ListValue) suggestionValue).getItems().stream()
                     .map(Value::getString)
                     .collect(Collectors.toSet());
@@ -365,6 +372,7 @@ public abstract class CommandArgument
     {
         if (customSuggester != null)
         {
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
             Map<Value, Value> params = new HashMap<>();
             for(ParsedCommandNode<ServerCommandSource> pnode : context.getNodes())
             {
@@ -379,7 +387,9 @@ public abstract class CommandArgument
             args.addAll(customSuggester.args);
             Value response = host.handleCommand(context.getSource(), customSuggester.function, args);
             if (!(response instanceof ListValue)) throw error("Custom suggester should return a list of options"+" for custom type "+suffix);
-            return ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            Collection<String> res = ((ListValue) response).getItems().stream().map(Value::getString).collect(Collectors.toList());
+            CarpetProfiler.end_current_section(currentSection);
+            return res;
         }
         if (needsMatching) return examples;
         //return Lists.newArrayList("");
@@ -432,13 +442,13 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
-                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom string type requires options passed as a list"+" for custom type "+suffix);
+                if (!(optionsValue instanceof ListValue)) throw error("Custom string type requires options passed as a list"+" for custom type "+suffix);
                 validOptions = ((ListValue) optionsValue).getItems().stream()
                         .map(v -> caseSensitive?v.getString():(v.getString().toLowerCase(Locale.ROOT)))
                         .collect(Collectors.toSet());
@@ -498,7 +508,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             mustBeLoaded = config.getOrDefault("loaded", Value.FALSE).getBoolean();
@@ -533,7 +543,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             blockCentered = config.getOrDefault("block_centered", Value.TRUE).getBoolean();
@@ -581,7 +591,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             onlyFans = config.getOrDefault("players", Value.FALSE).getBoolean();
@@ -622,7 +632,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             single = config.getOrDefault("single", Value.FALSE).getBoolean();
@@ -663,7 +673,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             single = config.getOrDefault("single", Value.FALSE).getBoolean();
@@ -700,7 +710,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             mapRequired = !config.getOrDefault("allow_element", Value.FALSE).getBoolean();
@@ -746,13 +756,13 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             if (config.containsKey("options"))
             {
                 Value optionsValue = config.get("options");
-                if (!(optionsValue instanceof ListValue)) throw new InternalExpressionException("Custom sting type requires options passed as a list"+" for custom type "+suffix);
+                if (!(optionsValue instanceof ListValue)) throw error("Custom sting type requires options passed as a list"+" for custom type "+suffix);
                 validOptions = ((ListValue) optionsValue).getItems().stream().map(v -> new Identifier(v.getString())).collect(Collectors.toSet());
             }
         }
@@ -788,7 +798,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             if (config.containsKey("min"))
@@ -799,7 +809,7 @@ public abstract class CommandArgument
             {
                 max = NumericValue.asNumber(config.get("max"), "max").getDouble();
             }
-            if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded"+" for custom type "+suffix);
+            if (max != null && min == null) throw error("Double types cannot be only upper-bounded"+" for custom type "+suffix);
         }
 
         @Override
@@ -839,7 +849,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             if (config.containsKey("min"))
@@ -850,7 +860,7 @@ public abstract class CommandArgument
             {
                 max = NumericValue.asNumber(config.get("max"), "max").getLong();
             }
-            if (max != null && min == null) throw new InternalExpressionException("Double types cannot be only upper-bounded"+" for custom type "+suffix);
+            if (max != null && min == null) throw error("Double types cannot be only upper-bounded"+" for custom type "+suffix);
         }
 
         @Override
@@ -929,7 +939,7 @@ public abstract class CommandArgument
         }
 
         @Override
-        protected void configure(Map<String, Value> config, CarpetScriptHost host)
+        protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
             if (config.containsKey("restrict"))
@@ -937,7 +947,7 @@ public abstract class CommandArgument
                 restrict = config.get("restrict").getString().toLowerCase(Locale.ROOT);
                 needsMatching = true;
                 if (!RESTRICTED_CONTAINERS.containsKey(restrict))
-                    throw new InternalExpressionException("Incorrect slot restriction "+restrict+" for custom type "+suffix);
+                    throw error("Incorrect slot restriction "+restrict+" for custom type "+suffix);
             }
         }
 

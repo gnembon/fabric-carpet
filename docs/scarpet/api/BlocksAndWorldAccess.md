@@ -21,6 +21,8 @@ when it was used. Block values passed in various places like `scan` functions, e
 its properties are needed. This means that if the block at the location changes before its queried in the program this 
 might result in getting the later state, which might not be desired. Consider the following example:
 
+Throws `unknown_block` if provided input is not valid.
+
 <pre>set(10,10,10,'stone');
 scan(10,10,10,0,0,0, b = _);
 set(10,10,10,'air');
@@ -50,12 +52,14 @@ properties that the original source block may have contained.
 
 The returned value is either the block state that has been set, or `false` if block setting was skipped, or failed
 
+Throws `unknown_block` if provided block to set is not valid
+
 <pre>
 set(0,5,0,'bedrock')  => bedrock
 set(l(0,5,0), 'bedrock')  => bedrock
 set(block(0,5,0), 'bedrock')  => bedrock
 scan(0,5,0,0,0,0,set(_,'bedrock'))  => 1
-set(pos(players()), 'bedrock')  => bedrock
+set(pos(player()), 'bedrock')  => bedrock
 set(0,0,0,'bedrock')  => 0   // or 1 in overworlds generated in 1.8 and before
 scan(0,100,0,20,20,20,set(_,'glass'))
     // filling the area with glass
@@ -128,6 +132,8 @@ but doesn't open chests / containers, so have no effect on interactive blocks, l
 Returns true if placement/use was 
 successful, false otherwise.
 
+Throws `unknown_item` if `item` doesn't exist
+
 <pre>
 place_item('stone',x,y,z) // places a stone block on x,y,z block
 place_item('piston,x,y,z,'down') // places a piston facing down
@@ -146,6 +152,8 @@ If type is `null`, POI at position is removed. In any case, previous POI is also
 Interestingly, `unemployed`, and `nitwit` are not used in the game, meaning, they could be used as permanent spatial 
 markers for scarpet apps. `meeting` is the only one with increased max occupancy of 32.
 
+Throws `unknown_poi` if the provided point of interest doesn't exist 
+
 ### `set_biome(pos, biome_name, update=true)`
 
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
@@ -155,6 +163,8 @@ Setting a biome is now (as of 1.16) dimension specific. In the overworld and the
 is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
 specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
 noise).
+
+Throws `unknown_biome` if the `biome_name` doesn't exist.
 
 ### `update(pos)`
 
@@ -179,6 +189,8 @@ Without item context it returns `false` if failed to destroy the block and `true
 In item context, `true` means that breaking item has no nbt to use, `null` indicating that the tool should be 
 considered broken in process, and `nbt` type value, for a resulting NBT tag on a hypothetical tool. Its up to the 
 programmer to use that nbt to apply it where it belong
+
+Throws `unknown_item` if `tool` doesn't exist.
 
 Here is a sample code that can be used to mine blocks using items in player inventory, without using player context 
 for mining. Obviously, in this case the use of `harvest` would be much more applicable:
@@ -217,6 +229,13 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
+
+Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
+`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
+`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
+endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
 If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
@@ -236,7 +255,7 @@ and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos
 
 <pre>
 pos(block(0,5,0)) => l(0,5,0)
-pos(players()) => l(12.3, 45.6, 32.05)
+pos(player()) => l(12.3, 45.6, 32.05)
 pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
@@ -271,6 +290,8 @@ back in state definition in various applications where block properties are requ
 
 `block_state` can also accept block names as input, returning block's default state.
 
+Throws `unknown_block` if the provided input is not valid.
+
 <pre>
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z)  => {waterlogged: false, half: top, open: false, ...}
 set(x,y,z,'iron_trapdoor','half','top'); block_state(x,y,z,'half')  => top
@@ -291,6 +312,8 @@ Without arguments, returns list of available tags, with block supplied (either b
 of tags the block belongs to, and if a tag is specified, returns `null` if tag is invalid, `false` if this block doesn't belong 
 to this tag, and `true` if the block belongs to the tag.
 
+Throws `unknown_block` if `block` doesn't exist
+
 ### `block_data(pos)`
 
 Return NBT string associated with specific location, or null if the block does not carry block data. Can be currently 
@@ -299,15 +322,17 @@ used to match specific information from it, or use it to copy to another block
 <pre>    block_data(x,y,z) => '{TransferCooldown:0,x:450,y:68, ... }'
 </pre>
 
-### `poi(pos), poi(pos, radius?, type?, status?, column?)`
+### `poi(pos), poi(pos, radius?, type?, status?, column_search?)`
 
 Queries a POI (Point of Interest) at a given position, returning `null` if none is found, or tuple of poi type and its 
 occupancy load. With optional `type`, `radius` and `status`, returns a list of POIs around `pos` within a 
 given `radius`. If the `type` is specified, returns only poi types of that types, or everything if omitted or `'any'`.
 If `status` is specified (either `'any'`, `'available'`, or `'occupied'`) returns only POIs with that status. 
-With `column` set to `true`, it will return all POIs in a cuboid with `radius` blocks away on x and z, in the entire
+With `column_search` set to `true`, it will return all POIs in a cuboid with `radius` blocks away on x and z, in the entire
 block column from 0 to 255. Default (`false`) returns POIs within a spherical area centered on `pos` and with `radius`
 radius. 
+
+All results of `poi` calls are returned in sorted order with respect to the euclidean distance to the requested center of `pos`.
 
 The return format of the results is a list of poi type, occupancy load, and extra triple of coordinates.
 
@@ -325,9 +350,9 @@ poi(x,y,z,5) => [['nether_portal',0,[7,8,9]],['nether_portal',0,[7,9,9]]] // two
 
 Without arguments, returns the list of biomes in the world.
 
-With block, or name, returns the name of the biome in that position, or null, if provided biome is not valid. 
+With block, or name, returns the name of the biome in that position, or throws `'unknown_biome'` if provided biome or block are not valid. 
 
-With an optional feature, it returns value for the specified attribute for that biome. Available and querable features include:
+With an optional feature, it returns value for the specified attribute for that biome. Available and queryable features include:
 * `'top_material'`: unlocalized block representing the top surface material
 * `'under_material'`: unlocalized block representing what sits below topsoil
 * `'category'`: the parent biome this biome is derived from. Possible values include:
@@ -480,7 +505,7 @@ To check if a block is truly loaded, I mean in memory, use `generation_status(x)
 outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
-loaded(pos(players()))  => 1
+loaded(pos(player()))  => 1
 loaded(100000,100,1000000)  => 0
 </pre>
 
@@ -716,6 +741,7 @@ If structure is not specified, it will return a set of structure names that are 
 as keys, and same type of map values as with a single structure call. An empty set or an empty map would indicate that nothing
 should be generated there.
 
+Throws `unknown_structure` if structure doesn't exist.
 
 ### `structures(pos), structures(pos, structure_name)`
 
@@ -749,6 +775,8 @@ structure starts.
 Requires a `Structure Variant` or `Standard Structure` name (see above). If standard name is used, the variant of the 
 structure may depend on the biome, otherwise the default structure for this type will be generated.
 
+Throws `unknown_structure` if structure doesn't exist.
+
 ### `plop(pos, what)`
 
 Plops a structure or a feature at a given `pos`, so block, triple position coordinates or a list of coordinates. 
@@ -771,7 +799,9 @@ All generated structures will retain their properties, like mob spawning, howeve
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
 
-### `custom_dimension(name, seed?)`
+###  (deprecated) `custom_dimension(name, seed?)`
+
+Deprecated by `create_datapack()` which can be used to setup custom dimensions
 
 Ensures the dimension with the given `'name'` is available and configured with the given seed. It merely sets the world
 generator settings to the overworld, and the optional custom seed (or using current world seed, if not provided). 

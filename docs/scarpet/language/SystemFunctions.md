@@ -14,30 +14,31 @@ as well as minecraft related concepts like `block`, `entity`, `nbt`, `text`.
 
 ### `bool(expr)`
 
-Returns a boolean context of the expression. Note that there are no true/false values in scarpet. `true` is 
-alias of 1, and `false` is 0\. Bool is also interpreting string values as boolean, which is different from other 
+Returns a boolean context of the expression. 
+Bool is also interpreting string values as boolean, which is different from other 
 places where boolean context can be used. This can be used in places where API functions return string values to 
-represent binary values
+represent binary values.
 
 <pre>
-bool(pi) => 1
-bool(false) => 0
-bool('') => 0
-bool(l()) => 0
-bool(l('')) => 1
-bool('foo') => 1
-bool('false') => 0
-bool('nulL') => 0
-if('false',1,0) => 1
+bool(pi) => true
+bool(false) => false
+bool('') => false
+bool(l()) => false
+bool(l('')) => true
+bool('foo') => true
+bool('false') => false
+bool('nulL') => false
+if('false',1,0) => true
 </pre>
 
 ### `number(expr)`
 
-Returns a numeric context of the expression. Can be used to read numbers from strings
+Returns a numeric context of the expression. Can be used to read numbers from strings, or other types
 
 <pre>
-number(null) => null
+number(null) => 0
 number(false) => 0
+number(true) => 1
 number('') => null
 number('3.14') => 3.14
 number(l()) => 0
@@ -65,15 +66,15 @@ Supported types (with `"%<?>"` syntax):
 *   `%%`: '%' character
 
 <pre>
-str(null) => null
-str(false) => 0
-str('') => null
-str('3.14') => 3.14
-str(l()) => 0
-str(l('')) => 1
-str('foo') => null
-str('3bar') => null
-str(2)+str(2) => 22
+str(null) => 'null'
+str(false) => 'false'
+str('') => ''
+str('3.14') => '3.14'
+str([]) => '[]'
+str(['']) => '[]'
+str('foo') => 'foo'
+str('3bar') => '3bar'
+str(2)+str(2) => '22'
 str('pi: %.2f',pi) => 'pi: 3.14'
 str('player at: %d %d %d',pos(player())) => 'player at: 567, -2423, 124'
 </pre>
@@ -226,17 +227,23 @@ length('foo') => 3
 ### `rand(expr), rand(expr, seed)`
 
 returns a random number from `0.0` (inclusive) to `expr` (exclusive). In boolean context (in conditions, 
-boolean functions, or `bool`), returns false if the randomly selected value is less than 1\. This means 
-that `rand(2)` returns true half of the time and `rand(5)` returns true for 80% (4/5) of the time. If seed is not 
-provided, uses a random seed. If seed is provided, each consecutive call to rand() will act like 'next' call to the 
-same random object. Scarpet keeps track of up to 1024 custom random number generators, so if you exceed this number 
-(per app), then your random sequence will revert to the beginning.
+boolean functions, or `bool`), returns false if the randomly selected value is less than 1. This means 
+that `bool(rand(2))` returns true half of the time and `!rand(5)` returns true for 20% (1/5) of the time. If seed is not 
+provided, uses a random seed that's shared across all scarpet apps. 
+If seed is provided, each consecutive call to rand() will act like 'next' call to the 
+same random object. Scarpet keeps track of up to 65536 custom random number generators (custom seeds, per app), 
+so if you exceed this number, your random sequences will revert to the beginning and start over.
 
 <pre>
 map(range(10), floor(rand(10))) => [5, 8, 0, 6, 9, 3, 9, 9, 1, 8]
-map(range(10), bool(rand(2))) => [1, 1, 1, 0, 0, 1, 1, 0, 0, 0]
+map(range(10), bool(rand(2))) => [false, false, true, false, false, false, true, false, true, false]
 map(range(10), str('%.1f',rand(_))) => [0.0, 0.4, 0.6, 1.9, 2.8, 3.8, 5.3, 2.2, 1.6, 5.6]
 </pre>
+
+## `reset_seed(seed)`
+
+Resets the sequence of the randomizer used by `rand` for this seed to its initial state. Returns a boolean value
+indicating if the given seed has been used or not.
 
 ### `perlin(x), perlin(x, y), perlin(x, y, z), perlin(x, y, z, seed)`
 

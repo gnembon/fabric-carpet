@@ -4,22 +4,32 @@ Collection of other methods that control smaller, yet still important aspects of
 
 ## Sounds
 
-### `sound(name, pos, volume?, pitch?, mixer?)`
+### `sound()`, `sound(name, pos, volume?, pitch?, mixer?)`
 
 Plays a specific sound `name`, at block or position `pos`, with optional `volume` and modified `pitch`, and under
 optional `mixer`. Default values for `volume`, `pitch` and `mixer` are `1.0`, `1.0`, and `master`. 
 Valid mixer options are `master`, `music`, `record`, `weather`, `block`, `hostile`,`neutral`, `player`, `ambient`
 and `voice`. `pos` can be either a block, triple of coords, or a list of thee numbers. Uses the same options as a
  corresponding `playsound` command.
+ 
+Used with no arguments, return the list of available sound names.
+ 
+Throws `unknown_sound` if sound doesn't exist.
 
 ## Particles
 
-### `particle(name, pos, count?. spread?, speed?, player?)`
+### `particle()`, `particle(name, pos, count?. spread?, speed?, player?)`
 
 Renders a cloud of particles `name` centered around `pos` position, by default `count` 10 of them, default `speed` 
 of 0, and to all players nearby, but these options can be changed via optional arguments. Follow vanilla `/particle` 
 command on details on those options. Valid particle names are 
 for example `'angry_villager', 'item diamond', 'block stone', 'dust 0.8 0.1 0.1 4'`.
+
+Used with no arguments, return the list of available particle names. Note that some of the names do not correspond to a valid
+particle that can be fed to `particle(...)` function due to a fact that some particles need more configuration
+to be valid, like `dust`, `block` etc. Should be used as a reference only.
+
+Throws `unknown_particle` if particle doesn't exist.
 
 ### `particle_line(name, pos, pos2, density?, player?)`
 
@@ -27,12 +37,15 @@ Renders a line of particles from point `pos` to `pos2` with supplied density (de
 apart you would want particles to appear, so `0.1` means one every 10cm. If a player (or player name) is supplied, only
 that player will receive particles.
 
+Throws `unknown_particle` if particle doesn't exist.
 
 ### `particle_box(name, pos, pos2, density?, player?)`
 ### `particle_rect` (deprecated)
 
 Renders a cuboid of particles between points `pos` and `pos2` with supplied density. If a player (or player name) is 
 supplied, only that player will receive particles.
+
+Throws `unknown_particle` if particle doesn't exist.
 
 ## Markers
 
@@ -67,7 +80,7 @@ Optional shared shape attributes:
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
  * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
  player, otherwise it will be send to all players in the dimension.
- * `line` - line thickness, defaults to 2.0pt
+ * `line` - (Deprecated) line thickness, defaults to 2.0pt. Not supported in 1.17's 3.2 core GL renderer.
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
    Follow attribute requires all positional arguments to be relative to the entity and disallow
@@ -101,7 +114,7 @@ Available shapes:
      * `align` - text alignment with regards to `pos`. Default is `center` (displayed text is
      centered with respect to `pos`), `left` (`pos` indicates beginning of text), and `right` (`pos`
      indicates the end of text).
-     * `tilt` - additional rotation of the text on the canvas
+     * `tilt`, `lean`, `turn` - additional rotations of the text on the canvas along all three axis
      * `indent`, `height`, `raise` - offsets for text rendering on X (`indent`), Y (`height`), and Z axis (`raise`) 
      with regards to the plane of the text. One unit of these corresponds to 1 line spacing, which
      can be used to display multiple lines of text bound to the same `pos` 
@@ -285,7 +298,8 @@ Resource is identified by a path to the file.
 A path can contain letters, numbers, characters `-`, `+`, or `_`, and a folder separator: `'/'`. Any other characters are stripped
 from the name. Empty descriptors are invalid, except for `list_files` where it means the root folder.
  Do not add file extensions to the descriptor - extensions are inferred
-based on the `type` of the file.
+based on the `type` of the file. A path can have one `'.zip'` component indicating a zip folder allowing to read / write to and from
+zip files, although you cannot nest zip files in other zip files. 
  
 Resources can be located in the app specific space, or a shared space for all the apps. Accessing of app-specific
 resources is guaranteed to be isolated from other apps. Shared resources are... well, shared across all apes, meaning
@@ -299,7 +313,7 @@ specific data directory is under `world/scripts/foo.data/...`, and shared data s
 
 The default no-name app, via `/script run` command can only save/load/read files from the shared space.
 
-Functions return `null` if an error is encounter or no file is present (for read, list and delete operations). Returns `true`
+Functions return `null` if no file is present (for read, list and delete operations). Returns `true`
 for success writes and deletes, and requested data, based on the file type, for read operations. It returns list of files 
 for folder listing.
  
@@ -319,6 +333,14 @@ sent to the file at once. The only difference between `raw` and `text` types are
 record to the file. Since files are closed after each write, sending multiple lines of data to
 write is beneficial for writing speed. To send multiple packs of data, either provide them flat or as a list in the
 third argument.
+
+Throws:
+- `nbt_read_error`: When failed to read NBT file.
+- `json_read_error`: When failed to read JSON file. The exception data will contain details about the problem.
+- `io_exception`: For all other errors when handling data on disk not related to encoding issues
+
+All other errors resulting of improper use of input arguments should result in `null` returned from the function, rather than exception
+thrown.
 
 <pre>
 write_file('foo', 'shared_text, ['one', 'two']);
@@ -371,6 +393,8 @@ specific data directory is under `world/scripts/foo.data/bar/../baz.nbt`, and sh
 
 You can use app data to save non-vanilla information separately from the world and other scripts.
 
+Throws `nbt_read_error` if failed to read app data.
+
 ### `store_app_data(tag)`
 
 Note:  `store_app_data(tag, file)` and `store_app_data(tag, file, shared?)` usages deprecated. Use `write_file` instead.
@@ -384,6 +408,122 @@ to sync preventing flickering in case this tag changes frequently. It will be sy
 Returns `true` if the file was saved successfully, `false` otherwise.
 
 Uses the same file structure for exclusive app data, and shared data folder as `load_app_data`.
+
+### `create_datapack(name, data)`
+
+Creates and loads custom datapack. The data has to be a map representing the file structure and the content of the 
+json files of the target pack.
+
+Returns `null` if the pack with this name already exists or is loaded, meaning no change has been made.
+Returns `false` if adding of the datapack wasn't successful.
+Returns `true` if creation and loading of the datapack was successful. Loading of a datapack results in
+reloading of all other datapacks (vanilla restrictions, identical to /datapack enable), however unlike with `/reload` 
+command, scarpet apps will not be reloaded by adding a datapack using `create_datapack`.
+
+Currently, only json files are supported in the packs. `'pack.mcmeta'` file is added automatically.
+
+Reloading of datapacks that define new dimensions is not implemented in vanilla. Vanilla game only loads 
+dimension information on server start. `create_datapack` is therefore a direct replacement of manually ploping of the specified 
+file structure in a datapack file and calling `/datapack enable` on the new datapack with all its quirks and sideeffects
+(like no worldgen changes, reloading all other datapacks, etc.). To enable newly added custom dimensions, call much more
+experimental `check_hidden_dimensions()` after adding a datapack if needed.
+
+Synopsis:
+<pre>
+script run create_datapack('foo', 
+{
+    'foo' -> { 'bar.json' -> {
+        'c' -> true,
+        'd' -> false,
+        'e' -> {'foo' -> [1,2,3]},
+        'a' -> 'foobar',
+        'b' -> 5
+    } }
+})
+</pre>
+
+Custom dimension example:
+<pre>
+script run create_datapack('funky_world',  {
+    'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+        'type' -> 'minecraft:the_end',
+        'generator' -> {
+            'biome_source' -> {
+                 'seed' -> 0,
+                 'large_biomes' -> false,
+                 'type' -> 'minecraft:vanilla_layered'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:nether',
+            'type' -> 'minecraft:noise'
+    } } } } }
+});
+check_hidden_dimensions();  => ['funky_world']
+</pre>
+
+Loot table example:
+<pre>
+script run create_datapack('silverfishes_drop_gravel', {
+    'data' -> { 'minecraft' -> { 'loot_tables' -> { 'entities' -> { 'silverfish.json' -> {
+        'type' -> 'minecraft:entity',
+        'pools' -> [
+            {
+                'rolls' -> {
+                    'min' -> 0,
+                    'max' -> 1
+                },
+                'entries' -> [
+                    {
+                        'type' -> 'minecraft:item',
+                        'name' -> 'minecraft:gravel'
+                    }
+                ]
+            }
+        ]
+    } } } } }
+});
+</pre>
+
+Recipe example:
+<pre>
+script run create_datapack('craftable_cobwebs', {
+    'data' -> { 'scarpet' -> { 'recipes' -> { 'cobweb.json' -> {
+        'type' -> 'crafting_shaped',
+        'pattern' -> [
+            'SSS',
+            'SSS',
+            'SSS'
+        ],
+        'key' -> {
+            'S' -> {
+                'item' -> 'minecraft:string'
+            }
+        },
+        'result' -> {
+            'item' -> 'minecraft:cobweb',
+            'count' -> 1
+        }
+    } } } }
+});
+</pre>
+
+### `enable_hidden_dimensions()`
+
+The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
+to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
+datapacks have been added to the game, either with `create_datapack()` or manually by dropping a datapack file and calling 
+`/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
+
+Fine print: The function should be
+considered experimental. There 'should not be' (famous last words) any side-effects if no worlds are added. Already connected
+clients will not see suggestions for commands that use dimensions `/execute in <dim>` (vanilla client limitation) 
+but all commands should work just fine with
+the new dimensions. Existing worlds that have gotten modified settings by the datapacks will not be reloaded or replaced.
+The usability of the dimensions added this way has not been fully tested, but it seems it works just fine. Generator settings
+for the new dimensions will not be added to `'level.dat'` but it will be added there automatically next time the game restarts by 
+vanilla. One could have said to use this method with caution, and the authors take no responsibility of any losses incurred due to 
+mis-handlilng of the temporary added dimensions, yet the feature itself (custom dimensions) is clearly experimental for Mojang 
+themselves, so that's about it.
 
 ### `tick_time()`
 
@@ -448,6 +588,8 @@ Evaluates the expression `expr` with different dimension execution context. `smt
 world-localized block, so not `block('stone')`, or a string representing a dimension like:
  `'nether'`, `'the_nether'`, `'end'` or `'overworld'`, etc.
  
+Throws `unknown_dimension` if provided dimension can't be found.
+ 
 ### `view_distance()`
 Returns the view distance of the server.
 
@@ -502,11 +644,12 @@ Available options in the scarpet app space:
  Relevant world related properties
   * `world_name` - name of the world
   * `world_seed` - a numeric seed of the world
+  * `world_dimensions` - a list of dimensions in the world
   * `world_path` - full path to the world saves folder
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
-
+  * `world_spawn_point` - world spawn point
 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`
@@ -517,7 +660,13 @@ Available options in the scarpet app space:
   * `game_view_distance` - the view distance
   * `game_mod_name` - the name of the base mod. Expect `'fabric'`
   * `game_version` - base version of the game
+  * `game_target` - target release version
+  * `game_major_target` - major release target. For 1.12.2, that would be 12
+  * `game_minor_reease` - minor release target. For 1.12.2, that woudl be 2
+  * `game_protocol` - protocol version number
+  * `game_pack_version` - datapack version number
   * `game_data_version` - data version of the game. Returns an integer, so it can be compared.
+  * `game_stable` - indicating if its a production release or a snapshot
   
  Server related properties
  * `server_motd` - the motd of the server visible when joining

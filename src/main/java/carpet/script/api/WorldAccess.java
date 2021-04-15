@@ -19,6 +19,8 @@ import carpet.script.LazyValue;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.script.utils.BiomeInfo;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
@@ -48,6 +50,7 @@ import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.FallingBlockEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -59,7 +62,7 @@ import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
 import net.minecraft.server.world.ChunkTicketType;
@@ -78,6 +81,7 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
@@ -87,6 +91,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
@@ -95,6 +100,7 @@ import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,7 +112,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -121,8 +126,7 @@ public class WorldAccess {
         put("unknown", ChunkTicketType.UNKNOWN);  // unknown
     }};
     // dummy entity for dummy requirements in the loot tables (see snowball)
-    private static FallingBlockEntity DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
-
+    private static FallingBlockEntity DUMMY_ENTITY = null;
     private static LazyValue booleanStateTest(
             Context c,
             String name,
@@ -336,8 +340,8 @@ public class WorldAccess {
                 String poiType = lv.get(locator.offset+1).evalValue(c).getString().toLowerCase(Locale.ROOT);
                 if (!"any".equals(poiType))
                 {
-                    PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.get(new Identifier(poiType));
-                    if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiType)) return LazyValue.NULL;
+                    PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiType))
+                            .orElseThrow(() -> new ThrowStatement(poiType, Throwables.UNKNOWN_POI));
                     condition = (tt) -> tt == type;
                 }
                 if (locator.offset + 2 < lv.size())
@@ -391,9 +395,8 @@ public class WorldAccess {
                 return LazyValue.FALSE;
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
-            PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.get(new Identifier(poiTypeString));
-            // solving lack of null with defaulted registries
-            if (type == PointOfInterestType.UNEMPLOYED && !"unemployed".equals(poiTypeString)) throw new InternalExpressionException("Unknown POI type: "+poiTypeString);
+            PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiTypeString))
+            		.orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
             {
@@ -872,9 +875,8 @@ public class WorldAccess {
                 {
                     playerBreak = true;
                     String itemString = val.getString();
-                    item = Registry.ITEM.get(new Identifier(itemString));
-                    if (item == Items.AIR && !itemString.equals("air"))
-                        throw new InternalExpressionException("Incorrect item: " + itemString);
+                    item = Registry.ITEM.getOrEmpty(new Identifier(itemString))
+                            .orElseThrow(() -> new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM));
                 }
             }
             CompoundTag tag = null;
@@ -932,6 +934,7 @@ public class WorldAccess {
                 {
                     if (how > 0)
                         tool.addEnchantment(Enchantments.FORTUNE, (int) how);
+                    if (DUMMY_ENTITY == null) DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
                     Block.dropStacks(state, world, where, be, DUMMY_ENTITY, tool);
                 }
             }
@@ -972,7 +975,90 @@ public class WorldAccess {
             return success ? LazyValue.TRUE : LazyValue.FALSE;
         });
 
-        expression.addLazyFunction("use_item", -1, (c, t, lv) ->
+        expression.addLazyFunction("create_explosion", -1, (c, t, lv) ->
+        {
+            if (lv.isEmpty())
+                throw new InternalExpressionException("'create_explosion' requires at least a position to explode");
+            CarpetContext cc = (CarpetContext)c;
+            float powah = 4.0f;
+            Explosion.DestructionType mode = Explosion.DestructionType.BREAK;
+            boolean createFire = false;
+            Entity source = null;
+            LivingEntity attacker = null;
+            Vector3Argument location = Vector3Argument.findIn(cc, lv, 0, false, true);
+            Vec3d pos = location.vec;
+            if (lv.size() > location.offset)
+            {
+                powah = NumericValue.asNumber(lv.get(location.offset).evalValue(c), "explosion power").getFloat();
+                if (powah < 0) throw new InternalExpressionException("Explosion power cannot be negative");
+                if (lv.size() > location.offset+1)
+                {
+                    String strval = lv.get(location.offset+1).evalValue(c).getString();
+                    try {
+                        mode = Explosion.DestructionType.valueOf(strval.toUpperCase(Locale.ROOT));
+                    }
+                    catch (IllegalArgumentException ile) { throw new InternalExpressionException("Illegal explosions block behaviour: "+strval); }
+                    if (lv.size() > location.offset+2)
+                    {
+                        createFire = lv.get(location.offset+2).evalValue(c, Context.BOOLEAN).getBoolean();
+                        if (lv.size() > location.offset+3)
+                        {
+                            Value enVal= lv.get(location.offset+3).evalValue(c);
+                            if (enVal.isNull()) {} // is null already
+                            else if (enVal instanceof EntityValue)
+                            {
+                                source = ((EntityValue) enVal).getEntity();
+                            }
+                            else
+                            {
+                                throw new InternalExpressionException("Fourth parameter of the explosion has to be an entity, not "+enVal.getTypeString());
+                            }
+                            if (lv.size() > location.offset+4)
+                            {
+                                enVal = lv.get(location.offset+4).evalValue(c);
+                                if (enVal.isNull()) {} // is null already
+                                else if (enVal instanceof EntityValue)
+                                {
+                                    Entity attackingEntity =  ((EntityValue) enVal).getEntity();
+                                    if (attackingEntity instanceof LivingEntity)
+                                    {
+                                        attacker = (LivingEntity) attackingEntity;
+                                    }
+                                    else throw new InternalExpressionException("Attacking entity needs to be a living thing, "+
+                                            ValueConversions.of(Registry.ENTITY_TYPE.getId(attackingEntity.getType())).getString() +" ain't it.");
+
+                                }
+                                else
+                                {
+                                    throw new InternalExpressionException("Fifth parameter of the explosion has to be a living entity, not "+enVal.getTypeString());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            LivingEntity theAttacker = attacker;
+            float thePowah = powah;
+
+            // copy of ServerWorld.createExplosion #TRACK#
+            Explosion explosion = new Explosion(cc.s.getWorld(), source, null, null, pos.x, pos.y, pos.z, powah, createFire, mode){
+                @Override
+                public @Nullable LivingEntity getCausingEntity() {
+                    return theAttacker;
+                }
+            };
+            explosion.collectBlocksAndDamageEntities();
+            explosion.affectWorld(false);
+            if (mode == Explosion.DestructionType.NONE) explosion.clearAffectedBlocks();
+            cc.s.getWorld().getPlayers().forEach(spe -> {
+                if (spe.squaredDistanceTo(pos) < 4096.0D)
+                    spe.networkHandler.sendPacket(new ExplosionS2CPacket(pos.x, pos.y, pos.z, thePowah, explosion.getAffectedBlocks(), explosion.getAffectedPlayers().get(spe)));
+            });
+            return LazyValue.TRUE;
+        });
+
+        // TODO rename to use_item
+        expression.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
                 throw new InternalExpressionException("'use_item' takes at least 2 parameters: item and block, or position, to place onto");
@@ -1025,8 +1111,6 @@ public class WorldAccess {
             }
             return (_c, _t) -> Value.FALSE;
         });
-
-        expression.alias("place_item", "use_item");
 
         expression.addLazyFunction("blocks_movement", -1, (c, t, lv) ->
                 booleanStateTest(c, "blocks_movement", lv, (s, p) ->
@@ -1128,7 +1212,8 @@ public class WorldAccess {
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
-                Value ret = ListValue.wrap(tagManager.getBlocks().getTagsFor(blockLocator.block.getBlockState().getBlock()).stream().map(ValueConversions::of).collect(Collectors.toList()));
+                Block target = blockLocator.block.getBlockState().getBlock();
+                Value ret = ListValue.wrap(tagManager.getBlocks().getTags().entrySet().stream().filter(e -> e.getValue().contains(target)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
                 return (_c, _t) -> ret;
             }
             String tag = lv.get(blockLocator.offset).evalValue(c).getString();
@@ -1152,7 +1237,7 @@ public class WorldAccess {
             if (locator.replacement != null)
             {
                 biome = world.getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(locator.replacement));
-                if (biome == null) return LazyValue.NULL;
+                if (biome == null) throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME) ;
             }
             else
             {
@@ -1181,9 +1266,8 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).evalValue(c).getString();
             // from locatebiome command code
-            Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(biomeName));
-            if (biome == null)
-                throw new InternalExpressionException("Unknown biome: "+biomeName);
+            Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(new Identifier(biomeName))
+                .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset+1)
             {
@@ -1252,8 +1336,8 @@ public class WorldAccess {
                 if (!(requested instanceof NullValue))
                 {
                     String reqString = requested.getString();
-                    structure = Registry.STRUCTURE_FEATURE.get(new Identifier(reqString));
-                    if (structure == null) throw new InternalExpressionException("Unknown structure: " + reqString);
+                    structure = Registry.STRUCTURE_FEATURE.getOrEmpty(new Identifier(reqString))
+                            .orElseThrow(() -> new ThrowStatement(reqString, Throwables.UNKNOWN_STRUCTURE));
                 }
                 if (lv.size() > locator.offset+1)
                 {
@@ -1333,7 +1417,7 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_structure requires at least position and a structure name");
             String structureName = lv.get(locator.offset).evalValue(c).getString().toLowerCase(Locale.ROOT);
             ConfiguredStructureFeature<?, ?> configuredStructure = FeatureGenerator.resolveConfiguredStructure(structureName, world, pos);
-            if (configuredStructure == null) throw new InternalExpressionException("Unknown structure: "+structureName);
+            if (configuredStructure == null) throw new ThrowStatement(structureName, Throwables.UNKNOWN_STRUCTURE);
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it
@@ -1383,6 +1467,7 @@ public class WorldAccess {
         {
             if (lv.size() == 0) throw new InternalExpressionException("'custom_dimension' requires at least one argument");
             CarpetContext cc = (CarpetContext)c;
+            cc.host.issueDeprecation("custom_dimension()");
             String worldKey = lv.get(0).evalValue(c).getString();
 
             Long seed = null;

@@ -74,6 +74,7 @@ public class TickSpeed
         if (player_active_timeout < PLAYER_GRACE)
         {
             player_active_timeout = PLAYER_GRACE;
+            ServerNetworkHandler.updateTickPlayerActiveTimeoutToConnectedPlayers();
         }
     }
 

@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 
 public abstract class Value implements Comparable<Value>, Cloneable
 {
-    public static NumericValue FALSE = new NumericValue(0);
-    public static NumericValue TRUE = new NumericValue(1);
-    public static NumericValue ZERO = FALSE;
-    public static NumericValue ONE = TRUE;
+    public static NumericValue FALSE = BooleanValue.FALSE;
+    public static NumericValue TRUE = BooleanValue.TRUE;
+    public static NumericValue ZERO = new NumericValue(0);
+    public static NumericValue ONE = new NumericValue(1);
 
-    public static NullValue NULL = new NullValue();
+    public static NullValue NULL = NullValue.NULL;
 
     public String boundVariable;
 
@@ -141,12 +141,12 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public void assertAssignable()
     {
-        if (boundVariable == null || boundVariable.startsWith("_"))
+        if (boundVariable == null)// || boundVariable.startsWith("_"))
         {
-            if (boundVariable != null)
+            /*if (boundVariable != null)
             {
                 throw new InternalExpressionException(boundVariable+ " cannot be assigned a new value");
-            }
+            }*/
             throw new InternalExpressionException(getString()+ " is not a variable");
 
         }
@@ -186,7 +186,7 @@ public abstract class Value implements Comparable<Value>, Cloneable
         int size = value.length();
         int from = ListValue.normalizeIndex(fromDesc, size);
         if (toDesc == null) return new StringValue(value.substring(from));
-        int to = ListValue.normalizeIndex(toDesc, size);
+        int to = ListValue.normalizeIndex(toDesc, size+1);
         if (from > to) return StringValue.EMPTY;
         return new StringValue(value.substring(from, to));
     }

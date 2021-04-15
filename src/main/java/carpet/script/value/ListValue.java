@@ -341,7 +341,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         int from = normalizeIndex(fromDesc, size);
         if (toDesc == null)
             return new ListValue((Collection<? extends Value>) getItems().subList(from, size));
-        int to = normalizeIndex(toDesc, size);
+        int to = normalizeIndex(toDesc, size+1);
         if (from > to)
             return ListValue.of();
         return new ListValue((Collection<? extends Value>) getItems().subList(from, to));
