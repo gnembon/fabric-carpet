@@ -1061,7 +1061,7 @@ public class WorldAccess {
         expression.addLazyFunction("place_item", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
-                throw new InternalExpressionException("'use_item' takes at least 2 parameters: item and block, or position, to place onto");
+                throw new InternalExpressionException("'place_item' takes at least 2 parameters: item and block, or position, to place onto");
             CarpetContext cc = (CarpetContext) c;
             String itemString = lv.get(0).evalValue(c).getString();
             Vector3Argument locator = Vector3Argument.findIn(cc, lv, 1);
