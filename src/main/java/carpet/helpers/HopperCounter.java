@@ -1,19 +1,39 @@
 package carpet.helpers;
 
+import carpet.CarpetServer;
+import carpet.fakes.IngredientInterface;
+import carpet.fakes.RecipeManagerInterface;
 import carpet.utils.WoolTool;
 import carpet.utils.Messenger;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import net.minecraft.block.AbstractBannerBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.MaterialColor;
+import net.minecraft.block.Stainable;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.DyeItem;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.text.Style;
+import net.minecraft.text.TextColor;
 import net.minecraft.util.DyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.BaseText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -24,6 +44,7 @@ import java.util.stream.Collectors;
 public class HopperCounter
 {
     public static final Map<DyeColor, HopperCounter> COUNTERS;
+    public static final TextColor WHITE = TextColor.fromFormatting(Formatting.WHITE);
 
     static
     {
@@ -44,13 +65,14 @@ public class HopperCounter
 
     private HopperCounter(DyeColor color)
     {
+        startTick = -1;
         this.color = color;
         this.prettyColour = WoolTool.Material2DyeName.getOrDefault(color.getMaterialColor(),"w ") + color.getName();
     }
 
     public void add(MinecraftServer server, ItemStack stack)
     {
-        if (startTick == 0)
+        if (startTick < 0)
         {
             startTick = server.getWorld(World.OVERWORLD).getTime();  //OW
             startMillis = System.currentTimeMillis();
@@ -68,11 +90,12 @@ public class HopperCounter
         // pubSubProvider.publish();
     }
 
-    public static void resetAll(MinecraftServer server)
+    public static void resetAll(MinecraftServer server, boolean fresh)
     {
         for (HopperCounter counter : COUNTERS.values())
         {
             counter.reset(server);
+            if (fresh) counter.startTick = -1;
         }
     }
 
@@ -98,21 +121,21 @@ public class HopperCounter
 
     public List<BaseText> format(MinecraftServer server, boolean realTime, boolean brief)
     {
-        if (counter.isEmpty())
+        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getWorld(World.OVERWORLD).getTime() - startTick, 1);  //OW
+        if (startTick < 0 || ticks == 0)
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c("g ", prettyColour,"w : -, -/h, - min "));
+                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","gi -, -/h, - min "));
             }
-            return Collections.singletonList(Messenger.c("w No items for ", prettyColour, "w  yet"));
+            return Collections.singletonList(Messenger.c(prettyColour, "w  hasn't started counting yet"));
         }
         long total = getTotalItems();
-        long ticks = Math.max(realTime ? (System.currentTimeMillis() - startMillis) / 50 : server.getWorld(World.OVERWORLD).getTime() - startTick, 1);  //OW
         if (total == 0)
         {
             if (brief)
             {
-                return Collections.singletonList(Messenger.c(prettyColour,String.format("c : 0, 0/h, %.1f min ", ticks / (20.0 * 60.0))));
+                return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ","wb 0","w , ","wb 0","w /h, ", String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"));
             }
             return Collections.singletonList(Messenger.c("w No items for ", prettyColour, String.format("w  yet (%.2f min.%s)",
                     ticks / (20.0 * 60.0), (realTime ? " - real time" : "")),
@@ -120,23 +143,106 @@ public class HopperCounter
         }
         if (brief)
         {
-            return Collections.singletonList(Messenger.c(prettyColour,String.format("c : %d, %d/h, %.1f min ",
-                    total, total * (20 * 60 * 60) / ticks, ticks / (20.0 * 60.0))));
+            return Collections.singletonList(Messenger.c("b"+prettyColour,"w : ",
+                    "wb "+total,"w , ",
+                    "wb "+(total * (20 * 60 * 60) / ticks),"w /h, ",
+                    String.format("wb %.1f ", ticks / (20.0 * 60.0)), "w min"
+            ));
         }
         List<BaseText> items = new ArrayList<>();
-        items.add(Messenger.c("w Items for ", prettyColour, String.format("w  (%.2f min.%s), total: %d, (%.1f/h):",
-                ticks*1.0/(20*60), (realTime?" - real time":""), total, total*1.0*(20*60*60)/ticks),
+        items.add(Messenger.c("w Items for ", prettyColour,
+                "w  (",String.format("wb %.2f", ticks*1.0/(20*60)), "w  min"+(realTime?" - real time":"")+"), ",
+                "w total: ", "wb "+total, "w , (",String.format("wb %.1f",total*1.0*(20*60*60)/ticks),"w /h):",
                 "nb [X]", "^g reset", "!/counter "+color+" reset"
         ));
         items.addAll(counter.object2LongEntrySet().stream().sorted((e, f) -> Long.compare(f.getLongValue(), e.getLongValue())).map(e ->
         {
-            BaseText itemName = new TranslatableText(e.getKey().getTranslationKey());
+            Item item = e.getKey();
+            BaseText itemName = new TranslatableText(item.getTranslationKey());
+            Style itemStyle = itemName.getStyle();
+            TextColor color = guessColor(item);
+            itemName.setStyle((color != null) ? itemStyle.withColor(color) : itemStyle.withItalic(true));
             long count = e.getLongValue();
-            return Messenger.c("w - ", itemName, String.format("w : %d, %.1f/h",
-                    count,
-                    count * (20.0 * 60.0 * 60.0) / ticks));
+            return Messenger.c("g - ", itemName,
+                    "g : ","wb "+count,"g , ",
+                    String.format("wb %.1f", count * (20.0 * 60.0 * 60.0) / ticks), "w /h"
+            );
         }).collect(Collectors.toList()));
         return items;
+    }
+
+    public static int appropriateColor(int color)
+    {
+        if (color == 0) return MaterialColor.WHITE.color;
+        return color;
+    }
+
+    private static final ImmutableMap<Item, Integer> DEFAULTS = new ImmutableMap.Builder<Item, Integer>()
+            .put(Items.DANDELION, MaterialColor.YELLOW.color)
+            .put(Items.POPPY,MaterialColor.RED.color)
+            .put(Items.BLUE_ORCHID,MaterialColor.LIGHT_BLUE.color)
+            .put(Items.ALLIUM,MaterialColor.MAGENTA.color)
+            .put(Items.AZURE_BLUET,MaterialColor.LIGHT_GRAY.color)
+            .put(Items.RED_TULIP,MaterialColor.RED.color)
+            .put(Items.ORANGE_TULIP,MaterialColor.ORANGE.color)
+            .put(Items.WHITE_TULIP,MaterialColor.WHITE.color)
+            .put(Items.PINK_TULIP,MaterialColor.PINK.color)
+            .put(Items.OXEYE_DAISY,MaterialColor.LIGHT_GRAY.color)
+            .put(Items.CORNFLOWER,MaterialColor.BLUE.color)
+            .put(Items.WITHER_ROSE,MaterialColor.BLACK.color)
+            .put(Items.LILY_OF_THE_VALLEY,MaterialColor.WHITE.color)
+            .put(Items.BROWN_MUSHROOM,MaterialColor.BROWN.color)
+            .put(Items.RED_MUSHROOM,MaterialColor.RED_TERRACOTTA.color)
+            .build();
+
+    public static TextColor fromItem(Item item)
+    {
+        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(DEFAULTS.get(item));
+        if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getColor().getMaterialColor().color));
+        Block block = null;
+        Identifier id = Registry.ITEM.getId(item);
+        if (item instanceof BlockItem)
+        {
+            block = ((BlockItem) item).getBlock();
+        }
+        else if (Registry.BLOCK.containsId(id))
+        {
+            block = Registry.BLOCK.get(id);
+        }
+        if (block != null)
+        {
+            if (block instanceof AbstractBannerBlock) return TextColor.fromRgb(appropriateColor(((AbstractBannerBlock) block).getColor().getMaterialColor().color));
+            if (block instanceof Stainable) return TextColor.fromRgb(appropriateColor( ((Stainable) block).getColor().getMaterialColor().color));
+            return TextColor.fromRgb(appropriateColor( block.getDefaultMaterialColor().color));
+        }
+        return null;
+    }
+
+    public static TextColor guessColor(Item item)
+    {
+        TextColor direct = fromItem(item);
+        if (direct != null) return direct;
+        if (CarpetServer.minecraft_server == null) return WHITE;
+        Identifier id = Registry.ITEM.getId(item);
+        for (RecipeType<?> type: Registry.RECIPE_TYPE)
+        {
+            for (Recipe<?> r: ((RecipeManagerInterface) CarpetServer.minecraft_server.getRecipeManager()).getAllMatching(type, id))
+            {
+                for (Ingredient ingredient: r.getPreviewInputs())
+                {
+                    for (Collection<ItemStack> stacks : ((IngredientInterface) (Object) ingredient).getRecipeStacks())
+                    {
+                        for (ItemStack iStak : stacks)
+                        {
+                            TextColor cand = fromItem(iStak.getItem());
+                            if (cand != null)
+                                return cand;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public static HopperCounter getCounter(String color)
@@ -154,6 +260,6 @@ public class HopperCounter
 
     public long getTotalItems()
     {
-        return counter.values().stream().mapToLong(Long::longValue).sum();
+        return counter.isEmpty()?0:counter.values().stream().mapToLong(Long::longValue).sum();
     }
 }
