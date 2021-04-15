@@ -22,23 +22,23 @@ public class WoolTool
 {
     private static final HashMap<MapColor,DyeColor> Material2Dye = new HashMap<>();
 
-    public static final HashMap<MapColor,String> Material2DyeName = new HashMap<MaterialColor, String>(){{
-        put(MaterialColor.WHITE, "w ");
-        put(MaterialColor.ORANGE, "#F9801D ");
-        put(MaterialColor.MAGENTA, "m ");
-        put(MaterialColor.LIGHT_BLUE, "t ");
-        put(MaterialColor.YELLOW, "y ");
-        put(MaterialColor.LAPIS, "l ");
-        put(MaterialColor.PINK, "#FFACCB ");
-        put(MaterialColor.GRAY, "f ");
-        put(MaterialColor.LIGHT_GRAY, "g ");
-        put(MaterialColor.CYAN, "c ");
-        put(MaterialColor.PURPLE, "p ");
-        put(MaterialColor.BLUE, "v ");
-        put(MaterialColor.BROWN, "#835432 ");
-        put(MaterialColor.GREEN, "e ");
-        put(MaterialColor.RED, "r ");
-        put(MaterialColor.BLACK, "k ");
+    public static final HashMap<MapColor,String> Material2DyeName = new HashMap<MapColor, String>(){{
+        put(MapColor.WHITE, "w ");
+        put(MapColor.ORANGE, "#F9801D ");
+        put(MapColor.MAGENTA, "m ");
+        put(MapColor.LIGHT_BLUE, "t ");
+        put(MapColor.YELLOW, "y ");
+        put(MapColor.LIME, "l ");
+        put(MapColor.PINK, "#FFACCB ");
+        put(MapColor.GRAY, "f ");
+        put(MapColor.LIGHT_GRAY, "g ");
+        put(MapColor.CYAN, "c ");
+        put(MapColor.PURPLE, "p ");
+        put(MapColor.BLUE, "v ");
+        put(MapColor.BROWN, "#835432 ");
+        put(MapColor.GREEN, "e ");
+        put(MapColor.RED, "r ");
+        put(MapColor.BLACK, "k ");
     }};
     static
     {
