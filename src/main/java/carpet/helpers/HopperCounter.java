@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.block.AbstractBannerBlock;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.MaterialColor;
 import net.minecraft.block.Stainable;
 import net.minecraft.item.BlockItem;
@@ -174,30 +175,103 @@ public class HopperCounter
     public static int appropriateColor(int color)
     {
         if (color == 0) return MaterialColor.WHITE.color;
-        return color;
+        int r = (color >> 16 & 255);
+        int g = (color >> 8 & 255);
+        int b = (color & 255);
+        if (r < 70) r = 70;
+        if (g < 70) g = 70;
+        if (b < 70) b = 70;
+        return (r << 16) + (g << 8) + b;
     }
 
-    private static final ImmutableMap<Item, Integer> DEFAULTS = new ImmutableMap.Builder<Item, Integer>()
-            .put(Items.DANDELION, MaterialColor.YELLOW.color)
-            .put(Items.POPPY,MaterialColor.RED.color)
-            .put(Items.BLUE_ORCHID,MaterialColor.LIGHT_BLUE.color)
-            .put(Items.ALLIUM,MaterialColor.MAGENTA.color)
-            .put(Items.AZURE_BLUET,MaterialColor.LIGHT_GRAY.color)
-            .put(Items.RED_TULIP,MaterialColor.RED.color)
-            .put(Items.ORANGE_TULIP,MaterialColor.ORANGE.color)
-            .put(Items.WHITE_TULIP,MaterialColor.WHITE.color)
-            .put(Items.PINK_TULIP,MaterialColor.PINK.color)
-            .put(Items.OXEYE_DAISY,MaterialColor.LIGHT_GRAY.color)
-            .put(Items.CORNFLOWER,MaterialColor.BLUE.color)
-            .put(Items.WITHER_ROSE,MaterialColor.BLACK.color)
-            .put(Items.LILY_OF_THE_VALLEY,MaterialColor.WHITE.color)
-            .put(Items.BROWN_MUSHROOM,MaterialColor.BROWN.color)
-            .put(Items.RED_MUSHROOM,MaterialColor.RED_TERRACOTTA.color)
+    private static final ImmutableMap<Item, Block> DEFAULTS = new ImmutableMap.Builder<Item, Block>()
+            .put(Items.DANDELION, Blocks.YELLOW_WOOL)
+            .put(Items.POPPY, Blocks.RED_WOOL)
+            .put(Items.BLUE_ORCHID, Blocks.LIGHT_BLUE_WOOL)
+            .put(Items.ALLIUM, Blocks.MAGENTA_WOOL)
+            .put(Items.AZURE_BLUET, Blocks.SNOW_BLOCK)
+            .put(Items.RED_TULIP, Blocks.RED_WOOL)
+            .put(Items.ORANGE_TULIP, Blocks.ORANGE_WOOL)
+            .put(Items.WHITE_TULIP, Blocks.SNOW_BLOCK)
+            .put(Items.PINK_TULIP, Blocks.PINK_WOOL)
+            .put(Items.OXEYE_DAISY, Blocks.SNOW_BLOCK)
+            .put(Items.CORNFLOWER, Blocks.BLUE_WOOL)
+            .put(Items.WITHER_ROSE, Blocks.BLACK_WOOL)
+            .put(Items.LILY_OF_THE_VALLEY, Blocks.WHITE_WOOL)
+            .put(Items.BROWN_MUSHROOM, Blocks.BROWN_MUSHROOM_BLOCK)
+            .put(Items.RED_MUSHROOM, Blocks.RED_MUSHROOM_BLOCK)
+            .put(Items.STICK, Blocks.OAK_PLANKS)
+            .put(Items.GOLD_INGOT, Blocks.GOLD_BLOCK)
+            .put(Items.IRON_INGOT, Blocks.IRON_BLOCK)
+            .put(Items.DIAMOND, Blocks.DIAMOND_BLOCK)
+            .put(Items.NETHERITE_INGOT, Blocks.NETHERITE_BLOCK)
+            .put(Items.SUNFLOWER, Blocks.YELLOW_WOOL)
+            .put(Items.LILAC, Blocks.MAGENTA_WOOL)
+            .put(Items.ROSE_BUSH, Blocks.RED_WOOL)
+            .put(Items.PEONY, Blocks.PINK_WOOL)
+            .put(Items.CARROT, Blocks.ORANGE_WOOL)
+            .put(Items.APPLE,Blocks.RED_WOOL)
+            .put(Items.WHEAT,Blocks.HAY_BLOCK)
+            .put(Items.PORKCHOP, Blocks.PINK_WOOL)
+            .put(Items.RABBIT,Blocks.PINK_WOOL)
+            .put(Items.CHICKEN,Blocks.WHITE_TERRACOTTA)
+            .put(Items.BEEF,Blocks.NETHERRACK)
+            .put(Items.ENCHANTED_GOLDEN_APPLE,Blocks.GOLD_BLOCK)
+            .put(Items.COD,Blocks.WHITE_TERRACOTTA)
+            .put(Items.SALMON,Blocks.ACACIA_PLANKS)
+            .put(Items.ROTTEN_FLESH,Blocks.BROWN_WOOL)
+            .put(Items.PUFFERFISH,Blocks.YELLOW_TERRACOTTA)
+            .put(Items.TROPICAL_FISH,Blocks.ORANGE_WOOL)
+            .put(Items.POTATO,Blocks.WHITE_TERRACOTTA)
+            .put(Items.MUTTON, Blocks.RED_WOOL)
+            .put(Items.BEETROOT,Blocks.NETHERRACK)
+            .put(Items.MELON_SLICE,Blocks.MELON)
+            .put(Items.POISONOUS_POTATO,Blocks.SLIME_BLOCK)
+            .put(Items.SPIDER_EYE,Blocks.NETHERRACK)
+            .put(Items.GUNPOWDER,Blocks.GRAY_WOOL)
+            .put(Items.SCUTE,Blocks.LIME_WOOL)
+            .put(Items.FEATHER,Blocks.WHITE_WOOL)
+            .put(Items.FLINT,Blocks.BLACK_WOOL)
+            .put(Items.LEATHER,Blocks.SPRUCE_PLANKS)
+            .put(Items.GLOWSTONE_DUST,Blocks.GLOWSTONE)
+            .put(Items.PAPER,Blocks.WHITE_WOOL)
+            .put(Items.BRICK,Blocks.BRICKS)
+            .put(Items.INK_SAC,Blocks.BLACK_WOOL)
+            .put(Items.SNOWBALL,Blocks.SNOW_BLOCK)
+            .put(Items.WATER_BUCKET,Blocks.WATER)
+            .put(Items.LAVA_BUCKET,Blocks.LAVA)
+            .put(Items.MILK_BUCKET,Blocks.WHITE_WOOL)
+            .put(Items.CLAY_BALL, Blocks.CLAY)
+            .put(Items.COCOA_BEANS,Blocks.COCOA)
+            .put(Items.BONE,Blocks.BONE_BLOCK)
+            .put(Items.COD_BUCKET,Blocks.BROWN_TERRACOTTA)
+            .put(Items.PUFFERFISH_BUCKET,Blocks.YELLOW_TERRACOTTA)
+            .put(Items.SALMON_BUCKET,Blocks.PINK_TERRACOTTA)
+            .put(Items.TROPICAL_FISH_BUCKET,Blocks.ORANGE_TERRACOTTA)
+            .put(Items.SUGAR,Blocks.WHITE_WOOL)
+            .put(Items.BLAZE_POWDER,Blocks.GOLD_BLOCK)
+            .put(Items.ENDER_PEARL,Blocks.WARPED_PLANKS)
+            .put(Items.NETHER_STAR,Blocks.DIAMOND_BLOCK)
+            .put(Items.PRISMARINE_CRYSTALS,Blocks.SEA_LANTERN)
+            .put(Items.PRISMARINE_SHARD,Blocks.PRISMARINE)
+            .put(Items.RABBIT_HIDE,Blocks.OAK_PLANKS)
+            .put(Items.CHORUS_FRUIT,Blocks.PURPUR_BLOCK)
+            .put(Items.SHULKER_SHELL,Blocks.SHULKER_BOX)
+            .put(Items.NAUTILUS_SHELL,Blocks.BONE_BLOCK)
+            .put(Items.HEART_OF_THE_SEA,Blocks.CONDUIT)
+            .put(Items.HONEYCOMB,Blocks.HONEYCOMB_BLOCK)
+            .put(Items.NAME_TAG,Blocks.BONE_BLOCK)
+            .put(Items.TOTEM_OF_UNDYING,Blocks.YELLOW_TERRACOTTA)
+            .put(Items.TRIDENT,Blocks.PRISMARINE)
+            .put(Items.GHAST_TEAR,Blocks.WHITE_WOOL)
+            .put(Items.PHANTOM_MEMBRANE,Blocks.BONE_BLOCK)
+            .put(Items.EGG,Blocks.BONE_BLOCK)
+            //.put(Items.,Blocks.)
             .build();
 
     public static TextColor fromItem(Item item)
     {
-        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(DEFAULTS.get(item));
+        if (DEFAULTS.containsKey(item)) return TextColor.fromRgb(appropriateColor(DEFAULTS.get(item).getDefaultMaterialColor().color));
         if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getColor().getMaterialColor().color));
         Block block = null;
         Identifier id = Registry.ITEM.getId(item);
