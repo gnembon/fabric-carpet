@@ -62,6 +62,7 @@
     "Brain_Mixin",
     "Memory_scarpetMixin",
 
+    "PlayerEntity_fakePlayersMixin",
     "ServerWorld_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
 
