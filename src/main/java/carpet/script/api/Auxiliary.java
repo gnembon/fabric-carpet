@@ -575,7 +575,7 @@ public class Auxiliary {
                             footer = ((FormattedTextValue) pVal).getText();
                         else
                             footer = new LiteralText(pVal.getString());
-                    } else throw new InternalExpressionException("Third and fourth argument of 'display_title' must be present for 'header' type");
+                    } else throw new InternalExpressionException("Third and fourth argument of 'display_title' must be present for 'player_list' type");
                     PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
                     ((PlayerListHeaderS2CPacketMixin) packet).setFooter(footer);
                     ((PlayerListHeaderS2CPacketMixin) packet).setHeader(header);
@@ -586,18 +586,6 @@ public class Auxiliary {
                     });
                     Value ret = NumericValue.of(total.get());
                     return (cc, tt) -> ret;
-                case "motd":
-                    Text title;
-                    if (lv.size() > 2)
-                    {
-                        pVal = lv.get(2).evalValue(c);
-                        if (pVal instanceof FormattedTextValue)
-                            title = ((FormattedTextValue) pVal).getText();
-                        else
-                            title = new LiteralText(pVal.getString());
-                    } else throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
-                    server.getServerMetadata().setDescription(title);
-                    return LazyValue.TRUE;
                 default:
                     throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list' or 'clear' as second argument");
             }
