@@ -277,11 +277,6 @@ Sends the player (or players if `players` is a list) a title of a specific type,
    Executing with those will set the times to the specified ones.
    Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
-### `display_title(players, 'motd', motd),`
-
-Changes the motd (message of the day) of the server. The `player` value is ignored for the `'motd'` text.
-Note that when the `customMOTD` carpet rule is active, this will not work and instead use the MOTD from the rule.
-
 ### `display_title(players, 'player_list', header, footer),`
 
 Changes the header and footer of the player list.
