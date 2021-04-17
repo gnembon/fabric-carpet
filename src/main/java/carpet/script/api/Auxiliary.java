@@ -599,7 +599,7 @@ public class Auxiliary {
                     server.getServerMetadata().setDescription(title);
                     return LazyValue.TRUE;
                 default:
-                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'clear', 'header' or 'motd' as second argument");
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list' or 'clear' as second argument");
             }
             if (action != Action.CLEAR && lv.size() < 3)
                 throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
