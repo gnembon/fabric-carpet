@@ -22,7 +22,7 @@ import java.util.function.BiConsumer;
 
 public class ClientNetworkHandler
 {
-    private static Map<String, BiConsumer<ClientPlayerEntity, NbtElement>> dataHandlers = new HashMap<String, BiConsumer<ClientPlayerEntity, NbtElement>>();
+    private static final Map<String, BiConsumer<ClientPlayerEntity, NbtElement>> dataHandlers = new HashMap<String, BiConsumer<ClientPlayerEntity, NbtElement>>();
     static
     {
         dataHandlers.put("Rules", (p, t) -> {
@@ -61,7 +61,7 @@ public class ClientNetworkHandler
                 if (rule != null)
                 {
                     String value = ruleNBT.getString("Value");
-                    rule.set(null, value);
+                    try { rule.set(null, value); } catch (Exception ignored) { }
                 }
             }
         });
@@ -133,8 +133,15 @@ public class ClientNetworkHandler
         if (compound == null) return;
         for (String key: compound.getKeys())
         {
-            if (dataHandlers.containsKey(key))
-                dataHandlers.get(key).accept(player, compound.get(key));
+            if (dataHandlers.containsKey(key)) {
+                try {
+                    dataHandlers.get(key).accept(player, compound.get(key));
+                }
+                catch (Exception exc)
+                {
+                    CarpetSettings.LOG.info("Corrupt carpet data for "+key);
+                }
+            }
             else
                 CarpetSettings.LOG.error("Unknown carpet data: "+key);
         }

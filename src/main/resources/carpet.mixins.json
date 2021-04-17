@@ -220,6 +220,7 @@
     "DebugRenderer_scarpetRenderMixin",
     "WorldRenderer_scarpetRenderMixin",
 
+    "BiomeArray_cleanLogsMixin",
     "SoundEngineInt_cleanLogsMixin",
     "SoundSystem_cleanLogsMixin"
   ],
