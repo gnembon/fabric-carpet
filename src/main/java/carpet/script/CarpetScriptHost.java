@@ -54,7 +54,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -385,6 +385,20 @@ public class CarpetScriptHost extends ScriptHost
         return addLegacyCommand(notifier);
     }
     
+    // Prefixes based on FLoader's SemanticVersionPredicateParser's class prefixes under Apache 2.0, since that's not public API
+    private static final Map<String, BiPredicate<SemanticVersion, SemanticVersion>> VERSION_PREFIXES = new HashMap<String, BiPredicate<SemanticVersion, SemanticVersion>>() {{
+            put(">=", (target, source) -> source.compareTo(target) >= 0);
+            put("<=", (target, source) -> source.compareTo(target) <= 0);
+            put(">", (target, source) -> source.compareTo(target) > 0);
+            put("<", (target, source) -> source.compareTo(target) < 0);
+            put("=", (target, source) -> source.compareTo(target) == 0);
+            put("~", (target, source) -> source.compareTo(target) >= 0
+                    && source.getVersionComponent(0) == target.getVersionComponent(0)
+                    && source.getVersionComponent(1) == target.getVersionComponent(1));
+            put("^", (target, source) -> source.compareTo(target) >= 0
+                    && source.getVersionComponent(0) == target.getVersionComponent(0));
+    }};
+    
     public void checkModVersionRequirements(Value reqs) {
         if (reqs == null)
             return;
@@ -399,27 +413,35 @@ public class CarpetScriptHost extends ScriptHost
             String requiredModId = requirement.getKey().getString();
             String requirementString = requirement.getValue().getString();
             
-            SemanticVersion requiredVersion = null;
-            if (!requirementString.equals("*"))
-            {
-                try
-                {
-                    requiredVersion = SemanticVersion.parse(requirementString);
-                }
-                catch (VersionParsingException e)
-                {
-                    throw new InternalExpressionException("Failed to parse semantic version for '" + requiredModId + "' in 'requires': " + e.getMessage());
-                }
-            }
             ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
             if (mod != null)
             {
                 if (requirementString.equals("*"))
                     continue;
                 Version presentVersion = mod.getMetadata().getVersion();
+                BiPredicate<SemanticVersion, SemanticVersion> tester = null;
+                String remainingRequirementString = requirementString;
+                for (Entry<String, BiPredicate<SemanticVersion, SemanticVersion>> s : VERSION_PREFIXES.entrySet())
+                {
+                    if (requirementString.startsWith(s.getKey()))
+                    {
+                        tester = s.getValue();
+                        remainingRequirementString = requirementString.substring(s.getKey().length());
+                    }
+                }
+                if (tester == null)
+                    tester = VERSION_PREFIXES.get("=");
                 if (presentVersion instanceof SemanticVersion)
                 {
-                    if (((SemanticVersion) presentVersion).compareTo(requiredVersion) >= 0)
+                    SemanticVersion requiredVersion = null;
+                    try {
+                        requiredVersion = SemanticVersion.parse(remainingRequirementString);
+                    }
+                    catch (VersionParsingException e)
+                    {
+                        throw new InternalExpressionException("Failed to parse semantic version for '" + requiredModId + "' in 'requires': " + e.getMessage());
+                    }
+                    if (tester.test(requiredVersion, (SemanticVersion) presentVersion))
                         successful = true;
                 }
                 else
@@ -428,14 +450,16 @@ public class CarpetScriptHost extends ScriptHost
                         successful = true; // Autoversioning breaks semver in dev (loads as ${version})
                     else
                     {
-                        if (presentVersion.getFriendlyString().equals(requirementString))
+                        if (!(tester == VERSION_PREFIXES.get("=")))
+                            throw new InternalExpressionException("Mod '"+requiredModId+"' doesn't use semversion, thus can only check version equality");
+                        if (presentVersion.getFriendlyString().equals(remainingRequirementString))
                             successful = true;
                     }
                 }
             }
             if (!successful)
             {
-                throw new InternalExpressionException(getName()+" requires " + requiredModId + " with at least version " + requirementString + " in order to load");
+                throw new InternalExpressionException(getName()+" requires " + requiredModId + " version " + requirementString + " in order to load");
             }
         }
     }
