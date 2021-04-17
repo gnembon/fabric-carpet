@@ -66,7 +66,7 @@ _create_shapes(mode, from, to) ->
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 1, 'align', 'left',                  'text',_round(_manhattan(from,to),0.001)];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'right', 'indent', -1.5, 'text',format('rb Euclidean:')];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'left',                  'text',_round(_euclidean(from,to),0.001)];
-    map(shapes, put(_, 1, [20, 'player', player()], 'extend'); _);
+    map(shapes, put(_, 1, [40, 'player', player()], 'extend'); _);
 );
 
 __mktp(pos) -> str('!/tp %.6f %.6f %.6f', pos);
