@@ -59,11 +59,15 @@ will warn and prevent such apps from loading with an error message. If `allow_co
 *   `'requires'` - defines either a map of mod dependencies in Fabric's mod.json style, or a function to be executed. If it's a map, it will only
     allow the app to load if all of the mods specified in the map meet the version criteria. If it's a function, it will prevent the app from 
     loading if the function does not execute to `false`, displaying whatever is returned to the user.
+    
+    Available prefixes for the version comparison are `>=`, `<=`, `>`, `<`, `~`, `^` and `=` (default if none specified), based in the spec 
+    at [NPM docs about SemVer ranges](https://docs.npmjs.com/cli/v6/using-npm/semver#ranges)
     ```
     __config() -> {
       'requires' -> {
         'carpet' -> '>=1.4.33', // Will require Carpet with a version >= 1.4.32
-        'minecraft' -> '>=1.16' // Will require Minecraft with a version
+        'minecraft' -> '>=1.16', // Will require Minecraft with a version >= 1.16
+        'chat-up' -> '*' // Will require any version of the chat-up mod
       }
     }
     ```
