@@ -282,7 +282,7 @@ Sends the player (or players if `players` is a list) a title of a specific type,
 Changes the motd (message of the day) of the server. The `player` value is ignored for the `'motd'` text.
 Note that when the `customMOTD` carpet rule is active, this will not work and instead use the MOTD from the rule.
 
-### `display_title(players, 'header', header, footer),`
+### `display_title(players, 'player_list', header, footer),`
 
 Changes the header and footer of the player list.
 Keep in mind this would interfere with carpet's loggers, so if you are using this, you need to keep them off.
