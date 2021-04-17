@@ -31,6 +31,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.particle.ParticleEffect;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
@@ -62,7 +63,7 @@ public class ShapeDispatcher
     private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
 
     public static Pair<ExpiringShape,Map<String, Value>> fromFunctionArgs(
-            CarpetContext cc,
+            MinecraftServer server, ServerWorld world,
             List<Value> lv,
             ServerPlayerEntity[] playerRef
     )
@@ -91,18 +92,18 @@ public class ShapeDispatcher
             for (int i=2; i < lv.size(); i++) paramList.add(lv.get(i));
             params = ShapeDispatcher.parseParams(paramList);
         }
-        params.putIfAbsent("dim", new StringValue(cc.s.getWorld().getRegistryKey().getValue().toString()));
+        params.putIfAbsent("dim", new StringValue(world.getRegistryKey().getValue().toString()));
         params.putIfAbsent("duration", duration);
 
         if (params.containsKey("player"))
         {
-            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), params.get("player"));
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(server, params.get("player"));
             if (player == null)
                 throw new InternalExpressionException("'player' parameter needs to represent an existing player");
             params.remove("player");
             playerRef[0] = player;
         }
-        return Pair.of(ShapeDispatcher.create(cc, shapeType, params), params);
+        return Pair.of(ShapeDispatcher.create(server, shapeType, params), params);
     }
 
     public static void sendShape(List<ServerPlayerEntity> players, List<Pair<ExpiringShape,Map<String, Value>>> shapes)
@@ -180,13 +181,13 @@ public class ShapeDispatcher
         return param;
     }
 
-    public static ExpiringShape create(CarpetContext cc, String shapeType, Map<String, Value> userParams)
+    public static ExpiringShape create(MinecraftServer server, String shapeType, Map<String, Value> userParams)
     {
         userParams.put("shape", new StringValue(shapeType));
         userParams.keySet().forEach(key -> {
             Param param = Param.of.get(key);
             if (param==null) throw new InternalExpressionException("Unknown feature for shape: "+key);
-            userParams.put(key, param.validate(userParams, cc, userParams.get(key)));
+            userParams.put(key, param.validate(userParams, server, userParams.get(key)));
         });
         Function<Map<String, Value>,ExpiringShape> factory = ExpiringShape.shapeProviders.get(shapeType);
         if (factory == null) throw new InternalExpressionException("Unknown shape: "+shapeType);
@@ -891,7 +892,7 @@ public class ShapeDispatcher
         }
 
         public abstract Tag toTag(Value value); //validates value, returning null if not necessary to keep it and serialize
-        public abstract Value validate(Map<String, Value> options, CarpetContext cc, Value value); // makes sure the value is proper
+        public abstract Value validate(Map<String, Value> options, MinecraftServer server, Value value); // makes sure the value is proper
         public abstract Value decode(Tag tag);
     }
 
@@ -910,7 +911,7 @@ public class ShapeDispatcher
             super(id);
         }
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             return value;
         }
@@ -923,7 +924,7 @@ public class ShapeDispatcher
             super(id);
         }
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (!(value instanceof FormattedTextValue))
                 value = new FormattedTextValue(new LiteralText(value.getString()));
@@ -957,7 +958,7 @@ public class ShapeDispatcher
 
 
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (this.options.contains(value.getString())) return value;
             return null;
@@ -969,14 +970,14 @@ public class ShapeDispatcher
         protected DimensionParam() { super("dim"); }
 
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value) { return value; }
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value) { return value; }
     }
     public static class ShapeParam extends StringParam
     {
         protected ShapeParam() { super("shape"); }
 
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             String shape = value.getString();
             if (!ExpiringShape.shapeProviders.containsKey(shape))
@@ -989,7 +990,7 @@ public class ShapeDispatcher
         protected NumericParam(String id) { super(id); }
 
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (!(value instanceof NumericValue))
                 throw new InternalExpressionException("'" + id + "' needs to be a number");
@@ -1027,9 +1028,9 @@ public class ShapeDispatcher
     public static abstract class PositiveParam extends NumericParam
     {
         protected PositiveParam(String id) { super(id); }
-        @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            Value ret = super.validate(options, cc, value);
+            Value ret = super.validate(options, server, value);
             if (((NumericValue)ret).getDouble()<=0) throw new InternalExpressionException("'"+id+"' should be positive");
             return ret;
         }
@@ -1059,9 +1060,9 @@ public class ShapeDispatcher
         public Value decode(Tag tag) { return new NumericValue(((IntTag)tag).getInt()); }
         @Override
         public Tag toTag(Value value) { return IntTag.of(NumericValue.asNumber(value, id).getInt()); }
-        @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            Value ret = super.validate(options, cc, value);
+            Value ret = super.validate(options, server, value);
             if (((NumericValue)ret).getDouble()<0) throw new InternalExpressionException("'"+id+"' should be non-negative");
             return ret;
         }
@@ -1073,9 +1074,9 @@ public class ShapeDispatcher
         public Value decode(Tag tag) { return new NumericValue(((FloatTag)tag).getFloat()); }
         @Override
         public Tag toTag(Value value) { return FloatTag.of(NumericValue.asNumber(value, id).getFloat()); }
-        @Override public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        @Override public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            Value ret = super.validate(options, cc, value);
+            Value ret = super.validate(options, server, value);
             if (((NumericValue)ret).getDouble()<0) throw new InternalExpressionException("'"+id+"' should be non-negative");
             return ret;
         }
@@ -1093,11 +1094,11 @@ public class ShapeDispatcher
             roundsUpForBlocks = doesRoundUpForBlocks;
         }
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
-            return validate(this, options, cc, value, roundsUpForBlocks);
+            return validate(this, options, value, roundsUpForBlocks);
         }
-        public static Value validate(Param p, Map<String, Value> options, CarpetContext cc, Value value, boolean roundsUp)
+        public static Value validate(Param p, Map<String, Value> options, Value value, boolean roundsUp)
         {
             if (value instanceof BlockValue)
             {
@@ -1165,13 +1166,13 @@ public class ShapeDispatcher
             super(id);
         }
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (!(value instanceof ListValue))
                 throw new InternalExpressionException(id+ " parameter should be a list");
             List<Value> points = new ArrayList<>();
             for (Value point: ((ListValue) value).getItems())
-                points.add(Vec3Param.validate(this, options, cc, point, false));
+                points.add(Vec3Param.validate(this, options, point, false));
             return ListValue.wrap(points);
         }
 
@@ -1233,10 +1234,10 @@ public class ShapeDispatcher
         }
 
         @Override
-        public Value validate(Map<String, Value> options, CarpetContext cc, Value value)
+        public Value validate(Map<String, Value> options, MinecraftServer server, Value value)
         {
             if (value instanceof EntityValue) return new NumericValue(((EntityValue) value).getEntity().getEntityId());
-            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), value);
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(server, value);
             if (player == null)
                 throw new InternalExpressionException(id+" parameter needs to represent an entity or player");
             return new NumericValue(player.getEntityId());

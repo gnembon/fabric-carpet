@@ -55,7 +55,9 @@
                 set without_updates
                 blocks_movement block_sound material map_colour block_state block_list block_tags block_data poi set_poi
                 place_item set_biome biome loaded_status generation_status inhabited_time spawn_potential chunk_tickets
-                structure_eligibility structures structure_references set_structure reset_chunk reload_chunk create_datapack enable_hidden_dimensions
+                plop harvest destroy create_explosion
+                structure_eligibility structures structure_references set_structure
+                reset_chunk reload_chunk create_datapack enable_hidden_dimensions
                 add_chunk_ticket
 
                 convert_date unix_time
@@ -82,7 +84,7 @@
 
                 run save tick_time world_time day_time last_tick_times game_tick current_dimension in_dimension view_distance
 
-                plop harvest destroy schedule nbt draw_shape create_marker remove_all_markers
+                schedule nbt draw_shape create_marker remove_all_markers
 
                 load_app_data store_app_data read_file write_file delete_file list_files
                 escape_nbt parse_nbt encode_nbt tag_matches statistic
@@ -139,6 +141,8 @@
                 __on_player_respawns
                 __on_player_disconnects
                 __on_player_connects
+                __on_explosion
+                __on_explosion_outcome
             </Keywords>
             <Keywords name="Keywords8">$</Keywords>
             <Keywords name="Delimiters">00&apos; 01\ 02&apos; 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23</Keywords>

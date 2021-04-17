@@ -441,7 +441,7 @@ $      )
 $   );
 $   lvl
 $);
-/script run global_get_enchantment(players(), 'sharpness')
+/script run global_get_enchantment(player(), 'sharpness')
 </pre>
 
 ### `Basic Arithmetic Operators + - * /`
@@ -910,11 +910,12 @@ length('foo') => 3
 ### `rand(expr), rand(expr, seed)`
 
 returns a random number from `0.0` (inclusive) to `expr` (exclusive). In boolean context (in conditions, 
-boolean functions, or `bool`), returns false if the randomly selected value is less than 1\. This means 
-that `rand(2)` returns true half of the time and `rand(5)` returns true for 80% (4/5) of the time. If seed is not 
-provided, uses a random seed. If seed is provided, each consecutive call to rand() will act like 'next' call to the 
-same random object. Scarpet keeps track of up to 1024 custom random number generators, so if you exceed this number 
-(per app), then your random sequence will revert to the beginning.
+boolean functions, or `bool`), returns false if the randomly selected value is less than 1. This means 
+that `bool(rand(2))` returns true half of the time and `!rand(5)` returns true for 20% (1/5) of the time. If seed is not 
+provided, uses a random seed that's shared across all scarpet apps. 
+If seed is provided, each consecutive call to rand() will act like 'next' call to the 
+same random object. Scarpet keeps track of up to 65536 custom random number generators (custom seeds, per app), 
+so if you exceed this number, your random sequences will revert to the beginning and start over.
 
 <pre>
 map(range(10), floor(rand(10))) => [5, 8, 0, 6, 9, 3, 9, 9, 1, 8]
@@ -1192,7 +1193,7 @@ place of the resulting map element, otherwise current element is skipped.
 
 <pre>
 map(range(10), _*_)  => [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
-map(players('*'), _+' is stoopid') [gnembon is stoopid, herobrine is stoopid]
+map(player('*'), _+' is stoopid') [gnembon is stoopid, herobrine is stoopid]
 </pre>
 
 ### `filter(list,expr(_,_i))`
@@ -2180,7 +2181,7 @@ set(0,5,0,'bedrock')  => bedrock
 set(l(0,5,0), 'bedrock')  => bedrock
 set(block(0,5,0), 'bedrock')  => bedrock
 scan(0,5,0,0,0,0,set(_,'bedrock'))  => 1
-set(pos(players()), 'bedrock')  => bedrock
+set(pos(player()), 'bedrock')  => bedrock
 set(0,0,0,'bedrock')  => 0   // or 1 in overworlds generated in 1.8 and before
 scan(0,100,0,20,20,20,set(_,'glass'))
     // filling the area with glass
@@ -2350,6 +2351,13 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
+
+Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
+`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
+`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
+endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
 If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
@@ -2369,7 +2377,7 @@ and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos
 
 <pre>
 pos(block(0,5,0)) => l(0,5,0)
-pos(players()) => l(12.3, 45.6, 32.05)
+pos(player()) => l(12.3, 45.6, 32.05)
 pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
@@ -2619,7 +2627,7 @@ To check if a block is truly loaded, I mean in memory, use `generation_status(x)
 outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
-loaded(pos(players()))  => 1
+loaded(pos(player()))  => 1
 loaded(100000,100,1000000)  => 0
 </pre>
 
@@ -3512,6 +3520,12 @@ Regardless of the options selected, the result could be:
  - block value if block is in reach, or
  - a coordinate triple if `'exact'` option was used and hit was successful.
 
+### `query(e, 'attribute')` `query(e, 'attribute', name)`
+
+returns the value of an attribute of the living entity. If the name is not provided, 
+returns a map of all attributes and values of this entity. If an attribute doesn't apply to the entity,
+or the entity is not a living entity, `null` is returned.
+
 ### `query(e, 'brain', memory)`
 
 Retrieves brain memory for entity. Possible memory units highly depend on the game version. Brain is availalble
@@ -4159,6 +4173,19 @@ at the same time.
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
+### `__on_explosion(pos, power, source, causer, mode, fire)`
+
+Event triggered right before explosion takes place and before has any effect on the world. `source` can be an entity causing
+the explosion, and `causer` the entity triggering it,
+`mode` indicates block effects: `'none'`, `'break'` (drop all blocks), or `'destroy'` - drop few blocks. Event
+is not captured when `create_explosion()` is called.
+
+### `__on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities)`
+Triggered during the explosion, before any changes to the blocks are done, 
+but the decision to blow up is already made and entities are already affected.  
+The parameter `blocks` contains the list of blocks that will blow up (empty if `explosionNoBlockDamage` is set to `true`).
+The parameter `entities` contains the list of entities that have been affected by the explosion. Triggered even with `create_explosion()`.
+
 ### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.
@@ -4187,7 +4214,7 @@ Example events that may cause it to happen is releasing a bow. The event is trig
 the request, however the `item_tuple` is provided representing the item that the player started with. You can use that and
 compare with the currently held item for a delta.
 
-### `__on_player_finishes_using_item(player, item_tuple, hand))`
+### `__on_player_finishes_using_item(player, item_tuple, hand)`
 Player using of an item is done. This is controlled server side and is responsible for such events as finishing
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.
@@ -5050,47 +5077,86 @@ Synopsis:
 <pre>
 script run create_datapack('foo', 
 {
-    'foo' -> {
-        'bar.json' -> {
-            'c' -> true,
-            'd' -> false,
-            'e' -> {'foo' -> [1,2,3]},
-            'a' -> 'foobar',
-            'b' -> 5
-        }
-    }
+    'foo' -> { 'bar.json' -> {
+        'c' -> true,
+        'd' -> false,
+        'e' -> {'foo' -> [1,2,3]},
+        'a' -> 'foobar',
+        'b' -> 5
+    } }
 })
+</pre>
 
+Custom dimension example:
+<pre>
 script run create_datapack('funky_world',  {
-    'data' -> {
-        'minecraft' -> {
-            'dimension' -> {
-                'custom_ow.json' -> { 
-                    'type' -> 'minecraft:the_end',
-                    'generator' -> {
-                        'biome_source' -> {
-                             'seed' -> 0,
-                             'large_biomes' -> false,
-                             'type' -> 'minecraft:vanilla_layered'
-                        },
-                        'seed' -> 0,
-                        'settings' -> 'minecraft:nether',
-                        'type' -> 'minecraft:noise'
-                    }
-                }
-            }
-        }
-    }
+    'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+        'type' -> 'minecraft:the_end',
+        'generator' -> {
+            'biome_source' -> {
+                 'seed' -> 0,
+                 'large_biomes' -> false,
+                 'type' -> 'minecraft:vanilla_layered'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:nether',
+            'type' -> 'minecraft:noise'
+    } } } } }
 });
 check_hidden_dimensions();  => ['funky_world']
-        
+</pre>
+
+Loot table example:
+<pre>
+script run create_datapack('silverfishes_drop_gravel', {
+    'data' -> { 'minecraft' -> { 'loot_tables' -> { 'entities' -> { 'silverfish.json' -> {
+        'type' -> 'minecraft:entity',
+        'pools' -> [
+            {
+                'rolls' -> {
+                    'min' -> 0,
+                    'max' -> 1
+                },
+                'entries' -> [
+                    {
+                        'type' -> 'minecraft:item',
+                        'name' -> 'minecraft:gravel'
+                    }
+                ]
+            }
+        ]
+    } } } } }
+});
+</pre>
+
+Recipe example:
+<pre>
+script run create_datapack('craftable_cobwebs', {
+    'data' -> { 'scarpet' -> { 'recipes' -> { 'cobweb.json' -> {
+        'type' -> 'crafting_shaped',
+        'pattern' -> [
+            'SSS',
+            'SSS',
+            'SSS'
+        ],
+        'key' -> {
+            'S' -> {
+                'item' -> 'minecraft:string'
+            }
+        },
+        'result' -> {
+            'item' -> 'minecraft:cobweb',
+            'count' -> 1
+        }
+    } } } }
+});
 </pre>
 
 ### `enable_hidden_dimensions()`
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
-datapacks have been added to the game, either with 'create_datapack()' or manually by dropping a datapack file and calling 
+datapacks have been added to the game, either with `create_datapack()` or manually by dropping a datapack file and calling 
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
@@ -5228,7 +5294,7 @@ Available options in the scarpet app space:
   * `world_folder` - name of the direct folder in the saves that holds world files
   * `world_carpet_rules` - returns all Carpet rules in a map form (`rule`->`value`). Note that the values are always returned as strings, so you can't do boolean comparisons directly. Includes rules from extensions with their namespace (`namespace:rule`->`value`). You can later listen to rule changes with the `on_carpet_rule_changes(rule, newValue)` event.
   * `world_gamerules` - returns all gamerules in a map form (`rule`->`value`). Like carpet rules, values are returned as strings, so you can use appropriate value conversions using `bool()` or `number()` to convert them to other values. Gamerules are read-only to discourage app programmers to mess up with the settings intentionally applied by server admins. Isn't that just super annoying when a datapack messes up with your gamerule settings? It is still possible to change them though using `run('gamerule ...`.
-
+  * `world_spawn_point` - world spawn point
 
  Relevant gameplay related properties
   * `game_difficulty` - current difficulty of the game: `'peaceful'`, `'easy'`, `'normal'`, or `'hard'`

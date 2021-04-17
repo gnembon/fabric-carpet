@@ -225,7 +225,7 @@ public class CarpetScriptServer
     public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
-        CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet loading", CarpetProfiler.TYPE.GENERAL);
+        CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
         if (commandValidator == null) commandValidator = p -> true;
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);

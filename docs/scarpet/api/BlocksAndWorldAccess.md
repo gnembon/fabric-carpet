@@ -59,7 +59,7 @@ set(0,5,0,'bedrock')  => bedrock
 set(l(0,5,0), 'bedrock')  => bedrock
 set(block(0,5,0), 'bedrock')  => bedrock
 scan(0,5,0,0,0,0,set(_,'bedrock'))  => 1
-set(pos(players()), 'bedrock')  => bedrock
+set(pos(player()), 'bedrock')  => bedrock
 set(0,0,0,'bedrock')  => 0   // or 1 in overworlds generated in 1.8 and before
 scan(0,100,0,20,20,20,set(_,'glass'))
     // filling the area with glass
@@ -229,6 +229,13 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
+
+Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
+`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
+`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
+endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
 If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
@@ -248,7 +255,7 @@ and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos
 
 <pre>
 pos(block(0,5,0)) => l(0,5,0)
-pos(players()) => l(12.3, 45.6, 32.05)
+pos(player()) => l(12.3, 45.6, 32.05)
 pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
@@ -498,7 +505,7 @@ To check if a block is truly loaded, I mean in memory, use `generation_status(x)
 outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
-loaded(pos(players()))  => 1
+loaded(pos(player()))  => 1
 loaded(100000,100,1000000)  => 0
 </pre>
 

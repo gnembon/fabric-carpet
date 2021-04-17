@@ -397,7 +397,7 @@ public class ScriptCommand
     {
         try
         {
-            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet ace", CarpetProfiler.TYPE.GENERAL);
+            CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet run", CarpetProfiler.TYPE.GENERAL);
             host.setChatErrorSnooper(source);
             long start = System.nanoTime();
             Value result = call.get();

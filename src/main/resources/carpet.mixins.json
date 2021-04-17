@@ -61,6 +61,7 @@
     "Brain_Mixin",
     "Memory_scarpetMixin",
 
+    "PlayerEntity_fakePlayersMixin",
     "ServerWorld_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
 
@@ -129,6 +130,7 @@
     "TntBlockMixin",
     "ExplosionMixin",
     "ExplosionAccessor",
+    "Explosion_scarpetEventMixin",
 
     "TntEntityMixin",
     "ProjectileEntityMixin",
@@ -213,6 +215,7 @@
     "DebugRenderer_scarpetRenderMixin",
     "WorldRenderer_scarpetRenderMixin",
 
+    "BiomeArray_cleanLogsMixin",
     "SoundEngineInt_cleanLogsMixin",
     "SoundSystem_cleanLogsMixin"
   ],
