@@ -561,21 +561,34 @@ public class Auxiliary {
                     action = Action.CLEAR;
                     break;
                 case "player_list":
-                    Text header;
                     Text footer;
-                    if (lv.size() > 3)
-                    {
+                    Text header;
+
+                    if(lv.size() == 2) {
+                        footer = new LiteralText("");
+                        header = new LiteralText("");
+                    } else if(lv.size() == 3) {
+                        pVal = lv.get(2).evalValue(c);
+                        if (pVal instanceof FormattedTextValue)
+                            footer = ((FormattedTextValue) pVal).getText();
+                        else
+                            footer = new LiteralText(pVal.getString());
+
+                        header = new LiteralText("");
+                    } else {
                         pVal = lv.get(2).evalValue(c);
                         if (pVal instanceof FormattedTextValue)
                             header = ((FormattedTextValue) pVal).getText();
                         else
                             header = new LiteralText(pVal.getString());
+
                         pVal = lv.get(3).evalValue(c);
                         if (pVal instanceof FormattedTextValue)
                             footer = ((FormattedTextValue) pVal).getText();
                         else
                             footer = new LiteralText(pVal.getString());
-                    } else throw new InternalExpressionException("Third and fourth argument of 'display_title' must be present for 'player_list' type");
+                    }
+
                     PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
                     ((PlayerListHeaderS2CPacketMixin) packet).setFooter(footer);
                     ((PlayerListHeaderS2CPacketMixin) packet).setHeader(header);
