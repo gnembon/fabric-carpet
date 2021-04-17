@@ -676,6 +676,7 @@ Available options in the scarpet app space:
  * `server_banned_players` - list of banned player names
  * `server_banned_ips` - list of banned IP addresses
  * `server_dev_environment` - boolean indicating whether this server is in a development environment.
+ * `server_mods` - map with all loaded mods mapped to their versions as strings
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
