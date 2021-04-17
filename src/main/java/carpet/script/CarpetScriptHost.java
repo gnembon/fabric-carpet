@@ -306,6 +306,18 @@ public class CarpetScriptHost extends ScriptHost
                     appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
                 }
             }
+            // check requires
+            Value loadRequirements = config.get(new StringValue("requires"));
+            if (loadRequirements instanceof FunctionValue)
+            {
+                Value reqResult = callNow((FunctionValue) loadRequirements, Collections.emptyList());
+                if (reqResult.getBoolean()) // != false or null
+                    throw new InternalExpressionException(reqResult.getString());
+            }
+            else
+            {
+                checkModVersionRequirements(loadRequirements);
+            }
             appConfig = config;
         }
         catch (NullPointerException ignored)
@@ -358,14 +370,12 @@ public class CarpetScriptHost extends ScriptHost
         return addLegacyCommand(notifier);
     }
     
-    public boolean meetsModVersionRequirements(ServerCommandSource source) {
-        Value reqs = appConfig.get(StringValue.of("requires"));
+    public void checkModVersionRequirements(Value reqs) {
         if (reqs == null)
-            return true;
+            return;
         if (!(reqs instanceof MapValue))
         {
-            Messenger.m(source, "r `requires` field in app config for "+getName()+" isn't a map, thus failed to load the app");
-            return false;
+            throw new InternalExpressionException("`requires` field must be a map of mod dependencies or a function to be executed");
         }
         Map<Value, Value> requirements = ((MapValue)reqs).getMap();
         for (Entry<Value, Value> requirement : requirements.entrySet())
@@ -380,10 +390,10 @@ public class CarpetScriptHost extends ScriptHost
                 try
                 {
                     requiredVersion = SemanticVersion.parse(requirementString);
-                } catch (VersionParsingException e) {
-                    Messenger.m(source, "r Failed to add " + getName() + " app");
-                    Messenger.m(source, "r Failed to parse semantic version for '" + requiredModId + "' in " + getName() + "'s config: " + e.getMessage());
-                    return false;
+                }
+                catch (VersionParsingException e)
+                {
+                    throw new InternalExpressionException("Failed to parse semantic version for '" + requiredModId + "' in 'requires': " + e.getMessage());
                 }
             }
             ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
@@ -400,27 +410,19 @@ public class CarpetScriptHost extends ScriptHost
                 else
                 {
                     if (FabricLoader.getInstance().isDevelopmentEnvironment())
-                    {
                         successful = true; // Autoversioning breaks semver in dev (loads as ${version})
-                    }
                     else
                     {
-                        CarpetSettings.LOG.info(mod.getMetadata().getName()+" does not support semver: Comparison suport is limited to exact");
-                        if (presentVersion.getFriendlyString().equals(requirementString)) {
+                        if (presentVersion.getFriendlyString().equals(requirementString))
                             successful = true;
-                        }
                     }
                 }
             }
             if (!successful)
             {
-                Messenger.m(source, "r Failed to add "+getName()+" app");
-                Messenger.m(source, "r "+getName()+" requires " + requiredModId + " with at least version " + requirementString);
-                return false;
+                throw new InternalExpressionException(getName()+" requires " + requiredModId + " with at least version " + requirementString + " in order to load");
             }
         }
-        
-        return true;
     }
 
     private Boolean addLegacyCommand(Consumer<Text> notifier)
