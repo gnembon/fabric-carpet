@@ -560,7 +560,7 @@ public class Auxiliary {
                 case "clear":
                     action = Action.CLEAR;
                     break;
-                case "header":
+                case "player_list":
                     Text header;
                     Text footer;
                     if (lv.size() > 3)
