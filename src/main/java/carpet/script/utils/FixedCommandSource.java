@@ -37,7 +37,7 @@ public class FixedCommandSource extends ServerCommandSource
     public FixedCommandSource(ServerCommandSource original, Vec3d pos, Value[] error, List<Value> chatOutput)
     {
         super(CommandOutput.DUMMY, pos, Vec2f.ZERO, original.getWorld(), CarpetSettings.runPermissionLevel,
-                original.getName(), original.getDisplayName(), original.getMinecraftServer(), original.getEntity(), true,
+                original.getName(), original.getDisplayName(), original.getMinecraftServer(), original.getEntity(), false,
                 (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET);
         position = pos;
         world = original.getWorld();
@@ -80,11 +80,9 @@ public class FixedCommandSource extends ServerCommandSource
         return this;
     }
 
-    @Override
-    public ServerCommandSource withSilent()
-    {
-        return this;
-    }
+    //@Override // only used in fuctions and we really don't care to track these actually, besides the basic output
+    // also other overrides target ONLY execute command, which withSilent doesn't care bout.
+    //public ServerCommandSource withSilent() { return this; }
 
     @Override
     public ServerCommandSource withLevel(int level)
