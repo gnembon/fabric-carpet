@@ -56,6 +56,30 @@ conflicts and ambiguities between different paths of execution. While ambiguous 
 and they tend to execute correctly, the suggestion support works really poorly in these situations and scarpet
 will warn and prevent such apps from loading with an error message. If `allow_command_conflicts` is specified and 
 `true`, then scarpet will load all provided commands regardless.
+*   `'requires'` - defines either a map of mod dependencies in Fabric's mod.json style, or a function to be executed. If it's a map, it will only
+    allow the app to load if all of the mods specified in the map meet the version criteria. If it's a function, it will prevent the app from 
+    loading if the function does not execute to `false`, displaying whatever is returned to the user.
+    
+    Available prefixes for the version comparison are `>=`, `<=`, `>`, `<`, `~`, `^` and `=` (default if none specified), based in the spec 
+    at [NPM docs about SemVer ranges](https://docs.npmjs.com/cli/v6/using-npm/semver#ranges)
+    ```
+    __config() -> {
+      'requires' -> {
+        'carpet' -> '>=1.4.33', // Will require Carpet with a version >= 1.4.32
+        'minecraft' -> '>=1.16', // Will require Minecraft with a version >= 1.16
+        'chat-up' -> '*' // Will require any version of the chat-up mod
+      }
+    }
+    ```
+    ```
+    __config() -> {
+      'requires' -> _() -> (
+          d = convert_date(unix_time());
+          if(d:6 == 5 && d:2 == 13, 
+            'Its Friday, 13th' // Will throw this if Friday 13th, will load else since `if` function returns `null` by default
+          )
+    }
+    ```
 *   `'command_permission'` - indicates a custom permission to run the command. It can either be a number indicating 
 permission level (from 1 to 4) or a string value, one of: `'all'` (default), `'ops'` (default opped player with permission level of 2),
 `'server'` - command accessible only through the server console and commandblocks, but not in chat, `'players'` - opposite

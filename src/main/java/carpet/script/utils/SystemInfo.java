@@ -15,6 +15,7 @@ import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import com.sun.management.OperatingSystemMXBean;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.SharedConstants;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.GameRules;
@@ -107,6 +108,12 @@ public class SystemInfo {
             return whitelist;
         });
         put("server_dev_environment", c-> new NumericValue(FabricLoader.getInstance().isDevelopmentEnvironment()));
+        put("server_mods", c -> {
+            Map<Value, Value> ret = new HashMap<>();
+            for (ModContainer mod : FabricLoader.getInstance().getAllMods())
+                ret.put(new StringValue(mod.getMetadata().getName()), new StringValue(mod.getMetadata().getVersion().getFriendlyString()));
+            return MapValue.wrap(ret);
+        });
 
         put("java_max_memory", c -> new NumericValue(Runtime.getRuntime().maxMemory()));
         put("java_allocated_memory", c -> new NumericValue(Runtime.getRuntime().totalMemory()));
