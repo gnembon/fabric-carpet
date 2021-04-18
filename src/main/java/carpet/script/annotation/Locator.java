@@ -7,6 +7,9 @@ import java.lang.reflect.AnnotatedParameterizedType;
 import java.lang.reflect.AnnotatedType;
 import java.util.Iterator;
 
+import org.apache.commons.lang3.NotImplementedException;
+
+import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.LazyValue;
 import carpet.script.argument.Argument;
@@ -23,9 +26,9 @@ import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Class that holds annotation for {@link Argument} locators to be used in Scarpet functions.
+ * <p>Class that holds annotation for {@link Argument} locators to be used in Scarpet functions.</p>
  * 
- * (TODO) Note: Nothing in this class has been implemented yet
+ * <p>Note: Only {@link Block} locator has been implemented at this point in time (TODO)</p>
  */
 public interface Locator {
 	/**
@@ -63,6 +66,8 @@ public interface Locator {
 	 * 
 	 * <p>Must be used in either a {@link Vector3Argument} or a {@link Vec3d} parameter, though the latest may not get
 	 * all the data.</p>
+	 * 
+	 * <p>Note: This locator has not been implemented yet (TODO)</p>
 	 */
 	@Documented
 	@Retention(RUNTIME)
@@ -88,6 +93,8 @@ public interface Locator {
 	 * arguments provided to the function, even though they will still be consumed from the arguments the function was called with.</p>
 	 * 
 	 * <p><b>This will consume any remaining parameters passed to the function, therefore any other parameters after this will throw.</b></p>
+	 * 
+	 * <p>Note: This locator has not been implemented yet (TODO)</p>
 	 */
 	@Documented
 	@Retention(RUNTIME)
@@ -114,6 +121,7 @@ public interface Locator {
 	 * <p>Not part of the public API, just that interfaces must have all members public</p>
 	 */
 	static class Locators {
+		private Locators() {}
 		static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType, Class<R> type) {
 			if (annoType.isAnnotationPresent(Block.class))
 				return new BlockLocator<R>(annoType.getAnnotation(Block.class), type);
@@ -179,7 +187,8 @@ public interface Locator {
 			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 				// TODO Make the locator
 				Vector3Argument locator = null;
-				return (R) (returnVec3d ? locator.vec : locator);
+				throw new NotImplementedException("Locator.Vec3d still require adapting Vector3Argument to accept iterators!");
+				//return (R) (returnVec3d ? locator.vec : locator);
 			}
 		}
 		
@@ -205,8 +214,10 @@ public interface Locator {
 			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 				Module module = context.host.main;
 				FunctionArgument<LazyValue> locator = null;
-				// TODO Auto-generated method stub
-				return (R) (returnFunctionValue ? locator.function : locator);
+				// TODO Make the locator
+				throw new NotImplementedException("Locator.FunctionValue still requires adapting the annotation system to somehow get lv size"
+						+ "or FunctionArgument to not depend on it!");
+				//return (R) (returnFunctionValue ? locator.function : locator);
 			}
 
 			@Override
