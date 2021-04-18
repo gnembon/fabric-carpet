@@ -76,7 +76,7 @@ will warn and prevent such apps from loading with an error message. If `allow_co
       'requires' -> _() -> (
           d = convert_date(unix_time());
           if(d:6 == 5 && d:2 == 13, 
-            'Its Friday, 13th' // Will throw this if Friday 13th, will load else since `if` functions returns `null` by default
+            'Its Friday, 13th' // Will throw this if Friday 13th, will load else since `if` function returns `null` by default
           )
     }
     ```
