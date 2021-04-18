@@ -33,6 +33,9 @@ public interface ValueConverter<R> {
 	 * from any aids or usages of the function, meaning that the {@link ValueConverter} is only providing some meta information
 	 * that isn't directly provided through the Scarpet language.</p>
 	 * 
+	 * <p>Those aids calling this method may append an {@code s} to the return value of this method, in case the type is used
+	 * in places where more than one may be present, such as lists or varargs.</p>
+	 * 
 	 * @apiNote This method is intended to only be called when an error has occurred and therefore there is a need to print a 
 	 *           stacktrace with some helpful usage instructions.
 	 */
