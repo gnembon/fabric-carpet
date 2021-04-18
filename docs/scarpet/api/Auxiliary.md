@@ -277,9 +277,18 @@ Sends the player (or players if `players` is a list) a title of a specific type,
    Executing with those will set the times to the specified ones.
    Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
+### `display_title(players, 'player_list')`
+### `display_title(players, 'player_list', footer)`
+### `display_title(players, 'player_list', header, footer)`
+
+Changes the header and footer of the player list.
+When no `header` and `footer` is specified, they will be reset.
+Keep in mind this would interfere with carpet's loggers, so if you are using this, you need to keep them off.
+
 ### `logger(msg), logger(type, msg)`
 
-Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
+Prints the message to system logs, and not to chat.
+By default prints an info, unless you specify otherwise in the `type` parameter.
 
 Available output types:
 

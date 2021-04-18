@@ -7,6 +7,8 @@ import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.mixins.PlayerListHeaderS2CPacketMixin;
+import carpet.script.bundled.Module;
 import carpet.script.argument.FileArgument;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
@@ -60,6 +62,7 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.ClearTitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.OverlayMessageS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
 //import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 //import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
@@ -553,7 +556,8 @@ public class Auxiliary {
             });
             Function<Text, Packet<?>> packetGetter;
             //TitleS2CPacket.Action action;
-            switch (lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT))
+            String actionString = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            switch (actionString)
             {
                 case "title":
                     packetGetter = TitleS2CPacket::new;
@@ -580,8 +584,47 @@ public class Auxiliary {
                     packetGetter = (x) -> new ClearTitleS2CPacket(true); // resetting default fade
                     //action = Action.CLEAR;
                     break;
+                case "player_list":
+                    Text footer;
+                    Text header;
+
+                    if(lv.size() == 2) {
+                        footer = new LiteralText("");
+                        header = new LiteralText("");
+                    } else if(lv.size() == 3) {
+                        pVal = lv.get(2).evalValue(c);
+                        if (pVal instanceof FormattedTextValue)
+                            footer = ((FormattedTextValue) pVal).getText();
+                        else
+                            footer = new LiteralText(pVal.getString());
+
+                        header = new LiteralText("");
+                    } else {
+                        pVal = lv.get(2).evalValue(c);
+                        if (pVal instanceof FormattedTextValue)
+                            header = ((FormattedTextValue) pVal).getText();
+                        else
+                            header = new LiteralText(pVal.getString());
+
+                        pVal = lv.get(3).evalValue(c);
+                        if (pVal instanceof FormattedTextValue)
+                            footer = ((FormattedTextValue) pVal).getText();
+                        else
+                            footer = new LiteralText(pVal.getString());
+                    }
+
+                    PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
+                    ((PlayerListHeaderS2CPacketMixin) packet).setFooter(footer);
+                    ((PlayerListHeaderS2CPacketMixin) packet).setHeader(header);
+                    AtomicInteger total = new AtomicInteger(0);
+                    targets.forEach(p -> {
+                        p.networkHandler.sendPacket(packet);
+                        total.getAndIncrement();
+                    });
+                    Value ret = NumericValue.of(total.get());
+                    return (cc, tt) -> ret;
                 default:
-                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list' or 'clear' as second argument");
             }
             //if (action != Action.CLEAR && lv.size() < 3)
             //    throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
