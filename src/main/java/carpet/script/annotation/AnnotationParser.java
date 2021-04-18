@@ -203,7 +203,7 @@ public class AnnotationParser {
 		@Override
 		public LazyValue apply(Context context, Integer t, List<LazyValue> lv) {
 			if (isVarArgs) {
-				if (lv.size() < minParams) //TODO More descriptive messages using ValueConverter#getTypeName (or even param.getName()?)
+				if (lv.size() < minParams)
 					throw new InternalExpressionException(name + " expects at least " + minParams + " arguments. " + getUsage());
 				if (lv.size() > maxParams)
 					throw new InternalExpressionException(name + " expects up to " + maxParams + " arguments. " + getUsage());
@@ -255,6 +255,7 @@ public class AnnotationParser {
 		}
 		
 		private String getUsage() {
+			// Possibility: More descriptive messages using param.getName()? Would need changing gradle setup to keep those
 			StringBuilder builder = new StringBuilder("Usage: ");
 			builder.append(name);
 			builder.append('(');
