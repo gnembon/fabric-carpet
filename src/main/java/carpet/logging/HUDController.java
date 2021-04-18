@@ -39,6 +39,15 @@ public class HUDController
     }
 
     public static Map<PlayerEntity, List<BaseText>> player_huds = new HashMap<>();
+    
+    public static final Map<PlayerEntity, BaseText> scarpet_headers = new HashMap<>();
+    
+    public static final Map<PlayerEntity, BaseText> scarpet_footers = new HashMap<>();
+
+    public static void resetScarpetHUDs() {
+        scarpet_headers.clear();
+        scarpet_footers.clear();
+    }
 
     public static void addMessage(PlayerEntity player, BaseText hudMessage)
     {
@@ -61,12 +70,14 @@ public class HUDController
     }
 
 
-    public static void update_hud(MinecraftServer server)
+    public static void update_hud(MinecraftServer server, boolean force)
     {
-        if(server.getTicks() % 20 != 0 || CarpetServer.minecraft_server == null)
+        if ((server.getTicks() % 20 != 0 && !force) || CarpetServer.minecraft_server == null)
             return;
 
         player_huds.clear();
+
+        scarpet_footers.forEach((p, m) -> addMessage(p, m));
 
         if (LoggerRegistry.__tps)
             LoggerRegistry.getLogger("tps").log(()-> send_tps_display(server));
@@ -101,7 +112,7 @@ public class HUDController
         for (PlayerEntity player: player_huds.keySet())
         {
             PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
+            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player, new LiteralText("")));
             ((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.get(player).toArray(new Object[0])));
             ((ServerPlayerEntity)player).networkHandler.sendPacket(packet);
         }
