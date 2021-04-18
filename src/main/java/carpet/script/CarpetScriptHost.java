@@ -28,6 +28,12 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.Tag;
@@ -47,6 +53,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -283,6 +291,18 @@ public class CarpetScriptHost extends ScriptHost
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
+            // check requires
+            Value loadRequirements = config.get(new StringValue("requires"));
+            if (loadRequirements instanceof FunctionValue)
+            {
+                Value reqResult = callNow((FunctionValue) loadRequirements, Collections.emptyList());
+                if (reqResult.getBoolean()) // != false or null
+                    throw new InternalExpressionException(reqResult.getString());
+            }
+            else
+            {
+                checkModVersionRequirements(loadRequirements);
+            }
 
             appConfig = config;
         }
@@ -363,6 +383,85 @@ public class CarpetScriptHost extends ScriptHost
 
         }
         return addLegacyCommand(notifier);
+    }
+    
+    // Prefixes based on FLoader's SemanticVersionPredicateParser's class prefixes under Apache 2.0, since that's not public API
+    private static final Map<String, BiPredicate<SemanticVersion, SemanticVersion>> VERSION_PREFIXES = new HashMap<String, BiPredicate<SemanticVersion, SemanticVersion>>() {{
+            put(">=", (target, source) -> source.compareTo(target) >= 0);
+            put("<=", (target, source) -> source.compareTo(target) <= 0);
+            put(">", (target, source) -> source.compareTo(target) > 0);
+            put("<", (target, source) -> source.compareTo(target) < 0);
+            put("=", (target, source) -> source.compareTo(target) == 0);
+            put("~", (target, source) -> source.compareTo(target) >= 0
+                    && source.getVersionComponent(0) == target.getVersionComponent(0)
+                    && source.getVersionComponent(1) == target.getVersionComponent(1));
+            put("^", (target, source) -> source.compareTo(target) >= 0
+                    && source.getVersionComponent(0) == target.getVersionComponent(0));
+    }};
+    
+    public void checkModVersionRequirements(Value reqs) {
+        if (reqs == null)
+            return;
+        if (!(reqs instanceof MapValue))
+        {
+            throw new InternalExpressionException("`requires` field must be a map of mod dependencies or a function to be executed");
+        }
+        Map<Value, Value> requirements = ((MapValue)reqs).getMap();
+        for (Entry<Value, Value> requirement : requirements.entrySet())
+        {
+            boolean successful = false;
+            String requiredModId = requirement.getKey().getString();
+            String requirementString = requirement.getValue().getString();
+            
+            ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
+            if (mod != null)
+            {
+                if (requirementString.equals("*"))
+                    continue;
+                Version presentVersion = mod.getMetadata().getVersion();
+                BiPredicate<SemanticVersion, SemanticVersion> tester = null;
+                String remainingRequirementString = requirementString;
+                for (Entry<String, BiPredicate<SemanticVersion, SemanticVersion>> s : VERSION_PREFIXES.entrySet())
+                {
+                    if (requirementString.startsWith(s.getKey()))
+                    {
+                        tester = s.getValue();
+                        remainingRequirementString = requirementString.substring(s.getKey().length());
+                    }
+                }
+                if (tester == null)
+                    tester = VERSION_PREFIXES.get("=");
+                if (presentVersion instanceof SemanticVersion)
+                {
+                    SemanticVersion requiredVersion = null;
+                    try {
+                        requiredVersion = SemanticVersion.parse(remainingRequirementString);
+                    }
+                    catch (VersionParsingException e)
+                    {
+                        throw new InternalExpressionException("Failed to parse semantic version for '" + requiredModId + "' in 'requires': " + e.getMessage());
+                    }
+                    if (tester.test(requiredVersion, (SemanticVersion) presentVersion))
+                        successful = true;
+                }
+                else
+                {
+                    if (FabricLoader.getInstance().isDevelopmentEnvironment())
+                        successful = true; // Autoversioning breaks semver in dev (loads as ${version})
+                    else
+                    {
+                        if (!(tester == VERSION_PREFIXES.get("=")))
+                            throw new InternalExpressionException("Mod '"+requiredModId+"' doesn't use semversion, thus can only check version equality");
+                        if (presentVersion.getFriendlyString().equals(remainingRequirementString))
+                            successful = true;
+                    }
+                }
+            }
+            if (!successful)
+            {
+                throw new InternalExpressionException(getName()+" requires " + requiredModId + " version " + requirementString + " in order to load");
+            }
+        }
     }
 
     private Boolean addLegacyCommand(Consumer<Text> notifier)
