@@ -34,30 +34,9 @@ public interface ValueConverter<R> {
 	 * that isn't directly provided through the Scarpet language.</p>
 	 * 
 	 * @apiNote This method is intended to only be called when an error has occurred and therefore there is a need to print a 
-	 *           stacktrace with some helpful usage instructions. 
-	 * @see #getPrefixedTypeName()
+	 *           stacktrace with some helpful usage instructions.
 	 */
 	public String getTypeName();
-	
-	/**
-	 * <p>Returns the user-friendly name of the result that this {@link ValueConverter} converts to, prefixed with {@code a} or {@code an},
-	 * depending on the rules of English (aka starts with {@code aeiou}: an)</p>
-	 * 
-	 * <p>This method holds the same nullability constraints as {@link #getTypeName()}</p>
-	 * 
-	 * @implNote This method's default implementation returns the result of {@link #getTypeName()} prefixed depending on whether the first character
-	 *           is one of {@code aeiou} or something else.
-	 * @see #getTypeName() 
-	 */ //TODO Decide whether to keep
-	default public String getPrefixedTypeName() {
-		if (getTypeName() == null) return null;
-		switch (getTypeName().charAt(0)) {
-			case 'a': case 'e': case 'i': case 'o': case 'u':
-				return "an " + getTypeName();
-			default:
-				return "a " + getTypeName();
-		}
-	}
 
 	/**
 	 * <p>Converts the given {@link Value} to {@code <R>}, which was defined when being registered.</p>
@@ -181,7 +160,7 @@ public interface ValueConverter<R> {
 	 * @param theLazyT The {@code t} that the original function was called with. It is ignored by the default implementation. 
 	 * @return The given {@link LazyValue}, evaluated with the given {@link Context}, and converted to the type {@code <R>} of
 	 *         this {@link ValueConverter}
-	 * @apiNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link LazyValue} evaluated with
+	 * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link LazyValue} evaluated with
 	 *          the given context, ignoring {@code theLazyT}.
 	 */
 	default public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {

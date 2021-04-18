@@ -154,7 +154,7 @@ public interface Param {
 			}
 			@Override
 			public String getTypeName() {
-				return "something"; //TODO Decide between "something" or "value" and use it in ValueCaster too. If first, change prefixedTypeName
+				return "something";
 			}
 		};
 		

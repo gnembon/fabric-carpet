@@ -143,10 +143,5 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 					(acceptMultiParam ? " or those key-value pairs in the function" : "") + " (keys being "
 					+ keyConverter.getTypeName() + "s and values being " + valueConverter.getTypeName() + "s)";
 		}
-		
-		@Override
-		public String getPrefixedTypeName() {
-			return getTypeName();
-		}
 	}
 }

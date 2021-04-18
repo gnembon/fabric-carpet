@@ -20,7 +20,7 @@ import carpet.script.value.Value;
 public final class ValueCaster<R> implements ValueConverter<R> {
 	private static final Map<Class<? extends Value>, ValueCaster<? extends Value>> byResult = new HashMap<>();
 	static {
-		register(Value.class, "value");
+		register(Value.class, "something");
 		register(BlockValue.class, "block");
 		register(EntityValue.class, "entity");
 		register(FormattedTextValue.class, "formatted text");
