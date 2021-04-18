@@ -133,6 +133,8 @@ public interface ValueConverter<R> {
 					throw new IllegalArgumentException("The lazy T can only be used in Integer parameters");
 				return (ValueConverter<R>) Params.LAZY_T_PROVIDER;
 			}
+			if (annoType.getAnnotations()[0].annotationType().getEnclosingClass() == Locator.class)
+				return Locator.Locators.fromAnnotatedType(annoType, type);
 		}
 		
 		//Start: Old fromType.
