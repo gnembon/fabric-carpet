@@ -119,18 +119,20 @@ public interface ValueConverter<R> {
 				// Those will just fail with a ClassCastException.
 		if (type.isArray()) type = (Class<R>) type.getComponentType(); // Varargs
 		type = (Class<R>) ClassUtils.primitiveToWrapper(type); // It will be boxed anyway, this saves unboxing-boxing
-		
 		if (type == List.class)
 			return (ValueConverter<R>) ListConverter.fromAnnotatedType(annoType); //Already checked that type is List
 		if (type == Map.class)
 			return (ValueConverter<R>) MapConverter.fromAnnotatedType(annoType);  //Already checked that type is Map
 		if (type == Optional.class)
 			return (ValueConverter<R>) OptionalConverter.fromAnnotatedType(annoType);
-		if (annoType.getAnnotations().length != 0) {
+		if (annoType.getDeclaredAnnotations().length != 0) {
 			if (annoType.getAnnotation(Param.Strict.class) != null)
 				return (ValueConverter<R>)Params.getStrictConverter(annoType); // Already throws if incorrect usage
-			if (annoType.getAnnotation(Param.TheLazyT.class) != null)
-				return (ValueConverter<R>)null;
+			if (annoType.getAnnotation(Param.TheLazyT.class) != null) {
+				if (type != Integer.class)
+					throw new IllegalArgumentException("The lazy T can only be used in Integer parameters");
+				return (ValueConverter<R>) Params.LAZY_T_PROVIDER;
+			}
 		}
 		
 		//Start: Old fromType.

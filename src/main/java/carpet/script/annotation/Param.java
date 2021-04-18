@@ -50,8 +50,8 @@ public interface Param {
 	 * <p>{@code expression.addLazyFunction("name", -1, (context, t <-- HERE, lv)}</p>
 	 */
 	@Documented
-	@Target(PARAMETER)
 	@Retention(RUNTIME)
+	@Target({PARAMETER, TYPE_USE}) // Not intended for type use, but for some reason else reflection doesn't get it?? 
 	public @interface TheLazyT {
 
 	}
