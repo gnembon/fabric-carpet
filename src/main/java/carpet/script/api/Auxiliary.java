@@ -7,8 +7,6 @@ import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.mixins.PlayerListHeaderS2CPacketMixin;
-import carpet.script.bundled.Module;
 import carpet.script.argument.FileArgument;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
@@ -85,7 +83,6 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
-import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.Util;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.dynamic.RegistryOps;
@@ -112,7 +109,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -613,9 +609,7 @@ public class Auxiliary {
                             footer = new LiteralText(pVal.getString());
                     }
 
-                    PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-                    ((PlayerListHeaderS2CPacketMixin) packet).setFooter(footer);
-                    ((PlayerListHeaderS2CPacketMixin) packet).setHeader(header);
+                    PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket(header, footer);
                     AtomicInteger total = new AtomicInteger(0);
                     targets.forEach(p -> {
                         p.networkHandler.sendPacket(packet);
