@@ -42,6 +42,8 @@ import carpet.script.value.Value;
  * @see Param.Strict
  * @see Param.TheLazyT
  * @see Param.AllowSingleton
+ * @see Param.KeyValuePairs
+ * @see Param.Custom
  * @see Locator.Block
  * @see Locator.Vec3d
  * @see Optional

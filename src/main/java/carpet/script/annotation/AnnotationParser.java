@@ -60,11 +60,13 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * @see Param.Strict
  * @see Param.AllowSingleton
  * @see Param.KeyValuePairs
+ * @see Param.Custom
  * @see Optional
  * @see OutputConverter#register(Class, java.util.function.Function)
  * @see ValueCaster#register(Class, String)
  * @see SimpleTypeConverter#registerType(Class, Class, java.util.function.Function)
  * @see Param.Params#registerStrictConverter(Class, boolean, ValueConverter)
+ * @see Param.Params#registerCustomConverterFactory(java.util.function.BiFunction)
  */
 public class AnnotationParser {
 	private static final List<ParsedFunction> functionList = new ArrayList<>();
