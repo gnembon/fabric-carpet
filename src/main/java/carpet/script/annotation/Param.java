@@ -4,11 +4,13 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.reflect.AnnotatedType;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -97,6 +99,18 @@ public interface Param {
 	}
 	
 	/**
+	 * <p>Defines that the parameter's converter has to be retrieved from the custom converter storage, in order to allow extensions to 
+	 * register <b>complex</b> {@link ValueConverter}s. You can register such converters in {@link Params#registerCustomConverterFactory(BiFunction)},
+	 * although if you only need a simple {@link Value}->something converter you should be looking at {@link SimpleTypeConverter} instead</p>
+	 */
+	@Documented
+	@Retention(RUNTIME)
+	@Target({PARAMETER, TYPE_USE})
+	public @interface Custom {
+
+	}
+	
+	/**
 	 * <p>Defines that a parameter of type {@link String}, {@link Text}, {@link ServerPlayerEntity} or {@link Boolean} <b>must</b> be
 	 * of its corresponding {@link Value} in order to be accepted (respectively {@link StringValue}, {@link FormattedTextValue},
 	 * {@link EntityValue} or {@link BooleanValue}).</p>
@@ -136,14 +150,14 @@ public interface Param {
 	 * @see #registerStrictConverter(Class, boolean, ValueConverter)
 	 *
 	 */
-	public static class Params {
+	public static final class Params {
 		/**
 		 * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context, Integer)},
 		 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.</p>
 		 * 
 		 * <p>Public in order to allow custom {@link ValueConverter} to check whether values should be evaluated while testing conditions.</p>
 		 */
-		public static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
+		static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
 			@Override
 			public LazyValue convert(Value val) {
 				throw new UnsupportedOperationException("Called convert() with a Value in LazyValue identity, where only evalAndConvert is supported");
@@ -250,6 +264,43 @@ public interface Param {
 			if (strictParamsByClassAndShallowness.containsKey(key))
 				throw new IllegalArgumentException(type + " already has a registered " + (shallow ? "" : "non-") + "shallow StrictConverter");
 			strictParamsByClassAndShallowness.put(key, converter);
+		}
+		
+		private static List<BiFunction<AnnotatedType, Class<?>, ValueConverter<?>>> customFactories = new ArrayList<>();
+		
+		/**
+		 * <p>Allows extensions to register <b>COMPLEX</b> {@link ValueConverter} factories in order to be used with the {@link Param.Custom} annotation.</p>
+		 * <p><b>If you only need to register a converter from a {@link Value} to a type, use 
+		 * {@link SimpleTypeConverter#registerType(Class, Class, java.util.function.Function, String)} instead. This is intended to be used when
+		 * you need more granular control over the conversion, such as custom extra parameters via annotations, converters using lazy values, multiple values, 
+		 * or even a variable number of values.</b></p>
+		 * <p>The annotation parser will loop through all registered custom converter factories when searching for the appropriate {@link ValueConverter} for
+		 * a parameter annotated with the {@link Param.Custom} annotation.</p>
+		 * <p>Factories are expected to return {@code null} when the provided arguments don't match a {@link ValueConverter} they are able
+		 * to create (or reuse).</p>
+		 * <p>You have exposed {@link ValueCaster#get(Class)} and {@link ValueConverter#fromAnnotatedType(AnnotatedType)} in case you need to get valid
+		 * {@link ValueConverter}s for things such as nested types, intermediary conversions or whatever you really need them for.</p>
+		 * @param <T> The type that the ValueConverter will convert to. Its class will also be passed to the factory
+		 * @param factory A {@link BiFunction} that provides {@link ValueConverter}s given an {@link AnnotatedType} and the {@link Class} of its type,
+		 *                for convenience reasons. The factory must return {@code null} if the specific conditions required to return a valid converter
+		 *                are not met, therefore letting other registered factories try get theirs. Factories must also ensure that the returned
+		 *                {@link ValueConverter} converts to the given {@link Class}, and that the {@link ValueConverter} follows the contract of
+		 *                {@link ValueConverter}s, which can be found in its Javadoc. Factories should try to be specific in order to avoid possible
+		 *                collisions with other extensions.
+		 */
+		@SuppressWarnings("unchecked") // this makes no sense... But I guess its preferable to enforce typesafety in callers
+		public static <T> void registerCustomConverterFactory(BiFunction<AnnotatedType, Class<T>, ValueConverter<T>> factory) {
+			customFactories.add((BiFunction<AnnotatedType, Class<?>, ValueConverter<?>>)(Object)factory);
+		}
+		
+		@SuppressWarnings("unchecked") // Stored correctly
+		static <R> ValueConverter<R> getCustomConverter(AnnotatedType annoType, Class<R> type) {
+			ValueConverter<R> result;
+			for (BiFunction<AnnotatedType, Class<?>, ValueConverter<?>> factory : customFactories) {
+				if ((result = (ValueConverter<R>) factory.apply(annoType, type)) != null)
+					return result;
+			}
+			throw new IllegalArgumentException("No custom converter found for Param.Custom annotated param with type "+annoType.getType().getTypeName());
 		}
 	}
 }

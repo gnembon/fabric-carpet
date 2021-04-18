@@ -126,9 +126,11 @@ public interface ValueConverter<R> {
 		if (type == Optional.class)
 			return (ValueConverter<R>) OptionalConverter.fromAnnotatedType(annoType);
 		if (annoType.getDeclaredAnnotations().length != 0) {
-			if (annoType.getAnnotation(Param.Strict.class) != null)
-				return (ValueConverter<R>)Params.getStrictConverter(annoType); // Already throws if incorrect usage
-			if (annoType.getAnnotation(Param.TheLazyT.class) != null) {
+			if (annoType.isAnnotationPresent(Param.Custom.class))
+				return Param.Params.getCustomConverter(annoType, type); // Throws if incorrect usage 
+			if (annoType.isAnnotationPresent(Param.Strict.class))
+				return (ValueConverter<R>)Params.getStrictConverter(annoType); // Throws if incorrect usage
+			if (annoType.isAnnotationPresent(Param.TheLazyT.class)) {
 				if (type != Integer.class)
 					throw new IllegalArgumentException("The lazy T can only be used in Integer parameters");
 				return (ValueConverter<R>) Params.LAZY_T_PROVIDER;
