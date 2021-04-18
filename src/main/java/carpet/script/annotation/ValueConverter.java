@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.Nullable;
 
 import carpet.script.Context;
@@ -135,6 +136,7 @@ public interface ValueConverter<R> {
 				// Example: AnnotatedGenericTypeArray (or similar) being (@Paran.KeyValuePairs Map<String, String>... name)
 				// Those will just fail with a ClassCastException.
 		if (type.isArray()) type = (Class<R>) type.getComponentType(); // Varargs
+		type = (Class<R>) ClassUtils.primitiveToWrapper(type); // It will be boxed anyway, this saves unboxing-boxing
 		
 		if (type == List.class)
 			return (ValueConverter<R>) ListConverter.fromAnnotatedType(annoType); //Already checked that type is List

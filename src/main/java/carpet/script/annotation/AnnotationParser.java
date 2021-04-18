@@ -13,6 +13,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.ClassUtils;
+
 import carpet.CarpetSettings;
 import carpet.script.Context;
 import carpet.script.Expression;
@@ -134,6 +137,7 @@ public class AnnotationParser {
 		private final int methodParamCount;
 		private final List<ValueConverter<?>> valueConverters;
 		private final Class<?> varArgsType;
+		private final boolean primitiveVarArgs;
 		private final ValueConverter<?> varArgsConverter;
 		private final OutputConverter<Object> outputConverter;
 		private final int minParams;
@@ -152,18 +156,13 @@ public class AnnotationParser {
 				if (!isVarArgs || i != this.methodParamCount -1 ) // Varargs converter is separate, inside #makeFunction
 					this.valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
 			}
-			this.varArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
+			Class<?> originalVarArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
+			this.varArgsType = ClassUtils.primitiveToWrapper(originalVarArgsType); // Primitive array cannot be cast to Obj[]
+			this.primitiveVarArgs = isVarArgs && originalVarArgsType.isPrimitive();
 			this.varArgsConverter = isVarArgs ? ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType()) : null;
 			@SuppressWarnings("unchecked") // Yes. Making a T is not worth
 			OutputConverter<Object> converter = OutputConverter.get((Class<Object>)method.getReturnType());
 			this.outputConverter = converter;
-			
-			//If using primitives, this is problematic when casting (cannot cast to Object[]). TODO Change if I find a better way.
-			//TODO Option 2: Just not support unboxeds in varargs and ask to use boxed types, would be both simpler and faster, since this 
-			//              method requires creating new array and moving every item to cast Boxed[] -> primitive[]
-			//TODO At least use one of them, since I got lazy and didn't even make this work (current idea: ArrayUtils.toPrimitive(boxedArray) )
-			//final Class<?> boxedVarArgsType = ClassUtils.primitiveToWrapper(varArgsType);
-			//TODO Find a better place for this TODO (this talks about varArgsConverter)
 			
 			boolean isEffectivelyVarArgs = isVarArgs ? true : valueConverters.stream().anyMatch(ValueConverter::consumesVariableArgs);
 			this.minParams = valueConverters.stream().mapToInt(ValueConverter::valueConsumption).sum(); //Note: In !varargs, this is params
@@ -250,8 +249,7 @@ public class AnnotationParser {
 							throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n" + getUsage());
 					}
 				}
-				params[methodParamCount - 1] = varArgs;
-				//TODO The above, but for primitive varargs
+				params[methodParamCount - 1] = primitiveVarArgs ? ArrayUtils.toPrimitive(varArgs) : varArgs; //Copies the array
 			}
 			return params;
 		}
