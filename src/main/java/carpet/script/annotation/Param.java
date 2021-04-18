@@ -138,7 +138,7 @@ public interface Param {
 	 */
 	public static class Params {
 		/**
-		 * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context)},
+		 * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context, Integer)},
 		 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.</p>
 		 * 
 		 * <p>Public in order to allow custom {@link ValueConverter} to check whether values should be evaluated while testing conditions.</p>
@@ -146,10 +146,10 @@ public interface Param {
 		public static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
 			@Override
 			public LazyValue convert(Value val) {
-				throw new UnsupportedOperationException("Called convert() with a Value in LazyValue identity converter, where only evalAndConvert is supported");
+				throw new UnsupportedOperationException("Called convert() with a Value in LazyValue identity, where only evalAndConvert is supported");
 			}
 			@Override
-			public LazyValue evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context c) {
+			public LazyValue evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context c, Integer theLazyT) {
 				return lazyValueIterator.hasNext() ? lazyValueIterator.next() : null;
 			}
 			@Override
@@ -160,7 +160,7 @@ public interface Param {
 		
 		/**
 		 * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
-		 * {@link #evalAndConvert(Iterator, Context)}, and throws {@link UnsupportedOperationException} when trying to
+		 * {@link #evalAndConvert(Iterator, Context, Integer)}, and throws {@link UnsupportedOperationException} when trying to
 		 * convert a {@link Value} directly.</p>
 		 */
 		static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
@@ -170,8 +170,28 @@ public interface Param {
 				throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");
 			}
 			@Override
-			public Context evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+			public Context evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 				return context;
+			}
+			@Override
+			public int valueConsumption() {
+				return 0;
+			}
+		};
+		/**
+		 * <p>A {@link ValueConverter} that outputs {@link TheLazyT} which the function has been called when running
+		 * {@link #evalAndConvert(Iterator, Context, Integer)}, or throws {@link UnsupportedOperationException} when trying to
+		 * convert a {@link Value} directly.</p>
+		 */
+		static final ValueConverter<Integer> LAZY_T_PROVIDER = new ValueConverter<Integer>() {
+			@Override public String getTypeName() {return null;}
+			@Override
+			public Integer convert(Value value) {
+				throw new UnsupportedOperationException("Called convert() with a Value in TheLazyT Provider, where only evalAndConvert is supported");
+			}
+			@Override
+			public Integer evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
+				return theLazyT;
 			}
 			@Override
 			public int valueConsumption() {
@@ -191,9 +211,7 @@ public interface Param {
 								v -> v instanceof FormattedTextValue ? ((FormattedTextValue) v).getText() : new LiteralText(v.getString()), "text"));
 			registerStrictConverter(ServerPlayerEntity.class, false, new SimpleTypeConverter<>(EntityValue.class, 
 								v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v), "online player entity"));
-			registerStrictConverter(Boolean.TYPE, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
 			registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
-			registerStrictConverter(Boolean.TYPE, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean, "boolean"));
 			registerStrictConverter(Boolean.class, true, new SimpleTypeConverter<>(NumericValue.class, NumericValue::getBoolean, "boolean"));
 		}
 		

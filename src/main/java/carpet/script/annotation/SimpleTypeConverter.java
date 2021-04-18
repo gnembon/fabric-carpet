@@ -39,12 +39,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
 		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : new LiteralText(v.getString()), "text"); 
 		registerType(Value.class, String.class, Value::getString, "string"); // Check out @Param.Strict for more specific types
 		
-		// TODO Make sure this doesn't box and unbox primitives. Not sure how to check it, though. EDIT: I think they do, and have to
-		registerType(NumericValue.class, Long.TYPE, NumericValue::getLong, "number");
-		registerType(NumericValue.class, Double.TYPE, NumericValue::getDouble, "number");
-		registerType(NumericValue.class, Integer.TYPE, NumericValue::getInt, "number");
-		registerType(Value.class, Boolean.TYPE, Value::getBoolean, "boolean"); // Check out @Param.Strict for more specific types
-		// Non-primitive versions of the above
+		// Primitives are also query those classes
 		registerType(NumericValue.class, Long.class, NumericValue::getLong, "number");
 		registerType(NumericValue.class, Double.class, NumericValue::getDouble, "number");
 		registerType(NumericValue.class, Integer.class, NumericValue::getInt, "number");

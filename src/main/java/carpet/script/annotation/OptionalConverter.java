@@ -44,7 +44,7 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	/**
 	 * {@inheritDoc}
 	 * @implNote Unlike most other converters, {@link OptionalConverter} will not call this method from 
-	 * 			 {@link #evalAndConvert(Iterator, Context)} and is only used as a fallback in types that don't support it.
+	 * 			 {@link #evalAndConvert(Iterator, Context, Integer)} and is only used as a fallback in types that don't support it.
 	 */
 	@Override
 	public Optional<R> convert(Value value) {
@@ -57,7 +57,7 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	}
 	
 	@Override
-	public Optional<R> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+	public Optional<R> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 		if (!lazyValueIterator.hasNext())
 			return Optional.empty();
 		if (typeConverter != Param.Params.LAZY_VALUE_IDENTITY) { // Checking Value#isNull, except if asked for LazyValue
@@ -67,7 +67,7 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 			((ListIterator<LazyValue>)lazyValueIterator).set((c, t) -> evaledValue); // Don't reevaluate in converter
 			((ListIterator<LazyValue>)lazyValueIterator).previous();
 		}
-		R converted = typeConverter.evalAndConvert(lazyValueIterator, context);
+		R converted = typeConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
 		if (converted == null)
 			return null;
 		return Optional.of(converted);

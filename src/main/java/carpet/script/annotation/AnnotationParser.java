@@ -208,7 +208,7 @@ public class AnnotationParser {
 				if (lv.size() > maxParams)
 					throw new InternalExpressionException(name + " expects up to " + maxParams + " arguments. " + getUsage());
 			}
-			Object[] params = getMethodParams(lv, context);
+			Object[] params = getMethodParams(lv, context, t);
 			try {
 				return outputConverter.convert(handle.invokeExact(params));
 			} catch (Throwable e) {
@@ -219,13 +219,13 @@ public class AnnotationParser {
 		}
 
 		// Hot code: Must be optimized
-		private Object[] getMethodParams(final List<LazyValue> lv, final Context context) {
+		private Object[] getMethodParams(final List<LazyValue> lv, final Context context, Integer theLazyT) {
 			Object[] params = new Object[methodParamCount];
 			ListIterator<LazyValue> lvIterator = lv.listIterator();
 			
 			int regularArgs = isVarArgs ? methodParamCount -1 : methodParamCount;
 			for (int i = 0; i < regularArgs; i++) {
-				params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context);
+				params[i] = valueConverters.get(i).evalAndConvert(lvIterator, context, theLazyT);
 				if (params[i] == null)
 					throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n" + getUsage());
 			}
@@ -235,7 +235,7 @@ public class AnnotationParser {
 				if (varArgsConverter.consumesVariableArgs()) {
 					List<Object> varArgsList = new ObjectArrayList<>();
 					while (lvIterator.hasNext()) {
-						Object obj = varArgsConverter.evalAndConvert(lvIterator, context);
+						Object obj = varArgsConverter.evalAndConvert(lvIterator, context, theLazyT);
 						if (obj == null)
 							throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n" + getUsage());
 						varArgsList.add(obj);
@@ -244,7 +244,7 @@ public class AnnotationParser {
 				} else {
 					varArgs = (Object[])Array.newInstance(varArgsType, remaining/varArgsConverter.valueConsumption());
 					for (int i = 0; lvIterator.hasNext(); i++) {
-						varArgs[i] = varArgsConverter.evalAndConvert(lvIterator, context);
+						varArgs[i] = varArgsConverter.evalAndConvert(lvIterator, context, theLazyT);
 						if (varArgs[i] == null)
 							throw new InternalExpressionException("Incorrect argument passsed to "+name+" function.\n" + getUsage());
 					}

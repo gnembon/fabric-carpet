@@ -115,7 +115,7 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 		}
 		
 		@Override
-		public Map<K, V> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+		public Map<K, V> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 			if (!lazyValueIterator.hasNext())
 				return null;
 			Value val = lazyValueIterator.next().evalValue(context);
@@ -123,13 +123,13 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 				return convert(val);                                   // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
 			Map<K, V> map = new HashMap<>();
 			K key = keyConverter.convert(val);
-			V value = valueConverter.evalAndConvert(lazyValueIterator, context);
+			V value = valueConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
 			if (key == null || value == null)
 				return null;
 			map.put(key, value);
 			while (lazyValueIterator.hasNext()) {
-				key = keyConverter.evalAndConvert(lazyValueIterator, context);
-				value = valueConverter.evalAndConvert(lazyValueIterator, context);
+				key = keyConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
+				value = valueConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
 				if (key == null || value == null)
 					return null;
 				map.put(key, value);

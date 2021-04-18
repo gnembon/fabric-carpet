@@ -72,23 +72,23 @@ public interface ValueConverter<R> {
 	 * @param value The {@link Value} to convert
 	 * @return The converted value, or {@code null} if the conversion failed in the process
 	 * @apiNote <p>While most implementations of this method should and will return the type from this method, 
-	 *           implementations that <b>require</b> parameters from {@link #evalAndConvert(Iterator, Context)} or that require multiple
-	 *           parameters may decide to throw {@link UnsupportedOperationException} in this method and override {@link #evalAndConvert(Iterator, Context)}
+	 *           implementations that <b>require</b> parameters from {@link #evalAndConvert(Iterator, Context, Integer)} or that require multiple
+	 *           parameters may decide to throw {@link UnsupportedOperationException} in this method and override {@link #evalAndConvert(Iterator, Context, Integer)}
 	 *           instead. Those implementations, however, should not be available for map or list types, since those can only operate 
 	 *           with {@link Value}.</p>
 	 *           <p>Currently, the only implementations requiring that are {@link Params#LAZY_VALUE_IDENTITY} and {@link Params#CONTEXT_PROVIDER}</p>
-	 *           <p>Implementations can also provide different implementations for this and {@link #evalAndConvert(Iterator, Context)}, in case
+	 *           <p>Implementations can also provide different implementations for this and {@link #evalAndConvert(Iterator, Context, Integer)}, in case
 	 *           they can support it in some situations that can't be used else, such as inside of lists or maps, although they should try to provide
-	 *           in {@link #evalAndConvert(Iterator, Context)} at least the same conversion as the one from this method.</p>
+	 *           in {@link #evalAndConvert(Iterator, Context, Integer)} at least the same conversion as the one from this method.</p>
 	 *           <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value)} whenever
-	 *           possible instead of {@link #evalAndConvert(Iterator, Context)}, since it allows its usage in generics of lists and maps.</p>
+	 *           possible instead of {@link #evalAndConvert(Iterator, Context, Integer)}, since it allows its usage in generics of lists and maps.</p>
 	 */
 	@Nullable
 	public R convert(Value value);
 	
 	/**
 	 * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator}
-	 * passed to it via {@link #evalAndConvert(Iterator, Context)}.</p>
+	 * passed to it via {@link #evalAndConvert(Iterator, Context, Integer)}.</p>
 	 * @implNote The default implementation returns {@code false} 
 	 * @see #valueConsumption()
 	 */
@@ -98,7 +98,7 @@ public interface ValueConverter<R> {
 	
 	/**
 	 * <p>Declares the number of {@link LazyValue}s this method consumes from the {@link Iterator} passed to it in
-	 * {@link #evalAndConvert(Iterator, Context)}.</p>
+	 * {@link #evalAndConvert(Iterator, Context, Integer)}.</p>
 	 * 
 	 * <p>If this {@link ValueConverter} can accept a variable number of arguments (therefore the result of calling
 	 * {@link #consumesVariableArgs()} <b>must</b> return {@code true}), it will return the minimum number of arguments
@@ -147,6 +147,8 @@ public interface ValueConverter<R> {
 		if (annoType.getAnnotations().length != 0) {
 			if (annoType.getAnnotation(Param.Strict.class) != null)
 				return (ValueConverter<R>)Params.getStrictConverter(annoType); // Already throws if incorrect usage
+			if (annoType.getAnnotation(Param.TheLazyT.class) != null)
+				return (ValueConverter<R>)null;
 		}
 		
 		//Start: Old fromType.
@@ -176,12 +178,13 @@ public interface ValueConverter<R> {
 	 *           <p>This method holds the same nullability constraints as {@link #convert(Value)}</p>
 	 * @param lazyValueIterator An {@link Iterator} holding the {@link LazyValue} to convert in next position
 	 * @param context The {@link Context} to convert with
+	 * @param theLazyT The {@code t} that the original function was called with. It is ignored by the default implementation. 
 	 * @return The given {@link LazyValue}, evaluated with the given {@link Context}, and converted to the type {@code <R>} of
 	 *         this {@link ValueConverter}
 	 * @apiNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link LazyValue} evaluated with
-	 *          the given context.
+	 *          the given context, ignoring {@code theLazyT}.
 	 */
-	default public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context) {
+	default public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 		if (!lazyValueIterator.hasNext())
 			return null;
 		return convert(lazyValueIterator.next().evalValue(context));
