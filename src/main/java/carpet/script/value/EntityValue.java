@@ -1106,7 +1106,7 @@ public class EntityValue extends Value
                 v = ((ListValue) v).getItems().get(0);
             }
             e.setCustomNameVisible(showName);
-            e.setCustomName(new LiteralText(v.getString()));
+            e.setCustomName(FormattedTextValue.getTextByValue(v));
         });
 
         put("persistence", (e, v) ->

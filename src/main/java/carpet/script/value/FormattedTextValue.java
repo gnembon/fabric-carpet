@@ -91,4 +91,8 @@ public class FormattedTextValue extends StringValue
         return new FormattedTextValue(Text.Serializer.fromJson(serialized));
     }
 
+    public static Text getTextByValue(Value value) {
+        return (value instanceof FormattedTextValue) ? ((FormattedTextValue) value).getText() : new LiteralText(value.getString());
+    }
+
 }
