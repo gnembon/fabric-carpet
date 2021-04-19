@@ -110,7 +110,7 @@ public class FixedCommandSource extends ServerCommandSource
     public ServerCommandSource withWorld(ServerWorld world)
     {
         this.world = world;
-        double d = DimensionType.method_31109(this.world.getDimension(), world.getDimension());
+        double d = DimensionType.getCoordinateScaleFactor(this.world.getDimension(), world.getDimension());
         this.position = new Vec3d(this.position.x * d, this.position.y, this.position.z * d);
         return this;
     }
