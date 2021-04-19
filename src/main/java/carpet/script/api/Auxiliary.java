@@ -571,35 +571,43 @@ public class Auxiliary {
             if (action != Action.CLEAR && lv.size() < 3)
                 throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
             Text title;
+            boolean soundsTrue = false;
             if (lv.size() > 2)
             {
                 pVal = lv.get(2).evalValue(c);
                 if (pVal instanceof FormattedTextValue)
+                {
                     title = ((FormattedTextValue) pVal).getText();
+                    soundsTrue = !title.asString().isEmpty();
+                }
                 else
+                {
                     title = new LiteralText(pVal.getString());
+                    soundsTrue = pVal.getBoolean();
+                }
             }
             else title = null; // Will never happen, just to make lambda happy
             if (action == null)
             {
-                Map<PlayerEntity, BaseText> map;
+                Map<ServerPlayerEntity, BaseText> map;
                 if (actionString.equals("player_list_header"))
                     map = HUDController.scarpet_headers;
                 else
                     map = HUDController.scarpet_footers;
                 
                 AtomicInteger total = new AtomicInteger(0);
-                if (!lv.get(2).evalValue(c).getBoolean()) // null or empty string
-                    targets.forEach(target -> {
+                List<ServerPlayerEntity> targetList = targets.collect(Collectors.toList());
+                if (!soundsTrue) // null or empty string
+                    targetList.forEach(target -> {
                         map.remove(target);
                         total.getAndIncrement();
                     });
                 else
-                    targets.forEach(target -> {
+                    targetList.forEach(target -> {
                         map.put(target, (BaseText) title);
                         total.getAndIncrement();
                     });
-                HUDController.update_hud(((CarpetContext)c).s.getMinecraftServer(), true);
+                HUDController.update_hud(((CarpetContext)c).s.getMinecraftServer(), targetList);
                 Value ret = NumericValue.of(total.get());
                 return (cc, tt) -> ret;
             }

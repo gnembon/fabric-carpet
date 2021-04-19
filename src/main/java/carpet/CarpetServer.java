@@ -112,7 +112,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     public static void tick(MinecraftServer server)
     {
         TickSpeed.tick();
-        HUDController.update_hud(server, false);
+        HUDController.update_hud(server, null);
         scriptServer.tick();
 
         //in case something happens
