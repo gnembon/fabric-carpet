@@ -552,7 +552,7 @@ public class Auxiliary {
                 if (player == null) throw new InternalExpressionException("'display_title' requires a valid online player or a list of players as first argument. "+v.getString()+" is not a player.");
                 return player;
             });
-            Function<Text, Packet<?>> packetGetter;
+            Function<Text, Packet<?>> packetGetter = null;
             //TitleS2CPacket.Action action;
             String actionString = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
             switch (actionString)
@@ -584,7 +584,6 @@ public class Auxiliary {
                     break;
                 case "player_list_header":
                 case "player_list_footer":
-                    action = null;
                     break;
                 default:
                     throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
@@ -608,7 +607,7 @@ public class Auxiliary {
                 }
             }
             else title = null; // Will never happen, just to make lambda happy
-            if (action == null)
+            if (packetGetter == null)
             {
                 Map<ServerPlayerEntity, BaseText> map;
                 if (actionString.equals("player_list_header"))
