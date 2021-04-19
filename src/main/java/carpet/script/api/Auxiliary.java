@@ -7,6 +7,7 @@ import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
+import carpet.logging.HUDController;
 import carpet.script.argument.FileArgument;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
@@ -79,6 +80,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
+import net.minecraft.text.BaseText;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -580,56 +582,55 @@ public class Auxiliary {
                     packetGetter = (x) -> new ClearTitleS2CPacket(true); // resetting default fade
                     //action = Action.CLEAR;
                     break;
-                case "player_list":
-                    Text footer;
-                    Text header;
-
-                    if(lv.size() == 2) {
-                        footer = new LiteralText("");
-                        header = new LiteralText("");
-                    } else if(lv.size() == 3) {
-                        pVal = lv.get(2).evalValue(c);
-                        if (pVal instanceof FormattedTextValue)
-                            footer = ((FormattedTextValue) pVal).getText();
-                        else
-                            footer = new LiteralText(pVal.getString());
-
-                        header = new LiteralText("");
-                    } else {
-                        pVal = lv.get(2).evalValue(c);
-                        if (pVal instanceof FormattedTextValue)
-                            header = ((FormattedTextValue) pVal).getText();
-                        else
-                            header = new LiteralText(pVal.getString());
-
-                        pVal = lv.get(3).evalValue(c);
-                        if (pVal instanceof FormattedTextValue)
-                            footer = ((FormattedTextValue) pVal).getText();
-                        else
-                            footer = new LiteralText(pVal.getString());
-                    }
-
-                    PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket(header, footer);
-                    AtomicInteger total = new AtomicInteger(0);
-                    targets.forEach(p -> {
-                        p.networkHandler.sendPacket(packet);
-                        total.getAndIncrement();
-                    });
-                    Value ret = NumericValue.of(total.get());
-                    return (cc, tt) -> ret;
+                case "player_list_header":
+                case "player_list_footer":
+                    action = null;
+                    break;
                 default:
-                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list' or 'clear' as second argument");
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
             }
             //if (action != Action.CLEAR && lv.size() < 3)
             //    throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
-            Text title = null;
+            Text title;
+            boolean soundsTrue = false;
             if (lv.size() > 2)
             {
                 pVal = lv.get(2).evalValue(c);
                 if (pVal instanceof FormattedTextValue)
+                {
                     title = ((FormattedTextValue) pVal).getText();
+                    soundsTrue = !title.asString().isEmpty();
+                }
                 else
+                {
                     title = new LiteralText(pVal.getString());
+                    soundsTrue = pVal.getBoolean();
+                }
+            }
+            else title = null; // Will never happen, just to make lambda happy
+            if (action == null)
+            {
+                Map<ServerPlayerEntity, BaseText> map;
+                if (actionString.equals("player_list_header"))
+                    map = HUDController.scarpet_headers;
+                else
+                    map = HUDController.scarpet_footers;
+
+                AtomicInteger total = new AtomicInteger(0);
+                List<ServerPlayerEntity> targetList = targets.collect(Collectors.toList());
+                if (!soundsTrue) // null or empty string
+                    targetList.forEach(target -> {
+                        map.remove(target);
+                        total.getAndIncrement();
+                    });
+                else
+                    targetList.forEach(target -> {
+                        map.put(target, (BaseText) title);
+                        total.getAndIncrement();
+                    });
+                HUDController.update_hud(((CarpetContext)c).s.getMinecraftServer(), targetList);
+                Value ret = NumericValue.of(total.get());
+                return (cc, tt) -> ret;
             }
             TitleFadeS2CPacket timesPacket; // TimesPacket
             if (lv.size() > 3)
