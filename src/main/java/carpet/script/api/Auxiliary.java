@@ -7,8 +7,7 @@ import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
-import carpet.mixins.PlayerListHeaderS2CPacketMixin;
-import carpet.script.bundled.Module;
+import carpet.logging.HUDController;
 import carpet.script.argument.FileArgument;
 import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
@@ -59,7 +58,6 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 import net.minecraft.particle.ParticleEffect;
@@ -75,6 +73,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.stat.Stat;
 import net.minecraft.stat.StatType;
+import net.minecraft.text.BaseText;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -562,51 +561,16 @@ public class Auxiliary {
                 case "clear":
                     action = Action.CLEAR;
                     break;
-                case "player_list":
-                    Text footer;
-                    Text header;
-
-                    if(lv.size() == 2) {
-                        footer = new LiteralText("");
-                        header = new LiteralText("");
-                    } else if(lv.size() == 3) {
-                        pVal = lv.get(2).evalValue(c);
-                        if (pVal instanceof FormattedTextValue)
-                            footer = ((FormattedTextValue) pVal).getText();
-                        else
-                            footer = new LiteralText(pVal.getString());
-
-                        header = new LiteralText("");
-                    } else {
-                        pVal = lv.get(2).evalValue(c);
-                        if (pVal instanceof FormattedTextValue)
-                            header = ((FormattedTextValue) pVal).getText();
-                        else
-                            header = new LiteralText(pVal.getString());
-
-                        pVal = lv.get(3).evalValue(c);
-                        if (pVal instanceof FormattedTextValue)
-                            footer = ((FormattedTextValue) pVal).getText();
-                        else
-                            footer = new LiteralText(pVal.getString());
-                    }
-
-                    PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-                    ((PlayerListHeaderS2CPacketMixin) packet).setFooter(footer);
-                    ((PlayerListHeaderS2CPacketMixin) packet).setHeader(header);
-                    AtomicInteger total = new AtomicInteger(0);
-                    targets.forEach(p -> {
-                        p.networkHandler.sendPacket(packet);
-                        total.getAndIncrement();
-                    });
-                    Value ret = NumericValue.of(total.get());
-                    return (cc, tt) -> ret;
+                case "player_list_header":
+                case "player_list_footer":
+                    action = null;
+                    break;
                 default:
-                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list' or 'clear' as second argument");
+                    throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
             }
             if (action != Action.CLEAR && lv.size() < 3)
                 throw new InternalExpressionException("Third argument of 'display_title' must be present except for 'clear' type");
-            Text title = null;
+            Text title;
             if (lv.size() > 2)
             {
                 pVal = lv.get(2).evalValue(c);
@@ -614,6 +578,30 @@ public class Auxiliary {
                     title = ((FormattedTextValue) pVal).getText();
                 else
                     title = new LiteralText(pVal.getString());
+            }
+            else title = null; // Will never happen, just to make lambda happy
+            if (action == null)
+            {
+                Map<PlayerEntity, BaseText> map;
+                if (actionString.equals("player_list_header"))
+                    map = HUDController.scarpet_headers;
+                else
+                    map = HUDController.scarpet_footers;
+                
+                AtomicInteger total = new AtomicInteger(0);
+                if (!lv.get(2).evalValue(c).getBoolean()) // null or empty string
+                    targets.forEach(target -> {
+                        map.remove(target);
+                        total.getAndIncrement();
+                    });
+                else
+                    targets.forEach(target -> {
+                        map.put(target, (BaseText) title);
+                        total.getAndIncrement();
+                    });
+                HUDController.update_hud(((CarpetContext)c).s.getMinecraftServer(), true);
+                Value ret = NumericValue.of(total.get());
+                return (cc, tt) -> ret;
             }
             TitleS2CPacket timesPacket;
             if (lv.size() > 3)
