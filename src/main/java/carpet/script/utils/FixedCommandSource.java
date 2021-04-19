@@ -16,6 +16,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.dimension.DimensionType;
 
 import java.util.List;
 import java.util.function.BinaryOperator;
@@ -24,8 +25,8 @@ public class FixedCommandSource extends ServerCommandSource
 {
     private Vec3d position;
     private ServerWorld world;
-    private final String simpleName;
-    private final Text name;
+    private String simpleName;
+    private Text name;
     private final MinecraftServer server;
     private Entity entity;
     private ResultConsumer<ServerCommandSource> resultConsumer;
@@ -56,6 +57,8 @@ public class FixedCommandSource extends ServerCommandSource
     public ServerCommandSource withEntity(Entity entity)
     {
         this.entity = entity;
+        this.simpleName = entity.getName().getString();
+        this.name = entity.getDisplayName();
         return this;
     }
 
@@ -107,6 +110,8 @@ public class FixedCommandSource extends ServerCommandSource
     public ServerCommandSource withWorld(ServerWorld world)
     {
         this.world = world;
+        double d = DimensionType.method_31109(this.world.getDimension(), world.getDimension());
+        this.position = new Vec3d(this.position.x * d, this.position.y, this.position.z * d);
         return this;
     }
 

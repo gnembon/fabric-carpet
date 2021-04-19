@@ -265,7 +265,7 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
 Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
  * `players` is either an online player or a list of players. When sending a single player, it will throw if the player is invalid or offline.
@@ -277,13 +277,12 @@ Sends the player (or players if `players` is a list) a title of a specific type,
    Executing with those will set the times to the specified ones.
    Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
-### `display_title(players, 'player_list')`
-### `display_title(players, 'player_list', footer)`
-### `display_title(players, 'player_list', header, footer)`
+### `display_title(players, 'player_list_header', text)`
+### `display_title(players, 'player_list_footer', text)`
 
-Changes the header and footer of the player list.
-When no `header` and `footer` is specified, they will be reset.
-Keep in mind this would interfere with carpet's loggers, so if you are using this, you need to keep them off.
+Changes the header or footer of the player list for the specified targets.
+If `text` is `null` or an empty string it will remove the header or footer for the specified targets.
+In case the player has Carpet loggers running, the footer specified by Scarpet will appear above the loggers.
 
 ### `logger(msg), logger(type, msg)`
 
