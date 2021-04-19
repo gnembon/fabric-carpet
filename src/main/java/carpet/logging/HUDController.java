@@ -80,7 +80,7 @@ public class HUDController
 
         player_huds.clear();
 
-        scarpet_footers.forEach((p, m) -> addMessage(p, m));
+        scarpet_footers.forEach(HUDController::addMessage);
 
         if (LoggerRegistry.__tps)
             LoggerRegistry.getLogger("tps").log(()-> send_tps_display(server));
