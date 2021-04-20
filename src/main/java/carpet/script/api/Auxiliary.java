@@ -23,7 +23,7 @@ import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
-import carpet.script.utils.FixedCommandSource;
+import carpet.script.utils.SnoopyCommandSource;
 import carpet.script.utils.InputValidator;
 import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.utils.ShapeDispatcher;
@@ -78,7 +78,6 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
-import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.Util;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.dynamic.RegistryOps;
@@ -105,7 +104,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -650,7 +648,7 @@ public class Auxiliary {
                 Value[] error = {Value.NULL};
                 List<Value> output = new ArrayList<>();
                 Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                        new FixedCommandSource(s, posf, error, output),
+                        new SnoopyCommandSource(s, posf, error, output),
                         lv.get(0).evalValue(c).getString())
                 );
                 Value ret = ListValue.of(retval, ListValue.wrap(output), error[0]);
