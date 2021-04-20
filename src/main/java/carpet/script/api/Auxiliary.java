@@ -645,13 +645,17 @@ public class Auxiliary {
             ServerCommandSource s = ((CarpetContext)c).s;
             try
             {
-                Value[] error = {Value.NULL};
-                List<Value> output = new ArrayList<>();
+                Text[] error = {null};
+                List<Text> output = new ArrayList<>();
                 Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
                         new SnoopyCommandSource(s, posf, error, output),
                         lv.get(0).evalValue(c).getString())
                 );
-                Value ret = ListValue.of(retval, ListValue.wrap(output), error[0]);
+                Value ret = ListValue.of(
+                        retval,
+                        ListValue.wrap(output.stream().map(FormattedTextValue::new).collect(Collectors.toList())),
+                        FormattedTextValue.of(error[0])
+                );
                 return (c_, t_) -> ret;
             }
             catch (Exception exc)
