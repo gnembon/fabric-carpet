@@ -42,6 +42,11 @@ public class FormattedTextValue extends StringValue
         }
     }
 
+    public static Value of(Text text) {
+        if (text == null) return Value.NULL;
+        return new FormattedTextValue(text);
+    }
+
     @Override
     public String getString() {
         return text.getString();
