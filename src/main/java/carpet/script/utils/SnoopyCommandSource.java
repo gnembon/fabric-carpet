@@ -2,7 +2,6 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import com.mojang.brigadier.ResultConsumer;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
@@ -123,7 +122,8 @@ public class SnoopyCommandSource extends ServerCommandSource
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, consumer, entityAnchor, error, chatOutput);
     }
 
-    public ServerCommandSource mergeConsumers(ResultConsumer<ServerCommandSource> consumer, BinaryOperator<ResultConsumer<ServerCommandSource>> binaryOperator) {
+    public ServerCommandSource mergeConsumers(ResultConsumer<ServerCommandSource> consumer, BinaryOperator<ResultConsumer<ServerCommandSource>> binaryOperator)
+    {
         ResultConsumer<ServerCommandSource> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);
         return this.withConsumer(resultConsumer);
     }
@@ -158,7 +158,8 @@ public class SnoopyCommandSource extends ServerCommandSource
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, error, chatOutput);
     }
 
-    public ServerCommandSource withLookingAt(Vec3d position) throws CommandSyntaxException {
+    public ServerCommandSource withLookingAt(Vec3d position)
+    {
         Vec3d vec3d = this.entityAnchor.positionAt(this);
         double d = position.x - vec3d.x;
         double e = position.y - vec3d.y;

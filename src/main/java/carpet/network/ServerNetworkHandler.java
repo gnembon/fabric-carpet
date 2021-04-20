@@ -105,7 +105,7 @@ public class ServerNetworkHandler
                     new SnoopyCommandSource(player, error, output), command
             );
         }
-        CompoundTag result = new CompoundTag();
+        NbtCompound result = new NbtCompound();
         result.putString("id", id);
         result.putInt("code", resultCode);
         if (error[0] != null) result.putString("error", error[0].asString());
