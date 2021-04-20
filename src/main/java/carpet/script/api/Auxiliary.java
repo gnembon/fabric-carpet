@@ -575,16 +575,8 @@ public class Auxiliary {
             if (lv.size() > 2)
             {
                 pVal = lv.get(2).evalValue(c);
-                if (pVal instanceof FormattedTextValue)
-                {
-                    title = ((FormattedTextValue) pVal).getText();
-                    soundsTrue = !title.asString().isEmpty();
-                }
-                else
-                {
-                    title = new LiteralText(pVal.getString());
-                    soundsTrue = pVal.getBoolean();
-                }
+                title = FormattedTextValue.getTextByValue(pVal);
+                soundsTrue = pVal.getBoolean();
             }
             else title = null; // Will never happen, just to make lambda happy
             if (action == null)

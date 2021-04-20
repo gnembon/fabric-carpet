@@ -49,7 +49,7 @@ public class FormattedTextValue extends StringValue
 
     @Override
     public boolean getBoolean() {
-          return text.getSiblings().size() > 0;
+        return !text.asString().isEmpty();
     }
 
     @Override
