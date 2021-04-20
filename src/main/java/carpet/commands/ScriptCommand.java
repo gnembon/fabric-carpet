@@ -2,6 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.helpers.ScriptDownloader;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
@@ -24,6 +25,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
 import net.minecraft.block.pattern.CachedBlockPosition;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.BlockPredicateArgumentType;
 import net.minecraft.command.argument.BlockStateArgument;
@@ -128,7 +130,7 @@ public class ScriptCommand
                                 null,
                                 null,
                                 ""
-                        )).
+                        ))  .
                         then(argument("arguments", StringArgumentType.greedyString()).
                                 executes( (cc) -> invoke(
                                         cc,
@@ -302,10 +304,20 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
 
+        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").then(argument("path", StringArgumentType.word()).
+                suggests((cc, bb) -> null).//todo (in this pr) suggestion
+                then(literal("global").
+                executes((cc)-> {//todo (in this pr) actually placing script into folder
+                    String pathRequest = StringArgumentType.getString(cc,"path");
+                    String code = ScriptDownloader.getScriptCode(pathRequest);;
+                    Messenger.m(cc.getSource(), code);
+                    return ScriptDownloader.saveScriptToFile(pathRequest.substring(pathRequest.lastIndexOf('/')), code, cc.getSource().getMinecraftServer(), true);
+                })
+        ).then(literal("local")));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
-                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q));
+                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d));
         dispatcher.register(literal("script").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
                 then(literal("in").
