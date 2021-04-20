@@ -21,7 +21,7 @@ import net.minecraft.world.dimension.DimensionType;
 import java.util.List;
 import java.util.function.BinaryOperator;
 
-public class FixedCommandSource extends ServerCommandSource
+public class SnoopyCommandSource extends ServerCommandSource
 {
     private Vec3d position;
     private ServerWorld world;
@@ -35,7 +35,7 @@ public class FixedCommandSource extends ServerCommandSource
     private final Value[] error;
     private final List<Value> chatOutput;
 
-    public FixedCommandSource(ServerCommandSource original, Vec3d pos, Value[] error, List<Value> chatOutput)
+    public SnoopyCommandSource(ServerCommandSource original, Vec3d pos, Value[] error, List<Value> chatOutput)
     {
         super(CommandOutput.DUMMY, pos, Vec2f.ZERO, original.getWorld(), CarpetSettings.runPermissionLevel,
                 original.getName(), original.getDisplayName(), original.getMinecraftServer(), original.getEntity(), false,
