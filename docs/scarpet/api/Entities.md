@@ -422,6 +422,10 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'language')`
+
+Returns `null` for any non-player entity, if not returns the player's language as a string.
+
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
