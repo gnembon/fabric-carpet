@@ -54,7 +54,7 @@ public class FormattedTextValue extends StringValue
 
     @Override
     public boolean getBoolean() {
-          return text.getSiblings().size() > 0;
+        return !text.asString().isEmpty();
     }
 
     @Override
@@ -94,6 +94,10 @@ public class FormattedTextValue extends StringValue
     public static FormattedTextValue deserialize(String serialized)
     {
         return new FormattedTextValue(Text.Serializer.fromJson(serialized));
+    }
+
+    public static Text getTextByValue(Value value) {
+        return (value instanceof FormattedTextValue) ? ((FormattedTextValue) value).getText() : new LiteralText(value.getString());
     }
 
 }
