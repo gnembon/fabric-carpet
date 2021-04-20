@@ -202,7 +202,9 @@
     "BlockItem_creativeNoClipMixin",
     "WallStandingBlockItem_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin",
-    "BaseRangeDecorator_cleanLogsMixin", "BaseRangeDecorator2_cleanLogsMixin"
+
+    "VeryBiasedToBottomHeightProvider_cleanLogsMixin",
+    "TrapezoidHeightProvider_cleanLogsMixin"
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",

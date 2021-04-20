@@ -1,14 +1,14 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.class_6342;
+import net.minecraft.world.gen.heightprovider.TrapezoidHeightProvider;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(class_6342.class)
-public class BaseRangeDecorator2_cleanLogsMixin {
+@Mixin(TrapezoidHeightProvider.class)
+public class TrapezoidHeightProvider_cleanLogsMixin {
 
     //@SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "get",

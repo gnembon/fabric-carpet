@@ -1,14 +1,14 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
-import net.minecraft.class_6343;
+import net.minecraft.world.gen.heightprovider.VeryBiasedToBottomHeightProvider;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(class_6343.class)
-public class BaseRangeDecorator_cleanLogsMixin {
+@Mixin(VeryBiasedToBottomHeightProvider.class)
+public class VeryBiasedToBottomHeightProvider_cleanLogsMixin {
 
     //@SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "get",
