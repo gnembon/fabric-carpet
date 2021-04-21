@@ -304,16 +304,15 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
 
-        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").then(argument("path", StringArgumentType.word()).
+        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").then(literal("global").then(argument("path", StringArgumentType.greedyString()).
                 suggests((cc, bb) -> null).//todo (in this pr) suggestion
-                then(literal("global").
-                executes((cc)-> {//todo (in this pr) actually placing script into folder
+                executes((cc)-> {
                     String pathRequest = StringArgumentType.getString(cc,"path");
-                    String code = ScriptDownloader.getScriptCode(pathRequest);;
-                    Messenger.m(cc.getSource(), code);
-                    return ScriptDownloader.saveScriptToFile(pathRequest.substring(pathRequest.lastIndexOf('/')), code, cc.getSource().getMinecraftServer(), true);
-                })
-        ).then(literal("local")));
+                    Messenger.m(cc.getSource(),"gi Getting script from: "+pathRequest);
+                    String code = ScriptDownloader.getScriptCode(cc, pathRequest);;
+                    //Messenger.m(cc.getSource(), code);
+                    return 1;//ScriptDownloader.saveScriptToFile(pathRequest.substring(pathRequest.lastIndexOf('/')), code, cc.getSource().getMinecraftServer(), true);
+                }))).then(literal("local"));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
