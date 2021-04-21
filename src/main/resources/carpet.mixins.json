@@ -163,6 +163,7 @@
     "MobEntity_extremeMixin",
     "ProjectileEntity_extremeMixin",
     "Projectile_extremeMixin",
+    "WitherEntity_extremeMixin",
 
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",

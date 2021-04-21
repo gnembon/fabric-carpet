@@ -195,7 +195,7 @@ public class Scoreboards {
                     return (_c, _t) -> StringValue.of(objective.getCriterion().getName());
                 case "display_name":
                     if(modify) {
-                        Text text = (setValue instanceof FormattedTextValue)?((FormattedTextValue) setValue).getText():new LiteralText(setValue.getString());
+                        Text text = FormattedTextValue.getTextByValue(setValue);
                         objective.setDisplayName(text);
                         return LazyValue.TRUE;
                     }
@@ -408,11 +408,7 @@ public class Scoreboards {
 
                     Text displayName;
 
-                    if(settingVal instanceof FormattedTextValue) {
-                        displayName = ((FormattedTextValue) settingVal).getText();
-                    } else {
-                        displayName = new LiteralText(settingVal.getString());
-                    }
+                    displayName = FormattedTextValue.getTextByValue(settingVal);
 
                     team.setDisplayName(displayName);
 
@@ -451,11 +447,7 @@ public class Scoreboards {
 
                     Text prefix;
 
-                    if(settingVal instanceof FormattedTextValue) {
-                        prefix = ((FormattedTextValue) settingVal).getText();
-                    } else {
-                        prefix = new LiteralText(settingVal.getString());
-                    }
+                    prefix = FormattedTextValue.getTextByValue(settingVal);
 
                     team.setPrefix(prefix);
                     break;
@@ -481,11 +473,7 @@ public class Scoreboards {
 
                     Text suffix;
 
-                    if(settingVal instanceof FormattedTextValue) {
-                        suffix = ((FormattedTextValue) settingVal).getText();
-                    } else {
-                        suffix = new LiteralText(settingVal.getString());
-                    }
+                    suffix = FormattedTextValue.getTextByValue(settingVal);
 
                     team.setSuffix(suffix);
                     break;
@@ -547,11 +535,7 @@ public class Scoreboards {
                 case "name":
                     if(propertyValue == null) return (_c, _t) -> new FormattedTextValue(bossBar.getName());
 
-                    if(propertyValue instanceof FormattedTextValue) {
-                        bossBar.setName(((FormattedTextValue) propertyValue).getText());
-                    } else {
-                        bossBar.setName(new LiteralText(propertyValue.getString()));
-                    }
+                    bossBar.setName(FormattedTextValue.getTextByValue(propertyValue));
                     return LazyValue.TRUE;
                 case "add_player":
                     if(propertyValue == null) throw new InternalExpressionException("Bossbar property " + property + " can't be queried, add a third parameter");

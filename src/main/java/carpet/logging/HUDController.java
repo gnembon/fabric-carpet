@@ -38,7 +38,7 @@ public class HUDController
      * Adds listener to be called when HUD is updated for logging information
      * @param listener - a method to be called when new HUD inforation are collected
      */
-    public void register(Consumer<MinecraftServer> listener)
+    public static void register(Consumer<MinecraftServer> listener)
     {
         HUDListeners.add(listener);
     }

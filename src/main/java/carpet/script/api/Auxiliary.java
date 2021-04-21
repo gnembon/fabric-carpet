@@ -528,7 +528,7 @@ public class Auxiliary {
                 targets = playerTargets;
                 res = lv.get(1).evalValue(c);
             }
-            Text message = (res instanceof FormattedTextValue)?((FormattedTextValue) res).getText():new LiteralText(res.getString());
+            Text message = FormattedTextValue.getTextByValue(res);
             if (targets == null)
             {
                 s.sendFeedback(message, false);
@@ -595,16 +595,8 @@ public class Auxiliary {
             if (lv.size() > 2)
             {
                 pVal = lv.get(2).evalValue(c);
-                if (pVal instanceof FormattedTextValue)
-                {
-                    title = ((FormattedTextValue) pVal).getText();
-                    soundsTrue = !title.asString().isEmpty();
-                }
-                else
-                {
-                    title = new LiteralText(pVal.getString());
-                    soundsTrue = pVal.getBoolean();
-                }
+                title = FormattedTextValue.getTextByValue(pVal);
+                soundsTrue = pVal.getBoolean();
             }
             else title = null; // Will never happen, just to make lambda happy
             if (packetGetter == null)
