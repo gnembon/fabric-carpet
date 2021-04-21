@@ -824,7 +824,9 @@ public class CarpetEventServer
             private final Set<Identifier> skippedStats = new HashSet<Identifier>(){{
                 add(Stats.TIME_SINCE_DEATH);
                 add(Stats.TIME_SINCE_REST);
-                add(Stats.PLAY_ONE_MINUTE);
+                //add(Stats.PLAY_ONE_MINUTE);
+                add(Stats.PLAY_TIME);
+                add(Stats.TOTAL_WORLD_TIME);
             }};
             @Override
             public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount)

@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(TrapezoidHeightProvider.class)
 public class TrapezoidHeightProvider_cleanLogsMixin {
 
-    //@SuppressWarnings("UnresolvedMixinReference")
+    @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "get",
             at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;)V")
     )
