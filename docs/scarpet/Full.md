@@ -1890,6 +1890,30 @@ conflicts and ambiguities between different paths of execution. While ambiguous 
 and they tend to execute correctly, the suggestion support works really poorly in these situations and scarpet
 will warn and prevent such apps from loading with an error message. If `allow_command_conflicts` is specified and 
 `true`, then scarpet will load all provided commands regardless.
+*   `'requires'` - defines either a map of mod dependencies in Fabric's mod.json style, or a function to be executed. If it's a map, it will only
+    allow the app to load if all of the mods specified in the map meet the version criteria. If it's a function, it will prevent the app from 
+    loading if the function does not execute to `false`, displaying whatever is returned to the user.
+    
+    Available prefixes for the version comparison are `>=`, `<=`, `>`, `<`, `~`, `^` and `=` (default if none specified), based in the spec 
+    at [NPM docs about SemVer ranges](https://docs.npmjs.com/cli/v6/using-npm/semver#ranges)
+    ```
+    __config() -> {
+      'requires' -> {
+        'carpet' -> '>=1.4.33', // Will require Carpet with a version >= 1.4.32
+        'minecraft' -> '>=1.16', // Will require Minecraft with a version >= 1.16
+        'chat-up' -> '*' // Will require any version of the chat-up mod
+      }
+    }
+    ```
+    ```
+    __config() -> {
+      'requires' -> _() -> (
+          d = convert_date(unix_time());
+          if(d:6 == 5 && d:2 == 13, 
+            'Its Friday, 13th' // Will throw this if Friday 13th, will load else since `if` function returns `null` by default
+          )
+    }
+    ```
 *   `'command_permission'` - indicates a custom permission to run the command. It can either be a number indicating 
 permission level (from 1 to 4) or a string value, one of: `'all'` (default), `'ops'` (default opped player with permission level of 2),
 `'server'` - command accessible only through the server console and commandblocks, but not in chat, `'players'` - opposite
@@ -2120,7 +2144,8 @@ if a player is in the other dimension, calls to entities and blocks around that 
 Moreover, running commandblocks in the spawn chunks would mean that commands will always refer to the overworld 
 blocks and entities. In case you would want to run commands across all dimensions, just run three of them, 
 using `/execute in overworld/the_nether/the_end run script run ...` and query players using `player('*')`, 
-which only returns players in current dimension, or use `in_dimension(expr)` function.# Blocks / World API
+which only returns players in current dimension, or use `in_dimension(expr)` function.
+# Blocks / World API
 
 ## Specifying blocks
 
@@ -3058,20 +3083,8 @@ living entities based on their spawn group. Negative descriptor resolves to all 
 category.
 * All entity tags including those provided with datapacks. Built-in entity tags include: `skeletons`, `raiders`, 
 `beehive_inhabitors` (bee, duh), `arrows` and `impact_projectiles`.
-* Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
-`area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
-`chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
-`egg`, `elder_guardian`, `end_crystal`, `ender_dragon`, `ender_pearl`, `enderman`, `endermite`, `evoker`, 
-`evoker_fangs`, `experience_bottle`, `experience_orb`, `eye_of_ender`, `falling_block`, `fireball`, `firework_rocket`, 
-`fishing_bobber`, `fox`, `furnace_minecart`, `ghast`, `giant`, `guardian`, `hoglin`, `hopper_minecart`, `horse`, 
-`husk`, `illusioner`, `iron_golem`, `item`, `item_frame`, `leash_knot`, `lightning_bolt`, `llama`, `llama_spit`, 
-`magma_cube`, `minecart`, `mooshroom`, `mule`, `ocelot`, `painting`, `panda`, `parrot`, `phantom`, `pig`, `piglin`, 
-`piglin_brute`, `pillager`, `player`, `polar_bear`, `potion`, `pufferfish`, `rabbit`, `ravager`, `salmon`, `sheep`, 
-`shulker`, `shulker_bullet`, `silverfish`, `skeleton`, `skeleton_horse`, `slime`, `small_fireball`, `snow_golem`, 
-`snowball`, `spawner_minecart`, `spectral_arrow`, `spider`, `squid`, `stray`, `strider`, `tnt`, `tnt_minecart`, 
-`trader_llama`, `trident`, `tropical_fish`, `turtle`, `vex`, `villager`, `vindicator`, `wandering_trader`, `witch`, 
-`wither`, `wither_skeleton`, `wither_skull`, `wolf`, `zoglin`, `zombie`, `zombie_horse`, `zombie_villager`, 
-`zombified_piglin`
+* Any of the standard entity types, equivalent to selection from `/summon` vanilla command, which is one of the options returned
+by `entity_types()`, except for `'fishing_bobber'` and `'player'`.
 
 All categories can be preceded with `'!'` which will fetch all entities (unless otherwise noted) that are valid (health > 0) but not 
 belonging to that group. 
@@ -4910,7 +4923,7 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
 Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
  * `players` is either an online player or a list of players. When sending a single player, it will throw if the player is invalid or offline.
@@ -4922,9 +4935,17 @@ Sends the player (or players if `players` is a list) a title of a specific type,
    Executing with those will set the times to the specified ones.
    Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
+### `display_title(players, 'player_list_header', text)`
+### `display_title(players, 'player_list_footer', text)`
+
+Changes the header or footer of the player list for the specified targets.
+If `text` is `null` or an empty string it will remove the header or footer for the specified targets.
+In case the player has Carpet loggers running, the footer specified by Scarpet will appear above the loggers.
+
 ### `logger(msg), logger(type, msg)`
 
-Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
+Prints the message to system logs, and not to chat.
+By default prints an info, unless you specify otherwise in the `type` parameter.
 
 Available output types:
 
@@ -5321,6 +5342,7 @@ Available options in the scarpet app space:
  * `server_banned_players` - list of banned player names
  * `server_banned_ips` - list of banned IP addresses
  * `server_dev_environment` - boolean indicating whether this server is in a development environment.
+ * `server_mods` - map with all loaded mods mapped to their versions as strings
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
