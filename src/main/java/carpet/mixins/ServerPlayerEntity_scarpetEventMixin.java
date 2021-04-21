@@ -46,8 +46,6 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity 
 
     @Shadow public boolean notInAnyWorld;
 
-    @Shadow public int pingMilliseconds;
-
     @Redirect(method = "consumeItem", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/PlayerEntity;consumeItem()V"
@@ -132,7 +130,7 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity 
     }
 
     //getting player language
-    private String language = null;
+    private String language;
 
     public String getLanguage(){
         return this.language;
