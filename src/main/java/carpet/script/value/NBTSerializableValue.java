@@ -569,13 +569,14 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
     @Override
     public Value get(Value value)
     {
-        NbtPathArgumentType.NbtPath path = cachePath(value.getString());
+        String valString = value.getString();
+        NbtPathArgumentType.NbtPath path = cachePath(valString);
         try
         {
             List<Tag> tags = path.get(getTag());
             if (tags.size()==0)
                 return Value.NULL;
-            if (tags.size()==1)
+            if (tags.size()==1 && !valString.endsWith("[]"))
                 return NBTSerializableValue.decodeTag(tags.get(0));
             return ListValue.wrap(tags.stream().map(NBTSerializableValue::decodeTag).collect(Collectors.toList()));
         }
