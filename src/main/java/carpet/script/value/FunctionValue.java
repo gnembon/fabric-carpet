@@ -11,7 +11,6 @@ import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
-import carpet.script.exception.ThrowStatement;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
@@ -173,15 +172,26 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         }
     }
 
-    @Override
-    public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+    public void checkArgs(int candidates)
     {
-        assertArgsOk(lazyParams, (fixedArgs) ->{
+        int actual = getArguments().size();
+
+        if (candidates < actual)
+            throw new InternalExpressionException("Function " + getPrettyString() + " requires at least " + actual + " arguments");
+        if (candidates > actual && getVarArgs() == null)
+            throw new InternalExpressionException("Function " + getPrettyString() + " requires " + actual + " arguments");
+    }
+
+    @Override
+    public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyPrams)
+    {
+        List<Value> resolvedArgs = Fluff.AbstractFunction.unpackArgs(lazyPrams, c);
+        assertArgsOk(resolvedArgs, (fixedArgs) ->{
             if (fixedArgs)  // wrong number of args for fixed args
             {
                 throw new ExpressionException(c, e, t,
                         "Incorrect number of arguments for function "+name+
-                                ". Should be "+args.size()+", not "+lazyParams.size()+" like "+args
+                                ". Should be "+args.size()+", not "+resolvedArgs.size()+" like "+args
                 );
             }
             else  // too few args for varargs
@@ -190,7 +200,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
                 argList.add("... "+varArgs);
                 throw new ExpressionException(c, e, t,
                         "Incorrect number of arguments for function "+name+
-                                ". Should be at least "+args.size()+", not "+lazyParams.size()+" like "+argList
+                                ". Should be at least "+args.size()+", not "+resolvedArgs.size()+" like "+argList
                 );
             }
         });
@@ -200,15 +210,15 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         for (int i=0; i<args.size(); i++)
         {
             String arg = args.get(i);
-            Value val = lazyParams.get(i).evalValue(c).reboundedTo(arg); // todo check if we need to copy that
+            Value val = resolvedArgs.get(i).reboundedTo(arg); // todo check if we need to copy that
             newFrame.setVariable(arg, (cc, tt) -> val);
         }
         if (varArgs != null)
         {
             List<Value> extraParams = new ArrayList<>();
-            for (int i = args.size(), mx = lazyParams.size(); i < mx; i++)
+            for (int i = args.size(), mx = resolvedArgs.size(); i < mx; i++)
             {
-                extraParams.add(lazyParams.get(i).evalValue(c).reboundedTo(null)); // copy by value I guess
+                extraParams.add(resolvedArgs.get(i).reboundedTo(null)); // copy by value I guess
             }
             Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
             newFrame.setVariable(varArgs, (cc, tt) -> rest);

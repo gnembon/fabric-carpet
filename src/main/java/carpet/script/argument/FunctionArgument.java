@@ -1,6 +1,7 @@
 package carpet.script.argument;
 
 import carpet.script.Context;
+import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.ScriptHost;
 import carpet.script.bundled.Module;
@@ -93,5 +94,15 @@ public class FunctionArgument<T> extends Argument
         if (params.size() > 1) args = params.subList(1,params.size());
 
         return new FunctionArgument<>(function, 0, args);
+    }
+
+    public void checkArgs() {
+        function.checkArgs(args.size());
+    }
+
+    public List<Value> unpackArgs(Context c) {
+        List<Value> unpackedArgs = Fluff.AbstractFunction.unpackArgs((List<LazyValue>) args, c);
+        function.checkArgs(unpackedArgs.size());
+        return unpackedArgs;
     }
 }

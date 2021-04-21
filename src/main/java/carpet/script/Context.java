@@ -19,6 +19,7 @@ public class Context
     public static final int LOCALIZATION = 8;
     public static final int LVALUE = 9;
     public static final int MAPDEF = 10;
+    public static final int CALLARGS = 11;
 
     public Map<String, LazyValue> variables = new HashMap<>();
 

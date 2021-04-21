@@ -773,12 +773,16 @@ public class Expression
                     stack.set(stack.size() - 1, stack.peek() - 2 + 1);
                     break;
                 case FUNCTION:
-                    ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
-                    int numParams = stack.pop();
-                    if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
-                    {
-                        throw new ExpressionException(c, this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
-                    }
+                    //ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
+                    //int numParams = stack.pop();
+                    //if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
+                    //{
+                    //    throw new ExpressionException(c, this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
+                    //}
+                    stack.pop();
+                    // due to unpacking, all functions can have variable number of arguments
+                    // we will be checking that at runtime.
+                    // TODO try analyze arguments and assess if its possible that they are static
                     if (stack.size() <= 0)
                     {
                         throw new ExpressionException(c, this, token, "Too many function calls, maximum scope exceeded");

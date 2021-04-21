@@ -19,7 +19,7 @@ public class Threading
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
             FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
-            ThreadValue thread = new ThreadValue(Value.NULL, functionArgument.function, expr, tok, c, FunctionValue.resolveArgs(functionArgument.args, c, t));
+            ThreadValue thread = new ThreadValue(Value.NULL, functionArgument.function, expr, tok, c, functionArgument.unpackArgs(c));
             Thread.yield();
             return (cc, tt) -> thread;
         });
@@ -30,7 +30,7 @@ public class Threading
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
             Value queue = lv.get(0).evalValue(c);
             FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
-            ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, FunctionValue.resolveArgs(functionArgument.args, c, t));
+            ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.unpackArgs(c));
             Thread.yield();
             return (cc, tt) -> thread;
         });

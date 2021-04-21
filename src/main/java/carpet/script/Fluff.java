@@ -1,6 +1,9 @@
 package carpet.script;
 
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.FunctionUnpackedArgumentsValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;
@@ -85,6 +88,30 @@ public abstract class Fluff
             super(numParams);
         }
 
+        public static List<Value> unpackArgs(List<LazyValue> lzargs, Context c)
+        {
+            List<Value> args = new ArrayList<>();
+            for (LazyValue lv : lzargs)
+            {
+                Value arg = lv.evalValue(c, Context.CALLARGS);
+                if (arg instanceof FunctionUnpackedArgumentsValue)
+                {
+                    args.addAll(((ListValue) arg).getItems());
+                }
+                else
+                {
+                    args.add(arg);
+                }
+            }
+            return args;
+        }
+
+        public void checkArgs(int candidates)
+        {
+            if (!numParamsVaries() && getNumParams() !=candidates)
+                throw new InternalExpressionException("Function " + getName() + " expected " + getNumParams() + " parameters, got " + candidates);
+        }
+
         @Override
         public LazyValue lazyEval(Context cc, Integer type, Expression e, Tokenizer.Token t, final List<LazyValue> lazyParams)
         {
@@ -100,10 +127,9 @@ public abstract class Fluff
 
                     private List<Value> getParams(Context c) {
                         if (params == null) {
-                            params = new ArrayList<>();
-                            for (LazyValue lazyParam : lazyParams) {
-                                params.add(lazyParam.evalValue(c)); // none type default by design
-                            }
+                            // very likely needs to be dynamic, so not static like here, or remember if it was.
+                            params = unpackArgs(lazyParams, c);
+                            checkArgs(params.size());
                         }
                         return params;
                     }

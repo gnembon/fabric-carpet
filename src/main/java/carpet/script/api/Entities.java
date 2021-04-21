@@ -308,7 +308,7 @@ public class Entities {
             }
             else
             {
-                types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t)));
+                types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, funArg.unpackArgs(c)));
             }
             Value ret = new NumericValue(types.size());
             return (cc, tt) -> ret;
@@ -326,7 +326,7 @@ public class Entities {
 
             FunctionArgument<LazyValue> funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, false);
 
-            ((EntityValue) v).setEvent((CarpetContext)c, what, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t));
+            ((EntityValue) v).setEvent((CarpetContext)c, what, funArg.function, funArg.unpackArgs(c));
 
             return LazyValue.NULL;
         });

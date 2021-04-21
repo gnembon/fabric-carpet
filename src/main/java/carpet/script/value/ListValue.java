@@ -70,7 +70,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         items.addAll(list);
     }
 
-    private ListValue(List<Value> list)
+    protected ListValue(List<Value> list)
     {
         items = list;
     }
