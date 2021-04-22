@@ -24,24 +24,16 @@ public class ScriptDownloader {
         return saveScriptToFile(path, code, cc.getSource().getMinecraftServer(),true);
     }
 
-    public static String getScriptCode(CommandContext<ServerCommandSource> cc, String fullPath){
-        String link = "https://github.com/gnembon/scarpet/tree/master/programs/"+ fullPath;
-        URL appURL;
-        HttpURLConnection http;
+    public static String getScriptCode(String path){
         try {
-            appURL = new URL(link);
-            http = (HttpURLConnection) appURL.openConnection();
-        }
-        catch (IOException e){
-            throw new CommandException(new LiteralText("'"+ fullPath + "' is not a valid path to a scarpet app"));
-        }
-        Messenger.m(cc.getSource(), "gi Got valid URL and HttpURLConnection objects...");
-        try {
-            System.out.println("http.getHeaderFields().keySet() = " + http.getHeaderFields().keySet());
-            System.out.println("http.getRequestProperties().keySet() = " + http.getRequestProperties().keySet());
-            return "";
-        } catch (Exception e) {
-            throw new CommandException(new LiteralText("Error while getting code: "+ Arrays.toString(e.getStackTrace())));
+            String link = "https://raw.githubusercontent.com/gnembon/scarpet/master/programs/"+ path;
+            URL appURL = new URL(link);
+            HttpURLConnection http = (HttpURLConnection) appURL.openConnection();
+            return getStringFromStream((InputStream) http.getContent());
+        } catch (FileNotFoundException e){
+            throw new CommandException(new LiteralText("'"+ path + "' is not a valid path to a scarpet app"));
+        } catch (IOException e) {
+            throw new new CommandException(new LiteralText("Error while getting code: "+ e));//todo figure out what else can trigger this
         }
     }
 
