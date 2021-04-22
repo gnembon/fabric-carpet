@@ -35,6 +35,7 @@ public class Loops {
             throw new InternalExpressionException("'continue' can only be called with zero or one argument");
         });
 
+        // lazy
         expression.addLazyFunction("while", 3, (c, t, lv) ->
         {
             long limit = NumericValue.asNumber(lv.get(1).evalValue(c)).getLong();

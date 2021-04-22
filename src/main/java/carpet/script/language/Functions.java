@@ -2,12 +2,13 @@ package carpet.script.language;
 
 import carpet.script.Context;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
+import carpet.script.Fluff;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.FunctionSignatureValue;
+import carpet.script.value.FunctionUnpackedArgumentsValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.FunctionAnnotationValue;
 import carpet.script.value.ListValue;
@@ -24,20 +25,20 @@ public class Functions {
     public static void apply(Expression expression) // public just to get the javadoc right
     {
         // artificial construct to handle user defined functions and function definitions
-        expression.addLazyFunction("import", -1, (c, t, lv) ->
+        expression.addContextFunction("import", -1, (c, t, lv) ->
         {
             if (lv.size() < 1) throw new InternalExpressionException("'import' needs at least a module name to import, and list of values to import");
-            String moduleName = lv.get(0).evalValue(c).getString();
+            String moduleName = lv.get(0).getString();
             c.host.importModule(c, moduleName);
             moduleName = moduleName.toLowerCase(Locale.ROOT);
             if (lv.size() > 1)
-                c.host.importNames(c, expression.module, moduleName, lv.subList(1, lv.size()).stream().map((l) -> l.evalValue(c).getString()).collect(Collectors.toList()));
+                c.host.importNames(c, expression.module, moduleName, lv.subList(1, lv.size()).stream().map(Value::getString).collect(Collectors.toList()));
             if (t == Context.VOID)
-                return LazyValue.NULL;
-            ListValue list = ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new).collect(Collectors.toList()));
-            return (cc, tt) -> list;
+                return Value.NULL;
+            return ListValue.wrap(c.host.availableImports(moduleName).map(StringValue::new).collect(Collectors.toList()));
         });
 
+        // needs to be lazy because of custom context of execution of arguments as a signature
         expression.addLazyFunctionWithDelegation("call",-1, (c, t, expr, tok, lv) ->
         { // adjust based on c
             if (lv.size() == 0)
@@ -45,7 +46,8 @@ public class Functions {
             //lv.remove(lv.size()-1); // aint gonna cut it // maybe it will because of the eager eval changes
             if (t != Context.SIGNATURE) // just call the function
             {
-                FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
+                List<Value> args = Fluff.AbstractFunction.unpackLazy(lv, c, Context.NONE);
+                FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, args, 0, false, true);
                 FunctionValue fun = functionArgument.function;
                 return fun.callInContext(c, t, functionArgument.args);
             }
@@ -63,7 +65,7 @@ public class Functions {
                 }
                 if (v instanceof FunctionAnnotationValue)
                 {
-                    if (((FunctionAnnotationValue) v).type == 0)
+                    if (((FunctionAnnotationValue) v).type == FunctionAnnotationValue.Type.GLOBAL)
                     {
                         globals.add(v.boundVariable);
                     }
@@ -83,32 +85,37 @@ public class Functions {
             return (cc, tt) -> retval;
         });
 
-        expression.addLazyFunction("outer", 1, (c, t, lv) ->
+        expression.addContextFunction("outer", 1, (c, t, lv) ->
         {
             if (t != Context.LOCALIZATION)
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
-            return (cc, tt) -> new FunctionAnnotationValue(lv.get(0).evalValue(c), 0);
+            return new FunctionAnnotationValue(lv.get(0), FunctionAnnotationValue.Type.GLOBAL);
         });
 
+        // lazy because of typed evaluation of the argument
         expression.addLazyUnaryOperator("...", Operators.precedence.get("def->..."), false, (c, t, lv) ->
         {
             if (t == Context.LOCALIZATION)
-                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), 1);
-            if (t == Context.CALLARGS)
-            {
-                Value params = lv.evalValue(c, Context.NONE);
-                if (params instanceof ListValue)
-                    return (cc, tt) -> params;
-                if (!(params instanceof AbstractListValue))
-                    throw new InternalExpressionException("Unable to unpack a non-list");
-                Value unpacked = ListValue.wrap(ImmutableList.copyOf(((AbstractListValue) params).iterator()));
-                return (cc, tt) -> unpacked;
-            }
-            throw new InternalExpressionException("That functionality has not been implemented yet.");
+                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
 
+            Value params = lv.evalValue(c, t);
+            FunctionUnpackedArgumentsValue fuaval;
+            if (params instanceof ListValue)
+            {
+                fuaval = new FunctionUnpackedArgumentsValue(((ListValue) params).getItems());
+                return (cc, tt) -> fuaval;
+            }
+            if (!(params instanceof AbstractListValue))
+                throw new InternalExpressionException("Unable to unpack a non-list");
+            fuaval = new FunctionUnpackedArgumentsValue(
+                    ImmutableList.copyOf(((AbstractListValue) params).iterator())
+            );
+            return (cc, tt) -> fuaval;
+            //throw new InternalExpressionException("That functionality has not been implemented yet.");
         });
 
         //assigns const procedure to the lhs, returning its previous value
+        // must be lazy due to RHS being an expression to save to execute
         expression.addLazyBinaryOperatorWithDelegation("->", Operators.precedence.get("def->..."), false, (c, type, e, t, lv1, lv2) ->
         {
             if (type == Context.MAPDEF)

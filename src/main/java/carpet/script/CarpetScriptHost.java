@@ -134,7 +134,7 @@ public class CarpetScriptHost extends ScriptHost
         return host;
     }
 
-    private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument<Value> funcSpec, List<String> paramNames) throws CommandSyntaxException
+    private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument funcSpec, List<String> paramNames) throws CommandSyntaxException
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
         CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
@@ -158,7 +158,7 @@ public class CarpetScriptHost extends ScriptHost
     public LiteralArgumentBuilder<ServerCommandSource> addPathToCommand(
             LiteralArgumentBuilder<ServerCommandSource> command,
             List<CommandToken> path,
-            FunctionArgument<Value> functionSpec
+            FunctionArgument functionSpec
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
@@ -180,14 +180,14 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> getNewCommandTree(
-            List<Pair<List<CommandToken>,FunctionArgument<Value>>> entries, Function<ServerCommandSource, Boolean> useValidator
+            List<Pair<List<CommandToken>,FunctionArgument>> entries, Function<ServerCommandSource, Boolean> useValidator
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
         Function<ServerCommandSource, Boolean> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
                requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player));
-        for (Pair<List<CommandToken>,FunctionArgument<Value>> commandData : entries)
+        for (Pair<List<CommandToken>,FunctionArgument> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
         }
@@ -547,12 +547,12 @@ public class CarpetScriptHost extends ScriptHost
         if (commands == null) return null;
         if (!(commands instanceof MapValue))
             throw CommandArgument.error("'commands' element in config should be a map");
-        List<Pair<List<CommandToken>,FunctionArgument<Value>>> commandEntries = new ArrayList<>();
+        List<Pair<List<CommandToken>,FunctionArgument>> commandEntries = new ArrayList<>();
 
         for (Map.Entry<Value, Value> commandsData : ((MapValue)commands).getMap().entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList()))
         {
             List<CommandToken> elements = CommandToken.parseSpec(commandsData.getKey().getString(), this);
-            FunctionArgument<Value> funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
+            FunctionArgument funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
             commandEntries.add(Pair.of(elements, funSpec));
         }
         commandEntries.sort(new ListComparator<>());
@@ -806,12 +806,10 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value call(ServerCommandSource source, FunctionValue function, List<Value> suppliedArgs)
+    public Value call(ServerCommandSource source, FunctionValue function, List<Value> argv)
     {
         if (CarpetServer.scriptServer.stopAll)
             throw new CarpetExpressionException("SCARPET PAUSED", null);
-
-        List<LazyValue> argv = FunctionValue.lazify(suppliedArgs);
 
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
@@ -819,7 +817,7 @@ public class CarpetScriptHost extends ScriptHost
             String error = "Fail: stored function "+function.getPrettyString()+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
             for (int i = 0; i < max(argv.size(), args.size()); i++)
             {
-                error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).evalValue(null).getString():"??")+"\n";
+                error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).getString():"??")+"\n";
             }
             throw new CarpetExpressionException(error, null);
         }
@@ -828,7 +826,7 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
             return function.getExpression().evalValue(
-                    () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
+                    () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
             );
@@ -857,7 +855,7 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, pos);
             return fun.getExpression().evalValue(
-                    () -> fun.lazyEval(context, Context.VOID, fun.getExpression(), fun.getToken(), FunctionValue.lazify(argv)),
+                    () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
                     context,
                     Context.VOID);
         }

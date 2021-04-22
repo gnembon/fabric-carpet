@@ -1208,7 +1208,7 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false);
+                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false, false);
                 pos = new BlockPos(locator.vec.x, locator.vec.y, locator.vec.z);
                 if (lv.size() > locator.offset)
                 {
@@ -1237,7 +1237,7 @@ public class EntityValue extends Value
             else if (a instanceof ListValue)
             {
                 List<Value> params= ((ListValue) a).getItems();
-                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false);
+                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false, false);
                 BlockPos pos = new BlockPos(blockLocator.vec);
                 RegistryKey<World> world = spe.getEntityWorld().getRegistryKey();
                 float angle = spe.getHeadYaw();

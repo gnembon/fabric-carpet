@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class FunctionArgument<T> extends Argument
+public class FunctionArgument extends Argument
 {
     public FunctionValue function;
-    public List<T> args;
+    public List<Value> args;
 
-    private FunctionArgument(FunctionValue function, int offset, List<T> args)
+    private FunctionArgument(FunctionValue function, int offset, List<Value> args)
     {
         super(offset);
         this.function = function;
@@ -39,18 +39,18 @@ public class FunctionArgument<T> extends Argument
      *                  if the number of supplied arguments is right
      * @return argument data
      */
-    public static FunctionArgument<LazyValue> findIn(
+    public static FunctionArgument findIn(
             Context c,
             Module module,
-            List<LazyValue> params,
+            List<Value> params,
             int offset,
             boolean allowNone,
             boolean checkArgs)
     {
-        Value functionValue = params.get(offset).evalValue(c);
+        Value functionValue = params.get(offset);
         if (functionValue.isNull())
         {
-            if (allowNone) return new FunctionArgument<>(null, offset+1, Collections.emptyList());
+            if (allowNone) return new FunctionArgument(null, offset+1, Collections.emptyList());
             throw new InternalExpressionException("function argument cannot be null");
         }
         if (!(functionValue instanceof FunctionValue))
@@ -68,12 +68,12 @@ public class FunctionArgument<T> extends Argument
             if (extraargs > 0 && fun.getVarArgs() == null)
                 throw new InternalExpressionException("Function " + fun.getPrettyString() + " requires " + fun.getArguments().size() + " arguments");
         }
-        List<LazyValue> lvargs = new ArrayList<>();
+        List<Value> lvargs = new ArrayList<>();
         for (int i = offset+1, mx = params.size(); i < mx; i++) lvargs.add(params.get(i));
-        return new FunctionArgument<>(fun, offset + 1 + argsize, lvargs);
+        return new FunctionArgument(fun, offset + 1 + argsize, lvargs);
     }
 
-    public static FunctionArgument<Value> fromCommandSpec(ScriptHost host, Value funSpec) throws CommandSyntaxException {
+    public static FunctionArgument fromCommandSpec(ScriptHost host, Value funSpec) throws CommandSyntaxException {
         FunctionValue function;
         List<Value> args = Collections.emptyList();
         if (!(funSpec instanceof ListValue))
@@ -93,16 +93,11 @@ public class FunctionArgument<T> extends Argument
         }
         if (params.size() > 1) args = params.subList(1,params.size());
 
-        return new FunctionArgument<>(function, 0, args);
+        return new FunctionArgument(function, 0, args);
     }
 
-    public void checkArgs() {
+    public List<Value> checkedArgs() {
         function.checkArgs(args.size());
-    }
-
-    public List<Value> unpackArgs(Context c) {
-        List<Value> unpackedArgs = Fluff.AbstractFunction.unpackArgs((List<LazyValue>) args, c);
-        function.checkArgs(unpackedArgs.size());
-        return unpackedArgs;
+        return args;
     }
 }

@@ -205,6 +205,27 @@ public class Expression
         });
     }
 
+    public void addFunctionWithDelegation(String name, int numpar,
+                                              QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(numpar)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
+            {
+                try
+                {
+                    Value res = fun.apply(c, type, e, t, unpackArgs(lv, c, Context.NONE));
+                    return (cc, tt) -> res;
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
     public void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc,
                                        QuadFunction<Context, Integer, LazyValue, LazyValue, LazyValue> lazyfun)
     {
@@ -217,6 +238,28 @@ public class Expression
                 {
                     Value.assertNotNull(v1, v2);
                     return lazyfun.apply(c, t, v1, v2);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, token);
+                }
+            }
+        });
+    }
+
+    public void addBinaryContextOperator(String surface, int precedence, boolean leftAssoc,
+                                      QuadFunction<Context, Integer, Value, Value, Value> fun)
+    {
+        operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            {
+                try
+                {
+                    Value.assertNotNull(v1, v2); // does anybody needs those
+                    Value ret = fun.apply(c, t, v1.evalValue(c, Context.NONE), v2.evalValue(c, Context.NONE));
+                    return (cc, tt) -> ret;
                 }
                 catch (RuntimeException exc)
                 {
@@ -343,6 +386,47 @@ public class Expression
             }
         });
     }
+
+    public void addContextFunction(String name, int num_params, TriFunction<Context, Integer, List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(num_params)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            {
+                try
+                {
+                    Value ret = fun.apply(c, i, unpackArgs(lazyParams, c, Context.NONE));
+                    return (cc, tt) -> ret;
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
+    public void addTypedContextFunction(String name, int num_params, int reqType, TriFunction<Context, Integer, List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(num_params)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            {
+                try
+                {
+                    Value ret = fun.apply(c, i, unpackArgs(lazyParams, c, reqType));
+                    return (cc, tt) -> ret;
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
     public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, String varArgs, List<String> outers, LazyValue code)
     {
         if (functions.containsKey(name))

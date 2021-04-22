@@ -44,6 +44,7 @@ public class Operators {
         expression.addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
                 new NumericValue(java.lang.Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
 
+        // lazy cause RHS is only conditional
         expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
@@ -51,6 +52,7 @@ public class Operators {
             return lv2;
         });
 
+        // lazy cause RHS is only conditional
         expression.addLazyBinaryOperator("||", precedence.get("or||"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
@@ -73,6 +75,7 @@ public class Operators {
         expression.addBinaryOperator("!=", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.FALSE : Value.TRUE);
 
+        // lazy cause of assignment which is non-trivial
         expression.addLazyBinaryOperator("=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
@@ -111,6 +114,7 @@ public class Operators {
             return boundedLHS;
         });
 
+        // lazy due to assignment
         expression.addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
@@ -171,10 +175,8 @@ public class Operators {
             return boundedLHS;
         });
 
-        expression.addLazyBinaryOperator("<>", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
+        expression.addBinaryContextOperator("<>", precedence.get("assign=<>"), false, (c, t, v1, v2) ->
         {
-            Value v1 = lv1.evalValue(c);
-            Value v2 = lv2.evalValue(c);
             if (v1 instanceof ListValue.ListConstructorValue && v2 instanceof ListValue.ListConstructorValue)
             {
                 List<Value> ll = ((ListValue)v1).getItems();
@@ -196,7 +198,7 @@ public class Operators {
                     expression.setAnyVariable(c, lname, (cc, tt) -> rval);
                     expression.setAnyVariable(c, rname, (cc, tt) -> lval);
                 }
-                return (cc, tt) -> Value.TRUE;
+                return Value.TRUE;
             }
             v1.assertAssignable();
             v2.assertAssignable();
@@ -206,13 +208,14 @@ public class Operators {
             Value rval = v1.reboundedTo(rvalvar);
             expression.setAnyVariable(c, lvalvar, (cc, tt) -> lval);
             expression.setAnyVariable(c, rvalvar, (cc, tt) -> rval);
-            return (cc, tt) -> lval;
+            return lval;
         });
 
         expression.addUnaryOperator("-",  false, v -> NumericValue.asNumber(v).opposite());
 
         expression.addUnaryOperator("+", false, NumericValue::asNumber);
 
+        // could be non-lazy, but who cares - its a small one.
         expression.addLazyUnaryOperator("!", precedence.get("unary+-!"), false, (c, t, lv)-> lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE); // might need context boolean
 
     }

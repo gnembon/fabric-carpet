@@ -29,21 +29,22 @@ public class BlockArgument extends Argument
         block = b;
         this.replacement = replacement;
     }
-    public static BlockArgument findIn(CarpetContext c, List<LazyValue> params, int offset)
+
+    public static BlockArgument findIn(CarpetContext c, List<Value> params, int offset)
     {
         return findIn(c, params,offset, false, false, false);
     }
 
-    public static BlockArgument findIn(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString)
+    public static BlockArgument findIn(CarpetContext c, List<Value> params, int offset, boolean acceptString)
     {
         return findIn(c, params,offset, acceptString, false, false);
     }
 
-    public static BlockArgument findIn(CarpetContext c, List<LazyValue> params, int offset, boolean acceptString, boolean optional, boolean anyString)
+    public static BlockArgument findIn(CarpetContext c, List<Value> params, int offset, boolean acceptString, boolean optional, boolean anyString)
     {
         try
         {
-            Value v1 = params.get(0 + offset).evalValue(c);
+            Value v1 = params.get(0 + offset);
             //add conditional from string name
             if (optional && v1 instanceof NullValue)
             {
@@ -76,8 +77,8 @@ public class BlockArgument extends Argument
                         1+offset);
             }
             int xpos = (int) NumericValue.asNumber(v1).getLong();
-            int ypos = (int) NumericValue.asNumber( params.get(1 + offset).evalValue(c)).getLong();
-            int zpos = (int) NumericValue.asNumber( params.get(2 + offset).evalValue(c)).getLong();
+            int ypos = (int) NumericValue.asNumber( params.get(1 + offset)).getLong();
+            int zpos = (int) NumericValue.asNumber( params.get(2 + offset)).getLong();
             return new BlockArgument(
                     new BlockValue(
                             null,

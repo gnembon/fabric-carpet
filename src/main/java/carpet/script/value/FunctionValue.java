@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import carpet.CarpetSettings;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
@@ -149,11 +150,11 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return varArgs != null;
     }
 
-    public LazyValue callInContext(Context c, Integer type, List<LazyValue> lazyParams)
+    public LazyValue callInContext(Context c, Integer type, List<Value> args)
     {
         try
         {
-            return lazyEval(c, type, expression, token, lazyParams);
+            return execute(c, type, expression, token, args);
         }
         catch (ExpressionException exc)
         {
@@ -182,10 +183,34 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             throw new InternalExpressionException("Function " + getPrettyString() + " requires " + actual + " arguments");
     }
 
-    @Override
-    public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyPrams)
+    public static List<Value> unpackArgs(List<LazyValue> lzargs, Context c)
     {
-        List<Value> resolvedArgs = Fluff.AbstractFunction.unpackArgs(lazyPrams, c);
+        // TODO we shoudn't need that if all fuctions are not lazy really
+        List<Value> args = new ArrayList<>();
+        for (LazyValue lv : lzargs)
+        {
+            Value arg = lv.evalValue(c, Context.NONE);
+            if (arg instanceof FunctionUnpackedArgumentsValue)
+            {
+                CarpetSettings.LOG.error("How did we get here?");
+                args.addAll(((ListValue) arg).getItems());
+            }
+            else
+            {
+                args.add(arg);
+            }
+        }
+        return args;
+    }
+
+    @Override
+    public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams) {
+        List<Value> resolvedArgs = unpackArgs(lazyParams, c);
+        return execute(c, type, e, t, resolvedArgs);
+    }
+
+    public LazyValue execute(Context c, Integer type, Expression e, Tokenizer.Token t, List<Value> resolvedArgs)
+    {
         assertArgsOk(resolvedArgs, (fixedArgs) ->{
             if (fixedArgs)  // wrong number of args for fixed args
             {
@@ -274,12 +299,6 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         {
             feedback.accept(false);
         }
-    }
-    public static List<Value> resolveArgs(List<LazyValue> lzargs, Context c, Integer t)
-    {
-        List<Value> args = new ArrayList<>(lzargs.size());
-        lzargs.forEach( v -> args.add( v.evalValue(c, t)));
-        return args;
     }
 
     public static List<LazyValue> lazify(List<Value> args)
