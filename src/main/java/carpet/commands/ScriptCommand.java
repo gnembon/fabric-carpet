@@ -309,7 +309,7 @@ public class ScriptCommand
                 executes((cc)-> {
                     String pathRequest = StringArgumentType.getString(cc,"path");
                     Messenger.m(cc.getSource(),"gi Getting script from: " + pathRequest + " into global config script folder");
-                    String code = ScriptDownloader.getScriptCode(cc, pathRequest);
+                    String code = ScriptDownloader.getScriptCode(pathRequest);
                     return 1;
                 }))).then(literal("local"));
 
