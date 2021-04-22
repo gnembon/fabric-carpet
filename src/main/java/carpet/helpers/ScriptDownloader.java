@@ -44,11 +44,10 @@ public class ScriptDownloader {
         }
     }
 
-    public static int saveScriptToFile(String name, String code, MinecraftServer server, boolean globalSavePath){
-
+    public static int saveScriptToFile(String name, String code, MinecraftServer server,boolean globalSavePath){
+        name = "scripts\\"+name;
         Path scriptPath;
         String location;
-
         if(globalSavePath){
             scriptPath = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
             location = "global script config folder";
@@ -57,19 +56,23 @@ public class ScriptDownloader {
             location = "world script folder";
         }
 
-        Messenger.m(server.getCommandSource(),"gi Path to place file: '"+scriptPath + "/" + name + ".sc'");
+        System.out.println("gi Path to place file: '"+ location + "'");
 
         FileWriter fileWriter;
+        File file = scriptPath.toFile();
         try {
-            if((new File(scriptPath + "/" + name + ".sc")).exists())
-                throw new CommandException(new LiteralText(String.format("%s.sc already exists in %s, will not overwrite", name, location)));
-            fileWriter = new FileWriter(scriptPath + "/" + name + ".sc");
+            if(file.exists())
+                throw new CommandException(new LiteralText(String.format("%s already exists in %s, will not overwrite", name, location)));
+            Runtime.getRuntime().exec("explorer.exe /select, " + location);
+            file.createNewFile();
+            fileWriter = new FileWriter(location + name);
             fileWriter.write(code);
+            System.out.println(file.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             return 0;
         }
-        Messenger.m(server.getCommandSource(), "gi Successfuly created "+ name+ ".sc in " + location);
+        System.out.println("gi Successfuly created "+ name + " in " + location);
         return 1;
     }
 
