@@ -33,7 +33,7 @@ public class ScriptDownloader {
         } catch (FileNotFoundException e){
             throw new CommandException(new LiteralText("'"+ path + "' is not a valid path to a scarpet app"));
         } catch (IOException e) {
-            throw new new CommandException(new LiteralText("Error while getting code: "+ e));//todo figure out what else can trigger this
+            throw new CommandException(new LiteralText("Error while getting code: "+ e));//todo figure out what else can trigger this
         }
     }
 
