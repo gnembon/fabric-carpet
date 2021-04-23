@@ -20,7 +20,7 @@ import java.util.Map;
 public class Operators {
     public static final Map<String, Integer> precedence = new HashMap<String,Integer>() {{
         put("attribute~:", 80);
-        put("unary+-!", 60);
+        put("unary+-!...", 60);
         put("exponent^", 40);
         put("multiplication*/%", 30);
         put("addition+-", 20);
@@ -29,7 +29,7 @@ public class Operators {
         put("and&&", 5);
         put("or||", 4);
         put("assign=<>", 3);
-        put("def->...", 2);
+        put("def->", 2);
         put("nextop;", 1);
     }};
 
@@ -216,7 +216,9 @@ public class Operators {
         expression.addUnaryOperator("+", false, NumericValue::asNumber);
 
         // could be non-lazy, but who cares - its a small one.
-        expression.addLazyUnaryOperator("!", precedence.get("unary+-!"), false, (c, t, lv)-> lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE); // might need context boolean
+        expression.addLazyUnaryOperator("!", precedence.get("unary+-!..."), false, (c, t, lv) ->
+                lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE
+        ); // might need context boolean
 
     }
 }

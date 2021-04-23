@@ -93,7 +93,7 @@ public class Functions {
         });
 
         // lazy because of typed evaluation of the argument
-        expression.addLazyUnaryOperator("...", Operators.precedence.get("def->..."), false, (c, t, lv) ->
+        expression.addLazyUnaryOperator("...", Operators.precedence.get("unary+-!..."), false, (c, t, lv) ->
         {
             if (t == Context.LOCALIZATION)
                 return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
@@ -116,7 +116,7 @@ public class Functions {
 
         //assigns const procedure to the lhs, returning its previous value
         // must be lazy due to RHS being an expression to save to execute
-        expression.addLazyBinaryOperatorWithDelegation("->", Operators.precedence.get("def->..."), false, (c, type, e, t, lv1, lv2) ->
+        expression.addLazyBinaryOperatorWithDelegation("->", Operators.precedence.get("def->"), false, (c, type, e, t, lv1, lv2) ->
         {
             if (type == Context.MAPDEF)
             {

@@ -29,11 +29,12 @@ Here is the complete list of operators in `scarpet` including control flow opera
 are not technically operators, but part of the language, even if they look like them:
 
 *   Match, Get `~ :`
-*   Unary `+ - !`
+*   Unary `+ - ! ...`
 *   Exponent `^`
 *   Multiplication `* / %`
 *   Addition `+ -`
-*   Comparison `== != > >= <= <`
+*   Comparison `> >= <= <`
+*   Equality `== !=`
 *   Logical And`&&`
 *   Logical Or `||`
 *   Assignment `= += <>`
@@ -234,3 +235,23 @@ flips boolean condition of the expression. Equivalent of `bool(expr)==false`
 !l() => true
 !l(null) => false
 </pre>
+
+### `Unpacking Operator ...`
+
+Unpacks elements of a list of an iterator into a sequence of arguments in a function making so that `fun(...[1, 2, 3])` is
+identical with `fun(1, 2, 3)`. 
+
+In function signatures it identifies a vararg parameter. 
+
+`fun(a, b, ... rest) -> [a, b, rest]; fun(1, 2, 3, 4)`  => `[1, 2, [3, 4]]`
+
+Effects of `...` can be surprisingly lasting. It is kept through the use of variables and function calls.
+
+`fun(a, b, ... rest) -> [a, b, ... rest]; fun(1, 2, 3, 4)`  => `[1, 2, 3, 4]`
+`args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())` => `6`
+`a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)` => `6`
+
+Unpacking mechanics can be used for list and map constriction, not just for function calls.
+
+`[...range(5), pi, ...range(5,-1,-1)]` => `[0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]`
+`{ ... map(range(5),  _  -> _*_ )}` => `{0: 0, 1: 1, 2: 4, 3: 9, 4: 16}`

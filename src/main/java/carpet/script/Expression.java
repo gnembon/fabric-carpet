@@ -188,7 +188,7 @@ public class Expression
     public void addLazyFunctionWithDelegation(String name, int numpar,
                                                      QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
     {
-        functions.put(name, new AbstractLazyFunction(numpar)
+        functions.put(name, new AbstractLazyFunction(numpar, name)
         {
             @Override
             public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
@@ -208,7 +208,7 @@ public class Expression
     public void addFunctionWithDelegation(String name, int numpar,
                                               QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<Value>, Value> fun)
     {
-        functions.put(name, new AbstractLazyFunction(numpar)
+        functions.put(name, new AbstractLazyFunction(numpar, name)
         {
             @Override
             public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
@@ -286,7 +286,7 @@ public class Expression
 
     public void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
     {
-        operators.put(surface+"u", new AbstractUnaryOperator(Operators.precedence.get("unary+-!"), leftAssoc)
+        operators.put(surface+"u", new AbstractUnaryOperator(Operators.precedence.get("unary+-!..."), leftAssoc)
         {
             @Override
             public Value evalUnary(Value v1)
@@ -312,7 +312,7 @@ public class Expression
 
     public void addUnaryFunction(String name, Function<Value, Value> fun)
     {
-        functions.put(name,  new AbstractFunction(1)
+        functions.put(name,  new AbstractFunction(1, name)
         {
             @Override
             public Value eval(List<Value> parameters)
@@ -324,7 +324,7 @@ public class Expression
 
     public void addBinaryFunction(String name, BiFunction<Value, Value, Value> fun)
     {
-        functions.put(name, new AbstractFunction(2)
+        functions.put(name, new AbstractFunction(2, name)
         {
             @Override
             public Value eval(List<Value> parameters)
@@ -339,7 +339,7 @@ public class Expression
 
     public void addFunction(String name, Function<List<Value>, Value> fun)
     {
-        functions.put(name, new AbstractFunction(-1)
+        functions.put(name, new AbstractFunction(-1, name)
         {
             @Override
             public Value eval(List<Value> parameters)
@@ -370,7 +370,7 @@ public class Expression
 
     public void addLazyFunction(String name, int num_params, TriFunction<Context, Integer, List<LazyValue>, LazyValue> fun)
     {
-        functions.put(name, new AbstractLazyFunction(num_params)
+        functions.put(name, new AbstractLazyFunction(num_params, name)
         {
             @Override
             public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
@@ -389,7 +389,7 @@ public class Expression
 
     public void addContextFunction(String name, int num_params, TriFunction<Context, Integer, List<Value>, Value> fun)
     {
-        functions.put(name, new AbstractLazyFunction(num_params)
+        functions.put(name, new AbstractLazyFunction(num_params, name)
         {
             @Override
             public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
@@ -409,7 +409,7 @@ public class Expression
 
     public void addTypedContextFunction(String name, int num_params, int reqType, TriFunction<Context, Integer, List<Value>, Value> fun)
     {
-        functions.put(name, new AbstractLazyFunction(num_params)
+        functions.put(name, new AbstractLazyFunction(num_params, name)
         {
             @Override
             public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)

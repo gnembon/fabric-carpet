@@ -64,9 +64,10 @@ public abstract class Fluff
         protected String name;
         int numParams;
 
-        AbstractLazyFunction(int numParams)
+        AbstractLazyFunction(int numParams, String name)
         {
             this.numParams = numParams;
+            this.name = name;
         }
 
 
@@ -115,11 +116,9 @@ public abstract class Fluff
 
     public abstract static class AbstractFunction extends AbstractLazyFunction implements IFunction
     {
-        AbstractFunction(int numParams) {
-            super(numParams);
+        AbstractFunction(int numParams, String name) {
+            super(numParams, name);
         }
-
-
 
         @Override
         public LazyValue lazyEval(Context cc, Integer type, Expression e, Tokenizer.Token t, final List<LazyValue> lazyParams)
