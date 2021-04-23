@@ -239,7 +239,7 @@ flips boolean condition of the expression. Equivalent of `bool(expr)==false`
 ### `Unpacking Operator ...`
 
 Unpacks elements of a list of an iterator into a sequence of arguments in a function making so that `fun(...[1, 2, 3])` is
-identical with `fun(1, 2, 3)`. 
+identical with `fun(1, 2, 3)`. For maps, it unpacks them to a list of key-value pairs.
 
 In function signatures it identifies a vararg parameter. 
 
@@ -255,3 +255,4 @@ Unpacking mechanics can be used for list and map constriction, not just for func
 
 `[...range(5), pi, ...range(5,-1,-1)]` => `[0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]`
 `{ ... map(range(5),  _  -> _*_ )}` => `{0: 0, 1: 1, 2: 4, 3: 9, 4: 16}`
+`{...{1 -> 2, 3 -> 4}, ...{5 -> 6, 7 -> 8}}` => `{1: 2, 3: 4, 5: 6, 7: 8}`
