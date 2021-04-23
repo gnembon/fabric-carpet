@@ -4,12 +4,10 @@ import carpet.script.CarpetContext;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetScriptHost;
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
-import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
@@ -43,7 +41,7 @@ import java.util.stream.Collectors;
 public class Entities {
     public static void apply(Expression expression)
     {
-        expression.addLazyFunction("player", -1, (c, t, lv) ->
+        expression.addContextFunction("player", -1, (c, t, lv) ->
         {
             if (lv.size() == 0)
             {
@@ -51,26 +49,15 @@ public class Entities {
                 if (cc.host.user != null)
                 {
                     ServerPlayerEntity player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(cc.host.user);
-                    if (player == null) return LazyValue.NULL;
-                    Value ret = new EntityValue(player);
-                    return (_c, _t) -> ret;
+                    return EntityValue.of(player);
                 }
                 Entity callingEntity = cc.s.getEntity();
-                if (callingEntity instanceof PlayerEntity)
-                {
-                    Value retval = new EntityValue(callingEntity);
-                    return (_c, _t) -> retval;
-                }
+                if (callingEntity instanceof PlayerEntity) return EntityValue.of(callingEntity);
                 Vec3d pos = ((CarpetContext)c).s.getPosition();
                 PlayerEntity closestPlayer = ((CarpetContext)c).s.getWorld().getClosestPlayer(pos.x, pos.y, pos.z, -1.0, EntityPredicates.VALID_ENTITY);
-                if (closestPlayer != null)
-                {
-                    Value retval = new EntityValue(closestPlayer);
-                    return (_c, _t) -> retval;
-                }
-                return (_c, _t) -> Value.NULL;
+                return EntityValue.of(closestPlayer);
             }
-            String playerName = lv.get(0).evalValue(c).getString();
+            String playerName = lv.get(0).getString();
             Value retval = Value.NULL;
             if ("all".equalsIgnoreCase(playerName))
             {
@@ -114,37 +101,36 @@ public class Entities {
                 if (player != null)
                     retval = new EntityValue(player);
             }
-            Value finalVar = retval;
-            return (_c, _t) -> finalVar;
+            return retval;
         });
 
-        expression.addLazyFunction("spawn", -1, (c, t, lv) ->
+        expression.addContextFunction("spawn", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() < 2)
                 throw new InternalExpressionException("'spawn' function takes mob name, and position to spawn");
-            String entityString = lv.get(0).evalValue(c).getString();
+            String entityString = lv.get(0).getString();
             Identifier entityId;
             try
             {
                 entityId = Identifier.fromCommandInput(new StringReader(entityString));
                 EntityType<? extends Entity> type = Registry.ENTITY_TYPE.getOrEmpty(entityId).orElse(null);
                 if (type == null || !type.isSummonable())
-                    return LazyValue.NULL;
+                    return Value.NULL;
             }
             catch (CommandSyntaxException exception)
             {
-                 return LazyValue.NULL;
+                 return Value.NULL;
             }
 
-            Vector3Argument position = Vector3Argument.findIn(cc, lv, 1);
+            Vector3Argument position = Vector3Argument.findIn(lv, 1);
             if (position.fromBlock)
                 position.vec = position.vec.subtract(0, 0.5, 0);
             NbtCompound tag = new NbtCompound();
             boolean hasTag = false;
             if (lv.size() > position.offset)
             {
-                Value nbt = lv.get(position.offset).evalValue(c);
+                Value nbt = lv.get(position.offset);
                 NBTSerializableValue v = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
                         : NBTSerializableValue.parseString(nbt.getString(), true);
                 hasTag = true;
@@ -160,51 +146,38 @@ public class Entities {
                 return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
             });
             if (entity_1 == null) {
-                return LazyValue.NULL;
+                return Value.NULL;
             } else {
                 if (!hasTag && entity_1 instanceof MobEntity) {
                     ((MobEntity)entity_1).initialize(serverWorld, serverWorld.getLocalDifficulty(entity_1.getBlockPos()), SpawnReason.COMMAND, null, null);
                 }
-                Value res = new EntityValue(entity_1);
-                return (_c, _t) -> res;
+                return new EntityValue(entity_1);
             }
         });
 
-        expression.addLazyFunction("entity_id", 1, (c, t, lv) ->
+        expression.addContextFunction("entity_id", 1, (c, t, lv) ->
         {
-            Value who = lv.get(0).evalValue(c);
-            Entity e;
+            Value who = lv.get(0);
             if (who instanceof NumericValue)
-            {
-                e = ((CarpetContext)c).s.getWorld().getEntityById((int)((NumericValue) who).getLong());
-            }
-            else
-            {
-                e = ((CarpetContext)c).s.getWorld().getEntity(UUID.fromString(who.getString()));
-            }
-            if (e==null)
-            {
-                return LazyValue.NULL;
-            }
-            return (cc, tt) -> new EntityValue(e);
+                return EntityValue.of(((CarpetContext)c).s.getWorld().getEntityById((int)((NumericValue) who).getLong()));
+            return EntityValue.of(((CarpetContext)c).s.getWorld().getEntity(UUID.fromString(who.getString())));
         });
 
-        expression.addLazyFunction("entity_list", 1, (c, t, lv) ->
+        expression.addContextFunction("entity_list", 1, (c, t, lv) ->
         {
-            String who = lv.get(0).evalValue(c).getString();
+            String who = lv.get(0).getString();
             ServerCommandSource source = ((CarpetContext)c).s;
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getMinecraftServer());
             List<? extends Entity> entityList = source.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
-            Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
-            return (_c, _t ) -> retval;
+            return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
         });
 
-        expression.addLazyFunction("entity_area", -1, (c, t, lv) ->
+        expression.addContextFunction("entity_area", -1, (c, t, lv) ->
         {
             if (lv.size()<3) throw new InternalExpressionException("'entity_area' requires entity type, center and range arguments");
-            String who = lv.get(0).evalValue(c).getString();
+            String who = lv.get(0).getString();
             CarpetContext cc = (CarpetContext)c;
-            Vector3Argument centerLocator = Vector3Argument.findIn(cc, lv, 1, false, true);
+            Vector3Argument centerLocator = Vector3Argument.findIn(lv, 1, false, true);
 
             Box centerBox;
             if (centerLocator.entity != null)
@@ -217,90 +190,87 @@ public class Entities {
                 if (centerLocator.fromBlock) center.add(0.5, 0.5, 0.5);
                 centerBox = new Box(center, center);
             }
-            Vector3Argument rangeLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
+            Vector3Argument rangeLocator = Vector3Argument.findIn(lv, centerLocator.offset);
             if (rangeLocator.fromBlock)
                 throw new InternalExpressionException("Range of 'entity_area' cannot come from a block argument");
             Vec3d range = rangeLocator.vec;
             Box area = centerBox.expand(range.x, range.y, range.z);
             EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, cc.s.getMinecraftServer());
             List<? extends Entity> entityList = cc.s.getWorld().getEntitiesByType(eDesc.directType, area,eDesc.filteringPredicate);
-            Value retval = ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
-            return (_c, _t ) -> retval;
+            return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
         });
 
-        expression.addLazyFunction("entity_selector", -1, (c, t, lv) ->
+        expression.addContextFunction("entity_selector", -1, (c, t, lv) ->
         {
-            String selector = lv.get(0).evalValue(c).getString();
+            String selector = lv.get(0).getString();
             List<Value> retlist = new ArrayList<>();
             for (Entity e: EntityValue.getEntitiesFromSelector(((CarpetContext)c).s, selector))
             {
                 retlist.add(new EntityValue(e));
             }
-            return (c_, t_) -> ListValue.wrap(retlist);
+            return ListValue.wrap(retlist);
         });
 
-        expression.addLazyFunction("query", -1, (c, t, lv) ->
+        expression.addContextFunction("query", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
             {
                 throw new InternalExpressionException("'query' takes entity as a first argument, and queried feature as a second");
             }
-            Value v = lv.get(0).evalValue(c);
+            Value v = lv.get(0);
             if (!(v instanceof EntityValue))
                 throw new InternalExpressionException("First argument to query should be an entity");
-            String what = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+            String what = lv.get(1).getString().toLowerCase(Locale.ROOT);
             if (what.equals("tags"))
                 c.host.issueDeprecation("'tags' for entity querying");
             Value retval;
             if (lv.size()==2)
                 retval = ((EntityValue) v).get(what, null);
             else if (lv.size()==3)
-                retval = ((EntityValue) v).get(what, lv.get(2).evalValue(c));
+                retval = ((EntityValue) v).get(what, lv.get(2));
             else
-                retval = ((EntityValue) v).get(what, ListValue.wrap(lv.subList(2, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList())));
-            return (cc, tt) -> retval;
+                retval = ((EntityValue) v).get(what, ListValue.wrap(lv.subList(2, lv.size())));
+            return retval;
         });
 
         // or update
-        expression.addLazyFunction("modify", -1, (c, t, lv) ->
+        expression.addContextFunction("modify", -1, (c, t, lv) ->
         {
             if (lv.size()<2)
             {
                 throw new InternalExpressionException("'modify' takes entity as a first argument, and queried feature as a second");
             }
-            Value v = lv.get(0).evalValue(c);
+            Value v = lv.get(0);
             if (!(v instanceof EntityValue))
                 throw new InternalExpressionException("First argument to modify should be an entity");
-            String what = lv.get(1).evalValue(c).getString();
+            String what = lv.get(1).getString();
             if (lv.size()==2)
                 ((EntityValue) v).set(what, null);
             else if (lv.size()==3)
-                ((EntityValue) v).set(what, lv.get(2).evalValue(c));
+                ((EntityValue) v).set(what, lv.get(2));
             else
-                ((EntityValue) v).set(what, ListValue.wrap(lv.subList(2, lv.size()).stream().map((vv) -> vv.evalValue(c)).collect(Collectors.toList())));
-            return (cc, tt) -> v;
+                ((EntityValue) v).set(what, ListValue.wrap(lv.subList(2, lv.size())));
+            return v;
         });
 
-        expression.addLazyFunction("entity_types", -1, (c, t, lv) ->
+        expression.addContextFunction("entity_types", -1, (c, t, lv) ->
         {
-
             if (lv.size() > 1) throw new InternalExpressionException("'entity_types' requires one or no arguments");
-            String desc = (lv.size() == 1)?lv.get(0).evalValue(c).getString():"*";
-            Value ret = EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).s.getMinecraftServer()).listValue;
-            return (_c, _t) -> ret;
+            String desc = (lv.size() == 1)?lv.get(0).getString():"*";
+            return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).s.getMinecraftServer()).listValue;
         });
 
-        expression.addLazyFunction("entity_load_handler", -1, (c, t, lv) ->
+        expression.addContextFunction("entity_load_handler", -1, (c, t, lv) ->
         {
             if (c.host.isPerUser()) throw new InternalExpressionException("'entity_load_handler' can only be called in apps with global scope");
             if (lv.size() < 2) throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
-            Value entityValue = lv.get(0).evalValue(c);
+            Value entityValue = lv.get(0);
             List<String> descriptors = (entityValue instanceof ListValue)
                     ? ((ListValue) entityValue).getItems().stream().map(Value::getString).collect(Collectors.toList())
                     : Collections.singletonList(entityValue.getString());
             Set<EntityType<? extends Entity>> types = new HashSet<>();
             descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).s.getMinecraftServer()).typeList));
-            FunctionArgument<LazyValue> funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
+            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
             if (funArg.function == null)
             {
@@ -308,27 +278,26 @@ public class Entities {
             }
             else
             {
-                types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t)));
+                types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, funArg.args));
             }
-            Value ret = new NumericValue(types.size());
-            return (cc, tt) -> ret;
+            return new NumericValue(types.size());
         });
 
         // or update
-        expression.addLazyFunction("entity_event", -1, (c, t, lv) ->
+        expression.addContextFunction("entity_event", -1, (c, t, lv) ->
         {
             if (lv.size()<3)
                 throw new InternalExpressionException("'entity_event' requires at least 3 arguments, entity, event to be handled, and function name, with optional arguments");
-            Value v = lv.get(0).evalValue(c);
+            Value v = lv.get(0);
             if (!(v instanceof EntityValue))
                 throw new InternalExpressionException("First argument to entity_event should be an entity");
-            String what = lv.get(1).evalValue(c).getString();
+            String what = lv.get(1).getString();
 
-            FunctionArgument<LazyValue> funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, false);
+            FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 2, true, false);
 
-            ((EntityValue) v).setEvent((CarpetContext)c, what, funArg.function, FunctionValue.resolveArgs(funArg.args, c, t));
+            ((EntityValue) v).setEvent((CarpetContext)c, what, funArg.function, funArg.args);
 
-            return LazyValue.NULL;
+            return Value.NULL;
         });
     }
 }

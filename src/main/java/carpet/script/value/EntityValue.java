@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import carpet.CarpetServer;
 import carpet.fakes.BrainInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
@@ -13,6 +14,7 @@ import carpet.helpers.Tracer;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
+import carpet.script.CarpetScriptServer;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
@@ -933,9 +935,11 @@ public class EntityValue extends Value
         }
     }
 
-    private static void updateVelocity(Entity e)
+    private static void updateVelocity(Entity e, double scale)
     {
         e.velocityModified = true;
+        if (Math.abs(scale) > 10000)
+            CarpetScriptServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremly fast: "+e.getVelocity());
         //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 
@@ -1067,30 +1071,32 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.setVelocity(
-                    NumericValue.asNumber(coords.get(0)).getDouble(),
-                    NumericValue.asNumber(coords.get(1)).getDouble(),
-                    NumericValue.asNumber(coords.get(2)).getDouble()
-            );
-            updateVelocity(e);
+            double dx = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dy = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dz = NumericValue.asNumber(coords.get(2)).getDouble();
+            e.setVelocity(dx, dy, dz);
+            updateVelocity(e, MathHelper.absMax(MathHelper.absMax(dx, dy), dz));
         });
         put("motion_x", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(NumericValue.asNumber(v).getDouble(), velocity.y, velocity.z);
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(dv, velocity.y, velocity.z);
+            updateVelocity(e, dv);
         });
         put("motion_y", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(velocity.x, NumericValue.asNumber(v).getDouble(), velocity.z);
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(velocity.x, dv, velocity.z);
+            updateVelocity(e, dv);
         });
         put("motion_z", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(velocity.x, velocity.y, NumericValue.asNumber(v).getDouble());
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(velocity.x, velocity.y, dv);
+            updateVelocity(e, dv);
         });
 
         put("accelerate", (e, v) ->
@@ -1105,7 +1111,7 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            updateVelocity(e);
+            updateVelocity(e, e.getVelocity().length());
 
         });
         put("custom_name", (e, v) -> {
@@ -1224,7 +1230,7 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false);
+                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false, false);
                 pos = new BlockPos(locator.vec.x, locator.vec.y, locator.vec.z);
                 if (lv.size() > locator.offset)
                 {
@@ -1253,7 +1259,7 @@ public class EntityValue extends Value
             else if (a instanceof ListValue)
             {
                 List<Value> params= ((ListValue) a).getItems();
-                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false);
+                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false, false);
                 BlockPos pos = new BlockPos(blockLocator.vec);
                 RegistryKey<World> world = spe.getEntityWorld().getRegistryKey();
                 float angle = spe.getHeadYaw();

@@ -291,7 +291,7 @@ public abstract class CommandArgument
     protected boolean needsMatching;
     protected boolean caseSensitive = true;
     protected SuggestionProvider<ServerCommandSource> suggestionProvider;
-    protected FunctionArgument<Value> customSuggester;
+    protected FunctionArgument customSuggester;
 
 
     protected CommandArgument(

@@ -188,7 +188,7 @@ public class Expression
     public void addLazyFunctionWithDelegation(String name, int numpar,
                                                      QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
     {
-        functions.put(name, new AbstractLazyFunction(numpar)
+        functions.put(name, new AbstractLazyFunction(numpar, name)
         {
             @Override
             public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
@@ -196,6 +196,27 @@ public class Expression
                 try
                 {
                     return lazyfun.apply(c, type, e, t, lv);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
+    public void addFunctionWithDelegation(String name, int numpar,
+                                              QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(numpar, name)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
+            {
+                try
+                {
+                    Value res = fun.apply(c, type, e, t, unpackArgs(lv, c, Context.NONE));
+                    return (cc, tt) -> res;
                 }
                 catch (RuntimeException exc)
                 {
@@ -226,6 +247,28 @@ public class Expression
         });
     }
 
+    public void addBinaryContextOperator(String surface, int precedence, boolean leftAssoc,
+                                      QuadFunction<Context, Integer, Value, Value, Value> fun)
+    {
+        operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            {
+                try
+                {
+                    Value.assertNotNull(v1, v2); // does anybody needs those
+                    Value ret = fun.apply(c, t, v1.evalValue(c, Context.NONE), v2.evalValue(c, Context.NONE));
+                    return (cc, tt) -> ret;
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, token);
+                }
+            }
+        });
+    }
+
     public static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Tokenizer.Token token)
     {
         if (exc instanceof ExitStatement)
@@ -243,7 +286,7 @@ public class Expression
 
     public void addUnaryOperator(String surface, boolean leftAssoc, Function<Value, Value> fun)
     {
-        operators.put(surface+"u", new AbstractUnaryOperator(Operators.precedence.get("unary+-!"), leftAssoc)
+        operators.put(surface+"u", new AbstractUnaryOperator(Operators.precedence.get("unary+-!..."), leftAssoc)
         {
             @Override
             public Value evalUnary(Value v1)
@@ -269,7 +312,7 @@ public class Expression
 
     public void addUnaryFunction(String name, Function<Value, Value> fun)
     {
-        functions.put(name,  new AbstractFunction(1)
+        functions.put(name,  new AbstractFunction(1, name)
         {
             @Override
             public Value eval(List<Value> parameters)
@@ -281,7 +324,7 @@ public class Expression
 
     public void addBinaryFunction(String name, BiFunction<Value, Value, Value> fun)
     {
-        functions.put(name, new AbstractFunction(2)
+        functions.put(name, new AbstractFunction(2, name)
         {
             @Override
             public Value eval(List<Value> parameters)
@@ -296,7 +339,7 @@ public class Expression
 
     public void addFunction(String name, Function<List<Value>, Value> fun)
     {
-        functions.put(name, new AbstractFunction(-1)
+        functions.put(name, new AbstractFunction(-1, name)
         {
             @Override
             public Value eval(List<Value> parameters)
@@ -327,7 +370,7 @@ public class Expression
 
     public void addLazyFunction(String name, int num_params, TriFunction<Context, Integer, List<LazyValue>, LazyValue> fun)
     {
-        functions.put(name, new AbstractLazyFunction(num_params)
+        functions.put(name, new AbstractLazyFunction(num_params, name)
         {
             @Override
             public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
@@ -343,6 +386,47 @@ public class Expression
             }
         });
     }
+
+    public void addContextFunction(String name, int num_params, TriFunction<Context, Integer, List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(num_params, name)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            {
+                try
+                {
+                    Value ret = fun.apply(c, i, unpackArgs(lazyParams, c, Context.NONE));
+                    return (cc, tt) -> ret;
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
+    public void addTypedContextFunction(String name, int num_params, int reqType, TriFunction<Context, Integer, List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(num_params, name)
+        {
+            @Override
+            public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            {
+                try
+                {
+                    Value ret = fun.apply(c, i, unpackArgs(lazyParams, c, reqType));
+                    return (cc, tt) -> ret;
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
     public FunctionValue createUserDefinedFunction(Context context, String name, Expression expr, Tokenizer.Token token, List<String> arguments, String varArgs, List<String> outers, LazyValue code)
     {
         if (functions.containsKey(name))
@@ -773,12 +857,16 @@ public class Expression
                     stack.set(stack.size() - 1, stack.peek() - 2 + 1);
                     break;
                 case FUNCTION:
-                    ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
-                    int numParams = stack.pop();
-                    if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
-                    {
-                        throw new ExpressionException(c, this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
-                    }
+                    //ILazyFunction f = functions.get(token.surface);// don't validate global - userdef functions
+                    //int numParams = stack.pop();
+                    //if (f != null && !f.numParamsVaries() && numParams != f.getNumParams())
+                    //{
+                    //    throw new ExpressionException(c, this, token, "Function " + token + " expected " + f.getNumParams() + " parameters, got " + numParams);
+                    //}
+                    stack.pop();
+                    // due to unpacking, all functions can have variable number of arguments
+                    // we will be checking that at runtime.
+                    // TODO try analyze arguments and assess if its possible that they are static
                     if (stack.size() <= 0)
                     {
                         throw new ExpressionException(c, this, token, "Too many function calls, maximum scope exceeded");

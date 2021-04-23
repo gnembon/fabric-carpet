@@ -83,6 +83,12 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         owned = true;
     }
 
+    public static Value of(NbtElement tag)
+    {
+        if (tag == null) return Value.NULL;
+        return new NBTSerializableValue(tag);
+    }
+
     public NBTSerializableValue(Supplier<NbtElement> tagSupplier)
     {
         nbtSupplier = tagSupplier;
@@ -180,29 +186,29 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return inventory;
     }
 
-    public static InventoryLocator locateInventory(CarpetContext c, List<LazyValue> params, int offset)
+    public static InventoryLocator locateInventory(CarpetContext c, List<Value> params, int offset)
     {
         try
         {
-            Value v1 = params.get(offset).evalValue(c);
+            Value v1 = params.get(offset);
             if (v1.isNull())
             {
                 offset ++;
-                v1 = params.get(offset).evalValue(c);
+                v1 = params.get(offset);
             }
             else if (v1 instanceof StringValue)
             {
                 String strVal = v1.getString().toLowerCase(Locale.ROOT);
                 if (strVal.equals("enderchest"))
                 {
-                    Value v2 = params.get(1 + offset).evalValue(c);
+                    Value v2 = params.get(1 + offset);
                     ServerPlayerEntity player = EntityValue.getPlayerByValue(c.s.getMinecraftServer(), v2);
                     if (player == null) throw new InternalExpressionException("enderchest inventory requires player argument");
                     return new InventoryLocator(player, player.getBlockPos(), player.getEnderChestInventory(), offset + 2, true);
                 }
                 if (strVal.equals("equipment"))
                 {
-                    Value v2 = params.get(1 + offset).evalValue(c);
+                    Value v2 = params.get(1 + offset);
                     if (!(v2 instanceof EntityValue)) throw new InternalExpressionException("Equipment inventory requires a living entity argument");
                     Entity e = ((EntityValue) v2).getEntity();
                     if (!(e instanceof LivingEntity)) throw new InternalExpressionException("Equipment inventory requires a living entity argument");
@@ -258,8 +264,8 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
-                    NumericValue.asNumber(params.get(1 + offset).evalValue(c)).getDouble(),
-                    NumericValue.asNumber(params.get(2 + offset).evalValue(c)).getDouble());
+                    NumericValue.asNumber(params.get(1 + offset)).getDouble(),
+                    NumericValue.asNumber(params.get(2 + offset)).getDouble());
             Inventory inv = getInventoryAt(c.s.getWorld(), pos);
             if (inv == null)
                 return null;

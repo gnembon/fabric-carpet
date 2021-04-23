@@ -5,10 +5,12 @@ import net.minecraft.nbt.NbtElement;
 
 public class FunctionAnnotationValue extends Value
 {
-    // 0 global
-    // 1 vararg
-    public int type;
-    public FunctionAnnotationValue(Value variable, int type)
+    public enum Type
+    {
+        GLOBAL, VARARG
+    }
+    public Type type;
+    public FunctionAnnotationValue(Value variable, Type type)
     {
         if (variable.boundVariable == null)
             throw new InternalExpressionException("You can only borrow variables from the outer scope");

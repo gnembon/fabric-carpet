@@ -117,11 +117,11 @@ public class FileArgument
         return "path: "+resource+" zip: "+zipContainer+" type: "+type.id+" folder: "+isFolder+" shared: "+isShared+" reason: "+reason.toString();
     }
 
-    public static FileArgument from(List<LazyValue> lv, Context c, boolean isFolder, Reason reason)
+    public static FileArgument from(List<Value> lv, boolean isFolder, Reason reason)
     {
         if (lv.size() < 2) throw new InternalExpressionException("File functions require path and type as first two arguments");
-        Pair<String, String> resource = recognizeResource(lv.get(0).evalValue(c), isFolder);
-        String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+        Pair<String, String> resource = recognizeResource(lv.get(0), isFolder);
+        String origtype = lv.get(1).getString().toLowerCase(Locale.ROOT);
         boolean shared = origtype.startsWith("shared_");
         String typeString = shared ? origtype.substring(7) : origtype; //len(shared_)
         Type type = Type.of.get(typeString);
