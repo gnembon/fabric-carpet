@@ -15,6 +15,7 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import net.minecraft.util.JsonHelper;
 
@@ -152,9 +153,21 @@ public class ControlFlow {
         });
 
         expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes())));
-        expression.addUnaryFunction("decode_b64", v -> StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1)));//using this charset cos it's the one used in decoding function
+        expression.addUnaryFunction("decode_b64", v -> {
+            try {
+                return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1));//using this charset cos it's the one used in decoding function
+            } catch (IllegalArgumentException iae){
+                throw new InternalExpressionException("Invalid b64 string: " + v.getString());
+            }
+        });
 
         expression.addUnaryFunction("encode_json", v -> StringValue.of(v.toJson().toString()));
-        expression.addUnaryFunction("decode_json", v -> ValueConversions.of(new JsonParser().parse(v.getString())));
+        expression.addUnaryFunction("decode_json", v -> {
+            try {
+                return ValueConversions.of(new JsonParser().parse(v.getString()));
+            } catch (JsonParseException jpe){
+                throw new InternalExpressionException("Invalid json string: " + v.getString());
+            }
+        });
     }
 }
