@@ -64,10 +64,10 @@ public class Arithmetic {
         expression.addMathematicalUnaryIntFunction("floor", n -> (long)Math.floor(n));
         expression.addMathematicalUnaryIntFunction("ceil",  n -> (long)Math.ceil(n));
 
-        expression.addLazyFunction("mandelbrot", 3, (c, t, lv) -> {
-            double a0 = NumericValue.asNumber(lv.get(0).evalValue(c)).getDouble();
-            double b0 = NumericValue.asNumber(lv.get(1).evalValue(c)).getDouble();
-            long maxiter = NumericValue.asNumber(lv.get(2).evalValue(c)).getLong();
+        expression.addContextFunction("mandelbrot", 3, (c, t, lv) -> {
+            double a0 = NumericValue.asNumber(lv.get(0)).getDouble();
+            double b0 = NumericValue.asNumber(lv.get(1)).getDouble();
+            long maxiter = NumericValue.asNumber(lv.get(2)).getLong();
             double a = 0.0D;
             double b = 0.0D;
             long iter = 0;
@@ -79,7 +79,7 @@ public class Arithmetic {
                 iter++;
             }
             long iFinal = iter;
-            return (cc, tt) -> new NumericValue(iFinal);
+            return new NumericValue(iFinal);
         });
 
         expression.addFunction("max", (lv) ->

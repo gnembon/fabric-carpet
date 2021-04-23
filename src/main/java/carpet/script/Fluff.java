@@ -1,6 +1,10 @@
 package carpet.script;
 
+import carpet.CarpetSettings;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.FunctionUnpackedArgumentsValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.Value;
 
 import java.util.ArrayList;
@@ -60,9 +64,10 @@ public abstract class Fluff
         protected String name;
         int numParams;
 
-        AbstractLazyFunction(int numParams)
+        AbstractLazyFunction(int numParams, String name)
         {
             this.numParams = numParams;
+            this.name = name;
         }
 
 
@@ -77,12 +82,42 @@ public abstract class Fluff
         public boolean numParamsVaries() {
             return numParams < 0;
         }
+
+        public static List<Value> unpackLazy(List<LazyValue> lzargs, Context c, int contextType)
+        {
+            List<Value> args = new ArrayList<>();
+            for (LazyValue lv : lzargs)
+            {
+                Value arg = lv.evalValue(c, contextType);
+                if (arg instanceof FunctionUnpackedArgumentsValue)
+                    args.addAll(((ListValue) arg).getItems());
+                else
+                    args.add(arg);
+            }
+            return args;
+        }
+
+        public List<Value> unpackArgs(List<LazyValue> lzargs, Context c, int contextType)
+        {
+            List<Value> args = new ArrayList<>();
+            for (LazyValue lv : lzargs)
+            {
+                Value arg = lv.evalValue(c, contextType);
+                if (arg instanceof FunctionUnpackedArgumentsValue)
+                    args.addAll(((ListValue) arg).getItems());
+                else
+                    args.add(arg);
+            }
+            if (!numParamsVaries() && getNumParams() != args.size())
+                throw new InternalExpressionException("Function " + getName() + " expected " + getNumParams() + " parameters, got " + args.size());
+            return args;
+        }
     }
 
     public abstract static class AbstractFunction extends AbstractLazyFunction implements IFunction
     {
-        AbstractFunction(int numParams) {
-            super(numParams);
+        AbstractFunction(int numParams, String name) {
+            super(numParams, name);
         }
 
         @Override
@@ -100,10 +135,12 @@ public abstract class Fluff
 
                     private List<Value> getParams(Context c) {
                         if (params == null) {
-                            params = new ArrayList<>();
-                            for (LazyValue lazyParam : lazyParams) {
-                                params.add(lazyParam.evalValue(c)); // none type default by design
-                            }
+                            // very likely needs to be dynamic, so not static like here, or remember if it was.
+                            params = unpackArgs(lazyParams, c, Context.NONE);
+                        }
+                        else
+                        {
+                            CarpetSettings.LOG.error("How did we get here 1");
                         }
                         return params;
                     }

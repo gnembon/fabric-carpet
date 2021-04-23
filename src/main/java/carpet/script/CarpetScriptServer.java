@@ -20,6 +20,8 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -43,6 +45,7 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class CarpetScriptServer
 {
     //make static for now, but will change that later:
+    public static final Logger LOG = LogManager.getLogger("scarpet");
     public final MinecraftServer server;
     public  CarpetScriptHost globalHost;
     public  Map<String, CarpetScriptHost> modules;

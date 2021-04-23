@@ -3,6 +3,7 @@ package carpet.script.api;
 import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.Expression;
+import carpet.script.Fluff;
 import carpet.script.LazyValue;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
@@ -30,11 +31,14 @@ import static java.lang.Math.min;
 public class BlockIterators {
     public static void apply(Expression expression)
     {
-        expression.addLazyFunction("scan", -1, (c, t, lv) ->
+        // lazy cause of lazy expression
+        expression.addLazyFunction("scan", -1, (c, t, llv) ->
         {
+            if (llv.size() < 3) throw new InternalExpressionException("'scan' needs many more arguments");
+            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size()-1), c, Context.NONE);
             CarpetContext cc = (CarpetContext)c;
             BlockArgument centerLocator = BlockArgument.findIn(cc, lv, 0);
-            Vector3Argument rangeLocator = Vector3Argument.findIn(cc, lv, centerLocator.offset);
+            Vector3Argument rangeLocator = Vector3Argument.findIn(lv, centerLocator.offset);
             BlockPos center = centerLocator.block.getPos();
             Vec3i range;
 
@@ -54,7 +58,7 @@ public class BlockIterators {
             Vec3i upperRange = range;
             if (lv.size() > rangeLocator.offset+1) // +1 cause we still need the expression
             {
-                rangeLocator = Vector3Argument.findIn(cc, lv, rangeLocator.offset);
+                rangeLocator = Vector3Argument.findIn(lv, rangeLocator.offset);
                 if (rangeLocator.fromBlock)
                 {
                     upperRange = new Vec3i(
@@ -69,11 +73,11 @@ public class BlockIterators {
                     upperRange = new Vec3i(abs(rangeLocator.vec.x), abs(rangeLocator.vec.y), abs(rangeLocator.vec.z));
                 }
             }
-            if (lv.size() != rangeLocator.offset+1)
+            if (llv.size() != rangeLocator.offset+1)
             {
                 throw new InternalExpressionException("'scan' takes two, or three block positions, and an expression: "+lv.size()+" "+rangeLocator.offset);
             }
-            LazyValue expr = lv.get(rangeLocator.offset);
+            LazyValue expr = llv.get(rangeLocator.offset);
 
             int cx = center.getX();
             int cy = center.getY();
@@ -135,9 +139,12 @@ public class BlockIterators {
             return (c_, t_) -> new NumericValue(finalSCount);
         });
 
-        expression.addLazyFunction("volume", -1, (c, t, lv) ->
+        // must be lazy
+        expression.addLazyFunction("volume", -1, (c, t, llv) ->
         {
             CarpetContext cc = (CarpetContext)c;
+            if (llv.size() < 3) throw new InternalExpressionException("'volume' needs many more arguments");
+            List<Value> lv = Fluff.AbstractFunction.unpackLazy(llv.subList(0, llv.size()-1), c, Context.NONE);
 
             BlockArgument pos1Locator = BlockArgument.findIn(cc, lv, 0);
             BlockArgument pos2Locator = BlockArgument.findIn(cc, lv, pos1Locator.offset);
@@ -156,7 +163,7 @@ public class BlockIterators {
             int maxx = max(x1, x2);
             int maxy = max(y1, y2);
             int maxz = max(z1, z2);
-            LazyValue expr = lv.get(pos2Locator.offset);
+            LazyValue expr = llv.get(pos2Locator.offset);
 
             //saving outer scope
             LazyValue _x = c.getVariable("_x");
@@ -207,9 +214,8 @@ public class BlockIterators {
             return (c_, t_) -> new NumericValue(finalSCount);
         });
 
-        expression.addLazyFunction("neighbours", -1, (c, t, lv)->
+        expression.addContextFunction("neighbours", -1, (c, t, lv)->
         {
-
             BlockPos center = BlockArgument.findIn((CarpetContext) c, lv,0).block.getPos();
             ServerWorld world = ((CarpetContext) c).s.getWorld();
 
@@ -220,11 +226,10 @@ public class BlockIterators {
             neighbours.add(new BlockValue(null, world, center.south()));
             neighbours.add(new BlockValue(null, world, center.east()));
             neighbours.add(new BlockValue(null, world, center.west()));
-            Value retval = ListValue.wrap(neighbours);
-            return (c_, t_) -> retval;
+            return ListValue.wrap(neighbours);
         });
 
-        expression.addLazyFunction("rect", -1, (c, t, lv)->
+        expression.addContextFunction("rect", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext) c;
             int cx, cy, cz;
@@ -237,7 +242,7 @@ public class BlockIterators {
             cz = cpos.getZ();
             if (lv.size() > cposLocator.offset)
             {
-                Vector3Argument diffLocator = Vector3Argument.findIn(cc, lv, cposLocator.offset);
+                Vector3Argument diffLocator = Vector3Argument.findIn(lv, cposLocator.offset);
                 if (diffLocator.fromBlock)
                 {
                     sminx = MathHelper.floor(abs(diffLocator.vec.x - cx));
@@ -252,7 +257,7 @@ public class BlockIterators {
                 }
                 if (lv.size() > diffLocator.offset)
                 {
-                    Vector3Argument posDiff = Vector3Argument.findIn(cc, lv, diffLocator.offset);
+                    Vector3Argument posDiff = Vector3Argument.findIn(lv, diffLocator.offset);
                     if (posDiff.fromBlock)
                     {
                         smaxx = MathHelper.floor(abs(posDiff.vec.x - cx));
@@ -283,7 +288,7 @@ public class BlockIterators {
                 smaxz = 1;
             }
 
-            return (c_, t_) -> new LazyListValue()
+            return new LazyListValue()
             {
                 final int minx = cx-sminx;
                 final int miny = cy-sminy;
@@ -348,7 +353,7 @@ public class BlockIterators {
             };
         });
 
-        expression.addLazyFunction("diamond", -1, (c, t, lv)->
+        expression.addContextFunction("diamond", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
 
@@ -377,17 +382,17 @@ public class BlockIterators {
                             BlockValue.fromCoords(cc, cx, cy, cz+1),
                             BlockValue.fromCoords(cc, cx, cy+1, cz)
                     );
-                    return (_c, _t ) -> retval;
+                    return retval;
                 }
                 else if (lv.size()==1+cposLocator.offset)
                 {
-                    width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(cposLocator.offset)).getLong();
                     height = 0;
                 }
                 else if(lv.size()==2+cposLocator.offset)
                 {
-                    width = (int) ((NumericValue) lv.get(cposLocator.offset).evalValue(c)).getLong();
-                    height = (int) ((NumericValue) lv.get(cposLocator.offset+1).evalValue(c)).getLong();
+                    width = (int) ((NumericValue) lv.get(cposLocator.offset)).getLong();
+                    height = (int) ((NumericValue) lv.get(cposLocator.offset+1)).getLong();
                 } else{
                     throw new InternalExpressionException("Incorrect number of arguments for 'diamond'");
                 }
@@ -398,7 +403,7 @@ public class BlockIterators {
             }
             if (height == 0)
             {
-                return (c_, t_) -> new LazyListValue()
+                return new LazyListValue()
                 {
                     int curradius;
                     int curpos;
@@ -448,7 +453,7 @@ public class BlockIterators {
             }
             else
             {
-                return (c_, t_) -> new LazyListValue()
+                return new LazyListValue()
                 {
                     int curradius;
                     int curpos;

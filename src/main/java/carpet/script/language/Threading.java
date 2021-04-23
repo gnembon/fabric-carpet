@@ -1,11 +1,9 @@
 package carpet.script.language;
 
 import carpet.script.Expression;
-import carpet.script.LazyValue;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
@@ -14,35 +12,30 @@ public class Threading
 {
     public static void apply(Expression expression)
     {
-        expression.addLazyFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) ->
+        expression.addFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
-            ThreadValue thread = new ThreadValue(Value.NULL, functionArgument.function, expr, tok, c, FunctionValue.resolveArgs(functionArgument.args, c, t));
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 0, false, true);
+            ThreadValue thread = new ThreadValue(Value.NULL, functionArgument.function, expr, tok, c, functionArgument.checkedArgs());
             Thread.yield();
-            return (cc, tt) -> thread;
+            return thread;
         });
 
-        expression.addLazyFunctionWithDelegation("task_thread", -1, (c, t, expr, tok, lv) ->
+        expression.addFunctionWithDelegation("task_thread", -1, (c, t, expr, tok, lv) ->
         {
             if (lv.size() < 2)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
-            Value queue = lv.get(0).evalValue(c);
-            FunctionArgument<LazyValue> functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
-            ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, FunctionValue.resolveArgs(functionArgument.args, c, t));
+            Value queue = lv.get(0);
+            FunctionArgument functionArgument = FunctionArgument.findIn(c, expression.module, lv, 1, false, true);
+            ThreadValue thread = new ThreadValue(queue, functionArgument.function, expr, tok, c, functionArgument.checkedArgs());
             Thread.yield();
-            return (cc, tt) -> thread;
+            return thread;
         });
 
 
-        expression.addLazyFunction("task_count", -1, (c, t, lv) ->
-        {
-            Value ret = (lv.size() > 0)?
-                    new NumericValue(c.host.taskCount(lv.get(0).evalValue(c))):
-                    new NumericValue(c.host.taskCount());
-            return (cc, tt) -> ret;
-        });
+        expression.addContextFunction("task_count", -1, (c, t, lv) ->
+                (lv.size() > 0)? new NumericValue(c.host.taskCount(lv.get(0))):new NumericValue(c.host.taskCount()));
 
         expression.addUnaryFunction("task_value", (v) ->
         {
@@ -72,6 +65,7 @@ public class Threading
             return new NumericValue(((ThreadValue) v).isFinished());
         });
 
+        // lazy cause expr is evaluated in the same type
         expression.addLazyFunction("synchronize", -1, (c, t, lv) ->
         {
             if (lv.size() == 0) throw new InternalExpressionException("'synchronize' require at least an expression to synchronize");
@@ -89,6 +83,7 @@ public class Threading
             }
         });
 
+        // lazy since exception expression is very conditional
         expression.addLazyFunction("sleep", -1, (c, t, lv) ->
         {
             long time = lv.isEmpty()?0L:NumericValue.asNumber(lv.get(0).evalValue(c)).getLong();
