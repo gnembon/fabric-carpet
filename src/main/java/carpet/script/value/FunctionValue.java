@@ -150,11 +150,11 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return varArgs != null;
     }
 
-    public LazyValue callInContext(Context c, Integer type, List<Value> args)
+    public LazyValue callInContext(Context c, Integer type, List<Value> params)
     {
         try
         {
-            return execute(c, type, expression, token, args);
+            return execute(c, type, expression, token, params);
         }
         catch (ExpressionException exc)
         {
@@ -183,40 +183,40 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
             throw new InternalExpressionException("Function " + getPrettyString() + " requires " + actual + " arguments");
     }
 
-    public static List<Value> unpackArgs(List<LazyValue> lzargs, Context c)
+    public static List<Value> unpackArgs(List<LazyValue> lazyParams, Context c)
     {
         // TODO we shoudn't need that if all fuctions are not lazy really
-        List<Value> args = new ArrayList<>();
-        for (LazyValue lv : lzargs)
+        List<Value> params = new ArrayList<>();
+        for (LazyValue lv : lazyParams)
         {
-            Value arg = lv.evalValue(c, Context.NONE);
-            if (arg instanceof FunctionUnpackedArgumentsValue)
+            Value param = lv.evalValue(c, Context.NONE);
+            if (param instanceof FunctionUnpackedArgumentsValue)
             {
                 CarpetSettings.LOG.error("How did we get here?");
-                args.addAll(((ListValue) arg).getItems());
+                params.addAll(((ListValue) param).getItems());
             }
             else
             {
-                args.add(arg);
+                params.add(param);
             }
         }
-        return args;
+        return params;
     }
 
     @Override
     public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams) {
-        List<Value> resolvedArgs = unpackArgs(lazyParams, c);
-        return execute(c, type, e, t, resolvedArgs);
+        List<Value> resolvedParams = unpackArgs(lazyParams, c);
+        return execute(c, type, e, t, resolvedParams);
     }
 
-    public LazyValue execute(Context c, Integer type, Expression e, Tokenizer.Token t, List<Value> resolvedArgs)
+    public LazyValue execute(Context c, Integer type, Expression e, Tokenizer.Token t, List<Value> params)
     {
-        assertArgsOk(resolvedArgs, (fixedArgs) ->{
+        assertArgsOk(params, (fixedArgs) ->{
             if (fixedArgs)  // wrong number of args for fixed args
             {
                 throw new ExpressionException(c, e, t,
                         "Incorrect number of arguments for function "+name+
-                                ". Should be "+args.size()+", not "+resolvedArgs.size()+" like "+args
+                                ". Should be "+args.size()+", not "+params.size()+" like "+args
                 );
             }
             else  // too few args for varargs
@@ -225,7 +225,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
                 argList.add("... "+varArgs);
                 throw new ExpressionException(c, e, t,
                         "Incorrect number of arguments for function "+name+
-                                ". Should be at least "+args.size()+", not "+resolvedArgs.size()+" like "+argList
+                                ". Should be at least "+args.size()+", not "+params.size()+" like "+argList
                 );
             }
         });
@@ -235,15 +235,15 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         for (int i=0; i<args.size(); i++)
         {
             String arg = args.get(i);
-            Value val = resolvedArgs.get(i).reboundedTo(arg); // todo check if we need to copy that
+            Value val = params.get(i).reboundedTo(arg); // todo check if we need to copy that
             newFrame.setVariable(arg, (cc, tt) -> val);
         }
         if (varArgs != null)
         {
             List<Value> extraParams = new ArrayList<>();
-            for (int i = args.size(), mx = resolvedArgs.size(); i < mx; i++)
+            for (int i = args.size(), mx = params.size(); i < mx; i++)
             {
-                extraParams.add(resolvedArgs.get(i).reboundedTo(null)); // copy by value I guess
+                extraParams.add(params.get(i).reboundedTo(null)); // copy by value I guess
             }
             Value rest = ListValue.wrap(extraParams).bindTo(varArgs); // didn't we just copied that?
             newFrame.setVariable(varArgs, (cc, tt) -> rest);
