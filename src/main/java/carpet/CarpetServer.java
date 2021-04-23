@@ -36,13 +36,10 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class CarpetServer implements ClientModInitializer,DedicatedServerModInitializer // static for now - easier to handle all around the code, its one anyways
 {
     public static final Random rand = new Random();
-    public static final Logger LOG = LogManager.getLogger("scarpet");
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
     public static CarpetScriptServer scriptServer;

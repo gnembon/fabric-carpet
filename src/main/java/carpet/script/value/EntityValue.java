@@ -14,6 +14,7 @@ import carpet.helpers.Tracer;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
+import carpet.script.CarpetScriptServer;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
@@ -922,7 +923,7 @@ public class EntityValue extends Value
     {
         e.velocityModified = true;
         if (Math.abs(scale) > 10000)
-            CarpetServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremly fast: "+e.getVelocity());
+            CarpetScriptServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremly fast: "+e.getVelocity());
         //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 

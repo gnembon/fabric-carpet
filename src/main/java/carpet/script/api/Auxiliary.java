@@ -1,7 +1,6 @@
 package carpet.script.api;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerWorldInterface;
 import carpet.fakes.StatTypeInterface;
@@ -628,7 +627,7 @@ public class Auxiliary {
             s.getMinecraftServer().getPlayerManager().saveAllPlayerData();
             s.getMinecraftServer().save(true,true,true);
             s.getWorld().getChunkManager().tick(() -> true);
-            CarpetSettings.LOG.warn("Saved chunks");
+            CarpetScriptServer.LOG.warn("Saved chunks");
             return Value.TRUE;
         });
 
@@ -797,24 +796,23 @@ public class Auxiliary {
 
         expression.addFunction("logger", lv ->
         {
-            //CarpetSettings.LOG.error(Registry.ENTITY_TYPE.getIds().stream().sorted().map(ValueConversions::simplify).collect(Collectors.joining("`, `")));
             Value res;
 
             if(lv.size()==1)
             {
                 res = lv.get(0);
-                CarpetSettings.LOG.info(res.getString());
+                CarpetScriptServer.LOG.info(res.getString());
             }
             else if(lv.size()==2)
             {
                 String level = lv.get(0).getString().toLowerCase(Locale.ROOT);
                 res = lv.get(1);
                 switch(level){
-                    case "error": CarpetSettings.LOG.error(res.getString()); break;
-                    case "warn":  CarpetSettings.LOG.warn(res.getString());  break;
-                    case "debug": CarpetSettings.LOG.debug(res.getString()); break;
-                    case "fatal": CarpetSettings.LOG.fatal(res.getString()); break;
-                    case "info":  CarpetSettings.LOG.info(res.getString());  break;
+                    case "error": CarpetScriptServer.LOG.error(res.getString()); break;
+                    case "warn":  CarpetScriptServer.LOG.warn(res.getString());  break;
+                    case "debug": CarpetScriptServer.LOG.debug(res.getString()); break;
+                    case "fatal": CarpetScriptServer.LOG.fatal(res.getString()); break;
+                    case "info":  CarpetScriptServer.LOG.info(res.getString());  break;
                     default: throw new InternalExpressionException("Unknown log level for 'logger': "+level);
                 }
             }
