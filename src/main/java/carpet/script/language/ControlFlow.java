@@ -13,8 +13,13 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import carpet.script.value.ValueConversions;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonParser;
+import net.minecraft.util.JsonHelper;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.stream.Collectors;
 
 public class ControlFlow {
@@ -145,5 +150,11 @@ public class ControlFlow {
                 return (c_, t_) -> retval;
             }
         });
+
+        expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes())));
+        expression.addUnaryFunction("decode_b64", v -> StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1)));//using this charset cos it's the one used in decoding function
+
+        expression.addUnaryFunction("encode_json", v -> StringValue.of(v.toJson().toString()));
+        expression.addUnaryFunction("decode_json", v -> ValueConversions.of(new JsonParser().parse(v.getString())));
     }
 }
