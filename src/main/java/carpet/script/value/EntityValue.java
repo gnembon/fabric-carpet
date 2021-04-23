@@ -1,5 +1,6 @@
 package carpet.script.value;
 
+import carpet.CarpetServer;
 import carpet.fakes.BrainInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
@@ -917,9 +918,11 @@ public class EntityValue extends Value
         }
     }
 
-    private static void updateVelocity(Entity e)
+    private static void updateVelocity(Entity e, double scale)
     {
         e.velocityModified = true;
+        if (Math.abs(scale) > 10000)
+            CarpetServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremly fast: "+e.getVelocity());
         //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 
@@ -1051,30 +1054,32 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.setVelocity(
-                    NumericValue.asNumber(coords.get(0)).getDouble(),
-                    NumericValue.asNumber(coords.get(1)).getDouble(),
-                    NumericValue.asNumber(coords.get(2)).getDouble()
-            );
-            updateVelocity(e);
+            double dx = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dy = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dz = NumericValue.asNumber(coords.get(2)).getDouble();
+            e.setVelocity(dx, dy, dz);
+            updateVelocity(e, MathHelper.absMax(MathHelper.absMax(dx, dy), dz));
         });
         put("motion_x", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(NumericValue.asNumber(v).getDouble(), velocity.y, velocity.z);
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(dv, velocity.y, velocity.z);
+            updateVelocity(e, dv);
         });
         put("motion_y", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(velocity.x, NumericValue.asNumber(v).getDouble(), velocity.z);
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(velocity.x, dv, velocity.z);
+            updateVelocity(e, dv);
         });
         put("motion_z", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(velocity.x, velocity.y, NumericValue.asNumber(v).getDouble());
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(velocity.x, velocity.y, dv);
+            updateVelocity(e, dv);
         });
 
         put("accelerate", (e, v) ->
@@ -1089,7 +1094,7 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            updateVelocity(e);
+            updateVelocity(e, e.getVelocity().length());
 
         });
         put("custom_name", (e, v) -> {
