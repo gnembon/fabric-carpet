@@ -6,15 +6,12 @@ import carpet.script.Fluff;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ReturnStatement;
-import carpet.script.value.AbstractListValue;
 import carpet.script.value.FunctionSignatureValue;
-import carpet.script.value.FunctionUnpackedArgumentsValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.FunctionAnnotationValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,28 +87,6 @@ public class Functions {
             if (t != Context.LOCALIZATION)
                 throw new InternalExpressionException("Outer scoping of variables is only possible in function signatures.");
             return new FunctionAnnotationValue(lv.get(0), FunctionAnnotationValue.Type.GLOBAL);
-        });
-
-        // lazy because of typed evaluation of the argument
-        expression.addLazyUnaryOperator("...", Operators.precedence.get("unary+-!..."), false, (c, t, lv) ->
-        {
-            if (t == Context.LOCALIZATION)
-                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
-
-            Value params = lv.evalValue(c, t);
-            FunctionUnpackedArgumentsValue fuaval;
-            if (params instanceof ListValue)
-            {
-                fuaval = new FunctionUnpackedArgumentsValue(((ListValue) params).getItems());
-                return (cc, tt) -> fuaval;
-            }
-            if (!(params instanceof AbstractListValue))
-                throw new InternalExpressionException("Unable to unpack a non-list");
-            fuaval = new FunctionUnpackedArgumentsValue(
-                    ImmutableList.copyOf(((AbstractListValue) params).iterator())
-            );
-            return (cc, tt) -> fuaval;
-            //throw new InternalExpressionException("That functionality has not been implemented yet.");
         });
 
         //assigns const procedure to the lhs, returning its previous value

@@ -29,7 +29,7 @@ import static java.lang.Math.abs;
 
 public class ListValue extends AbstractListValue implements ContainerValueInterface
 {
-    protected List<Value> items;
+    protected final List<Value> items;
     @Override
     public String getString()
     {
@@ -99,9 +99,7 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
     public static ListValue wrap(List<Value> list)
     {
-        ListValue created = new ListValue();
-        created.items = list;
-        return created;
+        return new ListValue(list);
     }
     public static ListValue of(Value ... list)
     {
@@ -283,10 +281,14 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
 
     public Iterator<Value> iterator() { return new ArrayList<>(items).iterator(); } // should be thread safe
 
+    public List<Value> unpack()
+    {
+        return new ArrayList<>(items);
+    }
+
     public void extend(List<Value> subList)
     {
-        for (Value v: subList)
-            items.add(v);
+        items.addAll(subList);
     }
 
     /**

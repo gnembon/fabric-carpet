@@ -6,6 +6,8 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
 import carpet.script.value.ContainerValueInterface;
+import carpet.script.value.FunctionAnnotationValue;
+import carpet.script.value.FunctionUnpackedArgumentsValue;
 import carpet.script.value.LContainerValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
@@ -219,6 +221,20 @@ public class Operators {
         expression.addLazyUnaryOperator("!", precedence.get("unary+-!..."), false, (c, t, lv) ->
                 lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE
         ); // might need context boolean
+
+        // lazy because of typed evaluation of the argument
+        expression.addLazyUnaryOperator("...", Operators.precedence.get("unary+-!..."), false, (c, t, lv) ->
+        {
+            if (t == Context.LOCALIZATION)
+                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
+
+            Value params = lv.evalValue(c, t);
+            if (!(params instanceof AbstractListValue))
+                throw new InternalExpressionException("Unable to unpack a non-list");
+            FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
+            return (cc, tt) -> fuaval;
+            //throw new InternalExpressionException("That functionality has not been implemented yet.");
+        });
 
     }
 }
