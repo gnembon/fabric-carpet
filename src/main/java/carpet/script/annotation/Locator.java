@@ -9,7 +9,6 @@ import java.util.Iterator;
 
 import org.apache.commons.lang3.NotImplementedException;
 
-import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.LazyValue;
 import carpet.script.argument.Argument;
@@ -28,7 +27,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * <p>Class that holds annotation for {@link Argument} locators to be used in Scarpet functions.</p>
  * 
- * <p>Note: Only {@link Block} locator has been implemented at this point in time (TODO)</p>
+ * <p>Note: Nothing in this class has been implemented at this point in time, since it requires Carpet changes. There is an implementation 
+ * for Locator.Block working, but not implemented.</p>
  */
 public interface Locator {
 	/**
@@ -39,6 +39,7 @@ public interface Locator {
 	@Documented
 	@Retention(RUNTIME)
 	@Target({PARAMETER, TYPE_USE})
+	@Deprecated //Not implemented, although implementation available
 	public @interface Block {
 		/**
 		 * <p>Whether or not should the locator accept a single {@link String} as the parameter and
@@ -57,7 +58,6 @@ public interface Locator {
 		 * <p>Whether or not should the {@link BlockArgument} locator accept any string as the argument.</p>
 		 * <p>Requires the annotation to be present in a {@link BlockArgument} type, since it may just return a {@link String}</p>
 		 */
-		@Deprecated
 		boolean anyString() default false;
 	}
 
@@ -72,6 +72,7 @@ public interface Locator {
 	@Documented
 	@Retention(RUNTIME)
 	@Target({PARAMETER, TYPE_USE})
+	@Deprecated // Not implemented
 	public @interface Vec3d {
 		/**
 		 * <p>Whether or not should the {@link Vector3Argument} locator accept an optional direction aside from the {@link net.minecraft.util.math.Vec3d}</p>
@@ -99,6 +100,7 @@ public interface Locator {
 	@Documented
 	@Retention(RUNTIME)
 	@Target({PARAMETER, TYPE_USE})
+	@Deprecated // Not implemented
 	public @interface Function {
 		/**
 		 * <p>Whether this Locator should allow no function to be passed.</p>
@@ -213,7 +215,7 @@ public interface Locator {
 			@Override
 			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 				Module module = context.host.main;
-				FunctionArgument<LazyValue> locator = null;
+				FunctionArgument locator = null;
 				// TODO Make the locator
 				throw new NotImplementedException("Locator.FunctionValue still requires adapting the annotation system to somehow get lv size"
 						+ "or FunctionArgument to not depend on it!");
