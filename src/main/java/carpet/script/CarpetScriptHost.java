@@ -1067,7 +1067,7 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    public void handleExpressionException(String message, ExpressionException exc)
+    synchronized public void handleExpressionException(String message, ExpressionException exc)
     {
         handleErrorWithStack(message, new CarpetExpressionException(exc.getMessage(), exc.stack));
     }

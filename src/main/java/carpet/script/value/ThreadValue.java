@@ -44,7 +44,7 @@ public class ThreadValue extends Value
                         }
                         catch (ExpressionException exc)
                         {
-                            ctx.host.handleExpressionException("Thread failed", exc);
+                            ctx.host.handleExpressionException("Thread failed\n", exc);
                             return Value.NULL;
                         }
 
