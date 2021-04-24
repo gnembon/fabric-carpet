@@ -4,6 +4,9 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
+import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.value.*;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -340,16 +343,16 @@ public class DataStructures {
             try {
                 return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1));//using this charset cos it's the one used in decoding function
             } catch (IllegalArgumentException iae){
-                throw new InternalExpressionException("Invalid b64 string: " + v.getString());
+                throw new ThrowStatement("Invalid b64 string: " + v.getString(), Throwables.B64_ERROR);
             }
         });
 
         expression.addUnaryFunction("encode_json", v -> StringValue.of(v.toJson().toString()));
         expression.addUnaryFunction("decode_json", v -> {
             try {
-                return ValueConversions.of(new JsonParser().parse(v.getString()));
+                return new ScarpetJsonDeserializer().deserialize(new JsonParser().parse(v.getString()), null, null);
             } catch (JsonParseException jpe){
-                throw new InternalExpressionException("Invalid json string: " + v.getString());
+                throw new ThrowStatement("Invalid json string: " + v.getString(), Throwables.JSON_ERROR);
             }
         });
     }

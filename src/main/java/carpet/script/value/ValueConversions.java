@@ -117,28 +117,6 @@ public class ValueConversions
         return StringValue.of(repr);
     }
 
-    public static Value of(JsonElement jsonElement){
-
-        if (jsonElement.isJsonArray()){
-            List<Value> lv = new ArrayList<>();
-            jsonElement.getAsJsonArray().forEach(je -> lv.add(ValueConversions.of(je)));
-            return ListValue.wrap(lv);
-        } else if(jsonElement.isJsonObject()){
-            Map<Value, Value> mv = new HashMap<>();
-            jsonElement.getAsJsonObject().entrySet().forEach(e->mv.put(new StringValue(e.getKey()), ValueConversions.of(e.getValue())));
-            return MapValue.wrap(mv);
-        } else if (jsonElement.isJsonPrimitive()){
-            JsonPrimitive jp = jsonElement.getAsJsonPrimitive();
-            if(jp.isBoolean())
-                return BooleanValue.of(jp.getAsBoolean());
-            else if (jp.isNumber())
-                return new NumericValue(jp.getAsNumber().doubleValue());
-            else
-                return StringValue.of(jp.getAsString());
-        } else
-            return Value.NULL;
-    }
-
     public static Value ofRGB(int value) {return new NumericValue(value*256+255 );}
 
     public static World dimFromValue(Value dimensionValue, MinecraftServer server)
