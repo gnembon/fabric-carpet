@@ -310,4 +310,3 @@ expression, or `null` if default is skipped
 
 `if` function is equivalent to `if (cond) expr; else if (cond) expr; else default;` from Java, 
 just in a functional form
-

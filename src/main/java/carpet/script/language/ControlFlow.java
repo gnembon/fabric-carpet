@@ -3,8 +3,16 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
-import carpet.script.exception.*;
-import carpet.script.value.*;
+import carpet.script.exception.ExitStatement;
+import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ProcessedThrowStatement;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
+import carpet.script.value.ListValue;
+import carpet.script.value.MapValue;
+import carpet.script.value.NumericValue;
+import carpet.script.value.StringValue;
+import carpet.script.value.Value;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.stream.Collectors;
