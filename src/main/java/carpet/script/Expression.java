@@ -148,11 +148,6 @@ public class Expression
             {
                 try
                 {
-                    if (v2 != null)
-                    {
-                        throw new ExpressionException(c, e, token, "Did not expect a second parameter for unary operator");
-                    }
-                    Value.assertNotNull(v);
                     return lazyfun.apply(c, t, v);
                 }
                 catch (RuntimeException exc)
@@ -174,7 +169,6 @@ public class Expression
             {
                 try
                 {
-                    Value.assertNotNull(v1, v2);
                     return lazyfun.apply(c, type, e, t, v1, v2);
                 }
                 catch (RuntimeException exc)
@@ -193,6 +187,7 @@ public class Expression
             @Override
             public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
             {
+                ILazyFunction.checkInterrupts();
                 try
                 {
                     return lazyfun.apply(c, type, e, t, lv);
@@ -234,9 +229,9 @@ public class Expression
             @Override
             public LazyValue lazyEval(Context c, Integer t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
             {
+                ILazyFunction.checkInterrupts();
                 try
                 {
-                    Value.assertNotNull(v1, v2);
                     return lazyfun.apply(c, t, v1, v2);
                 }
                 catch (RuntimeException exc)
@@ -257,7 +252,6 @@ public class Expression
             {
                 try
                 {
-                    Value.assertNotNull(v1, v2); // does anybody needs those
                     Value ret = fun.apply(c, t, v1.evalValue(c, Context.NONE), v2.evalValue(c, Context.NONE));
                     return (cc, tt) -> ret;
                 }
@@ -291,7 +285,7 @@ public class Expression
             @Override
             public Value evalUnary(Value v1)
             {
-                return fun.apply(Value.assertNotNull(v1));
+                return fun.apply(v1);
             }
         });
     }
@@ -301,11 +295,7 @@ public class Expression
         operators.put(surface, new AbstractOperator(precedence, leftAssoc)
         {
             @Override
-            public Value eval(Value v1, Value v2)
-            {
-                Value.assertNotNull(v1, v2);
-                return fun.apply(v1, v2);
-            }
+            public Value eval(Value v1, Value v2) { return fun.apply(v1, v2); }
         });
     }
 
@@ -315,10 +305,7 @@ public class Expression
         functions.put(name,  new AbstractFunction(1, name)
         {
             @Override
-            public Value eval(List<Value> parameters)
-            {
-                return fun.apply(Value.assertNotNull(parameters.get(0)));
-            }
+            public Value eval(List<Value> parameters) { return fun.apply(parameters.get(0)); }
         });
     }
 
@@ -327,13 +314,7 @@ public class Expression
         functions.put(name, new AbstractFunction(2, name)
         {
             @Override
-            public Value eval(List<Value> parameters)
-            {
-                Value v1 = parameters.get(0);
-                Value v2 = parameters.get(1);
-                Value.assertNotNull(v1, v2);
-                return fun.apply(v1, v2);
-            }
+            public Value eval(List<Value> parameters) { return fun.apply(parameters.get(0), parameters.get(1)); }
         });
     }
 
@@ -342,12 +323,7 @@ public class Expression
         functions.put(name, new AbstractFunction(-1, name)
         {
             @Override
-            public Value eval(List<Value> parameters)
-            {
-                for (Value v: parameters)
-                    Value.assertNotNull(v);
-                return fun.apply(parameters);
-            }
+            public Value eval(List<Value> parameters) { return fun.apply(parameters); }
         });
     }
 
@@ -375,6 +351,7 @@ public class Expression
             @Override
             public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
             {
+                ILazyFunction.checkInterrupts();
                 try
                 {
                     return fun.apply(c, i, lazyParams);
@@ -394,6 +371,7 @@ public class Expression
             @Override
             public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
             {
+                ILazyFunction.checkInterrupts();
                 try
                 {
                     Value ret = fun.apply(c, i, unpackArgs(lazyParams, c, Context.NONE));
