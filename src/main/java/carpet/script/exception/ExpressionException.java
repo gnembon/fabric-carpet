@@ -70,7 +70,7 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
         return errMsg;
     };
 
-    static String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
+    synchronized static String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
     {
         if (c.host.errorSnooper != null)
         {

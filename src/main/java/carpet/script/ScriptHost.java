@@ -344,7 +344,7 @@ public abstract class ScriptHost
         host.moduleData.forEach((module, data) -> data.setImportsBasedOn(host, this.moduleData.get(data.parent)));
     }
 
-    public void handleExpressionException(String msg, ExpressionException exc)
+    synchronized public void handleExpressionException(String msg, ExpressionException exc)
     {
         System.out.println(msg+": "+exc);
     }
