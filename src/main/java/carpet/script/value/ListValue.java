@@ -103,14 +103,14 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     }
     public static ListValue of(Value ... list)
     {
-        return ListValue.wrap(Arrays.asList(list));
+        return new ListValue(new ArrayList<>(Arrays.asList(list)));
     }
     public static ListValue ofNums(Number ... list)
     {
         List<Value> valList = new ArrayList<>();
         for (Number i : list)
             valList.add(new NumericValue(i.doubleValue()));
-        return ListValue.wrap(valList);
+        return new ListValue(valList);
     }
 
     public static LazyValue lazyEmpty()
@@ -342,11 +342,11 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
         int size = items.size();
         int from = normalizeIndex(fromDesc, size);
         if (toDesc == null)
-            return new ListValue((Collection<? extends Value>) getItems().subList(from, size));
+            return new ListValue(new ArrayList<>(getItems().subList(from, size)));
         int to = normalizeIndex(toDesc, size+1);
         if (from > to)
             return ListValue.of();
-        return new ListValue((Collection<? extends Value>) getItems().subList(from, to));
+        return new ListValue(new ArrayList<>(getItems().subList(from, to)));
     }
 
     @Override
@@ -364,11 +364,11 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
             index++;
             if (val.equals(delimiter))
             {
-                result.items.add(ListValue.wrap(this.items.subList(startIndex, index-1)));
+                result.items.add(new ListValue(new ArrayList<>(this.items.subList(startIndex, index-1))));
                 startIndex = index;
             }
         }
-        result.items.add(ListValue.wrap(this.items.subList(startIndex, length())));
+        result.items.add(new ListValue(new ArrayList<>(this.items.subList(startIndex, length()))));
         return result;
     }
 
