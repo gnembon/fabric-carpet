@@ -149,9 +149,9 @@ reduce([1,2,3,4],_a*_,1)  => 24
 
 ### `encode_b64(string)`, `decode_b64(string)`
 
-Encode or decode a string from b64, throwing an exception if it's invalid
+Encode or decode a string from b64, throwing a `b64_error` exception if it's invalid
 
 ### `encode_json(value)`, `decode_json(string)`
 
-Encodes a value as a json string, and decodes a json string as a valid value, again throwing an exception if it doesn't
-parse properly
+Encodes a value as a json string, and decodes a json string as a valid value, throwing a `json_error` exception if it 
+doesn't parse properly
