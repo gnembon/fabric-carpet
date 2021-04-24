@@ -89,7 +89,7 @@ are not thread safe and require the execution to park on the server thread, wher
 the off-tick time in between ticks that didn't take all 50ms. There are however benefits of running things in parallel, 
 like fine time control not relying on the tick clock, or running things independent on each other. You can still run 
 your actions on tick-by-tick basis, either taking control of the execution using `game_tick()` API function 
-(nasty solution), or scheduling tick using `schedule()` function (preffered solution), but threading gives much more control
+(nasty solution), or scheduling tick using `schedule()` function (preferred solution), but threading gives much more control
 on the timings without impacting the main game and is the only solution to solve problems in parallel 
 (see [scarpet camera](/src/main/resources/assets/carpet/scripts/camera.sc)).
 
@@ -103,7 +103,10 @@ effectively parallelized.
 
 If the app is shutting down, creating new tasks via `task` will not succeed. Instead the new task will do nothing and return
 `null`, so most threaded application should handle closing apps naturally. Keep in mind in case you rely on task return values,
-that they will return `null` regardless of anything in these situations.
+that they will return `null` regardless of anything in these situations. When app handles `__on_close()` event, new tasks cannot
+be submitted at this point, but current tasks are not terminated. Apps can use that opportunity to gracefully shutdown their tasks.
+Regardless if the app handles `__on_close()` event, or does anything with their tasks in it, all tasks will be terminated exceptionally
+within the next 1.5 seconds. 
 
 ### `task(function, ... args)`, `task_thread(executor, function, ... args)`
 

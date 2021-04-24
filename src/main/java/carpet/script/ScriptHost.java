@@ -19,8 +19,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -29,6 +31,7 @@ public abstract class ScriptHost
     public static Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
     private static final Map<Long, Random> randomizers = new Long2ObjectOpenHashMap<>();
 
+    public static Thread mainThread = null;
     private final Map<Value, ThreadPoolExecutor> executorServices = new HashMap<>();
     private final Map<Value, Object> locks = new ConcurrentHashMap<>();
     protected boolean inTermination = false;
@@ -113,6 +116,7 @@ public abstract class ScriptHost
         initializeModuleGlobals(moduleData);
         this.moduleData.put(code, moduleData);
         this.modules.put(code==null?null:code.getName(), code);
+        mainThread = Thread.currentThread();
     }
 
     void initializeModuleGlobals(ModuleData md)
@@ -375,8 +379,32 @@ public abstract class ScriptHost
     public void onClose()
     {
         inTermination = true;
+        executorServices.values().forEach(ThreadPoolExecutor::shutdown);
         for (ScriptHost uh : userHosts.values()) uh.onClose();
-        executorServices.values().forEach(e -> {e.shutdown(); e.shutdownNow();});
+        if (taskCount() > 0)
+        {
+            executorServices.values().forEach(e -> {
+                ExecutorService stopper = Executors.newSingleThreadExecutor();
+                stopper.submit( () -> {
+                    try {
+                        // Wait a while for existing tasks to terminate
+                        if (!e.awaitTermination(1500, TimeUnit.MILLISECONDS)) {
+                            e.shutdownNow(); // Cancel currently executing tasks
+                            // Wait a while for tasks to respond to being cancelled
+                            if (!e.awaitTermination(1500, TimeUnit.MILLISECONDS))
+                                CarpetScriptServer.LOG.error("Failed to stop app's thread");
+                        }
+                    } catch (InterruptedException ie) {
+                        // (Re-)Cancel if current thread also interrupted
+                        e.shutdownNow();
+                        // Preserve interrupt status
+                        Thread.currentThread().interrupt();
+                    }
+                    stopper.shutdown();
+                    stopper.shutdownNow();
+                });
+            });
+        }
     }
 
     public void setPerPlayer(boolean isPerUser)

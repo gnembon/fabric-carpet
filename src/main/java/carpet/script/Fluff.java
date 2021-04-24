@@ -37,6 +37,12 @@ public abstract class Fluff
         boolean numParamsVaries();
 
         LazyValue lazyEval(Context c, Integer type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams);
+
+        static void checkInterrupts()
+        {
+            if (ScriptHost.mainThread != Thread.currentThread() && Thread.currentThread().isInterrupted())
+                throw new InternalExpressionException("Thread interrupted");
+        }
         // lazy function has a chance to change execution based on contxt
     }
 
@@ -130,6 +136,7 @@ public abstract class Fluff
                     private List<Value> params;
 
                     public Value evalValue(Context c, Integer type) {
+                        ILazyFunction.checkInterrupts();
                         return AbstractFunction.this.eval(getParams(c));
                     }
 
@@ -210,7 +217,7 @@ public abstract class Fluff
                 {
                     throw new ExpressionException(cc, e, t, "Did not expect a second parameter for unary operator");
                 }
-                return (c, ignored_type) -> AbstractUnaryOperator.this.evalUnary(v1.evalValue(c));
+                return (c, ignored_type) -> AbstractUnaryOperator.this.evalUnary(v1.evalValue(c, Context.NONE));
             }
             catch (RuntimeException exc)
             {
