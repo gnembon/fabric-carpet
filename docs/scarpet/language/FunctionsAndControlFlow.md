@@ -311,11 +311,3 @@ expression, or `null` if default is skipped
 `if` function is equivalent to `if (cond) expr; else if (cond) expr; else default;` from Java, 
 just in a functional form
 
-### `encode_b64(string)`, `decode_b64(string)`
-
-Encode or decode a string from b64, throwing an exception if it's invalid
-
-### `encode_json(value)`, `decode_json(string)`
-
-Encodes a value as a json string, and decodes a json string as a valid value, again throwing an exception if it doesn't 
-parse properly

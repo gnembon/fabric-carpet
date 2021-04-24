@@ -146,3 +146,12 @@ it will be used from now on as a new value for the accumulator.
 reduce([1,2,3,4],_a+_,0)  => 10
 reduce([1,2,3,4],_a*_,1)  => 24
 </pre>
+
+### `encode_b64(string)`, `decode_b64(string)`
+
+Encode or decode a string from b64, throwing an exception if it's invalid
+
+### `encode_json(value)`, `decode_json(string)`
+
+Encodes a value as a json string, and decodes a json string as a valid value, again throwing an exception if it doesn't
+parse properly

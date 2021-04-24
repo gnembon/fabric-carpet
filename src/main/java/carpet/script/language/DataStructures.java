@@ -4,16 +4,13 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.value.ContainerValueInterface;
-import carpet.script.value.LContainerValue;
-import carpet.script.value.LazyListValue;
-import carpet.script.value.ListValue;
-import carpet.script.value.MapValue;
-import carpet.script.value.NumericValue;
-import carpet.script.value.StringValue;
-import carpet.script.value.Value;
+import carpet.script.value.*;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -336,6 +333,24 @@ public class DataStructures {
                 return (cc, tt) -> Value.NULL;
             Value ret = new NumericValue(((ContainerValueInterface) container).delete(lv.get(lv.size()-1).evalValue(c)));
             return (cc, tt) -> ret;
+        });
+
+        expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes())));
+        expression.addUnaryFunction("decode_b64", v -> {
+            try {
+                return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1));//using this charset cos it's the one used in decoding function
+            } catch (IllegalArgumentException iae){
+                throw new InternalExpressionException("Invalid b64 string: " + v.getString());
+            }
+        });
+
+        expression.addUnaryFunction("encode_json", v -> StringValue.of(v.toJson().toString()));
+        expression.addUnaryFunction("decode_json", v -> {
+            try {
+                return ValueConversions.of(new JsonParser().parse(v.getString()));
+            } catch (JsonParseException jpe){
+                throw new InternalExpressionException("Invalid json string: " + v.getString());
+            }
         });
     }
 }
