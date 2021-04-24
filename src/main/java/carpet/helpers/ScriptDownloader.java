@@ -76,7 +76,7 @@ public class ScriptDownloader {
     }
 
     // converting stream to string
-    private static String getStringFromStream(InputStream inputStream) throws IOException {
+    public static String getStringFromStream(InputStream inputStream) throws IOException {
         if (inputStream != null) {
             Writer stringWriter = new StringWriter();
 

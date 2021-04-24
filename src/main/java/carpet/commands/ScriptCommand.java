@@ -25,7 +25,6 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
 import net.minecraft.block.pattern.CachedBlockPosition;
-import net.minecraft.command.CommandException;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.BlockPredicateArgumentType;
 import net.minecraft.command.argument.BlockStateArgument;
@@ -38,10 +37,14 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -101,6 +104,11 @@ public class ScriptCommand
         return suggestionsBuilder.buildFuture();
     }
 
+    private static final Pattern fileFolderFinderPattern = Pattern.compile(//cos website response is string, so this captures it
+            "<div role=\"rowheader\" class=\"flex-auto min-width-0 col-md-2 mr-3\">\n" +
+            "            <span class=\"css-truncate css-truncate-target d-block width-fit\"><a class=\"js-navigation-open Link--primary\" title=\""
+    );
+
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
@@ -111,13 +119,52 @@ public class ScriptCommand
             return suggestionsBuilder.buildFuture();
         }
 
-        Set<String> directoryNames = new HashSet<>();//todo get them from repo with html stuff, with BFS or smth to see all directories
-        if(directoryNames.contains(previous.substring(0, previous.length()-2))){//then suggest all further subdirectories and files
+        String[] previousInput = previous.split("/");
+        String currentPath = "";
+        Set<String> suggestions = new HashSet<>();
 
+        try{
+            suggestions = getFileFolderNames("");
+        } catch (IOException ignored){} //we know it can't happen cos we have plain hardcoded URL which won't fail
+
+        for (String folderName: previousInput) {
+            currentPath += folderName;
+            try{
+                suggestions = getFileFolderNames(currentPath);
+            } catch (IOException e) {
+                //it means user has only typed part of the folder name, like: '/script download global survival/a'
+                //so we wanna suggest all the available options
+                break;
+            }
         }
 
+        suggestions.forEach(s -> suggestionsBuilder.suggest(previous + s));
 
         return suggestionsBuilder.buildFuture();
+    }
+
+    private static Set<String> getFileFolderNames(String path) throws IOException{
+        Set<String> directoryNames = new HashSet<>();
+
+        String link = "https://www.github.com/gnembon/scarpet/tree/master/programs/" + path;
+
+        URL appURL = new URL(link);
+
+        String response = ScriptDownloader.getStringFromStream(appURL.openStream());
+        Matcher matcher = fileFolderFinderPattern.matcher(response);
+
+        while(matcher.find()){
+            StringBuilder fileFolderName = new StringBuilder();
+            int index = matcher.end();
+            while(response.charAt(index)!='"'){
+                fileFolderName.append(response.charAt(index));
+                index++;
+            }
+            String fileFolder = fileFolderName.toString();
+            directoryNames.add(fileFolder + (fileFolder.matches(".+\\..+") ? "" : "/"));//if directory name then we wanna add '/' automatically
+        }
+
+        return directoryNames;
     }
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
