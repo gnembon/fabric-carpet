@@ -121,9 +121,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -331,7 +333,7 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext)c;
             ServerWorld world = cc.s.getWorld();
             MinecraftServer server = world.getServer();
-            ServerPlayerEntity player[] = {null};
+            Set<ServerPlayerEntity> playerTargets = new HashSet<>();
             List<Pair<ShapeDispatcher.ExpiringShape, Map<String,Value>>> shapes = new ArrayList<>();
             if (lv.size() == 1) // bulk
             {
@@ -340,16 +342,16 @@ public class Auxiliary {
                 for (Value list : ((ListValue) specLoad).getItems())
                 {
                     if (!(list instanceof ListValue))  throw new InternalExpressionException("In bulk mode - shapes need to be provided as a list of shape specs");
-                    shapes.add( ShapeDispatcher.fromFunctionArgs(server, world, ((ListValue) list).getItems(), player));
+                    shapes.add( ShapeDispatcher.fromFunctionArgs(server, world, ((ListValue) list).getItems(), playerTargets));
                 }
             }
             else
             {
-                shapes.add(ShapeDispatcher.fromFunctionArgs(server, world, lv, player));
+                shapes.add(ShapeDispatcher.fromFunctionArgs(server, world, lv, playerTargets));
             }
 
             ShapeDispatcher.sendShape(
-                    (player[0]==null)?cc.s.getWorld().getPlayers():Collections.singletonList(player[0]),
+                    (playerTargets.isEmpty())?cc.s.getWorld().getPlayers():playerTargets,
                     shapes
             );
             return Value.TRUE;
