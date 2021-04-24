@@ -38,13 +38,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -104,6 +98,25 @@ public class ScriptCommand
         String prefix = lastToken.reverse().toString();
         String previousString =  previous.substring(0,previous.length()-prefix.length()) ;
         suggestFunctions(currentHost, previousString, prefix).forEach(text -> suggestionsBuilder.suggest(previousString+text));
+        return suggestionsBuilder.buildFuture();
+    }
+
+    private static CompletableFuture<Suggestions> suggestDownloadableApps(
+            CommandContext<ServerCommandSource> context,
+            SuggestionsBuilder suggestionsBuilder
+    ) throws CommandSyntaxException {
+        String previous = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
+        if(!previous.endsWith("/")){//always ensure it ends in / to make certain that you have format like "directory/subdirectory/filename.sc"
+            suggestionsBuilder.suggest("/");
+            return suggestionsBuilder.buildFuture();
+        }
+
+        Set<String> directoryNames = new HashSet<>();//todo get them from repo with html stuff, with BFS or smth to see all directories
+        if(directoryNames.contains(previous.substring(0, previous.length()-2))){//then suggest all further subdirectories and files
+
+        }
+
+
         return suggestionsBuilder.buildFuture();
     }
 
@@ -304,14 +317,9 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
 
-        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).then(literal("global").then(argument("path", StringArgumentType.greedyString()).
-                suggests((cc, bb) -> null).//todo (in this pr) suggestion
-                executes((cc)-> {
-                    String pathRequest = StringArgumentType.getString(cc,"path");
-                    Messenger.m(cc.getSource(),"gi Getting script from: " + pathRequest + " into global config script folder");
-                    String code = ScriptDownloader.getScriptCode(pathRequest);
-                    return 1;
-                }))).then(literal("local"));
+        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
+                then(literal("global").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), true)))).
+                then(literal("local").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), false))));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).

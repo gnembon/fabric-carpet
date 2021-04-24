@@ -26,9 +26,9 @@ import java.nio.charset.StandardCharsets;
 
 public class ScriptDownloader {
 
-    public static int downloadScript(CommandContext<ServerCommandSource> cc, String path){
+    public static int downloadScript(CommandContext<ServerCommandSource> cc, String path, boolean global){
         String code = getScriptCode(path);
-        return saveScriptToFile(path, code, cc.getSource().getMinecraftServer(),true);
+        return saveScriptToFile(path, code, cc.getSource().getMinecraftServer(),global);
     }
 
     public static String getScriptCode(String path){
@@ -45,7 +45,6 @@ public class ScriptDownloader {
     }
 
     public static int saveScriptToFile(String name, String code, MinecraftServer server,boolean globalSavePath){
-        name = "scripts\\"+name;
         Path scriptPath;
         String location;
         if(globalSavePath){
@@ -55,24 +54,24 @@ public class ScriptDownloader {
             scriptPath = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
             location = "world script folder";
         }
-
-        System.out.println("gi Path to place file: '"+ location + "'");
+        Messenger.m(server.getCommandSource(), "gi Path to place file: '"+ location + "'");
+        Messenger.m(server.getCommandSource(), "gi Path to place file: '"+ scriptPath + "'");
 
         FileWriter fileWriter;
-        File file = scriptPath.toFile();
+        File file = new File(scriptPath.toFile(), name);
         try {
-            if(file.exists())
+            if(file.createNewFile())
                 throw new CommandException(new LiteralText(String.format("%s already exists in %s, will not overwrite", name, location)));
-            Runtime.getRuntime().exec("explorer.exe /select, " + location);
-            file.createNewFile();
-            fileWriter = new FileWriter(location + name);
+            Runtime.getRuntime().exec("explorer.exe /select, " + file.getAbsolutePath());//todo remove after debugging and finishing saving to disk
+            fileWriter = new FileWriter(file);
             fileWriter.write(code);
-            System.out.println(file.getAbsolutePath());
+            fileWriter.close();
+            Messenger.m(server.getCommandSource(), file.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             return 0;
         }
-        System.out.println("gi Successfuly created "+ name + " in " + location);
+        Messenger.m(server.getCommandSource(), "gi Successfully created "+ name + " in " + location);
         return 1;
     }
 
