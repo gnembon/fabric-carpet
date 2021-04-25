@@ -3,7 +3,6 @@ package carpet.script.annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import java.lang.reflect.AnnotatedParameterizedType;
 import java.lang.reflect.AnnotatedType;
 import java.util.Iterator;
 
@@ -161,7 +160,8 @@ public interface Locator {
 			@Override
 			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
 				BlockArgument locator = null;
-				return (R) (returnBlockValue ? locator.block : locator);
+				//return (R) (returnBlockValue ? locator.block : locator);
+				throw new NotImplementedException("Locator.Block still requires adapting BlockArgument to accept iterators (which is actually simple)");
 			}
 		}
 		
@@ -187,10 +187,10 @@ public interface Locator {
 
 			@Override
 			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
-				// TODO Make the locator
 				Vector3Argument locator = null;
-				throw new NotImplementedException("Locator.Vec3d still require adapting Vector3Argument to accept iterators!");
+				// TODO Make the locator
 				//return (R) (returnVec3d ? locator.vec : locator);
+				throw new NotImplementedException("Locator.Vec3d still require adapting Vector3Argument to accept iterators!");
 			}
 		}
 		
@@ -203,13 +203,11 @@ public interface Locator {
 				Function annotation = annoType.getAnnotation(Function.class);
 				this.returnFunctionValue = type == FunctionValue.class;
 				if (!returnFunctionValue && type != FunctionArgument.class)
-					throw new IllegalArgumentException("Params annotated with Locator.Function must be of either FunctionArgument<LazyValue> or FunctionValue type");
-				if (!returnFunctionValue && ((AnnotatedParameterizedType)annoType).getAnnotatedActualTypeArguments()[0].getType() != LazyValue.class)
-					throw new IllegalArgumentException("Params annotated with Locator.Function targeting FunctionArgument must have <LazyValue> generics");
+					throw new IllegalArgumentException("Params annotated with Locator.Function must be of either FunctionArgument or FunctionValue type");
 				this.allowNone = annotation.allowNone();
 				this.checkArgs = annotation.checkArgs();
 				if (returnFunctionValue && allowNone)
-					throw new IllegalArgumentException("Cannot use allowNone of Locator.Function in FunctionValue types, use FunctionArgument<LazyValue>");
+					throw new IllegalArgumentException("Cannot use allowNone of Locator.Function in FunctionValue types, use FunctionArgument");
 			}
 			
 			@Override
@@ -217,9 +215,9 @@ public interface Locator {
 				Module module = context.host.main;
 				FunctionArgument locator = null;
 				// TODO Make the locator
+				//return (R) (returnFunctionValue ? locator.function : locator);
 				throw new NotImplementedException("Locator.FunctionValue still requires adapting the annotation system to somehow get lv size"
 						+ "or FunctionArgument to not depend on it!");
-				//return (R) (returnFunctionValue ? locator.function : locator);
 			}
 
 			@Override
