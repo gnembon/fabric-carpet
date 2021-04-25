@@ -159,7 +159,7 @@ public interface Locator {
 
 			@Override
 			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
-				BlockArgument locator = null;
+				BlockArgument locator = null; // BlockArgument.findIn((CarpetContext)context, lazyValueIterator (requires changing to Value), 0, acceptString, optional, anyString);
 				//return (R) (returnBlockValue ? locator.block : locator);
 				throw new NotImplementedException("Locator.Block still requires adapting BlockArgument to accept iterators (which is actually simple)");
 			}

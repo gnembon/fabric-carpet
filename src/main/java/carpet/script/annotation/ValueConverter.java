@@ -132,14 +132,14 @@ public interface ValueConverter<R> {
 				return (ValueConverter<R>)Params.getStrictConverter(annoType); // Throws if incorrect usage
 			if (annoType.isAnnotationPresent(Param.TheLazyT.class)) {
 				if (type != Integer.class)
-					throw new IllegalArgumentException("The lazy T can only be used in Integer parameters");
+					throw new IllegalArgumentException("The Lazy T can only be used in Integer parameters");
 				return (ValueConverter<R>) Params.LAZY_T_PROVIDER;
 			}
 			if (annoType.getAnnotations()[0].annotationType().getEnclosingClass() == Locator.class)
 				return Locator.Locators.fromAnnotatedType(annoType, type);
 		}
 		
-		//Start: Old fromType.
+		// Class only checks
 		if (type.isAssignableFrom(Value.class))
 			return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
 		if (type == LazyValue.class)

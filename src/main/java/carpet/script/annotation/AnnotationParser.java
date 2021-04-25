@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ClassUtils;
 
-import carpet.CarpetSettings;
+import carpet.CarpetExtension;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff.TriFunction;
@@ -75,6 +75,8 @@ public class AnnotationParser {
 	 * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link LazyFunction} annotation, to be used
 	 * in the Scarpet language.</p>
 	 * 
+	 * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link CarpetExtension#onGameStarted()})</p>
+	 * 
 	 * <p>There is a set of requirements for the class in order to be accepted:</p>
 	 * <ul>
 	 * <li>Class must be concrete. That is, no interfaces or abstract classes should be passed</li>
@@ -108,17 +110,13 @@ public class AnnotationParser {
 		Method[] methodz = clazz.getDeclaredMethods();
 		for (Method method : methodz) {
 			if (!method.isAnnotationPresent(LazyFunction.class)) continue;
-			//Checks
-			if (Modifier.isStatic(method.getModifiers())) {
+			// Checks
+			if (Modifier.isStatic(method.getModifiers()))
 				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided in '" + clazz + "' must not be static");
-			}
-			if (method.getExceptionTypes().length != 0) {
+			if (method.getExceptionTypes().length != 0)
 				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided in '"+ clazz +"' must not declare checked exceptions");
-			}
-			
+
 			ParsedFunction function = new ParsedFunction(method, instance);
-			
-			CarpetSettings.LOG.info("Adding fname: "+function.name()+". Expr paramcount: "+function.scarpetParamCount()+". Provided in " + clazz.getName());
 			functionList.add(function);
 		}
 	}
@@ -130,7 +128,7 @@ public class AnnotationParser {
 	 */
 	public static void apply(Expression expr) {
 		for (ParsedFunction function : functionList)
-			expr.addLazyFunction(function.name(), function.scarpetParamCount(), function);
+			expr.addLazyFunction(function.name, function.scarpetParamCount, function);
 	}
 	
 	private static class ParsedFunction implements TriFunction<Context, Integer, List<LazyValue>, LazyValue> {
@@ -268,13 +266,6 @@ public class AnnotationParser {
 				builder.append("s...)");
 			}
 			return builder.toString();
-		}
-		
-		private int scarpetParamCount() {
-			return scarpetParamCount;
-		}
-		private String name() {
-			return name;
 		}
 	}
 	
