@@ -1,5 +1,6 @@
 package carpet.script.annotation;
 
+import carpet.logging.HUDController;
 import carpet.script.LazyValue;
 import carpet.script.annotation.Param.AllowSingleton;
 import carpet.script.exception.InternalExpressionException;
@@ -7,10 +8,12 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.BaseText;
 import net.minecraft.text.Text;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
@@ -56,8 +59,24 @@ public class FunctionsTestClass {
 	        case "clear":
 	            action = Action.CLEAR;
 	            break;
+	        case "player_list_header":
+	        case "player_list_footer":
+	            action = null;
+	            break;
 	        default:
 	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+	    }
+	    if (action == null) // Player list
+	    {
+	        Map<ServerPlayerEntity, BaseText> map = actionString.equals("player_list_header") ? HUDController.scarpet_headers : HUDController.scarpet_footers;
+	        if (!content.isPresent() || content.get().getString().isEmpty()) // null or empty string/text
+	            targets.forEach(p -> {
+	                map.remove(p);
+	            });
+	        else
+	            targets.forEach(p -> {
+	            	map.put(p, (BaseText) content.get());
+	            });
 	    }
 	    targets.forEach(p -> {
 	        if (times.length == 3) p.networkHandler.sendPacket(new TitleS2CPacket(Action.TIMES, null, times[0], times[1], times[2]));
