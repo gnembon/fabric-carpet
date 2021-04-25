@@ -16,6 +16,10 @@ import carpet.script.value.Value;
 import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -104,11 +108,6 @@ public class ScriptCommand
         return suggestionsBuilder.buildFuture();
     }
 
-    private static final Pattern fileFolderFinderPattern = Pattern.compile(//cos website response is string, so this captures it
-            "<div role=\"rowheader\" class=\"flex-auto min-width-0 col-md-2 mr-3\">\n" +
-            "            <span class=\"css-truncate css-truncate-target d-block width-fit\"><a class=\"js-navigation-open Link--primary\" title=\""
-    );
-
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
@@ -133,7 +132,7 @@ public class ScriptCommand
                 suggestions = getFileFolderNames(currentPath);
             } catch (IOException e) {
                 //it means user has only typed part of the folder name, like: '/script download global survival/a'
-                //so we wanna suggest all the available options
+                //so we wanna suggest all the currently available options
                 break;
             }
         }
@@ -146,22 +145,17 @@ public class ScriptCommand
     private static Set<String> getFileFolderNames(String path) throws IOException{
         Set<String> directoryNames = new HashSet<>();
 
-        String link = "https://www.github.com/gnembon/scarpet/tree/master/programs/" + path;
+        String link = "https://api.github.com/repos/gnembon/scarpet/contents/programs/" + path;
 
         URL appURL = new URL(link);
 
         String response = ScriptDownloader.getStringFromStream(appURL.openStream());
-        Matcher matcher = fileFolderFinderPattern.matcher(response);
 
-        while(matcher.find()){
-            StringBuilder fileFolderName = new StringBuilder();
-            int index = matcher.end();
-            while(response.charAt(index)!='"'){
-                fileFolderName.append(response.charAt(index));
-                index++;
-            }
-            String fileFolder = fileFolderName.toString();
-            directoryNames.add(fileFolder + (fileFolder.matches(".+\\..+") ? "" : "/"));//if directory name then we wanna add '/' automatically
+        JsonArray files = new JsonParser().parse(response).getAsJsonArray();
+
+        for(JsonElement je : files){
+            JsonObject jo = je.getAsJsonObject();
+            directoryNames.add((jo.get("name").getAsString() + jo.get("type").getAsString()).equals("dir") ? "/":"");//if directory name then we wanna add '/' automatically
         }
 
         return directoryNames;
