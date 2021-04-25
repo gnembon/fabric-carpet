@@ -37,16 +37,18 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @see Param.Strict
  * @see Param.AllowSingleton
  * @see Param.TheLazyT
+ * @see Param.Custom
  * @see Locator.Block
  * @see Locator.Vec3d
+ * @see Locator.Function
  *
  */
 public interface Param {
 
 	/**
-	 * <p>Indicates that this integer is The Lazy `t`, whatever that actually is.</p>
+	 * <p>Indicates that this integer is The Lazy <em>t</em>, whatever that actually is.</p>
 	 * 
-	 * <p>This has no parameters, since The Lazy `t` is The Lazy `t`, without
+	 * <p>This has no parameters, since The Lazy <em>t</em> is The Lazy <em>t</em>, without
 	 * further discussion</p>
 	 *
 	 * <p>{@code expression.addLazyFunction("name", -1, (context, t <-- HERE, lv)}</p>
@@ -221,8 +223,7 @@ public interface Param {
 		static { //TODO Specify strictness in name?
 			registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString, "string"));
 			registerStrictConverter(Text.class, false, new SimpleTypeConverter<>(FormattedTextValue.class, FormattedTextValue::getText, "text"));
-			registerStrictConverter(Text.class, true, new SimpleTypeConverter<>(StringValue.class, 
-								v -> v instanceof FormattedTextValue ? ((FormattedTextValue) v).getText() : new LiteralText(v.getString()), "text"));
+			registerStrictConverter(Text.class, true, new SimpleTypeConverter<>(StringValue.class, FormattedTextValue::getTextByValue, "text"));
 			registerStrictConverter(ServerPlayerEntity.class, false, new SimpleTypeConverter<>(EntityValue.class, 
 								v -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, v), "online player entity"));
 			registerStrictConverter(Boolean.class, false, new SimpleTypeConverter<>(BooleanValue.class, BooleanValue::getBoolean, "boolean"));
@@ -278,7 +279,7 @@ public interface Param {
 		 * a parameter annotated with the {@link Param.Custom} annotation.</p>
 		 * <p>Factories are expected to return {@code null} when the provided arguments don't match a {@link ValueConverter} they are able
 		 * to create (or reuse).</p>
-		 * <p>You have exposed {@link ValueCaster#get(Class)} and {@link ValueConverter#fromAnnotatedType(AnnotatedType)} in case you need to get valid
+		 * <p>You have {@link ValueCaster#get(Class)} and {@link ValueConverter#fromAnnotatedType(AnnotatedType)} available in case you need to get valid
 		 * {@link ValueConverter}s for things such as nested types, intermediary conversions or whatever you really need them for.</p>
 		 * @param <T> The type that the ValueConverter will convert to. Its class will also be passed to the factory
 		 * @param factory A {@link BiFunction} that provides {@link ValueConverter}s given an {@link AnnotatedType} and the {@link Class} of its type,

@@ -36,7 +36,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
 		registerType(Value.class, ServerPlayerEntity.class, val -> EntityValue.getPlayerByValue(CarpetServer.minecraft_server, val), "online player");
 		registerType(EntityValue.class, Entity.class, EntityValue::getEntity, "entity");
 		registerType(Value.class, World.class, val -> ValueConversions.dimFromValue(val, CarpetServer.minecraft_server), "dimension");
-		registerType(Value.class, Text.class, v -> v instanceof FormattedTextValue ? ((FormattedTextValue)v).getText() : new LiteralText(v.getString()), "text"); 
+		registerType(Value.class, Text.class, FormattedTextValue::getTextByValue, "text"); 
 		registerType(Value.class, String.class, Value::getString, "string"); // Check out @Param.Strict for more specific types
 		
 		// Primitives are also query those classes
