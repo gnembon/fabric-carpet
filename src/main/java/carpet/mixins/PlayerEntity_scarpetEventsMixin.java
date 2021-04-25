@@ -34,7 +34,7 @@ public abstract class PlayerEntity_scarpetEventsMixin extends LivingEntity
 
     @Inject(method = "applyDamage", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/entity/player/PlayerEntity;addExhaustion(F)V"
+            target = "Lnet/minecraft/entity/player/PlayerEntity;applyArmorToDamage(Lnet/minecraft/entity/damage/DamageSource;F)F"
     ))
     private void playerTakingDamage(DamageSource source, float amount, CallbackInfo ci)
     {
