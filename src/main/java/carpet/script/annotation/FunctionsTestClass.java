@@ -69,14 +69,13 @@ public class FunctionsTestClass {
 	    if (action == null) // Player list
 	    {
 	        Map<ServerPlayerEntity, BaseText> map = actionString.equals("player_list_header") ? HUDController.scarpet_headers : HUDController.scarpet_footers;
-	        if (!content.isPresent() || content.get().getString().isEmpty()) // null or empty string/text
-	            targets.forEach(p -> {
+	        if (!content.isPresent()) // null
+	            for (ServerPlayerEntity p : targets)
 	                map.remove(p);
-	            });
 	        else
-	            targets.forEach(p -> {
-	            	map.put(p, (BaseText) content.get());
-	            });
+	            for (ServerPlayerEntity p : targets)
+	                map.put(p, (BaseText) content.get());
+	        return targets.size();
 	    }
 	    targets.forEach(p -> {
 	        if (times.length == 3) p.networkHandler.sendPacket(new TitleS2CPacket(Action.TIMES, null, times[0], times[1], times[2]));
