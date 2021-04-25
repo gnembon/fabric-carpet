@@ -64,7 +64,7 @@ public class FunctionsTestClass {
 	            action = null;
 	            break;
 	        default:
-	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar' or 'clear' as second argument");
+	            throw new InternalExpressionException("'display_title' requires 'title', 'subtitle', 'actionbar', 'player_list_header', 'player_list_footer' or 'clear' as second argument");
 	    }
 	    if (action == null) // Player list
 	    {
