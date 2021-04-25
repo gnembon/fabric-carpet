@@ -127,7 +127,7 @@ public interface Locator {
 			if (annoType.isAnnotationPresent(Block.class))
 				return new BlockLocator<R>(annoType.getAnnotation(Block.class), type);
 			if (annoType.isAnnotationPresent(Function.class))
-				return new FunctionLocator<R>(annoType, type);
+				return new FunctionLocator<R>(annoType.getAnnotation(Function.class), type);
 			if (annoType.isAnnotationPresent(Vec3d.class))
 				return new Vec3dLocator<R>(annoType.getAnnotation(Vec3d.class), type);
 			throw new IllegalStateException("Locator#fromAnnotatedType got called with an incompatible AnnotatedType");
@@ -199,8 +199,7 @@ public interface Locator {
 			private final boolean allowNone;
 			private final boolean checkArgs;
 			
-			FunctionLocator(AnnotatedType annoType, Class<R> type) {
-				Function annotation = annoType.getAnnotation(Function.class);
+			FunctionLocator(Function annotation, Class<R> type) {
 				this.returnFunctionValue = type == FunctionValue.class;
 				if (!returnFunctionValue && type != FunctionArgument.class)
 					throw new IllegalArgumentException("Params annotated with Locator.Function must be of either FunctionArgument or FunctionValue type");

@@ -22,7 +22,7 @@ import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
-public class OutputConverter<T> {
+public final class OutputConverter<T> {
 	private static final Map<Class<?>, OutputConverter<?>> byResult = new HashMap<>();
 	private static OutputConverter<Value> VALUE = new OutputConverter<>(v -> (c, t) -> v);
 	static {
@@ -64,12 +64,12 @@ public class OutputConverter<T> {
 	public static <T> OutputConverter<T> get(Class<T> returnType) {
 		if (Value.class.isAssignableFrom(returnType))
 			return (OutputConverter<T>) VALUE;
-		return (OutputConverter<T>) Objects.requireNonNull(byResult.get(returnType), "Unregistered output type: "+returnType+". Register it in OutputConverter");
+		return (OutputConverter<T>)Objects.requireNonNull(byResult.get(returnType), "Unregistered output type: "+returnType+". Register it in OutputConverter");
 	}
 	
 	/**
-	 * Converts the given input object into a {@link LazyValue}, to be used in return values 
-	 * of Scarpet functions
+	 * <p>Converts the given input object into a {@link LazyValue}, to be used in return values 
+	 * of Scarpet functions</p>
 	 * @param input The value to convert
 	 * @return The converted value
 	 */
@@ -78,7 +78,7 @@ public class OutputConverter<T> {
 	}
 	
 	/**
-	 * Registers a new type to be able to be used as the return value of methods
+	 * <p>Registers a new type to be able to be used as the return value of methods</p>
 	 * @param <T> The type of the return value
 	 * @param outputClass The class of T
 	 * @param converter The function that converts the an instance of T to a {@link LazyValue}

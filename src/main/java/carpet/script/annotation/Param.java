@@ -25,7 +25,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 
 import static java.lang.annotation.ElementType.PARAMETER;
