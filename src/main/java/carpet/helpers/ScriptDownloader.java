@@ -37,10 +37,8 @@ public class ScriptDownloader {
             URL appURL = new URL(link);
             HttpURLConnection http = (HttpURLConnection) appURL.openConnection();
             return getStringFromStream((InputStream) http.getContent());
-        } catch (FileNotFoundException e){
+        } catch (IOException e){
             throw new CommandException(new LiteralText("'"+ path + "' is not a valid path to a scarpet app"));
-        } catch (IOException e) {
-            throw new CommandException(new LiteralText("Error while getting code: "+ e));//todo figure out what else can trigger this
         }
     }
 
