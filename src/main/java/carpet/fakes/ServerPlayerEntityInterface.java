@@ -7,5 +7,5 @@ public interface ServerPlayerEntityInterface
     EntityPlayerActionPack getActionPack();
     void invalidateEntityObjectReference();
     boolean isInvalidEntityObject();
-
+    String getLanguage();
 }
