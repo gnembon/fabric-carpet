@@ -1,5 +1,6 @@
 package carpet.mixins;
 
+import carpet.fakes.ClientSettingsC2SPacketInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.script.EntityEventsGroup;
@@ -7,6 +8,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.packet.c2s.play.ClientSettingsC2SPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.stat.Stat;
@@ -125,5 +127,17 @@ public abstract class ServerPlayerEntity_scarpetEventMixin extends PlayerEntity 
     public boolean isInvalidEntityObject()
     {
         return isInvalidReference;
+    }
+
+    //getting player language
+    private String language;
+
+    public String getLanguage(){
+        return this.language;
+    }
+
+    @Inject(method = "setClientSettings", at = @At("HEAD"))
+    public void setClientSettings(ClientSettingsC2SPacket packet, CallbackInfo ci){
+        this.language = ((ClientSettingsC2SPacketInterface) packet).getLanguage();
     }
 }

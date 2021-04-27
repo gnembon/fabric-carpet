@@ -551,6 +551,12 @@ public class EntityValue extends Value
         });
 
         put("air", (e, a) -> new NumericValue(e.getAir()));
+        put("language", (e, a)->{
+            if(!(e instanceof ServerPlayerEntity))
+                return NULL;
+            String lang = ((ServerPlayerEntityInterface) e).getLanguage();
+            return StringValue.of(lang);
+        });
         put("persistence", (e, a) -> {
             if (e instanceof MobEntity) return new NumericValue(((MobEntity) e).isPersistent());
             return Value.NULL;

@@ -75,6 +75,7 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
+    "ClientSettingsC2SPacket_scarpetMixin",
     "PlayerManager_coreMixin",
     "PlayerManager_fakePlayersMixin",
     "RedstoneWireBlockMixin",

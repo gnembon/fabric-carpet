@@ -350,6 +350,15 @@ This will give you a date:
 
 It is currently `hrs`:`mins` and `secs` seconds on the `date`th of `month`, `year`
 
+### `encode_b64(string)`, `decode_b64(string)`
+
+Encode or decode a string from b64, throwing a `b64_error` exception if it's invalid
+
+### `encode_json(value)`, `decode_json(string)`
+
+Encodes a value as a json string, and decodes a json string as a valid value, throwing a `json_error` exception if it 
+doesn't parse properly
+
 ### `profile_expr(expression)`
 
 Returns number of times given expression can be run in 50ms time. Useful to profile and optimize your code. 

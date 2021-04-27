@@ -267,6 +267,7 @@ but like everywhere else, doing that sounds like a bad idea.
   - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
     - `nbt_error`: Incorrect input/output NBT file.
     - `json_error`: Incorrect input/output JSON data.
+    - `b64_error`: Incorrect input/output b64 (base 64) string
   - `user_exception`: Exception thrown by default with `throw` function.
   
 Synopsis:
