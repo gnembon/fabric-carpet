@@ -243,16 +243,34 @@ identical with `fun(1, 2, 3)`. For maps, it unpacks them to a list of key-value 
 
 In function signatures it identifies a vararg parameter. 
 
-`fun(a, b, ... rest) -> [a, b, rest]; fun(1, 2, 3, 4)`  => `[1, 2, [3, 4]]`
+<pre>
+fun(a, b, ... rest) -> [a, b, rest]; fun(1, 2, 3, 4)    => [1, 2, [3, 4]]
+</pre>
 
 Effects of `...` can be surprisingly lasting. It is kept through the use of variables and function calls.
 
-`fun(a, b, ... rest) -> [a, b, ... rest]; fun(1, 2, 3, 4)`  => `[1, 2, 3, 4]`
-`args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())` => `6`
-`a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)` => `6`
+<pre>
+fun(a, b, ... rest) -> [a, b, ... rest]; fun(1, 2, 3, 4)    => [1, 2, 3, 4]
+args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())   => 6
+a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)   => 6
+</pre>
 
 Unpacking mechanics can be used for list and map constriction, not just for function calls.
 
-`[...range(5), pi, ...range(5,-1,-1)]` => `[0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]`
-`{ ... map(range(5),  _  -> _*_ )}` => `{0: 0, 1: 1, 2: 4, 3: 9, 4: 16}`
-`{...{1 -> 2, 3 -> 4}, ...{5 -> 6, 7 -> 8}}` => `{1: 2, 3: 4, 5: 6, 7: 8}`
+<pre>
+[...range(5), pi, ...range(5,-1,-1)]   => [0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]
+{ ... map(range(5),  _  -> _*_ )}   => {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}
+{...{1 -> 2, 3 -> 4}, ...{5 -> 6, 7 -> 8}}   => {1: 2, 3: 4, 5: 6, 7: 8}
+</pre>
+
+Fine print: unpacking of argument lists happens just before functions are evaluated. 
+This means that in some situations, for instance 
+when an expression is expected (`map(list, expr)`), or a function should not evaluate some (most!) of its arguments (`if(...)`), 
+unpacking cannot be used, and will be ignored, leaving `... list` identical to `list`. 
+Functions that don't honor unpacking mechanics, should have no use for it at the first place
+ (i.e. have one, or very well-defined, and very specific parameters), 
+so some caution (prior testing) is advised. Some of these multi-argument built-in functions are
+ `if`, `try`, `sort_key`, `system_variable_get`, `synchronize`, `sleep`, `in_dimension`, 
+all container functions (`get`, `has`, `put`, `delete`), 
+and all loop functions (`while`, `loop`, `map`, `filter`, `first`, `all`, `c_for`, `for` and`reduce`).
+ 
