@@ -36,6 +36,6 @@ public abstract class BastionRemnantFeatureMixin extends JigsawFeature
     {
         if (CarpetSettings.piglinsSpawningInBastions)
             return spawnList;
-        return SpawnSettings.field_30982;  // empty spawn list
+        return SpawnSettings.EMPTY_ENTRY_POOL;
     }
 }

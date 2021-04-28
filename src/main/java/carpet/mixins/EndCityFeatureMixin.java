@@ -29,6 +29,6 @@ public abstract class EndCityFeatureMixin extends StructureFeature<DefaultFeatur
     {
         if (CarpetSettings.shulkerSpawningInEndCities)
             return spawnList;
-        return  SpawnSettings.field_30982;  // empty spawn list
+        return  SpawnSettings.EMPTY_ENTRY_POOL;
     }
 }

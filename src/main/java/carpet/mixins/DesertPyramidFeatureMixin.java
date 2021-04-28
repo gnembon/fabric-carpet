@@ -37,7 +37,7 @@ public abstract class DesertPyramidFeatureMixin extends StructureFeature<Default
         {
             return MONSTER_SPAWNS;
         }
-        return  SpawnSettings.field_30982;  // empty spawn list
+        return  SpawnSettings.EMPTY_ENTRY_POOL;
     }
 }
 
