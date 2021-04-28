@@ -114,7 +114,7 @@ public class MobAI
         e.setVelocity(vec3d.x, jumpStrength, vec3d.z);
         if (e.isSprinting())
         {
-            float u = e.yaw * 0.017453292F;
+            float u = e.method_36454() * 0.017453292F; // yaw
             e.setVelocity(e.getVelocity().add((-MathHelper.sin(g) * 0.2F), 0.0D, (MathHelper.cos(u) * 0.2F)));
         }
         e.velocityDirty = true;

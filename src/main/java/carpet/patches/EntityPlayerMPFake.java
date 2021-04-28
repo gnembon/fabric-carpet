@@ -69,7 +69,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), playerShadow);
 
         playerShadow.setHealth(player.getHealth());
-        playerShadow.networkHandler.requestTeleport(player.getX(), player.getY(), player.getZ(), player.yaw, player.pitch);
+        playerShadow.networkHandler.requestTeleport(player.getX(), player.getY(), player.getZ(), player.method_36454(), player.method_36455());
         playerShadow.interactionManager.changeGameMode(player.interactionManager.getGameMode());
         ((ServerPlayerEntityInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerEntityInterface) player).getActionPack());
         playerShadow.stepHeight = 0.6F;

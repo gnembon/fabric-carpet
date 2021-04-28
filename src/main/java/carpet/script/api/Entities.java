@@ -142,7 +142,7 @@ public class Entities {
 
             ServerWorld serverWorld = cc.s.getWorld();
             Entity entity_1 = EntityType.loadEntityWithPassengers(tag, serverWorld, (entity_1x) -> {
-                entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.yaw, entity_1x.pitch);
+                entity_1x.refreshPositionAndAngles(vec3d.x, vec3d.y, vec3d.z, entity_1x.method_36454(), entity_1x.method_36455());
                 return !serverWorld.tryLoadEntity(entity_1x) ? null : entity_1x;
             });
             if (entity_1 == null) {

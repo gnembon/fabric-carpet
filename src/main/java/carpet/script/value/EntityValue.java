@@ -429,7 +429,7 @@ public class EntityValue extends Value
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
-        put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.yaw), new NumericValue(e.pitch)));
+        put("location", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ()), new NumericValue(e.method_36454()), new NumericValue(e.method_36455())));
         put("x", (e, a) -> new NumericValue(e.getX()));
         put("y", (e, a) -> new NumericValue(e.getY()));
         put("z", (e, a) -> new NumericValue(e.getZ()));
@@ -467,7 +467,7 @@ public class EntityValue extends Value
             return new NumericValue(e.getType().isIn(tag));
         });
 
-        put("yaw", (e, a)-> new NumericValue(e.yaw));
+        put("yaw", (e, a)-> new NumericValue(e.method_36454()));
         put("head_yaw", (e, a)-> {
             if (e instanceof LivingEntity)
             {
@@ -483,7 +483,7 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
-        put("pitch", (e, a)-> new NumericValue(e.pitch));
+        put("pitch", (e, a)-> new NumericValue(e.method_36455()));
         put("look", (e, a) -> {
             Vec3d look = e.getRotationVector();
             return ListValue.of(new NumericValue(look.x),new NumericValue(look.y),new NumericValue(look.z));
@@ -1010,25 +1010,25 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(0)).getDouble(),
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble(),
-                    e.yaw,
-                    e.pitch
+                    e.method_36454(),
+                    e.method_36455()
             );
         });
         put("x", (e, v) ->
         {
-            updatePosition(e, NumericValue.asNumber(v).getDouble(), e.getY(), e.getZ(), e.yaw, e.pitch);
+            updatePosition(e, NumericValue.asNumber(v).getDouble(), e.getY(), e.getZ(), e.method_36454(), e.method_36455());
         });
         put("y", (e, v) ->
         {
-            updatePosition(e, e.getX(), NumericValue.asNumber(v).getDouble(), e.getZ(), e.yaw, e.pitch);
+            updatePosition(e, e.getX(), NumericValue.asNumber(v).getDouble(), e.getZ(), e.method_36454(), e.method_36455());
         });
         put("z", (e, v) ->
         {
-            updatePosition(e, e.getX(), e.getY(), NumericValue.asNumber(v).getDouble(), e.yaw, e.pitch);
+            updatePosition(e, e.getX(), e.getY(), NumericValue.asNumber(v).getDouble(), e.method_36454(), e.method_36455());
         });
         put("yaw", (e, v) ->
         {
-            updatePosition(e, e.getX(), e.getY(), e.getZ(), ((float)NumericValue.asNumber(v).getDouble()) % 360, e.pitch);
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), ((float)NumericValue.asNumber(v).getDouble()) % 360, e.method_36455());
         });
         put("head_yaw", (e, v) ->
         {
@@ -1047,7 +1047,7 @@ public class EntityValue extends Value
 
         put("pitch", (e, v) ->
         {
-            updatePosition(e, e.getX(), e.getY(), e.getZ(), e.yaw, MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), e.method_36454(), MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
         });
 
         //"look"
@@ -1065,8 +1065,8 @@ public class EntityValue extends Value
                     e.getX() + NumericValue.asNumber(coords.get(0)).getDouble(),
                     e.getY() + NumericValue.asNumber(coords.get(1)).getDouble(),
                     e.getZ() + NumericValue.asNumber(coords.get(2)).getDouble(),
-                    e.yaw,
-                    e.pitch
+                    e.method_36454(),
+                    e.method_36455()
             );
         });
 
@@ -1290,7 +1290,7 @@ public class EntityValue extends Value
                 BlockValue bv= (BlockValue)a;
                 if (bv.getPos()==null || bv.getWorld() == null)
                     throw new InternalExpressionException("block for spawn modification should be localised in the world");
-                spe.setSpawnPoint(bv.getWorld().getRegistryKey(), bv.getPos(), e.yaw, true, false);
+                spe.setSpawnPoint(bv.getWorld().getRegistryKey(), bv.getPos(), e.method_36454(), true, false); // yaw
             }
             else if (a.isNull())
             {
