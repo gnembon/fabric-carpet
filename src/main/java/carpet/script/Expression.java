@@ -16,6 +16,7 @@ import carpet.script.exception.BreakStatement;
 import carpet.script.exception.ContinueStatement;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ResolvedException;
 import carpet.script.exception.ReturnStatement;
@@ -266,6 +267,8 @@ public class Expression
     public static RuntimeException handleCodeException(Context c, RuntimeException exc, Expression e, Tokenizer.Token token)
     {
         if (exc instanceof ExitStatement)
+            return exc;
+        if (exc instanceof IntegrityException)
             return exc;
         if (exc instanceof InternalExpressionException)
             return ((InternalExpressionException) exc).promote(c, e, token);

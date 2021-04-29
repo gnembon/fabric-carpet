@@ -414,7 +414,7 @@ public class Sys {
             List<Value> values = new ArrayList<>();
             if (prefix.startsWith("global"))
             {
-                c.host.globaVariableNames(expression.module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
+                c.host.globalVariableNames(expression.module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
             }
             else
             {
