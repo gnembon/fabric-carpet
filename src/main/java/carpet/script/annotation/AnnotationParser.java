@@ -38,8 +38,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * are able to convert from any compatible {@link Value} instance into the requested parameter type, as long as they are registered
  * using their respective {@code register} functions.</p>
  * 
- * <p>Built-in {@link ValueConverter}s include converters to convert {@link List}s to actual Java lists while also converting every item
- * inside of the {@link List} to the specified generic parameter ({@code <>}), with the same applying for maps</p>
+ * <p>Built-in {@link ValueConverter}s include but are not limited to converters to convert {@link List}s to actual Java lists while also 
+ * converting every item inside of the {@link List} to the specified generic parameter ({@code <>}), with the same applying for maps</p>
  * 
  * <p>Parameters can be given the annotations (present in the  {@link Locator} and {@link Param} interfaces) in order to restrict them or 
  * make them more permissive to accept types, such as {@link Param.AllowSingleton} for lists.</p>
@@ -147,6 +147,7 @@ public final class AnnotationParser {
 		private final int maxParams;
 		private final MethodHandle handle;
 		private final int scarpetParamCount;
+		private final Integer contextType; // Boxed since the TriFunction isn't specialized to unboxed
 		
 		private ParsedFunction(final Method method, final Object instance) {
 			this.name = method.getName();
@@ -200,12 +201,12 @@ public final class AnnotationParser {
 			}
 			
 			this.scarpetParamCount = this.isEffectivelyVarArgs ? -1 : this.minParams;
-			
+			this.contextType = method.getAnnotation(ScarpetFunction.class).contextType();
 		}
 		
 		@Override
 		public LazyValue apply(Context context, Integer t, List<LazyValue> lazyValues) {
-			List<Value> lv = AbstractLazyFunction.unpackLazy(lazyValues, context, Context.NONE);
+			List<Value> lv = AbstractLazyFunction.unpackLazy(lazyValues, context, contextType);
 			if (isEffectivelyVarArgs) {
 				if (lv.size() < minParams)
 					throw new InternalExpressionException(name + " expected at least " + minParams + " arguments, got " + lv.size() + ". " + getUsage());

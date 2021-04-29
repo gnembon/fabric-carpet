@@ -71,4 +71,17 @@ public @interface ScarpetFunction {
 	 * @return The maximum number of parameters this function can accept
 	 */
     int maxParams() default -2;
+    
+    /**
+     * <p>Defines the Context Type that will be used when evaluating arguments to annotated methods.</p>
+     * 
+     * <p>Note that this is not the same as the output from {@link Param.TheLazyT}, since 
+     * that returns the Context Type the method was called with, while this defines what Context Type
+     * will be used to evaluate the arguments.</p>
+     * 
+     * <p>Defaults to {@link Context#NONE}, like any regular ContextFunctions</p>
+     * 
+     * @see Context
+     */
+    int contextType() default Context.NONE;
 }
