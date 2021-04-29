@@ -19,12 +19,12 @@ import java.util.Optional;
 import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
 public class FunctionsTestClass {
-	@LazyFunction
+	@ScarpetFunction
 	public String make_noise(String string, String string2) {
 		return string + " " + string2;
 	}
 	
-	@LazyFunction(maxParams = 8)
+	@ScarpetFunction(maxParams = 8)
 	public LazyValue multiparams(String... values) {
 		String str = "";
 		for (String val : values)
@@ -33,7 +33,7 @@ public class FunctionsTestClass {
 		return (c, t) -> retval;
 	}
 	
-	@LazyFunction(maxParams = 6)
+	@ScarpetFunction(maxParams = 6)
 	public LazyValue semi_multiparams(Value fixed, Value... values) {
 		String str = fixed.getString();
 		for (Value val : values)
@@ -42,7 +42,7 @@ public class FunctionsTestClass {
 		return (c, t) -> retval;
 	}
 	
-	@LazyFunction(maxParams = 6)
+	@ScarpetFunction(maxParams = 6)
 	public Integer display_title2(@AllowSingleton List<ServerPlayerEntity> targets, String actionString, Optional<Text> content, Integer... times) {
 	    TitleS2CPacket.Action action;
 	    switch (actionString.toLowerCase(Locale.ROOT))

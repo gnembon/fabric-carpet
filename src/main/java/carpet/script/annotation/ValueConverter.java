@@ -18,7 +18,7 @@ import carpet.script.value.Value;
 
 /**
  * <p>Classes implementing this interface are able to convert {@link LazyValue} and {@link Value} instances into
- * {@code <R>}, in order to easily use them in parameters for Scarpet functions created using the {@link LazyFunction}
+ * {@code <R>}, in order to easily use them in parameters for Scarpet functions created using the {@link ScarpetFunction}
  * annotation.</p>
  *
  * @param <R> The result type that the passed {@link LazyValue} or {@link Value}s will be converted to

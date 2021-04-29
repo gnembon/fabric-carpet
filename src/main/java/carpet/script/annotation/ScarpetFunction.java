@@ -13,12 +13,11 @@ import carpet.script.LazyValue;
 import carpet.script.value.Value;
 
 /**
- * <p>Defines a method that can be used as a lazy function in order to be processed to be used
- * in the Scarpet language.</p>
+ * <p>Defines a method that can be used as a function in the Scarpet language.</p>
  * 
  * <p>Methods annotated with this annotation are not required to accept and return the typical
- * {@code Context context, Integer t, List<LazyValue> lv}, but instead can specify whatever parameters
- * they actually need that will be automatically converted from their respective {@link LazyValue}s and
+ * {@code Context context, Integer t, List<Value> lv}, but instead can specify whatever parameters
+ * they actually need that will be automatically converted from their respective {@link Value}s and
  * passed to the method as the expected type. Functions will automatically fail if given parameters are
  * not compatible with the specified ones, or if the number of provided arguments is either too large or too small.</p>
  * 
@@ -28,10 +27,10 @@ import carpet.script.value.Value;
  * In order to convert the output of your method to a {@link LazyValue} you will also need to register its conversion in {@link OutputConverter}</p>
  * 
  * <p>In order for Carpet to find methods annotated with this annotation, you must add your function class(es) to Carpet
- * by running {@link AnnotationParser#parseFunctionClass(Class)}. The provided {@link Class} must be concrete and provide
+ * by running {@link AnnotationParser#parseFunctionClass(Class)} ONCE. The provided {@link Class} must be concrete and provide
  * the default constructor or an equivalent to it.</p>
  * 
- * <p>Methods annotated with this annotation must not be static and must not be declared to throw any checked exceptions.</p>
+ * <p>Methods annotated with this annotation must not be static and must not declare throwing any checked exceptions.</p>
  * 
  * <p>If one of the method's parameters is {@link Context}, Carpet will pass the actual Carpet will pass the {@link Context} of the 
  * expression to the method. In order to get <em>The lazy t</em>, annotate an {@link Integer} with {@link Param.TheLazyT}.
@@ -51,7 +50,7 @@ import carpet.script.value.Value;
 @Documented
 @Target(METHOD)
 @Retention(RUNTIME)
-public @interface LazyFunction {
+public @interface ScarpetFunction {
 	/**
 	 * <p>If the function can accept a variable number of parameters, either by
 	 * declaring its last parameter as a varargs parameter or by having one of
@@ -59,7 +58,7 @@ public @interface LazyFunction {
 	 * this must define the maximum number of parameters this function can take.</p>
 	 * 
 	 * <p>The parser will throw in case a function can accept a variable number of parameters
-	 * but no maxParams value has been specified in its {@link LazyFunction} annotation.
+	 * but no maxParams value has been specified in its {@link ScarpetFunction} annotation.
 	 * <br>The value, however, will be ignored if the function has a fixed number of parameters.</p>
 	 * 
 	 * <p>Note that this maximum number of parameters refers to the limit of parameters that can be passed

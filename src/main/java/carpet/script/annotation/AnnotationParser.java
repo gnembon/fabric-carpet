@@ -26,7 +26,7 @@ import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
- * <p>This class parses methods annotated with the {@link LazyFunction} annotation in a given {@link Class}, generating
+ * <p>This class parses methods annotated with the {@link ScarpetFunction} annotation in a given {@link Class}, generating
  * fully-featured, automatically parsed and converted functions to be used in the Scarpet language.</p>
  * 
  * <p>This class and the rest in this package will try to ensure that the annotated method receives the proper parameters
@@ -34,13 +34,13 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * types, and converting them to the final needed object.</p>
  * 
  * <p>To do that, functions will save a list of {@link ValueConverter}s to convert all their parameters. {@link ValueConverter}s
- * are able to convert from any compatible {@link Value} (or {@link LazyValue}) instance into the requested parameter type,
- * as long as they are registered using their respective {@code register} functions.</p>
+ * are able to convert from any compatible {@link Value} instance into the requested parameter type, as long as they are registered
+ * using their respective {@code register} functions.</p>
  * 
  * <p>Built-in {@link ValueConverter}s include converters to convert {@link List}s to actual Java lists while also converting every item
  * inside of the {@link List} to the specified generic parameter ({@code <>}), with the same applying for maps</p>
  * 
- * <p>Parameters can be given the annotations (present in {@link Locator} and {@link Param} interfaces) in order to restrict them or 
+ * <p>Parameters can be given the annotations (present in the  {@link Locator} and {@link Param} interfaces) in order to restrict them or 
  * make them more permissive to accept types, such as {@link Param.AllowSingleton} for lists.</p>
  * 
  * <p>You can also declare optional parameters by using Java's {@link Optional} as the type of one of your parameters, though it must be
@@ -52,9 +52,9 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * <p>For a variable argument count, the Java varargs notation can be used in the last parameter, converting the function into a variable argument
  * function that will pass all the rest of parameters to that last varargs parameter, also converted into the specified type.</p>
  * 
- * <p>To begin, use the {@link #parseFunctionClass(Class)} method in a class with methods annotated with the {@link LazyFunction} annotation.</p>
+ * <p>To begin, use the {@link #parseFunctionClass(Class)} method in a class with methods annotated with the {@link ScarpetFunction} annotation.</p>
  *
- * @see LazyFunction
+ * @see ScarpetFunction
  * @see Locator.Block
  * @see Locator.Vec3d
  * @see Param.Strict
@@ -68,11 +68,11 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * @see Param.Params#registerStrictConverter(Class, boolean, ValueConverter)
  * @see Param.Params#registerCustomConverterFactory(java.util.function.BiFunction)
  */
-public class AnnotationParser {
+public final class AnnotationParser {
 	private static final List<ParsedFunction> functionList = new ArrayList<>();
 	
 	/**
-	 * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link LazyFunction} annotation, to be used
+	 * <p>Parses a given {@link Class} and registers its annotated methods, the ones with the {@link ScarpetFunction} annotation, to be used
 	 * in the Scarpet language.</p>
 	 * 
 	 * <p><b>Only call this method once per class per lifetime of the JVM!</b> (for example, at {@link CarpetExtension#onGameStarted()})</p>
@@ -85,14 +85,14 @@ public class AnnotationParser {
 	 * <li>Annotated methods must not be {@code static}. See claim above</li>
 	 * <li>Annotated methods must not throw checked exceptions. They can throw regular {@link RuntimeException}s (including but not limited to
 	 * {@link InternalExpressionException}). Basically, it's fine as long as you don't add a {@code throws} declaration to your methods.</li>
-	 * <li>Varargs (or effectively varargs) annotated methods must explicitly declare a maximum number of parameters to ingest in the {@link LazyFunction}
+	 * <li>Varargs (or effectively varargs) annotated methods must explicitly declare a maximum number of parameters to ingest in the {@link ScarpetFunction}
 	 * annotation. They can still declare an unlimited amount by setting that maximum to {@code -1}. "Effectively varargs" means a function that has
 	 * a parameter using/requiring a {@link ValueConverter} that has declared {@link ValueConverter#consumesVariableArgs()}.</li>
 	 * <li>Annotated methods must not have a parameter with generics as the varargs parameter. This is just because it was painful for me (altrisi) and
 	 * didn't want to support it. Those will crash with a {@code ClassCastException}</li>
 	 * </ul>
 	 * 
-	 * @see LazyFunction
+	 * @see ScarpetFunction
 	 * @param <T> The generic type of the class to parse.
 	 * @param clazz The class to parse
 	 */
@@ -109,7 +109,7 @@ public class AnnotationParser {
 		
 		Method[] methodz = clazz.getDeclaredMethods();
 		for (Method method : methodz) {
-			if (!method.isAnnotationPresent(LazyFunction.class)) continue;
+			if (!method.isAnnotationPresent(ScarpetFunction.class)) continue;
 			// Checks
 			if (Modifier.isStatic(method.getModifiers()))
 				throw new IllegalArgumentException("Annotated method '"+ method.getName() +"', provided in '" + clazz + "' must not be static");
@@ -168,7 +168,7 @@ public class AnnotationParser {
 			this.minParams = valueConverters.stream().mapToInt(ValueConverter::valueConsumption).sum(); //Note: In !varargs, this is params
 			int maxParams = this.minParams; // Unlimited == Integer.MAX_VALUE
 			if (isEffectivelyVarArgs) {
-				maxParams = method.getAnnotation(LazyFunction.class).maxParams();
+				maxParams = method.getAnnotation(ScarpetFunction.class).maxParams();
 				if (maxParams == -2)
 					throw new IllegalArgumentException("No maximum number of params specified for " + name + ", use -1 for unlimited. "
 							+ "Provided in " + instance.getClass());
