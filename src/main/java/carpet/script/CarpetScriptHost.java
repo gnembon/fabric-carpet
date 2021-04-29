@@ -498,7 +498,7 @@ public class CarpetScriptHost extends ScriptHost
 
         boolean hasTypeSupport = appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean();
 
-        for (String function : globaFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        for (String function : globalFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
             if (hasTypeSupport)
             {

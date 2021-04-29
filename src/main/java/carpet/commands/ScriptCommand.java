@@ -78,8 +78,8 @@ public class ScriptCommand
         // not that useful in commandline, more so in external scripts, so skipping here
         if (eventPrefix != null) scarpetMatches.addAll(CarpetEventServer.Event.publicEvents(null).stream().
                 filter(e -> e.name.startsWith(eventPrefix)).map(s -> "__on_"+s.name+"(").collect(Collectors.toList()));
-        scarpetMatches.addAll(host.globaFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
-        scarpetMatches.addAll(host.globaVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globalFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globalVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
         return scarpetMatches;
     }
 
@@ -332,7 +332,7 @@ public class ScriptCommand
     private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c) throws CommandSyntaxException
     {
         CarpetScriptHost host = getHost(c);
-        return host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
+        return host.globalFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
     }
     private static int listEvents(ServerCommandSource source)
     {
@@ -358,7 +358,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
 
         Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        host.globaFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
+        host.globalFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
             FunctionValue fun = host.getFunction(s);
             if (fun == null)
             {
@@ -379,7 +379,7 @@ public class ScriptCommand
         //Messenger.m(source, "w "+code);
         Messenger.m(source, "w  ");
         Messenger.m(source, "lb Global variables"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        host.globaVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
+        host.globalVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
             LazyValue variable = host.getGlobalVariable(s);
             if (variable == null)
             {

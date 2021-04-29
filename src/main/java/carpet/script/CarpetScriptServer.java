@@ -5,6 +5,7 @@ import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
@@ -403,7 +404,7 @@ public class CarpetScriptServer
             {
                 host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
             }
-            catch (NullPointerException | InvalidCallbackException npe)
+            catch (NullPointerException | InvalidCallbackException | IntegrityException npe)
             {
                 if (reportFails) return -1;
                 continue;
