@@ -9,7 +9,6 @@ import java.util.Iterator;
 import org.apache.commons.lang3.NotImplementedException;
 
 import carpet.script.Context;
-import carpet.script.LazyValue;
 import carpet.script.argument.Argument;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.FunctionArgument;
@@ -89,7 +88,7 @@ public interface Locator {
 	/**
 	 * <p>Represents that the annotated argument must be gotten by passing the arguments in this annotation into a {@link FunctionArgument} locator</p>
 	 * 
-	 * <p>Can be used in both {@link FunctionArgument FunctionArgument<LazyValue>} and {@link FunctionValue} types, but the last won't have access to
+	 * <p>Can be used in both {@link FunctionArgument} and {@link FunctionValue} types, but the last won't have access to
 	 * arguments provided to the function, even though they will still be consumed from the arguments the function was called with.</p>
 	 * 
 	 * <p><b>This will consume any remaining parameters passed to the function, therefore any other parameters after this will throw.</b></p>
@@ -158,8 +157,8 @@ public interface Locator {
 			}
 
 			@Override
-			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
-				BlockArgument locator = null; // BlockArgument.findIn((CarpetContext)context, lazyValueIterator (requires changing to Value), 0, acceptString, optional, anyString);
+			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+				BlockArgument locator = null; // BlockArgument.findIn((CarpetContext)context, valueIterator (requires changing to Value), 0, acceptString, optional, anyString);
 				//return (R) (returnBlockValue ? locator.block : locator);
 				throw new NotImplementedException("Locator.Block still requires adapting BlockArgument to accept iterators (which is actually simple)");
 			}
@@ -186,7 +185,7 @@ public interface Locator {
 			}
 
 			@Override
-			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
+			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
 				Vector3Argument locator = null;
 				// TODO Make the locator
 				//return (R) (returnVec3d ? locator.vec : locator);
@@ -210,7 +209,7 @@ public interface Locator {
 			}
 			
 			@Override
-			public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
+			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
 				Module module = context.host.main;
 				FunctionArgument locator = null;
 				// TODO Make the locator
@@ -239,7 +238,7 @@ public interface Locator {
 				return 1;
 			}
 			@Override
-			public abstract R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT);
+			public abstract R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT);
 		}
 		
 	}

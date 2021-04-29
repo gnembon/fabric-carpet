@@ -14,7 +14,6 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 

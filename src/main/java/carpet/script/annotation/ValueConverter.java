@@ -12,16 +12,15 @@ import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.Nullable;
 
 import carpet.script.Context;
-import carpet.script.LazyValue;
 import carpet.script.annotation.Param.Params;
 import carpet.script.value.Value;
 
 /**
- * <p>Classes implementing this interface are able to convert {@link LazyValue} and {@link Value} instances into
+ * <p>Classes implementing this interface are able to convert {@link Value} instances into
  * {@code <R>}, in order to easily use them in parameters for Scarpet functions created using the {@link ScarpetFunction}
  * annotation.</p>
  *
- * @param <R> The result type that the passed {@link LazyValue} or {@link Value}s will be converted to
+ * @param <R> The result type that the passed {@link Value}s will be converted to
  */
 public interface ValueConverter<R> {
 	
@@ -54,23 +53,23 @@ public interface ValueConverter<R> {
 	 * @param value The {@link Value} to convert
 	 * @return The converted value, or {@code null} if the conversion failed in the process
 	 * @apiNote <p>While most implementations of this method should and will return the type from this method, 
-	 *           implementations that <b>require</b> parameters from {@link #evalAndConvert(Iterator, Context, Integer)} or that require multiple
-	 *           parameters may decide to throw {@link UnsupportedOperationException} in this method and override {@link #evalAndConvert(Iterator, Context, Integer)}
+	 *           implementations that <b>require</b> parameters from {@link #checkAndConvert(Iterator, Context, Integer)} or that require multiple
+	 *           parameters may decide to throw {@link UnsupportedOperationException} in this method and override {@link #checkAndConvert(Iterator, Context, Integer)}
 	 *           instead. Those implementations, however, should not be available for map or list types, since those can only operate 
 	 *           with {@link Value}.</p>
-	 *           <p>Currently, the only implementations requiring that are {@link Params#LAZY_VALUE_IDENTITY} and {@link Params#CONTEXT_PROVIDER}</p>
-	 *           <p>Implementations can also provide different implementations for this and {@link #evalAndConvert(Iterator, Context, Integer)}, in case
+	 *           <p>Currently, the only implementations requiring that are {@link Params#CONTEXT_PROVIDER} and {@link Params#LAZY_T_PROVIDER}</p>
+	 *           <p>Implementations can also provide different implementations for this and {@link #checkAndConvert(Iterator, Context, Integer)}, in case
 	 *           they can support it in some situations that can't be used else, such as inside of lists or maps, although they should try to provide
-	 *           in {@link #evalAndConvert(Iterator, Context, Integer)} at least the same conversion as the one from this method.</p>
+	 *           in {@link #checkAndConvert(Iterator, Context, Integer)} at least the same conversion as the one from this method.</p>
 	 *           <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value)} whenever
-	 *           possible instead of {@link #evalAndConvert(Iterator, Context, Integer)}, since it allows its usage in generics of lists and maps.</p>
+	 *           possible instead of {@link #checkAndConvert(Iterator, Context, Integer)}, since it allows its usage in generics of lists and maps.</p>
 	 */
 	@Nullable
 	public R convert(Value value);
 	
 	/**
 	 * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator}
-	 * passed to it via {@link #evalAndConvert(Iterator, Context, Integer)}.</p>
+	 * passed to it via {@link #checkAndConvert(Iterator, Context, Integer)}.</p>
 	 * @implNote The default implementation returns {@code false} 
 	 * @see #valueConsumption()
 	 */
@@ -79,8 +78,8 @@ public interface ValueConverter<R> {
 	}
 	
 	/**
-	 * <p>Declares the number of {@link LazyValue}s this method consumes from the {@link Iterator} passed to it in
-	 * {@link #evalAndConvert(Iterator, Context, Integer)}.</p>
+	 * <p>Declares the number of {@link Value}s this converter consumes from the {@link Iterator} passed to it in
+	 * {@link #checkAndConvert(Iterator, Context, Integer)}.</p>
 	 * 
 	 * <p>If this {@link ValueConverter} can accept a variable number of arguments (therefore the result of calling
 	 * {@link #consumesVariableArgs()} <b>must</b> return {@code true}), it will return the minimum number of arguments
@@ -105,7 +104,7 @@ public interface ValueConverter<R> {
 	 * @param <R> The type of the class the returned {@link ValueConverter} will convert to.
 	 *            It is declared from the type in the {@link AnnotatedType} directly inside the function.
 	 * @param annoType The {@link AnnotatedType} to search a {@link ValueConverter}.
-	 * @return A usable {@link ValueConverter} to convert from a {@link LazyValue} or {@link Value} to {@code <R>}
+	 * @return A usable {@link ValueConverter} to convert from a {@link Value} to {@code <R>}
 	 */
 	@SuppressWarnings("unchecked")
 	public static <R> ValueConverter<R> fromAnnotatedType(AnnotatedType annoType) {
@@ -142,39 +141,38 @@ public interface ValueConverter<R> {
 		// Class only checks
 		if (type.isAssignableFrom(Value.class))
 			return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
-		if (type == LazyValue.class)
-			return (ValueConverter<R>) Params.LAZY_VALUE_IDENTITY;
+		//if (type == LazyValue.class) // No longer supported
+			//return (ValueConverter<R>) Params.LAZY_VALUE_IDENTITY;
 		if (type == Context.class)
 			return (ValueConverter<R>) Params.CONTEXT_PROVIDER;
 		return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + " is not registered. Register it in SimpleTypeConverter to use it");
 	}
 	
 	/**
-	 * <p>Checks for the presence of the next {@link LazyValue} in the given {@link Iterator}, evaluates it with the given {@link Context} and 
+	 * <p>Checks for the presence of the next {@link Value} in the given {@link Iterator}, evaluates it with the given {@link Context} and 
 	 * then converts it to this {@link ValueConverter}'s output type.</p>
 	 * 
-	 * <p>This should be the preferred way to call the converter, since it allows some conversions that
-	 * may not be supported by using directly a {@link Value}, allows multi-param converters and allows
+	 * <p>This should be the preferred way to call the converter, since it <!--allows some conversions that
+	 * may not be supported by using directly a {@link Value},--> allows multi-param converters and allows
 	 * meta converters (such as the {@link Context} provider)</p>
 	 * 
-	 * @implSpec Implementations of this method are not required to evaluate the next {@link LazyValue} if they are not supposed to,
-	 *           such as in the case of a {@link LazyValue} to {@link LazyValue} identity, neither move the {@link Iterator} to
+	 * @implSpec Implementations of this method are not required to move the {@link Iterator} to
 	 *           the next position, such as in the case of meta providers like {@link Context}.
-	 *           <p>Implementations can also evaluate more than a single parameter when being called with this function, 
+	 *           <p>Implementations can also use more than a single parameter when being called with this function, 
 	 *           but in such case they must implement {@link #valueConsumption()} to return how many parameters do they
 	 *           consume at minimum, and, if they may consume variable arguments, implement {@link #consumesVariableArgs()}</p>
 	 *           <p>This method holds the same nullability constraints as {@link #convert(Value)}</p>
-	 * @param lazyValueIterator An {@link Iterator} holding the {@link LazyValue} to convert in next position
-	 * @param context The {@link Context} to convert with
+	 * @param valueIterator An {@link Iterator} holding the {@link Value} to convert in next position
+	 * @param context The {@link Context} this function has been called with. This was used when this passed lazy values instead in order to evaluate,
+	 *                now it's used to get the context. It is now ignored by the default implementation
 	 * @param theLazyT The {@code t} that the original function was called with. It is ignored by the default implementation. 
-	 * @return The given {@link LazyValue}, evaluated with the given {@link Context}, and converted to the type {@code <R>} of
-	 *         this {@link ValueConverter}
-	 * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link LazyValue} evaluated with
-	 *          the given context, ignoring {@code theLazyT}.
+	 * @return The next {@link Value} (s) converted to the type {@code <R>} of this {@link ValueConverter}
+	 * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link Value} ignoring 
+	 *           {@link Context} and {@code theLazyT}.
 	 */
-	default public R evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
-		if (!lazyValueIterator.hasNext())
+	default public R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+		if (!valueIterator.hasNext())
 			return null;
-		return convert(lazyValueIterator.next().evalValue(context));
+		return convert(valueIterator.next());
 	}
 }

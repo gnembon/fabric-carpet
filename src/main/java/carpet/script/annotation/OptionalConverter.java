@@ -7,7 +7,6 @@ import java.util.ListIterator;
 import java.util.Optional;
 
 import carpet.script.Context;
-import carpet.script.LazyValue;
 import carpet.script.value.Value;
 
 /**
@@ -44,7 +43,7 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	/**
 	 * {@inheritDoc}
 	 * @implNote Unlike most other converters, {@link OptionalConverter} will not call this method from 
-	 * 			 {@link #evalAndConvert(Iterator, Context, Integer)} and is only used as a fallback in types that don't support it.
+	 * 			 {@link #checkAndConvert(Iterator, Context, Integer)} and is only used as a fallback in types that don't support it.
 	 */
 	@Override
 	public Optional<R> convert(Value value) {
@@ -57,17 +56,11 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	}
 	
 	@Override
-	public Optional<R> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
-		if (!lazyValueIterator.hasNext())
+	public Optional<R> checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+		if (!valueIterator.hasNext() || valueIterator.next().isNull())
 			return Optional.empty();
-		if (typeConverter != Param.Params.LAZY_VALUE_IDENTITY) { // Checking Value#isNull, except if asked for LazyValue
-			Value evaledValue = lazyValueIterator.next().evalValue(context);  // Will be evaluated anyway
-			if (evaledValue.isNull())
-				return Optional.empty();
-			((ListIterator<LazyValue>)lazyValueIterator).set((c, t) -> evaledValue); // Don't reevaluate in converter
-			((ListIterator<LazyValue>)lazyValueIterator).previous();
-		}
-		R converted = typeConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
+		((ListIterator<Value>) valueIterator).previous();
+		R converted = typeConverter.checkAndConvert(valueIterator, context, theLazyT);
 		if (converted == null)
 			return null;
 		return Optional.of(converted);

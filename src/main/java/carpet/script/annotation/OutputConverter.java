@@ -70,6 +70,8 @@ public final class OutputConverter<T> {
 	/**
 	 * <p>Converts the given input object into a {@link LazyValue}, to be used in return values 
 	 * of Scarpet functions</p>
+	 * 
+	 * <p>Returns {@link LazyValue#NULL} if passed a {@code null} input</p>
 	 * @param input The value to convert
 	 * @return The converted value
 	 */

@@ -16,7 +16,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import carpet.CarpetServer;
 import carpet.script.Context;
-import carpet.script.LazyValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
@@ -153,29 +152,29 @@ public interface Param {
 	 */
 	public static final class Params {
 		/**
-		 * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #evalAndConvert(Iterator, Context, Integer)},
+		 * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #checkAndConvert(Iterator, Context, Integer)},
 		 * and throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.</p>
 		 * 
 		 * <p>Public in order to allow custom {@link ValueConverter} to check whether values should be evaluated while testing conditions.</p>
 		 */
-		static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() {
+		/*public static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>() { No longer possible
 			@Override
 			public LazyValue convert(Value val) {
 				throw new UnsupportedOperationException("Called convert() with a Value in LazyValue identity, where only evalAndConvert is supported");
 			}
 			@Override
-			public LazyValue evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context c, Integer theLazyT) {
+			public LazyValue checkAndConvert(Iterator<Value> lazyValueIterator, Context c, Integer theLazyT) {
 				return lazyValueIterator.hasNext() ? lazyValueIterator.next() : null;
 			}
 			@Override
 			public String getTypeName() {
 				return "something";
 			}
-		};
+		};*/
 		
 		/**
 		 * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
-		 * {@link #evalAndConvert(Iterator, Context, Integer)}, and throws {@link UnsupportedOperationException} when trying to
+		 * {@link #checkAndConvert(Iterator, Context, Integer)}, and throws {@link UnsupportedOperationException} when trying to
 		 * convert a {@link Value} directly.</p>
 		 */
 		static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>() {
@@ -185,7 +184,7 @@ public interface Param {
 				throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");
 			}
 			@Override
-			public Context evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
+			public Context checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
 				return context;
 			}
 			@Override
@@ -195,7 +194,7 @@ public interface Param {
 		};
 		/**
 		 * <p>A {@link ValueConverter} that outputs {@link TheLazyT} which the function has been called when running
-		 * {@link #evalAndConvert(Iterator, Context, Integer)}, or throws {@link UnsupportedOperationException} when trying to
+		 * {@link #checkAndConvert(Iterator, Context, Integer)}, or throws {@link UnsupportedOperationException} when trying to
 		 * convert a {@link Value} directly.</p>
 		 */
 		static final ValueConverter<Integer> LAZY_T_PROVIDER = new ValueConverter<Integer>() {
@@ -205,7 +204,7 @@ public interface Param {
 				throw new UnsupportedOperationException("Called convert() with a Value in TheLazyT Provider, where only evalAndConvert is supported");
 			}
 			@Override
-			public Integer evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
+			public Integer checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
 				return theLazyT;
 			}
 			@Override

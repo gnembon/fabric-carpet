@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import carpet.script.Context;
-import carpet.script.LazyValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.Value;
@@ -115,21 +114,21 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 		}
 		
 		@Override
-		public Map<K, V> evalAndConvert(Iterator<LazyValue> lazyValueIterator, Context context, Integer theLazyT) {
-			if (!lazyValueIterator.hasNext())
+		public Map<K, V> checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+			if (!valueIterator.hasNext())
 				return null;
-			Value val = lazyValueIterator.next().evalValue(context);
+			Value val = valueIterator.next();
 			if (!acceptMultiParam || val instanceof MapValue || (val instanceof ListValue && !(keyConverter instanceof ListConverter)))
 				return convert(val);                                   // @KeyValuePairs Map<List<Something>, Boolean> will not support list consumption
 			Map<K, V> map = new HashMap<>();
 			K key = keyConverter.convert(val);
-			V value = valueConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
+			V value = valueConverter.checkAndConvert(valueIterator, context, theLazyT);
 			if (key == null || value == null)
 				return null;
 			map.put(key, value);
-			while (lazyValueIterator.hasNext()) {
-				key = keyConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
-				value = valueConverter.evalAndConvert(lazyValueIterator, context, theLazyT);
+			while (valueIterator.hasNext()) {
+				key = keyConverter.checkAndConvert(valueIterator, context, theLazyT);
+				value = valueConverter.checkAndConvert(valueIterator, context, theLazyT);
 				if (key == null || value == null)
 					return null;
 				map.put(key, value);
