@@ -16,10 +16,6 @@ import carpet.script.value.Value;
 import carpet.settings.SettingsManager;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -36,19 +32,17 @@ import net.minecraft.command.argument.BlockStateArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.Clearable;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -64,6 +58,7 @@ public class ScriptCommand
         Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
         scarpetFunctions = new TreeSet<>(Expression.none.getFunctionNames());
         APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
+        ScriptDownloader.updateLocalRepoStructure();
     }
 
     public static List<String> suggestFunctions(ScriptHost host, String previous, String prefix)
@@ -112,53 +107,13 @@ public class ScriptCommand
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
-        String previous = suggestionsBuilder.getRemaining().toLowerCase(Locale.ROOT);
-        if(!previous.endsWith("/")){//always ensure it ends in / to make certain that you have format like "directory/subdirectory/filename.sc"
-            suggestionsBuilder.suggest("/");
-            return suggestionsBuilder.buildFuture();
-        }
+        String previous = suggestionsBuilder.getRemaining();
+        Pair<String, Set<String>> suggestions = ScriptDownloader.fileNamesFromPath(previous);
+        String currentPath = suggestions.getLeft();
 
-        String[] previousInput = previous.split("/");
-        String currentPath = "";
-        Set<String> suggestions = new HashSet<>();
-
-        try{
-            suggestions = getFileFolderNames("");
-        } catch (IOException ignored){} //we know it can't happen cos we have plain hardcoded URL which won't fail
-
-        for (String folderName: previousInput) {
-            currentPath += folderName;
-            try{
-                suggestions = getFileFolderNames(currentPath);
-            } catch (IOException e) {
-                //it means user has only typed part of the folder name, like: '/script download global survival/a'
-                //so we wanna suggest all the currently available options
-                break;
-            }
-        }
-
-        suggestions.forEach(s -> suggestionsBuilder.suggest(previous + s));
+        suggestions.getRight().forEach(s -> suggestionsBuilder.suggest(currentPath + s));
 
         return suggestionsBuilder.buildFuture();
-    }
-
-    private static Set<String> getFileFolderNames(String path) throws IOException{
-        Set<String> directoryNames = new HashSet<>();
-
-        String link = "https://api.github.com/repos/gnembon/scarpet/contents/programs/" + path;
-
-        URL appURL = new URL(link);
-
-        String response = ScriptDownloader.getStringFromStream(appURL.openStream());
-
-        JsonArray files = new JsonParser().parse(response).getAsJsonArray();
-
-        for(JsonElement je : files){
-            JsonObject jo = je.getAsJsonObject();
-            directoryNames.add((jo.get("name").getAsString() + jo.get("type").getAsString()).equals("dir") ? "/":"");//if directory name then we wanna add '/' automatically
-        }
-
-        return directoryNames;
     }
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
