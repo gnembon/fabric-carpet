@@ -55,7 +55,7 @@ public class ScriptDownloader {
 
     public static String getScriptCode(String path){
         try {
-            String link = "https://raw.githubusercontent.com/gnembon/scarpet/master/programs/"+ path;
+            String link = "https://raw.githubusercontent.com/gnembon/scarpet/master/programs/"+ path.replace(" ", "%20");
             URL appURL = new URL(link);
             HttpURLConnection http = (HttpURLConnection) appURL.openConnection();
             return getStringFromStream((InputStream) http.getContent());
