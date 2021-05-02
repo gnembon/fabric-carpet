@@ -241,7 +241,7 @@
   "rule.spawnChunksSize.desc": "更改出生點永加載區塊半徑",
   "rule.spawnChunksSize.extra.0": "定義新半徑\n設為0以禁用出生點區塊加載",
   
-    "rule.chainStone.name": "強化鎖鏈",
+  "rule.chainStone.name": "強化鎖鏈",
   "rule.chainStone.desc": "長條鎖鏈在末端間將會相互連接",
   "rule.chainStone.extra.0": "並且也會與直接連接的方塊連接\n當啟用 stick_to_all : 將無視視覺上連接狀態，使全部連接",
 
