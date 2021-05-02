@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.CommandException;
 import net.minecraft.server.command.ServerCommandSource;
@@ -86,7 +87,7 @@ public class ScriptDownloader {
         Path scriptLocation;
         String scriptPath;
         String location;
-        if(globalSavePath){
+        if(globalSavePath && FabricLoader.getInstance().getEnvironmentType()== EnvType.CLIENT) {//cos config folder only is in clients
             scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore");
             location = "global script config folder";
         } else {
