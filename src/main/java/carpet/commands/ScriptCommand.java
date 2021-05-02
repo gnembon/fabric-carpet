@@ -38,7 +38,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -103,15 +102,19 @@ public class ScriptCommand
         return suggestionsBuilder.buildFuture();
     }
 
+    /**
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link ScriptDownloader#localScarpetRepoStructure}
+     * variable.
+     */
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
-    ) throws CommandSyntaxException {
+    ) {
         String previous = suggestionsBuilder.getRemaining();
         Pair<String, Set<String>> suggestions = ScriptDownloader.fileNamesFromPath(previous);
-        String currentPath = suggestions.getLeft();
+        String currentValidPath = suggestions.getLeft();
 
-        suggestions.getRight().forEach(s -> suggestionsBuilder.suggest(currentPath + s));
+        suggestions.getRight().forEach(s -> suggestionsBuilder.suggest(currentValidPath + s));
 
         return suggestionsBuilder.buildFuture();
     }

@@ -8,14 +8,12 @@ import com.google.gson.JsonParser;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.CommandException;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Pair;
 import net.minecraft.util.WorldSavePath;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,15 +23,19 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ScriptDownloader {
+/**
+ * A class used to save scarpet app store scripts to disk
+ */
 
+public class ScriptDownloader {
 
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions. Therefore, we save the file structure at the beginning
@@ -48,11 +50,27 @@ public class ScriptDownloader {
      */
     private static final String scarpetRepoLink = "https://api.github.com/repos/gnembon/scarpet/contents/programs/";
 
+    /** A simple shorthand for calling the {@link ScriptDownloader#getScriptCode} and {@link ScriptDownloader#saveScriptToFile}
+     * methods to avoid repeating code and so it makes more sense what it's exactly doing.
+     *
+     * @param path The user-inputted path to the script
+     * @param global Whether or not we wanna save it to the local scripts folder or in the global config folder
+     * @return {@code 1} if we succesfully saved the script, {@code 0} otherwise
+     */
+
     public static int downloadScript(CommandContext<ServerCommandSource> cc, String path, boolean global){
         String code = getScriptCode(path);
-        return saveScriptToFile(path, code, cc.getSource().getMinecraftServer(),global);
+        return saveScriptToFile(path, code, cc, global);
     }
 
+    /** Gets the code once the user inputs the command. The code isn't saved in {@link ScriptDownloader#localScarpetRepoStructure}
+     * as the scarpet repo is very large and may get much larger in the future, and that may cause RAM issues if we have
+     * the entire thing saved in memory.
+     *
+     * @param path The user inputted path to the scarpet script
+     * @return the HTML request from the path program using {@link ScriptDownloader#getStringFromStream} method to convert
+     * HTML response into a string
+     */
     public static String getScriptCode(String path){
         try {
             String link = "https://raw.githubusercontent.com/gnembon/scarpet/master/programs/"+ path.replace(" ", "%20");
@@ -64,38 +82,52 @@ public class ScriptDownloader {
         }
     }
 
-    public static int saveScriptToFile(String name, String code, MinecraftServer server,boolean globalSavePath){
-        Path scriptPath;
+    public static int saveScriptToFile(String name, String code, CommandContext<ServerCommandSource> cc, boolean globalSavePath){
+        Path scriptLocation;
+        String scriptPath;
         String location;
         if(globalSavePath){
-            scriptPath = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts");
+            scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore");
             location = "global script config folder";
         } else {
-            scriptPath = server.getSavePath(WorldSavePath.ROOT).resolve("scripts");
-            location = "world script folder";
+            scriptLocation = cc.getSource().getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts/appstore");
+            location = "world scripts folder";
         }
-        Messenger.m(server.getCommandSource(), "gi Path to place file: '"+ location + "'");
-        Messenger.m(server.getCommandSource(), "gi Path to place file: '"+ scriptPath + "'");
-
-        FileWriter fileWriter;
-        File file = new File(scriptPath.toFile(), name);
         try {
-            if(file.createNewFile())
-                throw new CommandException(new LiteralText(String.format("%s already exists in %s, will not overwrite", name, location)));
-            Runtime.getRuntime().exec("explorer.exe /select, " + file.getAbsolutePath());//todo remove after debugging and finishing saving to disk
-            fileWriter = new FileWriter(file);
+            scriptPath = scriptLocation.toAbsolutePath() + "/" + name;
+            scriptLocation = Paths.get(scriptPath);
+            String scriptFolderPath = scriptPath.substring(0, scriptPath.lastIndexOf('/'));//folder location without file name
+            Messenger.m(cc.getSource(), "gi Script folder path: "+scriptFolderPath);
+            Path scriptFolderLocation = Paths.get(scriptFolderPath);
+            if (!Files.exists(scriptFolderLocation)) {
+                Files.createDirectories(scriptFolderLocation);
+            }
+
+            if(Files.exists(scriptLocation)){
+                Messenger.m(cc.getSource(), String.format("gi Note: overwriting existing file '%s'", name));
+            }
+
+            Messenger.m(cc.getSource(), "gi Placing script in " + location);
+
+            FileWriter fileWriter = new FileWriter(scriptPath);
             fileWriter.write(code);
             fileWriter.close();
-            Messenger.m(server.getCommandSource(), file.getAbsolutePath());
+            Messenger.m(cc.getSource(), "gi "+ scriptFolderPath);
         } catch (IOException e) {
-            e.printStackTrace();
+            Messenger.m(cc.getSource(), "r Error in downloading script");
             return 0;
         }
-        Messenger.m(server.getCommandSource(), "gi Successfully created "+ name + " in " + location);
+        Messenger.m(cc.getSource(), "gi Successfully created "+ name + " in " + location);
         return 1;
     }
 
-    // converting stream to string
+    /** Returns the string from the inputstream gotten from the html request
+     * Thanks to App Shah in <a href="https://crunchify.com/in-java-how-to-read-github-file-contents-using-httpurlconnection-convert-stream-to-string-utility/">this post</a>
+     * for this code.
+     *
+     * @return the string input from the InputStream
+     * @throws IOException if an I/O error occurs
+     */
     public static String getStringFromStream(InputStream inputStream) throws IOException {
         if (inputStream != null) {
             Writer stringWriter = new StringWriter();
@@ -116,8 +148,8 @@ public class ScriptDownloader {
         }
     }
 
-    /** Updates local copy of scarpet repo, giving an error otherwise which ought to be with immediacy reported to fabric-carpet
-     * devs, in particular Ghoulboy if possible as he wrote this code.
+    /** Updates local copy of scarpet repo, giving an error otherwise which ought to be reported to fabric-carpet devs,
+     * in particular Ghoulboy if possible as he wrote this code.
      *
      * @author Ghoulboy
      */
@@ -126,8 +158,8 @@ public class ScriptDownloader {
         try{
             localScarpetRepoStructure = updateLocalRepoStructure("");
         } catch (IOException | IllegalStateException exc){//should not happen as long as repo name stays the same
-            System.out.println("ERROR: ScriptDownloader#scarpetRepoLink variable is out of date, please update fabric-carpet and contact its devs!");
-            throw new CommandException(new LiteralText("Internal scarpet app store repo structure changed, please contact fabric-carpet developers immediately, enclosing a copy of the server log!"));
+            System.out.println("ERROR: ScriptDownloader#scarpetRepoLink variable is out of date, please update your carpet version, and if the problem persists please submit a bug report here: https://github.com/gnembon/fabric-carpet/issues/new");
+            throw new CommandException(new LiteralText("Internal scarpet app store repo structure changed, please contact fabric-carpet developers, enclosing a copy of the server log!"));
         }
     }
 
@@ -170,25 +202,13 @@ public class ScriptDownloader {
         return ret;
     }
 
-    public static Set<String> getFileFolderNames(String path) throws IOException{
-        Set<String> directoryNames = new HashSet<>();
-
-        String link = scarpetRepoLink + path;
-
-        URL appURL = new URL(link);
-
-        String response = ScriptDownloader.getStringFromStream(appURL.openStream());
-
-        JsonArray files = new JsonParser().parse(response).getAsJsonArray();
-
-        for(JsonElement je : files){
-            JsonObject jo = je.getAsJsonObject();
-            directoryNames.add((jo.get("name").getAsString() + jo.get("type").getAsString()).equals("dir") ? "/":"");//if directory name then we wanna add '/' automatically
-        }
-
-        return directoryNames;
-    }
-
+    /** This method searches for valid file names from the user-inputted string, e.g if the user has thus far typed
+     * {@code survival/a} then it will return all the files in the {@code survival} directory of the scarpet repo (and
+     * will automatically highlight those starting with a), and the string {@code survival/} as the current most valid path.
+     *
+     * @param currentPath The path down which we want to search for files
+     * @return A pair of the current valid path, as well as the set of all the file/directory names at the end of that path
+     */
     public static Pair<String, Set<String>> fileNamesFromPath(String currentPath){
         String[] path = currentPath.split("/");
 
