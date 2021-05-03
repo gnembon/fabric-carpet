@@ -11,6 +11,10 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.util.DyeColor;
 import net.minecraft.text.BaseText;
 
+/**
+ * Class for the /counter command which allows to use hoppers pointing into wool
+ */
+
 public class CounterCommand
 {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
