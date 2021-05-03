@@ -171,6 +171,7 @@ calling `gametick` should be balanced in each case separately
 # `/script download` command
 
 `/script download <global or local?> <path>` command allows to download and save scripts directly from [scarpet app store](https://www.github.com/gnembon/scarpet).
-You can choose whether to save the script in the global config scripts folder or the local per-world script folder, (todo check for server saving scenario...)
-and it will be saved there, e.g `/script download local survival/angel_block.sc` would save the `angel_block.sc` file in https://github.com/gnembon/scarpet/blob/master/programs/survival/angel_block.sc
-to a folder called `survival` in the world's scripts folder.
+You can choose whether to save the script in the global config scripts folder or the local per-world script folder, 
+(on servers it always saves in the scripts folder) and it will be saved there, e.g `/script download local survival/angel_block.sc`
+would save the `angel_block.sc` file [here](https://github.com/gnembon/scarpet/blob/master/programs/survival/angel_block.sc)
+to a folder called `appstore/survival` in the world's scripts folder.

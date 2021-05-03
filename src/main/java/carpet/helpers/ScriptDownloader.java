@@ -85,7 +85,6 @@ public class ScriptDownloader {
 
     public static int saveScriptToFile(String name, String code, CommandContext<ServerCommandSource> cc, boolean globalSavePath){
         Path scriptLocation;
-        String scriptPath;
         String location;
         if(globalSavePath && FabricLoader.getInstance().getEnvironmentType()== EnvType.CLIENT) {//cos config folder only is in clients
             scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore");
@@ -95,11 +94,9 @@ public class ScriptDownloader {
             location = "world scripts folder";
         }
         try {
-            scriptPath = scriptLocation.toAbsolutePath() + "/" + name;
+            String scriptPath = scriptLocation.toAbsolutePath() + "/" + name;
             scriptLocation = Paths.get(scriptPath);
-            String scriptFolderPath = scriptPath.substring(0, scriptPath.lastIndexOf('/'));//folder location without file name
-            Messenger.m(cc.getSource(), "gi Script folder path: "+scriptFolderPath);
-            Path scriptFolderLocation = Paths.get(scriptFolderPath);
+            Path scriptFolderLocation = Paths.get(scriptPath.substring(0, scriptPath.lastIndexOf('/')));//folder location without file name
             if (!Files.exists(scriptFolderLocation)) {
                 Files.createDirectories(scriptFolderLocation);
             }
@@ -113,7 +110,6 @@ public class ScriptDownloader {
             FileWriter fileWriter = new FileWriter(scriptPath);
             fileWriter.write(code);
             fileWriter.close();
-            Messenger.m(cc.getSource(), "gi "+ scriptFolderPath);
         } catch (IOException e) {
             Messenger.m(cc.getSource(), "r Error in downloading script");
             return 0;
@@ -122,7 +118,7 @@ public class ScriptDownloader {
         return 1;
     }
 
-    /** Returns the string from the inputstream gotten from the html request
+    /** Returns the string from the inputstream gotten from the html request.
      * Thanks to App Shah in <a href="https://crunchify.com/in-java-how-to-read-github-file-contents-using-httpurlconnection-convert-stream-to-string-utility/">this post</a>
      * for this code.
      *
