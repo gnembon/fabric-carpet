@@ -17,6 +17,9 @@ import net.minecraft.text.BaseText;
 
 public class CounterCommand
 {
+    /**
+     * The method used to register the command and make it available for the players to use.
+     */
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> literalargumentbuilder = CommandManager.literal("counter").executes((context)
@@ -41,6 +44,13 @@ public class CounterCommand
         dispatcher.register(literalargumentbuilder);
     }
 
+    /**
+     * A method to prettily display the contents of a counter to the player
+     * @param color The counter colour whose contents we are querying.
+     * @param realtime Whether or not to display it as in-game time or IRL time, which accounts for less than 20TPS which
+     *                would make it slower than IRL
+     */
+
     private static int displayCounter(ServerCommandSource source, String color, boolean realtime)
     {
         HopperCounter counter = HopperCounter.getCounter(color);
@@ -53,6 +63,11 @@ public class CounterCommand
         return 1;
     }
 
+    /**
+     * A method to reset the counter's timer to 0 and empty its items. If the {@code color} parameter is {@code null},
+     * it will reset all counters.
+     * @param color The counter whose contents we want to reset
+     */
     private static int resetCounter(ServerCommandSource source, String color)
     {
         if (color == null)
@@ -70,6 +85,11 @@ public class CounterCommand
         return 1;
     }
 
+    /**
+     * A method to prettily display all the counters to the player
+     * @param realtime Whether or not to display it as in-game time or IRL time, which accounts for less than 20TPS which
+     *                would make it slower than IRL
+     */
     private static int listAllCounters(ServerCommandSource source, boolean realtime)
     {
         for (BaseText message: HopperCounter.formatAll(source.getMinecraftServer(), realtime))
