@@ -6,6 +6,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,6 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import carpet.helpers.HopperCounter;
 import carpet.utils.WoolTool;
 
+/**
+ * The {@link Mixin} which removes items in a hopper if it points into a wool counter, and calls {@link HopperCounter#add}
+ */
 @Mixin(HopperBlockEntity.class)
 public abstract class HopperBlockEntityMixin extends LootableContainerBlockEntity {
 
@@ -36,6 +40,9 @@ public abstract class HopperBlockEntityMixin extends LootableContainerBlockEntit
 
     @Shadow public abstract void setStack(int slot, ItemStack stack);
 
+    /**
+     * A method to remove items from hoppers pointing into wool and count them via {@link HopperCounter#add} method
+     */
     @Inject(method = "insert", at = @At("HEAD"), cancellable = true)
     private void onInsert(CallbackInfoReturnable<Boolean> cir)
     {
