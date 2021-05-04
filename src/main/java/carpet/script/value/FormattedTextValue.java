@@ -54,7 +54,7 @@ public class FormattedTextValue extends StringValue
 
     @Override
     public boolean getBoolean() {
-        return !text.asString().isEmpty();
+        return !text.getString().isEmpty();
     }
 
     @Override
