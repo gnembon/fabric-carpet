@@ -37,7 +37,7 @@ Here is a [list of other carpet extensions](https://github.com/gnembon/fabric-ca
 
 Everybody can create your own carpet features or extend scarpet language with some new API, by creating a carpet extension using this [carpet extension mod template](https://github.com/gnembon/fabric-carpet-extension-example-mod). 
 
-# How? Hwat?
+# How? What?
 
 Follow instructions for all other fabric mods in https://fabricmc.net/use/ and dump [carpet...jar](https://github.com/gnembon/fabric-carpet/releases) in `mods` folder along with other compatible mods.
 
