@@ -36,11 +36,6 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     {
         //prolly half of that crap is not necessary, but it works
         ServerWorld worldIn = server.getWorld(dimensionId);
-        GameProfile gameprofile = server.getUserCache().findByName(username);
-        if (gameprofile == null)
-        {
-            return null;
-        ServerPlayerInteractionManager interactionManagerIn = new ServerPlayerInteractionManager(worldIn);
         UserCache.setUseRemote(false);
         GameProfile gameprofile;
         try {
