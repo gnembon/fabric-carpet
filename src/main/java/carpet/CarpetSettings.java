@@ -444,6 +444,19 @@ public class CarpetSettings
     )
     public static boolean scriptsAutoload = true;
 
+    @Rule(
+            desc = "Enables scripts debugging messages in system log",
+            category = SCARPET
+    )
+    public static boolean scriptsDebugging = false;
+
+    @Rule(
+            desc = "Enables scripts optimization",
+            category = SCARPET
+    )
+    public static boolean scriptsOptimization = true;
+
+
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static String commandPlayer = "ops";
 

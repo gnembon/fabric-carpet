@@ -21,14 +21,14 @@ public class Loops {
         // condition and expression will get a bound '_i'
         // returns last successful expression or false
         // while(cond, limit, expr) => ??
-        expression.addFunction("break", lv ->
+        expression.addImpureFunction("break", lv ->
         {
             if (lv.size()==0) throw new BreakStatement(null);
             if (lv.size()==1) throw new BreakStatement(lv.get(0));
             throw new InternalExpressionException("'break' can only be called with zero or one argument");
         });
 
-        expression.addFunction("continue", lv ->
+        expression.addImpureFunction("continue", lv ->
         {
             if (lv.size()==0) throw new ContinueStatement(null);
             if (lv.size()==1) throw new ContinueStatement(lv.get(0));

@@ -1,7 +1,19 @@
 # Minecraft specific API and `scarpet` language add-ons and commands
 
-Here is the gist of the Minecraft related functions. Otherwise the CarpetScript could live without Minecraft.
+Here is the gist of the Minecraft related functions. Otherwise the scarpet could live without Minecraft.
 
+## Global scarpet options
+
+These options affect directly how scarpet functions and can be triggered via `/carpet` command.
+ - `commandScript`: disables `/script` command making it impossible to control apps in game. Apps will still load and run 
+ when loaded with the world (i.e. present in the world/scripts folder)
+ - `scriptsAutoload`: when set to `false` will prevent apps loaded with the world to load automatically. You can still
+ load them on demand via `/script load` command
+ - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggeres
+ the code that calls the command). Defaults to `ops`, could be customized to any level via a numerical value (0, 1, 2, 3 or 4)
+ - `scriptsOptimization`: when disabled, disables default app compile time optimizations. If your app behaves differently with
+ and without optimizations, please file a bug report on the bug tracker and disable code optimizations
+ - `scriptsDebugging`: Puts detailed information about apps loading, performance and runtime in system log.
 
 ## App structure
 

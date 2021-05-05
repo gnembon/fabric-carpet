@@ -356,11 +356,12 @@ Here is the complete list of operators in `scarpet` including control flow opera
 are not technically operators, but part of the language, even if they look like them:
 
 *   Match, Get `~ :`
-*   Unary `+ - !`
+*   Unary `+ - ! ...`
 *   Exponent `^`
 *   Multiplication `* / %`
 *   Addition `+ -`
-*   Comparison `== != > >= <= <`
+*   Comparison `> >= <= <`
+*   Equality `== !=`
 *   Logical And`&&`
 *   Logical Or `||`
 *   Assignment `= += <>`
@@ -561,6 +562,45 @@ flips boolean condition of the expression. Equivalent of `bool(expr)==false`
 !l() => true
 !l(null) => false
 </pre>
+
+### `Unpacking Operator ...`
+
+Unpacks elements of a list of an iterator into a sequence of arguments in a function making so that `fun(...[1, 2, 3])` is
+identical with `fun(1, 2, 3)`. For maps, it unpacks them to a list of key-value pairs.
+
+In function signatures it identifies a vararg parameter. 
+
+<pre>
+fun(a, b, ... rest) -> [a, b, rest]; fun(1, 2, 3, 4)    => [1, 2, [3, 4]]
+</pre>
+
+Effects of `...` can be surprisingly lasting. It is kept through the use of variables and function calls.
+
+<pre>
+fun(a, b, ... rest) -> [a, b, ... rest]; fun(1, 2, 3, 4)    => [1, 2, 3, 4]
+args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())   => 6
+a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)   => 6
+</pre>
+
+Unpacking mechanics can be used for list and map constriction, not just for function calls.
+
+<pre>
+[...range(5), pi, ...range(5,-1,-1)]   => [0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]
+{ ... map(range(5),  _  -> _*_ )}   => {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}
+{...{1 -> 2, 3 -> 4}, ...{5 -> 6, 7 -> 8}}   => {1: 2, 3: 4, 5: 6, 7: 8}
+</pre>
+
+Fine print: unpacking of argument lists happens just before functions are evaluated. 
+This means that in some situations, for instance 
+when an expression is expected (`map(list, expr)`), or a function should not evaluate some (most!) of its arguments (`if(...)`), 
+unpacking cannot be used, and will be ignored, leaving `... list` identical to `list`. 
+Functions that don't honor unpacking mechanics, should have no use for it at the first place
+ (i.e. have one, or very well-defined, and very specific parameters), 
+so some caution (prior testing) is advised. Some of these multi-argument built-in functions are
+ `if`, `try`, `sort_key`, `system_variable_get`, `synchronize`, `sleep`, `in_dimension`, 
+all container functions (`get`, `has`, `put`, `delete`), 
+and all loop functions (`while`, `loop`, `map`, `filter`, `first`, `all`, `c_for`, `for` and`reduce`).
+ 
 # Arithmetic operations
 
 ## Basic Arithmetic Functions
@@ -772,7 +812,7 @@ are not thread safe and require the execution to park on the server thread, wher
 the off-tick time in between ticks that didn't take all 50ms. There are however benefits of running things in parallel, 
 like fine time control not relying on the tick clock, or running things independent on each other. You can still run 
 your actions on tick-by-tick basis, either taking control of the execution using `game_tick()` API function 
-(nasty solution), or scheduling tick using `schedule()` function (preffered solution), but threading gives much more control
+(nasty solution), or scheduling tick using `schedule()` function (preferred solution), but threading gives much more control
 on the timings without impacting the main game and is the only solution to solve problems in parallel 
 (see [scarpet camera](/src/main/resources/assets/carpet/scripts/camera.sc)).
 
@@ -786,7 +826,10 @@ effectively parallelized.
 
 If the app is shutting down, creating new tasks via `task` will not succeed. Instead the new task will do nothing and return
 `null`, so most threaded application should handle closing apps naturally. Keep in mind in case you rely on task return values,
-that they will return `null` regardless of anything in these situations.
+that they will return `null` regardless of anything in these situations. When app handles `__on_close()` event, new tasks cannot
+be submitted at this point, but current tasks are not terminated. Apps can use that opportunity to gracefully shutdown their tasks.
+Regardless if the app handles `__on_close()` event, or does anything with their tasks in it, all tasks will be terminated exceptionally
+within the next 1.5 seconds. 
 
 ### `task(function, ... args)`, `task_thread(executor, function, ... args)`
 
@@ -1030,6 +1073,15 @@ This will give you a date:
 
 It is currently `hrs`:`mins` and `secs` seconds on the `date`th of `month`, `year`
 
+### `encode_b64(string)`, `decode_b64(string)`
+
+Encode or decode a string from b64, throwing a `b64_error` exception if it's invalid
+
+### `encode_json(value)`, `decode_json(string)`
+
+Encodes a value as a json string, and decodes a json string as a valid value, throwing a `json_error` exception if it 
+doesn't parse properly
+
 ### `profile_expr(expression)`
 
 Returns number of times given expression can be run in 50ms time. Useful to profile and optimize your code. 
@@ -1247,6 +1299,7 @@ it will be used from now on as a new value for the accumulator.
 reduce([1,2,3,4],_a+_,0)  => 10
 reduce([1,2,3,4],_a*_,1)  => 24
 </pre>
+
 # User-defined functions and program control flow
 
 ## Writing programs with more than 1 line
@@ -1516,6 +1569,7 @@ but like everywhere else, doing that sounds like a bad idea.
   - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
     - `nbt_error`: Incorrect input/output NBT file.
     - `json_error`: Incorrect input/output JSON data.
+    - `b64_error`: Incorrect input/output b64 (base 64) string
   - `user_exception`: Exception thrown by default with `throw` function.
   
 Synopsis:
@@ -3448,6 +3502,10 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'language')`
+
+Returns `null` for any non-player entity, if not returns the player's language as a string.
+
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
@@ -4723,7 +4781,8 @@ per shape and last whatever they typically last in the game.
 
 Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
 Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
-sending many small packets to draw several shapes at once.
+sending many small packets to draw several shapes at once. The drawback of sending shapes is batches is that they need to address
+the same list of players, i.e. if multiple players from the list target different players, all shapes will be sent to all of them.
 
 Shapes will fail to draw and raise a runtime error if not all its required parameters
 are specified and all available shapes have some parameters that are required, so make sure to have them in place:
@@ -4736,8 +4795,8 @@ or simply refresh the shapes periodically in more dynamic applications.
 Optional shared shape attributes:
  * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
- * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
- player, otherwise it will be send to all players in the dimension.
+ * `player` - name or player entity to send the shape to, or a list of players. If specified, the shapes will appear only for the specified
+ players (regardless where they are), otherwise it will be send to all players in the current dimension.
  * `line` - (Deprecated) line thickness, defaults to 2.0pt. Not supported in 1.17's 3.2 core GL renderer.
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.

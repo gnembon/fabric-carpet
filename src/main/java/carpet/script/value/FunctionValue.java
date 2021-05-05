@@ -150,7 +150,7 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         return varArgs != null;
     }
 
-    public LazyValue callInContext(Context c, Integer type, List<Value> params)
+    public LazyValue callInContext(Context c, Context.Type type, List<Value> params)
     {
         try
         {
@@ -204,12 +204,12 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
     }
 
     @Override
-    public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams) {
+    public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams) {
         List<Value> resolvedParams = unpackArgs(lazyParams, c);
         return execute(c, type, e, t, resolvedParams);
     }
 
-    public LazyValue execute(Context c, Integer type, Expression e, Tokenizer.Token t, List<Value> params)
+    public LazyValue execute(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<Value> params)
     {
         assertArgsOk(params, (fixedArgs) ->{
             if (fixedArgs)  // wrong number of args for fixed args
@@ -301,10 +301,13 @@ public class FunctionValue extends Value implements Fluff.ILazyFunction
         }
     }
 
-    public static List<LazyValue> lazify(List<Value> args)
-    {
-        List<LazyValue> lzargs = new ArrayList<>(args.size());
-        args.forEach( v -> lzargs.add( (c, t) -> v));
-        return lzargs;
+    @Override
+    public boolean pure() {
+        return false;
+    }
+
+    @Override
+    public boolean transitive() {
+        return false;
     }
 }

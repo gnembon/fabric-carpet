@@ -31,6 +31,7 @@
                 log log10 log1p
                 sqrt
                 max min abs round floor ceil
+                then sum difference product quotient equal unique increasing decreasing nonincreasing nondecreasing or and
                 mandelbrot relu
                 perlin simplex
 

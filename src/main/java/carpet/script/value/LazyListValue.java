@@ -193,6 +193,11 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     }
 
     @Override
+    public Value fromConstant() {
+        return (Value)clone();
+    }
+
+    @Override
     public int hashCode()
     {
         return ("i"+getString()).hashCode();

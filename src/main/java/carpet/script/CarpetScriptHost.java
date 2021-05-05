@@ -1004,15 +1004,7 @@ public class CarpetScriptHost extends ScriptHost
                 return null;
             }
 
-            String shebang = message;
-            if (expr.module != null)
-            {
-                shebang += " in " + expr.module.getName() + "";
-            }
-            else
-            {
-                shebang += " in system chat";
-            }
+            String shebang = message+" in "+expr.getModuleName();
             if (token != null)
             {
                 String[] lines = expr.getCodeString().split("\n");

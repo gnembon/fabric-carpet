@@ -152,6 +152,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return copy;
     }
 
+    @Override
+    public Value fromConstant() {
+        return deepcopy();
+    }
+
     // stolen from HopperBlockEntity, adjusted for threaded operation
     public static Inventory getInventoryAt(ServerWorld world, BlockPos blockPos)
     {

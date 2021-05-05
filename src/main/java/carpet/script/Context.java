@@ -8,17 +8,21 @@ import java.util.Set;
 
 public class Context
 {
-    public static final int NONE = 0;
-    public static final int VOID = 1;
-    public static final int BOOLEAN = 2;
-    public static final int NUMBER = 3;
-    public static final int STRING = 4;
-    public static final int LIST = 5;
-    public static final int ITERATOR = 6;
-    public static final int SIGNATURE = 7;
-    public static final int LOCALIZATION = 8;
-    public static final int LVALUE = 9;
-    public static final int MAPDEF = 10;
+    public enum Type
+    {
+        NONE, VOID, BOOLEAN, NUMBER, STRING, LIST, ITERATOR, SIGNATURE, LOCALIZATION, LVALUE, MAPDEF
+    }
+    public static final Type NONE = Type.NONE;
+    public static final Type VOID = Type.VOID;
+    public static final Type BOOLEAN = Type.BOOLEAN;
+    public static final Type NUMBER = Type.NUMBER;
+    public static final Type STRING = Type.STRING;
+    public static final Type LIST = Type.LIST;
+    public static final Type ITERATOR = Type.ITERATOR;
+    public static final Type SIGNATURE = Type.SIGNATURE;
+    public static final Type LOCALIZATION = Type.LOCALIZATION;
+    public static final Type LVALUE = Type.LVALUE;
+    public static final Type MAPDEF = Type.MAPDEF;
 
     public Map<String, LazyValue> variables = new HashMap<>();
 

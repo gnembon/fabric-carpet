@@ -189,7 +189,7 @@ public class DataStructures {
             return Value.NULL;
         });
 
-        expression.addBinaryContextOperator(":", Operators.precedence.get("attribute~:"),true, (c, t, container, address) ->
+        expression.addBinaryContextOperator(":", Operators.precedence.get("attribute~:"),true, true, false, (ctx, t, container, address) ->
         {
             if (container instanceof LContainerValue)
             {

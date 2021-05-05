@@ -12,7 +12,7 @@ public class Threading
 {
     public static void apply(Expression expression)
     {
-        expression.addFunctionWithDelegation("task", -1, (c, t, expr, tok, lv) ->
+        expression.addFunctionWithDelegation("task", -1, false, false, (c, t, expr, tok, lv) ->
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");
@@ -22,7 +22,7 @@ public class Threading
             return thread;
         });
 
-        expression.addFunctionWithDelegation("task_thread", -1, (c, t, expr, tok, lv) ->
+        expression.addFunctionWithDelegation("task_thread", -1, false, false, (c, t, expr, tok, lv) ->
         {
             if (lv.size() < 2)
                 throw new InternalExpressionException("'task' requires at least function to call as a parameter");

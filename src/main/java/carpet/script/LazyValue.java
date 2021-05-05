@@ -10,15 +10,50 @@ public interface LazyValue
     LazyValue TRUE = (c, t) -> Value.TRUE;
     LazyValue NULL = (c, t) -> Value.NULL;
     LazyValue ZERO = (c, t) -> Value.ZERO;
-    /**
-     * The Value representation of the left parenthesis, used for parsing
-     * varying numbers of function parameters.
-     */
-    LazyValue PARAMS_START = (c, t) -> null;
 
-    Value evalValue(Context c, Integer type);
+    public static LazyValue ofConstant(Value val) {
+        return new Constant(val);
+    }
+
+    Value evalValue(Context c, Context.Type type);
 
     default Value evalValue(Context c){
-        return evalValue(c, Context.NONE);
+        return evalValue(c, Context.Type.NONE);
+    }
+
+    @FunctionalInterface
+    interface ContextFreeLazyValue extends LazyValue
+    {
+
+        Value evalType(Context.Type type);
+
+        @Override
+        default Value evalValue(Context c, Context.Type type) {
+            return evalType(type);
+        }
+    }
+
+
+    class Constant implements ContextFreeLazyValue
+    {
+        Value result;
+
+        public Constant(Value value)
+        {
+            result = value;
+        }
+
+        public Value get() {return result;}
+
+        @Override
+        public Value evalType(Context.Type type) {
+
+            return result.fromConstant();
+        }
+
+        @Override
+        public Value evalValue(Context c, Context.Type type) {
+            return result.fromConstant();
+        }
     }
 }
