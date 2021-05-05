@@ -54,7 +54,7 @@ import net.minecraft.command.argument.ItemSlotArgumentType;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.command.argument.MessageArgumentType;
 import net.minecraft.command.argument.StatusEffectArgumentType;
-import net.minecraft.command.argument.NbtCompoundTagArgumentType;
+import net.minecraft.command.argument.NbtCompoundArgumentType;
 import net.minecraft.command.argument.NbtPathArgumentType;
 import net.minecraft.command.argument.NbtElementArgumentType;
 import net.minecraft.command.argument.NumberRangeArgumentType;
@@ -691,20 +691,20 @@ public abstract class CommandArgument
         boolean mapRequired;
         private TagArgument()
         {
-            super("tag", NbtCompoundTagArgumentType.nbtCompound().getExamples(), false);
+            super("tag", NbtCompoundArgumentType.nbtCompound().getExamples(), false);
             mapRequired = true;
         }
         @Override
         protected ArgumentType<?> getArgumentType()
         {
-            return mapRequired?NbtCompoundTagArgumentType.nbtCompound(): NbtElementArgumentType.nbtElement();
+            return mapRequired?NbtCompoundArgumentType.nbtCompound(): NbtElementArgumentType.nbtElement();
         }
 
         @Override
         protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
         {
             if (mapRequired)
-                return new NBTSerializableValue(NbtCompoundTagArgumentType.getNbtCompound(context, param));
+                return new NBTSerializableValue(NbtCompoundArgumentType.getNbtCompound(context, param));
             else
                 return new NBTSerializableValue(NbtElementArgumentType.getNbtElement(context, param));
         }
