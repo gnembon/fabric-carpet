@@ -25,7 +25,7 @@ public class Threading
         });
 
         // has to be lazy due to deferred execution of the expression
-        expression.addLazyFunctionWithDelegation("task_dock", 1, (c, t, expr, tok, lv) -> {
+        expression.addLazyFunctionWithDelegation("task_dock", 1, false,true, (c, t, expr, tok, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             MinecraftServer server = cc.s.getMinecraftServer();
             if (server.isOnThread()) return lv.get(0); // pass through for on thread tasks

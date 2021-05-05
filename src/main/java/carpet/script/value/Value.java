@@ -244,4 +244,11 @@ public abstract class Value implements Comparable<Value>, Cloneable
     }
 
     public boolean isNull() { return false; }
+
+    /**
+     * @return retrieves useful in-run value of an optimized code-base value.
+     * For immutable values (most of them) it can return itself,
+     * but for mutables, it needs to be its copy or deep copy.
+     */
+    public Value fromConstant() { return this; }
 }

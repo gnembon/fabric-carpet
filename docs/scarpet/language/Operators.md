@@ -6,6 +6,12 @@ as `2+(2*2)`, not `(2+2)*2`, otherwise they are applied from left to right, i.e.
 as `(2+4)-3`, which in case of numbers doesn't matter, but since `scarpet` allows for mixing all value types 
 the associativity would matter, and may lead to unintended effects:
 
+Operators can be unary - with one argument prefixed by the operator (like `-`, `!`, `...`), "practically binary" (that
+clearly have left and right operands, like assignment `=` operator), and "technically binary" (all binary operators have left and 
+right hand, but can be frequently chained together, like `1+2+3`). All "technically binary" operators (where chaining makes sense)
+have their functional counterparts, e.g. `1+2+3` is equivalent to `sum(1, 2, 3)`. Functional and operatoral forms are directly 
+equivalent - they actually will result in the same code as scarpet will optimize long operator chains into their optimized functional forms. 
+
 Important operator is function definition `->` operator. It will be covered 
 in [User Defined Functions and Program Control Flow](docs/scarpet/language/FunctionsAndControlFlow.md)
 
@@ -118,7 +124,7 @@ $);
 /script run global_get_enchantment(player(), 'sharpness')
 </pre>
 
-### `Basic Arithmetic Operators + - * /`
+### Basic Arithmetic Operators `+`, `sum(...)`, `-`, `difference(...)`, `*`, `product(...)`, `/`, `quotient(...)`
 
 Allows to add the results of two expressions. If the operands resolve to numbers, the result is arithmetic operation. 
 In case of strings, adding or subtracting from a string results in string concatenation and removal of substrings 
@@ -133,6 +139,9 @@ to lists treated as vectors.
 Addition with maps (`{}` or `m()`) results in a new map with keys from both maps added, if both operands are maps,
 adding elements of the right argument to the keys, of left map, or just adding the right value as a new key
 in the output map. 
+
+Functional forms of `-` and `/` have less intuitive multi-nary interpretation, but they might be useful in some situations.
+`x-y-z` resolves to `difference(x, y, z)`.
 
 Examples:
 
@@ -149,7 +158,7 @@ b = [100,63,100]; b+[10,0,10]  => [110,63,110]
 {'a' -> 1} + {'b' -> 2} => {'a' -> 1, 'b' -> 2}
 </pre>
 
-### `Just Operators % ^`
+### Just Operators `%`, `^`
 
 The modulo and exponent (power) operators work only if both operands are numbers
 
@@ -160,11 +169,11 @@ The modulo and exponent (power) operators work only if both operands are numbers
 -3 ^ pi => // Error
 </pre>
 
-### `Comparison Operators == != < > <= >=`
+### Comparison Operators `==`, `equal()`, `!=`, `unique()`, `<`, `increasing()`, `>`, `decreasing()`, `<=`, `nondecreasing()`, `>=`, `nonincreasing()`
 
-Allows to compare the results of two expressions. For numbers it is considers arithmetic order of numbers, for 
+Allows to compare the results of two expressions. For numbers, it considers arithmetic order of numbers, for 
 strings - lexicographical, nulls are always 'less' than everything else, and lists check their elements - 
-if the sizes are different, the size matters, otherwise, pairwise comparisons for each elements are performed. 
+if the sizes are different, the size matters, otherwise, pairwise comparisons for each element are performed. 
 The same order rules than with all these operators are used with the default sortographical order as used by `sort` 
 function. All of these are true:
 
@@ -180,7 +189,12 @@ null < -1000
 3 == 3.0
 </pre>
 
-### `Logical Operators && ||`
+Functional variants of these operators allow to assert certain paradigms on multiple arguments at once. This means that 
+due to formal equivalence `x < y < z` is equivalent to `x < y & y < z` because of direct mapping to `increasing(x, y, z)`. This translates through
+the parentheses, so `((x < y) < z)` is the same as `increasing(x, y, z)`. To achieve the same effect as you would see in other
+ languages (not python), you would need to cast the first pair to boolean value, i.e. `bool(x < y) < z`. 
+
+### Logical Operators `&&`, `and(...)`, `||`, `or(...)`
 
 These operator compute respective boolean operation on the operands. What it important is that if calculating of the 
 second operand is not necessary, it won't be evaluated, which means one can use them as conditional statements. In 

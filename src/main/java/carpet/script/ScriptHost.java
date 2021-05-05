@@ -122,11 +122,6 @@ public abstract class ScriptHost
 
     void initializeModuleGlobals(ModuleData md)
     {
-        md.globalVariables.put("euler", (c, t) -> Arithmetic.euler);
-        md.globalVariables.put("pi", (c, t) -> Arithmetic.PI);
-        md.globalVariables.put("null", (c, t) -> Value.NULL);
-        md.globalVariables.put("true", (c, t) -> Value.TRUE);
-        md.globalVariables.put("false", (c, t) -> Value.FALSE);
     }
 
     public void importModule(Context c, String moduleName)

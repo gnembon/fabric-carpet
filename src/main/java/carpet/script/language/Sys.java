@@ -36,7 +36,7 @@ public class Sys {
     {
         expression.addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
 
-        expression.addUnaryFunction("copy", Value::deepcopy);
+        expression.addImpureUnaryFunction("copy", Value::deepcopy);
 
         expression.addTypedContextFunction("bool", 1, Context.BOOLEAN, (c, t, lv) ->
         {

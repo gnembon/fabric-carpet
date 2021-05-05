@@ -15,4 +15,9 @@ public abstract class AbstractListValue extends Value implements Iterable<Value>
     {
         throw new InternalExpressionException("Cannot append a value to an abstract list");
     }
+
+    @Override
+    public Value fromConstant() {
+        return this.deepcopy();
+    }
 }

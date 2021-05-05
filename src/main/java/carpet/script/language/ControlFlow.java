@@ -21,12 +21,21 @@ public class ControlFlow {
     public static void apply(Expression expression) // public just to get the javadoc right
     {
         // needs to be lazy cause of custom contextualization
-        expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, (c, t, lv1, lv2) ->
+        expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, true, t -> Context.Type.VOID, (c, t, lv1, lv2) ->
         {
             lv1.evalValue(c, Context.VOID);
             Value v2 = lv2.evalValue(c, t);
             return (cc, tt) -> v2;
         });
+
+        expression.addPureLazyFunction("then", -1, t -> Context.Type.VOID, (c, t, lv) -> {
+            int imax = lv.size()-1;
+            for (int i = 0; i < imax; i++) lv.get(i).evalValue(c, Context.VOID);
+            Value v = lv.get(imax).evalValue(c, t);
+            return (cc, tt) -> v;
+        });
+        expression.addFunctionalEquivalence(";", "then");
+
 
         // obvious lazy due to conditional evaluation of arguments
         expression.addLazyFunction("if", -1, (c, t, lv) ->
@@ -50,9 +59,9 @@ public class ControlFlow {
             return (cc, tt) -> Value.NULL;
         });
 
-        expression.addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        expression.addImpureFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
 
-        expression.addFunction("throw", lv->
+        expression.addImpureFunction("throw", lv->
         {
             switch (lv.size()) 
             {

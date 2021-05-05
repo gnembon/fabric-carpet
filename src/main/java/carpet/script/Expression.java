@@ -1,5 +1,6 @@
 package carpet.script;
 
+import carpet.CarpetSettings;
 import carpet.script.Fluff.AbstractFunction;
 import carpet.script.Fluff.AbstractLazyFunction;
 import carpet.script.Fluff.AbstractLazyOperator;
@@ -32,6 +33,8 @@ import carpet.script.value.FunctionValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.math.BigInteger;
@@ -45,6 +48,7 @@ import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -85,6 +89,27 @@ public class Expression
 
     private final Map<String, ILazyFunction> functions = new  Object2ObjectOpenHashMap<>();
     public Set<String> getFunctionNames() {return functions.keySet();}
+
+    private final Map<String, String> functionalEquivalence = new Object2ObjectOpenHashMap<>();
+    public void addFunctionalEquivalence(String operator, String function)
+    {
+        assert operators.containsKey(operator);
+        assert functions.containsKey(function);
+        functionalEquivalence.put(operator, function);
+    }
+
+    private final Map<String, Value> constants = ImmutableMap.of(
+            "euler", Arithmetic.euler,
+            "pi", Arithmetic.PI,
+            "null", Value.NULL,
+            "true", Value.TRUE,
+            "false", Value.FALSE
+    );
+
+    protected Value getConstantFor(String surface)
+    {
+        return constants.get(surface);
+    }
 
     public List<String> getExpressionSnippet(Tokenizer.Token token)
     {
@@ -139,13 +164,28 @@ public class Expression
     }
 
 
-    public void addLazyUnaryOperator(String surface, int precedence, boolean leftAssoc,
-                                       TriFunction<Context, Integer, LazyValue, LazyValue> lazyfun)
+    public void addLazyUnaryOperator(String surface, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type,Context.Type> staticTyper,
+                                       TriFunction<Context, Context.Type, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface+"u", new AbstractLazyOperator(precedence, leftAssoc)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer t, Expression e, Tokenizer.Token token, LazyValue v, LazyValue v2)
+            public boolean pure() {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType) {
+                return staticTyper.apply(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v, LazyValue v2)
             {
                 try
                 {
@@ -160,13 +200,23 @@ public class Expression
     }
 
 
-    public void addLazyBinaryOperatorWithDelegation(String surface, int precedence, boolean leftAssoc,
-                                       SexFunction<Context, Integer, Expression, Tokenizer.Token, LazyValue, LazyValue, LazyValue> lazyfun)
+    public void addLazyBinaryOperatorWithDelegation(String surface, int precedence, boolean leftAssoc, boolean pure,
+                                       SexFunction<Context, Context.Type, Expression, Tokenizer.Token, LazyValue, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2)
+            public boolean pure() {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, LazyValue v1, LazyValue v2)
             {
                 try
                 {
@@ -180,13 +230,28 @@ public class Expression
         });
     }
 
-    public void addLazyFunctionWithDelegation(String name, int numpar,
-                                                     QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
+    public void addCustomFunction(String name, ILazyFunction fun)
+    {
+        functions.put(name, fun);
+    }
+
+    public void addLazyFunctionWithDelegation(String name, int numpar, boolean pure, boolean transitive,
+                                                     QuinnFunction<Context, Context.Type, Expression, Tokenizer.Token, List<LazyValue>, LazyValue> lazyfun)
     {
         functions.put(name, new AbstractLazyFunction(numpar, name)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
+            public boolean pure() {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive() {
+                return transitive;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -201,13 +266,23 @@ public class Expression
         });
     }
 
-    public void addFunctionWithDelegation(String name, int numpar,
-                                              QuinnFunction<Context, Integer, Expression, Tokenizer.Token, List<Value>, Value> fun)
+    public void addFunctionWithDelegation(String name, int numpar, boolean pure, boolean transitive,
+                                              QuinnFunction<Context, Context.Type, Expression, Tokenizer.Token, List<Value>, Value> fun)
     {
         functions.put(name, new AbstractLazyFunction(numpar, name)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
+            public boolean pure() {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive() {
+                return transitive;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type type, Expression e, Tokenizer.Token t, List<LazyValue> lv)
             {
                 try
                 {
@@ -222,13 +297,30 @@ public class Expression
         });
     }
 
-    public void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc,
-                                       QuadFunction<Context, Integer, LazyValue, LazyValue, LazyValue> lazyfun)
+    public void addLazyBinaryOperator(String surface, int precedence, boolean leftAssoc, boolean pure, Function<Context.Type, Context.Type> typer,
+                                       QuadFunction<Context, Context.Type, LazyValue, LazyValue, LazyValue> lazyfun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
         {
+
             @Override
-            public LazyValue lazyEval(Context c, Integer t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            public boolean pure() {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return typer.apply(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -243,13 +335,23 @@ public class Expression
         });
     }
 
-    public void addBinaryContextOperator(String surface, int precedence, boolean leftAssoc,
-                                      QuadFunction<Context, Integer, Value, Value, Value> fun)
+    public void addBinaryContextOperator(String surface, int precedence, boolean leftAssoc, boolean pure, boolean transitive,
+                                      QuadFunction<Context, Context.Type, Value, Value, Value> fun)
     {
         operators.put(surface, new AbstractLazyOperator(precedence, leftAssoc)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
+            public boolean pure() {
+                return pure;
+            }
+
+            @Override
+            public boolean transitive() {
+                return transitive;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type t, Expression e, Tokenizer.Token token, LazyValue v1, LazyValue v2)
             {
                 try
                 {
@@ -312,6 +414,20 @@ public class Expression
         });
     }
 
+    public void addImpureUnaryFunction(String name, Function<Value, Value> fun)
+    {
+        functions.put(name,  new AbstractFunction(1, name)
+        {
+            @Override
+            public boolean pure() {
+                return false;
+            }
+
+            @Override
+            public Value eval(List<Value> parameters) { return fun.apply(parameters.get(0)); }
+        });
+    }
+
     public void addBinaryFunction(String name, BiFunction<Value, Value, Value> fun)
     {
         functions.put(name, new AbstractFunction(2, name)
@@ -325,6 +441,20 @@ public class Expression
     {
         functions.put(name, new AbstractFunction(-1, name)
         {
+            @Override
+            public Value eval(List<Value> parameters) { return fun.apply(parameters); }
+        });
+    }
+
+    public void addImpureFunction(String name, Function<List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractFunction(-1, name)
+        {
+            @Override
+            public boolean pure() {
+                return false;
+            }
+
             @Override
             public Value eval(List<Value> parameters) { return fun.apply(parameters); }
         });
@@ -347,12 +477,22 @@ public class Expression
     }
 
 
-    public void addLazyFunction(String name, int num_params, TriFunction<Context, Integer, List<LazyValue>, LazyValue> fun)
+    public void addLazyFunction(String name, int num_params, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
     {
         functions.put(name, new AbstractLazyFunction(num_params, name)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public boolean pure() {
+                return false;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -367,12 +507,58 @@ public class Expression
         });
     }
 
-    public void addContextFunction(String name, int num_params, TriFunction<Context, Integer, List<Value>, Value> fun)
+    public void addPureLazyFunction(String name, int num_params, Function<Context.Type, Context.Type> typer, TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> fun)
     {
         functions.put(name, new AbstractLazyFunction(num_params, name)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public boolean pure() {
+                return true;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType)
+            {
+                return typer.apply(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            {
+                ILazyFunction.checkInterrupts();
+                try
+                {
+                    return fun.apply(c, i, lazyParams);
+                }
+                catch (RuntimeException exc)
+                {
+                    throw handleCodeException(c, exc, e, t);
+                }
+            }
+        });
+    }
+
+    public void addContextFunction(String name, int num_params, TriFunction<Context, Context.Type, List<Value>, Value> fun)
+    {
+        functions.put(name, new AbstractLazyFunction(num_params, name)
+        {
+            @Override
+            public boolean pure() {
+                return false;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
             {
                 ILazyFunction.checkInterrupts();
                 try
@@ -388,12 +574,27 @@ public class Expression
         });
     }
 
-    public void addTypedContextFunction(String name, int num_params, int reqType, TriFunction<Context, Integer, List<Value>, Value> fun)
+    public void addTypedContextFunction(String name, int num_params, Context.Type reqType, TriFunction<Context, Context.Type, List<Value>, Value> fun)
     {
         functions.put(name, new AbstractLazyFunction(num_params, name)
         {
             @Override
-            public LazyValue lazyEval(Context c, Integer i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
+            public boolean pure() {
+                return true;
+            }
+
+            @Override
+            public boolean transitive() {
+                return false;
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType) {
+                return reqType;
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type i, Expression e, Tokenizer.Token t, List<LazyValue> lazyParams)
             {
                 try
                 {
@@ -451,7 +652,22 @@ public class Expression
             }
 
             @Override
-            public LazyValue lazyEval(Context c, Integer type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams)
+            public boolean pure() {
+                return originalFunction.pure();
+            }
+
+            @Override
+            public boolean transitive() {
+                return originalFunction.transitive();
+            }
+
+            @Override
+            public Context.Type staticType(Context.Type outerType) {
+                return originalFunction.staticType(outerType);
+            }
+
+            @Override
+            public LazyValue lazyEval(Context c, Context.Type type, Expression expr, Tokenizer.Token token, List<LazyValue> lazyParams)
             {
                 c.host.issueDeprecation(copy+"(...)");
                 return originalFunction.lazyEval(c, type, expr, token, lazyParams);
@@ -474,7 +690,7 @@ public class Expression
 
     public LazyValue getOrSetAnyVariable(Context c, String name)
     {
-        LazyValue var = null;
+        LazyValue var;
         if (!name.startsWith("global_"))
         {
             var = c.getVariable(name);
@@ -599,16 +815,16 @@ public class Expression
                 case OPEN_PAREN:
                     if (previousToken != null)
                     {
-                        if (previousToken.type == Tokenizer.Token.TokenType.LITERAL || previousToken.type == Tokenizer.Token.TokenType.CLOSE_PAREN
-                                || previousToken.type == Tokenizer.Token.TokenType.VARIABLE
-                                || previousToken.type == Tokenizer.Token.TokenType.HEX_LITERAL)
-                        {
+                        //if (previousToken.type == Tokenizer.Token.TokenType.LITERAL || previousToken.type == Tokenizer.Token.TokenType.CLOSE_PAREN
+                        //        || previousToken.type == Tokenizer.Token.TokenType.VARIABLE
+                        //        || previousToken.type == Tokenizer.Token.TokenType.HEX_LITERAL)
+                        //{
                             // Implicit multiplication, e.g. 23(a+b) or (a+b)(a-b)
-                            Tokenizer.Token multiplication = new Tokenizer.Token();
-                            multiplication.append("*");
-                            multiplication.type = Tokenizer.Token.TokenType.OPERATOR;
-                            stack.push(multiplication);
-                        }
+                        //    Tokenizer.Token multiplication = new Tokenizer.Token();
+                        //    multiplication.append("*");
+                        //    multiplication.type = Tokenizer.Token.TokenType.OPERATOR;
+                        //    stack.push(multiplication);
+                        //}
                         // if the ( is preceded by a valid function, then it
                         // denotes the start of a parameter list
                         if (previousToken.type == Tokenizer.Token.TokenType.FUNCTION)
@@ -676,18 +892,14 @@ public class Expression
 
     public Value eval(Context c)
     {
-        return eval(c, Context.NONE);
-    }
-    public Value eval(Context c, Integer expectedType)
-    {
         if (ast == null)
         {
             ast = getAST(c);
         }
-        return evalValue(() -> ast, c, expectedType);
+        return evalValue(() -> ast, c, Context.Type.NONE);
     }
 
-    public Value evalValue(Supplier<LazyValue> exprProvider, Context c, Integer expectedType)
+    public Value evalValue(Supplier<LazyValue> exprProvider, Context c, Context.Type expectedType)
     {
         try
         {
@@ -715,35 +927,67 @@ public class Expression
         }
     }
 
-    private LazyValue getAST(Context context)
+    public static class ExpressionNode
     {
-        Stack<LazyValue> stack = new Stack<>();
-        List<Tokenizer.Token> rpn = shuntingYard(context);
-        validate(context, rpn);
-        for (final Tokenizer.Token token : rpn)
+        public LazyValue op;
+        public List<ExpressionNode> args;
+        public Tokenizer.Token token;
+        public List<Tokenizer.Token> range;
+        /**
+         * The Value representation of the left parenthesis, used for parsing
+         * varying numbers of function parameters.
+         */
+        public static final ExpressionNode PARAMS_START = new ExpressionNode(null, null, Tokenizer.Token.NONE);
+        public ExpressionNode(LazyValue op, List<ExpressionNode> args, Tokenizer.Token token)
+        {
+            this.op = op;
+            this.args = args;
+            this.token = token;
+            range = new ArrayList<>();
+            range.add(token);
+        }
+        public static ExpressionNode ofConstant(Value val, Tokenizer.Token token)
+        {
+            return new ExpressionNode(new LazyValue.Constant(val), Collections.emptyList(), token);
+        }
+    }
+
+
+    private ExpressionNode RPNToParseTree(List<Tokenizer.Token> tokens, Context context)
+    {
+        Stack<ExpressionNode> nodeStack = new Stack<>();
+        for (final Tokenizer.Token token : tokens)
         {
             switch (token.type)
             {
                 case UNARY_OPERATOR:
                 {
-                    final LazyValue value = stack.pop();
-                    LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, value, null).evalValue(c, t);
-                    stack.push(result);
+                    final ExpressionNode node = nodeStack.pop();
+                    LazyValue result = (c, t) -> operators.get(token.surface).lazyEval(c, t, this, token, node.op, null).evalValue(c, t);
+                    nodeStack.push(new ExpressionNode(result, Collections.singletonList(node), token));
                     break;
                 }
                 case OPERATOR:
-                    final LazyValue v1 = stack.pop();
-                    final LazyValue v2 = stack.pop();
-                    LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2, v1).evalValue(c, t);
-                    stack.push(result);
+                    final ExpressionNode v1 = nodeStack.pop();
+                    final ExpressionNode v2 = nodeStack.pop();
+                    LazyValue result = (c,t) -> operators.get(token.surface).lazyEval(c, t,this, token, v2.op, v1.op).evalValue(c, t);
+                    nodeStack.push(new ExpressionNode(result, ImmutableList.of(v2, v1), token ));
                     break;
                 case VARIABLE:
-                    stack.push((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t));
+                    Value constant = getConstantFor(token.surface);
+                    if (constant != null)
+                    {
+                        token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                        nodeStack.push(new ExpressionNode(LazyValue.ofConstant(constant), Collections.emptyList(), token));
+                    }
+                    else {
+                        nodeStack.push(new ExpressionNode(((c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t)), Collections.emptyList(), token));
+                    }
                     break;
                 case FUNCTION:
                     String name = token.surface;
                     ILazyFunction f;
-                    ArrayList<LazyValue> p;
+                    ArrayList<ExpressionNode> p;
                     boolean isKnown = functions.containsKey(name); // globals will be evaluated lazily, not at compile time via .
                     if (isKnown)
                     {
@@ -757,47 +1001,301 @@ public class Expression
                     }
                     // pop parameters off the stack until we hit the start of
                     // this function's parameter list
-                    while (!stack.isEmpty() && stack.peek() != LazyValue.PARAMS_START)
+                    while (!nodeStack.isEmpty() && nodeStack.peek() != ExpressionNode.PARAMS_START)
                     {
-                        p.add(stack.pop());
+                        p.add(nodeStack.pop());
                     }
-                    if (!isKnown) p.add( (c, t) -> new StringValue(name));
+                    if (!isKnown)
+                    {
+                        p.add(ExpressionNode.ofConstant(new StringValue(name), token.morphedInto(Tokenizer.Token.TokenType.STRINGPARAM, token.surface)));
+                        token.morph(Tokenizer.Token.TokenType.FUNCTION, "call");
+                    }
                     Collections.reverse(p);
 
-                    if (stack.peek() == LazyValue.PARAMS_START)
+                    if (nodeStack.peek() == ExpressionNode.PARAMS_START)
                     {
-                        stack.pop();
-                    }
+                        nodeStack.pop();
+                    };
+                    List<LazyValue> params = p.stream().map(n -> n.op).collect(Collectors.toList());
 
-                    stack.push((c, t) -> f.lazyEval(c, t, this, token, p).evalValue(c, t));
+                    nodeStack.push(new ExpressionNode(
+                            (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t),
+                            p,token
+                    ));
                     break;
                 case OPEN_PAREN:
-                    stack.push(LazyValue.PARAMS_START);
+                    nodeStack.push(ExpressionNode.PARAMS_START);
                     break;
                 case LITERAL:
-                    stack.push((c, t) ->
+                    Value number;
+                    try
                     {
-                        try
-                        {
-                            return new NumericValue(token.surface);
-                        }
-                        catch (NumberFormatException exception)
-                        {
-                            throw new ExpressionException(c, this, token, "Not a number");
-                        }
-                    });
+                        number = new NumericValue(token.surface);
+                    }
+                    catch (NumberFormatException exception)
+                    {
+                        throw new ExpressionException(context, this, token, "Not a number");
+                    }
+                    token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                    nodeStack.push(ExpressionNode.ofConstant(number, token));
                     break;
                 case STRINGPARAM:
-                    stack.push((c, t) -> new StringValue(token.surface) ); // was originally null
+                    token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                    nodeStack.push(ExpressionNode.ofConstant(new StringValue(token.surface), token));
                     break;
                 case HEX_LITERAL:
-                    stack.push((c, t) -> new NumericValue(new BigInteger(token.surface.substring(2), 16).doubleValue()));
+                    Value hexNumber;
+                    try
+                    {
+                        hexNumber = new NumericValue(new BigInteger(token.surface.substring(2), 16).longValue());
+                    }
+                    catch (NumberFormatException exception)
+                    {
+                        throw new ExpressionException(context, this, token, "Not a number");
+                    }
+                    token.morph(Tokenizer.Token.TokenType.CONSTANT, token.surface);
+                    nodeStack.push(ExpressionNode.ofConstant(hexNumber, token));
                     break;
                 default:
                     throw new ExpressionException(context, this, token, "Unexpected token '" + token.surface + "'");
             }
         }
-        return stack.pop();
+        return nodeStack.pop();
+    }
+
+    private LazyValue getAST(Context context)
+    {
+        //Stack<LazyValue> stack = new Stack<>();
+        List<Tokenizer.Token> rpn = shuntingYard(context);
+        validate(context, rpn);
+        ExpressionNode root = RPNToParseTree(rpn, context);
+        if (!CarpetSettings.scriptsOptimization)
+            return root.op;
+
+        CarpetScriptServer.LOG.info("Input code size: " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
+
+        boolean changed = true;
+        while(changed) {
+            changed = false;
+            while (true) {
+                int tree_size = treeSize(root);
+                int tree_depth = treeDepth(root);
+                boolean optimized = compactTree(root, Context.Type.NONE, 0);
+                if (!optimized) break;
+                changed = true;
+                CarpetScriptServer.LOG.info("Compacted from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
+            }
+            while (true) {
+                int tree_size = treeSize(root);
+                int tree_depth = treeDepth(root);
+                boolean optimized = optimizeTree(context, root, Context.Type.NONE, 0);
+                if (!optimized) break;
+                changed = true;
+                CarpetScriptServer.LOG.info("Optimized from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
+            }
+        }
+        return extractOp(context, root, Context.Type.NONE);
+    }
+
+    private int treeSize(ExpressionNode node)
+    {
+        if (node.op instanceof LazyValue.ContextFreeLazyValue) return 1;
+        return node.args.stream().mapToInt(this::treeSize).sum()+1;
+    }
+    private int treeDepth(ExpressionNode node)
+    {
+        if (node.op instanceof LazyValue.ContextFreeLazyValue) return 1;
+        return node.args.stream().mapToInt(this::treeDepth).max().orElse(0)+1;
+    }
+
+
+    private boolean compactTree(ExpressionNode node, Context.Type expectedType, int indent) {
+        // ctx is just to report errors, not values evaluation
+        boolean optimized = false;
+        Tokenizer.Token.TokenType token = node.token.type;
+        if (!token.isFunctional()) return false;
+        // input special cases here, like function signature
+        if (node.op instanceof LazyValue.Constant) return false; // optimized already
+        // function or operator
+        String symbol = node.token.surface;
+        Fluff.EvalNode operation = ((token == Tokenizer.Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
+        Context.Type requestedType = operation.staticType(expectedType);
+        for (ExpressionNode arg : node.args) {
+            if (compactTree(arg, requestedType, indent+1)) optimized = true;
+        }
+
+        if (expectedType != Context.Type.MAPDEF && symbol.equals("->") && node.args.size() == 2) {
+            String rop = node.args.get(1).token.surface;
+            ExpressionNode returnNode = null;
+            if ((rop.equals(";") || rop.equals("then"))) {
+                List<ExpressionNode> thenArgs = node.args.get(1).args;
+                if (thenArgs.size() > 1 && thenArgs.get(thenArgs.size() - 1).token.surface.equals("return")) {
+                    returnNode = thenArgs.get(thenArgs.size() - 1);
+                }
+            } else if (rop.equals("return")) {
+                returnNode = node.args.get(1);
+            }
+            if (returnNode != null) // tail return
+            {
+                if (returnNode.args.size() > 0) {
+                    returnNode.op = returnNode.args.get(0).op;
+                    returnNode.token = returnNode.args.get(0).token;
+                    returnNode.range = returnNode.args.get(0).range;
+                    returnNode.args = returnNode.args.get(0).args;
+                    if (CarpetSettings.scriptsDebugging)
+                        CarpetScriptServer.LOG.info(" - Removed unnecessary tail return of " + returnNode.token.surface + " from function body at line " + (returnNode.token.lineno + 1) + ", node depth " + indent);
+
+                } else {
+                    returnNode.op = LazyValue.ofConstant(Value.NULL);
+                    returnNode.token.morph(Tokenizer.Token.TokenType.CONSTANT, "");
+                    returnNode.args = Collections.emptyList();
+                    if (CarpetSettings.scriptsDebugging)
+                        CarpetScriptServer.LOG.info(" - Removed unnecessary tail return from function body at line " + (returnNode.token.lineno + 1) + ", node depth " + indent);
+
+                }
+
+            }
+        }
+        for (Map.Entry<String, String> pair : functionalEquivalence.entrySet()) {
+            String operator = pair.getKey();
+            String function = pair.getValue();
+            if (symbol.equals(operator) || symbol.equals(function)) {
+                List<ExpressionNode> newargs = new ArrayList<>();
+                boolean contracted = false;
+                for (ExpressionNode arg : node.args) {
+                    String argsymbol = arg.token.surface; // child is unoptimized and also same class
+                    if ((argsymbol.equals(operator) || argsymbol.equals(function)) && (!(arg.op instanceof LazyValue.ContextFreeLazyValue))) {
+                        newargs.addAll(arg.args);
+                        contracted = true;
+                    } else {
+                        newargs.add(arg);
+                    }
+                }
+                if (contracted) {
+                    optimized = true;
+                    if (CarpetSettings.scriptsDebugging)
+                        CarpetScriptServer.LOG.info(" - " + symbol + "(" + node.args.size() + ") => " + function + "(" + newargs.size() + ") at line " + (node.token.lineno + 1) + ", node depth " + indent);
+                    node.token.morph(Tokenizer.Token.TokenType.FUNCTION, function);
+                    node.args = newargs;
+                }
+            }
+        }
+        return optimized;
+    }
+
+    private boolean optimizeTree(Context ctx, ExpressionNode node, Context.Type expectedType, int indent) {
+        // ctx is just to report errors, not values evaluation
+        boolean optimized = false;
+        Tokenizer.Token.TokenType token = node.token.type;
+        if (!token.isFunctional()) return false;
+        String symbol = node.token.surface;
+
+        // input special cases here, like function signature
+        if (node.op instanceof LazyValue.Constant) return false; // optimized already
+        // function or operator
+
+        Fluff.EvalNode operation = ((token == Tokenizer.Token.TokenType.FUNCTION) ? functions : operators).get(symbol);
+        Context.Type requestedType = operation.staticType(expectedType);
+        for (ExpressionNode arg : node.args) {
+            if (optimizeTree(ctx, arg, requestedType, indent+1)) optimized = true;
+        }
+
+        for (ExpressionNode arg : node.args) {
+            if (arg.token.type.isConstant()) continue;
+            if (arg.op instanceof LazyValue.ContextFreeLazyValue) continue;
+            return optimized;
+        }
+        if (!operation.pure())
+        {
+            if (symbol.equals("->") && expectedType == Context.Type.MAPDEF)
+            {
+
+            }
+            else {
+                return optimized;
+            }
+        }
+        List<LazyValue> args = new ArrayList<>(node.args.size());
+        for (ExpressionNode arg : node.args) {
+            try {
+                if (arg.op instanceof LazyValue.Constant) {
+                    Value val = ((LazyValue.Constant) arg.op).get();
+                    args.add((c, t) -> val);
+                }
+                else args.add((c, t) -> arg.op.evalValue(null, requestedType));
+            } catch (NullPointerException npe) {
+                throw new ExpressionException(ctx, this, node.token, "Attempted to evaluate context free expression");
+            }
+        }
+        // applying argument unpacking
+        args= AbstractLazyFunction.lazify(AbstractLazyFunction.unpackLazy(args, null, requestedType));
+        Value result;
+        if (operation instanceof ILazyFunction)
+        {
+            result = ((ILazyFunction) operation).lazyEval(null, expectedType, this, node.token, args).evalValue(null, expectedType);
+        }
+        else if (args.size() == 1)
+        {
+            result = ((ILazyOperator)operation).lazyEval(null, expectedType, this, node.token, args.get(0), null).evalValue(null, expectedType);
+        }
+        else // args == 2
+        {
+            result = ((ILazyOperator)operation).lazyEval(null, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
+        }
+        node.op = LazyValue.ofConstant(result);
+        //node.token.morph(Tokenizer.Token.TokenType.CONSTANT, node.token.surface);
+        if (CarpetSettings.scriptsDebugging)
+            CarpetScriptServer.LOG.info(" - "+symbol+"("+args.stream().map(a -> a.evalValue(null, requestedType).getString()).collect(Collectors.joining(", "))+") => "+result.getString()+" at line "+(node.token.lineno+1) +", node depth "+indent);
+        return true;
+    }
+
+    private LazyValue extractOp(Context ctx, ExpressionNode node, Context.Type expectedType)
+    {
+        if (node.op instanceof LazyValue.Constant)
+        {
+            // constants are immutable
+            if (node.token.type.isConstant())
+            {
+                Value value = ((LazyValue.Constant) node.op).get();
+                return (c, t) -> value;
+            }
+            return node.op;
+        }
+        if (node.op instanceof LazyValue.ContextFreeLazyValue)
+        {
+            Value ret = ((LazyValue.ContextFreeLazyValue) node.op).evalType(expectedType);
+            return (c, t) -> ret;
+        }
+        Tokenizer.Token token = node.token;
+        switch (token.type)
+        {
+            case UNARY_OPERATOR: {
+                ILazyOperator op = operators.get(token.surface);
+                Context.Type requestedType = op.staticType(expectedType);
+                LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
+                return (c, t) -> op.lazyEval(c, t, this, token, arg, null).evalValue(c, t);
+            }
+            case OPERATOR: {
+                ILazyOperator op = operators.get(token.surface);
+                Context.Type requestedType = op.staticType(expectedType);
+                LazyValue arg = extractOp(ctx, node.args.get(0), requestedType);
+                LazyValue arh = extractOp(ctx, node.args.get(1), requestedType);
+                return (c, t) -> op.lazyEval(c, t, this, token, arg, arh).evalValue(c, t);
+            }
+            case VARIABLE:
+                return (c, t) -> getOrSetAnyVariable(c, token.surface).evalValue(c, t);
+            case FUNCTION: {
+                ILazyFunction f = functions.get(token.surface);
+                Context.Type requestedType = f.staticType(expectedType);
+                List<LazyValue> params = node.args.stream().map(n -> extractOp(ctx, n, requestedType)).collect(Collectors.toList());
+                return (c, t) -> f.lazyEval(c, t, this, token, params).evalValue(c, t);
+            }
+            case CONSTANT:
+                return node.op;
+            default:
+                throw new ExpressionException(ctx, this, node.token, "Unexpected token '" + node.token.type +" "+node.token.surface + "'");
+
+        }
     }
 
     private void validate(Context c, List<Tokenizer.Token> rpn)
