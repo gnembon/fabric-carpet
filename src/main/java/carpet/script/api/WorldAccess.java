@@ -101,6 +101,8 @@ import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
+
+import org.apache.commons.lang3.tuple.Triple;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -782,6 +784,9 @@ public class WorldAccess {
             cc.s.getMinecraftServer().submitAndJoin( () ->
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
+
+                SaveBlockStateChanges(c, world, targetPos);
+
                 boolean success = world.setBlockState(targetPos, finalSourceBlockState, 2);
                 if (finalData != null)
                 {
@@ -812,7 +817,7 @@ public class WorldAccess {
             if (state.isAir()) return Value.FALSE;
             BlockPos where = locator.block.getPos();
             BlockEntity be = world.getBlockEntity(where);
-            long how = 0;
+            long fortuneLevel = 0;
             Item item = Items.DIAMOND_PICKAXE;
             boolean playerBreak = false;
             if (lv.size() > locator.offset)
@@ -820,7 +825,7 @@ public class WorldAccess {
                 Value val = lv.get(locator.offset);
                 if (val instanceof NumericValue)
                 {
-                    how = ((NumericValue) val).getLong();
+                    fortuneLevel = ((NumericValue) val).getLong();
                 }
                 else
                 {
@@ -845,6 +850,8 @@ public class WorldAccess {
                     tag = readTag.getCompoundTag();
                 }
             }
+
+            SaveBlockStateChanges(c, world, where);
 
             ItemStack tool = new ItemStack(item, 1);
             if (tag != null)
@@ -877,14 +884,14 @@ public class WorldAccess {
 
             if (dropLoot)
             {
-                if (how < 0 || (tag != null && EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, tool) > 0))
+                if (fortuneLevel < 0 || (tag != null && EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, tool) > 0))
                 {
                     Block.dropStack(world, where, new ItemStack(state.getBlock()));
                 }
                 else
                 {
-                    if (how > 0)
-                        tool.addEnchantment(Enchantments.FORTUNE, (int) how);
+                    if (fortuneLevel > 0)
+                        tool.addEnchantment(Enchantments.FORTUNE, (int) fortuneLevel);
                     if (DUMMY_ENTITY == null) DUMMY_ENTITY = new FallingBlockEntity(EntityType.FALLING_BLOCK, null);
                     Block.dropStacks(state, world, where, be, DUMMY_ENTITY, tool);
                 }
@@ -917,6 +924,9 @@ public class WorldAccess {
             BlockPos where = locator.block.getPos();
             BlockState state = locator.block.getBlockState();
             Block block = state.getBlock();
+
+            SaveBlockStateChanges(c, world, where);
+
             boolean success = false;
             if (!((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.interactionManager.isSurvivalLike()))
                 success = tryBreakBlock_copy_from_ServerPlayerInteractionManager(player, where);
@@ -1018,6 +1028,8 @@ public class WorldAccess {
             ItemStackArgument stackArg = NBTSerializableValue.parseItem(itemString);
             BlockPos where = new BlockPos(locator.vec);
             String facing = "up";
+            ServerWorld world = cc.s.getWorld();
+
             if (lv.size() > locator.offset)
                 facing = lv.get(locator.offset).getString();
             boolean sneakPlace = false;
@@ -1034,6 +1046,8 @@ public class WorldAccess {
                 throw new InternalExpressionException(e.getMessage());
             }
 
+            SaveBlockStateChanges(c, world, where);
+
             if (!(stackArg.getItem() instanceof BlockItem))
             {
                 ActionResult useResult = ctx.getStack().useOnBlock(ctx);
@@ -1049,11 +1063,11 @@ public class WorldAccess {
                 BlockState placementState = blockItem.getBlock().getPlacementState(ctx);
                 if (placementState != null)
                 {
-                    if (placementState.canPlaceAt(cc.s.getWorld(), where))
+                    if (placementState.canPlaceAt(world, where))
                     {
-                        cc.s.getWorld().setBlockState(where, placementState, 2);
+                        world.setBlockState(where, placementState, 2);
                         BlockSoundGroup blockSoundGroup = placementState.getSoundGroup();
-                        cc.s.getWorld().playSound(null, where, blockSoundGroup.getPlaceSound(), SoundCategory.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
+                        world.playSound(null, where, blockSoundGroup.getPlaceSound(), SoundCategory.BLOCKS, (blockSoundGroup.getVolume() + 1.0F) / 2.0F, blockSoundGroup.getPitch() * 0.8F);
                         return Value.TRUE;
                     }
                 }
@@ -1528,5 +1542,17 @@ public class WorldAccess {
             return new NumericValue(ticket.getExpiryTicks());
         });
 
+    }
+
+    /**
+     * Save the state of a block position so it can be undone later
+     * @param c
+     * @param world
+     * @param blockPos
+     */
+    private static void SaveBlockStateChanges(Context c, World world, BlockPos blockPos) {
+        if (c.host.trackingBlockChanges) {
+            c.host.blockChanges.add(Triple.of(blockPos, world.getBlockState(blockPos), world.getBlockEntity(blockPos)));
+        }
     }
 }
