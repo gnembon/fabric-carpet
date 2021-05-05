@@ -796,7 +796,7 @@ public class Auxiliary {
             return Value.TRUE;
         });
 
-        expression.addFunction("logger", lv ->
+        expression.addImpureFunction("logger", lv ->
         {
             Value res;
 

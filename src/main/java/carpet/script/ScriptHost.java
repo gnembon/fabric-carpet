@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.language.Arithmetic;
 import carpet.script.value.FunctionValue;
@@ -121,11 +122,6 @@ public abstract class ScriptHost
 
     void initializeModuleGlobals(ModuleData md)
     {
-        md.globalVariables.put("euler", (c, t) -> Arithmetic.euler);
-        md.globalVariables.put("pi", (c, t) -> Arithmetic.PI);
-        md.globalVariables.put("null", (c, t) -> Value.NULL);
-        md.globalVariables.put("true", (c, t) -> Value.TRUE);
-        md.globalVariables.put("false", (c, t) -> Value.FALSE);
     }
 
     public void importModule(Context c, String moduleName)
@@ -181,8 +177,8 @@ public abstract class ScriptHost
             throw new InternalExpressionException("Cannot import from module that is not imported");
         }
         return Stream.concat(
-                globaVariableNames(source, s -> s.startsWith("global_")),
-                globaFunctionNames(source, s -> true)
+                globalVariableNames(source, s -> s.startsWith("global_")),
+                globalFunctionNames(source, s -> true)
         ).distinct().sorted();
     }
 
@@ -205,7 +201,7 @@ public abstract class ScriptHost
     }
     private FunctionValue getFunction(Module module, String name)
     {
-        ModuleData local = moduleData.get(module);
+        ModuleData local = getModuleData(module);
         FunctionValue ret = local.globalFunctions.get(name); // most uses would be from local scope anyways
         if (ret != null) return ret;
         ModuleData target = local.functionImports.get(name);
@@ -239,7 +235,7 @@ public abstract class ScriptHost
     public LazyValue getGlobalVariable(String name) { return getGlobalVariable(main, name); }
     public LazyValue getGlobalVariable(Module module, String name)
     {
-        ModuleData local = moduleData.get(module);
+        ModuleData local = getModuleData(module);
         LazyValue ret = local.globalVariables.get(name); // most uses would be from local scope anyways
         if (ret != null) return ret;
         ModuleData target = local.globalsImports.get(name);
@@ -272,55 +268,62 @@ public abstract class ScriptHost
 
     public void delFunctionWithPrefix(Module module, String prefix)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalFunctions.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
         data.functionImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
     }
     public void delFunction(Module module, String funName)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalFunctions.remove(funName);
         data.functionImports.remove(funName);
     }
 
     public void delGlobalVariableWithPrefix(Module module, String prefix)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalVariables.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
         data.globalsImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
     }
 
     public void delGlobalVariable(Module module, String varName)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalFunctions.remove(varName);
         data.functionImports.remove(varName);
     }
 
+    private ModuleData getModuleData(Module module)
+    {
+        ModuleData data = moduleData.get(module);
+        if (data == null) throw new IntegrityException("Module structure changed for the app. Did you reload the app with tasks running?");
+        return data;
+    }
+
     public void addUserDefinedFunction(Context ctx, Module module, String name, FunctionValue fun)
     {
-        moduleData.get(module).globalFunctions.put(name, fun);
+        getModuleData(module).globalFunctions.put(name, fun);
     }
 
     public void setGlobalVariable(Module module, String name, LazyValue lv)
     {
-        moduleData.get(module).globalVariables.put(name, lv);
+        getModuleData(module).globalVariables.put(name, lv);
     }
 
-    public Stream<String> globaVariableNames(Module module, Predicate<String> predicate)
+    public Stream<String> globalVariableNames(Module module, Predicate<String> predicate)
     {
         return Stream.concat(Stream.concat(
-                moduleData.get(module).globalVariables.keySet().stream(),
-                moduleData.get(module).globalsImports.keySet().stream()
-        ), moduleData.get(module).futureImports.keySet().stream().filter(s -> s.startsWith("global_"))).filter(predicate);
+                getModuleData(module).globalVariables.keySet().stream(),
+                getModuleData(module).globalsImports.keySet().stream()
+        ), getModuleData(module).futureImports.keySet().stream().filter(s -> s.startsWith("global_"))).filter(predicate);
     }
 
-    public Stream<String> globaFunctionNames(Module module, Predicate<String> predicate)
+    public Stream<String> globalFunctionNames(Module module, Predicate<String> predicate)
     {
         return Stream.concat(Stream.concat(
-                moduleData.get(module).globalFunctions.keySet().stream(),
-                moduleData.get(module).functionImports.keySet().stream()
-        ),moduleData.get(module).futureImports.keySet().stream().filter(s -> !s.startsWith("global_"))).filter(predicate);
+                getModuleData(module).globalFunctions.keySet().stream(),
+                getModuleData(module).functionImports.keySet().stream()
+        ),getModuleData(module).futureImports.keySet().stream().filter(s -> !s.startsWith("global_"))).filter(predicate);
     }
 
     public ScriptHost retrieveForExecution(String /*Nullable*/ user)

@@ -498,7 +498,7 @@ public class CarpetScriptHost extends ScriptHost
 
         boolean hasTypeSupport = appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean();
 
-        for (String function : globaFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        for (String function : globalFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
             if (hasTypeSupport)
             {
@@ -1004,15 +1004,7 @@ public class CarpetScriptHost extends ScriptHost
                 return null;
             }
 
-            String shebang = message;
-            if (expr.module != null)
-            {
-                shebang += " in " + expr.module.getName() + "";
-            }
-            else
-            {
-                shebang += " in system chat";
-            }
+            String shebang = message+" in "+expr.getModuleName();
             if (token != null)
             {
                 String[] lines = expr.getCodeString().split("\n");
