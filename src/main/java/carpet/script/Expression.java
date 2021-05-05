@@ -66,7 +66,7 @@ public class Expression
 
     public String getModuleName()
     {
-        return module == null?null:module.getName();
+        return module == null?"system chat":module.getName();
     }
 
     public void asATextSource()
@@ -1072,7 +1072,7 @@ public class Expression
         if (!CarpetSettings.scriptsOptimization)
             return root.op;
 
-        CarpetScriptServer.LOG.info("Input code size: " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
+        CarpetScriptServer.LOG.info("Input code size for "+getModuleName()+": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
 
         boolean changed = true;
         while(changed) {
