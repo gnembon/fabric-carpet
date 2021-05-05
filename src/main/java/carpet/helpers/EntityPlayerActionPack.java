@@ -116,8 +116,8 @@ public class EntityPlayerActionPack
             case SOUTH: return look(0, 0);
             case EAST: return look(-90, 0);
             case WEST: return look(90, 0);
-            case UP: return look(player.method_36454(), -90);
-            case DOWN: return look(player.method_36454(), 90);
+            case UP: return look(player.getYaw(), -90);
+            case DOWN: return look(player.getYaw(), 90);
         }
         return this;
     }
@@ -128,8 +128,8 @@ public class EntityPlayerActionPack
 
     public EntityPlayerActionPack look(float yaw, float pitch)
     {
-        player.method_36456(yaw % 360); //setYaw
-        player.method_36457(MathHelper.clamp(pitch, -90, 90)); // setPitch
+        player.setYaw(yaw % 360); //setYaw
+        player.setPitch(MathHelper.clamp(pitch, -90, 90)); // setPitch
         // maybe player.setPositionAndAngles(player.x, player.y, player.z, yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
         return this;
     }
@@ -142,7 +142,7 @@ public class EntityPlayerActionPack
 
     public EntityPlayerActionPack turn(float yaw, float pitch)
     {
-        return look(player.method_36454() + yaw, player.method_36455() + pitch);
+        return look(player.getYaw() + yaw, player.getPitch() + pitch);
     }
 
     public EntityPlayerActionPack turn(Vec2f rotation)

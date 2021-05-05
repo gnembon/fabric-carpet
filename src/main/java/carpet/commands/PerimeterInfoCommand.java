@@ -52,7 +52,7 @@ public class PerimeterInfoCommand
         {
             nbttagcompound.putString("id", mobId);
             Entity baseEntity = EntityType.loadEntityWithPassengers(nbttagcompound, source.getWorld(), (entity_1x) -> {
-                entity_1x.refreshPositionAndAngles(new BlockPos(pos.getX(), -10, pos.getZ()), entity_1x.method_36454(), entity_1x.method_36455()); // yaw pitch
+                entity_1x.refreshPositionAndAngles(new BlockPos(pos.getX(), -10, pos.getZ()), entity_1x.getYaw(), entity_1x. getPitch());
                 return !source.getWorld().tryLoadEntity(entity_1x) ? null : entity_1x;
             });
             if (!(baseEntity instanceof  MobEntity))

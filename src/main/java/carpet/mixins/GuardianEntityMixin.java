@@ -27,7 +27,7 @@ public abstract class GuardianEntityMixin extends HostileEntity
         if (!this.world.isClient && !this.isRemoved() && CarpetSettings.renewableSponges && !((Object)this instanceof ElderGuardianEntity))
         {
             ElderGuardianEntity elderGuardian = new ElderGuardianEntity(EntityType.ELDER_GUARDIAN ,this.world);
-            elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.method_36454(), this.method_36455());
+            elderGuardian.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.getYaw(), this.getPitch());
             elderGuardian.initialize(serverWorld ,this.world.getLocalDifficulty(elderGuardian.getBlockPos()), SpawnReason.CONVERSION, (EntityData)null, (NbtCompound)null);
             elderGuardian.setAiDisabled(this.isAiDisabled());
             
