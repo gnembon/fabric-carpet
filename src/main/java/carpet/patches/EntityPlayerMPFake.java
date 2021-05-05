@@ -18,6 +18,7 @@ import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.UserCache;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
@@ -39,7 +40,16 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         if (gameprofile == null)
         {
             return null;
+        ServerPlayerInteractionManager interactionManagerIn = new ServerPlayerInteractionManager(worldIn);
+        UserCache.setUseRemote(false);
+        GameProfile gameprofile;
+        try {
+            gameprofile = server.getUserCache().findByName(username);
         }
+        finally {
+            UserCache.setUseRemote(server.isDedicated() && server.isOnlineMode());
+        }
+        if (gameprofile == null) return null;
         if (gameprofile.getProperties().containsKey("textures"))
         {
             gameprofile = SkullBlockEntity.loadProperties(gameprofile);
