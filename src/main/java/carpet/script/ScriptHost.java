@@ -4,20 +4,22 @@ import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.language.Arithmetic;
+import carpet.script.utils.SavedBlockChange;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +47,7 @@ public abstract class ScriptHost
 
     private final Set<String> deprecations = new HashSet<>();
 
-    public final List<Triple<BlockPos, BlockState, BlockEntity>> blockChanges = new ArrayList<>();
+    public final List<SavedBlockChange> blockChanges = Collections.synchronizedList(new ArrayList<>());
     public boolean trackingBlockChanges = false;
 
     public Random getRandom(long aLong)
@@ -127,6 +129,32 @@ public abstract class ScriptHost
         this.moduleData.put(code, moduleData);
         this.modules.put(code==null?null:code.getName(), code);
         mainThread = Thread.currentThread();
+    }
+
+    public void TrackChanges() {
+        trackingBlockChanges = true;
+    }
+
+    public void CommitChanges() {
+        blockChanges.clear();
+    }
+
+    public void UndoChanges() {
+        for (int i = blockChanges.size() - 1; i >= 0; i--) {
+            SavedBlockChange change = blockChanges.get(i);
+            BlockPos pos = change.pos;
+            World world = change.world;
+            BlockState state = change.state;
+            CompoundTag entityTag = change.entity;
+
+            world.setBlockState(pos, state);
+
+            if (entityTag != null) {
+                world.getBlockEntity(pos).fromTag(state, entityTag);
+            }
+        }
+
+        blockChanges.clear();
     }
 
     void initializeModuleGlobals(ModuleData md)
@@ -393,6 +421,9 @@ public abstract class ScriptHost
         inTermination = true;
         executorServices.values().forEach(ThreadPoolExecutor::shutdown);
         for (ScriptHost uh : userHosts.values()) uh.onClose();
+
+        UndoChanges();
+
         if (taskCount() > 0)
         {
             executorServices.values().forEach(e -> {

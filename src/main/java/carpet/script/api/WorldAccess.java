@@ -22,6 +22,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.utils.BiomeInfo;
+import carpet.script.utils.SavedBlockChange;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -716,6 +717,7 @@ public class WorldAccess {
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
             CompoundTag data = null;
+
             if (lv.size() > sourceLocator.offset)
             {
                 List<Value> args = new ArrayList<>();
@@ -778,14 +780,17 @@ public class WorldAccess {
 
             if (sourceBlockState == targetBlockState && data == null)
                 return Value.FALSE;
+
+                
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
             Boolean[] result = new Boolean[]{true};
+            
+            SaveBlockStateChanges(c, world, targetPos);
+
             cc.s.getMinecraftServer().submitAndJoin( () ->
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
-
-                SaveBlockStateChanges(c, world, targetPos);
 
                 boolean success = world.setBlockState(targetPos, finalSourceBlockState, 2);
                 if (finalData != null)
@@ -1542,6 +1547,34 @@ public class WorldAccess {
             return new NumericValue(ticket.getExpiryTicks());
         });
 
+        expression.addContextFunction("track_changes", 0, (c, t, lv) ->
+        {
+            if (c.host.trackingBlockChanges) {
+                return Value.TRUE;
+            }
+
+            c.host.TrackChanges();
+
+            return Value.FALSE;
+        });
+
+        expression.addContextFunction("commit_changes", 0, (c, t, lv) -> 
+        {
+            int doneChanges = c.host.blockChanges.size();
+
+            c.host.CommitChanges();
+
+            return new NumericValue(doneChanges);
+        });
+
+        expression.addContextFunction("undo_changes", 0, (c, t, lv) -> 
+        {
+            int undoneChanges = c.host.blockChanges.size();
+
+            c.host.UndoChanges();
+
+            return new NumericValue(undoneChanges);
+        });
     }
 
     /**
@@ -1552,7 +1585,9 @@ public class WorldAccess {
      */
     private static void SaveBlockStateChanges(Context c, World world, BlockPos blockPos) {
         if (c.host.trackingBlockChanges) {
-            c.host.blockChanges.add(Triple.of(blockPos, world.getBlockState(blockPos), world.getBlockEntity(blockPos)));
+            BlockEntity entity = world.getBlockEntity(blockPos);
+            CompoundTag tag = entity == null ? null : entity.toTag(new CompoundTag());
+            c.host.blockChanges.add(new SavedBlockChange(world, blockPos, world.getBlockState(blockPos), tag));
         }
     }
 }
