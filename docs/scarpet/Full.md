@@ -333,6 +333,12 @@ as `2+(2*2)`, not `(2+2)*2`, otherwise they are applied from left to right, i.e.
 as `(2+4)-3`, which in case of numbers doesn't matter, but since `scarpet` allows for mixing all value types 
 the associativity would matter, and may lead to unintended effects:
 
+Operators can be unary - with one argument prefixed by the operator (like `-`, `!`, `...`), "practically binary" (that
+clearly have left and right operands, like assignment `=` operator), and "technically binary" (all binary operators have left and 
+right hand, but can be frequently chained together, like `1+2+3`). All "technically binary" operators (where chaining makes sense)
+have their functional counterparts, e.g. `1+2+3` is equivalent to `sum(1, 2, 3)`. Functional and operatoral forms are directly 
+equivalent - they actually will result in the same code as scarpet will optimize long operator chains into their optimized functional forms. 
+
 Important operator is function definition `->` operator. It will be covered 
 in [User Defined Functions and Program Control Flow](docs/scarpet/language/FunctionsAndControlFlow.md)
 
@@ -445,7 +451,7 @@ $);
 /script run global_get_enchantment(player(), 'sharpness')
 </pre>
 
-### `Basic Arithmetic Operators + - * /`
+### Basic Arithmetic Operators `+`, `sum(...)`, `-`, `difference(...)`, `*`, `product(...)`, `/`, `quotient(...)`
 
 Allows to add the results of two expressions. If the operands resolve to numbers, the result is arithmetic operation. 
 In case of strings, adding or subtracting from a string results in string concatenation and removal of substrings 
@@ -460,6 +466,9 @@ to lists treated as vectors.
 Addition with maps (`{}` or `m()`) results in a new map with keys from both maps added, if both operands are maps,
 adding elements of the right argument to the keys, of left map, or just adding the right value as a new key
 in the output map. 
+
+Functional forms of `-` and `/` have less intuitive multi-nary interpretation, but they might be useful in some situations.
+`x-y-z` resolves to `difference(x, y, z)`.
 
 Examples:
 
@@ -476,7 +485,7 @@ b = [100,63,100]; b+[10,0,10]  => [110,63,110]
 {'a' -> 1} + {'b' -> 2} => {'a' -> 1, 'b' -> 2}
 </pre>
 
-### `Just Operators % ^`
+### Just Operators `%`, `^`
 
 The modulo and exponent (power) operators work only if both operands are numbers
 
@@ -487,11 +496,11 @@ The modulo and exponent (power) operators work only if both operands are numbers
 -3 ^ pi => // Error
 </pre>
 
-### `Comparison Operators == != < > <= >=`
+### Comparison Operators `==`, `equal()`, `!=`, `unique()`, `<`, `increasing()`, `>`, `decreasing()`, `<=`, `nondecreasing()`, `>=`, `nonincreasing()`
 
-Allows to compare the results of two expressions. For numbers it is considers arithmetic order of numbers, for 
+Allows to compare the results of two expressions. For numbers, it considers arithmetic order of numbers, for 
 strings - lexicographical, nulls are always 'less' than everything else, and lists check their elements - 
-if the sizes are different, the size matters, otherwise, pairwise comparisons for each elements are performed. 
+if the sizes are different, the size matters, otherwise, pairwise comparisons for each element are performed. 
 The same order rules than with all these operators are used with the default sortographical order as used by `sort` 
 function. All of these are true:
 
@@ -507,7 +516,12 @@ null < -1000
 3 == 3.0
 </pre>
 
-### `Logical Operators && ||`
+Functional variants of these operators allow to assert certain paradigms on multiple arguments at once. This means that 
+due to formal equivalence `x < y < z` is equivalent to `x < y & y < z` because of direct mapping to `increasing(x, y, z)`. This translates through
+the parentheses, so `((x < y) < z)` is the same as `increasing(x, y, z)`. To achieve the same effect as you would see in other
+ languages (not python), you would need to cast the first pair to boolean value, i.e. `bool(x < y) < z`. 
+
+### Logical Operators `&&`, `and(...)`, `||`, `or(...)`
 
 These operator compute respective boolean operation on the operands. What it important is that if calculating of the 
 second operand is not necessary, it won't be evaluated, which means one can use them as conditional statements. In 
@@ -1304,7 +1318,7 @@ reduce([1,2,3,4],_a*_,1)  => 24
 
 ## Writing programs with more than 1 line
 
-### `Operator ;`
+### Operator `;`, `then(...)`
 
 To effectively write programs that have more than one line, a programmer needs way to specify a sequence of commands 
 that execute one after another. In `scarpet` this can be achieved with `;`. Its an operator, and by separating 
@@ -1324,7 +1338,7 @@ in `scarpet`, and not barely an instruction delimiter, terminating the code with
 be valid. Having said that, since many programming languages don't care about the number of op terminators 
 programmers use, carpet preprocessor will remove all unnecessary semicolons from scripts when compiled.
 
-In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)`.
+In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)` or `then(expr, expr, expr, expr)`.
 
 Result of the evaluated expression is the same as the result of the second expression, but first expression 
 is also evaluated for side-effects
@@ -1434,15 +1448,16 @@ foo(... x) -> ...  # all arguments for foo are included in the list
     
 </pre>
 
-### `import(module_name, symbols ...)`
+### `import(module_name, ? symbols ...)`
 
 Imports symbols from other apps and libraries into the current one: global variables or functions, allowing to use 
 them in the current app. This includes other symbols imported by these modules. Scarpet supports circular dependencies, 
 but if symbols are used directly in the module body rather than functions, it may not be able to retrieve them. 
+
 Returns full list of available symbols that could be imported from this module, which can be used to debug import 
 issues, and list contents of libraries.
 
-### `call(function, args.....)`
+### `call(function, ? args ...)`
 
 calls a user defined function with specified arguments. It is equivalent to calling `function(args...)` directly 
 except you can use it with function value, or name instead. This means you can pass functions to other user defined 
@@ -1888,8 +1903,20 @@ reduce(range(10), put(_a, _, _*_); _a, {})
 Returns full lists of keys, values and key-value pairs (2-element lists) for all the entries in the map
 # Minecraft specific API and `scarpet` language add-ons and commands
 
-Here is the gist of the Minecraft related functions. Otherwise the CarpetScript could live without Minecraft.
+Here is the gist of the Minecraft related functions. Otherwise the scarpet could live without Minecraft.
 
+## Global scarpet options
+
+These options affect directly how scarpet functions and can be triggered via `/carpet` command.
+ - `commandScript`: disables `/script` command making it impossible to control apps in game. Apps will still load and run 
+ when loaded with the world (i.e. present in the world/scripts folder)
+ - `scriptsAutoload`: when set to `false` will prevent apps loaded with the world to load automatically. You can still
+ load them on demand via `/script load` command
+ - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggeres
+ the code that calls the command). Defaults to `ops`, could be customized to any level via a numerical value (0, 1, 2, 3 or 4)
+ - `scriptsOptimization`: when disabled, disables default app compile time optimizations. If your app behaves differently with
+ and without optimizations, please file a bug report on the bug tracker and disable code optimizations
+ - `scriptsDebugging`: Puts detailed information about apps loading, performance and runtime in system log.
 
 ## App structure
 

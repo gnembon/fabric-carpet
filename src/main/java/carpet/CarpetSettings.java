@@ -42,7 +42,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.34+v210428";
+    public static final String carpetVersion = "1.4.35+v210505";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
