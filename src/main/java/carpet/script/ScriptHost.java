@@ -47,7 +47,7 @@ public abstract class ScriptHost
 
     private final Set<String> deprecations = new HashSet<>();
 
-    public final List<SavedBlockChange> blockChanges = Collections.synchronizedList(new ArrayList<>());
+    public final List<SavedBlockChange> blockChanges = new ArrayList<>();
     public boolean trackingBlockChanges = false;
 
     public Random getRandom(long aLong)
@@ -131,15 +131,36 @@ public abstract class ScriptHost
         mainThread = Thread.currentThread();
     }
 
+    public void SaveBlockStateChange(World world, BlockPos blockPos) {
+        if (trackingBlockChanges) {
+            BlockEntity entity = world.getBlockEntity(blockPos);
+            CompoundTag tag = entity == null ? null : entity.toTag(new CompoundTag());
+
+            synchronized (blockChanges) {
+                blockChanges.add(new SavedBlockChange(world, blockPos, world.getBlockState(blockPos), tag));
+            }
+        }
+    }
+
     public void TrackChanges() {
+        if (isPerUser()) {
+            throw new InternalExpressionException("Tracking changes is only valid in global scoped apps");
+        }
+
         trackingBlockChanges = true;
     }
 
     public void CommitChanges() {
-        blockChanges.clear();
+        trackingBlockChanges = false;
+
+        synchronized (blockChanges) {
+            blockChanges.clear();
+        }
     }
 
     public void UndoChanges() {
+        trackingBlockChanges = false;
+
         for (int i = blockChanges.size() - 1; i >= 0; i--) {
             SavedBlockChange change = blockChanges.get(i);
             BlockPos pos = change.pos;
@@ -154,7 +175,9 @@ public abstract class ScriptHost
             }
         }
 
-        blockChanges.clear();
+        synchronized (blockChanges) {
+            blockChanges.clear();
+        }
     }
 
     void initializeModuleGlobals(ModuleData md)

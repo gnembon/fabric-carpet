@@ -15,14 +15,12 @@ import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.Fluff;
-import carpet.script.LazyValue;
 import carpet.script.argument.BlockArgument;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.utils.BiomeInfo;
-import carpet.script.utils.SavedBlockChange;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -103,7 +101,6 @@ import net.minecraft.world.poi.PointOfInterest;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestType;
 
-import org.apache.commons.lang3.tuple.Triple;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -786,7 +783,7 @@ public class WorldAccess {
             BlockPos targetPos = targetLocator.block.getPos();
             Boolean[] result = new Boolean[]{true};
             
-            SaveBlockStateChanges(c, world, targetPos);
+            c.host.SaveBlockStateChange(world, targetPos);
 
             cc.s.getMinecraftServer().submitAndJoin( () ->
             {
@@ -856,7 +853,7 @@ public class WorldAccess {
                 }
             }
 
-            SaveBlockStateChanges(c, world, where);
+            c.host.SaveBlockStateChange(world, where);
 
             ItemStack tool = new ItemStack(item, 1);
             if (tag != null)
@@ -930,7 +927,7 @@ public class WorldAccess {
             BlockState state = locator.block.getBlockState();
             Block block = state.getBlock();
 
-            SaveBlockStateChanges(c, world, where);
+            c.host.SaveBlockStateChange(world, where);
 
             boolean success = false;
             if (!((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.interactionManager.isSurvivalLike()))
@@ -1051,7 +1048,7 @@ public class WorldAccess {
                 throw new InternalExpressionException(e.getMessage());
             }
 
-            SaveBlockStateChanges(c, world, where);
+            c.host.SaveBlockStateChange(world, where);
 
             if (!(stackArg.getItem() instanceof BlockItem))
             {
@@ -1575,19 +1572,5 @@ public class WorldAccess {
 
             return new NumericValue(undoneChanges);
         });
-    }
-
-    /**
-     * Save the state of a block position so it can be undone later
-     * @param c
-     * @param world
-     * @param blockPos
-     */
-    private static void SaveBlockStateChanges(Context c, World world, BlockPos blockPos) {
-        if (c.host.trackingBlockChanges) {
-            BlockEntity entity = world.getBlockEntity(blockPos);
-            CompoundTag tag = entity == null ? null : entity.toTag(new CompoundTag());
-            c.host.blockChanges.add(new SavedBlockChange(world, blockPos, world.getBlockState(blockPos), tag));
-        }
     }
 }

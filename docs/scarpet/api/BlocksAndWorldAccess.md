@@ -246,6 +246,57 @@ NB: It can thunder without there being a thunderstorm, there has to be both rain
 
 With two args, sets the weather to `type` for `ticks` ticks.
 
+### `track_changes()`
+Keep track of any changes to the block states of blocks made by your scarpet script so they can be undone later if neccesary using `undo_changes()`. All changes tracked are undone when the script unloads. Does nothing if changes are already being tracked.
+
+Returns a boolean for whether changes were being tracked before
+
+Only works in globally scoped apps
+
+```
+__config() -> {
+  'scope' -> 'global',
+  'commands' -> {
+    'block_one <block>' -> _(block) -> ( global_block1 = block; make_block(); ),
+    'block_two <block>' -> _(block) -> ( global_block2 = block; make_block(); ),
+    'ratio <ratio>' -> _(ratio) -> ( global_ratio = ratio; make_block(); ),
+    'commit' -> _() -> commit_changes()
+  },
+  'arguments' -> {
+    'block' -> { 'type' -> 'block' },
+    'ratio' -> { 'type' -> 'float', 'min' -> 0, 'max' -> 1 }
+  }
+};
+
+global_block1 = 'stone_bricks';
+global_block2 = 'cracked_stone_bricks';
+global_ratio = 0.5;
+
+make_block() -> (
+  undo_changes();
+  track_changes();
+  for (rect(l(0, 64, 0), l(5, 5, 5)),
+    if (rand(1) > global_ratio,
+      set(_, global_block1);
+    ,
+      set(_, global_block2);
+    );
+  );
+);
+
+make_block();
+```
+
+### `undo_changes()`
+Undo all the changes tracked by `track_changes()`. Stops tracking changes to block states
+
+Returns the amount of changes undone
+
+### `commit_changes()`
+Commit all changes tracked by `track_changes()` so they can't be undone. Stops tracking changes to block states
+
+Returns the amount of changes committed
+
 ## Block and World querying
 
 ### `pos(block), pos(entity)`
