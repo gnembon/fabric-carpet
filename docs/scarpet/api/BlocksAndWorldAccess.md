@@ -247,7 +247,7 @@ NB: It can thunder without there being a thunderstorm, there has to be both rain
 With two args, sets the weather to `type` for `ticks` ticks.
 
 ### `track_changes()`
-Keep track of any changes to the block states of blocks made by your scarpet script so they can be undone later if neccesary using `undo_changes()`. All changes tracked are undone when the script unloads, or if the server closes (unless you close a server with the x button, or it crashes). Does nothing if changes are already being tracked.
+Keep track of any changes to the block states of blocks made by your scarpet script so they can be undone later if neccesary using `undo_changes()`. All changes tracked are undone when the script unloads, or if the server closes (unless you close a server with the x button, or it crashes). Does nothing if changes are already being tracked. Only changes made using `set()` or `place_item()` are tracked.
 
 Returns a boolean for whether changes were being tracked before
 

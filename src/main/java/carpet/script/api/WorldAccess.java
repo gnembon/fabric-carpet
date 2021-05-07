@@ -853,8 +853,6 @@ public class WorldAccess {
                 }
             }
 
-            c.host.SaveBlockStateChange(world, where);
-
             ItemStack tool = new ItemStack(item, 1);
             if (tag != null)
                 tool.setTag(tag);
@@ -926,8 +924,6 @@ public class WorldAccess {
             BlockPos where = locator.block.getPos();
             BlockState state = locator.block.getBlockState();
             Block block = state.getBlock();
-
-            c.host.SaveBlockStateChange(world, where);
 
             boolean success = false;
             if (!((block == Blocks.BEDROCK || block == Blocks.BARRIER) && player.interactionManager.isSurvivalLike()))
