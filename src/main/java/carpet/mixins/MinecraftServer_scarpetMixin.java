@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.TickSpeed;
+import carpet.script.ScriptHost;
 import net.minecraft.resource.ServerResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
@@ -85,5 +86,8 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
         ENDER_TICK.onTick();
     }
 
-
+    @Inject(method = "stop", at = @At("HEAD"))
+    public void stop(boolean v, CallbackInfo info) {
+        ScriptHost.beforeClose();
+    }
 }

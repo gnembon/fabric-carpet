@@ -1,5 +1,6 @@
 package carpet.script;
 
+import carpet.CarpetServer;
 import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.IntegrityException;
@@ -430,6 +431,7 @@ public abstract class ScriptHost
     {
         return executorServices.values().stream().map(ThreadPoolExecutor::getActiveCount).reduce(0, Integer::sum);
     }
+
     public int taskCount(Value pool)
     {
         if (executorServices.containsKey(pool))
@@ -439,13 +441,26 @@ public abstract class ScriptHost
         return 0;
     }
 
+    public static void beforeClose()
+    {
+        for (ScriptHost host : CarpetServer.scriptServer.modules.values()) {
+            host.UndoChanges();
+            host.beforeCloseUsers();
+        }
+    }
+
+    private void beforeCloseUsers() {
+        for (ScriptHost host : userHosts.values()) {
+            host.UndoChanges();
+            host.beforeCloseUsers();
+        }
+    }
+
     public void onClose()
     {
         inTermination = true;
         executorServices.values().forEach(ThreadPoolExecutor::shutdown);
-        for (ScriptHost uh : userHosts.values()) uh.onClose();
-
-        UndoChanges();
+        for (ScriptHost host : userHosts.values()) host.onClose();
 
         if (taskCount() > 0)
         {
