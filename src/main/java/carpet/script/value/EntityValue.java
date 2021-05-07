@@ -1034,7 +1034,20 @@ public class EntityValue extends Value
             updatePosition(e, e.getX(), e.getY(), e.getZ(), e.yaw, MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
         });
 
-        //"look"
+        put("look", (e, v) -> {
+            if(!(v instanceof ListValue) || v.length() != 3) throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");;
+            float x = (float) ((ListValue) v).items.get(0).readDoubleNumber();
+            float y = (float) ((ListValue) v).items.get(1).readDoubleNumber();
+            float z = (float) ((ListValue) v).items.get(2).readDoubleNumber();
+            float l = MathHelper.sqrt(x*x + y*y + z*z);
+            x /= l;
+            y /= l;
+            z /= l;
+            float pitch = (float) -Math.asin(y) / 0.017453292F;
+            float yaw = (float) MathHelper.atan2(-x,z) / 0.017453292F;
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), yaw, pitch);
+        });
+
         //"turn"
         //"nod"
 
