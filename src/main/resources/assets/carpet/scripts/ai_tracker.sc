@@ -316,6 +316,28 @@ global_functions = {
          null
       ]
    },
+
+   'drowning' -> {
+      'zombie' -> [
+         _(arg) -> _(entity) -> (
+            w = query(entity, 'width')/2;
+            e = query(entity, 'eye_height');
+            from = [-w, e-0.111,-w];
+            to = [w, e-0.111, w];
+            data = query(entity, 'nbt');
+            iwt = data:'InWaterTime';
+            messages = if(
+            0 < iwt < 600,
+                [['drown','drowning in:', 600-iwt]],
+            dt = data:'DrownedConversionTime'; dt > 0,
+                [['drown','drowned in:', dt]],
+            []);
+            [[ ['box', global_duration, 'from', from, 'to', to, 'follow', entity, 'color', 0x00bbbbff, 'fill', 0x00bbbb22]],[],messages],
+         )
+      ,
+        null
+      ]
+   }
 };
 
 global_hostile_to_villager = {
@@ -345,7 +367,7 @@ __config() ->{
         'transparency <alpha>'->_(alpha)->global_opacity = alpha
     },
     'arguments'->{
-        'display'->{'type'->'term','options'->['item_pickup','velocity','portal_cooldown','health','pathfinding','xpstack']},
+        'display'->{'type'->'term','options'->['item_pickup','velocity','portal_cooldown','health','pathfinding','xpstack','drowning']},
         'aspect'->{'type'->'term','options'->['iron_golem_spawning','buddy_detection','hostile_detection','breeding']},
         'ticks'->{'type'->'int','min'->0,'max'->100},
         'alpha'->{'type'->'int','min'->0,'max'->255},
