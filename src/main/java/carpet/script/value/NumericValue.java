@@ -201,11 +201,12 @@ public class NumericValue extends Value
 
     public NumericValue(double value)
     {
-        this(value, (long) value);
+        this.value = value == 0.0D ? 0.0D : value;//to stop it from accidentally being -0.0D
+        this.longValue = (long) value;
     }
     private NumericValue(double value, Long longValue)
     {
-        this.value = value == 0.0D ? 0.0D : value;//to stop it from accidentally being -0.0D,
+        this.value = value == 0.0D ? 0.0D : value;//to stop it from accidentally being -0.0D
         this.longValue = longValue;
     }
 
@@ -220,7 +221,7 @@ public class NumericValue extends Value
             }
             catch (ArithmeticException ignored) {}
         }
-        this.value = decimal.doubleValue() == 0.0D ? 0.0D : decimal.doubleValue();//to stop it from accidentally being -0.0D,
+        this.value = decimal.doubleValue() == 0.0D ? 0.0D : decimal.doubleValue();//to stop it from accidentally being -0.0D
     }
     public NumericValue(long value)
     {
