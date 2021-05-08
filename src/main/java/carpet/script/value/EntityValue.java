@@ -1041,11 +1041,12 @@ public class EntityValue extends Value
             float y = NumericValue.asNumber(vec.get(1)).getFloat();
             float z = NumericValue.asNumber(vec.get(2)).getFloat();
             float l = MathHelper.sqrt(x*x + y*y + z*z);
+            if(l==0) return;
             x /= l;
             y /= l;
             z /= l;
             float pitch = (float) -Math.asin(y) / 0.017453292F;
-            float yaw = (float) MathHelper.atan2(-x,z) / 0.017453292F;
+            float yaw = (float) (x==0 && z==0 ? e.yaw : MathHelper.atan2(-x,z) / 0.017453292F);
             updatePosition(e, e.getX(), e.getY(), e.getZ(), yaw, pitch);
         });
 
