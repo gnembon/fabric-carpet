@@ -476,6 +476,8 @@ public abstract class ScriptHost
         executorServices.values().forEach(ThreadPoolExecutor::shutdown);
         for (ScriptHost host : userHosts.values()) host.onClose();
 
+        UndoChanges();
+
         if (taskCount() > 0)
         {
             executorServices.values().forEach(e -> {
