@@ -48,7 +48,7 @@ public abstract class ScriptHost
 
     private final Set<String> deprecations = new HashSet<>();
 
-    public final List<SavedBlockChange> blockChanges = new ArrayList<>();
+    public List<SavedBlockChange> blockChanges = new ArrayList<>();
     public boolean trackingBlockChanges = false;
 
     public Random getRandom(long aLong)
@@ -136,18 +136,26 @@ public abstract class ScriptHost
         if (trackingBlockChanges) {
             BlockEntity entity = world.getBlockEntity(blockPos);
             CompoundTag tag = entity == null ? null : entity.toTag(new CompoundTag());
+            SavedBlockChange change = new SavedBlockChange(world, blockPos, world.getBlockState(blockPos), tag);
 
             synchronized (blockChanges) {
-                blockChanges.add(new SavedBlockChange(world, blockPos, world.getBlockState(blockPos), tag));
+                blockChanges.add(change);
+            }
+
+            // Copy changes made in the global state to user hosts
+            for (ScriptHost host : userHosts.values()) {
+                host.SaveBlockStateChange(change);
             }
         }
     }
 
-    public void TrackChanges() {
-        if (isPerUser()) {
-            throw new InternalExpressionException("Tracking changes is only valid in global scoped apps");
+    private void SaveBlockStateChange(SavedBlockChange change) {
+        synchronized (blockChanges) {
+            blockChanges.add(change);
         }
+    }
 
+    public void TrackChanges() {
         trackingBlockChanges = true;
     }
 
@@ -444,15 +452,21 @@ public abstract class ScriptHost
     public static void beforeClose()
     {
         for (ScriptHost host : CarpetServer.scriptServer.modules.values()) {
-            host.UndoChanges();
             host.beforeCloseUsers();
+
+            if (host.userHosts.size() > 0) continue;
+
+            host.UndoChanges();
         }
     }
 
     private void beforeCloseUsers() {
         for (ScriptHost host : userHosts.values()) {
-            host.UndoChanges();
             host.beforeCloseUsers();
+
+            if (host.userHosts.size() > 0) continue;
+
+            host.UndoChanges();
         }
     }
 

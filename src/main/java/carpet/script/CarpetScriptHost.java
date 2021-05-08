@@ -12,6 +12,7 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.utils.SavedBlockChange;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.MapValue;
@@ -79,7 +80,7 @@ public class CarpetScriptHost extends ScriptHost
     Function<ServerCommandSource, Boolean> commandValidator;
     boolean isRuleApp;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp, List<SavedBlockChange> blockChanges)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -98,11 +99,12 @@ public class CarpetScriptHost extends ScriptHost
         appArgTypes = argTypes;
         this.commandValidator = commandValidator;
         this.isRuleApp = isRuleApp;
+        this.blockChanges = blockChanges;
     }
 
     public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
     {
-        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
+        CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp, new ArrayList<>());
         // parse code and convert to expression
         if (module != null)
         {
@@ -243,7 +245,7 @@ public class CarpetScriptHost extends ScriptHost
     @Override
     protected ScriptHost duplicate()
     {
-        return new CarpetScriptHost(scriptServer, main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp);
+        return new CarpetScriptHost(scriptServer, main, false, this, appConfig, appArgTypes, commandValidator, isRuleApp, new ArrayList<>(blockChanges));
     }
 
     @Override

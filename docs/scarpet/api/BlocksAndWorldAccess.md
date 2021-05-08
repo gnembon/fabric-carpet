@@ -251,11 +251,8 @@ Keep track of any changes to the block states of blocks made by your scarpet scr
 
 Returns a boolean for whether changes were being tracked before
 
-Only works in globally scoped apps
-
 ```
 __config() -> {
-  'scope' -> 'global',
   'commands' -> {
     'block_one <block>' -> _(block) -> ( global_block1 = block; make_block(); ),
     'block_two <block>' -> _(block) -> ( global_block2 = block; make_block(); ),
