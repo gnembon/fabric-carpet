@@ -133,12 +133,8 @@ public final class AnnotationParser
     }
 
     /**
-     * <p>
-     * Adds all parsed functions to the given {@link Expression}.
-     * </p>
-     * <p>
-     * This is handled automatically by Carpet
-     * </p>
+     * <p>Adds all parsed functions to the given {@link Expression}.</p>
+     * <p>This is handled automatically by Carpet</p>
      * 
      * @param expr The expression to add every function to
      */
@@ -163,7 +159,7 @@ public final class AnnotationParser
         private final int maxParams;
         private final MethodHandle handle;
         private final int scarpetParamCount;
-        private final Context.Type contextType; // Boxed since the TriFunction isn't specialized to unboxed
+        private final Context.Type contextType;
 
         private ParsedFunction(final Method method, final Object instance)
         {
