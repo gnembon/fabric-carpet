@@ -157,7 +157,7 @@ public interface Locator {
 			}
 
 			@Override
-			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT) {
 				BlockArgument locator = null; // BlockArgument.findIn((CarpetContext)context, valueIterator (requires changing to Value), 0, acceptString, optional, anyString);
 				//return (R) (returnBlockValue ? locator.block : locator);
 				throw new NotImplementedException("Locator.Block still requires adapting BlockArgument to accept iterators (which is actually simple)");
@@ -185,7 +185,7 @@ public interface Locator {
 			}
 
 			@Override
-			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT) {
 				Vector3Argument locator = null;
 				// TODO Make the locator
 				//return (R) (returnVec3d ? locator.vec : locator);
@@ -209,7 +209,7 @@ public interface Locator {
 			}
 			
 			@Override
-			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+			public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT) {
 				Module module = context.host.main;
 				FunctionArgument locator = null;
 				// TODO Make the locator
@@ -238,7 +238,7 @@ public interface Locator {
 				return 1;
 			}
 			@Override
-			public abstract R checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT);
+			public abstract R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT);
 		}
 		
 	}

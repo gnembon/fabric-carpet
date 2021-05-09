@@ -79,9 +79,9 @@ public @interface ScarpetFunction {
      * that returns the Context Type the method was called with, while this defines what Context Type
      * will be used to evaluate the arguments.</p>
      * 
-     * <p>Defaults to {@link Context#NONE}, like any regular ContextFunctions</p>
+     * <p>Defaults to {@link Context.Type#NONE}, like any regular ContextFunctions</p>
      * 
      * @see Context
      */
-    int contextType() default Context.NONE;
+    Context.Type contextType() default Context.Type.NONE;
 }

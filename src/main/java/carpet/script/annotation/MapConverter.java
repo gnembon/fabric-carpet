@@ -114,7 +114,7 @@ class MapConverter<K, V> implements ValueConverter<Map<K, V>> {
 		}
 		
 		@Override
-		public Map<K, V> checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+		public Map<K, V> checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT) {
 			if (!valueIterator.hasNext())
 				return null;
 			Value val = valueIterator.next();

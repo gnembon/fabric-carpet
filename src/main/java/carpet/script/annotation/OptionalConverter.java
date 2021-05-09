@@ -7,6 +7,7 @@ import java.util.ListIterator;
 import java.util.Optional;
 
 import carpet.script.Context;
+import carpet.script.Context.Type;
 import carpet.script.value.Value;
 
 /**
@@ -43,7 +44,7 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	/**
 	 * {@inheritDoc}
 	 * @implNote Unlike most other converters, {@link OptionalConverter} will not call this method from 
-	 * 			 {@link #checkAndConvert(Iterator, Context, Integer)} and is only used as a fallback in types that don't support it.
+	 * 			 {@link #checkAndConvert(Iterator, Context, Type)} and is only used as a fallback in types that don't support it.
 	 */
 	@Override
 	public Optional<R> convert(Value value) {
@@ -56,7 +57,7 @@ final class OptionalConverter<R> implements ValueConverter<Optional<R>> {
 	}
 	
 	@Override
-	public Optional<R> checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
+	public Optional<R> checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT) {
 		if (!valueIterator.hasNext() || valueIterator.next().isNull())
 			return Optional.empty();
 		((ListIterator<Value>) valueIterator).previous();

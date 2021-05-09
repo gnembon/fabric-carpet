@@ -134,7 +134,7 @@ public final class AnnotationParser {
 			expr.addLazyFunction(function.name, function.scarpetParamCount, function);
 	}
 	
-	private static class ParsedFunction implements TriFunction<Context, Integer, List<LazyValue>, LazyValue> {
+	private static class ParsedFunction implements TriFunction<Context, Context.Type, List<LazyValue>, LazyValue> {
 		private final String name;
 		private final boolean isMethodVarArgs;
 		private final int methodParamCount;
@@ -148,7 +148,7 @@ public final class AnnotationParser {
 		private final int maxParams;
 		private final MethodHandle handle;
 		private final int scarpetParamCount;
-		private final Integer contextType; // Boxed since the TriFunction isn't specialized to unboxed
+		private final Context.Type contextType; // Boxed since the TriFunction isn't specialized to unboxed
 		
 		private ParsedFunction(final Method method, final Object instance) {
 			this.name = method.getName();
@@ -206,7 +206,7 @@ public final class AnnotationParser {
 		}
 		
 		@Override
-		public LazyValue apply(Context context, Integer t, List<LazyValue> lazyValues) {
+		public LazyValue apply(Context context, Context.Type t, List<LazyValue> lazyValues) {
 			List<Value> lv = AbstractLazyFunction.unpackLazy(lazyValues, context, contextType);
 			if (isEffectivelyVarArgs) {
 				if (lv.size() < minParams)
@@ -228,7 +228,7 @@ public final class AnnotationParser {
 		}
 
 		// Hot code: Must be optimized
-		private Object[] getMethodParams(final List<Value> lv, final Context context, Integer theLazyT) {
+		private Object[] getMethodParams(final List<Value> lv, final Context context, Context.Type theLazyT) {
 			Object[] params = new Object[methodParamCount];
 			ListIterator<Value> lvIterator = lv.listIterator();
 			
