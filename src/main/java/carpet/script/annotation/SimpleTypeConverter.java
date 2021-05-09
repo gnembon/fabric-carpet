@@ -23,6 +23,8 @@ import net.minecraft.world.World;
  * 
  * <p>This class uses a {@link ValueCaster} in order to check and cast the {@link Value} to its required type, and then converts it
  * using the given function.</p>
+ * 
+ * <p>{@link SimpleTypeConverter}s are reused whenever asked for one, since they don't have any complexity.</p>
  *
  * @see #registerType(Class, Class, Function)
  * 

@@ -31,7 +31,7 @@ import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Class that holds annotations for Scarpet parameters.
+ * <p>Class that holds annotations for Scarpet parameters.</p>
  * @see Param.Strict
  * @see Param.AllowSingleton
  * @see Param.TheLazyT
@@ -111,11 +111,11 @@ public interface Param {
 	}
 	
 	/**
-	 * <p>Defines that a parameter of type {@link String}, {@link Text}, {@link ServerPlayerEntity} or {@link Boolean} <b>must</b> be
-	 * of its corresponding {@link Value} in order to be accepted (respectively {@link StringValue}, {@link FormattedTextValue},
+	 * <p>Defines that a parameter of type {@link String}, {@link Text}, {@link ServerPlayerEntity}, {@link Boolean} or other registered strict type
+	 * <b>must</b> be of its corresponding {@link Value} in order to be accepted (respectively {@link StringValue}, {@link FormattedTextValue},
 	 * {@link EntityValue} or {@link BooleanValue}).</p>
 	 * 
-	 * <p>If this annotation is not specified, Carpet will accept any other {@link Value} and call their respective
+	 * <p>If this annotation is not specified, Carpet will accept any other {@link Value} and call respectively
 	 * {@link Value#getString()}, {@code new LiteralText(Value#getString())}, {@link EntityValue#getPlayerByValue(MinecraftServer, Value)}
 	 * or {@link Value#getBoolean()}.</p>
 	 * 
@@ -181,7 +181,7 @@ public interface Param {
 			@Override public String getTypeName() {return null;}
 			@Override
 			public Context convert(Value value) {
-				throw new UnsupportedOperationException("Called convert() with a Value in Context Provider converter, where only evalAndConvert is supported");
+				throw new UnsupportedOperationException("Called convert() with Value in Context Provider converter, where only checkAndConvert is supported");
 			}
 			@Override
 			public Context checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
@@ -201,7 +201,7 @@ public interface Param {
 			@Override public String getTypeName() {return null;}
 			@Override
 			public Integer convert(Value value) {
-				throw new UnsupportedOperationException("Called convert() with a Value in TheLazyT Provider, where only evalAndConvert is supported");
+				throw new UnsupportedOperationException("Called convert() with a Value in TheLazyT Provider, where only checkAndConvert is supported");
 			}
 			@Override
 			public Integer checkAndConvert(Iterator<Value> valueIterator, Context context, Integer theLazyT) {
@@ -271,7 +271,7 @@ public interface Param {
 		 * <p>Allows extensions to register <b>COMPLEX</b> {@link ValueConverter} factories in order to be used with the {@link Param.Custom} annotation.</p>
 		 * <p><b>If you only need to register a converter from a {@link Value} to a type, use 
 		 * {@link SimpleTypeConverter#registerType(Class, Class, java.util.function.Function, String)} instead. This is intended to be used when
-		 * you need more granular control over the conversion, such as custom extra parameters via annotations, converters using lazy values, multiple values, 
+		 * you need more granular control over the conversion, such as custom extra parameters via annotations, converters using multiple values, 
 		 * or even a variable number of values.</b></p>
 		 * <p>The annotation parser will loop through all registered custom converter factories when searching for the appropriate {@link ValueConverter} for
 		 * a parameter annotated with the {@link Param.Custom} annotation.</p>
@@ -299,7 +299,7 @@ public interface Param {
 				if ((result = (ValueConverter<R>) factory.apply(annoType, type)) != null)
 					return result;
 			}
-			throw new IllegalArgumentException("No custom converter found for Param.Custom annotated param with type "+annoType.getType().getTypeName());
+			throw new IllegalArgumentException("No custom converter found for Param.Custom annotated param with type " + annoType.getType().getTypeName());
 		}
 	}
 }

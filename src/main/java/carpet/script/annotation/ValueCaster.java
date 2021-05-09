@@ -17,7 +17,17 @@ import carpet.script.value.StringValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
 
-public final class ValueCaster<R> implements ValueConverter<R> {
+/**
+ * <p>Simple {@link ValueConverter} implementation that casts a {@link Value} into one of its subclasses,
+ * either for use directly in parameters or converters, or as an already working middle step.</p>
+ * 
+ * <p>{@link ValueCaster}s are reused whenever asked for one, since they don't have any complexity.</p>
+ * 
+ * {@link #register(Class, String)}
+ * 
+ * @param <R> The {@link Value} subclass this {@link ValueCaster} casts to
+ */
+public final class ValueCaster<R> implements ValueConverter<R> { // R always extends Value, not explicitly for type checking
 	private static final Map<Class<? extends Value>, ValueCaster<? extends Value>> byResult = new HashMap<>();
 	static {
 		register(Value.class, "value");
@@ -49,14 +59,14 @@ public final class ValueCaster<R> implements ValueConverter<R> {
 	}
 	
 	/**
-	 * Returns the registered {@link ValueCaster} for the specified outputType.
+	 * <p>Returns the registered {@link ValueCaster} for the specified outputType.</p>
 	 * @param <R> The type of the {@link ValueCaster} you are looking for
 	 * @param outputType The class of the {@link Value} the returned {@link ValueCaster} casts to
 	 * @return The {@link ValueCaster} for the specified outputType
 	 */
 	@SuppressWarnings("unchecked") // Casters are stored with their exact class, for sure since the map is private (&& class has same generic as caster)
 	public static <R> ValueCaster<R> get(Class<R> outputType) {
-		return (ValueCaster<R>)byResult.get(outputType);
+		return (ValueCaster<R>) byResult.get(outputType);
 	}
 	
 	@Override
@@ -67,12 +77,12 @@ public final class ValueCaster<R> implements ValueConverter<R> {
 	}
 	
 	/**
-	 * Registers a new {@link Value} to be able to use it in {@link SimpleTypeConverter}
+	 * <p>Registers a new {@link Value} to be able to use it in {@link SimpleTypeConverter}</p>
 	 * @param <R> The {@link Value} subclass
 	 * @param valueClass The class of T
 	 * @param typeName A {@link String} representing the name of this type. It will be used in error messages
-	 *                 when there is no higher type required, with the form 
-	 *                 <code>(function name) requires a (typeName) to be passed as (argName, if available)</code>
+	 *                 when there is no higher type required<!--, with the form //Outdated concept
+	 *                 <code>(function name) requires a (typeName) to be passed as (argName, if available)</code>-->
 	 */
 	public static <R extends Value> void register(Class<R> valueClass, String typeName) {
 		ValueCaster<R> caster = new ValueCaster<R>(valueClass, typeName);
