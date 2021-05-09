@@ -46,7 +46,7 @@ public interface Param
 {
 
     /**
-     * <p>Indicates that this {@link Context.Type} is The Lazy <em>t</em>, whatever that actually is.</p>
+     * <p>Indicates that this {@link Context.Type} argument is The Lazy <em>t</em>, whatever that actually is.</p>
      * 
      * <p>This has no parameters, since The Lazy <em>t</em> is The Lazy <em>t</em>, without further discussion</p>
      *
@@ -158,7 +158,7 @@ public interface Param
     public static final class Params
     {
         /**
-         * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #checkAndConvert(Iterator, Context, Integer)}, and
+         * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #checkAndConvert(Iterator, Context, Context.Type)}, and
          * throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.</p>
          * 
          * <p>Public in order to allow custom {@link ValueConverter} to check whether values should be evaluated while testing conditions.</p>
@@ -174,7 +174,7 @@ public interface Param
             }
 
             @Override
-            public LazyValue checkAndConvert(Iterator<Value> lazyValueIterator, Context c, Integer theLazyT)
+            public LazyValue checkAndConvert(Iterator<Value> lazyValueIterator, Context c, Context.Type theLazyT)
             {
                 return lazyValueIterator.hasNext() ? lazyValueIterator.next() : null;
             }
@@ -188,7 +188,7 @@ public interface Param
 
         /**
          * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
-         * {@link #checkAndConvert(Iterator, Context, Type)}, and throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
+         * {@link #checkAndConvert(Iterator, Context, Context.Type)}, and throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
         static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>()
@@ -216,7 +216,7 @@ public interface Param
         
         /**
          * <p>A {@link ValueConverter} that outputs {@link TheLazyT} which the function has been called when running
-         * {@link #checkAndConvert(Iterator, Context, Type)}, or throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
+         * {@link #checkAndConvert(Iterator, Context, Context.Type)}, or throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
         static final ValueConverter<Context.Type> LAZY_T_PROVIDER = new ValueConverter<Context.Type>()

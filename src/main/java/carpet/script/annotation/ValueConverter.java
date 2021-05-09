@@ -12,7 +12,6 @@ import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.Nullable;
 
 import carpet.script.Context;
-import carpet.script.Context.Type;
 import carpet.script.annotation.Param.Params;
 import carpet.script.value.Value;
 
@@ -53,22 +52,22 @@ public interface ValueConverter<R>
      * @param value The {@link Value} to convert
      * @return The converted value, or {@code null} if the conversion failed in the process
      * @apiNote <p>While most implementations of this method should and will return the type from this method, implementations that <b>require</b>
-     *          parameters from {@link #checkAndConvert(Iterator, Context, Type)} or that require multiple parameters may decide to throw
-     *          {@link UnsupportedOperationException} in this method and override {@link #checkAndConvert(Iterator, Context, Type)} instead. Those
+     *          parameters from {@link #checkAndConvert(Iterator, Context, Context.Type)} or that require multiple parameters may decide to throw
+     *          {@link UnsupportedOperationException} in this method and override {@link #checkAndConvert(Iterator, Context, Context.Type)} instead. Those
      *          implementations, however, should not be available for map or list types, since those can only operate with {@link Value}.</p>
      *          <p>Currently, the only implementations requiring that are {@link Params#CONTEXT_PROVIDER} and {@link Params#LAZY_T_PROVIDER}</p>
-     *          <p>Implementations can also provide different implementations for this and {@link #checkAndConvert(Iterator, Context, Type)}, in case
+     *          <p>Implementations can also provide different implementations for this and {@link #checkAndConvert(Iterator, Context, Context.Type)}, in case
      *          they can support it in some situations that can't be used else, such as inside of lists or maps, although they should try to provide
-     *          in {@link #checkAndConvert(Iterator, Context, Type)} at least the same conversion as the one from this method.</p>
+     *          in {@link #checkAndConvert(Iterator, Context, Context.Type)} at least the same conversion as the one from this method.</p>
      *          <p>Even with the above reasons, {@link ValueConverter} users should try to implement {@link #convert(Value)} whenever possible instead of
-     *          {@link #checkAndConvert(Iterator, Context, Type)}, since it allows its usage in generics of lists and maps.</p>
+     *          {@link #checkAndConvert(Iterator, Context, Context.Type)}, since it allows its usage in generics of lists and maps.</p>
      */
     @Nullable
     public R convert(Value value);
 
     /**
      * <p>Returns whether this {@link ValueConverter} consumes a variable number of elements from the {@link Iterator} passed to it via
-     * {@link #checkAndConvert(Iterator, Context, Type)}.</p>
+     * {@link #checkAndConvert(Iterator, Context, Context.Type)}.</p>
      * 
      * @implNote The default implementation returns {@code false}
      * @see #valueConsumption()
@@ -80,7 +79,7 @@ public interface ValueConverter<R>
 
     /**
      * <p>Declares the number of {@link Value}s this converter consumes from the {@link Iterator} passed to it in
-     * {@link #checkAndConvert(Iterator, Context, Type)}.</p>
+     * {@link #checkAndConvert(Iterator, Context, Context.Type)}.</p>
      * 
      * <p>If this {@link ValueConverter} can accept a variable number of arguments (therefore the result of calling {@link #consumesVariableArgs()}
      * <b>must</b> return {@code true}), it will return the minimum number of arguments it will consume.</p>
@@ -173,7 +172,7 @@ public interface ValueConverter<R>
      * @implNote This method's default implementation runs the {@link #convert(Value)} function in the next {@link Value} ignoring {@link Context} and
      *           {@code theLazyT}.
      */
-    default public R checkAndConvert(Iterator<Value> valueIterator, Context context, Type theLazyT)
+    default public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
     {
         if (!valueIterator.hasNext())
             return null;
