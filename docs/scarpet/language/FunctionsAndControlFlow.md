@@ -47,7 +47,7 @@ and with `player` scope, each player hosts its own state for each app, so functi
 
 
 <pre>
-/script run a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1, 2, 3, 1, 1]
+/script run a() -> global_list+=1; global_list = [1,2,3]; a(); a(); global_list  // => [1, 2, 3, 1, 1]
 /script run a(); a(); global_list  // => [1, 2, 3, 1, 1, 1, 1]
 </pre>
 
@@ -76,7 +76,7 @@ a unique name, which you can pass somewhere else to get this function `call`ed. 
 by their value and `call` method.
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
+a(lst) -> lst+=1; list = [1,2,3]; a(list); a(list); list  // => [1,2,3]
 </pre>
 
 In case the inner function wants to operate and modify larger objects, lists from the outer scope, but not global, 
@@ -102,14 +102,14 @@ which variables you want to use, and borrow
 This mechanism can be used to use static mutable objects without the need of using `global_...` variables
 
 <pre>
-list = l(1,2,3); a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
+list = [1,2,3]; a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
 </pre>
 
 The return value of a function is the value of the last expression. This as the same effect as using outer or 
 global lists, but is more expensive
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); list=a(list); list=a(list); list  // => [1,2,3,1,1]
+a(lst) -> lst+=1; list = [1,2,3]; list=a(list); list=a(list); list  // => [1,2,3,1,1]
 </pre>
 
 Ability to combine more statements into one expression, with functions, passing parameters, and global and outer 
@@ -202,11 +202,11 @@ programmers with their own lambda arguments
 
 <pre>
 my_map(list, function) -> map(list, call(function, _));
-my_map(l(1,2,3), _(x) -> x*x);    // => [1,4,9]
-profile_expr(my_map(l(1,2,3), _(x) -> x*x));   // => ~32000
-sq(x) -> x*x; profile_expr(my_map(l(1,2,3), 'sq'));   // => ~36000
-sq = (_(x) -> x*x); profile_expr(my_map(l(1,2,3), sq));   // => ~36000
-profile_expr(map(l(1,2,3), _*_));   // => ~80000
+my_map([1,2,3], _(x) -> x*x);    // => [1,4,9]
+profile_expr(my_map([1,2,3], _(x) -> x*x));   // => ~32000
+sq(x) -> x*x; profile_expr(my_map([1,2,3], 'sq'));   // => ~36000
+sq = (_(x) -> x*x); profile_expr(my_map([1,2,3], sq));   // => ~36000
+profile_expr(map([1,2,3], _*_));   // => ~80000
 </pre>
 
 ## Control flow

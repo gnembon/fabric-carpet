@@ -2,7 +2,7 @@
 
 ## Specifying blocks
 
-### `block(x, y, z)`, `block(l(x,y,z))`, `block(state)`
+### `block(x, y, z)`, `block([x,y,z])`, `block(state)`
 
 Returns either a block from specified location, or block with a specific state (as used by `/setblock` command), 
 so allowing for block properties, block entity data etc. Blocks otherwise can be referenced everywhere by its simple 
@@ -56,7 +56,7 @@ Throws `unknown_block` if provided block to set is not valid
 
 <pre>
 set(0,5,0,'bedrock')  => bedrock
-set(l(0,5,0), 'bedrock')  => bedrock
+set([0,5,0], 'bedrock')  => bedrock
 set(block(0,5,0), 'bedrock')  => bedrock
 scan(0,5,0,0,0,0,set(_,'bedrock'))  => 1
 set(pos(player()), 'bedrock')  => bedrock
@@ -91,7 +91,7 @@ generator. The following code causes a cascading effect as blocks placed on chun
 loaded to full, thus generated:
 
 <pre>
-__config() -> m(l('scope', 'global'));
+__config() -> m(['scope', 'global']);
 __on_chunk_generated(x, z) -> (
   scan(x,0,z,0,0,0,15,15,15,
     if (perlin(_x/16, _y/8, _z/16) > _y/16,
@@ -104,7 +104,7 @@ __on_chunk_generated(x, z) -> (
 The following addition resolves this issue, by not allowing block updates past chunk borders:
 
 <pre>
-__config() -> m(l('scope', 'global'));
+__config() -> m(['scope', 'global']);
 __on_chunk_generated(x, z) -> (
   without_updates(
     scan(x,0,z,0,0,0,15,15,15,
@@ -202,7 +202,7 @@ mine(x,y,z) ->
   slot = p~'selected_slot';
   item_tuple = inventory_get(p, slot);
   if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
-  l(item, count, tag) = item_tuple;
+  [item, count, tag] = item_tuple;
   tag_back = destroy(x,y,z, item, tag);
   if (tag_back == false, // failed to break the item
     return(tag_back)
@@ -254,8 +254,8 @@ Returns a triple of coordinates of a specified block or entity. Technically enti
 and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos` allows to pass all positional objects.
 
 <pre>
-pos(block(0,5,0)) => l(0,5,0)
-pos(player()) => l(12.3, 45.6, 32.05)
+pos(block(0,5,0)) => [0,5,0]
+pos(player()) => [12.3, 45.6, 32.05]
 pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
@@ -265,8 +265,8 @@ Returns a coords triple that is offset in a specified `direction` by `amount` of
 1 block. To offset into opposite facing, use negative numbers for the `amount`.
 
 <pre>
-pos_offset(block(0,5,0), 'up', 2)  => l(0,7,0)
-pos_offset(l(0,5,0), 'up', -2 ) => l(0,3,0)
+pos_offset(block(0,5,0), 'up', 2)  => [0,7,0]
+pos_offset([0,5,0], 'up', -2 ) => [0,3,0]
 </pre>
 
 ### `(Deprecated) block_properties(pos)`
@@ -551,7 +551,7 @@ Returns spawn potential at a location (1.16+ only)
 
 Sends full chunk data to clients. Useful when lots stuff happened and you want to refresh it on the clients.
 
-### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
+### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk([pos, ...])`
 Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous
 blocks and entities, and replacing it with a new generation. For all currently loaded chunks, they will be brought
 to their current generation status, and updated to the player. All chunks that are not in the loaded area, will only

@@ -246,8 +246,8 @@ flips boolean condition of the expression. Equivalent of `bool(expr)==false`
 !false  => true
 !null  => true
 !5  => false
-!l() => true
-!l(null) => false
+![] => true
+![null] => false
 </pre>
 
 ### `Unpacking Operator ...`
