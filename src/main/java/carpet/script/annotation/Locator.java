@@ -123,7 +123,7 @@ public interface Locator
      * 
      * <p>Not part of the public API, just that interfaces must have all members public</p>
      */
-    static class Locators
+    static final class Locators
     {
         private Locators() {}
 

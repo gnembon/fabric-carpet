@@ -40,6 +40,7 @@ public final class OutputConverter<T>
     {
         register(LazyValue.class, Function.identity()); // Primitives are handled. Things are boxed in the process anyway, therefore
         register(Boolean.class, v -> (v ? LazyValue.TRUE : LazyValue.FALSE)); // would recommend boxed outputs, so you can use null
+        register(Void.TYPE, v -> LazyValue.NULL);
         registerToValue(Integer.class, NumericValue::of);
         registerToValue(Double.class, NumericValue::of);
         registerToValue(Float.class, NumericValue::of);
