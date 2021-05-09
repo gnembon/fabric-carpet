@@ -20,65 +20,71 @@ import carpet.script.value.Value;
  *
  * @param <T> The type of the element that will be inside the list
  */
-final class ListConverter<T> implements ValueConverter<List<T>> {
-	private final ValueConverter<T> itemConverter;
-	private final boolean allowSingletonCreation;
-	
-	@Override
-	public String getTypeName() {
-		return (allowSingletonCreation ? itemConverter.getTypeName() + " or ": "") + "list of " + itemConverter.getTypeName() + "s";
-	}
+final class ListConverter<T> implements ValueConverter<List<T>>
+{
+    private final ValueConverter<T> itemConverter;
+    private final boolean allowSingletonCreation;
 
-	@Override
-	public List<T> convert(Value value) {
-		return value instanceof ListValue 
-				? convertListValue((ListValue) value)
-				: allowSingletonCreation ? convertSingleton(value) : null;
-	}
-	
-	private List<T> convertListValue(ListValue values) {
-		List<T> list = new ArrayList<>(values.getItems().size());
-		for (Value value : values) {
-			T converted = itemConverter.convert(value);
-			if (converted == null)
-				return null;
-			list.add(converted);
-		}
-		return list;
-	}
-	
-	private List<T> convertSingleton(Value val) {
-		T converted = itemConverter.convert(val);
-		if (converted == null)
-			return null;
-		return Collections.singletonList(converted);
+    @Override
+    public String getTypeName()
+    {
+        return (allowSingletonCreation ? itemConverter.getTypeName() + " or " : "") + "list of " + itemConverter.getTypeName() + "s";
+    }
 
-	}
-	
-	private ListConverter(AnnotatedType itemType, boolean allowSingletonCreation) {
-		itemConverter = ValueConverter.fromAnnotatedType(itemType);
-		this.allowSingletonCreation = allowSingletonCreation;
-	}
-	
-	/**
-	 * <p>Returns a new {@link ListConverter} to convert to the given {@link AnnotatedType}.</p>
-	 * 
-	 * <p>The returned {@link ValueConverter} will convert the objects inside the list to the
-	 * generics specified in the {@link AnnotatedType}, and the {@link ValueConverter} will
-	 * be set to accept non-list (but correct) items and make a singleton out of them
-	 * if the {@link Param.AllowSingleton} annotation has been specified.</p>
-	 * 
-	 * @apiNote This method expects the {@link AnnotatedType} to already be of {@link List} type, and, while it will
-	 *          technically accept a non-{@link List} {@link AnnotatedType}, it will fail with an {@link ArrayIndexOutOfBoundsException}
-	 *          if it doesn't has at least one generic parameter. 
-	 * @param annotatedType The type to get generics information from
-	 * @return A new {@link ListConverter} for the data specified in the {@link AnnotatedType}
-	 */
-	static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType) {
-		AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
-		AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];
-		boolean allowSingletonCreation = annotatedType.isAnnotationPresent(Param.AllowSingleton.class);
-		return new ListConverter<>(itemType, allowSingletonCreation);
-	}
+    @Override
+    public List<T> convert(Value value)
+    {
+        return value instanceof ListValue ? convertListValue((ListValue) value) : allowSingletonCreation ? convertSingleton(value) : null;
+    }
+
+    private List<T> convertListValue(ListValue values)
+    {
+        List<T> list = new ArrayList<>(values.getItems().size());
+        for (Value value : values)
+        {
+            T converted = itemConverter.convert(value);
+            if (converted == null)
+                return null;
+            list.add(converted);
+        }
+        return list;
+    }
+
+    private List<T> convertSingleton(Value val)
+    {
+        T converted = itemConverter.convert(val);
+        if (converted == null)
+            return null;
+        return Collections.singletonList(converted);
+
+    }
+
+    private ListConverter(AnnotatedType itemType, boolean allowSingletonCreation)
+    {
+        itemConverter = ValueConverter.fromAnnotatedType(itemType);
+        this.allowSingletonCreation = allowSingletonCreation;
+    }
+
+    /**
+     * <p>Returns a new {@link ListConverter} to convert to the given {@link AnnotatedType}.</p>
+     * 
+     * <p>The returned {@link ValueConverter} will convert the objects inside the list to the
+     * generics specified in the {@link AnnotatedType}, and the {@link ValueConverter} will
+     * be set to accept non-list (but correct) items and make a singleton out of them
+     * if the {@link Param.AllowSingleton} annotation has been specified.</p>
+     * 
+     * @apiNote This method expects the {@link AnnotatedType} to already be of {@link List} type, and, while it will
+     *          technically accept a non-{@link List} {@link AnnotatedType}, it will fail with an {@link ArrayIndexOutOfBoundsException}
+     *          if it doesn't has at least one generic parameter. 
+     * @param annotatedType The type to get generics information from
+     * @return A new {@link ListConverter} for the data specified in the {@link AnnotatedType}
+     */
+    static ListConverter<?> fromAnnotatedType(AnnotatedType annotatedType)
+    {
+        AnnotatedParameterizedType paramType = (AnnotatedParameterizedType) annotatedType;
+        AnnotatedType itemType = paramType.getAnnotatedActualTypeArguments()[0];
+        boolean allowSingletonCreation = annotatedType.isAnnotationPresent(Param.AllowSingleton.class);
+        return new ListConverter<>(itemType, allowSingletonCreation);
+    }
 
 }
