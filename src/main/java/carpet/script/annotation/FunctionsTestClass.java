@@ -1,11 +1,8 @@
 package carpet.script.annotation;
 
 import carpet.logging.HUDController;
-import carpet.script.LazyValue;
 import carpet.script.annotation.Param.AllowSingleton;
 import carpet.script.exception.InternalExpressionException;
-import carpet.script.value.StringValue;
-import carpet.script.value.Value;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
@@ -19,29 +16,6 @@ import java.util.Optional;
 import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
 public class FunctionsTestClass {
-	@ScarpetFunction
-	public String make_noise(String string, String string2) {
-		return string + " " + string2;
-	}
-	
-	@ScarpetFunction(maxParams = 8)
-	public LazyValue multiparams(String... values) {
-		String str = "";
-		for (String val : values)
-			str += val;
-		Value retval = StringValue.of(str);
-		return (c, t) -> retval;
-	}
-	
-	@ScarpetFunction(maxParams = 6)
-	public LazyValue semi_multiparams(Value fixed, Value... values) {
-		String str = fixed.getString();
-		for (Value val : values)
-			str += val.getString();
-		Value retval = StringValue.of(str);
-		return (c, t) -> retval;
-	}
-	
 	@ScarpetFunction(maxParams = 6)
 	public Integer display_title2(@AllowSingleton List<ServerPlayerEntity> targets, String actionString, Optional<Text> content, Integer... times) {
 	    TitleS2CPacket.Action action;
