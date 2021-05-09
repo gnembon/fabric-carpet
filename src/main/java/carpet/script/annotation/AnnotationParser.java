@@ -170,18 +170,19 @@ public final class AnnotationParser
             this.name = method.getName();
             this.isMethodVarArgs = method.isVarArgs();
             this.methodParamCount = method.getParameterCount();
+            Parameter[] methodParameters = method.getParameters();
 
             this.valueConverters = new ObjectArrayList<>();
             for (int i = 0; i < this.methodParamCount; i++)
             {
-                Parameter param = method.getParameters()[i];
+                Parameter param = methodParameters[i];
                 if (!isMethodVarArgs || i != this.methodParamCount - 1) // Varargs converter is separate
                     this.valueConverters.add(ValueConverter.fromAnnotatedType(param.getAnnotatedType()));
             }
-            Class<?> originalVarArgsType = method.getParameters()[methodParamCount - 1].getType().getComponentType();
+            Class<?> originalVarArgsType = isMethodVarArgs ? methodParameters[methodParamCount - 1].getType().getComponentType() : null;
             this.varArgsType = ClassUtils.primitiveToWrapper(originalVarArgsType); // Primitive array cannot be cast to Obj[]
-            this.primitiveVarArgs = isMethodVarArgs && originalVarArgsType.isPrimitive();
-            this.varArgsConverter = isMethodVarArgs ? ValueConverter.fromAnnotatedType(method.getParameters()[methodParamCount - 1].getAnnotatedType()) : null;
+            this.primitiveVarArgs = originalVarArgsType != null && originalVarArgsType.isPrimitive(); 
+            this.varArgsConverter = isMethodVarArgs ? ValueConverter.fromAnnotatedType(methodParameters[methodParamCount - 1].getAnnotatedType()) : null;
             @SuppressWarnings("unchecked") // Yes. Making a T is not worth
             OutputConverter<Object> converter = OutputConverter.get((Class<Object>) method.getReturnType());
             this.outputConverter = converter;
