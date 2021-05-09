@@ -589,7 +589,7 @@ Changes entity's location in the specified direction.
 
 Changes entity's pitch or yaw angle.
 
-### `modify(e, 'look', x, y, z), modify(e, 'look', l(x,y,z) )`
+### `modify(e, 'look', x, y, z), modify(e, 'look', [x,y,z] )`
 
 Sets entity's 3d vector where the entity is looking.
 For cases where the vector has a length of 0, yaw and pitch won't get changed.
