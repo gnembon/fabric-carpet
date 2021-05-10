@@ -143,6 +143,9 @@ in the output map.
 Functional forms of `-` and `/` have less intuitive multi-nary interpretation, but they might be useful in some situations.
 `x-y-z` resolves to `difference(x, y, z)`.
 
+`/` always produces a properly accurate result, fully reversible with `*` operator. To obtain a integer 'div' result, use
+`floor(x/y)`.
+
 Examples:
 
 <pre>
@@ -160,11 +163,15 @@ b = [100,63,100]; b+[10,0,10]  => [110,63,110]
 
 ### Just Operators `%`, `^`
 
-The modulo and exponent (power) operators work only if both operands are numbers
+The modulo and exponent (power) operators work only if both operands are numbers. `%` is a proper (and useful) 'modulus' operator,
+not a useless 'reminder' operator that you would expect from anything that touches Java. While typically modulus is reserved
+to integer numbers, scarpet expands them to floats with as much sense as possible.
 
 <pre>pi^pi%euler  => 1.124....
--9 % 4  => -1
-9 % -4  => 0 ¯\_(ツ)_/¯ Java
+-9 % 4  => 3
+9 % -4  => -3
+9.1 % -4.2  => -3.5
+9.1 % 4.2  => 0.7
 -3 ^ 2  => 9
 -3 ^ pi => // Error
 </pre>

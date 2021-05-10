@@ -313,4 +313,14 @@ public class NumericValue extends Value
     {
         return longValue!= null ||  getDouble() == (double)getLong();
     }
+
+    public Value mod(NumericValue n2)
+    {
+        if (this.longValue != null && n2.longValue != null)
+            return new NumericValue(Math.floorMod(longValue, n2.longValue));
+        double x = value;
+        double y = n2.value;
+        if (y == 0) throw new ArithmeticException("Division by zero");
+        return new NumericValue( x - Math.floor(x / y) * y);
+    }
 }
