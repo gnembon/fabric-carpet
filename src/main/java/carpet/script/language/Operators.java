@@ -80,7 +80,7 @@ public class Operators {
         expression.addFunctionalEquivalence("/", "quotient");
 
         expression.addBinaryOperator("%", precedence.get("multiplication*/%"), true, (v1, v2) ->
-                new NumericValue(NumericValue.asNumber(v1).getDouble() % NumericValue.asNumber(v2).getDouble()));
+                NumericValue.asNumber(v1).mod(NumericValue.asNumber(v2)));
         expression.addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
                 new NumericValue(java.lang.Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
 
