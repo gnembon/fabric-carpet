@@ -6,13 +6,14 @@ Displays or modifies individual scoreboard values. With no arguments, returns th
 With specified `objective`, lists all keys (players) associated with current objective, or `null` if objective does not exist.
 With specified `objective` and
 `key`, returns current value of the objective for a given player (key). With additional `value` sets a new scoreboard
- value, returning previous value associated with the `key`.
+ value, returning previous value associated with the `key`. If the `value` is null, resets the scoreboard value.
  
 ### `scoreboard_add(objective, criterion?)`
 
 Adds a new objective to scoreboard. If `criterion` is not specified, assumes `'dummy'`.
-If the objective already exists, changes the criterion of that objective and returns `false`. If the criterion was not specified but the objective already exists, returns the current criterion.
-If the objective was added, returns `true`. If nothing is affected, returns `null`
+Returns `true` if the objective was created, or `null` if an objective with the specified name already exists.
+
+Throws `unknown_criterion` if criterion doesn't exist.
 
 <pre>
 scoreboard_add('counter')
@@ -30,6 +31,15 @@ for the objective.
 
 Sets display location for a specified `objective`. If `objective` is `null`, then display is cleared. If objective is invalid,
 returns `null`.
+
+### `scoreboard_property(objective, property)` `scoreboard_property(objective, property, value)`
+
+Reads a property of an `objective` or sets it to a `value` if specified. Available properties are:
+
+* `criterion`
+* `display_name` (Formatted text supported)
+* `display_slot`: When reading, returns a list of slots this objective is displayed in, when modifying, displays the objective in the specified slot
+* `render_type`: Either `'integer'` or `'hearts'`, defaults to `'integer'` if invalid value specified
 
 # Team
 

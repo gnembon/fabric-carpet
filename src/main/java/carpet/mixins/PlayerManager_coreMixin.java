@@ -25,10 +25,4 @@ public class PlayerManager_coreMixin
         CarpetServer.onPlayerLoggedIn(player);
         PLAYER_CONNECTS.onPlayerEvent(player);
     }
-
-    @Inject(method = "onDataPacksReloaded", at = @At("HEAD"))
-    private void onResourcesRefreshedReloadCommand(CallbackInfo ci)
-    {
-        CarpetServer.onReload(server);
-    }
 }

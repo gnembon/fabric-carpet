@@ -1,4 +1,4 @@
-__command() ->
+_command() ->
 (
    print('camera: scarpet app.');
    print('-------------------');
@@ -11,7 +11,7 @@ __command() ->
    print(' "/camera place_player - Move player to the selected point');
    print(' "/camera move" - Move the selected point to players location');
    print(' "/camera duration <X>" - Set new selected path duration');
-   print(' "/camera split_point>" - Split selected path in half.');
+   print(' "/camera split_point" - Split selected path in half.');
    print(' "/camera delete_point" - Remove current key point');
    print(' "/camera trim_path" - Remove all key points from selected up');
    print('');
@@ -19,15 +19,14 @@ __command() ->
    print(' "/camera load <name>"');
    print('    - Store and load paths from world saves /scripts folder');
    print('');
-   print(' "/camera interpolation < linear | gauss | cr | gauss_<num> >"');
+   print(' "/camera interpolation < linear | gauss | catmull_rom | gauss <variance?> >"');
    print('    Select interpolation between points:');
-   print('    - cr: Catmull-Rom interpolation (default).');
+   print('    - catmull_rom: Catmull-Rom interpolation (default).');
    print('        smooth path that goes through all points.');
    print('    - linear: straight paths between points.');
    print('    - gauss: automatic smooth transitions.');
-   print('    - gauss_<N>: custom fixed variance ');
+   print('    - gauss <variance>: custom fixed variance ');
    print('            (in seconds) for special effects.');
-   print('            use "_" for decimal separator, e.g. gauss_2_5');
    print('        gauss makes the smoothest path,');
    print('        but treating points as suggestions only');
    print('');
@@ -57,6 +56,47 @@ __command() ->
    print('');
    null
 );
+__config() ->{
+    'commands'->{
+        ''->'_command',
+        '<command>'->'_call',
+        'add <seconds>'->'add',
+        'prepend <seconds>'->'prepend',
+        'duration <seconds>' -> 'duration',
+        'save_as <name>'->'save_as',
+        'load <name>'->'load',
+        'interpolation <interpolation>'->['__interpolation',true],
+        'interpolation gauss'->['__interpolation','gauss',true],
+        'interpolation gauss <seconds>'->_(float)->(__interpolation('gauss_'+str(float),true)),
+        'repeat <seconds> <last_delay>'->'repeat',
+        'stretch <factor>'->'stretch'
+    },
+    'arguments'->{
+        'seconds'->{'type'->'float', 'min' -> 0.01, 'suggest'->[]},
+        'last_delay'->{'type'->'float','min' -> 0.01, 'suggest'->[]},
+        'name'->{'type'->'string','suggest'->[]},
+        'interpolation'->{'type'->'term','options'->['linear','catmull_rom']},
+        'factor'->{'type'->'int','min'->25,'max'->400},
+        'command'->{'type'->'term','options'->[
+            'start',
+            'clear',
+            'select',
+            'place_player',
+            'move',
+            'split_point',
+            'delete_point',
+            'trim_path',
+            'transpose',
+            'play',
+            'show',
+            'hide',
+            'prefer_smooth_play',
+            'prefer_synced_play'
+        ]}
+    }
+};
+
+_call(command)->call(command);
 
 global_points = null;
 global_dimension = null;
@@ -97,7 +137,7 @@ __start_with(points_supplier) ->
     global_selected_point = null;
     __update();
     show();
-    str('Started path at %.1f %.1f %.1f', p~'x', p~'y', p~'z');
+    print(str('Started path at %.1f %.1f %.1f', p~'x', p~'y', p~'z'));
 );
 
 // gets current player controlling the path, or fails
@@ -119,7 +159,7 @@ clear() ->
    global_showing_path = false;
    global_playing_path = false;
    __update();
-   'Path cleared';
+   print('Path cleared');
 );
 
 // camera position for the player sticks out of their eyes
@@ -150,7 +190,6 @@ __assert_point_selected(validator) ->
 );
 
 //select a custom interpolation method
-interpolation(method) -> __interpolation(method, true);
 __interpolation(method, verbose) ->
 (
    __prepare_path_if_needed() -> __prepare_path_if_needed_generic();
@@ -159,7 +198,7 @@ __interpolation(method, verbose) ->
    // or optionally __prepare_path_if_needed, if path is inefficient to compute point by point
    global_interpolator = if (
        method == 'linear', '__interpolator_linear',
-       method == 'cr', '__interpolator_cr',
+       method == 'catmull_rom', '__interpolator_cr',
        method == 'gauss', _(s, p) -> __interpolator_gauB(s, p, 0),
        method ~ '^gauss_',
             (
@@ -167,13 +206,12 @@ __interpolation(method, verbose) ->
                 type = replace(type,'_','.');
                 variance = round(60*number(type));
                 _(s, p, outer(variance)) -> __interpolator_gauB(s, p, variance);
-            ),
-       exit('Choose one of the following methods: linear, gauss, gauss_<deviation>, cr')
+            )
    );
    __update();
-   if(verbose, 'Interpolation changed to '+method, '');
+   if(verbose, print('Interpolation changed to '+method));
 );
-__interpolation('cr', false);
+__interpolation('catmull_rom', false);
 
 // adds a point to the end of the path with delay in seconds
 add(delay) ->
@@ -183,7 +221,7 @@ add(delay) ->
    // but this option could be used could be used at some point by more robust interpolators
    __add_path_segment(__camera_position(), round(60*delay), 'smooth', true);
    __update();
-   __get_path_size_string();
+   print(__get_path_size_string());
 );
 
 // prepends the path with a new starting point, with a segment of specified delay
@@ -192,7 +230,7 @@ prepend(delay) ->
     __assert_can_modify_path();
     __add_path_segment(__camera_position(), round(60*delay), 'smooth', false);
     __update();
-    __get_path_size_string();
+    print(__get_path_size_string());
 );
 
 // repeats existing points seveal times, using last section delay (seconds) to join points
@@ -209,25 +247,22 @@ repeat(times, last_section_delay) ->
        )
    );
    __update();
-   __get_path_size_string();
+   print(__get_path_size_string());
 );
 
 //stretches or shrinks current path to X percent of what it was before
 stretch(percentage) ->
 (
    if (err = __is_not_valid_for_motion(), exit(err));
-   if (percentage < 25 || percentage > 400,
-       exit('path speed can only be speed, or slowed down 4 times. Re-call command for larger changes')
-   );
    ratio = percentage/100;
    previous_path_length = global_points:(-1):1;
    for(global_points, _:1 = _:1*ratio );
    __update();
-   str('path %s from %.2f to %.2f seconds',
+   print(str('path %s from %.2f to %.2f seconds',
        if(ratio<1,'shortened','extended'),
        previous_path_length/60,
        global_points:(-1):1/60
-   )
+   ))
 );
 
 // moves current selected point to player location
@@ -258,7 +293,7 @@ duration(amount) ->
         global_points:_:1 += delta;
     );
     __update();
-    __get_path_size_string();
+    print(__get_path_size_string());
 );
 
 // deletes current keypoint without changing the path length
@@ -270,7 +305,7 @@ delete_point() ->
     global_points = filter(global_points, _i != global_selected_point);
     if (global_selected_point >= length(global_points), global_selected_point = null);
     __update();
-    __get_path_size_string();
+    print(__get_path_size_string());
 );
 
 // splits current selected segment in half by adding a keypoint in between
@@ -291,7 +326,7 @@ split_point() ->
         'insert'
     );
     __update();
-    __get_path_size_string();
+    print(__get_path_size_string());
 );
 
 // removes all points in the path from the current point
@@ -301,7 +336,7 @@ trim_path() ->
     global_points = slice(global_points, 0, global_selected_point);
     global_selected_point = null;
     __update();
-    __get_path_size_string();
+    print(__get_path_size_string());
 );
 
 // moves entire camera path keeping the angles to player position being in the starting point
@@ -313,7 +348,7 @@ transpose() ->
     shift = shift + global_player_eye_offset;
     for(global_points, _:0 = _:0 + shift);
     __update();
-    __get_path_size_string();
+    print(__get_path_size_string());
 );
 
 // selects either a point of certain number (starting from 1), or closest point
@@ -331,7 +366,6 @@ select(num) ->
     );
     global_selected_point = if (global_selected_point == selected_point, null, selected_point);
     global_needs_updating = true;
-
 );
 
 // player can also punch the mannequin to select/deselect it
@@ -485,7 +519,6 @@ hide() ->
 (
    if (global_showing_path,
       global_showing_path = false;
-      'Stopped showing path';
    );
 );
 
@@ -639,7 +672,7 @@ save_as(file) ->
         put(path_nbt:'points', point_nbt, _i);
     );
     write_file(file, 'nbt', path_nbt);
-    'stored path as '+file;
+    print('stored path as '+file);
 );
 
 // loads path under the local file that
@@ -652,7 +685,7 @@ load(file) ->
         exit('Incorrect data for :'+file);
     );
     __start_with(_(outer(new_points)) -> new_points);
-    'loaded '+file;
+    print('loaded '+file);
 );
 
 // when closing - shut-down visualization and playback threads

@@ -1,5 +1,6 @@
 package carpet.logging;
 
+import carpet.CarpetServer;
 import carpet.helpers.HopperCounter;
 import carpet.helpers.TickSpeed;
 import carpet.logging.logHelpers.PacketCounter;
@@ -18,10 +19,13 @@ import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class HUDController
@@ -32,14 +36,23 @@ public class HUDController
      * Adds listener to be called when HUD is updated for logging information
      * @param listener - a method to be called when new HUD inforation are collected
      */
-    public void register(Consumer<MinecraftServer> listener)
+    public static void register(Consumer<MinecraftServer> listener)
     {
         HUDListeners.add(listener);
     }
 
-    public static Map<PlayerEntity, List<BaseText>> player_huds = new HashMap<>();
+    public static Map<ServerPlayerEntity, List<BaseText>> player_huds = new HashMap<>();
+    
+    public static final Map<ServerPlayerEntity, BaseText> scarpet_headers = new HashMap<>();
+    
+    public static final Map<ServerPlayerEntity, BaseText> scarpet_footers = new HashMap<>();
 
-    public static void addMessage(PlayerEntity player, BaseText hudMessage)
+    public static void resetScarpetHUDs() {
+        scarpet_headers.clear();
+        scarpet_footers.clear();
+    }
+
+    public static void addMessage(ServerPlayerEntity player, BaseText hudMessage)
     {
         if (!player_huds.containsKey(player))
         {
@@ -60,12 +73,14 @@ public class HUDController
     }
 
 
-    public static void update_hud(MinecraftServer server)
+    public static void update_hud(MinecraftServer server, List<ServerPlayerEntity> force)
     {
-        if(server.getTicks() % 20 != 0)
+        if (((server.getTicks() % 20 != 0) && force == null) || CarpetServer.minecraft_server == null)
             return;
 
         player_huds.clear();
+
+        scarpet_footers.forEach(HUDController::addMessage);
 
         if (LoggerRegistry.__tps)
             LoggerRegistry.getLogger("tps").log(()-> send_tps_display(server));
@@ -97,12 +112,14 @@ public class HUDController
         // extensions have time to pitch in.
         HUDListeners.forEach(l -> l.accept(server));
 
-        for (PlayerEntity player: player_huds.keySet())
+        Set<ServerPlayerEntity> targets = new HashSet<>(player_huds.keySet());
+        if (force!= null) targets.addAll(force);
+        for (ServerPlayerEntity player: targets)
         {
             PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
-            ((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.get(player).toArray(new Object[0])));
-            ((ServerPlayerEntity)player).networkHandler.sendPacket(packet);
+            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player, new LiteralText("")));
+            ((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
+            player.networkHandler.sendPacket(packet);
         }
     }
     private static BaseText [] send_tps_display(MinecraftServer server)

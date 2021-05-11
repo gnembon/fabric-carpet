@@ -42,6 +42,11 @@ public class FormattedTextValue extends StringValue
         }
     }
 
+    public static Value of(Text text) {
+        if (text == null) return Value.NULL;
+        return new FormattedTextValue(text);
+    }
+
     @Override
     public String getString() {
         return text.getString();
@@ -49,7 +54,7 @@ public class FormattedTextValue extends StringValue
 
     @Override
     public boolean getBoolean() {
-          return text.getSiblings().size() > 0;
+        return !text.getString().isEmpty();
     }
 
     @Override
@@ -89,6 +94,10 @@ public class FormattedTextValue extends StringValue
     public static FormattedTextValue deserialize(String serialized)
     {
         return new FormattedTextValue(Text.Serializer.fromJson(serialized));
+    }
+
+    public static Text getTextByValue(Value value) {
+        return (value instanceof FormattedTextValue) ? ((FormattedTextValue) value).getText() : new LiteralText(value.getString());
     }
 
 }

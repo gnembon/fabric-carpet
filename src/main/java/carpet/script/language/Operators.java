@@ -5,13 +5,17 @@ import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.AbstractListValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.ContainerValueInterface;
+import carpet.script.value.FunctionAnnotationValue;
+import carpet.script.value.FunctionUnpackedArgumentsValue;
 import carpet.script.value.LContainerValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +24,7 @@ import java.util.Map;
 public class Operators {
     public static final Map<String, Integer> precedence = new HashMap<String,Integer>() {{
         put("attribute~:", 80);
-        put("unary+-!", 60);
+        put("unary+-!...", 60);
         put("exponent^", 40);
         put("multiplication*/%", 30);
         put("addition+-", 20);
@@ -29,51 +33,210 @@ public class Operators {
         put("and&&", 5);
         put("or||", 4);
         put("assign=<>", 3);
-        put("def->...", 2);
+        put("def->", 2);
         put("nextop;", 1);
     }};
 
     public static void apply(Expression expression)
     {
         expression.addBinaryOperator("+", precedence.get("addition+-"), true, Value::add);
+        expression.addFunction("sum", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            Value accumulator = lv.get(0);
+            for (Value v: lv.subList(1, size)) accumulator = accumulator.add(v);
+            return accumulator;
+        });
+        expression.addFunctionalEquivalence("+", "sum");
+
         expression.addBinaryOperator("-", precedence.get("addition+-"), true, Value::subtract);
+        expression.addFunction("difference", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            Value accumulator = lv.get(0);
+            for (Value v: lv.subList(1, size)) accumulator = accumulator.subtract(v);
+            return accumulator;
+        });
+        expression.addFunctionalEquivalence("-", "difference");
+
         expression.addBinaryOperator("*", precedence.get("multiplication*/%"), true, Value::multiply);
+        expression.addFunction("product", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            Value accumulator = lv.get(0);
+            for (Value v: lv.subList(1, size)) accumulator = accumulator.multiply(v);
+            return accumulator;
+        });
+        expression.addFunctionalEquivalence("*", "product");
+
         expression.addBinaryOperator("/", precedence.get("multiplication*/%"), true, Value::divide);
+        expression.addFunction("quotient", lv -> {
+            int size = lv.size();
+            if (size == 0) return Value.NULL;
+            Value accumulator = lv.get(0);
+            for (Value v: lv.subList(1, size)) accumulator = accumulator.multiply(v);
+            return accumulator;
+        });
+        expression.addFunctionalEquivalence("/", "quotient");
+
         expression.addBinaryOperator("%", precedence.get("multiplication*/%"), true, (v1, v2) ->
-                new NumericValue(NumericValue.asNumber(v1).getDouble() % NumericValue.asNumber(v2).getDouble()));
+                NumericValue.asNumber(v1).mod(NumericValue.asNumber(v2)));
         expression.addBinaryOperator("^", precedence.get("exponent^"), false, (v1, v2) ->
                 new NumericValue(java.lang.Math.pow(NumericValue.asNumber(v1).getDouble(), NumericValue.asNumber(v2).getDouble())));
 
-        expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, (c, t, lv1, lv2) ->
-        {
+        // lazy cause RHS is only conditional
+        expression.addLazyBinaryOperator("&&", precedence.get("and&&"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
+        { // todo check how is optimizations going
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (!v1.getBoolean()) return (cc, tt) -> v1;
             return lv2;
         });
 
-        expression.addLazyBinaryOperator("||", precedence.get("or||"), false, (c, t, lv1, lv2) ->
+        expression.addPureLazyFunction("and", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
+            int last = lv.size()-1;
+            if (last == -1) return LazyValue.TRUE;
+            for (LazyValue l: lv.subList(0, last))
+            {
+                Value val = l.evalValue(c, Context.Type.BOOLEAN);
+                if (val instanceof FunctionUnpackedArgumentsValue)
+                {
+                    for (Value it : (FunctionUnpackedArgumentsValue) val)
+                        if (!it.getBoolean()) return (cc, tt) -> it;
+                }
+                else
+                {
+                    if (!val.getBoolean()) return (cc, tt) -> val;
+                }
+            }
+            return lv.get(last);
+        });
+        expression.addFunctionalEquivalence("&&", "and");
+
+        // lazy cause RHS is only conditional
+        expression.addLazyBinaryOperator("||", precedence.get("or||"), false, true, t -> Context.Type.BOOLEAN, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.BOOLEAN);
             if (v1.getBoolean()) return (cc, tt) -> v1;
             return lv2;
         });
 
+        expression.addPureLazyFunction("or", -1, t -> Context.Type.BOOLEAN, (c, t, lv) -> {
+            int last = lv.size()-1;
+            if (last == -1) return LazyValue.FALSE;
+            for (LazyValue l: lv.subList(0, last))
+            {
+                Value val = l.evalValue(c, Context.Type.BOOLEAN);
+                if (val instanceof FunctionUnpackedArgumentsValue)
+                {
+                    for (Value it : (FunctionUnpackedArgumentsValue) val)
+                        if (it.getBoolean()) return (cc, tt) -> it;
+                }
+                else
+                {
+                    if (val.getBoolean()) return (cc, tt) -> val;
+                }
+            }
+            return lv.get(last);
+        });
+        expression.addFunctionalEquivalence("||", "or");
+
         expression.addBinaryOperator("~", precedence.get("attribute~:"), true, Value::in);
 
         expression.addBinaryOperator(">", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                v1.compareTo(v2) > 0 ? Value.TRUE : Value.FALSE);
+                BooleanValue.of(v1.compareTo(v2) > 0));
+        expression.addFunction("decreasing", lv -> {
+            int size = lv.size();
+            if (size < 2) return Value.TRUE;
+            Value prev = lv.get(0);
+            for (Value next: lv.subList(1, size))
+            {
+                if (prev.compareTo(next) <= 0) return Value.FALSE;
+                prev = next;
+            }
+            return Value.TRUE;
+        });
+        expression.addFunctionalEquivalence(">", "decreasing");
+
         expression.addBinaryOperator(">=", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                v1.compareTo(v2) >= 0 ? Value.TRUE : Value.FALSE);
+                BooleanValue.of(v1.compareTo(v2) >= 0));
+        expression.addFunction("nonincreasing", lv -> {
+            int size = lv.size();
+            if (size < 2) return Value.TRUE;
+            Value prev = lv.get(0);
+            for (Value next: lv.subList(1, size))
+            {
+                if (prev.compareTo(next) < 0) return Value.FALSE;
+                prev = next;
+            }
+            return Value.TRUE;
+        });
+        expression.addFunctionalEquivalence(">=", "nonincreasing");
+
         expression.addBinaryOperator("<", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                v1.compareTo(v2) < 0 ? Value.TRUE : Value.FALSE);
+                BooleanValue.of(v1.compareTo(v2) < 0));
+        expression.addFunction("increasing", lv -> {
+            int size = lv.size();
+            if (size < 2) return Value.TRUE;
+            Value prev = lv.get(0);
+            for (Value next: lv.subList(1, size))
+            {
+                if (prev.compareTo(next) >= 0) return Value.FALSE;
+                prev = next;
+            }
+            return Value.TRUE;
+        });
+        expression.addFunctionalEquivalence("<", "increasing");
+
         expression.addBinaryOperator("<=", precedence.get("compare>=><=<"), false, (v1, v2) ->
-                v1.compareTo(v2) <= 0 ? Value.TRUE : Value.FALSE);
+                BooleanValue.of(v1.compareTo(v2) <= 0));
+        expression.addFunction("nondecreasing", lv -> {
+            int size = lv.size();
+            if (size < 2) return Value.TRUE;
+            Value prev = lv.get(0);
+            for (Value next: lv.subList(1, size))
+            {
+                if (prev.compareTo(next) > 0) return Value.FALSE;
+                prev = next;
+            }
+            return Value.TRUE;
+        });
+        expression.addFunctionalEquivalence("<=", "nondecreasing");
+
         expression.addBinaryOperator("==", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.TRUE : Value.FALSE);
+        expression.addFunction("equal", lv -> {
+            int size = lv.size();
+            if (size < 2) return Value.TRUE;
+            Value prev = lv.get(0);
+            for (Value next: lv.subList(1, size))
+            {
+                if (!prev.equals(next)) return Value.FALSE;
+                prev = next;
+            }
+            return Value.TRUE;
+        });
+        expression.addFunctionalEquivalence("==", "equal");
+
+
         expression.addBinaryOperator("!=", precedence.get("equal==!="), false, (v1, v2) ->
                 v1.equals(v2) ? Value.FALSE : Value.TRUE);
+        expression.addFunction("unique", lv -> {
+            int size = lv.size();
+            if (size < 2) return Value.TRUE;
+            // need to order them so same obejects will be next to each other.
+            lv.sort(Comparator.comparingInt(Value::hashCode));
+            Value prev = lv.get(0);
+            for (Value next: lv.subList(1, size))
+            {
+                if (prev.equals(next)) return Value.FALSE;
+                prev = next;
+            }
+            return Value.TRUE;
+        });
+        expression.addFunctionalEquivalence("!=", "unique");
 
-        expression.addLazyBinaryOperator("=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
+        // lazy cause of assignment which is non-trivial
+        expression.addLazyBinaryOperator("=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
@@ -111,7 +274,8 @@ public class Operators {
             return boundedLHS;
         });
 
-        expression.addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
+        // lazy due to assignment
+        expression.addLazyBinaryOperator("+=", precedence.get("assign=<>"), false, false, t -> Context.Type.LVALUE, (c, t, lv1, lv2) ->
         {
             Value v1 = lv1.evalValue(c, Context.LVALUE);
             Value v2 = lv2.evalValue(c);
@@ -171,10 +335,8 @@ public class Operators {
             return boundedLHS;
         });
 
-        expression.addLazyBinaryOperator("<>", precedence.get("assign=<>"), false, (c, t, lv1, lv2) ->
+        expression.addBinaryContextOperator("<>", precedence.get("assign=<>"), false, false, false, (c, t, v1, v2) ->
         {
-            Value v1 = lv1.evalValue(c);
-            Value v2 = lv2.evalValue(c);
             if (v1 instanceof ListValue.ListConstructorValue && v2 instanceof ListValue.ListConstructorValue)
             {
                 List<Value> ll = ((ListValue)v1).getItems();
@@ -196,7 +358,7 @@ public class Operators {
                     expression.setAnyVariable(c, lname, (cc, tt) -> rval);
                     expression.setAnyVariable(c, rname, (cc, tt) -> lval);
                 }
-                return (cc, tt) -> Value.TRUE;
+                return Value.TRUE;
             }
             v1.assertAssignable();
             v2.assertAssignable();
@@ -206,14 +368,31 @@ public class Operators {
             Value rval = v1.reboundedTo(rvalvar);
             expression.setAnyVariable(c, lvalvar, (cc, tt) -> lval);
             expression.setAnyVariable(c, rvalvar, (cc, tt) -> rval);
-            return (cc, tt) -> lval;
+            return lval;
         });
 
         expression.addUnaryOperator("-",  false, v -> NumericValue.asNumber(v).opposite());
 
         expression.addUnaryOperator("+", false, NumericValue::asNumber);
 
-        expression.addLazyUnaryOperator("!", precedence.get("unary+-!"), false, (c, t, lv)-> lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE); // might need context boolean
+        // could be non-lazy, but who cares - its a small one.
+        expression.addLazyUnaryOperator("!", precedence.get("unary+-!..."), false, true, x -> Context.Type.BOOLEAN, (c, t, lv) ->
+                lv.evalValue(c, Context.BOOLEAN).getBoolean() ? (cc, tt)-> Value.FALSE : (cc, tt) -> Value.TRUE
+        ); // might need context boolean
+
+        // lazy because of typed evaluation of the argument
+        expression.addLazyUnaryOperator("...", Operators.precedence.get("unary+-!..."), false, true, t -> t== Context.Type.LOCALIZATION?Context.NONE:t, (c, t, lv) ->
+        {
+            if (t == Context.LOCALIZATION)
+                return (cc, tt) -> new FunctionAnnotationValue(lv.evalValue(c), FunctionAnnotationValue.Type.VARARG);
+
+            Value params = lv.evalValue(c, t);
+            if (!(params instanceof AbstractListValue))
+                throw new InternalExpressionException("Unable to unpack a non-list");
+            FunctionUnpackedArgumentsValue fuaval = new FunctionUnpackedArgumentsValue( ((AbstractListValue) params).unpack());
+            return (cc, tt) -> fuaval;
+            //throw new InternalExpressionException("That functionality has not been implemented yet.");
+        });
 
     }
 }

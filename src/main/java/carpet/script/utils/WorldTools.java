@@ -157,5 +157,5 @@ public class WorldTools
         @Override public void stop() { }
     }
 
-    private static final WorldGenerationProgressListener NOOP_LISTENER = new NoopWorldGenerationProgressListener();
+    public static final WorldGenerationProgressListener NOOP_LISTENER = new NoopWorldGenerationProgressListener();
 }

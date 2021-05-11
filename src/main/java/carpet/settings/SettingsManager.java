@@ -318,10 +318,12 @@ public class SettingsManager
         }
         server.send(new ServerTask(this.server.getTicks(), () ->
         {
-            for (ServerPlayerEntity entityplayermp : server.getPlayerManager().getPlayerList())
-            {
-                server.getCommandManager().sendCommandTree(entityplayermp);
+            try {
+                for (ServerPlayerEntity entityplayermp : server.getPlayerManager().getPlayerList()) {
+                    server.getCommandManager().sendCommandTree(entityplayermp);
+                }
             }
+            catch (NullPointerException ignored) {}
         }));
     }
 

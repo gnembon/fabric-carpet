@@ -67,7 +67,7 @@ Evaluates expression `expr`, `num` number of times. code>expr receives `_` syste
 
 <pre>
 loop(5, game_tick())  => repeat tick 5 times
-list = l(); loop(5, x = _; loop(5, list += l(x, _) ) ); list
+list = []; loop(5, x = _; loop(5, list += [x, _] ) ); list
   // double loop, produces: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], ... , [4, 2], [4, 3], [4, 4]]
 </pre>
 
@@ -75,7 +75,7 @@ In this small example we will search for first 10 primes, apparently including 0
 
 <pre>
 check_prime(n) -> !first( range(2, sqrt(n)+1), !(n % _) );
-primes = l();
+primes = [];
 loop(10000, if(check_prime(_), primes += _ ; if (length(primes) >= 10, break())));
 primes
 // outputs: [0, 1, 2, 3, 5, 7, 11, 13, 17, 19]
@@ -92,7 +92,7 @@ place of the resulting map element, otherwise current element is skipped.
 
 <pre>
 map(range(10), _*_)  => [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
-map(players('*'), _+' is stoopid') [gnembon is stoopid, herobrine is stoopid]
+map(player('*'), _+' is stoopid') [gnembon is stoopid, herobrine is stoopid]
 </pre>
 
 ### `filter(list,expr(_,_i))`
@@ -124,12 +124,12 @@ to `all(list,expr) <=> for(list,expr)==length(list)`. `expr` also receives bound
 and `continue` have no sense and cannot be used inside of `expr` body.
 
 <pre>
-all([1,2,3], check_prime(_))  => 1
-all(neighbours(x,y,z), _=='stone')  => 1 // if all neighbours of [x, y, z] are stone
-map(filter(rect(0,4,0,1000,0,1000), l(x,y,z)=pos(_); all(rect(x,y,z,1,0,1),_=='bedrock') ), pos(_) )
+all([1,2,3], check_prime(_))  => true
+all(neighbours(x,y,z), _=='stone')  => true // if all neighbours of [x, y, z] are stone
+map(filter(rect(0,4,0,1000,0,1000), [x,y,z]=pos(_); all(rect(x,y,z,1,0,1),_=='bedrock') ), pos(_) )
   => [[-298, 4, -703], [-287, 4, -156], [-269, 4, 104], [242, 4, 250], [-159, 4, 335], [-208, 4, 416], [-510, 4, 546], [376, 4, 806]]
     // find all 3x3 bedrock structures in the top bedrock layer
-map( filter( rect(0,4,0,1000,1,1000,1000,0,1000), l(x,y,z)=pos(_);
+map( filter( rect(0,4,0,1000,1,1000,1000,0,1000), [x,y,z]=pos(_);
         all(rect(x,y,z,1,0,1),_=='bedrock') && for(rect(x,y-1,z,1,1,1,1,0,1),_=='bedrock')<8),
    pos(_) )  => [[343, 3, -642], [153, 3, -285], [674, 3, 167], [-710, 3, 398]]
     // ditto, but requiring at most 7 bedrock block in the 18 blocks below them
@@ -146,3 +146,4 @@ it will be used from now on as a new value for the accumulator.
 reduce([1,2,3,4],_a+_,0)  => 10
 reduce([1,2,3,4],_a*_,1)  => 24
 </pre>
+

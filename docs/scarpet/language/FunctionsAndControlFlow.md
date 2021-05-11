@@ -2,7 +2,7 @@
 
 ## Writing programs with more than 1 line
 
-### `Operator ;`
+### Operator `;`, `then(...)`
 
 To effectively write programs that have more than one line, a programmer needs way to specify a sequence of commands 
 that execute one after another. In `scarpet` this can be achieved with `;`. Its an operator, and by separating 
@@ -22,7 +22,7 @@ in `scarpet`, and not barely an instruction delimiter, terminating the code with
 be valid. Having said that, since many programming languages don't care about the number of op terminators 
 programmers use, carpet preprocessor will remove all unnecessary semicolons from scripts when compiled.
 
-In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)`.
+In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)` or `then(expr, expr, expr, expr)`.
 
 Result of the evaluated expression is the same as the result of the second expression, but first expression 
 is also evaluated for side-effects
@@ -47,7 +47,7 @@ and with `player` scope, each player hosts its own state for each app, so functi
 
 
 <pre>
-/script run a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1, 2, 3, 1, 1]
+/script run a() -> global_list+=1; global_list = [1,2,3]; a(); a(); global_list  // => [1, 2, 3, 1, 1]
 /script run a(); a(); global_list  // => [1, 2, 3, 1, 1, 1, 1]
 </pre>
 
@@ -76,7 +76,7 @@ a unique name, which you can pass somewhere else to get this function `call`ed. 
 by their value and `call` method.
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
+a(lst) -> lst+=1; list = [1,2,3]; a(list); a(list); list  // => [1,2,3]
 </pre>
 
 In case the inner function wants to operate and modify larger objects, lists from the outer scope, but not global, 
@@ -102,14 +102,14 @@ which variables you want to use, and borrow
 This mechanism can be used to use static mutable objects without the need of using `global_...` variables
 
 <pre>
-list = l(1,2,3); a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
+list = [1,2,3]; a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
 </pre>
 
 The return value of a function is the value of the last expression. This as the same effect as using outer or 
 global lists, but is more expensive
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); list=a(list); list=a(list); list  // => [1,2,3,1,1]
+a(lst) -> lst+=1; list = [1,2,3]; list=a(list); list=a(list); list  // => [1,2,3,1,1]
 </pre>
 
 Ability to combine more statements into one expression, with functions, passing parameters, and global and outer 
@@ -132,15 +132,16 @@ foo(... x) -> ...  # all arguments for foo are included in the list
     
 </pre>
 
-### `import(module_name, symbols ...)`
+### `import(module_name, ? symbols ...)`
 
 Imports symbols from other apps and libraries into the current one: global variables or functions, allowing to use 
 them in the current app. This includes other symbols imported by these modules. Scarpet supports circular dependencies, 
 but if symbols are used directly in the module body rather than functions, it may not be able to retrieve them. 
+
 Returns full list of available symbols that could be imported from this module, which can be used to debug import 
 issues, and list contents of libraries.
 
-### `call(function, args.....)`
+### `call(function, ? args ...)`
 
 calls a user defined function with specified arguments. It is equivalent to calling `function(args...)` directly 
 except you can use it with function value, or name instead. This means you can pass functions to other user defined 
@@ -201,11 +202,11 @@ programmers with their own lambda arguments
 
 <pre>
 my_map(list, function) -> map(list, call(function, _));
-my_map(l(1,2,3), _(x) -> x*x);    // => [1,4,9]
-profile_expr(my_map(l(1,2,3), _(x) -> x*x));   // => ~32000
-sq(x) -> x*x; profile_expr(my_map(l(1,2,3), 'sq'));   // => ~36000
-sq = (_(x) -> x*x); profile_expr(my_map(l(1,2,3), sq));   // => ~36000
-profile_expr(map(l(1,2,3), _*_));   // => ~80000
+my_map([1,2,3], _(x) -> x*x);    // => [1,4,9]
+profile_expr(my_map([1,2,3], _(x) -> x*x));   // => ~32000
+sq(x) -> x*x; profile_expr(my_map([1,2,3], 'sq'));   // => ~36000
+sq = (_(x) -> x*x); profile_expr(my_map([1,2,3], sq));   // => ~36000
+profile_expr(map([1,2,3], _*_));   // => ~80000
 </pre>
 
 ## Control flow
@@ -234,15 +235,74 @@ returns everywhere, but it would often lead to a messy code.
 
 It terminates entire program passing `expr` as the result of the program execution, or null if omitted.
 
-### `try(expr, catch_expr(_)?) ... throw(value?)`
+### `try(expr)` `try(expr, user_catch_expr)` `try(expr, type, catch_expr, type?, catch_expr?, ...)`
 
-`try` function evaluates expression, and continues further unless `throw` function is called anywhere 
-inside `expr`. In that case the `catch_expr` is evaluates with `_` set to the argument `throw` was called with. 
-This mechanic accepts skipping thrown value - it throws null instead, and catch expression - then try returns 
-null as well This mechanism allows to terminate large portion of a convoluted call stack and continue program 
-execution. There is only one level of exceptions currently in carpet, so if the inner function also defines 
-the `try` catchment area, it will received the exception first, but it can technically rethrow the value its 
-getting for the outer scope. Unhandled throw acts like an exit statement.
+`try` evaluates expression, allowing capturing exceptions that would be thrown inside `expr` statement. The exceptions can be
+thrown explicitly using `throw()` or internally by scarpet where code is correct but detects illegal state. The 2-argument form
+catches only user-thrown exceptions and one argument call `try(expr)` is equivalent to `try(expr, null)`, 
+or `try(expr, 'user_exception', null)`. If multiple `type-catch` pairs are defined, the execution terminates on the first 
+applicable type for the exception thrown. Therefore, even if the caught exception matches multiple filters, only 
+the first matching block will be executed.
+
+Catch expressions are evaluated with 
+`_` set to the value associated with the exception and `_trace` set to contain details about point of error (token, and line and 
+column positions), call stack and local
+variables at the time of failure. The `type` will catch any exception of that type and any subtype of this type.
+  
+
+You can use `try` mechanism to exit from large portion of a convoluted call stack and continue program execution, although catching
+exceptions is typically much more expensive comparing to not throwing them.
+
+The `try` function allows you to catch some scarpet exceptions for cases covering invalid data, like invalid
+blocks, biomes, dimensions and other things, that may have been modified by datapacks, resourcepacks or other mods,
+or when an error is outside of the programmers scope, such as problems when reading or decoding files.
+
+This is the hierarchy of the exceptions that could be thrown/caught in the with the `try` function:
+- `exception`: This is the base exception. Catching `'exception'` allows to catch everything that can be caught, 
+but like everywhere else, doing that sounds like a bad idea.
+  - `value_exception`: This is the parent for any exception that occurs due to an 
+  incorrect argument value provided to a built-in function
+    - `unknown_item`, `unknown_block`, `unknown_biome`, `unknown_sound`, `unknown_particle`, 
+    `unknown_poi_type`, `unknown_dimension`, `unknown_structure`, `unknown_criterion`: Specific 
+    errors thrown when a specified internal name does not exist or is invalid.
+  - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
+    - `nbt_error`: Incorrect input/output NBT file.
+    - `json_error`: Incorrect input/output JSON data.
+    - `b64_error`: Incorrect input/output b64 (base 64) string
+  - `user_exception`: Exception thrown by default with `throw` function.
+  
+Synopsis:
+<pre>
+inner_call() ->
+(
+   aaa = 'booyah';
+   try(
+      for (range(10), item_tags('stick'+_*'k'));
+   ,
+      print(_trace) // not caught, only catching user_exceptions
+   )
+);
+
+outer_call() -> 
+( 
+   try(
+      inner_call()
+   , 'exception', // catching everything
+      print(_trace)
+   ) 
+);
+</pre>
+Producing:
+```
+{stack: [[<app>, inner_call, 1, 14]], locals: {_a: 0, aaa: booyah, _: 1, _y: 0, _i: 1, _x: 0, _z: 0}, token: [item_tags, 5, 23]}
+```
+
+### `throw(value?)`, `throw(type, value)`, `throw(subtype, type, value)`
+
+Throws an exception that can be caught in a `try` block (see above). If ran without arguments, it will throw a `user_exception` 
+passing `null` as the value to the `catch_expr`. With two arguments you can mimic any other exception type thrown in scarpet.
+With 3 arguments, you can specify a custom exception acting as a `subtype` of a provided `type`, allowing to customize `try` 
+statements with custom exceptions.
 
 ### `if(cond, expr, cond?, expr?, ..., default?)`
 

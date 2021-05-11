@@ -61,8 +61,8 @@ Interesting bit - `min` and `max` don't remove variable associations from argume
 LHS of assignments (obvious case), or argument spec in function definitions (far less obvious).
 
 <pre>
-a = 1; b = 2; min(a,b) = 3; l(a,b)  => [3, 2]
-a = 1; b = 2; fun(x, min(a,b)) -> l(a,b); fun(3,5)  => [5, 0]
+a = 1; b = 2; min(a,b) = 3; [a,b]  => [3, 2]
+a = 1; b = 2; fun(x, min(a,b)) -> [a,b]; fun(3,5)  => [5, 0]
 </pre>
 
 Absolutely no idea, how the latter might be useful in practice. But since it compiles, can ship it.

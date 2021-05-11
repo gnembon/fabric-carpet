@@ -104,7 +104,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerLoadedWorlds(MinecraftServer minecraftServer)
     {
-        HopperCounter.resetAll(minecraftServer);
+        HopperCounter.resetAll(minecraftServer, true);
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         scriptServer.initializeForWorld();
     }
@@ -112,7 +112,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     public static void tick(MinecraftServer server)
     {
         TickSpeed.tick();
-        HUDController.update_hud(server);
+        HUDController.update_hud(server, null);
         scriptServer.tick();
 
         //in case something happens
@@ -180,6 +180,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
             currentCommandDispatcher = null;
 
             LoggerRegistry.stopLoggers();
+            HUDController.resetScarpetHUDs();
             extensions.forEach(e -> e.onServerClosed(server));
             minecraft_server = null;
         }

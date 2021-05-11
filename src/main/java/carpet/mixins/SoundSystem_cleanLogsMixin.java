@@ -7,10 +7,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(SoundSystem.class)
+@Mixin(value = SoundSystem.class, priority = 69420)
 public class SoundSystem_cleanLogsMixin
 {
-    @Redirect(method = "play(Lnet/minecraft/client/sound/SoundInstance;)V", at = @At( remap = false,
+    @Redirect(method = "play(Lnet/minecraft/client/sound/SoundInstance;)V", require = 0, at = @At( remap = false,
             value = "INVOKE",
             target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V"
     ))

@@ -7,6 +7,7 @@ import carpet.script.ScriptHost;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.utils.PerlinNoiseSampler;
 import carpet.script.utils.SimplexNoiseSampler;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NullValue;
@@ -35,28 +36,26 @@ public class Sys {
     {
         expression.addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
 
-        expression.addUnaryFunction("copy", Value::deepcopy);
+        expression.addImpureUnaryFunction("copy", Value::deepcopy);
 
-        expression.addLazyFunction("bool", 1, (c, t, lv) ->
+        expression.addTypedContextFunction("bool", 1, Context.BOOLEAN, (c, t, lv) ->
         {
-            Value v = lv.get(0).evalValue(c, Context.BOOLEAN);
+            Value v = lv.get(0);
             if (v instanceof StringValue)
             {
-                String str = v.getString();
-                if ("false".equalsIgnoreCase(str) || "null".equalsIgnoreCase(str))
-                {
-                    return (cc, tt) -> Value.FALSE;
-                }
+                String str = v.getString().toLowerCase(Locale.ROOT);
+                if ("false".equals(str) || "null".equals(str)) return Value.FALSE;
             }
-            Value retval = new NumericValue(v.getBoolean());
-            return (cc, tt) -> retval;
+            return BooleanValue.of(v.getBoolean());
         });
 
         expression.addUnaryFunction("number", v ->
         {
             if (v instanceof NumericValue)
             {
-                return v;
+                NumericValue num = (NumericValue)v;
+                if (num.isInteger()) return new NumericValue(num.getLong());
+                return new NumericValue(num.getDouble());
             }
             try
             {
@@ -185,41 +184,40 @@ public class Sys {
 
         expression.addUnaryFunction("type", v -> new StringValue(v.getTypeString()));
         expression.addUnaryFunction("length", v -> new NumericValue(v.length()));
-        expression.addLazyFunction("rand", -1, (c, t, lv) ->
+        expression.addContextFunction("rand", -1, (c, t, lv) ->
         {
             int argsize = lv.size();
             Random randomizer = Sys.randomizer;
             if (argsize != 1 && argsize != 2)
                 throw new InternalExpressionException("'rand' takes one (range) or two arguments (range and seed)");
-            if (argsize == 2) randomizer = c.host.getRandom(NumericValue.asNumber(lv.get(1).evalValue(c)).getLong());
-            Value argument = lv.get(0).evalValue(c);
+            if (argsize == 2) randomizer = c.host.getRandom(NumericValue.asNumber(lv.get(1)).getLong());
+            Value argument = lv.get(0);
             if (argument instanceof ListValue)
             {
                 List<Value> list = ((ListValue) argument).getItems();
-                Value retval = list.get(randomizer.nextInt(list.size()));
-                return (cc, tt) -> retval;
+                return list.get(randomizer.nextInt(list.size()));
             }
+            double value = NumericValue.asNumber(argument).getDouble()*randomizer.nextDouble();
             if (t == Context.BOOLEAN)
-            {
-                double rv = NumericValue.asNumber(argument).getDouble()*randomizer.nextFloat();
-                Value retval = rv<1.0D?Value.FALSE:Value.TRUE;
-                return (cc, tt) -> retval;
-            }
-            Value retval = new NumericValue(NumericValue.asNumber(argument).getDouble()*randomizer.nextDouble());
-            return (cc, tt) -> retval;
+                return BooleanValue.of(value >= 1.0D);
+            return new NumericValue(value);
+        });
+        expression.addContextFunction("reset_seed", 1, (c, t, lv) -> {
+            boolean gotIt = c.host.resetRandom(NumericValue.asNumber(lv.get(0)).getLong());
+            return BooleanValue.of(gotIt);
         });
 
-        expression.addLazyFunction("perlin", -1, (c, t, lv) ->
+        expression.addFunction("perlin", lv ->
         {
             PerlinNoiseSampler sampler;
             Value x, y, z;
 
             if (lv.size() >= 4)
             {
-                x = lv.get(0).evalValue(c);
-                y = lv.get(1).evalValue(c);
-                z = lv.get(2).evalValue(c);
-                sampler = PerlinNoiseSampler.getPerlin(NumericValue.asNumber(lv.get(3).evalValue(c)).getLong());
+                x = lv.get(0);
+                y = lv.get(1);
+                z = lv.get(2);
+                sampler = PerlinNoiseSampler.getPerlin(NumericValue.asNumber(lv.get(3)).getLong());
             }
             else
             {
@@ -228,12 +226,12 @@ public class Sys {
                 z = Value.NULL;
                 if (lv.size() == 0 )
                     throw new InternalExpressionException("'perlin' requires at least one dimension to sample from");
-                x = NumericValue.asNumber(lv.get(0).evalValue(c));
+                x = NumericValue.asNumber(lv.get(0));
                 if (lv.size() > 1)
                 {
-                    y = NumericValue.asNumber(lv.get(1).evalValue(c));
+                    y = NumericValue.asNumber(lv.get(1));
                     if (lv.size() > 2)
-                        z = NumericValue.asNumber(lv.get(2).evalValue(c));
+                        z = NumericValue.asNumber(lv.get(2));
                 }
             }
 
@@ -249,21 +247,20 @@ public class Sys {
                         NumericValue.asNumber(x).getDouble(),
                         NumericValue.asNumber(y).getDouble(),
                         NumericValue.asNumber(z).getDouble());
-            Value ret = new NumericValue(result);
-            return (cc, tt) -> ret;
+            return new NumericValue(result);
         });
 
-        expression.addLazyFunction("simplex", -1, (c, t, lv) ->
+        expression.addFunction("simplex", lv ->
         {
             SimplexNoiseSampler sampler;
             Value x, y, z;
 
             if (lv.size() >= 4)
             {
-                x = lv.get(0).evalValue(c);
-                y = lv.get(1).evalValue(c);
-                z = lv.get(2).evalValue(c);
-                sampler = SimplexNoiseSampler.getSimplex(NumericValue.asNumber(lv.get(3).evalValue(c)).getLong());
+                x = lv.get(0);
+                y = lv.get(1);
+                z = lv.get(2);
+                sampler = SimplexNoiseSampler.getSimplex(NumericValue.asNumber(lv.get(3)).getLong());
             }
             else
             {
@@ -271,10 +268,10 @@ public class Sys {
                 z = Value.NULL;
                 if (lv.size() < 2 )
                     throw new InternalExpressionException("'simplex' requires at least two dimensions to sample from");
-                x = NumericValue.asNumber(lv.get(0).evalValue(c));
-                y = NumericValue.asNumber(lv.get(1).evalValue(c));
+                x = NumericValue.asNumber(lv.get(0));
+                y = NumericValue.asNumber(lv.get(1));
                 if (lv.size() > 2)
-                    z = NumericValue.asNumber(lv.get(2).evalValue(c));
+                    z = NumericValue.asNumber(lv.get(2));
             }
             double result;
 
@@ -285,8 +282,7 @@ public class Sys {
                         NumericValue.asNumber(x).getDouble(),
                         NumericValue.asNumber(y).getDouble(),
                         NumericValue.asNumber(z).getDouble());
-            Value ret = new NumericValue(result);
-            return (cc, tt) -> ret;
+            return new NumericValue(result);
         });
 
         expression.addUnaryFunction("print", (v) ->
@@ -295,17 +291,11 @@ public class Sys {
             return v; // pass through for variables
         });
 
-        expression.addLazyFunction("time", 0, (c, t, lv) ->
-        {
-            Value time = new NumericValue((System.nanoTime() / 1000) / 1000.0);
-            return (cc, tt) -> time;
-        });
+        expression.addContextFunction("time", 0, (c, t, lv) ->
+                new NumericValue((System.nanoTime() / 1000.0) / 1000.0));
 
-        expression.addLazyFunction("unix_time", 0, (c, t, lv) ->
-        {
-            Value time = new NumericValue(System.currentTimeMillis());
-            return (cc, tt) -> time;
-        });
+        expression.addContextFunction("unix_time", 0, (c, t, lv) ->
+                new NumericValue(System.currentTimeMillis()));
 
         expression.addFunction("convert_date", lv ->
         {
@@ -318,7 +308,7 @@ public class Sys {
                 cal.setTimeInMillis(NumericValue.asNumber(value, "timestamp").getLong());
                 int weekday = cal.get(Calendar.DAY_OF_WEEK)-1;
                 if (weekday == 0) weekday = 7;
-                Value retVal = ListValue.ofNums(
+                return ListValue.ofNums(
                         cal.get(Calendar.YEAR),
                         cal.get(Calendar.MONTH)+1,
                         cal.get(Calendar.DAY_OF_MONTH),
@@ -329,7 +319,6 @@ public class Sys {
                         cal.get(Calendar.DAY_OF_YEAR),
                         cal.get(Calendar.WEEK_OF_YEAR)
                 );
-                return retVal;
             }
             else if(value instanceof ListValue)
             {
@@ -361,6 +350,7 @@ public class Sys {
             return new NumericValue(cal.getTimeInMillis());
         });
 
+        // lazy cause evaluates expression multiple times
         expression.addLazyFunction("profile_expr", 1, (c, t, lv) ->
         {
             LazyValue lazy = lv.get(0);
@@ -375,19 +365,16 @@ public class Sys {
             return (cc, tt) -> res;
         });
 
-        expression.addLazyFunction("var", 1, (c, t, lv) ->
-        {
-            String varname = lv.get(0).evalValue(c).getString();
-            return expression.getOrSetAnyVariable(c, varname);
-        });
+        expression.addContextFunction("var", 1, (c, t, lv) ->
+                expression.getOrSetAnyVariable(c, lv.get(0).getString()).evalValue(c));
 
-        expression.addLazyFunction("undef", 1, (c, t, lv) ->
+        expression.addContextFunction("undef", 1, (c, t, lv) ->
         {
-            Value remove = lv.get(0).evalValue(c);
+            Value remove = lv.get(0);
             if (remove instanceof FunctionValue)
             {
                 c.host.delFunction(expression.module, remove.getString());
-                return (cc, tt) -> Value.NULL;
+                return Value.NULL;
             }
             String varname = remove.getString();
             boolean isPrefix = varname.endsWith("*");
@@ -417,46 +404,41 @@ public class Sys {
                     c.delVariable(varname);
                 }
             }
-            return (cc, tt) -> Value.NULL;
+            return Value.NULL;
         });
 
         //deprecate
-        expression.addLazyFunction("vars", 1, (c, t, lv) ->
+        expression.addContextFunction("vars", 1, (c, t, lv) ->
         {
-            String prefix = lv.get(0).evalValue(c).getString();
+            String prefix = lv.get(0).getString();
             List<Value> values = new ArrayList<>();
             if (prefix.startsWith("global"))
             {
-                c.host.globaVariableNames(expression.module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
+                c.host.globalVariableNames(expression.module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
             }
             else
             {
                 c.getAllVariableNames().stream().filter(s -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
             }
-            Value retval = ListValue.wrap(values);
-            return (cc, tt) -> retval;
+            return ListValue.wrap(values);
         });
 
+        // lazy cause default expression may not be executed if not needed
         expression.addLazyFunction("system_variable_get", -1, (c, t, lv) ->
         {
             if (lv.size() == 0) throw new InternalExpressionException("'system_variable_get' expects at least a key to be fetched");
             Value key = lv.get(0).evalValue(c);
-            if (lv.size() > 1)
-            {
-                ScriptHost.systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
-            }
+            if (lv.size() > 1) ScriptHost.systemGlobals.computeIfAbsent(key, k -> lv.get(1).evalValue(c));
             Value res = ScriptHost.systemGlobals.get(key);
             if (res!=null) return (cc, tt) -> res;
-            return (cc, tt) -> Value.NULL;
+            return LazyValue.NULL;
         });
 
-        expression.addLazyFunction("system_variable_set", 2, (c, t, lv) ->
+        expression.addBinaryFunction("system_variable_set", (key, value) ->
         {
-            Value key = lv.get(0).evalValue(c);
-            Value value = lv.get(1).evalValue(c);
             Value res = ScriptHost.systemGlobals.put(key, value);
-            if (res!=null) return (cc, tt) -> res;
-            return (cc, tt) -> Value.NULL;
+            if (res!=null) return res;
+            return Value.NULL;
         });
     }
 }

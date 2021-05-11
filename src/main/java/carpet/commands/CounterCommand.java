@@ -53,7 +53,7 @@ public class CounterCommand
     {
         if (color == null)
         {
-            HopperCounter.resetAll(source.getMinecraftServer());
+            HopperCounter.resetAll(source.getMinecraftServer(), false);
             Messenger.m(source, "w Restarted all counters");
         }
         else

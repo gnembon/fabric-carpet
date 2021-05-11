@@ -23,6 +23,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
@@ -271,7 +272,13 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
             return 0;
         }
+
         MinecraftServer server = source.getMinecraftServer();
+        if (!World.isInBuildLimit(new BlockPos(pos.x, pos.y, pos.z)))
+        {
+            Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
+            return 0;
+        }
         PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode);
         if (player == null)
         {

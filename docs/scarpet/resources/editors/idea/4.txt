@@ -42,4 +42,6 @@ __on_player_deals_damage(player, amount, entity) ->
 __on_player_dies(player) -> 
 __on_player_respawns(player) -> 
 __on_player_disconnects(player, reason) -> 
-__on_player_connects(player) ->
+__on_player_connects(player) -> 
+__on_explosion(pos, power, source, causer, mode, fire) ->
+__on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities) ->

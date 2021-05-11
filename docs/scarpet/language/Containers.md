@@ -23,12 +23,12 @@ In case to simplify the access with nested objects, you can add chain of address
 than calling it multiple times. `get(get(foo,a),b)` is equivalent to `get(foo, a, b)`, or `foo:a:b`.
 
 <pre>
-get(l(range(10)), 5)  => 5
-get(l(range(10)), -1)  => 9
-get(l(range(10)), 10)  => 0
-l(range(10)):93  => 3
+get([range(10)], 5)  => 5
+get([range(10)], -1)  => 9
+get([range(10)], 10)  => 0
+[range(10)]:93  => 3
 get(player() ~ 'nbt', 'Health') => 20 // inefficient way to get player health, use player() ~ 'health' instead
-get(m( l('foo',2), l('bar',3), l('baz',4) ), 'bar')  => 3
+get({ 'foo' -> 2, 'bar' -> 3, 'baz' -> 4 }, 'bar')  => 3
 </pre>
 
 ### `has(container, address, ...), has(lvalue)`
@@ -100,13 +100,13 @@ of the existing elements. Use `replace` to remove and replace existing element.
 and merges keys from `value` with the compound tag under the path
 
 <pre>
-a = l(1, 2, 3); put(a, 1, 4); a  => [1, 4, 3]
-a = l(1, 2, 3); put(a, null, 4); a  => [1, 2, 3, 4]
-a = l(1, 2, 3); put(a, 1, 4, 'insert'); a  => [1, 4, 2, 3]
-a = l(1, 2, 3); put(a, null, l(4, 5, 6), 'extend'); a  => [1, 2, 3, 4, 5, 6]
-a = l(1, 2, 3); put(a, 1, l(4, 5, 6), 'extend'); a  => [1, 4, 5, 6, 2, 3]
-a = l(l(0,0,0),l(0,0,0),l(0,0,0)); put(a.1, 1, 1); a  => [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
-a = m(1,2,3,4); put(a, 5, null); a  => {1: null, 2: null, 3: null, 4: null, 5: null}
+a = [1, 2, 3]; put(a, 1, 4); a  => [1, 4, 3]
+a = [1, 2, 3]; put(a, null, 4); a  => [1, 2, 3, 4]
+a = [1, 2, 3]; put(a, 1, 4, 'insert'); a  => [1, 4, 2, 3]
+a = [1, 2, 3]; put(a, null, [4, 5, 6], 'extend'); a  => [1, 2, 3, 4, 5, 6]
+a = [1, 2, 3]; put(a, 1, [4, 5, 6], 'extend'); a  => [1, 4, 5, 6, 2, 3]
+a = [[0,0,0],[0,0,0],[0,0,0]]; put(a:1, 1, 1); a  => [[0, 0, 0], [0, 1, 0], [0, 0, 0]]
+a = {1,2,3,4}; put(a, 5, null); a  => {1: null, 2: null, 3: null, 4: null, 5: null}
 tag = nbt('{}'); put(tag, 'BlockData.Properties', '[1,2,3,4]'); tag  => {BlockData:{Properties:[1,2,3,4]}}
 tag = nbt('{a:[{lvl:3},{lvl:5},{lvl:2}]}'); put(tag, 'a[].lvl', 1); tag  => {a:[{lvl:1},{lvl:1},{lvl:1}]}
 tag = nbt('{a:[{lvl:[1,2,3]},{lvl:[3,2,1]},{lvl:[4,5,6]}]}'); put(tag, 'a[].lvl', 1, 2); tag
@@ -187,10 +187,10 @@ other parts. In that case consecutive calls to `slice` will refer to index `0` t
 cannot go back nor track where they are in the sequence (see examples).
 
 <pre>
-slice([0,1,2,3,4,5], 1, 3)  => [1, 2, 3]
+slice([0,1,2,3,4,5], 1, 3)  => [1, 2]
 slice('foobar', 0, 1)  => 'f'
 slice('foobar', 3)  => 'bar'
-slice(range(10), 3, 5)  => [3, 4, 5]
+slice(range(10), 3, 5)  => [3, 4]
 slice(range(10), 5)  => [5, 6, 7, 8, 9]
 r = range(100); [slice(r, 5, 7), slice(r, 1, 3)]  => [[5, 6], [8, 9]]
 </pre>
@@ -202,7 +202,7 @@ It returns a new sorted list, not affecting the list passed to the argument
 
 <pre>sort(3,2,1)  => [1, 2, 3]
 sort('a',3,11,1)  => [1, 3, 11, 'a']
-list = l(4,3,2,1); sort(list)  => [1, 2, 3, 4]
+list = [4,3,2,1]; sort(list)  => [1, 2, 3, 4]
 </pre>
 
 ### `sort_key(list, key_expr)`
@@ -212,20 +212,20 @@ Sorts a copy of the list in the order or keys as defined by the `key_expr` for e
 <pre>
 sort_key([1,3,2],_)  => [1, 2, 3]
 sort_key([1,3,2],-_)  => [3, 2, 1]
-sort_key(l(range(10)),rand(1))  => [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
-sort_key(l(range(20)),str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
+sort_key([range(10)],rand(1))  => [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
+sort_key([range(20)],str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
 </pre>
 
 ### `range(to), range(from, to), range(from, to, step)`
 
 Creates a range of numbers from `from`, no greater/larger than `to`. The `step` parameter dictates not only the 
 increment size, but also direction (can be negative). The returned value is not a proper list, just the iterator 
-but if for whatever reason you need a proper list with all items evaluated, use `l(range(to))`. 
+but if for whatever reason you need a proper list with all items evaluated, use `[range(to)]`. 
 Primarily to be used in higher order functions
 
 <pre>
 range(10)  => [...]
-l(range(10))  => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+[range(10)]  => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 map(range(10),_*_)  => [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
 reduce(range(10),_a+_, 0)  => 45
 range(5,10)  => [5, 6, 7, 8, 9]
@@ -247,7 +247,7 @@ arguments is a list of lists, they have to have two elements each, and then firs
 
 In map creation context (directly inside `{}` or `m{}` call), `->` operator acts like a pair constructor for simpler
 syntax providing key value pairs, so the invocation to `{foo -> bar, baz -> quux}` is equivalent to
-`{l(foo, bar), l(baz, quux)}`, which is equivalent to somewhat older, but more traditional functional form of
+`{[foo, bar], [baz, quux]}`, which is equivalent to somewhat older, but more traditional functional form of
 `m(l(foo, bar),l(baz, quuz))`.
 
 Internally, `{?}`(list syntax) and `m(?)`(function syntax) are equivalent. `{}` is simply translated to 

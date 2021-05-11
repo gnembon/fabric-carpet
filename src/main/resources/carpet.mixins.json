@@ -24,6 +24,7 @@
     "ServerPlayNetworkHandler_interactionUpdatesMixin",
 
     "ServerMetadata_motdMixin",
+    "MinecraftServer_pingPlayerSampleLimit",
 
     "MinecraftServer_coreMixin",
 
@@ -60,6 +61,7 @@
     "Brain_Mixin",
     "Memory_scarpetMixin",
 
+    "PlayerEntity_fakePlayersMixin",
     "ServerWorld_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
 
@@ -72,6 +74,7 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
+    "ClientSettingsC2SPacket_scarpetMixin",
     "PlayerManager_coreMixin",
     "PlayerManager_fakePlayersMixin",
     "RedstoneWireBlockMixin",
@@ -128,6 +131,7 @@
     "TntBlockMixin",
     "ExplosionMixin",
     "ExplosionAccessor",
+    "Explosion_scarpetEventMixin",
 
     "TntEntityMixin",
     "ProjectileEntityMixin",
@@ -156,6 +160,7 @@
     "MobEntity_extremeMixin",
     "ProjectileEntity_extremeMixin",
     "Projectile_extremeMixin",
+    "WitherEntity_extremeMixin",
 
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
@@ -175,6 +180,7 @@
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
+    "ReloadCommand_reloadAppsMixin",
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
@@ -192,6 +198,7 @@
     "PlayerEntity_creativeNoClipMixin",
     "PistonBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
+    "WallStandingBlockItem_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin"
 
   ],
@@ -210,6 +217,7 @@
     "DebugRenderer_scarpetRenderMixin",
     "WorldRenderer_scarpetRenderMixin",
 
+    "BiomeArray_cleanLogsMixin",
     "SoundEngineInt_cleanLogsMixin",
     "SoundSystem_cleanLogsMixin"
   ],

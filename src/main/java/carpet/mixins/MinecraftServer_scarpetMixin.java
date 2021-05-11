@@ -2,6 +2,7 @@ package carpet.mixins;
 
 import carpet.fakes.MinecraftServerInterface;
 import carpet.helpers.TickSpeed;
+import net.minecraft.resource.ServerResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.world.ServerWorld;
@@ -44,6 +45,8 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
 
     @Shadow @Final private Map<RegistryKey<World>, ServerWorld> worlds;
 
+    @Shadow private ServerResourceManager serverResourceManager;
+
     @Override
     public void forceTick(BooleanSupplier isAhead)
     {
@@ -56,6 +59,11 @@ public abstract class MinecraftServer_scarpetMixin extends ReentrantThreadExecut
     public LevelStorage.Session getCMSession()
     {
         return session;
+    }
+
+    @Override
+    public ServerResourceManager getResourceManager() {
+        return serverResourceManager;
     }
 
     @Override

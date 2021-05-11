@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class MapValue extends AbstractListValue implements ContainerValueInterface
 {
-    private Map<Value, Value> map;
+    private final Map<Value, Value> map;
 
     private MapValue()
     {
@@ -45,6 +46,12 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     public Iterator<Value> iterator()
     {
         return new ArrayList<>(map.keySet()).iterator();
+    }
+
+    @Override
+    public List<Value> unpack()
+    {
+        return map.entrySet().stream().map(e -> ListValue.of(e.getKey(), e.getValue())).collect(Collectors.toList());
     }
 
     @Override
@@ -268,7 +275,9 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     public JsonElement toJson()
     {
         JsonObject jsonMap = new JsonObject();
-        map.forEach((k, v) -> jsonMap.add(k.getString(), v.toJson()));
+        List<Value> keys = new ArrayList<>(map.keySet());
+        Collections.sort(keys);
+        keys.forEach( k -> jsonMap.add(k.getString(), map.get(k).toJson()));
         return jsonMap;
     }
 }

@@ -42,7 +42,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.28+v210224";
+    public static final String carpetVersion = "1.4.35+v210505";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -413,20 +413,26 @@ public class CarpetSettings
 
     private static class ModulePermissionLevel extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
-            CarpetSettings.runPermissionLevel = SettingsManager.getCommandLevel(newValue);
+            int permissionLevel = SettingsManager.getCommandLevel(newValue);
+            if (source != null && !source.hasPermissionLevel(permissionLevel))
+                return null;
+            CarpetSettings.runPermissionLevel = permissionLevel;
+            CarpetServer.settingsManager.notifyPlayersCommandsChanged();
             return newValue;
         }
         @Override
-        public String description() { return "Also controls permission level of commands executed via `run()`";}
+        public String description() { return "When changing the rule, you must at least have the permission level you are trying to give it";}
     }
     @Rule(
             desc = "Enables restrictions for arbitrary code execution with scarpet",
             extra = {
                     "Users that don't have this permission level",
-                    "won't be able to load apps or /script run"
+                    "won't be able to load apps or /script run.",
+                    "It is also the permission level apps will",
+                    "have when running commands with run()"
             },
-            category = {COMMAND, SCARPET},
-            validate = ModulePermissionLevel.class
+            category = {SCARPET},
+            validate = {Validator._COMMAND_LEVEL_VALIDATOR.class, ModulePermissionLevel.class}
     )
     public static String commandScriptACE = "ops";
 
@@ -436,6 +442,19 @@ public class CarpetSettings
             category = SCARPET
     )
     public static boolean scriptsAutoload = true;
+
+    @Rule(
+            desc = "Enables scripts debugging messages in system log",
+            category = SCARPET
+    )
+    public static boolean scriptsDebugging = false;
+
+    @Rule(
+            desc = "Enables scripts optimization",
+            category = SCARPET
+    )
+    public static boolean scriptsOptimization = true;
+
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static String commandPlayer = "ops";
@@ -532,6 +551,14 @@ public class CarpetSettings
     )
     public static int maxEntityCollisions = 0;
 
+    @Rule(
+            desc = "Customizable server list ping (Multiplayer menu) playerlist sample limit",
+            options = {"0", "12", "20", "40"},
+            category = CREATIVE,
+            strict = false,
+            validate = Validator.NONNEGATIVE_NUMBER.class
+    )
+    public static int pingPlayerListLimit = 12;
     /*
 
     @Rule(

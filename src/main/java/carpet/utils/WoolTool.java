@@ -21,6 +21,26 @@ import java.util.List;
 public class WoolTool
 {
     private static final HashMap<MaterialColor,DyeColor> Material2Dye = new HashMap<>();
+
+    public static final HashMap<MaterialColor,String> Material2DyeName = new HashMap<MaterialColor, String>(){{
+        put(MaterialColor.WHITE, "w ");
+        put(MaterialColor.ORANGE, "#F9801D ");
+        put(MaterialColor.MAGENTA, "m ");
+        put(MaterialColor.LIGHT_BLUE, "t ");
+        put(MaterialColor.YELLOW, "y ");
+        put(MaterialColor.LAPIS, "l ");
+        put(MaterialColor.PINK, "#FFACCB ");
+        put(MaterialColor.GRAY, "f ");
+        put(MaterialColor.LIGHT_GRAY, "g ");
+        put(MaterialColor.CYAN, "c ");
+        put(MaterialColor.PURPLE, "p ");
+        put(MaterialColor.BLUE, "v ");
+        put(MaterialColor.BROWN, "#835432 ");
+        put(MaterialColor.GREEN, "e ");
+        put(MaterialColor.RED, "r ");
+        put(MaterialColor.BLACK, "k ");
+    }};
+
     static
     {
         for (DyeColor color: DyeColor.values())

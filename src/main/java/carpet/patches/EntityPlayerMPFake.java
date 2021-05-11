@@ -2,6 +2,8 @@ package carpet.patches;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
@@ -16,6 +18,7 @@ import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.UserCache;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
@@ -34,11 +37,15 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         //prolly half of that crap is not necessary, but it works
         ServerWorld worldIn = server.getWorld(dimensionId);
         ServerPlayerInteractionManager interactionManagerIn = new ServerPlayerInteractionManager(worldIn);
-        GameProfile gameprofile = server.getUserCache().findByName(username);
-        if (gameprofile == null)
-        {
-            return null;
+        UserCache.setUseRemote(false);
+        GameProfile gameprofile;
+        try {
+            gameprofile = server.getUserCache().findByName(username);
         }
+        finally {
+            UserCache.setUseRemote(server.isDedicated() && server.isOnlineMode());
+        }
+        if (gameprofile == null) return null;
         if (gameprofile.getProperties().containsKey("textures"))
         {
             gameprofile = SkullBlockEntity.loadProperties(gameprofile);
@@ -102,6 +109,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
 
     public void kill(Text reason)
     {
+        shakeOff();
         this.server.send(new ServerTask(this.server.getTicks(), () -> {
             this.networkHandler.onDisconnected(reason);
         }));
@@ -120,9 +128,19 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         this.playerTick();
     }
 
+    private void shakeOff()
+    {
+        if (getVehicle() instanceof PlayerEntity) stopRiding();
+        for (Entity passenger : getPassengersDeep())
+        {
+            if (passenger instanceof PlayerEntity) passenger.stopRiding();
+        }
+    }
+
     @Override
     public void onDeath(DamageSource cause)
     {
+        shakeOff();
         super.onDeath(cause);
         setHealth(20);
         this.hungerManager = new HungerManager();

@@ -2,6 +2,8 @@ package carpet.script.value;
 
 import carpet.fakes.BlockPredicateInterface;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
 import carpet.utils.BlockInfo;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.MaterialColor;
@@ -32,6 +34,7 @@ import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ColumnPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
@@ -158,7 +161,7 @@ public class ValueConversions
                         }
                     }
                     if (dim == null)
-                        throw new InternalExpressionException("Incorrect dimension string: "+dimString);
+                        throw new ThrowStatement(dimString, Throwables.UNKNOWN_DIMENSION);
                     return server.getWorld(dim);
             }
         }
@@ -393,5 +396,27 @@ public class ValueConversions
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );
+    }
+
+    public static Value guess(ServerWorld serverWorld, Object o) {
+        if (o instanceof List)
+            return ListValue.wrap(((List<?>) o).stream().map(oo -> guess(serverWorld, oo)).collect(Collectors.toList()));
+        if (o instanceof BlockPos)
+            return new BlockValue(null, serverWorld, (BlockPos)o);
+        if (o instanceof Entity)
+            return EntityValue.of((Entity) o);
+        if (o instanceof Vec3d)
+            return of((Vec3d)o);
+        if (o instanceof Vec3i)
+            return of(new BlockPos((Vec3i)o));
+        if (o instanceof ItemStack)
+            return of((ItemStack)o);
+        if (o instanceof Boolean)
+            return BooleanValue.of((Boolean) o);
+        if (o instanceof Number)
+            return NumericValue.of((Number) o);
+        if (o instanceof Identifier)
+            return of((Identifier)o);
+        return StringValue.of(o.toString());
     }
 }

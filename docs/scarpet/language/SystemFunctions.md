@@ -14,34 +14,35 @@ as well as minecraft related concepts like `block`, `entity`, `nbt`, `text`.
 
 ### `bool(expr)`
 
-Returns a boolean context of the expression. Note that there are no true/false values in scarpet. `true` is 
-alias of 1, and `false` is 0\. Bool is also interpreting string values as boolean, which is different from other 
+Returns a boolean context of the expression. 
+Bool is also interpreting string values as boolean, which is different from other 
 places where boolean context can be used. This can be used in places where API functions return string values to 
-represent binary values
+represent binary values.
 
 <pre>
-bool(pi) => 1
-bool(false) => 0
-bool('') => 0
-bool(l()) => 0
-bool(l('')) => 1
-bool('foo') => 1
-bool('false') => 0
-bool('nulL') => 0
-if('false',1,0) => 1
+bool(pi) => true
+bool(false) => false
+bool('') => false
+bool([]) => false
+bool(['']) => true
+bool('foo') => true
+bool('false') => false
+bool('nulL') => false
+if('false',1,0) => true
 </pre>
 
 ### `number(expr)`
 
-Returns a numeric context of the expression. Can be used to read numbers from strings
+Returns a numeric context of the expression. Can be used to read numbers from strings, or other types
 
 <pre>
-number(null) => null
+number(null) => 0
 number(false) => 0
+number(true) => 1
 number('') => null
 number('3.14') => 3.14
-number(l()) => 0
-number(l('')) => 1
+number([]) => 0
+number(['']) => 1
 number('foo') => null
 number('3bar') => null
 number('2')+number('2') => 4
@@ -53,7 +54,7 @@ If called with one argument, returns string representation of such value.
 
 Otherwise, returns a formatted string representing the expression. Arguments for formatting can either be provided as
  each consecutive parameter, or as a list which then would be the only extra parameter. To format one list argument
- , you can use `str(list)`, or `str('foo %s', l(list))`.
+ , you can use `str(list)`, or `str('foo %s', [list])`.
 
 Accepts formatting style accepted by `String.format`. 
 Supported types (with `"%<?>"` syntax):
@@ -65,15 +66,15 @@ Supported types (with `"%<?>"` syntax):
 *   `%%`: '%' character
 
 <pre>
-str(null) => null
-str(false) => 0
-str('') => null
-str('3.14') => 3.14
-str(l()) => 0
-str(l('')) => 1
-str('foo') => null
-str('3bar') => null
-str(2)+str(2) => 22
+str(null) => 'null'
+str(false) => 'false'
+str('') => ''
+str('3.14') => '3.14'
+str([]) => '[]'
+str(['']) => '[]'
+str('foo') => 'foo'
+str('3bar') => '3bar'
+str(2)+str(2) => '22'
 str('pi: %.2f',pi) => 'pi: 3.14'
 str('player at: %d %d %d',pos(player())) => 'player at: 567, -2423, 124'
 </pre>
@@ -88,7 +89,7 @@ are not thread safe and require the execution to park on the server thread, wher
 the off-tick time in between ticks that didn't take all 50ms. There are however benefits of running things in parallel, 
 like fine time control not relying on the tick clock, or running things independent on each other. You can still run 
 your actions on tick-by-tick basis, either taking control of the execution using `game_tick()` API function 
-(nasty solution), or scheduling tick using `schedule()` function (preffered solution), but threading gives much more control
+(nasty solution), or scheduling tick using `schedule()` function (preferred solution), but threading gives much more control
 on the timings without impacting the main game and is the only solution to solve problems in parallel 
 (see [scarpet camera](/src/main/resources/assets/carpet/scripts/camera.sc)).
 
@@ -102,7 +103,10 @@ effectively parallelized.
 
 If the app is shutting down, creating new tasks via `task` will not succeed. Instead the new task will do nothing and return
 `null`, so most threaded application should handle closing apps naturally. Keep in mind in case you rely on task return values,
-that they will return `null` regardless of anything in these situations.
+that they will return `null` regardless of anything in these situations. When app handles `__on_close()` event, new tasks cannot
+be submitted at this point, but current tasks are not terminated. Apps can use that opportunity to gracefully shutdown their tasks.
+Regardless if the app handles `__on_close()` event, or does anything with their tasks in it, all tasks will be terminated exceptionally
+within the next 1.5 seconds. 
 
 ### `task(function, ... args)`, `task_thread(executor, function, ... args)`
 
@@ -217,8 +221,8 @@ or length of the list
 length(pi) => 1
 length(pi*pi) => 1
 length(pi^pi) => 2
-length(l()) => 0
-length(l(1,2,3)) => 3
+length([]) => 0
+length([1,2,3]) => 3
 length('') => 0
 length('foo') => 3
 </pre>
@@ -226,17 +230,23 @@ length('foo') => 3
 ### `rand(expr), rand(expr, seed)`
 
 returns a random number from `0.0` (inclusive) to `expr` (exclusive). In boolean context (in conditions, 
-boolean functions, or `bool`), returns false if the randomly selected value is less than 1\. This means 
-that `rand(2)` returns true half of the time and `rand(5)` returns true for 80% (4/5) of the time. If seed is not 
-provided, uses a random seed. If seed is provided, each consecutive call to rand() will act like 'next' call to the 
-same random object. Scarpet keeps track of up to 1024 custom random number generators, so if you exceed this number 
-(per app), then your random sequence will revert to the beginning.
+boolean functions, or `bool`), returns false if the randomly selected value is less than 1. This means 
+that `bool(rand(2))` returns true half of the time and `!rand(5)` returns true for 20% (1/5) of the time. If seed is not 
+provided, uses a random seed that's shared across all scarpet apps. 
+If seed is provided, each consecutive call to rand() will act like 'next' call to the 
+same random object. Scarpet keeps track of up to 65536 custom random number generators (custom seeds, per app), 
+so if you exceed this number, your random sequences will revert to the beginning and start over.
 
 <pre>
 map(range(10), floor(rand(10))) => [5, 8, 0, 6, 9, 3, 9, 9, 1, 8]
-map(range(10), bool(rand(2))) => [1, 1, 1, 0, 0, 1, 1, 0, 0, 0]
+map(range(10), bool(rand(2))) => [false, false, true, false, false, false, true, false, true, false]
 map(range(10), str('%.1f',rand(_))) => [0.0, 0.4, 0.6, 1.9, 2.8, 3.8, 5.3, 2.2, 1.6, 5.6]
 </pre>
+
+## `reset_seed(seed)`
+
+Resets the sequence of the randomizer used by `rand` for this seed to its initial state. Returns a boolean value
+indicating if the given seed has been used or not.
 
 ### `perlin(x), perlin(x, y), perlin(x, y, z), perlin(x, y, z, seed)`
 
@@ -302,11 +312,11 @@ Unlike the previous function, this can be used to get exact time, but it varies 
 
 ### `convert_date(milliseconds)`
 ### `convert_date(year, month, date, hours?, mins?, secs?)`
-### `convert_date(l(year, month, date, hours?, mins?, secs?))`
+### `convert_date([year, month, date, hours?, mins?, secs?])`
 
 If called with a single argument, converts standard POSIX time to a list in the format: 
 
-`l(year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year)`
+`[year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year]`
 
 eg: `convert_date(1592401346960) -> [2020, 6, 17, 10, 42, 26, 3, 169, 25]`
 
@@ -325,9 +335,9 @@ Example editing:
 <pre>
 date = convert_date(unix_time());
 
-months = l('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-days = l('Mon','Tue','Wed','Thu','Fri','Sat','Sun');
+days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 print(
   str('Its %s, %d %s %d, %02d:%02d:%02d', 
@@ -339,6 +349,15 @@ print(
 This will give you a date:
 
 It is currently `hrs`:`mins` and `secs` seconds on the `date`th of `month`, `year`
+
+### `encode_b64(string)`, `decode_b64(string)`
+
+Encode or decode a string from b64, throwing a `b64_error` exception if it's invalid
+
+### `encode_json(value)`, `decode_json(string)`
+
+Encodes a value as a json string, and decodes a json string as a valid value, throwing a `json_error` exception if it 
+doesn't parse properly
 
 ### `profile_expr(expression)`
 
@@ -381,7 +400,7 @@ used for object counting
 <pre>
 /script run
 $ count_blocks(ent) -> (
-$   l(cx, cy, cz) = query(ent, 'pos');
+$   [cx, cy, cz] = query(ent, 'pos');
 $   scan(cx, cy, cz, 16, 16, 16, var('count_'+_) += 1);
 $   for ( sort_key( vars('count_'), -var(_)),
 $     print(str( '%s: %d', slice(_,6), var(_) ))

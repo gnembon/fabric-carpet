@@ -44,9 +44,11 @@ public abstract class CommandManagerMixin
 
     @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "execute", at = @At(
-            value = "INVOKE",
-            target = "Lorg/apache/logging/log4j/Logger;isDebugEnabled()Z"
-    ))
+                value = "INVOKE",
+                target = "Lorg/apache/logging/log4j/Logger;isDebugEnabled()Z"
+            ),
+        require = 0
+    )
     private boolean doesOutputCommandStackTrace(Logger logger)
     {
         if (CarpetSettings.superSecretSetting)

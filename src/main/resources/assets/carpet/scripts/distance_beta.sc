@@ -60,13 +60,13 @@ global_generators = {
 _create_shapes(mode, from, to) ->
 (
     shapes = call(global_generators:mode, from+[0, 0.07, 0], to+[0, 0.07, 0]);
-    shapes += ['label', 'pos',to+[0,0.2,0],             'align', 'right', 'indent', -1.5, 'text',format('rb Cylindrical:')];
-    shapes += ['label', 'pos',to+[0,0.2,0],             'align', 'left',                  'text',_round(_euclidean(from, [to:0, from:1, to:2]), 0.001)];
+    shapes += ['label', 'pos',to+[0,0.2,0],              'align', 'right', 'indent', -1.5, 'text',format('rb Cylindrical:')];
+    shapes += ['label', 'pos',to+[0,0.2,0],              'align', 'left',                  'text',_round(_euclidean(from, [to:0, from:1, to:2]), 0.001)];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 1, 'align', 'right', 'indent', -1.5, 'text',format('rb Manhattan:')];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 1, 'align', 'left',                  'text',_round(_manhattan(from,to),0.001)];
-    shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'right', 'indent', -1.5, 'text',format('rb Euclidian:')];
+    shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'right', 'indent', -1.5, 'text',format('rb Euclidean:')];
     shapes += ['label', 'pos',to+[0,0.2,0], 'height', 2, 'align', 'left',                  'text',_round(_euclidean(from,to),0.001)];
-    map(shapes, put(_, 1, [20, 'player', player()], 'extend'); _);
+    map(shapes, put(_, 1, [40, 'player', player()], 'extend'); _);
 );
 
 __mktp(pos) -> str('!/tp %.6f %.6f %.6f', pos);
@@ -77,9 +77,8 @@ set_start(pos)->(
 );
 
 set_mode(mode)->(
-    if (global_display_modes ~ mode,
-        global_current_mode = mode
-    )
+    global_current_mode = mode;
+    print(player(),format('gi Set display mode to '+mode))
 );
 
 calculate(end)->(
