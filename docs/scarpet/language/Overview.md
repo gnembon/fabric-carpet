@@ -69,7 +69,7 @@ Writing a program, is like writing a `2+3`, just a bit longer.
 ## Basic language components
 
 Programs consist of constants, like `2`, `3.14`, `pi`, or `'foo'`, operators like `+`, `/`, `->`, variables which you 
-can define, like `foo` or special ones that will be defined for you, like `_x`, or `_` , which I specific to a each
+can define, like `foo` or special ones that will be defined for you, like `_x`, or `_` , which are specific to each
 built in function, and functions with name, and arguments in the form of `f(a,b,c)`, where `f` is the function name,
 and `a, b, c` are the arguments which can be any other expression. And that's all the parts of the language, so all
 in all - sounds quite simple.
