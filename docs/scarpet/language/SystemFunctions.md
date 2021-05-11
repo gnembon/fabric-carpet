@@ -23,8 +23,8 @@ represent binary values.
 bool(pi) => true
 bool(false) => false
 bool('') => false
-bool(l()) => false
-bool(l('')) => true
+bool([]) => false
+bool(['']) => true
 bool('foo') => true
 bool('false') => false
 bool('nulL') => false
@@ -41,8 +41,8 @@ number(false) => 0
 number(true) => 1
 number('') => null
 number('3.14') => 3.14
-number(l()) => 0
-number(l('')) => 1
+number([]) => 0
+number(['']) => 1
 number('foo') => null
 number('3bar') => null
 number('2')+number('2') => 4
@@ -54,7 +54,7 @@ If called with one argument, returns string representation of such value.
 
 Otherwise, returns a formatted string representing the expression. Arguments for formatting can either be provided as
  each consecutive parameter, or as a list which then would be the only extra parameter. To format one list argument
- , you can use `str(list)`, or `str('foo %s', l(list))`.
+ , you can use `str(list)`, or `str('foo %s', [list])`.
 
 Accepts formatting style accepted by `String.format`. 
 Supported types (with `"%<?>"` syntax):
@@ -221,8 +221,8 @@ or length of the list
 length(pi) => 1
 length(pi*pi) => 1
 length(pi^pi) => 2
-length(l()) => 0
-length(l(1,2,3)) => 3
+length([]) => 0
+length([1,2,3]) => 3
 length('') => 0
 length('foo') => 3
 </pre>
@@ -312,11 +312,11 @@ Unlike the previous function, this can be used to get exact time, but it varies 
 
 ### `convert_date(milliseconds)`
 ### `convert_date(year, month, date, hours?, mins?, secs?)`
-### `convert_date(l(year, month, date, hours?, mins?, secs?))`
+### `convert_date([year, month, date, hours?, mins?, secs?])`
 
 If called with a single argument, converts standard POSIX time to a list in the format: 
 
-`l(year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year)`
+`[year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year]`
 
 eg: `convert_date(1592401346960) -> [2020, 6, 17, 10, 42, 26, 3, 169, 25]`
 
@@ -335,9 +335,9 @@ Example editing:
 <pre>
 date = convert_date(unix_time());
 
-months = l('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-days = l('Mon','Tue','Wed','Thu','Fri','Sat','Sun');
+days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 print(
   str('Its %s, %d %s %d, %02d:%02d:%02d', 
@@ -400,7 +400,7 @@ used for object counting
 <pre>
 /script run
 $ count_blocks(ent) -> (
-$   l(cx, cy, cz) = query(ent, 'pos');
+$   [cx, cy, cz] = query(ent, 'pos');
 $   scan(cx, cy, cz, 16, 16, 16, var('count_'+_) += 1);
 $   for ( sort_key( vars('count_'), -var(_)),
 $     print(str( '%s: %d', slice(_,6), var(_) ))

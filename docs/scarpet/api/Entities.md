@@ -102,7 +102,7 @@ which in this case can be radically simplified:
 
 <pre>
 query(p, 'name') <=> p ~ 'name'     // much shorter and cleaner
-query(p, 'holds', 'offhand') <=> p ~ l('holds', 'offhand')    // not really but can be done
+query(p, 'holds', 'offhand') <=> p ~ ['holds', 'offhand']    // not really but can be done
 </pre>
 
 ### `query(e, 'removed')`
@@ -151,7 +151,7 @@ Returns a 3d vector where the entity is looking.
 
 ### `query(e, 'motion')`
 
-Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`. Motion represents the velocity from all the forces
+Triple of entity's motion vector, `[motion_x, motion_y, motion_z]`. Motion represents the velocity from all the forces
 that exert on the given entity. Things that are not 'forces' like voluntary movement, or reaction from the ground are
 not part of said forces.
 
@@ -573,11 +573,11 @@ Removes (not kills) entity from the game.
 
 Kills the entity.
 
-### `modify(e, 'pos', x, y, z), modify(e, 'pos', l(x,y,z) )`
+### `modify(e, 'pos', x, y, z), modify(e, 'pos', [x,y,z] )`
 
 Moves the entity to a specified coords.
 
-### `modify(e, 'location', x, y, z, yaw, pitch), modify(e, 'location', l(x, y, z, yaw, pitch) )`
+### `modify(e, 'location', x, y, z, yaw, pitch), modify(e, 'location', [x, y, z, yaw, pitch] )`
 
 Changes full location vector all at once.
 
@@ -599,11 +599,11 @@ When pointing straight up or down, yaw will stay the same.
 
 For living entities, controls their head and body yaw angle.
 
-### `modify(e, 'move', x, y, z), modify(e, 'move', l(x,y,z) )`
+### `modify(e, 'move', x, y, z), modify(e, 'move', [x,y,z] )`
 
 Moves the entity by a vector from its current location.
 
-### `modify(e, 'motion', x, y, z), modify(e, 'motion', l(x,y,z) )`
+### `modify(e, 'motion', x, y, z), modify(e, 'motion', [x,y,z] )`
 
 Sets the motion vector (where and how much entity is moving).
 
@@ -611,7 +611,7 @@ Sets the motion vector (where and how much entity is moving).
 
 Sets the corresponding component of the motion vector.
 
-### `modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', l(x, y, z) )`
+### `modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', [x, y, z] )`
 
 Adds a vector to the motion vector. Most realistic way to apply a force to an entity.
 
@@ -662,15 +662,15 @@ Mounts the entity to the `other`.
 
 Shakes off all passengers.
 
-### `modify(e, 'mount_passengers', passenger, ? ...), modify(e, 'mount_passengers', l(passengers) )`
+### `modify(e, 'mount_passengers', passenger, ? ...), modify(e, 'mount_passengers', [passengers] )`
 
 Mounts on all listed entities on `e`.
 
-### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', l(tags) )`
+### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', [tags] )`
 
 Adds tag(s) to the entity.
 
-### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', l(tags) )`
+### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', [tags] )`
 
 Removes tag(s) from the entity.
 
@@ -867,7 +867,7 @@ protect_villager(entity, amount, source, source_entity, healing_player) ->
 (
    if(source_entity && source_entity~'type' != 'player',
       modify(entity, 'health', amount + entity~'health' );
-      particle('end_rod', pos(entity)+l(0,3,0));
+      particle('end_rod', pos(entity)+[0,3,0]);
       print(str('%s healed thanks to %s', entity, healing_player))
    )
 );

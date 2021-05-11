@@ -20,9 +20,9 @@ or an OVERLY complex example:
 /script run
     block_check(x1, y1, z1, x2, y2, z2, block_to_check) ->
     (
-        l(minx, maxx) = sort(l(x1, x2));
-        l(miny, maxy) = sort(l(y1, y2));
-        l(minz, maxz) = sort(l(z1, z2));
+        [minx, maxx] = sort([x1, x2]);
+        [miny, maxy] = sort([y1, y2]);
+        [minz, maxz] = sort([z1, z2]);
         'Need to compute the size of the area of course';
         'Cause this language doesn\'t support comments in the command mode';
         xsize = maxx - minx + 1;
@@ -46,7 +46,7 @@ or an OVERLY complex example:
     check_area_around_closest_player_for_block(block_to_check) ->
     (
         closest_player = player();
-        l(posx, posy, posz) = query(closest_player, 'pos');
+        [posx, posy, posz] = query(closest_player, 'pos');
         total_count = block_check( posx-8,1,posz-8, posx+8,17,posz+8, block_to_check);
         print('There is '+total_count+' of '+block_to_check+' around you')
     )
