@@ -91,7 +91,7 @@ generator. The following code causes a cascading effect as blocks placed on chun
 loaded to full, thus generated:
 
 <pre>
-__config() -> m(['scope', 'global']);
+__config() -> {'scope' -> 'global'};
 __on_chunk_generated(x, z) -> (
   scan(x,0,z,0,0,0,15,15,15,
     if (perlin(_x/16, _y/8, _z/16) > _y/16,
@@ -104,7 +104,7 @@ __on_chunk_generated(x, z) -> (
 The following addition resolves this issue, by not allowing block updates past chunk borders:
 
 <pre>
-__config() -> m(['scope', 'global']);
+__config() -> {'scope' -> 'global'};
 __on_chunk_generated(x, z) -> (
   without_updates(
     scan(x,0,z,0,0,0,15,15,15,
@@ -822,4 +822,3 @@ with the game and assumed not changing.
 
 `custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
 the future.
-
