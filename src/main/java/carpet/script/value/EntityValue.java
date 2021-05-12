@@ -1062,7 +1062,7 @@ public class EntityValue extends Value
             y /= l;
             z /= l;
             float pitch = (float) -Math.asin(y) / 0.017453292F;
-            float yaw = (float) (x==0 && z==0 ? e.yaw : MathHelper.atan2(-x,z) / 0.017453292F);
+            float yaw = (float) (x==0 && z==0 ? e.getYaw() : MathHelper.atan2(-x,z) / 0.017453292F);
             updatePosition(e, e.getX(), e.getY(), e.getZ(), yaw, pitch);
         });
 
