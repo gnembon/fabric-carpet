@@ -55,7 +55,7 @@ public interface ValueConverter<R>
      *          parameters from {@link #checkAndConvert(Iterator, Context, Context.Type)} or that require multiple parameters may decide to throw
      *          {@link UnsupportedOperationException} in this method and override {@link #checkAndConvert(Iterator, Context, Context.Type)} instead. Those
      *          implementations, however, should not be available for map or list types, since those can only operate with {@link Value}.</p>
-     *          <p>Currently, the only implementations requiring that are {@link Params#CONTEXT_PROVIDER} and {@link Params#LAZY_T_PROVIDER}</p>
+     *          <p>Currently, the only implementations requiring that are {@link Params#CONTEXT_PROVIDER} and {@link Params#CONTEXT_TYPE_PROVIDER}</p>
      *          <p>Implementations can also provide different implementations for this and {@link #checkAndConvert(Iterator, Context, Context.Type)}, in case
      *          they can support it in some situations that can't be used else, such as inside of lists or maps, although they should try to provide
      *          in {@link #checkAndConvert(Iterator, Context, Context.Type)} at least the same conversion as the one from this method.</p>
@@ -132,12 +132,6 @@ public interface ValueConverter<R>
                 return Param.Params.getCustomConverter(annoType, type); // Throws if incorrect usage
             if (annoType.isAnnotationPresent(Param.Strict.class))
                 return (ValueConverter<R>) Params.getStrictConverter(annoType); // Throws if incorrect usage
-            if (annoType.isAnnotationPresent(Param.TheLazyT.class))
-            {
-                if (type != Context.Type.class)
-                    throw new IllegalArgumentException("The Lazy T can only be used in Integer parameters");
-                return (ValueConverter<R>) Params.LAZY_T_PROVIDER;
-            }
             if (annoType.getAnnotations()[0].annotationType().getEnclosingClass() == Locator.class)
                 return Locator.Locators.fromAnnotatedType(annoType, type);
         }
@@ -149,6 +143,8 @@ public interface ValueConverter<R>
         //     return (ValueConverter<R>) Params.LAZY_VALUE_IDENTITY;
         if (type == Context.class)
             return (ValueConverter<R>) Params.CONTEXT_PROVIDER;
+        if (type == Context.Type.class)
+            return (ValueConverter<R>) Params.CONTEXT_TYPE_PROVIDER;
         return Objects.requireNonNull(SimpleTypeConverter.get(type), "Type " + type + " is not registered. Register it in SimpleTypeConverter to use it");
     }
 

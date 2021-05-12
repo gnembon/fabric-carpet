@@ -35,7 +35,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * 
  * @see Param.Strict
  * @see Param.AllowSingleton
- * @see Param.TheLazyT
  * @see Param.Custom
  * @see Locator.Block
  * @see Locator.Vec3d
@@ -44,22 +43,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 public interface Param
 {
-
-    /**
-     * <p>Indicates that this {@link Context.Type} argument is The Lazy <em>t</em>, whatever that actually is.</p>
-     * 
-     * <p>This has no parameters, since The Lazy <em>t</em> is The Lazy <em>t</em>, without further discussion</p>
-     *
-     * <p>{@code expression.addLazyFunction("name", -1, (context, t <-- HERE, lv)}</p>
-     */
-    @Documented
-    @Retention(RUNTIME)
-    @Target({ PARAMETER, TYPE_USE }) // Not intended for type use, but for some reason else reflection doesn't get it??
-    public @interface TheLazyT
-    {
-
-    }
-
     /**
      * <p>Determines that this parameter accepts being passing a value directly instead of a list of those values.</p>
      * 
@@ -215,11 +198,11 @@ public interface Param
         };
         
         /**
-         * <p>A {@link ValueConverter} that outputs {@link TheLazyT} which the function has been called when running
+         * <p>A {@link ValueConverter} that outputs the {@link Context.Type} which the function has been called when running
          * {@link #checkAndConvert(Iterator, Context, Context.Type)}, or throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
-        static final ValueConverter<Context.Type> LAZY_T_PROVIDER = new ValueConverter<Context.Type>()
+        static final ValueConverter<Context.Type> CONTEXT_TYPE_PROVIDER = new ValueConverter<Context.Type>()
         {
             @Override public String getTypeName() { return null; }
 

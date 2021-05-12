@@ -166,8 +166,8 @@ public final class AnnotationParser
             this.name = method.getName();
             this.isMethodVarArgs = method.isVarArgs();
             this.methodParamCount = method.getParameterCount();
-            Parameter[] methodParameters = method.getParameters();
 
+            Parameter[] methodParameters = method.getParameters();
             this.valueConverters = new ObjectArrayList<>();
             for (int i = 0; i < this.methodParamCount; i++)
             {
@@ -270,7 +270,7 @@ public final class AnnotationParser
                 Object[] varArgs;
                 if (varArgsConverter.consumesVariableArgs())
                 {
-                    List<Object> varArgsList = new ObjectArrayList<>();
+                    List<Object> varArgsList = new ArrayList<>();
                     while (lvIterator.hasNext())
                     {
                         Object obj = varArgsConverter.checkAndConvert(lvIterator, context, theLazyT);

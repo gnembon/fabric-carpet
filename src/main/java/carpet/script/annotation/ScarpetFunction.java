@@ -31,13 +31,14 @@ import carpet.script.value.Value;
  * 
  * <p>Methods annotated with this annotation must not be static and must not declare throwing any checked exceptions.</p>
  * 
- * <p>If one of the method's parameters is {@link Context}, Carpet will pass the actual Carpet will pass the {@link Context} of the expression to the
- * method. In order to get <em>The lazy t</em>, annotate an {@link Integer} with {@link Param.TheLazyT}. See that class for more details.</p>
+ * <p>If one of the method's parameters is {@link Context}, Carpet will pass the actual {@link Context} of the expression to the
+ * method. If one of the method's parameters is {@link Context.Type}, Carpet will pass the Context Type the function was called inside. That
+ * is different from the Context Type provided in this annotation in that it's the one it was called with, while the one in the annotation
+ * is the one that will be used when evaluating the lazy values passed to the function.</p>
  * 
  * @see AnnotationParser
  * @see AnnotationParser#parseFunctionClass(Class)
  * @see Param.Strict
- * @see Param.TheLazyT
  * @see Param.AllowSingleton
  * @see Param.KeyValuePairs
  * @see Param.Custom
@@ -73,8 +74,8 @@ public @interface ScarpetFunction
     /**
      * <p>Defines the Context Type that will be used when evaluating arguments to annotated methods.</p>
      * 
-     * <p>Note that this is not the same as the output from {@link Param.TheLazyT}, since that returns the Context Type the method was called with,
-     * while this defines what Context Type will be used to evaluate the arguments.</p>
+     * <p>Note that this is not the same as the output from a {@link Context.Type} parameter, since that returns the Context Type the method was
+     * called with, while this defines what Context Type will be used to evaluate the arguments.</p>
      * 
      * <p>Defaults to {@link Context.Type#NONE}, like any regular ContextFunctions</p>
      * 
