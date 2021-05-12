@@ -50,7 +50,7 @@ Throws `unknown_particle` if particle doesn't exist.
 ## Markers
 
 ### `draw_shape(shape, duration, key?, value?, ... )`, 
-### `draw_shape(shape, duration, l(key?, value?, ... ))`, 
+### `draw_shape(shape, duration, [key?, value?, ... ])`, 
 ### `draw_shape(shape, duration, attribute_map)`
 ### `draw_shape(shape_list)`
 
@@ -212,7 +212,7 @@ produce an exception.
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
 Can optionally define player or list of players to send the message to.
 
-### `format(components, ...)`, `format(l(components, ...))`
+### `format(components, ...)`, `format([components, ...])`
 
 Creates a line of formatted text. Each component is either a string indicating formatting and text it corresponds to
 or a decorator affecting the component preceding it.
