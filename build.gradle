@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.5-SNAPSHOT'
+	id 'fabric-loom' version '0.8-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -18,7 +18,7 @@ dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modCompile "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	// modCompile "net.fabricmc:fabric:${project.fabric_version}"
@@ -31,14 +31,17 @@ dependencies {
 processResources {
 	inputs.property "version", project.version
 
-	from(sourceSets.main.resources.srcDirs) {
-		include "fabric.mod.json"
-		expand "version": project.mod_version
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
 	}
+	//from(sourceSets.main.resources.srcDirs) {
+	//	include "fabric.mod.json"
+	//	expand "version": project.mod_version
+	//}
 
-	from(sourceSets.main.resources.srcDirs) {
-		exclude "fabric.mod.json"
-	}
+	//from(sourceSets.main.resources.srcDirs) {
+	//	exclude "fabric.mod.json"
+	//}
 }
 
 
@@ -56,6 +59,9 @@ tasks.withType(JavaCompile).configureEach {
 	if (JavaVersion.current().isJava9Compatible()) {
 		 it.options.release = targetVersion
 	}
+
+	// Minecraft 1.17 (21w19a) upwards uses Java 16.
+	//it.options.release = 16
 }
 
 java {
