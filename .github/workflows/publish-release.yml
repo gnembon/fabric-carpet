@@ -66,8 +66,9 @@ jobs:
         with:
           ref: ${{ steps.getbranchinfo.outputs.branchname }}
       - name: Set up JDK 16
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 16
       - name: Cache Gradle packages
         uses: actions/cache@v2
@@ -140,8 +141,9 @@ jobs:
       - name: Checkout Carpet sources
         uses: actions/checkout@v2
       - name: Set up JDK 16
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 16
       - name: Cache Gradle packages
         uses: actions/cache@v2
