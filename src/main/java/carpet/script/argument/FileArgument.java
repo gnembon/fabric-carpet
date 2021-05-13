@@ -189,7 +189,8 @@ public class FileArgument
                 }
                 catch (IOException e)
                 {
-                    throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
+                    return null; // undr java 16 no file throws IOException - will take care of it later
+                    //throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
                 }
             }
             return zfs.getPath(resource+(isFolder?"/":type.extension));

@@ -142,7 +142,7 @@ public class FeatureGenerator
                 findFirst().map(Map.Entry::getValue).orElse(null);
     }
 
-    public static <T extends FeatureConfig> StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<T> structure, boolean computeBox)
+    synchronized public static <T extends FeatureConfig> StructureStart shouldStructureStartAt(ServerWorld world, BlockPos pos, StructureFeature<T> structure, boolean computeBox)
     {
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();

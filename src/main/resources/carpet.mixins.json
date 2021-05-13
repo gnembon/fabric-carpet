@@ -2,7 +2,7 @@
   "required": true,
   "refmap": "fabric-carpet-refmap.json",
   "package": "carpet.mixins",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_16",
   "mixins": [
     "SpawnHelperInnerMixin",
     "CommandManagerMixin",
