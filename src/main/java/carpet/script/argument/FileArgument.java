@@ -184,8 +184,7 @@ public class FileArgument
                 }
                 catch (FileSystemNotFoundException | IOException fsnfe)
                 {
-                    return null; // undr java 16 no file throws IOException - will take care of it later
-                    //throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
+                    throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
                 }
             }
             return zfs.getPath(resource+(isFolder?"/":type.extension));
