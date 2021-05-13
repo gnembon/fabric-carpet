@@ -1,8 +1,6 @@
 package carpet.script.argument;
 
 import carpet.CarpetServer;
-import carpet.script.Context;
-import carpet.script.LazyValue;
 import carpet.script.bundled.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -180,14 +178,11 @@ public class FileArgument
                 Map<String, String> env = new HashMap<>();
                 if (reason == Reason.CREATE) env.put("create", "true");
                 zipPath = resolve(getDescriptor(module, zipContainer));
+                if (!Files.exists(zipPath) && reason != Reason.CREATE) return null; // no zip file
                 try {
                     zfs = FileSystems.newFileSystem(URI.create("jar:"+ zipPath.toUri().toString()), env);
                 }
-                catch (FileSystemNotFoundException fsnfe)
-                {
-                    return null;
-                }
-                catch (IOException e)
+                catch (FileSystemNotFoundException | IOException fsnfe)
                 {
                     return null; // undr java 16 no file throws IOException - will take care of it later
                     //throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
