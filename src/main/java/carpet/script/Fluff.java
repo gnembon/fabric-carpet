@@ -166,34 +166,36 @@ public abstract class Fluff
         @Override
         public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final List<LazyValue> lazyParams)
         {
-            try
-            {
-                return new LazyValue()
-                { // eager evaluation always ignores the required type and evals params by none default
-                    private List<Value> params;
 
-                    public Value evalValue(Context c, Context.Type type) {
-                        ILazyFunction.checkInterrupts();
+            return new LazyValue()
+            { // eager evaluation always ignores the required type and evals params by none default
+                private List<Value> params;
+                public Value evalValue(Context c, Context.Type type)
+                {
+                    ILazyFunction.checkInterrupts();
+                    try
+                    {
                         return AbstractFunction.this.eval(getParams(c));
                     }
-
-                    private List<Value> getParams(Context c) {
-                        if (params == null) {
-                            // very likely needs to be dynamic, so not static like here, or remember if it was.
-                            params = unpackArgs(lazyParams, c, Context.Type.NONE);
-                        }
-                        else
-                        {
-                            CarpetSettings.LOG.error("How did we get here 1");
-                        }
-                        return params;
+                    catch (RuntimeException exc)
+                    {
+                        throw Expression.handleCodeException(cc, exc, e, t);
                     }
-                };
-            }
-            catch (RuntimeException exc)
-            {
-                throw Expression.handleCodeException(cc, exc, e, t);
-            }
+                }
+                private List<Value> getParams(Context c)
+                {
+                    if (params == null)
+                    {
+                        // very likely needs to be dynamic, so not static like here, or remember if it was.
+                        params = unpackArgs(lazyParams, c, Context.Type.NONE);
+                    }
+                    else
+                    {
+                        CarpetSettings.LOG.error("How did we get here 1");
+                    }
+                    return params;
+                }
+            };
         }
     }
 
