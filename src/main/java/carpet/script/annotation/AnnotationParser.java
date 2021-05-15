@@ -229,13 +229,15 @@ public final class AnnotationParser
             if (isEffectivelyVarArgs)
             {
                 if (lv.size() < minParams)
-                    throw new InternalExpressionException(name + " expected at least " + minParams + " arguments, got " + lv.size() + ". " + getUsage());
+                    throw new InternalExpressionException("Function '" + name + "' expected at least " + minParams + " arguments, got " + lv.size() + ". " 
+                            + getUsage());
                 if (lv.size() > maxParams)
-                    throw new InternalExpressionException( name + " expected up to " + maxParams + " arguments, got " + lv.size() + ". " + getUsage());
+                    throw new InternalExpressionException("Function '" + name + " expected up to " + maxParams + " arguments, got " + lv.size() + ". " 
+                            + getUsage());
             } else
             {
                 if (lv.size() != minParams) // min == max if not varargs. We do this cause we don't use function's arg checking to be able to return lazy
-                    throw new InternalExpressionException("Function " + name + " expected " + minParams + " arguments, got " + lv.size() + ". " + getUsage());
+                    throw new InternalExpressionException("Function '" + name + "' expected " + minParams + " arguments, got " + lv.size() +". " + getUsage());
             }
             Object[] params = getMethodParams(lv, context, t);
             try
@@ -261,8 +263,7 @@ public final class AnnotationParser
             {
                 params[i] = valueConverters.get(i).checkAndConvert(lvIterator, context, theLazyT);
                 if (params[i] == null)
-                    throw new InternalExpressionException(
-                            "Incorrect argument passsed to " + name + " function.\n" + getUsage());
+                    throw new InternalExpressionException("Incorrect argument passsed to '" + name + "' function.\n" + getUsage());
             }
             if (isMethodVarArgs)
             {
@@ -275,7 +276,7 @@ public final class AnnotationParser
                     {
                         Object obj = varArgsConverter.checkAndConvert(lvIterator, context, theLazyT);
                         if (obj == null)
-                            throw new InternalExpressionException("Incorrect argument passsed to " + name + " function.\n" + getUsage());
+                            throw new InternalExpressionException("Incorrect argument passsed to '" + name + "' function.\n" + getUsage());
                         varArgsList.add(obj);
                     }
                     varArgs = varArgsList.toArray();
@@ -286,7 +287,7 @@ public final class AnnotationParser
                     {
                         varArgs[i] = varArgsConverter.checkAndConvert(lvIterator, context, theLazyT);
                         if (varArgs[i] == null)
-                            throw new InternalExpressionException("Incorrect argument passsed to " + name + " function.\n" + getUsage());
+                            throw new InternalExpressionException("Incorrect argument passsed to '" + name + "' function.\n" + getUsage());
                     }
                 }
                 params[methodParamCount - 1] = primitiveVarArgs ? ArrayUtils.toPrimitive(varArgs) : varArgs; // Copies the array
@@ -297,7 +298,7 @@ public final class AnnotationParser
         private String getUsage()
         {
             // Possibility: More descriptive messages using param.getName()? Would need changing gradle setup to keep those
-            StringBuilder builder = new StringBuilder("Usage: ");
+            StringBuilder builder = new StringBuilder("Usage: '");
             builder.append(name);
             builder.append('(');
             builder.append(valueConverters.stream().map(ValueConverter::getTypeName).filter(Objects::nonNull).collect(Collectors.joining(", ")));
@@ -310,6 +311,7 @@ public final class AnnotationParser
             {
                 builder.append(')');
             }
+            builder.append("'");
             return builder.toString();
         }
     }
