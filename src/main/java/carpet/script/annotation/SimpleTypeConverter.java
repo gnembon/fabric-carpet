@@ -4,9 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.jetbrains.annotations.Nullable;
-
 import carpet.CarpetServer;
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.NumericValue;
@@ -19,9 +18,6 @@ import net.minecraft.world.World;
 
 /**
  * <p>A simple {@link ValueConverter} implementation that converts from a specified subclass of {@link Value} into {@code <R>} by using a given
- * function.</p>
- * 
- * <p>This class uses a {@link ValueCaster} in order to check and cast the {@link Value} to its required type, and then converts it using the given
  * function.</p>
  * 
  * <p>{@link SimpleTypeConverter}s are reused whenever asked for one, since they don't have any complexity.</p>
@@ -50,7 +46,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
     }
 
     private final Function<T, R> converter;
-    private final ValueCaster<T> caster;
+    private final Class<T> valueClass;
     private final String typeName;
 
     /**
@@ -66,7 +62,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
     public SimpleTypeConverter(Class<T> inputType, Function<T, R> converter, String typeName)
     {
         this.converter = converter;
-        this.caster = ValueCaster.get(inputType);
+        this.valueClass = inputType;
         this.typeName = typeName;
     }
 
@@ -90,18 +86,27 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
     }
 
     @Override
-    @Nullable
     public R convert(Value value)
     {
-        T castedValue = caster.convert(value);
-        return castedValue == null ? null : converter.apply(castedValue);
+        return valueClass.isInstance(value) ? converter.apply(valueClass.cast(value)) : null;
     }
 
-    public static <T extends Value, R> SimpleTypeConverter<T, R> registerType(Class<T> requiredInputType, Class<R> outputType,
+    /**
+     * <p>Registers a new conversion from a {@link Value} subclass to a Java type.</p>
+     * 
+     * @param <T> The {@link Value} subtype required for this conversion, for automatic checked casting
+     * @param <R> The type of the resulting object
+     * @param requiredInputType The {@link Class} of {@code <T>}
+     * @param outputType The {@link Class} of {@code <R>>}
+     * @param converter A function that converts from the given {@link Value} subtype to the given type. Should ideally return {@code null}
+     *                  when given {@link Value} cannot be converted to the {@code <R>}, to follow the {@link ValueConverter} contract, but it
+     *                  can also throw an {@link InternalExpressionException} by itself if really necessary.
+     * @param typeName The name of the type, following the conventions of {@link ValueConverter#getTypeName()}
+     */
+    public static <T extends Value, R> void registerType(Class<T> requiredInputType, Class<R> outputType,
             Function<T, R> converter, String typeName)
     {
         SimpleTypeConverter<T, R> type = new SimpleTypeConverter<>(requiredInputType, converter, typeName);
         byResult.put(outputType, type);
-        return type;
     }
 }
