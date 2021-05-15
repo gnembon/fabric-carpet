@@ -37,7 +37,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -226,7 +226,7 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
+    public boolean addScriptHost(ServerCommandSource source, String name, Predicate<ServerCommandSource> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
@@ -457,7 +457,7 @@ public class CarpetScriptServer
     static class TransferData
     {
         boolean perUser;
-        Function<ServerCommandSource, Boolean> commandValidator;
+        Predicate<ServerCommandSource> commandValidator;
         boolean isRuleApp;
         private TransferData(CarpetScriptHost host)
         {
