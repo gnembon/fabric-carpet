@@ -40,6 +40,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class HopperCounter
@@ -275,13 +276,14 @@ public class HopperCounter
         if (item instanceof DyeItem) return TextColor.fromRgb(appropriateColor(((DyeItem) item).getColor().getMaterialColor().color));
         Block block = null;
         Identifier id = Registry.ITEM.getId(item);
+        Optional<Block> optionalBlock;
         if (item instanceof BlockItem)
         {
             block = ((BlockItem) item).getBlock();
         }
-        else if (Registry.BLOCK.containsId(id))
+        else if ((optionalBlock = Registry.BLOCK.getOrEmpty(id)).isPresent())
         {
-            block = Registry.BLOCK.get(id);
+            block = optionalBlock.get();
         }
         if (block != null)
         {
