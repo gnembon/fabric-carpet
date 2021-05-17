@@ -356,7 +356,7 @@ public class HopperCounter
 
     /**
      * Guesses the item's colour from the item itself. It first calls {@link HopperCounter#fromItem} to see if it has a
-     * valid colour there, if not just makes a guess, and if that fails just returns {@link HopperCounter#WHITE}
+     * valid colour there, if not just makes a guess, and if that fails just returns null
      */
     public static TextColor guessColor(Item item)
     {
