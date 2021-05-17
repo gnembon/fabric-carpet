@@ -240,7 +240,7 @@ public class HopperCounter
     }
 
     /**
-     * Maps a number of items to a number of blocks, so we can get their colours easily with the
+     * Maps items that don't get a good block to reference for colour, or those that colour is wrong to a number of blocks, so we can get their colours easily with the
      * {@link Block#getDefaultMaterialColor()} method as these items have those same colours.
      */
     private static final ImmutableMap<Item, Block> DEFAULTS = new ImmutableMap.Builder<Item, Block>()
