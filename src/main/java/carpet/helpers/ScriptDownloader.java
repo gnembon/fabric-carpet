@@ -36,6 +36,7 @@ import java.util.Set;
  * A class used to save scarpet app store scripts to disk
  */
 
+@SuppressWarnings("rawtypes")
 public class ScriptDownloader {
 
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
@@ -214,7 +215,7 @@ public class ScriptDownloader {
 
 
         for(String folder : path){
-            if(!currentLookedAtFiles.containsKey(folder))
+            if(!currentLookedAtFiles.containsKey(folder) || folder.matches(".+\\.sc"))
                 return new Pair<>(currentValidPath.toString(), currentLookedAtFiles.keySet());
 
             currentValidPath.append(folder).append("/");
