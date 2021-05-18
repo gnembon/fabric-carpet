@@ -56,7 +56,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -76,10 +76,10 @@ public class CarpetScriptHost extends ScriptHost
     public Map<Value, Value> appConfig;
     public Map<String, CommandArgument> appArgTypes;
 
-    Function<ServerCommandSource, Boolean> commandValidator;
+    Predicate<ServerCommandSource> commandValidator;
     boolean isRuleApp;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -100,7 +100,7 @@ public class CarpetScriptHost extends ScriptHost
         this.isRuleApp = isRuleApp;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
     {
         CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
@@ -180,13 +180,13 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> getNewCommandTree(
-            List<Pair<List<CommandToken>,FunctionArgument>> entries, Function<ServerCommandSource, Boolean> useValidator
+            List<Pair<List<CommandToken>,FunctionArgument>> entries, Predicate<ServerCommandSource> useValidator
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
-        Function<ServerCommandSource, Boolean> configValidator = getCommandConfigPermissions();
+        Predicate<ServerCommandSource> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player));
+               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.test(player) && configValidator.test(player));
         for (Pair<List<CommandToken>,FunctionArgument> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
@@ -194,7 +194,7 @@ public class CarpetScriptHost extends ScriptHost
         return command;
     }
 
-    public Function<ServerCommandSource, Boolean> getCommandConfigPermissions() throws CommandSyntaxException
+    public Predicate<ServerCommandSource> getCommandConfigPermissions() throws CommandSyntaxException
     {
         Value confValue = appConfig.get(StringValue.of("command_permission"));
         if (confValue == null) return s -> true;
@@ -475,7 +475,7 @@ public class CarpetScriptHost extends ScriptHost
             return null;
         }
 
-        Function<ServerCommandSource, Boolean> configValidator;
+        Predicate<ServerCommandSource> configValidator;
         try
         {
             configValidator = getCommandConfigPermissions();
@@ -487,7 +487,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         String hostName = getName();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.apply(player) && configValidator.apply(player)).
+                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.test(player) && configValidator.test(player)).
                 executes( (c) ->
                 {
                     CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
@@ -540,7 +540,7 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
-    public LiteralArgumentBuilder<ServerCommandSource> readCommands(Function<ServerCommandSource, Boolean> useValidator) throws CommandSyntaxException
+    public LiteralArgumentBuilder<ServerCommandSource> readCommands(Predicate<ServerCommandSource> useValidator) throws CommandSyntaxException
     {
         Value commands = appConfig.get(StringValue.of("commands"));
 
