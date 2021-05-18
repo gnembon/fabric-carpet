@@ -279,7 +279,7 @@ public class HopperCounter
         {
             block = ((BlockItem) item).getBlock();
         }
-        else if (Registry.BLOCK.containsId(id))
+        else if (Registry.BLOCK.getOrEmpty(id).isPresent())
         {
             block = Registry.BLOCK.get(id);
         }
