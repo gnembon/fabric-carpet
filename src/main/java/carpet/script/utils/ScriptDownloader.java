@@ -1,4 +1,4 @@
-package carpet.helpers;
+package carpet.script.utils;
 
 import carpet.utils.Messenger;
 import com.google.gson.JsonArray;
