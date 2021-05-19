@@ -2,6 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.helpers.ScriptDownloader;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
@@ -31,18 +32,13 @@ import net.minecraft.command.argument.BlockStateArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.Clearable;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -61,6 +57,7 @@ public class ScriptCommand
         Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
         scarpetFunctions = new TreeSet<>(Expression.none.getFunctionNames());
         APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
+        ScriptDownloader.updateLocalRepoStructure();
     }
 
     public static List<String> suggestFunctions(ScriptHost host, String previous, String prefix)
@@ -105,6 +102,23 @@ public class ScriptCommand
         return suggestionsBuilder.buildFuture();
     }
 
+    /**
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link ScriptDownloader#localScarpetRepoStructure}
+     * variable.
+     */
+    private static CompletableFuture<Suggestions> suggestDownloadableApps(
+            CommandContext<ServerCommandSource> context,
+            SuggestionsBuilder suggestionsBuilder
+    ) {
+        String previous = suggestionsBuilder.getRemaining();
+        Pair<String, Set<String>> suggestions = ScriptDownloader.fileNamesFromPath(previous);
+        String currentValidPath = suggestions.getLeft();
+
+        suggestions.getRight().forEach(s -> suggestionsBuilder.suggest(currentValidPath + s));
+
+        return suggestionsBuilder.buildFuture();
+    }
+
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> b = literal("globals").
@@ -128,7 +142,7 @@ public class ScriptCommand
                                 null,
                                 null,
                                 ""
-                        )).
+                        ))  .
                         then(argument("arguments", StringArgumentType.greedyString()).
                                 executes( (cc) -> invoke(
                                         cc,
@@ -302,10 +316,13 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
 
+        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
+                then(literal("global").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), true)))).
+                then(literal("local").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), false))));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
-                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q));
+                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d));
         dispatcher.register(literal("script").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
                 then(literal("in").
