@@ -623,16 +623,15 @@ public class Auxiliary {
             return new FormattedTextValue(Messenger.c(values.stream().map(Value::getString).toArray()));
         });
 
-        expression.addContextFunction("run", 1, (c, t, lv) -> {
-            BlockPos target = ((CarpetContext)c).origin;
-            Vec3d posf = new Vec3d((double)target.getX()+0.5D, target.getY(),(double)target.getZ()+0.5D);
+        expression.addContextFunction("run", 1, (c, t, lv) ->
+        {
             ServerCommandSource s = ((CarpetContext)c).s;
             try
             {
                 Text[] error = {null};
                 List<Text> output = new ArrayList<>();
                 Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
-                        new SnoopyCommandSource(s, posf, error, output),
+                        new SnoopyCommandSource(s, error, output),
                         lv.get(0).getString())
                 );
                 return ListValue.of(
@@ -647,7 +646,8 @@ public class Auxiliary {
             }
         });
 
-        expression.addContextFunction("save", 0, (c, t, lv) -> {
+        expression.addContextFunction("save", 0, (c, t, lv) ->
+        {
             ServerCommandSource s = ((CarpetContext)c).s;
             s.getMinecraftServer().getPlayerManager().saveAllPlayerData();
             s.getMinecraftServer().save(true,true,true);
