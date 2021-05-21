@@ -82,6 +82,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
+        CarpetScriptServer.parseFunctionClasses();
     }
 
     public static void onServerLoaded(MinecraftServer server)
