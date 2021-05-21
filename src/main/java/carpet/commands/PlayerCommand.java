@@ -230,10 +230,6 @@ public class PlayerCommand
             String playerName = StringArgumentType.getString(context, "player");
 
             // check parameters
-            if (playerName.length() > 40) {
-                Messenger.m(context.getSource(), "rb Player name: " + playerName + " is too long");
-                return 0;
-            }
             if (!World.isInBuildLimit(new BlockPos(pos.x, pos.y, pos.z))) {
                 Messenger.m(context.getSource(), "rb Player " + playerName + " cannot be placed outside of the world");
                 return 0;
