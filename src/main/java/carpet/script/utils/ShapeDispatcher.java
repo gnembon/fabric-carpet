@@ -47,6 +47,7 @@ import net.minecraft.util.registry.RegistryKey;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +66,7 @@ public class ShapeDispatcher
     public static Pair<ExpiringShape,Map<String, Value>> fromFunctionArgs(
             MinecraftServer server, ServerWorld world,
             List<Value> lv,
-            ServerPlayerEntity[] playerRef
+            Set<ServerPlayerEntity> playerSet
     )
     {
         if (lv.size() < 3) throw new InternalExpressionException("'draw_shape' takes at least three parameters, shape name, duration, and its params");
@@ -97,16 +98,25 @@ public class ShapeDispatcher
 
         if (params.containsKey("player"))
         {
-            ServerPlayerEntity player = EntityValue.getPlayerByValue(server, params.get("player"));
-            if (player == null)
-                throw new InternalExpressionException("'player' parameter needs to represent an existing player");
+            Value players = params.get("player");
+            List<Value> playerVals;
+            if (players instanceof ListValue)
+                playerVals = ((ListValue) players).getItems();
+            else
+                playerVals = Collections.singletonList(players);
+            for (Value pVal : playerVals)
+            {
+                ServerPlayerEntity player = EntityValue.getPlayerByValue(server, pVal);
+                if (player == null)
+                    throw new InternalExpressionException("'player' parameter needs to represent an existing player, not "+pVal.getString());
+                playerSet.add(player);
+            }
             params.remove("player");
-            playerRef[0] = player;
         }
         return Pair.of(ShapeDispatcher.create(server, shapeType, params), params);
     }
 
-    public static void sendShape(List<ServerPlayerEntity> players, List<Pair<ExpiringShape,Map<String, Value>>> shapes)
+    public static void sendShape(Collection<ServerPlayerEntity> players, List<Pair<ExpiringShape,Map<String, Value>>> shapes)
     {
         List<ServerPlayerEntity> clientPlayers = new ArrayList<>();
         List<ServerPlayerEntity> alternativePlayers = new ArrayList<>();

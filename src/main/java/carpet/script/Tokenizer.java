@@ -398,8 +398,28 @@ public class Tokenizer implements Iterator<Tokenizer.Token>
     {
         enum TokenType
         {
-            VARIABLE, FUNCTION, LITERAL, OPERATOR, UNARY_OPERATOR,
-            OPEN_PAREN, COMMA, CLOSE_PAREN, HEX_LITERAL, STRINGPARAM, MARKER
+            FUNCTION(true, false), OPERATOR(true, false), UNARY_OPERATOR(true, false),
+            VARIABLE(false, false), CONSTANT(false, true),
+            LITERAL(false, true), HEX_LITERAL(false, true), STRINGPARAM(false, true),
+            OPEN_PAREN(false, true), COMMA(false, true), CLOSE_PAREN(false, true), MARKER(false, true);
+
+            boolean functional;
+            boolean constant;
+
+            TokenType(boolean functional, boolean constant)
+            {
+                this.functional = functional;
+                this.constant = constant;
+            }
+
+            public boolean isFunctional()
+            {
+                return functional;
+            }
+
+            public boolean isConstant() {
+                return constant;
+            }
         }
         public String surface = "";
         public TokenType type;

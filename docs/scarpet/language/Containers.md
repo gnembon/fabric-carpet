@@ -202,7 +202,7 @@ It returns a new sorted list, not affecting the list passed to the argument
 
 <pre>sort(3,2,1)  => [1, 2, 3]
 sort('a',3,11,1)  => [1, 3, 11, 'a']
-list = l(4,3,2,1); sort(list)  => [1, 2, 3, 4]
+list = [4,3,2,1]; sort(list)  => [1, 2, 3, 4]
 </pre>
 
 ### `sort_key(list, key_expr)`
@@ -212,15 +212,15 @@ Sorts a copy of the list in the order or keys as defined by the `key_expr` for e
 <pre>
 sort_key([1,3,2],_)  => [1, 2, 3]
 sort_key([1,3,2],-_)  => [3, 2, 1]
-sort_key(l(range(10)),rand(1))  => [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
-sort_key(l(range(20)),str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
+sort_key([range(10)],rand(1))  => [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
+sort_key([range(20)],str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
 </pre>
 
 ### `range(to), range(from, to), range(from, to, step)`
 
 Creates a range of numbers from `from`, no greater/larger than `to`. The `step` parameter dictates not only the 
 increment size, but also direction (can be negative). The returned value is not a proper list, just the iterator 
-but if for whatever reason you need a proper list with all items evaluated, use `l(range(to))`. 
+but if for whatever reason you need a proper list with all items evaluated, use `[range(to)]`. 
 Primarily to be used in higher order functions
 
 <pre>
@@ -247,7 +247,7 @@ arguments is a list of lists, they have to have two elements each, and then firs
 
 In map creation context (directly inside `{}` or `m{}` call), `->` operator acts like a pair constructor for simpler
 syntax providing key value pairs, so the invocation to `{foo -> bar, baz -> quux}` is equivalent to
-`{l(foo, bar), l(baz, quux)}`, which is equivalent to somewhat older, but more traditional functional form of
+`{[foo, bar], [baz, quux]}`, which is equivalent to somewhat older, but more traditional functional form of
 `m(l(foo, bar),l(baz, quuz))`.
 
 Internally, `{?}`(list syntax) and `m(?)`(function syntax) are equivalent. `{}` is simply translated to 

@@ -2,6 +2,7 @@ package carpet.script;
 
 import carpet.script.bundled.Module;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.language.Arithmetic;
 import carpet.script.value.FunctionValue;
@@ -19,8 +20,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -29,6 +32,7 @@ public abstract class ScriptHost
     public static Map<Value, Value> systemGlobals = new ConcurrentHashMap<>();
     private static final Map<Long, Random> randomizers = new Long2ObjectOpenHashMap<>();
 
+    public static Thread mainThread = null;
     private final Map<Value, ThreadPoolExecutor> executorServices = new HashMap<>();
     private final Map<Value, Object> locks = new ConcurrentHashMap<>();
     protected boolean inTermination = false;
@@ -113,15 +117,11 @@ public abstract class ScriptHost
         initializeModuleGlobals(moduleData);
         this.moduleData.put(code, moduleData);
         this.modules.put(code==null?null:code.getName(), code);
+        mainThread = Thread.currentThread();
     }
 
     void initializeModuleGlobals(ModuleData md)
     {
-        md.globalVariables.put("euler", (c, t) -> Arithmetic.euler);
-        md.globalVariables.put("pi", (c, t) -> Arithmetic.PI);
-        md.globalVariables.put("null", (c, t) -> Value.NULL);
-        md.globalVariables.put("true", (c, t) -> Value.TRUE);
-        md.globalVariables.put("false", (c, t) -> Value.FALSE);
     }
 
     public void importModule(Context c, String moduleName)
@@ -177,8 +177,8 @@ public abstract class ScriptHost
             throw new InternalExpressionException("Cannot import from module that is not imported");
         }
         return Stream.concat(
-                globaVariableNames(source, s -> s.startsWith("global_")),
-                globaFunctionNames(source, s -> true)
+                globalVariableNames(source, s -> s.startsWith("global_")),
+                globalFunctionNames(source, s -> true)
         ).distinct().sorted();
     }
 
@@ -201,7 +201,7 @@ public abstract class ScriptHost
     }
     private FunctionValue getFunction(Module module, String name)
     {
-        ModuleData local = moduleData.get(module);
+        ModuleData local = getModuleData(module);
         FunctionValue ret = local.globalFunctions.get(name); // most uses would be from local scope anyways
         if (ret != null) return ret;
         ModuleData target = local.functionImports.get(name);
@@ -235,7 +235,7 @@ public abstract class ScriptHost
     public LazyValue getGlobalVariable(String name) { return getGlobalVariable(main, name); }
     public LazyValue getGlobalVariable(Module module, String name)
     {
-        ModuleData local = moduleData.get(module);
+        ModuleData local = getModuleData(module);
         LazyValue ret = local.globalVariables.get(name); // most uses would be from local scope anyways
         if (ret != null) return ret;
         ModuleData target = local.globalsImports.get(name);
@@ -268,55 +268,62 @@ public abstract class ScriptHost
 
     public void delFunctionWithPrefix(Module module, String prefix)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalFunctions.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
         data.functionImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
     }
     public void delFunction(Module module, String funName)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalFunctions.remove(funName);
         data.functionImports.remove(funName);
     }
 
     public void delGlobalVariableWithPrefix(Module module, String prefix)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalVariables.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
         data.globalsImports.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
     }
 
     public void delGlobalVariable(Module module, String varName)
     {
-        ModuleData data = moduleData.get(module);
+        ModuleData data = getModuleData(module);
         data.globalFunctions.remove(varName);
         data.functionImports.remove(varName);
     }
 
+    private ModuleData getModuleData(Module module)
+    {
+        ModuleData data = moduleData.get(module);
+        if (data == null) throw new IntegrityException("Module structure changed for the app. Did you reload the app with tasks running?");
+        return data;
+    }
+
     public void addUserDefinedFunction(Context ctx, Module module, String name, FunctionValue fun)
     {
-        moduleData.get(module).globalFunctions.put(name, fun);
+        getModuleData(module).globalFunctions.put(name, fun);
     }
 
     public void setGlobalVariable(Module module, String name, LazyValue lv)
     {
-        moduleData.get(module).globalVariables.put(name, lv);
+        getModuleData(module).globalVariables.put(name, lv);
     }
 
-    public Stream<String> globaVariableNames(Module module, Predicate<String> predicate)
+    public Stream<String> globalVariableNames(Module module, Predicate<String> predicate)
     {
         return Stream.concat(Stream.concat(
-                moduleData.get(module).globalVariables.keySet().stream(),
-                moduleData.get(module).globalsImports.keySet().stream()
-        ), moduleData.get(module).futureImports.keySet().stream().filter(s -> s.startsWith("global_"))).filter(predicate);
+                getModuleData(module).globalVariables.keySet().stream(),
+                getModuleData(module).globalsImports.keySet().stream()
+        ), getModuleData(module).futureImports.keySet().stream().filter(s -> s.startsWith("global_"))).filter(predicate);
     }
 
-    public Stream<String> globaFunctionNames(Module module, Predicate<String> predicate)
+    public Stream<String> globalFunctionNames(Module module, Predicate<String> predicate)
     {
         return Stream.concat(Stream.concat(
-                moduleData.get(module).globalFunctions.keySet().stream(),
-                moduleData.get(module).functionImports.keySet().stream()
-        ),moduleData.get(module).futureImports.keySet().stream().filter(s -> !s.startsWith("global_"))).filter(predicate);
+                getModuleData(module).globalFunctions.keySet().stream(),
+                getModuleData(module).functionImports.keySet().stream()
+        ),getModuleData(module).futureImports.keySet().stream().filter(s -> !s.startsWith("global_"))).filter(predicate);
     }
 
     public ScriptHost retrieveForExecution(String /*Nullable*/ user)
@@ -340,7 +347,7 @@ public abstract class ScriptHost
         host.moduleData.forEach((module, data) -> data.setImportsBasedOn(host, this.moduleData.get(data.parent)));
     }
 
-    public void handleExpressionException(String msg, ExpressionException exc)
+    synchronized public void handleExpressionException(String msg, ExpressionException exc)
     {
         System.out.println(msg+": "+exc);
     }
@@ -375,8 +382,32 @@ public abstract class ScriptHost
     public void onClose()
     {
         inTermination = true;
+        executorServices.values().forEach(ThreadPoolExecutor::shutdown);
         for (ScriptHost uh : userHosts.values()) uh.onClose();
-        executorServices.values().forEach(e -> {e.shutdown(); e.shutdownNow();});
+        if (taskCount() > 0)
+        {
+            executorServices.values().forEach(e -> {
+                ExecutorService stopper = Executors.newSingleThreadExecutor();
+                stopper.submit( () -> {
+                    try {
+                        // Wait a while for existing tasks to terminate
+                        if (!e.awaitTermination(1500, TimeUnit.MILLISECONDS)) {
+                            e.shutdownNow(); // Cancel currently executing tasks
+                            // Wait a while for tasks to respond to being cancelled
+                            if (!e.awaitTermination(1500, TimeUnit.MILLISECONDS))
+                                CarpetScriptServer.LOG.error("Failed to stop app's thread");
+                        }
+                    } catch (InterruptedException ie) {
+                        // (Re-)Cancel if current thread also interrupted
+                        e.shutdownNow();
+                        // Preserve interrupt status
+                        Thread.currentThread().interrupt();
+                    }
+                    stopper.shutdown();
+                    stopper.shutdownNow();
+                });
+            });
+        }
     }
 
     public void setPerPlayer(boolean isPerUser)

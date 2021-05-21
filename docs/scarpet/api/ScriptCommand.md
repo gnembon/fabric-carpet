@@ -167,3 +167,11 @@ This would slow down the computation of fib(40) from a minute to two, but allows
 and be responsive to commands, using about half of each tick to advance the computation. Obviously depending on the 
 problem, and available hardware, certain things can take more or less time to execute, so portioning of work with 
 calling `gametick` should be balanced in each case separately
+
+# `/script download` command
+
+`/script download <global or local?> <path>` command allows to download and save scripts directly from [scarpet app store](https://www.github.com/gnembon/scarpet).
+You can choose whether to save the script in the global config scripts folder or the local per-world script folder, 
+(on servers it always saves in the scripts folder) and it will be saved there, e.g `/script download local survival/angel_block.sc`
+would save the `angel_block.sc` file [here](https://github.com/gnembon/scarpet/blob/master/programs/survival/angel_block.sc)
+to a folder called `appstore/survival` in the world's scripts folder.

@@ -93,7 +93,7 @@ draw_prism(args)->(
                 positions += _ + offset_vector * offset
             )
         );
-    )
+    );
     positions
 );
 

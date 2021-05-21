@@ -1,11 +1,26 @@
 package carpet.script;
 
 import carpet.CarpetSettings;
+import carpet.script.annotation.AnnotationParser;
+import carpet.script.api.Auxiliary;
+import carpet.script.api.BlockIterators;
+import carpet.script.api.Entities;
+import carpet.script.api.Inventories;
+import carpet.script.api.Scoreboards;
+import carpet.script.api.WorldAccess;
 import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.language.Arithmetic;
+import carpet.script.language.ControlFlow;
+import carpet.script.language.DataStructures;
+import carpet.script.language.Functions;
+import carpet.script.language.Loops;
+import carpet.script.language.Sys;
+import carpet.script.language.Threading;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import carpet.utils.CarpetProfiler;
@@ -36,7 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -225,7 +240,7 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
+    public boolean addScriptHost(ServerCommandSource source, String name, Predicate<ServerCommandSource> commandValidator,
                                  boolean perPlayer, boolean autoload, boolean isRuleApp)
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
@@ -403,7 +418,7 @@ public class CarpetScriptServer
             {
                 host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
             }
-            catch (NullPointerException | InvalidCallbackException npe)
+            catch (NullPointerException | InvalidCallbackException | IntegrityException npe)
             {
                 if (reportFails) return -1;
                 continue;
@@ -456,7 +471,7 @@ public class CarpetScriptServer
     static class TransferData
     {
         boolean perUser;
-        Function<ServerCommandSource, Boolean> commandValidator;
+        Predicate<ServerCommandSource> commandValidator;
         boolean isRuleApp;
         private TransferData(CarpetScriptHost host)
         {
@@ -479,5 +494,26 @@ public class CarpetScriptServer
     public void reAddCommands()
     {
         modules.values().forEach(host -> host.addAppCommands(s -> {}));
+    }
+    
+    public static void parseFunctionClasses()
+    {
+        // Language
+        AnnotationParser.parseFunctionClass(Arithmetic.class);
+        AnnotationParser.parseFunctionClass(ControlFlow.class);
+        AnnotationParser.parseFunctionClass(DataStructures.class);
+        AnnotationParser.parseFunctionClass(Functions.class);
+        AnnotationParser.parseFunctionClass(Loops.class);
+        AnnotationParser.parseFunctionClass(Sys.class);
+        AnnotationParser.parseFunctionClass(Threading.class);
+        
+        // API
+        AnnotationParser.parseFunctionClass(Auxiliary.class);
+        AnnotationParser.parseFunctionClass(BlockIterators.class);
+        AnnotationParser.parseFunctionClass(Entities.class);
+        AnnotationParser.parseFunctionClass(Inventories.class);
+        AnnotationParser.parseFunctionClass(Scoreboards.class);
+        AnnotationParser.parseFunctionClass(carpet.script.language.Threading.class);
+        AnnotationParser.parseFunctionClass(WorldAccess.class);
     }
 }

@@ -24,21 +24,6 @@ public abstract class Value implements Comparable<Value>, Cloneable
 
     public String boundVariable;
 
-    public static <T> T assertNotNull(T t)
-    {
-        if (t == null)
-            throw new InternalExpressionException("Operand may not be null");
-        return t;
-    }
-
-    public static <T> void assertNotNull(T t1, T t2)
-    {
-        if (t1 == null)
-            throw new InternalExpressionException("First operand may not be null");
-        if (t2 == null)
-            throw new InternalExpressionException("Second operand may not be null");
-    }
-
     public boolean isBound()
     {
         return boundVariable != null;
@@ -259,4 +244,11 @@ public abstract class Value implements Comparable<Value>, Cloneable
     }
 
     public boolean isNull() { return false; }
+
+    /**
+     * @return retrieves useful in-run value of an optimized code-base value.
+     * For immutable values (most of them) it can return itself,
+     * but for mutables, it needs to be its copy or deep copy.
+     */
+    public Value fromConstant() { return this; }
 }

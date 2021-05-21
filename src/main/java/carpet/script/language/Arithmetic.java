@@ -3,6 +3,7 @@ package carpet.script.language;
 import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.Value;
@@ -15,7 +16,7 @@ public class Arithmetic {
 
     public static void apply(Expression expression)
     {
-        expression.addLazyFunction("not", 1, (c, t, lv) -> lv.get(0).evalValue(c, Context.BOOLEAN).getBoolean() ? ((cc, tt) -> Value.FALSE) : ((cc, tt) -> Value.TRUE));
+        expression.addTypedContextFunction("not", 1, Context.Type.BOOLEAN, (c, t, lv) -> BooleanValue.of(lv.get(0).getBoolean()) );
         expression.addUnaryFunction("fact", (v) ->
         {
             long number = NumericValue.asNumber(v).getLong();

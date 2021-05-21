@@ -50,7 +50,7 @@ Throws `unknown_particle` if particle doesn't exist.
 ## Markers
 
 ### `draw_shape(shape, duration, key?, value?, ... )`, 
-### `draw_shape(shape, duration, l(key?, value?, ... ))`, 
+### `draw_shape(shape, duration, [key?, value?, ... ])`, 
 ### `draw_shape(shape, duration, attribute_map)`
 ### `draw_shape(shape_list)`
 
@@ -65,7 +65,8 @@ per shape and last whatever they typically last in the game.
 
 Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
 Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
-sending many small packets to draw several shapes at once.
+sending many small packets to draw several shapes at once. The drawback of sending shapes is batches is that they need to address
+the same list of players, i.e. if multiple players from the list target different players, all shapes will be sent to all of them.
 
 Shapes will fail to draw and raise a runtime error if not all its required parameters
 are specified and all available shapes have some parameters that are required, so make sure to have them in place:
@@ -78,8 +79,8 @@ or simply refresh the shapes periodically in more dynamic applications.
 Optional shared shape attributes:
  * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
- * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
- player, otherwise it will be send to all players in the dimension.
+ * `player` - name or player entity to send the shape to, or a list of players. If specified, the shapes will appear only for the specified
+ players (regardless where they are), otherwise it will be send to all players in the current dimension.
  * `line` - (Deprecated) line thickness, defaults to 2.0pt. Not supported in 1.17's 3.2 core GL renderer.
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
@@ -211,7 +212,7 @@ produce an exception.
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
 Can optionally define player or list of players to send the message to.
 
-### `format(components, ...)`, `format(l(components, ...))`
+### `format(components, ...)`, `format([components, ...])`
 
 Creates a line of formatted text. Each component is either a string indicating formatting and text it corresponds to
 or a decorator affecting the component preceding it.

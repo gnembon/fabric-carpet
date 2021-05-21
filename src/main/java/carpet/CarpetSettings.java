@@ -1,5 +1,6 @@
 package carpet;
 
+import carpet.script.utils.ScriptDownloader;
 import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
 import carpet.settings.SettingsManager;
@@ -42,7 +43,7 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.33+v210421";
+    public static final String carpetVersion = "1.4.37+v210519";
     public static final Logger LOG = LogManager.getLogger("carpet");
     public static boolean skipGenerationChecks = false;
     public static boolean impendingFillSkipUpdates = false;
@@ -442,6 +443,31 @@ public class CarpetSettings
             category = SCARPET
     )
     public static boolean scriptsAutoload = true;
+
+    @Rule(
+            desc = "Enables scripts debugging messages in system log",
+            category = SCARPET
+    )
+    public static boolean scriptsDebugging = false;
+
+    @Rule(
+            desc = "Enables scripts optimization",
+            category = SCARPET
+    )
+    public static boolean scriptsOptimization = true;
+
+    @Rule(
+            desc = "Location of the online repository of scarpet apps",
+            extra = {
+                    "set to 'none' to disable.",
+                    "Point to any github repo with scarpet apps",
+                    "using <user>/<repo>/contents/<path...>"
+            },
+            category = SCARPET,
+            validate= ScriptDownloader.ScarpetAppStoreValidator.class
+    )
+    public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
+
 
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static String commandPlayer = "ops";

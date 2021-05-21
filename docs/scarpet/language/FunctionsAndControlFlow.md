@@ -2,7 +2,7 @@
 
 ## Writing programs with more than 1 line
 
-### `Operator ;`
+### Operator `;`, `then(...)`
 
 To effectively write programs that have more than one line, a programmer needs way to specify a sequence of commands 
 that execute one after another. In `scarpet` this can be achieved with `;`. Its an operator, and by separating 
@@ -22,7 +22,7 @@ in `scarpet`, and not barely an instruction delimiter, terminating the code with
 be valid. Having said that, since many programming languages don't care about the number of op terminators 
 programmers use, carpet preprocessor will remove all unnecessary semicolons from scripts when compiled.
 
-In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)`.
+In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)` or `then(expr, expr, expr, expr)`.
 
 Result of the evaluated expression is the same as the result of the second expression, but first expression 
 is also evaluated for side-effects
@@ -47,7 +47,7 @@ and with `player` scope, each player hosts its own state for each app, so functi
 
 
 <pre>
-/script run a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1, 2, 3, 1, 1]
+/script run a() -> global_list+=1; global_list = [1,2,3]; a(); a(); global_list  // => [1, 2, 3, 1, 1]
 /script run a(); a(); global_list  // => [1, 2, 3, 1, 1, 1, 1]
 </pre>
 
@@ -76,7 +76,7 @@ a unique name, which you can pass somewhere else to get this function `call`ed. 
 by their value and `call` method.
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
+a(lst) -> lst+=1; list = [1,2,3]; a(list); a(list); list  // => [1,2,3]
 </pre>
 
 In case the inner function wants to operate and modify larger objects, lists from the outer scope, but not global, 
@@ -102,14 +102,14 @@ which variables you want to use, and borrow
 This mechanism can be used to use static mutable objects without the need of using `global_...` variables
 
 <pre>
-list = l(1,2,3); a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
+list = [1,2,3]; a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
 </pre>
 
 The return value of a function is the value of the last expression. This as the same effect as using outer or 
 global lists, but is more expensive
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); list=a(list); list=a(list); list  // => [1,2,3,1,1]
+a(lst) -> lst+=1; list = [1,2,3]; list=a(list); list=a(list); list  // => [1,2,3,1,1]
 </pre>
 
 Ability to combine more statements into one expression, with functions, passing parameters, and global and outer 
@@ -132,15 +132,16 @@ foo(... x) -> ...  # all arguments for foo are included in the list
     
 </pre>
 
-### `import(module_name, symbols ...)`
+### `import(module_name, ? symbols ...)`
 
 Imports symbols from other apps and libraries into the current one: global variables or functions, allowing to use 
 them in the current app. This includes other symbols imported by these modules. Scarpet supports circular dependencies, 
 but if symbols are used directly in the module body rather than functions, it may not be able to retrieve them. 
+
 Returns full list of available symbols that could be imported from this module, which can be used to debug import 
 issues, and list contents of libraries.
 
-### `call(function, args.....)`
+### `call(function, ? args ...)`
 
 calls a user defined function with specified arguments. It is equivalent to calling `function(args...)` directly 
 except you can use it with function value, or name instead. This means you can pass functions to other user defined 
@@ -201,11 +202,11 @@ programmers with their own lambda arguments
 
 <pre>
 my_map(list, function) -> map(list, call(function, _));
-my_map(l(1,2,3), _(x) -> x*x);    // => [1,4,9]
-profile_expr(my_map(l(1,2,3), _(x) -> x*x));   // => ~32000
-sq(x) -> x*x; profile_expr(my_map(l(1,2,3), 'sq'));   // => ~36000
-sq = (_(x) -> x*x); profile_expr(my_map(l(1,2,3), sq));   // => ~36000
-profile_expr(map(l(1,2,3), _*_));   // => ~80000
+my_map([1,2,3], _(x) -> x*x);    // => [1,4,9]
+profile_expr(my_map([1,2,3], _(x) -> x*x));   // => ~32000
+sq(x) -> x*x; profile_expr(my_map([1,2,3], 'sq'));   // => ~36000
+sq = (_(x) -> x*x); profile_expr(my_map([1,2,3], sq));   // => ~36000
+profile_expr(map([1,2,3], _*_));   // => ~80000
 </pre>
 
 ## Control flow
@@ -267,6 +268,7 @@ but like everywhere else, doing that sounds like a bad idea.
   - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
     - `nbt_error`: Incorrect input/output NBT file.
     - `json_error`: Incorrect input/output JSON data.
+    - `b64_error`: Incorrect input/output b64 (base 64) string
   - `user_exception`: Exception thrown by default with `throw` function.
   
 Synopsis:

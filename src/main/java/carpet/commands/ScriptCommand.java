@@ -2,6 +2,8 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.script.CarpetScriptServer;
+import carpet.script.utils.ScriptDownloader;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
@@ -20,6 +22,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -36,6 +39,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,8 +82,8 @@ public class ScriptCommand
         // not that useful in commandline, more so in external scripts, so skipping here
         if (eventPrefix != null) scarpetMatches.addAll(CarpetEventServer.Event.publicEvents(null).stream().
                 filter(e -> e.name.startsWith(eventPrefix)).map(s -> "__on_"+s.name+"(").collect(Collectors.toList()));
-        scarpetMatches.addAll(host.globaFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
-        scarpetMatches.addAll(host.globaVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globalFunctionNames(host.main, s -> s.startsWith(prefix)).map(s -> s+"(").collect(Collectors.toList()));
+        scarpetMatches.addAll(host.globalVariableNames(host.main, s -> s.startsWith(prefix)).collect(Collectors.toList()));
         return scarpetMatches;
     }
 
@@ -105,6 +109,27 @@ public class ScriptCommand
         return suggestionsBuilder.buildFuture();
     }
 
+    /**
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link ScriptDownloader#localScarpetRepoStructure}
+     * variable.
+     */
+    private static CompletableFuture<Suggestions> suggestDownloadableApps(
+            CommandContext<ServerCommandSource> context,
+            SuggestionsBuilder suggestionsBuilder
+    ) throws CommandSyntaxException {
+        try {
+            String previous = suggestionsBuilder.getRemaining();
+            List<String> suggestions = ScriptDownloader.suggestionsFromPath(previous);
+            CarpetScriptServer.LOG.error(String.join(":", suggestions));
+            ScriptDownloader.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
+            return suggestionsBuilder.buildFuture();
+        }
+        catch (IOException e)
+        {
+            throw new SimpleCommandExceptionType(Messenger.c("rb "+e.getMessage())).create();
+        }
+    }
+
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> b = literal("globals").
@@ -128,7 +153,7 @@ public class ScriptCommand
                                 null,
                                 null,
                                 ""
-                        )).
+                        ))  .
                         then(argument("arguments", StringArgumentType.greedyString()).
                                 executes( (cc) -> invoke(
                                         cc,
@@ -302,10 +327,13 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
 
+        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
+                then(literal("global").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), true)))).
+                then(literal("local").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), false))));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
-                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q));
+                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d));
         dispatcher.register(literal("script").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
                 then(literal("in").
@@ -332,7 +360,7 @@ public class ScriptCommand
     private static Collection<String> suggestFunctionCalls(CommandContext<ServerCommandSource> c) throws CommandSyntaxException
     {
         CarpetScriptHost host = getHost(c);
-        return host.globaFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
+        return host.globalFunctionNames(host.main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList());
     }
     private static int listEvents(ServerCommandSource source)
     {
@@ -358,7 +386,7 @@ public class ScriptCommand
         ServerCommandSource source = context.getSource();
 
         Messenger.m(source, "lb Stored functions"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        host.globaFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
+        host.globalFunctionNames(host.main, (str) -> all || !str.startsWith("__")).sorted().forEach( (s) -> {
             FunctionValue fun = host.getFunction(s);
             if (fun == null)
             {
@@ -379,7 +407,7 @@ public class ScriptCommand
         //Messenger.m(source, "w "+code);
         Messenger.m(source, "w  ");
         Messenger.m(source, "lb Global variables"+((host == CarpetServer.scriptServer.globalHost)?":":" in "+host.getName()+":"));
-        host.globaVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
+        host.globalVariableNames(host.main, (s) -> s.startsWith("global_")).sorted().forEach( (s) -> {
             LazyValue variable = host.getGlobalVariable(s);
             if (variable == null)
             {

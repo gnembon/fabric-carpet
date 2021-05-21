@@ -36,7 +36,7 @@ public class Sys {
     {
         expression.addUnaryFunction("hash_code", v -> new NumericValue(v.hashCode()));
 
-        expression.addUnaryFunction("copy", Value::deepcopy);
+        expression.addImpureUnaryFunction("copy", Value::deepcopy);
 
         expression.addTypedContextFunction("bool", 1, Context.BOOLEAN, (c, t, lv) ->
         {
@@ -414,7 +414,7 @@ public class Sys {
             List<Value> values = new ArrayList<>();
             if (prefix.startsWith("global"))
             {
-                c.host.globaVariableNames(expression.module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
+                c.host.globalVariableNames(expression.module, (s) -> s.startsWith(prefix)).forEach(s -> values.add(new StringValue(s)));
             }
             else
             {

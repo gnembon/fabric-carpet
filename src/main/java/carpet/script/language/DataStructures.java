@@ -4,6 +4,9 @@ import carpet.script.Context;
 import carpet.script.Expression;
 import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.exception.ThrowStatement;
+import carpet.script.exception.Throwables;
+import carpet.script.utils.ScarpetJsonDeserializer;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.LContainerValue;
 import carpet.script.value.LazyListValue;
@@ -12,8 +15,12 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -182,7 +189,7 @@ public class DataStructures {
             return Value.NULL;
         });
 
-        expression.addBinaryContextOperator(":", Operators.precedence.get("attribute~:"),true, (c, t, container, address) ->
+        expression.addBinaryContextOperator(":", Operators.precedence.get("attribute~:"),true, true, false, (ctx, t, container, address) ->
         {
             if (container instanceof LContainerValue)
             {
@@ -319,6 +326,24 @@ public class DataStructures {
                 return LazyValue.NULL;
             Value ret = new NumericValue(((ContainerValueInterface) container).delete(lv.get(lv.size()-1).evalValue(c)));
             return (cc, tt) -> ret;
+        });
+
+        expression.addUnaryFunction("encode_b64", v -> StringValue.of(Base64.getEncoder().encodeToString(v.getString().getBytes())));
+        expression.addUnaryFunction("decode_b64", v -> {
+            try {
+                return StringValue.of(new String(Base64.getDecoder().decode(v.getString()), StandardCharsets.ISO_8859_1));//using this charset cos it's the one used in decoding function
+            } catch (IllegalArgumentException iae){
+                throw new ThrowStatement("Invalid b64 string: " + v.getString(), Throwables.B64_ERROR);
+            }
+        });
+
+        expression.addUnaryFunction("encode_json", v -> StringValue.of(v.toJson().toString()));
+        expression.addUnaryFunction("decode_json", v -> {
+            try {
+                return new ScarpetJsonDeserializer().deserialize(new JsonParser().parse(v.getString()), null, null);
+            } catch (JsonParseException jpe){
+                throw new ThrowStatement("Invalid json string: " + v.getString(), Throwables.JSON_ERROR);
+            }
         });
     }
 }
