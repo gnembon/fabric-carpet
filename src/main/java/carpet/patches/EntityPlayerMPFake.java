@@ -53,7 +53,8 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         }
 
         // check player name length
-        if (playerName.length() > 40)
+        // player with a name longer than 16 bytes will kick out all players
+        if (playerName.length() > 16)
             throw new FakePlayerSpawnException("rb Player name: " + playerName + " is too long");
 
         // get player profile from auth server (or generate offline-mode profile if the server is in offline mode)
@@ -69,10 +70,6 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             } else {
                 // spawn offline player
                 profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
-
-                // offline-mode player with a name longer than 16 bytes will kick out all players
-                if (playerName.length() > 16)
-                    throw new FakePlayerSpawnException("rb Player name: " + playerName + " is too long");
             }
         }
 
