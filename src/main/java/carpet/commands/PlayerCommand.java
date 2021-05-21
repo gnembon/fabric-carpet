@@ -1,13 +1,12 @@
 package carpet.commands;
 
-import carpet.helpers.EntityPlayerActionPack;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.helpers.EntityPlayerActionPack;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -18,10 +17,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
-import net.minecraft.server.PlayerManager;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -36,9 +34,9 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import static net.minecraft.command.CommandSource.suggestMatching;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
-import static net.minecraft.command.CommandSource.suggestMatching;
 
 public class PlayerCommand
 {
@@ -178,37 +176,6 @@ public class PlayerCommand
         return true;
     }
 
-    private static boolean cantSpawn(CommandContext<ServerCommandSource> context)
-    {
-        String playerName = StringArgumentType.getString(context, "player");
-        MinecraftServer server = context.getSource().getMinecraftServer();
-        PlayerManager manager = server.getPlayerManager();
-        PlayerEntity player = manager.getPlayer(playerName);
-        if (player != null)
-        {
-            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
-            return true;
-        }
-        GameProfile profile = server.getUserCache().findByName(playerName);
-        if (profile == null)
-        {
-            Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
-                    "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
-            return true;
-        }
-        if (manager.getUserBanList().contains(profile))
-        {
-            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
-            return true;
-        }
-        if (manager.isWhitelistEnabled() && manager.isWhitelisted(profile) && !context.getSource().hasPermissionLevel(2))
-        {
-            Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
-            return true;
-        }
-        return false;
-    }
-
     private static int kill(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
@@ -245,45 +212,51 @@ public class PlayerCommand
 
     private static int spawn(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
     {
-        if (cantSpawn(context)) return 0;
-        ServerCommandSource source = context.getSource();
-        Vec3d pos = tryGetArg(
-                () -> Vec3ArgumentType.getVec3(context, "position"),
-                source::getPosition
-        );
-        Vec2f facing = tryGetArg(
-                () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
-                source::getRotation
-        );
-        RegistryKey<World> dimType = tryGetArg(
-                () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
-                () -> source.getWorld().getRegistryKey() // dimension.getType()
-        );
-        GameMode mode = GameMode.CREATIVE;
-        try
-        {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            mode = player.interactionManager.getGameMode();
-        }
-        catch (CommandSyntaxException ignored) {}
-        String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length()>40)
-        {
-            Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
-            return 0;
-        }
+        try {
+            // get parameters
+            ServerCommandSource commandSource = context.getSource();
+            Vec3d pos = tryGetArg(
+                    () -> Vec3ArgumentType.getVec3(context, "position"),
+                    commandSource::getPosition
+            );
+            Vec2f facing = tryGetArg(
+                    () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
+                    commandSource::getRotation
+            );
+            RegistryKey<World> dimType = tryGetArg(
+                    () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
+                    () -> commandSource.getWorld().getRegistryKey() // dimension.getType()
+            );
+            String playerName = StringArgumentType.getString(context, "player");
 
-        MinecraftServer server = source.getMinecraftServer();
-        if (!World.isInBuildLimit(new BlockPos(pos.x, pos.y, pos.z)))
-        {
-            Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
-            return 0;
-        }
-        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode);
-        if (player == null)
-        {
-            Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +
-                    "and cannot spawn in online mode. Turn the server offline to spawn non-existing players");
+            // check parameters
+            if (playerName.length() > 40) {
+                Messenger.m(context.getSource(), "rb Player name: " + playerName + " is too long");
+                return 0;
+            }
+            if (!World.isInBuildLimit(new BlockPos(pos.x, pos.y, pos.z))) {
+                Messenger.m(context.getSource(), "rb Player " + playerName + " cannot be placed outside of the world");
+                return 0;
+            }
+
+            // get fake player game mode
+            GameMode mode = GameMode.CREATIVE;
+            try {
+                ServerPlayerEntity player = context.getSource().getPlayer();
+                mode = player.interactionManager.getGameMode();
+            } catch (CommandSyntaxException ignored) {
+            }
+
+            // spawn fake player
+            EntityPlayerMPFake.createFake(
+                    playerName, commandSource.getMinecraftServer(),
+                    pos.x, pos.y, pos.z, facing.y, facing.x,
+                    dimType, mode,
+                    context.getSource().hasPermissionLevel(2)
+            );
+        } catch (EntityPlayerMPFake.FakePlayerSpawnException e) {
+            // EntityPlayerMPFake.createFake failed
+            Messenger.m(context.getSource(), e.getMessengerMessage());
             return 0;
         }
         return 1;
