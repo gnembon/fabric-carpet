@@ -267,7 +267,7 @@ public class PlayerCommand
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length()>40)
+        if (playerName.length()>16)
         {
             Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
             return 0;
