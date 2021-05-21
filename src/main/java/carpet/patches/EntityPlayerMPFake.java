@@ -36,7 +36,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     public static void createFake(String playerName, MinecraftServer server,
                                   double d0, double d1, double d2, double yaw, double pitch,
                                   RegistryKey<World> dimensionId, GameMode gamemode,
-                                  boolean isSpawnerPrivileged
+                                  boolean isSpawnerPrivileged, boolean fallBackToSpawningOfflinePlayer
                                                 )
             throws FakePlayerSpawnException {
         Objects.requireNonNull(playerName);
@@ -58,9 +58,14 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         // if the player with this playerName does not exist
         if (profile == null)
         {
-            throw new FakePlayerSpawnException("r Player " + playerName + " is either banned by Mojang, or " +
-                    "auth servers are down. Banned players can only be summoned in Singleplayer " +
-                    "and in servers in off-line mode.");
+            if (!fallBackToSpawningOfflinePlayer) {
+                throw new FakePlayerSpawnException("r Player " + playerName + " is either banned by Mojang, or " +
+                        "auth servers are down. Banned players can only be summoned in Singleplayer " +
+                        "and in servers in off-line mode.");
+            } else {
+                // spawn offline player
+                profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
+            }
         }
 
         // if this player is banned locally

@@ -252,7 +252,8 @@ public class PlayerCommand
                     playerName, commandSource.getMinecraftServer(),
                     pos.x, pos.y, pos.z, facing.y, facing.x,
                     dimType, mode,
-                    context.getSource().hasPermissionLevel(2)
+                    context.getSource().hasPermissionLevel(2),
+                    CarpetSettings.fallBackToSpawningOfflinePlayers
             );
         } catch (EntityPlayerMPFake.FakePlayerSpawnException e) {
             // EntityPlayerMPFake.createFake failed
