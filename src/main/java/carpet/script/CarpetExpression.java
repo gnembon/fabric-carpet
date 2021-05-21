@@ -1,6 +1,7 @@
 package carpet.script;
 
 import carpet.CarpetServer;
+import carpet.script.annotation.AnnotationParser;
 import carpet.script.api.Auxiliary;
 import carpet.script.api.BlockIterators;
 import carpet.script.api.Entities;
@@ -45,6 +46,7 @@ public class CarpetExpression
         Threading.apply(this.expr);
         Scoreboards.apply(this.expr);
         Monitoring.apply(this.expr);
+        AnnotationParser.apply(this.expr);
         CarpetServer.extensions.forEach(e -> e.scarpetApi(this));
     }
 

@@ -179,6 +179,7 @@
     "Scoreboard_scarpetMixin",
     "TradeOutputSlot_scarpetEventMixin",
 
+    "BiomeEffects_scarpetMixin",
     "ChunkTicketManager_scarpetMixin",
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",

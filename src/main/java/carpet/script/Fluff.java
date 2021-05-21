@@ -125,15 +125,7 @@ public abstract class Fluff
 
         public List<Value> unpackArgs(List<LazyValue> lzargs, Context c, Context.Type contextType)
         {
-            List<Value> args = new ArrayList<>();
-            for (LazyValue lv : lzargs)
-            {
-                Value arg = lv.evalValue(c, contextType);
-                if (arg instanceof FunctionUnpackedArgumentsValue)
-                    args.addAll(((ListValue) arg).getItems());
-                else
-                    args.add(arg);
-            }
+            List<Value> args = unpackLazy(lzargs, c, contextType);
             if (!numParamsVaries() && getNumParams() != args.size())
                 throw new InternalExpressionException("Function " + getName() + " expected " + getNumParams() + " parameters, got " + args.size());
             return args;

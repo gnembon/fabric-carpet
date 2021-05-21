@@ -2,6 +2,8 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.script.CarpetScriptServer;
+import carpet.script.utils.ScriptDownloader;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
@@ -20,6 +22,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -36,6 +39,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -105,6 +109,27 @@ public class ScriptCommand
         return suggestionsBuilder.buildFuture();
     }
 
+    /**
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link ScriptDownloader#localScarpetRepoStructure}
+     * variable.
+     */
+    private static CompletableFuture<Suggestions> suggestDownloadableApps(
+            CommandContext<ServerCommandSource> context,
+            SuggestionsBuilder suggestionsBuilder
+    ) throws CommandSyntaxException {
+        try {
+            String previous = suggestionsBuilder.getRemaining();
+            List<String> suggestions = ScriptDownloader.suggestionsFromPath(previous);
+            CarpetScriptServer.LOG.error(String.join(":", suggestions));
+            ScriptDownloader.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
+            return suggestionsBuilder.buildFuture();
+        }
+        catch (IOException e)
+        {
+            throw new SimpleCommandExceptionType(Messenger.c("rb "+e.getMessage())).create();
+        }
+    }
+
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
         LiteralArgumentBuilder<ServerCommandSource> b = literal("globals").
@@ -128,7 +153,7 @@ public class ScriptCommand
                                 null,
                                 null,
                                 ""
-                        )).
+                        ))  .
                         then(argument("arguments", StringArgumentType.greedyString()).
                                 executes( (cc) -> invoke(
                                         cc,
@@ -302,10 +327,13 @@ public class ScriptCommand
                                                 StringArgumentType.getString(cc, "call")
                                         )?1:0))));
 
+        LiteralArgumentBuilder<ServerCommandSource> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
+                then(literal("global").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), true)))).
+                then(literal("local").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), false))));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
-                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q));
+                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d));
         dispatcher.register(literal("script").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
                 then(literal("in").
