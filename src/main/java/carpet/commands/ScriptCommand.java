@@ -2,6 +2,7 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.script.CarpetScriptServer;
 import carpet.script.utils.ScriptDownloader;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
@@ -21,6 +22,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -32,13 +34,19 @@ import net.minecraft.command.argument.BlockStateArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.Clearable;
-import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockBox;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -57,7 +65,6 @@ public class ScriptCommand
         Set<String> allFunctions = (new CarpetExpression(null, "null", null, null)).getExpr().getFunctionNames();
         scarpetFunctions = new TreeSet<>(Expression.none.getFunctionNames());
         APIFunctions = allFunctions.stream().filter(s -> !scarpetFunctions.contains(s)).collect(Collectors.toCollection(TreeSet::new));
-        ScriptDownloader.updateLocalRepoStructure();
     }
 
     public static List<String> suggestFunctions(ScriptHost host, String previous, String prefix)
@@ -109,14 +116,18 @@ public class ScriptCommand
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
-    ) {
-        String previous = suggestionsBuilder.getRemaining();
-        Pair<String, Set<String>> suggestions = ScriptDownloader.fileNamesFromPath(previous);
-        String currentValidPath = suggestions.getLeft();
-
-        suggestions.getRight().forEach(s -> suggestionsBuilder.suggest(currentValidPath + s));
-
-        return suggestionsBuilder.buildFuture();
+    ) throws CommandSyntaxException {
+        try {
+            String previous = suggestionsBuilder.getRemaining();
+            List<String> suggestions = ScriptDownloader.suggestionsFromPath(previous);
+            CarpetScriptServer.LOG.error(String.join(":", suggestions));
+            ScriptDownloader.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
+            return suggestionsBuilder.buildFuture();
+        }
+        catch (IOException e)
+        {
+            throw new SimpleCommandExceptionType(Messenger.c("rb "+e.getMessage())).create();
+        }
     }
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)

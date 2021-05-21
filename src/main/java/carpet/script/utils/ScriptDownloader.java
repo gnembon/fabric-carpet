@@ -1,18 +1,19 @@
 package carpet.script.utils;
 
+import carpet.script.CarpetScriptServer;
+import carpet.settings.ParsedRule;
+import carpet.settings.Validator;
 import carpet.utils.Messenger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.CommandException;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Pair;
 import net.minecraft.util.WorldSavePath;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
@@ -28,29 +29,195 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
+
 
 /**
  * A class used to save scarpet app store scripts to disk
  */
-
-@SuppressWarnings("rawtypes")
-public class ScriptDownloader {
-
+public class ScriptDownloader
+{
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
-     * {@code /script download} command and getting the suggestions. Therefore, we save the file structure at the beginning
-     * of the server's starting, and update it with {@link ScriptDownloader#updateLocalRepoStructure()} if we get an error
-     * in the query, thereby allowing us to re-enter the command and get the correct app (unless of course the inputted
-     * path is itself wrong)
+     * {@code /script download} command and getting the suggestions.
      */
-    public static Map<String, Map> localScarpetRepoStructure = new HashMap<>();
+    public static final PathNode appStoreRoot = PathNode.folder(null, "");
 
-    /** This is the link to the scarpet app repo from the github api, so if that ever changes then this variable would
-     * have to change as well to match.
+    /** This is the base link to the scarpet app repo from the github api.
      */
-    private static final String scarpetRepoLink = "https://api.github.com/repos/gnembon/scarpet/contents/programs/";
+    private static String scarpetRepoLink = "https://api.github.com/repos/gnembon/scarpet/contents/programs/";
+
+    public static class ScarpetAppStoreValidator extends Validator<String>
+    {
+        @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
+        {
+            appStoreRoot.sealed = false;
+            appStoreRoot.children = new HashMap<>();
+            if (newValue.equalsIgnoreCase("none"))
+            {
+                scarpetRepoLink = null;
+                return newValue;
+            }
+            if (newValue.endsWith("/")) newValue = newValue.replaceAll("/$", "");
+            scarpetRepoLink = "https://api.github.com/repos/"+newValue+"/";
+            return newValue;
+        }
+        @Override
+        public String description() { return "Appstore link should point to a valid github repository";}
+    }
+
+    public static class PathNode
+    {
+        public String name;
+        public PathNode parent;
+        public Map<String, PathNode> children;
+        public boolean sealed;
+        public String value;
+        public static PathNode folder(PathNode parent, String name)
+        {
+            PathNode node = new PathNode(parent, name);
+            node.children = new HashMap<>();
+            node.value = null;
+            node.sealed = false;
+            return node;
+        }
+
+        public static PathNode scriptFile(PathNode parent, String name, String value)
+        {
+            PathNode node = new PathNode(parent, name);
+            node.children = null;
+            node.value = value;
+            node.sealed = true;
+            return node;
+        }
+
+        public boolean isLeaf()
+        {
+            return value != null;
+        }
+        public String pathElement()
+        {
+            return name+(isLeaf()?"":"/");
+        }
+        public String getPath()
+        {
+            return createPrePath().toString();
+        }
+        private StringBuilder createPrePath()
+        {
+            return this == appStoreRoot ? new StringBuilder() : parent.createPrePath().append(pathElement());
+        }
+        private PathNode(PathNode parent, String name)
+        {
+            this.parent = parent;
+            this.name = name;
+            this.sealed = false;
+        }
+
+        public void fillChildren() throws IOException
+        {
+            if (sealed) return;
+            if (scarpetRepoLink == null) throw new IOException("Accessing scarpet app repo is disabled");
+
+            String queryPath = scarpetRepoLink + getPath();
+            CarpetScriptServer.LOG.error("Fetching: "+queryPath);
+            String response;
+            try
+            {
+                URL appURL = new URL(queryPath);
+                response = ScriptDownloader.getStringFromStream(appURL.openStream());
+            }
+            catch (IOException e)
+            {
+                CarpetScriptServer.LOG.error("Problems fetching: "+e);
+                sealed = true;
+                return;
+            }
+            JsonArray files = new JsonParser().parse(response).getAsJsonArray();
+            for(JsonElement je : files)
+            {
+                JsonObject jo = je.getAsJsonObject();
+                String name = jo.get("name").getAsString();
+                if (jo.get("type").getAsString().equals("dir"))
+                {
+                    children.put(name, folder(this, name));
+                }
+                else if (name.matches("(\\w+\\.scl?)"))
+                {
+                    String value = jo.get("download_url").getAsString();
+                    children.put(name, scriptFile(this, name, value));
+                }
+            }
+            CarpetScriptServer.LOG.error("nodes for "+ getPath()+" are "+children.values().stream().map(PathNode::pathElement).collect(Collectors.joining(",")));
+            sealed = true;
+        }
+
+        /**
+         * Returns true if doing down the directory structire cannot continue since the matching element is either a leaf or
+         * a string not matching of any node.
+         * @param pathElement
+         * @return
+         */
+        public boolean cannotContinueFor(String pathElement) throws IOException
+        {
+            if (isLeaf()) return true;
+            fillChildren();
+            return !children.containsKey(pathElement);
+        }
+
+        public List<String> createPathSuggestions() throws IOException
+        {
+            if (isLeaf())
+            {
+                CarpetScriptServer.LOG.error("suggestions for leaf :"+name);
+                return Collections.singletonList(getPath());
+            }
+            fillChildren();
+            String prefix = getPath();
+            CarpetScriptServer.LOG.error("suggestions for node :"+name);
+            return children.values().stream().map(s -> prefix+s.pathElement().replaceAll("/$", "")).collect(Collectors.toList());
+        }
+
+        public PathNode drillDown(String pathElement) throws IOException
+        {
+            if (isLeaf()) throw new IOException(pathElement+" is not a folder");
+            fillChildren();
+            if (!children.containsKey(pathElement)) throw new IOException("Folder "+pathElement+" is not present");
+            return children.get(pathElement);
+        }
+
+        public String getValue(String file) throws IOException
+        {
+            PathNode leaf = drillDown(file);
+            if (!leaf.isLeaf()) throw new IOException(file+" is not a file");
+            return leaf.value;
+        }
+    }
+
+    /** This method searches for valid file names from the user-inputted string, e.g if the user has thus far typed
+     * {@code survival/a} then it will return all the files in the {@code survival} directory of the scarpet repo (and
+     * will automatically highlight those starting with a), and the string {@code survival/} as the current most valid path.
+     *
+     * @param currentPath The path down which we want to search for files
+     * @return A pair of the current valid path, as well as the set of all the file/directory names at the end of that path
+     */
+    public static List<String> suggestionsFromPath(String currentPath) throws IOException
+    {
+        String[] path = currentPath.split("/");
+        PathNode appKiosk = appStoreRoot;
+        for(String pathElement : path)
+        {
+            if (appKiosk.cannotContinueFor(pathElement)) return appKiosk.createPathSuggestions();
+            appKiosk = appKiosk.children.get(pathElement);
+        }
+        return appKiosk.createPathSuggestions();
+    }
+
+
 
     /** A simple shorthand for calling the {@link ScriptDownloader#getScriptCode} and {@link ScriptDownloader#saveScriptToFile}
      * methods to avoid repeating code and so it makes more sense what it's exactly doing.
@@ -60,62 +227,72 @@ public class ScriptDownloader {
      * @return {@code 1} if we succesfully saved the script, {@code 0} otherwise
      */
 
-    public static int downloadScript(CommandContext<ServerCommandSource> cc, String path, boolean global){
-        String code = getScriptCode(path);
-        return saveScriptToFile(path, code, cc, global);
+    public static int downloadScript(CommandContext<ServerCommandSource> cc, String path, boolean global)
+    {
+        Pair<String,String> code = getScriptCode(path);
+        return saveScriptToFile(path, code.getLeft(), code.getRight(), cc, global);
     }
 
-    /** Gets the code once the user inputs the command. The code isn't saved in {@link ScriptDownloader#localScarpetRepoStructure}
-     * as the scarpet repo is very large and may get much larger in the future, and that may cause RAM issues if we have
-     * the entire thing saved in memory.
+    /** Gets the code once the user inputs the command.
      *
-     * @param path The user inputted path to the scarpet script
-     * @return the HTML request from the path program using {@link ScriptDownloader#getStringFromStream} method to convert
-     * HTML response into a string
+     * @param appPath The user inputted path to the scarpet script
+     * @return Pair of app file name and content
      */
-    public static String getScriptCode(String path){
-        try {
-            String link = "https://raw.githubusercontent.com/gnembon/scarpet/master/programs/"+ path.replace(" ", "%20");
-            URL appURL = new URL(link);
+    public static Pair<String,String> getScriptCode(String appPath)
+    {
+        String[] path = appPath.split("/");
+        PathNode appKiosk = appStoreRoot;
+        try
+        {
+            for(String pathElement : Arrays.copyOfRange(path, 0, path.length-1))
+                appKiosk = appKiosk.drillDown(pathElement);
+            String appName = path[path.length-1];
+            URL appURL = new URL(appKiosk.getValue(appName));
             HttpURLConnection http = (HttpURLConnection) appURL.openConnection();
-            return getStringFromStream((InputStream) http.getContent());
-        } catch (IOException e){//todo add checks to distinguish between incorrect file path or change in scarpet repo structure
-            throw new CommandException(new LiteralText("'"+ path + "' is not a valid path to a scarpet app"));
+            return Pair.of(appName, getStringFromStream((InputStream) http.getContent()));
+        }
+        catch (IOException e)
+        {
+            throw new CommandException(Messenger.c("rb '"+ appPath + "' is not a valid path to a scarpet app: "+e.getMessage()));
         }
     }
 
-    public static int saveScriptToFile(String name, String code, CommandContext<ServerCommandSource> cc, boolean globalSavePath){
-        Path scriptLocation;
-        String location;
-        if(globalSavePath && FabricLoader.getInstance().getEnvironmentType()== EnvType.CLIENT) {//cos config folder only is in clients
-            scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore");
-            location = "global script config folder";
-        } else {
-            scriptLocation = cc.getSource().getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts/appstore");
-            location = "world scripts folder";
+    public static int saveScriptToFile(String path, String appFileName, String code, CommandContext<ServerCommandSource> cc, boolean globalSavePath){
+        String  scriptPath;
+        String message;
+        if(globalSavePath && !cc.getSource().getMinecraftServer().isDedicated())
+        { //cos config folder only is in clients
+            scriptPath = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath()+"/"+path;
+            message = "global script config folder";
         }
-        try {
-            String scriptPath = scriptLocation.toAbsolutePath() + "/" + name;
-            scriptLocation = Paths.get(scriptPath);
+        else
+        {
+            scriptPath = cc.getSource().getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath()+"/"+appFileName;
+            message = "world scripts folder";
+        }
+        try
+        {
+            Path scriptLocation = Paths.get(scriptPath);
             Path scriptFolderLocation = Paths.get(scriptPath.substring(0, scriptPath.lastIndexOf('/')));//folder location without file name
-            if (!Files.exists(scriptFolderLocation)) {
+            if (!Files.exists(scriptFolderLocation))
                 Files.createDirectories(scriptFolderLocation);
-            }
 
-            if(Files.exists(scriptLocation)){
-                Messenger.m(cc.getSource(), String.format("gi Note: overwriting existing file '%s'", name));
-            }
+            if(Files.exists(scriptLocation))
+                Messenger.m(cc.getSource(), String.format("gi Note: overwriting existing file '%s'", appFileName));
 
-            Messenger.m(cc.getSource(), "gi Placing script in " + location);
+
+            Messenger.m(cc.getSource(), "gi Placing script in " + message);
 
             FileWriter fileWriter = new FileWriter(scriptPath);
             fileWriter.write(code);
             fileWriter.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             Messenger.m(cc.getSource(), "r Error in downloading script");
             return 0;
         }
-        Messenger.m(cc.getSource(), "gi Successfully created "+ name + " in " + location);
+        Messenger.m(cc.getSource(), "gi Successfully created "+ appFileName + " in " + message);
         return 1;
     }
 
@@ -126,109 +303,30 @@ public class ScriptDownloader {
      * @return the string input from the InputStream
      * @throws IOException if an I/O error occurs
      */
-    public static String getStringFromStream(InputStream inputStream) throws IOException {
-        if (inputStream != null) {
+    public static String getStringFromStream(InputStream inputStream) throws IOException
+    {
+        if (inputStream != null)
+        {
             Writer stringWriter = new StringWriter();
 
             char[] charBuffer = new char[2048];
-            try{
+            try
+            {
                 Reader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
                 int counter;
-                while ((counter = reader.read(charBuffer)) != -1) {
+                while ((counter = reader.read(charBuffer)) != -1)
                     stringWriter.write(charBuffer, 0, counter);
-                }
-            } finally {
+
+            }
+            finally
+            {
                 inputStream.close();
             }
             return stringWriter.toString();
-        } else {
+        }
+        else
+        {
             return "";
         }
-    }
-
-    /** Updates local copy of scarpet repo, giving an error otherwise which ought to be reported to fabric-carpet devs,
-     * in particular Ghoulboy if possible as he wrote this code.
-     *
-     * @author Ghoulboy
-     */
-
-    public static void updateLocalRepoStructure(){
-        try{
-            localScarpetRepoStructure = updateLocalRepoStructure("");
-        } catch (IOException | IllegalStateException exc){//should not happen as long as repo name stays the same
-            System.out.println("ERROR: ScriptDownloader#scarpetRepoLink variable is out of date, please update your carpet version, and if the problem persists please submit a bug report here: https://github.com/gnembon/fabric-carpet/issues/new");
-            throw new CommandException(new LiteralText("Internal scarpet app store repo structure changed, please contact fabric-carpet developers, enclosing a copy of the server log!"));
-        }
-    }
-
-    /** A DFS to save the file structure (not the code) in the scarpet repo, called at server start and whenever running
-     * the command {@code /script download} command  causes an oopsie, so the internal scarpet repo structure is changed
-     * and we therefore need to update it. We don't save the code here in case it needs updating from the last time, and
-     * also not to slow down the search for
-     *
-     * @param currentPath The current path down which we are looking for code.
-     * @return The scarpet repo structure as a map which you navigate down, so you don't need to query to github API
-     * multiple times
-     * @throws IOException only if {@link ScriptDownloader#scarpetRepoLink} structure is out of date, i.e scarpet internal
-     * repo structure has changed
-     */
-
-    public static Map<String, Map> updateLocalRepoStructure(String currentPath) throws IOException{
-
-        Map<String, Map> ret = new HashMap<>();
-
-        String queryPath = scarpetRepoLink + currentPath;
-
-        URL appURL = new URL(queryPath);
-
-        String response = ScriptDownloader.getStringFromStream(appURL.openStream());
-
-        JsonArray files = new JsonParser().parse(response).getAsJsonArray();
-
-        for(JsonElement je : files){
-            JsonObject jo = je.getAsJsonObject();
-            String name = jo.get("name").getAsString();
-            String filePath = jo.get("path").getAsString().substring(9).replace(" ", "%20");
-
-            if (jo.get("type").getAsString().equals("dir") && !name.contains("shared")) {//cos that may be a directory for shared data, so we don't wanna search there
-                ret.put(name, updateLocalRepoStructure(filePath));
-            } else if (name.matches("(\\w+\\.scl?)")){
-                ret.put(name, null);
-            }
-        }
-
-        return ret;
-    }
-
-    /** This method searches for valid file names from the user-inputted string, e.g if the user has thus far typed
-     * {@code survival/a} then it will return all the files in the {@code survival} directory of the scarpet repo (and
-     * will automatically highlight those starting with a), and the string {@code survival/} as the current most valid path.
-     *
-     * @param currentPath The path down which we want to search for files
-     * @return A pair of the current valid path, as well as the set of all the file/directory names at the end of that path
-     */
-    public static Pair<String, Set<String>> fileNamesFromPath(String currentPath){
-        String[] path = currentPath.split("/");
-
-        Map<String, Map> currentLookedAtFiles = localScarpetRepoStructure;
-        StringBuilder currentValidPath = new StringBuilder();
-
-
-        for(String folder : path){
-            if(!currentLookedAtFiles.containsKey(folder) || folder.matches(".+\\.sc"))
-                return new Pair<>(currentValidPath.toString(), currentLookedAtFiles.keySet());
-
-            currentValidPath.append(folder).append("/");
-
-
-            Map newFolder = currentLookedAtFiles.get(folder);
-
-            if(newFolder == null)
-                return new Pair<>(currentValidPath.toString(), currentLookedAtFiles.keySet());
-
-            currentLookedAtFiles = newFolder;
-        }
-
-        return new Pair<>(currentValidPath.toString(), currentLookedAtFiles.keySet());
     }
 }
