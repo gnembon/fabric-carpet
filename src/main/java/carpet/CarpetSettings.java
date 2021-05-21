@@ -1,6 +1,6 @@
 package carpet;
 
-import carpet.script.utils.ScriptDownloader;
+import carpet.script.utils.AppStoreManager;
 import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
 import carpet.settings.SettingsManager;
@@ -465,7 +465,7 @@ public class CarpetSettings
                     "using <user>/<repo>/contents/<path...>"
             },
             category = SCARPET,
-            validate= ScriptDownloader.ScarpetAppStoreValidator.class
+            validate= AppStoreManager.ScarpetAppStoreValidator.class
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
 

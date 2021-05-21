@@ -1,6 +1,5 @@
 package carpet.script.utils;
 
-import carpet.script.CarpetScriptServer;
 import carpet.settings.ParsedRule;
 import carpet.settings.Validator;
 import carpet.utils.Messenger;
@@ -40,7 +39,7 @@ import java.util.stream.Collectors;
 /**
  * A class used to save scarpet app store scripts to disk
  */
-public class ScriptDownloader
+public class AppStoreManager
 {
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions.
@@ -124,18 +123,15 @@ public class ScriptDownloader
             if (scarpetRepoLink == null) throw new IOException("Accessing scarpet app repo is disabled");
 
             String queryPath = scarpetRepoLink + getPath();
-            CarpetScriptServer.LOG.error("Fetching: "+queryPath);
             String response;
             try
             {
                 URL appURL = new URL(queryPath);
-                response = ScriptDownloader.getStringFromStream(appURL.openStream());
+                response = AppStoreManager.getStringFromStream(appURL.openStream());
             }
             catch (IOException e)
             {
-                CarpetScriptServer.LOG.error("Problems fetching: "+e);
-                sealed = true;
-                return;
+                throw new IOException("Problems fetching "+queryPath+": "+e);
             }
             JsonArray files = new JsonParser().parse(response).getAsJsonArray();
             for(JsonElement je : files)
@@ -152,7 +148,6 @@ public class ScriptDownloader
                     children.put(name, scriptFile(this, name, value));
                 }
             }
-            CarpetScriptServer.LOG.error("nodes for "+ getPath()+" are "+children.values().stream().map(PathNode::pathElement).collect(Collectors.joining(",")));
             sealed = true;
         }
 
@@ -173,12 +168,10 @@ public class ScriptDownloader
         {
             if (isLeaf())
             {
-                CarpetScriptServer.LOG.error("suggestions for leaf :"+name);
                 return Collections.singletonList(getPath());
             }
             fillChildren();
             String prefix = getPath();
-            CarpetScriptServer.LOG.error("suggestions for node :"+name);
             return children.values().stream().map(s -> prefix+s.pathElement().replaceAll("/$", "")).collect(Collectors.toList());
         }
 
@@ -219,7 +212,7 @@ public class ScriptDownloader
 
 
 
-    /** A simple shorthand for calling the {@link ScriptDownloader#getScriptCode} and {@link ScriptDownloader#saveScriptToFile}
+    /** A simple shorthand for calling the {@link AppStoreManager#getScriptCode} and {@link AppStoreManager#saveScriptToFile}
      * methods to avoid repeating code and so it makes more sense what it's exactly doing.
      *
      * @param path The user-inputted path to the script

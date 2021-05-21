@@ -3,7 +3,7 @@ package carpet.commands;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.script.CarpetScriptServer;
-import carpet.script.utils.ScriptDownloader;
+import carpet.script.utils.AppStoreManager;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
 import carpet.script.CarpetScriptHost;
@@ -110,7 +110,7 @@ public class ScriptCommand
     }
 
     /**
-     * A method to suggest the available scarpet scripts based off of the current player input and {@link ScriptDownloader#localScarpetRepoStructure}
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#localScarpetRepoStructure}
      * variable.
      */
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
@@ -119,9 +119,9 @@ public class ScriptCommand
     ) throws CommandSyntaxException {
         try {
             String previous = suggestionsBuilder.getRemaining();
-            List<String> suggestions = ScriptDownloader.suggestionsFromPath(previous);
+            List<String> suggestions = AppStoreManager.suggestionsFromPath(previous);
             CarpetScriptServer.LOG.error(String.join(":", suggestions));
-            ScriptDownloader.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
+            AppStoreManager.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
             return suggestionsBuilder.buildFuture();
         }
         catch (IOException e)
@@ -328,8 +328,8 @@ public class ScriptCommand
                                         )?1:0))));
 
         LiteralArgumentBuilder<ServerCommandSource> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
-                then(literal("global").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), true)))).
-                then(literal("local").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc->ScriptDownloader.downloadScript(cc, StringArgumentType.getString(cc,"path"), false))));
+                then(literal("global").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc-> AppStoreManager.downloadScript(cc, StringArgumentType.getString(cc,"path"), true)))).
+                then(literal("local").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc-> AppStoreManager.downloadScript(cc, StringArgumentType.getString(cc,"path"), false))));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
