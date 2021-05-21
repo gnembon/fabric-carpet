@@ -67,7 +67,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * @see OutputConverter#registerToValue(Class, java.util.function.Function)
  * @see OutputConverter#register(Class, java.util.function.Function)
  * @see ValueCaster#register(Class, String)
- * @see SimpleTypeConverter#registerType(Class, Class, java.util.function.Function)
+ * @see SimpleTypeConverter#registerType(Class, Class, java.util.function.Function, String)
  * @see Param.Params#registerStrictConverter(Class, boolean, ValueConverter)
  * @see Param.Params#registerCustomConverterFactory(java.util.function.BiFunction)
  */

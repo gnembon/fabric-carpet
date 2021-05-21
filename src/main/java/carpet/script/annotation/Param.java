@@ -170,8 +170,7 @@ public interface Param
         };*/
 
         /**
-         * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called when running
-         * {@link #checkAndConvert(Iterator, Context, Context.Type)}, and throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
+         * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called, and throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
         static final ValueConverter<Context> CONTEXT_PROVIDER = new ValueConverter<Context>()
@@ -198,8 +197,7 @@ public interface Param
         };
         
         /**
-         * <p>A {@link ValueConverter} that outputs the {@link Context.Type} which the function has been called when running
-         * {@link #checkAndConvert(Iterator, Context, Context.Type)}, or throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
+         * <p>A {@link ValueConverter} that outputs the {@link Context.Type} which the function has been called, or throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
          */
         static final ValueConverter<Context.Type> CONTEXT_TYPE_PROVIDER = new ValueConverter<Context.Type>()

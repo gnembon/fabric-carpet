@@ -22,7 +22,7 @@ import net.minecraft.world.World;
  * 
  * <p>{@link SimpleTypeConverter}s are reused whenever asked for one, since they don't have any complexity.</p>
  *
- * @see #registerType(Class, Class, Function)
+ * @see #registerType(Class, Class, Function, String)
  * 
  * @param <T> The type of the required input {@link Value}
  * @param <R> The type that this converter converts to
@@ -53,7 +53,7 @@ public final class SimpleTypeConverter<T extends Value, R> implements ValueConve
      * <p>The default constructor for {@link SimpleTypeConverter}.</p>
      * 
      * <p>This is public in order to provide an implementation to use when registering {@link ValueConverter}s for the {@link Param.Strict} annotation
-     * registry, and it's not intended way to register new {@link SimpleTypeConverter}</p> <p>Use {@link #registerType(Class, Class, Function)} for
+     * registry, and it's not intended way to register new {@link SimpleTypeConverter}</p> <p>Use {@link #registerType(Class, Class, Function, String)} for
      * that.</p>
      * 
      * @param inputType The required type for the input {@link Value}
