@@ -72,9 +72,9 @@ public class ExpressionException extends RuntimeException implements ResolvedExc
 
     synchronized static String makeMessage(Context c, Expression e, Tokenizer.Token t, String message) throws ExpressionException
     {
-        if (c.host.errorSnooper != null)
+        if (c.getErrorSnooper() != null)
         {
-            List<String> alternative = c.host.errorSnooper.apply(e, t, message);
+            List<String> alternative = c.getErrorSnooper().apply(e, t, message);
             if (alternative!= null)
             {
                 return String.join("\n", alternative);
