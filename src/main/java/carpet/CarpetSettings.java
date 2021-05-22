@@ -28,7 +28,17 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
 
-import static carpet.settings.RuleCategory.*;
+import static carpet.settings.RuleCategory.BUGFIX;
+import static carpet.settings.RuleCategory.COMMAND;
+import static carpet.settings.RuleCategory.CREATIVE;
+import static carpet.settings.RuleCategory.EXPERIMENTAL;
+import static carpet.settings.RuleCategory.FEATURE;
+import static carpet.settings.RuleCategory.OPTIMIZATION;
+import static carpet.settings.RuleCategory.SURVIVAL;
+import static carpet.settings.RuleCategory.TNT;
+import static carpet.settings.RuleCategory.DISPENSER;
+import static carpet.settings.RuleCategory.SCARPET;
+import static carpet.settings.RuleCategory.CLIENT;
 
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
