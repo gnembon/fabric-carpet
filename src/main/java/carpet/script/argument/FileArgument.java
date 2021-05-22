@@ -222,7 +222,10 @@ public class FileArgument
         String ext = type.extension;
         try
         {
-            return Files.list(dir).filter(path -> (type==Type.FOLDER)?path.toString().endsWith("/"):path.toString().endsWith(ext));
+            return Files.list(dir).filter(path -> (type==Type.FOLDER)
+                    ?Files.isDirectory(path)
+                    :(Files.isRegularFile(path) &&  path.toString().endsWith(ext))
+            );
         }
         catch (IOException ignored)
         {
@@ -252,6 +255,7 @@ public class FileArgument
             close();
         }
         if (type == Type.FOLDER)
+            // java 8 paths are inconsistent. in java 16 they all should not have trailing slashes
             return strings.map(s -> s.endsWith("/")?s.substring(0, s.length()-1):s);
         return strings.map(FilenameUtils::removeExtension);
     }
