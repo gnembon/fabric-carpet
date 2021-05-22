@@ -1,29 +1,29 @@
 package carpet.patches;
 
-import carpet.fakes.ServerPlayerEntityInterface;
-import carpet.utils.Messenger;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.HungerManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.NetworkSide;
 import net.minecraft.network.packet.s2c.play.EntityPositionS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySetHeadYawS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.HungerManager;
+import net.minecraft.network.NetworkSide;
 import net.minecraft.server.PlayerManager;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
+import carpet.fakes.ServerPlayerEntityInterface;
+import carpet.utils.Messenger;
 
 import java.util.Objects;
 
@@ -33,12 +33,11 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     public Runnable fixStartingPosition = () -> {};
     public boolean isAShadow;
 
-    public static void createFake(String playerName, MinecraftServer server,
+    public static EntityPlayerMPFake createFake(String playerName, MinecraftServer server,
                                   double d0, double d1, double d2, double yaw, double pitch,
                                   RegistryKey<World> dimensionId, GameMode gamemode,
                                   boolean isSpawnerPrivileged, boolean fallBackToSpawningOfflinePlayer
-                                                )
-            throws FakePlayerSpawnException {
+    ) throws FakePlayerSpawnException {
         Objects.requireNonNull(playerName);
         Objects.requireNonNull(server);
         Objects.requireNonNull(dimensionId);
@@ -58,10 +57,10 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             throw new FakePlayerSpawnException("rb Player name: " + playerName + " is too long");
 
         // get player profile from auth server (or generate offline-mode profile if the server is in offline mode)
-        GameProfile profile = server.getUserCache().findByName(playerName);
+        GameProfile gameprofile = server.getUserCache().findByName(playerName);
 
         // if the player with this playerName does not exist
-        if (profile == null)
+        if (gameprofile == null)
         {
             if (!fallBackToSpawningOfflinePlayer) {
                 throw new FakePlayerSpawnException("r Player " + playerName + " is either banned by Mojang, or " +
@@ -69,46 +68,46 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
                         "and in servers in off-line mode.");
             } else {
                 // spawn offline player
-                profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
+                gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
             }
         }
 
         // if this player is banned locally
-        if (playerManager.getUserBanList().contains(profile))
+        if (playerManager.getUserBanList().contains(gameprofile))
         {
             throw new FakePlayerSpawnException("r Player ", "rb " + playerName, "r  is banned on this server");
         }
 
         // if the player is whitelisted and the command runner is not privileged
-        if (playerManager.isWhitelistEnabled() && playerManager.isWhitelisted(profile) && !isSpawnerPrivileged)
+        if (playerManager.isWhitelistEnabled() && playerManager.isWhitelisted(gameprofile) && !isSpawnerPrivileged)
         {
             throw new FakePlayerSpawnException("r Whitelisted players can only be spawned by operators");
         }
 
         // get necessary server managers
-        ServerWorld world = server.getWorld(dimensionId);
-        ServerPlayerInteractionManager playerInteractionManager = new ServerPlayerInteractionManager(world);
+        ServerWorld worldIn = server.getWorld(dimensionId);
+        ServerPlayerInteractionManager interactionManagerIn = new ServerPlayerInteractionManager(worldIn);
 
         // load player texture
-        if (profile.getProperties().containsKey("textures"))
+        if (gameprofile.getProperties().containsKey("textures"))
         {
-            profile = SkullBlockEntity.loadProperties(profile);
+            gameprofile = SkullBlockEntity.loadProperties(gameprofile);
         }
 
         // initiate player instance
-        EntityPlayerMPFake player = new EntityPlayerMPFake(server, world, profile, playerInteractionManager, false);
-        player.fixStartingPosition = () -> player.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
-        server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), player);
-        player.teleport(world, d0, d1, d2, (float)yaw, (float)pitch);
-        player.setHealth(20.0F);
-        player.removed = false;
-        player.stepHeight = 0.6F;
-        playerInteractionManager.setGameMode(gamemode);
-        server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(player, (byte) (player.headYaw * 256 / 360)), dimensionId);//instance.dimension);
-        server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(player), dimensionId);//instance.dimension);
-        player.getServerWorld().getChunkManager().updateCameraPosition(player);
-        player.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
-
+        EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn, false);
+        instance.fixStartingPosition = () -> instance.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
+        server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
+        instance.teleport(worldIn, d0, d1, d2, (float)yaw, (float)pitch);
+        instance.setHealth(20.0F);
+        instance.removed = false;
+        instance.stepHeight = 0.6F;
+        interactionManagerIn.setGameMode(gamemode);
+        server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(instance, (byte) (instance.headYaw * 256 / 360)), dimensionId);//instance.dimension);
+        server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), dimensionId);//instance.dimension);
+        instance.getServerWorld().getChunkManager().updateCameraPosition(instance);
+        instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
+        return instance;
     }
 
     public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayerEntity player)

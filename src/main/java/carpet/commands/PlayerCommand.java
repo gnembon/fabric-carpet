@@ -1,8 +1,8 @@
 package carpet.commands;
 
+import carpet.helpers.EntityPlayerActionPack;
 import carpet.CarpetSettings;
 import carpet.fakes.ServerPlayerEntityInterface;
-import carpet.helpers.EntityPlayerActionPack;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
@@ -17,9 +17,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -34,9 +34,9 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static net.minecraft.command.CommandSource.suggestMatching;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.command.CommandSource.suggestMatching;
 
 public class PlayerCommand
 {
@@ -214,18 +214,18 @@ public class PlayerCommand
     {
         try {
             // get parameters
-            ServerCommandSource commandSource = context.getSource();
+            ServerCommandSource source = context.getSource();
             Vec3d pos = tryGetArg(
                     () -> Vec3ArgumentType.getVec3(context, "position"),
-                    commandSource::getPosition
+                    source::getPosition
             );
             Vec2f facing = tryGetArg(
                     () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
-                    commandSource::getRotation
+                    source::getRotation
             );
             RegistryKey<World> dimType = tryGetArg(
                     () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
-                    () -> commandSource.getWorld().getRegistryKey() // dimension.getType()
+                    () -> source.getWorld().getRegistryKey() // dimension.getType()
             );
             String playerName = StringArgumentType.getString(context, "player");
 
@@ -245,7 +245,7 @@ public class PlayerCommand
 
             // spawn fake player
             EntityPlayerMPFake.createFake(
-                    playerName, commandSource.getMinecraftServer(),
+                    playerName, source.getMinecraftServer(),
                     pos.x, pos.y, pos.z, facing.y, facing.x,
                     dimType, mode,
                     context.getSource().hasPermissionLevel(2),
