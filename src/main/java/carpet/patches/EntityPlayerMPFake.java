@@ -48,11 +48,6 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
             throw new FakePlayerSpawnException("r Player ", "rb " + playerName, "r  is already logged on");
         }
 
-        // check player name length
-        // player with a name longer than 16 bytes will kick out all players
-        if (playerName.length() > 16)
-            throw new FakePlayerSpawnException("rb Player name: " + playerName + " is too long");
-
         // get player profile from auth server (or generate offline-mode profile if the server is in offline mode)
         GameProfile gameprofile = server.getUserCache().findByName(playerName);
 
