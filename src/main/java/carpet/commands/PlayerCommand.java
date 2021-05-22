@@ -212,46 +212,51 @@ public class PlayerCommand
 
     private static int spawn(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
     {
-        try {
-            // get parameters
-            ServerCommandSource source = context.getSource();
-            Vec3d pos = tryGetArg(
-                    () -> Vec3ArgumentType.getVec3(context, "position"),
-                    source::getPosition
-            );
-            Vec2f facing = tryGetArg(
-                    () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
-                    source::getRotation
-            );
-            RegistryKey<World> dimType = tryGetArg(
-                    () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
-                    () -> source.getWorld().getRegistryKey() // dimension.getType()
-            );
-            String playerName = StringArgumentType.getString(context, "player");
+        ServerCommandSource source = context.getSource();
+        Vec3d pos = tryGetArg(
+                () -> Vec3ArgumentType.getVec3(context, "position"),
+                source::getPosition
+        );
+        Vec2f facing = tryGetArg(
+                () -> RotationArgumentType.getRotation(context, "direction").toAbsoluteRotation(context.getSource()),
+                source::getRotation
+        );
+        RegistryKey<World> dimType = tryGetArg(
+                () -> DimensionArgumentType.getDimensionArgument(context, "dimension").getRegistryKey(),
+                () -> source.getWorld().getRegistryKey() // dimension.getType()
+        );
+        GameMode mode = GameMode.CREATIVE;
+        try
+        {
+            ServerPlayerEntity player = context.getSource().getPlayer();
+            mode = player.interactionManager.getGameMode();
+        }
+        catch (CommandSyntaxException ignored) {}
+        String playerName = StringArgumentType.getString(context, "player");
+        if (playerName.length()>40)
+        {
+            Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
+            return 0;
+        }
 
-            // check parameters
-            if (!World.isInBuildLimit(new BlockPos(pos.x, pos.y, pos.z))) {
-                Messenger.m(context.getSource(), "rb Player " + playerName + " cannot be placed outside of the world");
-                return 0;
-            }
-
-            // get fake player game mode
-            GameMode mode = GameMode.CREATIVE;
-            try {
-                ServerPlayerEntity player = context.getSource().getPlayer();
-                mode = player.interactionManager.getGameMode();
-            } catch (CommandSyntaxException ignored) {
-            }
-
+        MinecraftServer server = source.getMinecraftServer();
+        if (!World.isInBuildLimit(new BlockPos(pos.x, pos.y, pos.z)))
+        {
+            Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
+            return 0;
+        }
+        try
+        {
             // spawn fake player
             EntityPlayerMPFake.createFake(
-                    playerName, source.getMinecraftServer(),
+                    playerName, server,
                     pos.x, pos.y, pos.z, facing.y, facing.x,
                     dimType, mode,
                     context.getSource().hasPermissionLevel(2),
                     CarpetSettings.fallBackToSpawningOfflinePlayers
             );
-        } catch (EntityPlayerMPFake.FakePlayerSpawnException e) {
+        } catch (EntityPlayerMPFake.FakePlayerSpawnException e)
+        {
             // EntityPlayerMPFake.createFake failed
             Messenger.m(context.getSource(), e.getMessengerMessage());
             return 0;

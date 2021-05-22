@@ -33,10 +33,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     public Runnable fixStartingPosition = () -> {};
     public boolean isAShadow;
 
-    public static EntityPlayerMPFake createFake(String playerName, MinecraftServer server,
-                                  double d0, double d1, double d2, double yaw, double pitch,
-                                  RegistryKey<World> dimensionId, GameMode gamemode,
-                                  boolean isSpawnerPrivileged, boolean fallBackToSpawningOfflinePlayer
+    public static EntityPlayerMPFake createFake(String playerName, MinecraftServer server, double d0, double d1, double d2, double yaw, double pitch, RegistryKey<World> dimensionId, GameMode gamemode, boolean isSpawnerPrivileged, boolean fallBackToSpawningOfflinePlayer
     ) throws FakePlayerSpawnException {
         Objects.requireNonNull(playerName);
         Objects.requireNonNull(server);
