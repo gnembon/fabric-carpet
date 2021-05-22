@@ -12,8 +12,10 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.utils.AppStoreManager;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -78,6 +80,7 @@ public class CarpetScriptHost extends ScriptHost
 
     Predicate<ServerCommandSource> commandValidator;
     boolean isRuleApp;
+    public AppStoreManager.StoreNode storeSource;
 
     private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
     {
@@ -98,9 +101,10 @@ public class CarpetScriptHost extends ScriptHost
         appArgTypes = argTypes;
         this.commandValidator = commandValidator;
         this.isRuleApp = isRuleApp;
+        storeSource = null;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
     {
         CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
@@ -117,6 +121,7 @@ public class CarpetScriptHost extends ScriptHost
                 host.setChatErrorSnooper(source);
                 CarpetExpression ex = new CarpetExpression(host.main, code, source, new BlockPos(0, 0, 0));
                 ex.getExpr().asATextSource();
+                host.storeSource = storeSource;
                 ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
             }
             catch (CarpetExpressionException e)
@@ -129,6 +134,10 @@ public class CarpetScriptHost extends ScriptHost
             {
                 host.handleErrorWithStack("Math doesn't compute", ae);
                 return null;
+            }
+            finally
+            {
+                host.storeSource = null;
             }
         }
         return host;
@@ -302,8 +311,19 @@ public class CarpetScriptHost extends ScriptHost
             else
             {
                 checkModVersionRequirements(loadRequirements);
+            };
+            if (storeSource != null)
+            {
+                Value resources = config.get(new StringValue("resources"));
+                if (resources != null)
+                {
+                    if (!(resources instanceof ListValue)) throw new InternalExpressionException("App resources not defined as a list");
+                    for (Value resource : ((ListValue) resources).getItems())
+                    {
+                        AppStoreManager.addResource(this, storeSource, resource);
+                    }
+                }
             }
-
             appConfig = config;
         }
         catch (NullPointerException ignored)
