@@ -21,6 +21,7 @@ import carpet.script.language.Functions;
 import carpet.script.language.Loops;
 import carpet.script.language.Sys;
 import carpet.script.language.Threading;
+import carpet.script.utils.AppStoreManager;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import carpet.utils.CarpetProfiler;
@@ -53,9 +54,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
 
 public class CarpetScriptServer
 {
@@ -127,7 +125,7 @@ public class CarpetScriptServer
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
-        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false);
+        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null);
     }
 
     public void initializeForWorld()
@@ -142,7 +140,7 @@ public class CarpetScriptServer
         {
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);
+                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false, null);
             }
         }
         CarpetEventServer.Event.START.onTick();
@@ -241,7 +239,7 @@ public class CarpetScriptServer
     }
 
     public boolean addScriptHost(ServerCommandSource source, String name, Predicate<ServerCommandSource> commandValidator,
-                                 boolean perPlayer, boolean autoload, boolean isRuleApp)
+                                 boolean perPlayer, boolean autoload, boolean isRuleApp, AppStoreManager.StoreNode installer)
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
         if (commandValidator == null) commandValidator = p -> true;
@@ -260,7 +258,7 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to add "+name+" app");
             return false;
         }
-        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp);
+        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp, installer);
         if (newHost == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -488,7 +486,7 @@ public class CarpetScriptServer
         apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp));
+        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp, null));
     }
 
     public void reAddCommands()
