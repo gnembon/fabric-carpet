@@ -1,5 +1,6 @@
 package carpet.patches;
 
+import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
 import net.minecraft.entity.Entity;
@@ -11,7 +12,6 @@ import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.network.NetworkSide;
-import net.minecraft.server.PlayerManager;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
@@ -19,13 +19,12 @@ import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.UserCache;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.utils.Messenger;
-
-import java.util.Objects;
 
 @SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayerEntity
@@ -33,60 +32,32 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     public Runnable fixStartingPosition = () -> {};
     public boolean isAShadow;
 
-    public static EntityPlayerMPFake createFake(String playerName, MinecraftServer server, double d0, double d1, double d2, double yaw, double pitch, RegistryKey<World> dimensionId, GameMode gamemode, boolean isSpawnerPrivileged, boolean fallBackToSpawningOfflinePlayer
-    ) throws FakePlayerSpawnException {
-        Objects.requireNonNull(playerName);
-        Objects.requireNonNull(server);
-        Objects.requireNonNull(dimensionId);
-        Objects.requireNonNull(gamemode);
-
-        PlayerManager playerManager = server.getPlayerManager();
-
-        // if this player already logged in
-        if (playerManager.getPlayer(playerName) != null)
-        {
-            throw new FakePlayerSpawnException("r Player ", "rb " + playerName, "r  is already logged on");
-        }
-
-        // get player profile from auth server (or generate offline-mode profile if the server is in offline mode)
-        GameProfile gameprofile = server.getUserCache().findByName(playerName);
-
-        // if the player with this playerName does not exist
-        if (gameprofile == null)
-        {
-            if (!fallBackToSpawningOfflinePlayer) {
-                throw new FakePlayerSpawnException("r Player " + playerName + " is either banned by Mojang, or " +
-                        "auth servers are down. Banned players can only be summoned in Singleplayer " +
-                        "and in servers in off-line mode.");
-            } else {
-                // spawn offline player
-                gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
-            }
-        }
-
-        // if this player is banned locally
-        if (playerManager.getUserBanList().contains(gameprofile))
-        {
-            throw new FakePlayerSpawnException("r Player ", "rb " + playerName, "r  is banned on this server");
-        }
-
-        // if the player is whitelisted and the command runner is not privileged
-        if (playerManager.isWhitelistEnabled() && playerManager.isWhitelisted(gameprofile) && !isSpawnerPrivileged)
-        {
-            throw new FakePlayerSpawnException("r Whitelisted players can only be spawned by operators");
-        }
-
-        // get necessary server managers
+    public static EntityPlayerMPFake createFake(String username, MinecraftServer server, double d0, double d1, double d2, double yaw, double pitch, RegistryKey<World> dimensionId, GameMode gamemode)
+    {
+        //prolly half of that crap is not necessary, but it works
         ServerWorld worldIn = server.getWorld(dimensionId);
         ServerPlayerInteractionManager interactionManagerIn = new ServerPlayerInteractionManager(worldIn);
-
-        // load player texture
+        UserCache.setUseRemote(false);
+        GameProfile gameprofile;
+        try {
+            gameprofile = server.getUserCache().findByName(username);
+        }
+        finally {
+            UserCache.setUseRemote(server.isDedicated() && server.isOnlineMode());
+        }
+        if (gameprofile == null)
+        {
+            if (CarpetSettings.strictOnlineMode)
+            {
+                return null;
+            } else {
+                gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(username), username);
+            }
+        }
         if (gameprofile.getProperties().containsKey("textures"))
         {
             gameprofile = SkullBlockEntity.loadProperties(gameprofile);
         }
-
-        // initiate player instance
         EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, interactionManagerIn, false);
         instance.fixStartingPosition = () -> instance.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
         server.getPlayerManager().onPlayerConnect(new NetworkManagerFake(NetworkSide.SERVERBOUND), instance);
@@ -188,24 +159,5 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
     public String getIp()
     {
         return "127.0.0.1";
-    }
-
-    public static class FakePlayerSpawnException extends Exception {
-        private final Object[] message;
-
-        /**
-         * Create an exception indicating a failure when trying to spawn a fake player.
-         * @param message the message to be passed to {@link Messenger::m} method.
-         */
-        public FakePlayerSpawnException(Object ... message) {
-            this.message = message;
-        }
-
-        /**
-         * Get the detailed error message which should be sent to user via {@link Messenger::m} method.
-         */
-        public Object[] getMessengerMessage() {
-            return message;
-        }
     }
 }

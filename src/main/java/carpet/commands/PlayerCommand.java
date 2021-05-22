@@ -7,6 +7,7 @@ import carpet.patches.EntityPlayerMPFake;
 import carpet.settings.SettingsManager;
 import carpet.utils.Messenger;
 import com.google.common.collect.Sets;
+import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -17,6 +18,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.DimensionArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
+import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
@@ -176,6 +178,42 @@ public class PlayerCommand
         return true;
     }
 
+    private static boolean cantSpawn(CommandContext<ServerCommandSource> context)
+    {
+        String playerName = StringArgumentType.getString(context, "player");
+        MinecraftServer server = context.getSource().getMinecraftServer();
+        PlayerManager manager = server.getPlayerManager();
+        PlayerEntity player = manager.getPlayer(playerName);
+        if (player != null)
+        {
+            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
+            return true;
+        }
+        GameProfile profile = server.getUserCache().findByName(playerName);
+        if (profile == null)
+        {
+            if (CarpetSettings.strictOnlineMode)
+            {
+                Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
+                        "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
+                return true;
+            } else {
+                profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
+            }
+        }
+        if (manager.getUserBanList().contains(profile))
+        {
+            Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
+            return true;
+        }
+        if (manager.isWhitelistEnabled() && manager.isWhitelisted(profile) && !context.getSource().hasPermissionLevel(2))
+        {
+            Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
+            return true;
+        }
+        return false;
+    }
+
     private static int kill(CommandContext<ServerCommandSource> context)
     {
         if (cantReMove(context)) return 0;
@@ -212,6 +250,7 @@ public class PlayerCommand
 
     private static int spawn(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
     {
+        if (cantSpawn(context)) return 0;
         ServerCommandSource source = context.getSource();
         Vec3d pos = tryGetArg(
                 () -> Vec3ArgumentType.getVec3(context, "position"),
@@ -245,20 +284,11 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
             return 0;
         }
-        try
+        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode);
+        if (player == null)
         {
-            // spawn fake player
-            EntityPlayerMPFake.createFake(
-                    playerName, server,
-                    pos.x, pos.y, pos.z, facing.y, facing.x,
-                    dimType, mode,
-                    context.getSource().hasPermissionLevel(2),
-                    CarpetSettings.fallBackToSpawningOfflinePlayers
-            );
-        } catch (EntityPlayerMPFake.FakePlayerSpawnException e)
-        {
-            // EntityPlayerMPFake.createFake failed
-            Messenger.m(context.getSource(), e.getMessengerMessage());
+            Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +
+                    "and cannot spawn in online mode. Turn the server offline to spawn non-existing players");
             return 0;
         }
         return 1;
