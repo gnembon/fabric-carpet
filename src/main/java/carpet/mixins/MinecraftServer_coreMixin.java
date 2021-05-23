@@ -50,6 +50,12 @@ public abstract class MinecraftServer_coreMixin
         CarpetServer.onServerClosed((MinecraftServer) (Object) this);
     }
 
+    @Inject(method = "shutdown", at = @At("TAIL"))
+    private void serverDoneClosed(CallbackInfo ci)
+    {
+        CarpetServer.onServerDoneClosing((MinecraftServer) (Object) this);
+    }
+
     @Inject(method = "prepareStartRegion", at = @At("RETURN"))
     private void afterSpawnCreated(WorldGenerationProgressListener worldGenerationProgressListener, CallbackInfo ci)
     {
