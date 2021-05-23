@@ -19,6 +19,7 @@ import net.minecraft.tag.BlockTags;
 import net.minecraft.text.BaseText;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.registry.RegistryKey;
@@ -275,7 +276,7 @@ public class SpawnReporter
     {
         List<BaseText> lst = new ArrayList<>();
         lst.add( Messenger.s(String.format("Loaded entities for %s class:", get_type_string(cat))));
-        for (Entity entity : ((ServerWorld)worldIn).getEntitiesByType(null, (e) -> e.getType().getSpawnGroup()==cat))
+        for (Entity entity : ((ServerWorld)worldIn).getEntitiesByType(TypeFilter.instanceOf(Entity.class), (e) -> e.getType().getSpawnGroup()==cat))
         {
             boolean persistent = entity instanceof MobEntity && ( ((MobEntity) entity).isPersistent() || ((MobEntity) entity).cannotDespawn());
             if (!all && persistent)
