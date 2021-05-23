@@ -244,11 +244,10 @@ public class FileArgument
             Path rootPath = moduleRootPath(module);
             if (rootPath == null) return null;
             String zipComponent = (zipContainer != null) ? rootPath.relativize(zipPath).toString() : null;
-            strings = result.map(p -> {
-                if (zipContainer == null)
-                    return rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/");
-                return (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/");
-            });
+            strings = (zipContainer == null)
+                    ? result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/"))
+                    // need to remove ties to the zip file system before closing, so wrapping the stream
+                    : result.map(p -> (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/")).collect(Collectors.toList()).stream();
         } }
         finally
         {
