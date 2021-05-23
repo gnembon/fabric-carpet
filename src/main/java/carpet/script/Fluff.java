@@ -125,15 +125,7 @@ public abstract class Fluff
 
         public List<Value> unpackArgs(List<LazyValue> lzargs, Context c, Context.Type contextType)
         {
-            List<Value> args = new ArrayList<>();
-            for (LazyValue lv : lzargs)
-            {
-                Value arg = lv.evalValue(c, contextType);
-                if (arg instanceof FunctionUnpackedArgumentsValue)
-                    args.addAll(((ListValue) arg).getItems());
-                else
-                    args.add(arg);
-            }
+            List<Value> args = unpackLazy(lzargs, c, contextType);
             if (!numParamsVaries() && getNumParams() != args.size())
                 throw new InternalExpressionException("Function " + getName() + " expected " + getNumParams() + " parameters, got " + args.size());
             return args;
@@ -166,34 +158,36 @@ public abstract class Fluff
         @Override
         public LazyValue lazyEval(Context cc, Context.Type type, Expression e, Tokenizer.Token t, final List<LazyValue> lazyParams)
         {
-            try
-            {
-                return new LazyValue()
-                { // eager evaluation always ignores the required type and evals params by none default
-                    private List<Value> params;
 
-                    public Value evalValue(Context c, Context.Type type) {
-                        ILazyFunction.checkInterrupts();
+            return new LazyValue()
+            { // eager evaluation always ignores the required type and evals params by none default
+                private List<Value> params;
+                public Value evalValue(Context c, Context.Type type)
+                {
+                    ILazyFunction.checkInterrupts();
+                    try
+                    {
                         return AbstractFunction.this.eval(getParams(c));
                     }
-
-                    private List<Value> getParams(Context c) {
-                        if (params == null) {
-                            // very likely needs to be dynamic, so not static like here, or remember if it was.
-                            params = unpackArgs(lazyParams, c, Context.Type.NONE);
-                        }
-                        else
-                        {
-                            CarpetSettings.LOG.error("How did we get here 1");
-                        }
-                        return params;
+                    catch (RuntimeException exc)
+                    {
+                        throw Expression.handleCodeException(cc, exc, e, t);
                     }
-                };
-            }
-            catch (RuntimeException exc)
-            {
-                throw Expression.handleCodeException(cc, exc, e, t);
-            }
+                }
+                private List<Value> getParams(Context c)
+                {
+                    if (params == null)
+                    {
+                        // very likely needs to be dynamic, so not static like here, or remember if it was.
+                        params = unpackArgs(lazyParams, c, Context.Type.NONE);
+                    }
+                    else
+                    {
+                        CarpetSettings.LOG.error("How did we get here 1");
+                    }
+                    return params;
+                }
+            };
         }
     }
 

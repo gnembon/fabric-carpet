@@ -113,6 +113,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -132,7 +133,7 @@ public class WorldAccess {
             Context c,
             String name,
             List<Value> params,
-            BiFunction<BlockState, BlockPos, Boolean> test
+            BiPredicate<BlockState, BlockPos> test
     )
     {
         CarpetContext cc = (CarpetContext) c;
@@ -140,9 +141,9 @@ public class WorldAccess {
             throw new InternalExpressionException("'" + name + "' requires at least one parameter");
         Value v0 = params.get(0);
         if (v0 instanceof BlockValue)
-            return BooleanValue.of(test.apply(((BlockValue) v0).getBlockState(), ((BlockValue) v0).getPos()));
+            return BooleanValue.of(test.test(((BlockValue) v0).getBlockState(), ((BlockValue) v0).getPos()));
         BlockValue block = BlockArgument.findIn(cc, params, 0).block;
-        return BooleanValue.of(test.apply(block.getBlockState(), block.getPos()));
+        return BooleanValue.of(test.test(block.getBlockState(), block.getPos()));
     }
 
     private static Value stateStringQuery(

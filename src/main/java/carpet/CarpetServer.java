@@ -82,6 +82,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
+        CarpetScriptServer.parseFunctionClasses();
     }
 
     public static void onServerLoaded(MinecraftServer server)
@@ -187,6 +188,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
         // this for whatever reason gets called multiple times even when joining;
         TickSpeed.reset();
+    }
+    public static void onServerDoneClosing(MinecraftServer server)
+    {
         settingsManager.detachServer();
     }
 

@@ -1,5 +1,6 @@
 package carpet.script;
 
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.Value;
 
 import java.util.HashMap;
@@ -82,5 +83,64 @@ public class Context
     public Context duplicate()
     {
         return new Context(this.host);
+    }
+    public ScriptHost.ErrorSnooper getErrorSnooper()
+    {
+        return host.errorSnooper;
+    }
+
+
+    /**
+     * immutable context only for reason on reporting access violations in evaluating expressions in optimizization
+     * mode detecting any potential violations that may happen on the way
+     */
+    public static class ContextForErrorReporting extends Context
+    {
+        public ScriptHost.ErrorSnooper optmizerEerrorSnooper;
+        public ContextForErrorReporting(Context parent)
+        {
+            super(null);
+            optmizerEerrorSnooper =  parent.host.errorSnooper;
+        }
+
+        @Override
+        public ScriptHost.ErrorSnooper getErrorSnooper()
+        {
+            return optmizerEerrorSnooper;
+        }
+
+        public void badProgrammer()
+        {
+            throw new InternalExpressionException("Attempting to access the execution context while optimizing the code;" +
+                    " This is not the problem with your code, but the error cause by improper use of code compile optimizations" +
+                    "of scarpet authors. Please report this issue directly to the scarpet issue tracker");
+
+        }
+        @Override
+        public LazyValue getVariable(String name) { badProgrammer(); return null;}
+
+        @Override
+        public void setVariable(String name, LazyValue lv) { badProgrammer(); }
+
+        @Override
+        public void delVariable(String variable) { badProgrammer(); }
+
+        @Override
+        public void removeVariablesMatching(String varname) { badProgrammer(); }
+
+        @Override
+        public Context with(String variable, LazyValue lv) { badProgrammer(); return this; }
+
+        @Override
+        public Set<String> getAllVariableNames() { badProgrammer(); return null;}
+
+        @Override
+        public Context recreate() { badProgrammer(); return null;}
+
+        @Override
+        protected void initialize() { badProgrammer();}
+
+        @Override
+        public Context duplicate() { badProgrammer(); return null;}
     }
 }

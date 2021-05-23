@@ -38,13 +38,13 @@ public class SnoopyCommandSource extends ServerCommandSource
     private final Text[] error;
     private final List<Text> chatOutput;
 
-    public SnoopyCommandSource(ServerCommandSource original, Vec3d pos, Text[] error, List<Text> chatOutput)
+    public SnoopyCommandSource(ServerCommandSource original, Text[] error, List<Text> chatOutput)
     {
-        super(CommandOutput.DUMMY, pos, Vec2f.ZERO, original.getWorld(), CarpetSettings.runPermissionLevel,
+        super(CommandOutput.DUMMY, original.getPosition(), original.getRotation(), original.getWorld(), CarpetSettings.runPermissionLevel,
                 original.getName(), original.getDisplayName(), original.getMinecraftServer(), original.getEntity(), false,
                 (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET);
         this.output = CommandOutput.DUMMY;
-        this.position = pos;
+        this.position = original.getPosition();
         this.world = original.getWorld();
         this.level = CarpetSettings.runPermissionLevel;
         this.simpleName = original.getName();
@@ -53,7 +53,7 @@ public class SnoopyCommandSource extends ServerCommandSource
         this.entity = original.getEntity();
         this.resultConsumer = (ctx, succ, res) -> { };
         this.entityAnchor = original.getEntityAnchor();
-        this.rotation = Vec2f.ZERO;
+        this.rotation = original.getRotation();
         this.error = error;
         this.chatOutput = chatOutput;
     }
@@ -73,7 +73,7 @@ public class SnoopyCommandSource extends ServerCommandSource
         this.entity = player;
         this.resultConsumer = (ctx, succ, res) -> { };
         this.entityAnchor = EntityAnchorArgumentType.EntityAnchor.FEET;
-        this.rotation = Vec2f.ZERO;
+        this.rotation = player.getRotationClient(); // not a client call really
         this.error = error;
         this.chatOutput = output;
     }
@@ -158,6 +158,7 @@ public class SnoopyCommandSource extends ServerCommandSource
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, resultConsumer, entityAnchor, error, chatOutput);
     }
 
+    @Override
     public ServerCommandSource withLookingAt(Vec3d position) throws CommandSyntaxException {
         Vec3d vec3d = this.entityAnchor.positionAt(this);
         double d = position.x - vec3d.x;

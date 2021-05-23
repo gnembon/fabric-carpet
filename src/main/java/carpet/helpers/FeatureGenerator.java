@@ -40,7 +40,7 @@ import java.util.Map;
 
 public class FeatureGenerator
 {
-
+    public static final Object boo = new Object();
     synchronized public static Boolean plop(String featureName, ServerWorld world, BlockPos pos)
     {
         Thing custom = featureMap.get(featureName);
@@ -147,8 +147,10 @@ public class FeatureGenerator
         long seed = world.getSeed();
         ChunkGenerator generator = world.getChunkManager().getChunkGenerator();
         StructureConfig params = generator.getStructuresConfig().getForType(structure);
-        if (!generator.getBiomeSource().hasStructureFeature(structure))
-            return null;
+        synchronized(boo) {
+            if (!generator.getBiomeSource().hasStructureFeature(structure))
+                return null;
+        }
         BiomeAccess biomeAccess = world.getBiomeAccess().withSource(generator.getBiomeSource());
         ChunkRandom chunkRandom = new ChunkRandom();
         ChunkPos chunkPos = new ChunkPos(pos);
@@ -161,7 +163,9 @@ public class FeatureGenerator
             if (!computeBox) return StructureStart.DEFAULT;
             StructureManager manager = world.getStructureManager();
             StructureStart<T> structureStart3 = structure.getStructureStartFactory().create((StructureFeature<T>) configuredFeature.feature, chunkPos.x, chunkPos.z, BlockBox.empty(), 0, seed);
-            structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos.x, chunkPos.z, biome, (T) configuredFeature.config);
+            synchronized (boo) {
+                structureStart3.init(world.getRegistryManager(), generator, manager, chunkPos.x, chunkPos.z, biome, (T) configuredFeature.config);
+            }
             if (!structureStart3.hasChildren()) return null;
             return structureStart3;
         }
