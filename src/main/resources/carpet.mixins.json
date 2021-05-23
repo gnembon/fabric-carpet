@@ -4,6 +4,8 @@
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "BarrierBlock_updateSuppressionBlockMixin",
+
     "SpawnHelperInnerMixin",
     "CommandManagerMixin",
 
