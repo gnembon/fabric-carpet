@@ -74,7 +74,7 @@ public class Operators {
             int size = lv.size();
             if (size == 0) return Value.NULL;
             Value accumulator = lv.get(0);
-            for (Value v: lv.subList(1, size)) accumulator = accumulator.multiply(v);
+            for (Value v: lv.subList(1, size)) accumulator = accumulator.divide(v);
             return accumulator;
         });
         expression.addFunctionalEquivalence("/", "quotient");

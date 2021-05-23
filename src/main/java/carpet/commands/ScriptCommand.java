@@ -271,13 +271,13 @@ public class ScriptCommand
                         suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.listAvailableModules(true),bb)).
                         executes((cc) ->
                         {
-                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false);
+                            boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, true, false, false, null);
                             return success?1:0;
                         }).
                         then(literal("global").
                                 executes((cc) ->
                                 {
-                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false);
+                                    boolean success = CarpetServer.scriptServer.addScriptHost(cc.getSource(), StringArgumentType.getString(cc, "app"), null, false, false, false, null);
                                     return success?1:0;
                                 }
                                 )
@@ -328,8 +328,9 @@ public class ScriptCommand
                                         )?1:0))));
 
         LiteralArgumentBuilder<ServerCommandSource> d = literal("download").requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE)).
-                then(literal("global").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc-> AppStoreManager.downloadScript(cc, StringArgumentType.getString(cc,"path"), true)))).
-                then(literal("local").then(argument("path", StringArgumentType.greedyString()).suggests(ScriptCommand::suggestDownloadableApps).executes(cc-> AppStoreManager.downloadScript(cc, StringArgumentType.getString(cc,"path"), false))));
+                then(argument("path", StringArgumentType.greedyString()).
+                        suggests(ScriptCommand::suggestDownloadableApps).
+                        executes(cc-> AppStoreManager.downloadScript(cc.getSource(), StringArgumentType.getString(cc,"path"))));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).

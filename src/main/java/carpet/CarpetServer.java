@@ -188,6 +188,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
         // this for whatever reason gets called multiple times even when joining;
         TickSpeed.reset();
+    }
+    public static void onServerDoneClosing(MinecraftServer server)
+    {
         settingsManager.detachServer();
     }
 

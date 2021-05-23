@@ -1,5 +1,8 @@
 package carpet.script.utils;
 
+import carpet.CarpetServer;
+import carpet.script.CarpetScriptHost;
+import carpet.script.value.Value;
 import carpet.settings.ParsedRule;
 import carpet.settings.Validator;
 import carpet.utils.Messenger;
@@ -7,12 +10,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.CommandException;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
@@ -44,11 +46,17 @@ public class AppStoreManager
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions.
      */
-    public static final PathNode appStoreRoot = PathNode.folder(null, "");
+    public static final StoreNode appStoreRoot = StoreNode.folder(null, "");
 
     /** This is the base link to the scarpet app repo from the github api.
      */
     private static String scarpetRepoLink = "https://api.github.com/repos/gnembon/scarpet/contents/programs/";
+
+    public static void addResource(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value resource)
+    {
+        // todo
+        // locate online file, download to specified location
+    }
 
     public static class ScarpetAppStoreValidator extends Validator<String>
     {
@@ -69,25 +77,25 @@ public class AppStoreManager
         public String description() { return "Appstore link should point to a valid github repository";}
     }
 
-    public static class PathNode
+    public static class StoreNode
     {
         public String name;
-        public PathNode parent;
-        public Map<String, PathNode> children;
+        public StoreNode parent;
+        public Map<String, StoreNode> children;
         public boolean sealed;
         public String value;
-        public static PathNode folder(PathNode parent, String name)
+        public static StoreNode folder(StoreNode parent, String name)
         {
-            PathNode node = new PathNode(parent, name);
+            StoreNode node = new StoreNode(parent, name);
             node.children = new HashMap<>();
             node.value = null;
             node.sealed = false;
             return node;
         }
 
-        public static PathNode scriptFile(PathNode parent, String name, String value)
+        public static StoreNode scriptFile(StoreNode parent, String name, String value)
         {
-            PathNode node = new PathNode(parent, name);
+            StoreNode node = new StoreNode(parent, name);
             node.children = null;
             node.value = value;
             node.sealed = true;
@@ -110,7 +118,7 @@ public class AppStoreManager
         {
             return this == appStoreRoot ? new StringBuilder() : parent.createPrePath().append(pathElement());
         }
-        private PathNode(PathNode parent, String name)
+        private StoreNode(StoreNode parent, String name)
         {
             this.parent = parent;
             this.name = name;
@@ -175,7 +183,7 @@ public class AppStoreManager
             return children.values().stream().map(s -> prefix+s.pathElement().replaceAll("/$", "")).collect(Collectors.toList());
         }
 
-        public PathNode drillDown(String pathElement) throws IOException
+        public StoreNode drillDown(String pathElement) throws IOException
         {
             if (isLeaf()) throw new IOException(pathElement+" is not a folder");
             fillChildren();
@@ -185,7 +193,7 @@ public class AppStoreManager
 
         public String getValue(String file) throws IOException
         {
-            PathNode leaf = drillDown(file);
+            StoreNode leaf = drillDown(file);
             if (!leaf.isLeaf()) throw new IOException(file+" is not a file");
             return leaf.value;
         }
@@ -201,7 +209,7 @@ public class AppStoreManager
     public static List<String> suggestionsFromPath(String currentPath) throws IOException
     {
         String[] path = currentPath.split("/");
-        PathNode appKiosk = appStoreRoot;
+        StoreNode appKiosk = appStoreRoot;
         for(String pathElement : path)
         {
             if (appKiosk.cannotContinueFor(pathElement)) return appKiosk.createPathSuggestions();
@@ -216,14 +224,15 @@ public class AppStoreManager
      * methods to avoid repeating code and so it makes more sense what it's exactly doing.
      *
      * @param path The user-inputted path to the script
-     * @param global Whether or not we wanna save it to the local scripts folder or in the global config folder
      * @return {@code 1} if we succesfully saved the script, {@code 0} otherwise
      */
 
-    public static int downloadScript(CommandContext<ServerCommandSource> cc, String path, boolean global)
+    public static int downloadScript(ServerCommandSource source, String path)
     {
-        Pair<String,String> code = getScriptCode(path);
-        return saveScriptToFile(path, code.getLeft(), code.getRight(), cc, global);
+        Triple<String,String, StoreNode> code = getScriptCode(path);
+        if (!saveScriptToFile(source, path, code.getLeft(), code.getMiddle(), false)) return 0;
+        boolean success = CarpetServer.scriptServer.addScriptHost(source, code.getLeft(), null, true, false, false, code.getRight());
+        return success?1:0;
     }
 
     /** Gets the code once the user inputs the command.
@@ -231,10 +240,10 @@ public class AppStoreManager
      * @param appPath The user inputted path to the scarpet script
      * @return Pair of app file name and content
      */
-    public static Pair<String,String> getScriptCode(String appPath)
+    public static Triple<String,String, StoreNode> getScriptCode(String appPath)
     {
         String[] path = appPath.split("/");
-        PathNode appKiosk = appStoreRoot;
+        StoreNode appKiosk = appStoreRoot;
         try
         {
             for(String pathElement : Arrays.copyOfRange(path, 0, path.length-1))
@@ -242,7 +251,7 @@ public class AppStoreManager
             String appName = path[path.length-1];
             URL appURL = new URL(appKiosk.getValue(appName));
             HttpURLConnection http = (HttpURLConnection) appURL.openConnection();
-            return Pair.of(appName, getStringFromStream((InputStream) http.getContent()));
+            return Triple.of(appName, getStringFromStream((InputStream) http.getContent()), appKiosk);
         }
         catch (IOException e)
         {
@@ -250,43 +259,36 @@ public class AppStoreManager
         }
     }
 
-    public static int saveScriptToFile(String path, String appFileName, String code, CommandContext<ServerCommandSource> cc, boolean globalSavePath){
+    public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath){
         String  scriptPath;
-        String message;
-        if(globalSavePath && !cc.getSource().getMinecraftServer().isDedicated())
+        String location;
+        if(globalSavePath && !source.getMinecraftServer().isDedicated())
         { //cos config folder only is in clients
             scriptPath = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath()+"/"+path;
-            message = "global script config folder";
+            location = "global script config folder";
         }
         else
         {
-            scriptPath = cc.getSource().getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath()+"/"+appFileName;
-            message = "world scripts folder";
+            scriptPath = source.getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath()+"/"+appFileName;
+            location = "world scripts folder";
         }
         try
         {
             Path scriptLocation = Paths.get(scriptPath);
-            Path scriptFolderLocation = Paths.get(scriptPath.substring(0, scriptPath.lastIndexOf('/')));//folder location without file name
-            if (!Files.exists(scriptFolderLocation))
-                Files.createDirectories(scriptFolderLocation);
-
+            Files.createDirectories(scriptLocation.getParent());
             if(Files.exists(scriptLocation))
-                Messenger.m(cc.getSource(), String.format("gi Note: overwriting existing file '%s'", appFileName));
-
-
-            Messenger.m(cc.getSource(), "gi Placing script in " + message);
-
+                Messenger.m(source, String.format("gi Note: overwriting existing app '%s'", appFileName));
             FileWriter fileWriter = new FileWriter(scriptPath);
             fileWriter.write(code);
             fileWriter.close();
         }
         catch (IOException e)
         {
-            Messenger.m(cc.getSource(), "r Error in downloading script");
-            return 0;
+            Messenger.m(source, "r Error in downloading script: "+e.getMessage());
+            return false;
         }
-        Messenger.m(cc.getSource(), "gi Successfully created "+ appFileName + " in " + message);
-        return 1;
+        Messenger.m(source, "gi Successfully created "+ appFileName + " in " + location);
+        return true;
     }
 
     /** Returns the string from the inputstream gotten from the html request.
@@ -298,28 +300,23 @@ public class AppStoreManager
      */
     public static String getStringFromStream(InputStream inputStream) throws IOException
     {
-        if (inputStream != null)
-        {
-            Writer stringWriter = new StringWriter();
+        if (inputStream == null)
+            throw new IOException("No app to be found on the appstore");
 
-            char[] charBuffer = new char[2048];
-            try
-            {
-                Reader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-                int counter;
-                while ((counter = reader.read(charBuffer)) != -1)
-                    stringWriter.write(charBuffer, 0, counter);
-
-            }
-            finally
-            {
-                inputStream.close();
-            }
-            return stringWriter.toString();
-        }
-        else
+        Writer stringWriter = new StringWriter();
+        char[] charBuffer = new char[2048];
+        try
         {
-            return "";
+            Reader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            int counter;
+            while ((counter = reader.read(charBuffer)) != -1)
+                stringWriter.write(charBuffer, 0, counter);
+
         }
+        finally
+        {
+            inputStream.close();
+        }
+        return stringWriter.toString();
     }
 }

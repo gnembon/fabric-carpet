@@ -37,9 +37,13 @@ public class CarpetClient
 
     public static void disconnect()
     {
-        isServerCarpet = false;
-        clientPlayer = null;
-        CarpetServer.onServerClosed(null);
+        if (isServerCarpet)
+        {
+            isServerCarpet = false;
+            clientPlayer = null;
+            CarpetServer.onServerClosed(null);
+            CarpetServer.onServerDoneClosing(null);
+        }
     }
 
     public static void setCarpet()
