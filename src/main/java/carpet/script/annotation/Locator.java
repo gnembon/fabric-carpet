@@ -35,7 +35,7 @@ public interface Locator
     /**
      * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link BlockArgument} locator.</p>
      * 
-     * <p>Must be used in either {@link BlockArgument}, {@link BlockValue} or {@link BlockPos} parameters</p>
+     * <p>Must be used in either {@link BlockArgument}, {@link BlockValue}, {@link BlockPos} or {@link BlockState} parameters</p>
      */
     @Documented
     @Retention(RUNTIME)
