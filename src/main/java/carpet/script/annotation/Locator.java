@@ -8,6 +8,7 @@ import java.util.Iterator;
 
 import org.apache.commons.lang3.NotImplementedException;
 
+import carpet.script.CarpetContext;
 import carpet.script.Context;
 import carpet.script.argument.Argument;
 import carpet.script.argument.BlockArgument;
@@ -25,8 +26,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * <p>Class that holds annotation for {@link Argument} locators to be used in Scarpet functions.</p>
  * 
- * <p>Note: Nothing in this class has been implemented at this point in time, since it requires Carpet changes. There is an implementation for
- * Locator.Block working, but not implemented.</p>
+ * <p>Note: Only {@link Block} locator is currently implemented.</p>
  */
 public interface Locator
 {
@@ -38,7 +38,6 @@ public interface Locator
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    @Deprecated // Not implemented, although implementation available
     public @interface Block
     {
         /**
@@ -166,10 +165,8 @@ public interface Locator
             @Override
             public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
-                BlockArgument locator = null; // BlockArgument.findIn((CarpetContext)context, valueIterator (requires changing to Value), 0,
-                                              // acceptString, optional, anyString);
-                // return (R) (returnBlockValue ? locator.block : locator);
-                throw new NotImplementedException("Locator.Block still requires adapting BlockArgument to accept iterators (which is actually simple)");
+                BlockArgument locator = BlockArgument.findIn((CarpetContext) context, valueIterator, 0, acceptString, optional, anyString);
+                return (R) (returnBlockValue ? locator.block : locator);
             }
         }
 
