@@ -1,6 +1,5 @@
 package carpet.script.value;
 
-import carpet.CarpetServer;
 import carpet.fakes.BrainInterface;
 import carpet.fakes.EntityInterface;
 import carpet.fakes.ItemEntityInterface;
@@ -59,7 +58,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
@@ -1458,7 +1456,7 @@ public class EntityValue extends Value
         });
 
         put("add_exhaustion", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion(NumericValue.asNumber(v).getFloat());
         });
 
         put("absorption", (e, v) -> {

@@ -19,7 +19,7 @@ import static java.lang.Math.signum;
 
 public class NumericValue extends Value
 {
-    private final Double value;
+    private final double value;
     private Long longValue;
     private final static double epsilon = abs(32*((7*0.1)*10-7));
     private final static MathContext displayRounding = new MathContext(12, RoundingMode.HALF_EVEN);
@@ -56,8 +56,8 @@ public class NumericValue extends Value
         }
         try
         {
-            if (value.isInfinite()) return "INFINITY";
-            if (value.isNaN()) return "NaN";
+            if (Double.isInfinite(value)) return "INFINITY";
+            if (Double.isNaN(value)) return "NaN";
             if (abs(value) < epsilon) return (signum(value) < 0)?"-0":"0"; //zero rounding fails with big decimals
             // dobules have 16 point precision, 12 is plenty to display
             return BigDecimal.valueOf(value).round(displayRounding).stripTrailingZeros().toPlainString();
@@ -93,7 +93,7 @@ public class NumericValue extends Value
     }
     public float getFloat()
     {
-        return value.floatValue();
+        return (float) value;
     }
 
     private static long floor(double double_1) {
@@ -178,7 +178,7 @@ public class NumericValue extends Value
             NumericValue no = (NumericValue)o;
             if (longValue != null && no.longValue != null)
                 return longValue.compareTo(no.longValue);
-            return value.compareTo(no.value);
+            return Double.compare(value, no.value);
         }
         return getString().compareTo(o.getString());
     }
