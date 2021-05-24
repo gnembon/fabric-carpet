@@ -486,7 +486,7 @@ public class EntityValue extends Value
         put("age", (e, a) -> new NumericValue(e.age));
         put("breeding_age", (e, a) -> e instanceof PassiveEntity?new NumericValue(((PassiveEntity) e).getBreedingAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
-        put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
+        put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
         put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
@@ -734,7 +734,7 @@ public class EntityValue extends Value
             if (where == null)
                 throw new InternalExpressionException("Unknown inventory slot: "+a.getString());
             if (e instanceof LivingEntity)
-                return ListValue.fromItemStack(((LivingEntity)e).getEquippedStack(where));
+                return ValueConversions.of(((LivingEntity)e).getEquippedStack(where));
             return Value.NULL;
         });
 
