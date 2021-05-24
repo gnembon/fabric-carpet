@@ -18,6 +18,8 @@ import carpet.script.bundled.Module;
 import carpet.script.value.BlockValue;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
 
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
@@ -33,7 +35,7 @@ public interface Locator
     /**
      * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link BlockArgument} locator.</p>
      * 
-     * <p>Must be used in either {@link BlockValue} or {@link BlockArgument} parameters</p>
+     * <p>Must be used in either {@link BlockArgument}, {@link BlockValue} or {@link BlockPos} parameters</p>
      */
     @Documented
     @Retention(RUNTIME)
@@ -139,7 +141,7 @@ public interface Locator
 
         private static class BlockLocator<R> extends AbstractLocator<R>
         {
-            private final boolean returnBlockValue;
+            private final java.util.function.Function<BlockArgument, R> returnFunction;
             private final boolean acceptString;
             private final boolean anyString;
             private final boolean optional;
@@ -149,11 +151,24 @@ public interface Locator
                 this.acceptString = annotation.acceptString();
                 this.anyString = annotation.anyString();
                 this.optional = annotation.optional();
-                this.returnBlockValue = type == BlockValue.class;
-                if (returnBlockValue && (anyString || optional))
+                if (type != BlockArgument.class && (anyString || optional))
                     throw new IllegalArgumentException("Can only use anyString or optional parameters of Locator.Block if targeting a BlockArgument");
-                if (!returnBlockValue && type != BlockArgument.class)
-                    throw new IllegalArgumentException("Locator.Block can only be used against BlockArgument or BlockValue types!");
+                this.returnFunction = getReturnFunction(type);
+                if (returnFunction == null)
+                    throw new IllegalArgumentException("Locator.Block can only be used against BlockArgument, BlockValue, BlockPos or BlockState types!");
+            }
+
+            @SuppressWarnings("unchecked")
+            private static <R> java.util.function.Function<BlockArgument, R> getReturnFunction(Class<R> type) {
+                if (type == BlockArgument.class)
+                    return r -> (R) r;
+                if (type == BlockValue.class)
+                    return r -> (R) r.block;
+                if (type == BlockPos.class)
+                    return r -> (R) r.block.getPos();
+                if (type == BlockState.class)
+                    return r -> (R) r.block.getBlockState();
+                return null;
             }
 
             @Override
@@ -166,7 +181,7 @@ public interface Locator
             public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
                 BlockArgument locator = BlockArgument.findIn((CarpetContext) context, valueIterator, 0, acceptString, optional, anyString);
-                return (R) (returnBlockValue ? locator.block : locator);
+                return returnFunction.apply(locator);
             }
         }
 
