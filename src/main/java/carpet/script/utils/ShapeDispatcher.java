@@ -8,6 +8,7 @@ import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.language.Sys;
 import carpet.script.value.BlockValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
@@ -1023,7 +1024,7 @@ public class ShapeDispatcher
         @Override
         public Value decode(Tag tag)
         {
-            return new NumericValue(((ByteTag) tag).getByte() > 0);
+            return BooleanValue.of(((ByteTag) tag).getByte() > 0);
         }
     }
     public static class FloatParam extends NumericParam

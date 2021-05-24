@@ -4,6 +4,7 @@ import carpet.script.Expression;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.ThreadValue;
 import carpet.script.value.Value;
@@ -62,7 +63,7 @@ public class Threading
         {
             if (!(v instanceof ThreadValue))
                 throw new InternalExpressionException("'task_completed' could only be used with a task value");
-            return new NumericValue(((ThreadValue) v).isFinished());
+            return BooleanValue.of(((ThreadValue) v).isFinished());
         });
 
         // lazy cause expr is evaluated in the same type

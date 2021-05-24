@@ -7,6 +7,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.utils.ScarpetJsonDeserializer;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.ContainerValueInterface;
 import carpet.script.value.LContainerValue;
 import carpet.script.value.LazyListValue;
@@ -246,7 +247,7 @@ public class DataStructures {
                 ContainerValueInterface container = ((LContainerValue) v).getContainer();
                 if (container == null)
                     return LazyValue.NULL;
-                Value ret = new NumericValue(container.has(((LContainerValue) v).getAddress()));
+                Value ret = BooleanValue.of(container.has(((LContainerValue) v).getAddress()));
                 return (cc, tt) -> ret;
             }
             Value container = lv.get(0).evalValue(c);
@@ -257,7 +258,7 @@ public class DataStructures {
             }
             if (!(container instanceof ContainerValueInterface))
                 return LazyValue.NULL;
-            Value ret = new NumericValue(((ContainerValueInterface) container).has(lv.get(lv.size()-1).evalValue(c)));
+            Value ret = BooleanValue.of(((ContainerValueInterface) container).has(lv.get(lv.size()-1).evalValue(c)));
             return (cc, tt) -> ret;
         });
 
@@ -278,7 +279,7 @@ public class DataStructures {
                 }
                 Value address = ((LContainerValue) container).getAddress();
                 Value what = lv.get(1).evalValue(c);
-                Value retVal = new NumericValue( (lv.size() > 2)
+                Value retVal = BooleanValue.of((lv.size() > 2)
                         ? internalContainer.put(address, what, lv.get(2).evalValue(c))
                         : internalContainer.put(address, what));
                 return (cc, tt) -> retVal;
@@ -294,7 +295,7 @@ public class DataStructures {
             }
             Value where = lv.get(1).evalValue(c);
             Value what = lv.get(2).evalValue(c);
-            Value retVal = new NumericValue( (lv.size()>3)
+            Value retVal = BooleanValue.of((lv.size()>3)
                     ? ((ContainerValueInterface) container).put(where, what, lv.get(3).evalValue(c))
                     : ((ContainerValueInterface) container).put(where, what));
             return (cc, tt) -> retVal;
@@ -313,7 +314,7 @@ public class DataStructures {
                 ContainerValueInterface container = ((LContainerValue) v).getContainer();
                 if (container == null)
                     return LazyValue.NULL;
-                Value ret = new NumericValue(container.delete(((LContainerValue) v).getAddress()));
+                Value ret = BooleanValue.of(container.delete(((LContainerValue) v).getAddress()));
                 return (cc, tt) -> ret;
             }
             Value container = lv.get(0).evalValue(c);
@@ -324,7 +325,7 @@ public class DataStructures {
             }
             if (!(container instanceof ContainerValueInterface))
                 return LazyValue.NULL;
-            Value ret = new NumericValue(((ContainerValueInterface) container).delete(lv.get(lv.size()-1).evalValue(c)));
+            Value ret = BooleanValue.of(((ContainerValueInterface) container).delete(lv.get(lv.size()-1).evalValue(c)));
             return (cc, tt) -> ret;
         });
 

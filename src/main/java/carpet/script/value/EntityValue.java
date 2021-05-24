@@ -409,7 +409,7 @@ public class EntityValue extends Value
 
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
-        put("removed", (entity, arg) -> new NumericValue(entity.removed));
+        put("removed", (entity, arg) -> BooleanValue.of(entity.removed));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getEntityId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
@@ -425,30 +425,30 @@ public class EntityValue extends Value
         put("motion_x", (e, a) -> new NumericValue(e.getVelocity().x));
         put("motion_y", (e, a) -> new NumericValue(e.getVelocity().y));
         put("motion_z", (e, a) -> new NumericValue(e.getVelocity().z));
-        put("on_ground", (e, a) -> new NumericValue(e.isOnGround()));
+        put("on_ground", (e, a) -> BooleanValue.of(e.isOnGround()));
         put("name", (e, a) -> new StringValue(e.getName().getString()));
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getEntityName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
         put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getId(e.getType()))));
-        put("is_riding", (e, a) -> new NumericValue(e.hasVehicle()));
-        put("is_ridden", (e, a) -> new NumericValue(e.hasPassengers()));
+        put("is_riding", (e, a) -> BooleanValue.of(e.hasVehicle()));
+        put("is_ridden", (e, a) -> BooleanValue.of(e.hasPassengers()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengerList().stream().map(EntityValue::new).collect(Collectors.toList())));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
-        put("unmountable", (e, a) -> new NumericValue(((EntityInterface)e).isPermanentVehicle()));
+        put("unmountable", (e, a) -> BooleanValue.of(((EntityInterface)e).isPermanentVehicle()));
         // deprecated
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
         put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTags().entrySet().stream().filter(entry -> entry.getValue().contains(e.getType())).map(entry -> ValueConversions.of(entry.getKey())).collect(Collectors.toList())));
         // deprecated
-        put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+        put("has_tag", (e, a) -> BooleanValue.of(e.getScoreboardTags().contains(a.getString())));
 
-        put("has_scoreboard_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+        put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getScoreboardTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
             net.minecraft.tag.Tag<EntityType<?>> tag = e.getServer().getTagManager().getEntityTypes().getTag(new Identifier(a.getString()));
             if (tag == null) return Value.NULL;
-            return new NumericValue(e.getType().isIn(tag));
+            return BooleanValue.of(e.getType().isIn(tag));
         });
 
         put("yaw", (e, a)-> new NumericValue(e.yaw));
@@ -472,13 +472,13 @@ public class EntityValue extends Value
             Vec3d look = e.getRotationVector();
             return ListValue.of(new NumericValue(look.x),new NumericValue(look.y),new NumericValue(look.z));
         });
-        put("is_burning", (e, a) -> new NumericValue(e.isOnFire()));
+        put("is_burning", (e, a) -> BooleanValue.of(e.isOnFire()));
         put("fire", (e, a) -> new NumericValue(e.getFireTicks()));
-        put("silent", (e, a)-> new NumericValue(e.isSilent()));
-        put("gravity", (e, a) -> new NumericValue(!e.hasNoGravity()));
-        put("immune_to_fire", (e, a) -> new NumericValue(e.isFireImmune()));
+        put("silent", (e, a)-> BooleanValue.of(e.isSilent()));
+        put("gravity", (e, a) -> BooleanValue.of(!e.hasNoGravity()));
+        put("immune_to_fire", (e, a) -> BooleanValue.of(e.isFireImmune()));
 
-        put("invulnerable", (e, a) -> new NumericValue(e.isInvulnerable()));
+        put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
         put("dimension", (e, a) -> new StringValue(nameFromRegistryId(e.world.getRegistryKey().getValue()))); // getDimId
         put("height", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).height));
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
@@ -492,7 +492,7 @@ public class EntityValue extends Value
         put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
         put("portal_timer", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
         // ItemEntity -> despawn timer via ssGetAge
-        put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
+        put("is_baby", (e, a) -> (e instanceof LivingEntity)?BooleanValue.of(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
             if (e instanceof MobEntity)
             {
@@ -520,7 +520,7 @@ public class EntityValue extends Value
                         ValueConversions.of(spe.getSpawnPointPosition()),
                         ValueConversions.of(spe.getSpawnPointDimension()),
                         new NumericValue(spe.getSpawnAngle()),
-                        new NumericValue(spe.isSpawnPointSet()) // true if forced spawn point
+                        BooleanValue.of(spe.isSpawnPointSet())
                         );
             }
             return Value.NULL;
@@ -530,7 +530,7 @@ public class EntityValue extends Value
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
         put("swinging", (e, a) -> {
-            if (e instanceof LivingEntity) return new NumericValue(((LivingEntity) e).handSwinging);
+            if (e instanceof LivingEntity) return BooleanValue.of(((LivingEntity) e).handSwinging);
             return Value.NULL;
         });
 
@@ -542,7 +542,7 @@ public class EntityValue extends Value
             return StringValue.of(lang);
         });
         put("persistence", (e, a) -> {
-            if (e instanceof MobEntity) return new NumericValue(((MobEntity) e).isPersistent());
+            if (e instanceof MobEntity) return BooleanValue.of(((MobEntity) e).isPersistent());
             return Value.NULL;
         });
         put("hunger", (e, a) -> {

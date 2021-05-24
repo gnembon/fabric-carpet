@@ -492,7 +492,7 @@ public class WorldAccess {
         });
 
         expression.addContextFunction("solid", -1, (c, t, lv) ->
-                genericStateTest(c, "solid", lv, (s, p, w) -> new NumericValue(s.isSolidBlock(w, p)))); // isSimpleFullBlock
+                genericStateTest(c, "solid", lv, (s, p, w) -> BooleanValue.of(s.isSolidBlock(w, p)))); // isSimpleFullBlock
 
         expression.addContextFunction("air", -1, (c, t, lv) ->
                 booleanStateTest(c, "air", lv, (s, p) -> s.isAir()));
@@ -525,7 +525,7 @@ public class WorldAccess {
                 genericStateTest(c, "sky_light", lv, (s, p, w) -> new NumericValue(w.getLightLevel(LightType.SKY, p))));
 
         expression.addContextFunction("see_sky", -1, (c, t, lv) ->
-                genericStateTest(c, "see_sky", lv, (s, p, w) -> new NumericValue(w.isSkyVisible(p))));
+                genericStateTest(c, "see_sky", lv, (s, p, w) -> BooleanValue.of(w.isSkyVisible(p))));
 
         expression.addContextFunction("brightness", -1, (c, t, lv) ->
                 genericStateTest(c, "brightness", lv, (s, p, w) -> new NumericValue(w.getBrightness(p))));
@@ -540,7 +540,7 @@ public class WorldAccess {
         {
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
             ChunkPos chunkPos = new ChunkPos(pos);
-            return new NumericValue(ChunkRandom.getSlimeRandom(
+            return BooleanValue.of(ChunkRandom.getSlimeRandom(
                     chunkPos.x, chunkPos.z,
                     ((CarpetContext)c).s.getWorld().getSeed(),
                     987234911L
@@ -593,7 +593,7 @@ public class WorldAccess {
             boolean force = false;
             if (lv.size() > locator.offset)
                 force = lv.get(locator.offset).getBoolean();
-            return new NumericValue(canHasChunk(((CarpetContext)c).s.getWorld(), new ChunkPos(pos), null, force));
+            return BooleanValue.of(canHasChunk(((CarpetContext)c).s.getWorld(), new ChunkPos(pos), null, force));
         });
 
         expression.addContextFunction("generation_status", -1, (c, t, lv) ->
@@ -653,7 +653,7 @@ public class WorldAccess {
         });
 
         expression.addContextFunction("suffocates", -1, (c, t, lv) ->
-                genericStateTest(c, "suffocates", lv, (s, p, w) -> new NumericValue(s.shouldSuffocate(w, p)))); // canSuffocate
+                genericStateTest(c, "suffocates", lv, (s, p, w) -> BooleanValue.of(s.shouldSuffocate(w, p)))); // canSuffocate
 
         expression.addContextFunction("power", -1, (c, t, lv) ->
                 genericStateTest(c, "power", lv, (s, p, w) -> new NumericValue(w.getReceivedRedstonePower(p))));

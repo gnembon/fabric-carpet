@@ -60,7 +60,7 @@ public class SystemInfo {
         });
 
         put("game_difficulty", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getDifficulty().getName()));
-        put("game_hardcore", c -> new NumericValue(c.s.getMinecraftServer().getSaveProperties().isHardcore()));
+        put("game_hardcore", c -> BooleanValue.of(c.s.getMinecraftServer().getSaveProperties().isHardcore()));
         put("game_storage_format", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getFormatName(c.s.getMinecraftServer().getSaveProperties().getVersion())));
         put("game_default_gamemode", c -> StringValue.of(c.s.getMinecraftServer().getDefaultGameMode().getName()));
         put("game_max_players", c -> new NumericValue(c.s.getMinecraftServer().getMaxPlayerCount()));
@@ -82,7 +82,7 @@ public class SystemInfo {
         put("game_pack_version", c->NumericValue.of(SharedConstants.getGameVersion().getPackVersion()));
 
         put("server_ip", c -> StringValue.of(c.s.getMinecraftServer().getServerIp()));
-        put("server_whitelisted", c -> new NumericValue(c.s.getMinecraftServer().isEnforceWhitelist()));
+        put("server_whitelisted", c -> BooleanValue.of(c.s.getMinecraftServer().isEnforceWhitelist()));
         put("server_whitelist", c -> {
             MapValue whitelist = new MapValue(Collections.emptyList());
             for (String s: c.s.getMinecraftServer().getPlayerManager().getWhitelistedNames())
@@ -107,7 +107,7 @@ public class SystemInfo {
             }
             return whitelist;
         });
-        put("server_dev_environment", c-> new NumericValue(FabricLoader.getInstance().isDevelopmentEnvironment()));
+        put("server_dev_environment", c-> BooleanValue.of(FabricLoader.getInstance().isDevelopmentEnvironment()));
         put("server_mods", c -> {
             Map<Value, Value> ret = new HashMap<>();
             for (ModContainer mod : FabricLoader.getInstance().getAllMods())
