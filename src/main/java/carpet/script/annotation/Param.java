@@ -133,42 +133,14 @@ public interface Param
     /**
      * <p>Class that holds the actual converters and converter getting logic for those annotated types and things.</p>
      * 
-     * <p>It also holds the registry for strict {@link ValueConverter}s.</p>
+     * <p>It also holds the registry for strict and custom {@link ValueConverter}s.</p>
      * 
      * @see #registerStrictConverter(Class, boolean, ValueConverter)
+     * @see #registerCustomConverterFactory(BiFunction)
      *
      */
     public static final class Params
     {
-        /**
-         * <p>A {@link ValueConverter} that outputs the given {@link LazyValue} when running {@link #checkAndConvert(Iterator, Context, Context.Type)}, and
-         * throws {@link UnsupportedOperationException} when trying to convert a {@link Value} directly.</p>
-         * 
-         * <p>Public in order to allow custom {@link ValueConverter} to check whether values should be evaluated while testing conditions.</p>
-         */
-        /*public static final ValueConverter<LazyValue> LAZY_VALUE_IDENTITY = new ValueConverter<LazyValue>()
-        { // No longer possible
-
-            @Override
-            public LazyValue convert(Value val)
-            {
-                throw new UnsupportedOperationException(
-                        "Called convert() with a Value in LazyValue identity, where only evalAndConvert is supported");
-            }
-
-            @Override
-            public LazyValue checkAndConvert(Iterator<Value> lazyValueIterator, Context c, Context.Type theLazyT)
-            {
-                return lazyValueIterator.hasNext() ? lazyValueIterator.next() : null;
-            }
-
-            @Override
-            public String getTypeName()
-            {
-                return "something";
-            }
-        };*/
-
         /**
          * <p>A {@link ValueConverter} that outputs the {@link Context} in which the function has been called, and throws {@link UnsupportedOperationException} when trying to convert a {@link Value}
          * directly.</p>
@@ -228,7 +200,7 @@ public interface Param
          * 
          * <p>Stored as {@code <Pair<Type, shallow?>, Converter>}</p>
          */
-        private static Map<Pair<Class<?>, Boolean>, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
+        private static final Map<Pair<Class<?>, Boolean>, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
         static
         { // TODO Specify strictness in name?
             registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString, "string"));
@@ -279,7 +251,7 @@ public interface Param
             strictParamsByClassAndShallowness.put(key, converter);
         }
 
-        private static List<BiFunction<AnnotatedType, Class<?>, ValueConverter<?>>> customFactories = new ArrayList<>();
+        private static final List<BiFunction<AnnotatedType, Class<?>, ValueConverter<?>>> customFactories = new ArrayList<>();
 
         /**
          * <p>Allows extensions to register <b>COMPLEX</b> {@link ValueConverter} factories in order to be used with the {@link Param.Custom}
