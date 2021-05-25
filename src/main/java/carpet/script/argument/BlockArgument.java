@@ -1,7 +1,6 @@
 package carpet.script.argument;
 
 import carpet.script.CarpetContext;
-import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.ListValue;
@@ -11,7 +10,9 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class BlockArgument extends Argument
 {
@@ -42,25 +43,30 @@ public class BlockArgument extends Argument
 
     public static BlockArgument findIn(CarpetContext c, List<Value> params, int offset, boolean acceptString, boolean optional, boolean anyString)
     {
+        return findIn(c, params.listIterator(offset), offset, acceptString, optional, anyString);
+    }
+
+    public static BlockArgument findIn(CarpetContext c, Iterator<Value> params, int offset, boolean acceptString, boolean optional, boolean anyString)
+    {
         try
         {
-            Value v1 = params.get(0 + offset);
+            Value v1 = params.next();
             //add conditional from string name
             if (optional && v1 instanceof NullValue)
             {
-                return new BlockArgument(null, 1+offset);
+                return new BlockArgument(null, 1 + offset);
             }
             if (anyString && v1 instanceof StringValue)
             {
-                return new BlockArgument(null, 1+offset, v1.getString());
+                return new BlockArgument(null, 1 + offset, v1.getString());
             }
             if (acceptString && v1 instanceof StringValue)
             {
-                return new BlockArgument(BlockValue.fromString(v1.getString()), 1+offset);
+                return new BlockArgument(BlockValue.fromString(v1.getString()), 1 + offset);
             }
             if (v1 instanceof BlockValue)
             {
-                return new BlockArgument(((BlockValue) v1), 1+offset);
+                return new BlockArgument(((BlockValue) v1), 1 + offset);
             }
             if (v1 instanceof ListValue)
             {
@@ -74,21 +80,21 @@ public class BlockArgument extends Argument
                                 c.s.getWorld(),
                                 new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
                         ),
-                        1+offset);
+                        1 + offset);
             }
             int xpos = (int) NumericValue.asNumber(v1).getLong();
-            int ypos = (int) NumericValue.asNumber( params.get(1 + offset)).getLong();
-            int zpos = (int) NumericValue.asNumber( params.get(2 + offset)).getLong();
+            int ypos = (int) NumericValue.asNumber( params.next()).getLong();
+            int zpos = (int) NumericValue.asNumber( params.next()).getLong();
             return new BlockArgument(
                     new BlockValue(
                             null,
                             c.s.getWorld(),
                             new BlockPos(c.origin.getX() + xpos, c.origin.getY() + ypos, c.origin.getZ() + zpos)
                     ),
-                    3+offset
+                    3 + offset
             );
         }
-        catch (IndexOutOfBoundsException e)
+        catch (IndexOutOfBoundsException | NoSuchElementException e)
         {
             throw handleError(optional, acceptString);
         }

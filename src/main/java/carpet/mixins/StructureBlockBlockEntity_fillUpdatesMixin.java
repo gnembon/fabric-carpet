@@ -22,14 +22,14 @@ public abstract class StructureBlockBlockEntity_fillUpdatesMixin
     private boolean onStructurePlacen(Structure structure, ServerWorldAccess serverWorldAccess, BlockPos pos, BlockPos blockPos, StructurePlacementData placementData, Random random, int i)
     {
         if(!CarpetSettings.fillUpdates)
-            CarpetSettings.impendingFillSkipUpdates = true;
+            CarpetSettings.impendingFillSkipUpdates.set(true);
         try
         {
             return structure.place(serverWorldAccess, pos, blockPos, placementData, random, i); // serverWorldAccess, pos, placementData, random);
         }
         finally
         {
-            CarpetSettings.impendingFillSkipUpdates = false;
+            CarpetSettings.impendingFillSkipUpdates.set(false);
         }
     }
 }

@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ChunkRegion.class)
 public class ChunkRegion_scarpetPlopMixin
 {
-    @Inject(method = "markBlockForPostProcessing", at = @At("HEAD"))
+    @Inject(method = "markBlockForPostProcessing", at = @At("HEAD"), cancellable = true)
     private void markOrNot(BlockPos blockPos, CallbackInfo ci)
     {
-        if (CarpetSettings.skipGenerationChecks) ci.cancel();
+        if (CarpetSettings.skipGenerationChecks.get()) ci.cancel();
     }
 }

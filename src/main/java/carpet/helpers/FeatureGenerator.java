@@ -61,14 +61,14 @@ public class FeatureGenerator
         ConfiguredFeature<?, ?> feature = world.getRegistryManager().get(Registry.CONFIGURED_FEATURE_KEY).get(id);
         if (feature != null)
         {
-            CarpetSettings.skipGenerationChecks = true;
+            CarpetSettings.skipGenerationChecks.set(true);
             try
             {
                 return feature.generate(world, world.getChunkManager().getChunkGenerator(), world.random, pos);
             }
             finally
             {
-                CarpetSettings.skipGenerationChecks = false;
+                CarpetSettings.skipGenerationChecks.set(false);
             }
         }
         return null;
@@ -99,14 +99,14 @@ public class FeatureGenerator
     private static Thing simplePlop(ConfiguredFeature feature)
     {
         return (w, p) -> {
-            CarpetSettings.skipGenerationChecks=true;
+            CarpetSettings.skipGenerationChecks.set(true);
             try
             {
                 return feature.generate(w, w.getChunkManager().getChunkGenerator(), w.random, p);
             }
             finally
             {
-                CarpetSettings.skipGenerationChecks = false;
+                CarpetSettings.skipGenerationChecks.set(false);
             }
         };
     }

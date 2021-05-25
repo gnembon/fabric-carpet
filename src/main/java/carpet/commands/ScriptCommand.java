@@ -508,7 +508,7 @@ public class ScriptCommand
             return 1;
         }
         int successCount = 0;
-        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+        CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
         try
         {
             for (int x = area.getMinX(); x <= area.getMaxX(); x++)
@@ -535,7 +535,7 @@ public class ScriptCommand
         }
         finally
         {
-            CarpetSettings.impendingFillSkipUpdates = false;
+            CarpetSettings.impendingFillSkipUpdates.set(false);
         }
         Messenger.m(source, "w Expression successful in " + successCount + " out of " + int_1 + " blocks");
         return successCount;
@@ -618,7 +618,7 @@ public class ScriptCommand
         }
         int affected = 0;
 
-        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+        CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
         for (int x = 0; x <= maxx; x++)
         {
             for (int y = 0; y <= maxy; y++)
@@ -643,7 +643,7 @@ public class ScriptCommand
                 }
             }
         }
-        CarpetSettings.impendingFillSkipUpdates = false;
+        CarpetSettings.impendingFillSkipUpdates.set(false);
 
         if (CarpetSettings.fillUpdates && block != null)
         {

@@ -19,7 +19,7 @@ public class Structure_fillUpdatesMixin
     ))
     private void skipUpdateNeighbours(ServerWorldAccess serverWorldAccess, BlockPos pos, Block block)
     {
-        if (!CarpetSettings.impendingFillSkipUpdates)
+        if (!CarpetSettings.impendingFillSkipUpdates.get())
             serverWorldAccess.updateNeighbors(pos, block);
     }
 
@@ -29,6 +29,6 @@ public class Structure_fillUpdatesMixin
     ))
     private boolean skipPostprocess(StructurePlacementData structurePlacementData)
     {
-        return structurePlacementData.shouldUpdateNeighbors() || CarpetSettings.impendingFillSkipUpdates;
+        return structurePlacementData.shouldUpdateNeighbors() || CarpetSettings.impendingFillSkipUpdates.get();
     }
 }

@@ -19,7 +19,7 @@ public class WorldChunk_fillUpdatesMixin
     ))
     private void onAdded(BlockState blockState, World world_1, BlockPos blockPos_1, BlockState blockState_1, boolean boolean_1)
     {
-        if (!CarpetSettings.impendingFillSkipUpdates)
+        if (!CarpetSettings.impendingFillSkipUpdates.get())
             blockState.onBlockAdded(world_1, blockPos_1, blockState_1, boolean_1);
     }
 
@@ -29,7 +29,7 @@ public class WorldChunk_fillUpdatesMixin
     ))
     private void onRemovedBlock(BlockState blockState, World world, BlockPos pos, BlockState state, boolean moved)
     {
-        if (CarpetSettings.impendingFillSkipUpdates) // doing due dilligence from AbstractBlock onStateReplaced
+        if (CarpetSettings.impendingFillSkipUpdates.get()) // doing due dilligence from AbstractBlock onStateReplaced
         {
             if (blockState.hasBlockEntity() && !blockState.isOf(state.getBlock()))
             {

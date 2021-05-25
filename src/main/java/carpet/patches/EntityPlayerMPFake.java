@@ -1,5 +1,6 @@
 package carpet.patches;
 
+import carpet.CarpetSettings;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.block.entity.SkullBlockEntity;
 import net.minecraft.entity.Entity;
@@ -22,7 +23,6 @@ import net.minecraft.util.UserCache;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.utils.Messenger;
 
@@ -44,7 +44,15 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         finally {
             UserCache.setUseRemote(server.isDedicated() && server.isOnlineMode());
         }
-        if (gameprofile == null) return null;
+        if (gameprofile == null)
+        {
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
+            {
+                return null;
+            } else {
+                gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(username), username);
+            }
+        }
         if (gameprofile.getProperties().containsKey("textures"))
         {
             gameprofile = SkullBlockEntity.loadProperties(gameprofile);

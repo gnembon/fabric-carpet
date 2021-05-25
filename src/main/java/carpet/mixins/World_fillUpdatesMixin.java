@@ -16,7 +16,7 @@ public abstract class World_fillUpdatesMixin
     @ModifyConstant(method = "setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;II)Z", //setBlockState main
             constant = @Constant(intValue = 16))
     private int addFillUpdatesInt(int original) {
-        if (CarpetSettings.impendingFillSkipUpdates)
+        if (CarpetSettings.impendingFillSkipUpdates.get())
             return -1;
         return original;
     }
@@ -27,7 +27,7 @@ public abstract class World_fillUpdatesMixin
     ))
     private void updateNeighborsMaybe(World world, BlockPos blockPos, Block block)
     {
-        if (!CarpetSettings.impendingFillSkipUpdates) world.updateNeighbors(blockPos, block);
+        if (!CarpetSettings.impendingFillSkipUpdates.get()) world.updateNeighbors(blockPos, block);
     }
 
 }

@@ -192,9 +192,14 @@ public class PlayerCommand
         GameProfile profile = server.getUserCache().findByName(playerName);
         if (profile == null)
         {
-            Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
-                    "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
-            return true;
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
+            {
+                Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
+                        "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
+                return true;
+            } else {
+                profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
+            }
         }
         if (manager.getUserBanList().contains(profile))
         {
