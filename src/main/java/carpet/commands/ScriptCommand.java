@@ -119,8 +119,6 @@ public class ScriptCommand
     ) throws CommandSyntaxException {
         try {
             String previous = suggestionsBuilder.getRemaining();
-            List<String> suggestions = AppStoreManager.suggestionsFromPath(previous);
-            CarpetScriptServer.LOG.error(String.join(":", suggestions));
             AppStoreManager.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
             return suggestionsBuilder.buildFuture();
         }
