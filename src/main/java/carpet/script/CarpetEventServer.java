@@ -465,7 +465,7 @@ public class CarpetEventServer
             public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
             {
                 handler.call( () -> Arrays.asList(new EntityValue(player),
-                        new NumericValue(forwardSpeed), new NumericValue(strafeSpeed), new NumericValue(jumping), new NumericValue(sneaking)
+                        new NumericValue(forwardSpeed), new NumericValue(strafeSpeed), BooleanValue.of(jumping), BooleanValue.of(sneaking)
                 ), player::getCommandSource);
             }
         };
@@ -479,7 +479,7 @@ public class CarpetEventServer
                     //ItemStack itemstack = player.getStackInHand(enumhand);
                     return Arrays.asList(
                             new EntityValue(player),
-                            ListValue.fromItemStack(itemstack),
+                            ValueConversions.of(itemstack),
                             StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
                     );
                 }, player::getCommandSource);
@@ -513,7 +513,7 @@ public class CarpetEventServer
                     Vec3d vec3d = hitRes.getPos().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
                     return Arrays.asList(
                             new EntityValue(player),
-                            ListValue.fromItemStack(itemstack),
+                            ValueConversions.of(itemstack),
                             StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
                             new BlockValue(null, player.getServerWorld(), blockpos),
                             StringValue.of(enumfacing.getName()),
@@ -557,7 +557,7 @@ public class CarpetEventServer
             {
                 handler.call( () -> Arrays.asList(
                         new EntityValue(player),
-                        ListValue.fromItemStack(itemstack),
+                        ValueConversions.of(itemstack),
                         StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
                         new BlockValue(null, player.getServerWorld(), pos)
                 ), player::getCommandSource);
@@ -602,7 +602,7 @@ public class CarpetEventServer
         {
             @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), ListValue.fromItemStack(itemstack)), player::getCommandSource);
+                handler.call( () -> Arrays.asList(new EntityValue(player), ValueConversions.of(itemstack)), player::getCommandSource);
             }
         };
 
@@ -656,7 +656,7 @@ public class CarpetEventServer
                 handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ListValue.fromItemStack(itemstack),
+                                ValueConversions.of(itemstack),
                                 StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::getCommandSource);
             }
@@ -670,7 +670,7 @@ public class CarpetEventServer
                 handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ListValue.fromItemStack(itemstack),
+                                ValueConversions.of(itemstack),
                                 new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::getCommandSource);
             }
@@ -700,7 +700,7 @@ public class CarpetEventServer
                         Arrays.asList(
                                 new EntityValue(player),
                                 StringValue.of(NBTSerializableValue.nameFromRegistryId(recipe)),
-                                new NumericValue(fullStack)
+                                BooleanValue.of(fullStack)
                         ), player::getCommandSource);
             }
         };

@@ -460,7 +460,7 @@ public class Auxiliary {
             if (lv.get(0).isNull()) return Value.FALSE;
             NbtElement source = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(0)))).getTag();
             NbtElement match = ((NBTSerializableValue)(NBTSerializableValue.fromValue(lv.get(1)))).getTag();
-            return new NumericValue(NbtHelper.matches(match, source, numParam == 2 || lv.get(2).getBoolean()));
+            return BooleanValue.of(NbtHelper.matches(match, source, numParam == 2 || lv.get(2).getBoolean()));
         });
 
         expression.addFunction("encode_nbt", lv -> {
@@ -799,7 +799,7 @@ public class Auxiliary {
                     return;
                 if (what.equalsIgnoreCase("boulder"))  // there might be more of those
                     WorldTools.forceChunkUpdate(locator.block.getPos(), ((CarpetContext) c).s.getWorld());
-                result[0] = new NumericValue(res);
+                result[0] = BooleanValue.of(res);
             });
             return result[0];
         });

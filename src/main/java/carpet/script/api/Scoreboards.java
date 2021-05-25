@@ -8,6 +8,7 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NullValue;
@@ -301,7 +302,7 @@ public class Scoreboards {
             Value playerVal = lv.get(0);
             String player = EntityValue.getPlayerNameByValue(playerVal);
             if(player == null) return Value.NULL;
-            return new NumericValue(scoreboard.clearPlayerTeam(player));
+            return BooleanValue.of(scoreboard.clearPlayerTeam(player));
         });
 
         expression.addContextFunction("team_property", -1, (c, t, lv) ->
@@ -357,7 +358,7 @@ public class Scoreboards {
                     team.setDisplayName(displayName);
                     break;
                 case "friendlyFire":
-                    if(!modifying) return new NumericValue(team.isFriendlyFireAllowed());
+                    if(!modifying) return BooleanValue.of(team.isFriendlyFireAllowed());
                     if(!(settingVal instanceof NumericValue)) throw  new InternalExpressionException("'team_property' requires a boolean as the third argument for the property " + propertyVal.getString());
                     boolean friendlyFire = settingVal.getBoolean();
                     team.setFriendlyFireAllowed(friendlyFire);
@@ -378,7 +379,7 @@ public class Scoreboards {
                     team.setPrefix(prefix);
                     break;
                 case "seeFriendlyInvisibles":
-                    if(!modifying) return new NumericValue(team.shouldShowFriendlyInvisibles());
+                    if(!modifying) return BooleanValue.of(team.shouldShowFriendlyInvisibles());
                     if(!(settingVal instanceof NumericValue)) throw  new InternalExpressionException("'team_property' requires a boolean as the third argument for the property " + propertyVal.getString());
                     boolean seeFriendlyInvisibles = settingVal.getBoolean();
                     team.setShowFriendlyInvisibles(seeFriendlyInvisibles);
@@ -500,7 +501,7 @@ public class Scoreboards {
                     bossBar.setValue(((NumericValue) propertyValue).getInt());
                     return Value.TRUE;
                 case "visible":
-                    if(propertyValue == null) return new NumericValue(bossBar.isVisible());
+                    if(propertyValue == null) return BooleanValue.of(bossBar.isVisible());
 
                     bossBar.setVisible(propertyValue.getBoolean());
                     return Value.TRUE;
