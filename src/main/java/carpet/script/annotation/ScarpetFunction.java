@@ -29,7 +29,7 @@ import carpet.script.value.Value;
  * {@link AnnotationParser#parseFunctionClass(Class)} ONCE. The provided {@link Class} must be concrete and provide the default constructor or an
  * equivalent to it.</p>
  * 
- * <p>Methods annotated with this annotation must not be static and must not declare throwing any checked exceptions.</p>
+ * <p>Methods annotated with this annotation must not declare throwing any checked exceptions.</p>
  * 
  * <p>If one of the method's parameters is {@link Context}, Carpet will pass the actual {@link Context} of the expression to the
  * method. If one of the method's parameters is {@link Context.Type}, Carpet will pass the Context Type the function was called inside. That
