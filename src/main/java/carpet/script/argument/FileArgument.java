@@ -147,7 +147,7 @@ public class FileArgument
         for (int i =0; i < pathElements.length; i++ )
         {
             String token = pathElements[i];
-            boolean isZip = token.endsWith(".zip");
+            boolean isZip = token.endsWith(".zip") && (isFolder || (i < pathElements.length-1));
             if (zipPath != null && isZip) throw new InternalExpressionException(token+" indicates zip access in an already zipped location "+zipPath);
             if (isZip) token = token.substring(0, token.length()-4);
             token = (type==Type.ANY && i == pathElements.length-1)? // sloppy really, but should work
