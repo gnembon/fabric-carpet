@@ -192,7 +192,7 @@ public class PlayerCommand
         GameProfile profile = server.getUserCache().findByName(playerName);
         if (profile == null)
         {
-            if (CarpetSettings.strictOnlineMode)
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
             {
                 Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
                         "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
