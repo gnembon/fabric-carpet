@@ -47,7 +47,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         }
         if (gameprofile == null)
         {
-            if (CarpetSettings.strictOnlineMode)
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
             {
                 return null;
             } else {
