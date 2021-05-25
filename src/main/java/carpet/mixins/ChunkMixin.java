@@ -16,6 +16,6 @@ public abstract class ChunkMixin
         at =@At("HEAD"), cancellable = true)
     private void squashWarnings(BlockPos blockPos_1, CallbackInfo ci)
     {
-        if (CarpetSettings.skipGenerationChecks) ci.cancel();
+        if (CarpetSettings.skipGenerationChecks.get()) ci.cancel();
     }
 }

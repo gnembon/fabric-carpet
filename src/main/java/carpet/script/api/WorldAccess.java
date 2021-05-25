@@ -688,19 +688,19 @@ public class WorldAccess {
         // lazy cause its parked execution
         expression.addLazyFunction("without_updates", 1, (c, t, lv) ->
         {
-            boolean previous = CarpetSettings.impendingFillSkipUpdates;
+            boolean previous = CarpetSettings.impendingFillSkipUpdates.get();
             if (previous) return lv.get(0);
             Value [] result = new Value[]{Value.NULL};
             ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
                 try
                 {
-                    CarpetSettings.impendingFillSkipUpdates = true;
+                    CarpetSettings.impendingFillSkipUpdates.set(true);
                     result[0] = lv.get(0).evalValue(c, t);
                 }
                 finally
                 {
-                    CarpetSettings.impendingFillSkipUpdates = previous;
+                    CarpetSettings.impendingFillSkipUpdates.set(previous);
                 }
             });
             return (cc, tt) -> result[0];

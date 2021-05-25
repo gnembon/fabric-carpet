@@ -18,7 +18,7 @@ public class World_scarpetPlopMixin
     ))
     private int fixSampleHeightmap(WorldChunk chunk, Heightmap.Type type, int x, int z)
     {
-        if (CarpetSettings.skipGenerationChecks)
+        if (CarpetSettings.skipGenerationChecks.get())
         {
             Heightmap.Type newType = type;
             if (type == Heightmap.Type.OCEAN_FLOOR_WG) newType = Heightmap.Type.OCEAN_FLOOR;

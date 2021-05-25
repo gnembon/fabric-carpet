@@ -45,10 +45,8 @@ public class CarpetSettings
 {
     public static final String carpetVersion = "1.4.37+v210519";
     public static final Logger LOG = LogManager.getLogger("carpet");
-    public static boolean skipGenerationChecks = false;
-    public static boolean impendingFillSkipUpdates = false;
-    public static Box currentTelepotingEntityBox = null;
-    public static Vec3d fixedPosition = null;
+    public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
+    public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;

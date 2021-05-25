@@ -21,7 +21,7 @@ public class ServerPlayNetworkHandler_interactionUpdatesMixin
     private void beforeBlockInteracted(PlayerInteractBlockC2SPacket playerInteractBlockC2SPacket_1, CallbackInfo ci)
     {
         if (!CarpetSettings.interactionUpdates)
-            CarpetSettings.impendingFillSkipUpdates = true;
+            CarpetSettings.impendingFillSkipUpdates.set(true);
     }
 
     @Inject(method = "onPlayerInteractBlock", at = @At(
@@ -32,7 +32,7 @@ public class ServerPlayNetworkHandler_interactionUpdatesMixin
     private void afterBlockInteracted(PlayerInteractBlockC2SPacket playerInteractBlockC2SPacket_1, CallbackInfo ci)
     {
         if (!CarpetSettings.interactionUpdates)
-            CarpetSettings.impendingFillSkipUpdates = false;
+            CarpetSettings.impendingFillSkipUpdates.set(false);
     }
 
     @Inject(method = "onPlayerInteractItem", at = @At(
@@ -43,7 +43,7 @@ public class ServerPlayNetworkHandler_interactionUpdatesMixin
     private void beforeItemInteracted(PlayerInteractItemC2SPacket packet, CallbackInfo ci)
     {
         if (!CarpetSettings.interactionUpdates)
-            CarpetSettings.impendingFillSkipUpdates = true;
+            CarpetSettings.impendingFillSkipUpdates.set(true);
     }
 
     @Inject(method = "onPlayerInteractItem", at = @At(
@@ -54,7 +54,7 @@ public class ServerPlayNetworkHandler_interactionUpdatesMixin
     private void afterItemInteracted(PlayerInteractItemC2SPacket packet, CallbackInfo ci)
     {
         if (!CarpetSettings.interactionUpdates)
-            CarpetSettings.impendingFillSkipUpdates = false;
+            CarpetSettings.impendingFillSkipUpdates.set(false);
     }
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
@@ -64,7 +64,7 @@ public class ServerPlayNetworkHandler_interactionUpdatesMixin
     private void beforeBlockBroken(PlayerActionC2SPacket packet, CallbackInfo ci)
     {
         if (!CarpetSettings.interactionUpdates)
-            CarpetSettings.impendingFillSkipUpdates = true;
+            CarpetSettings.impendingFillSkipUpdates.set(true);
     }
 
     @Inject(method = "onPlayerAction", at = @At(
@@ -75,7 +75,7 @@ public class ServerPlayNetworkHandler_interactionUpdatesMixin
     private void afterBlockBroken(PlayerActionC2SPacket packet, CallbackInfo ci)
     {
         if (!CarpetSettings.interactionUpdates)
-            CarpetSettings.impendingFillSkipUpdates = false;
+            CarpetSettings.impendingFillSkipUpdates.set(false);
     }
 
 }

@@ -33,13 +33,13 @@ public abstract class CommandManagerMixin
     private void onExecuteBegin(ServerCommandSource serverCommandSource_1, String string_1, CallbackInfoReturnable<Integer> cir)
     {
         if (!CarpetSettings.fillUpdates)
-            CarpetSettings.impendingFillSkipUpdates = true;
+            CarpetSettings.impendingFillSkipUpdates.set(true);
     }
 
     @Inject(method = "execute", at = @At("RETURN"))
     private void onExecuteEnd(ServerCommandSource serverCommandSource_1, String string_1, CallbackInfoReturnable<Integer> cir)
     {
-        CarpetSettings.impendingFillSkipUpdates = false;
+        CarpetSettings.impendingFillSkipUpdates.set(false);
     }
 
     @SuppressWarnings("UnresolvedMixinReference")
