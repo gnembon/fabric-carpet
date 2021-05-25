@@ -9,11 +9,12 @@ These options affect directly how scarpet functions and can be triggered via `/c
  when loaded with the world (i.e. present in the world/scripts folder)
  - `scriptsAutoload`: when set to `false` will prevent apps loaded with the world to load automatically. You can still
  load them on demand via `/script load` command
- - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggeres
+ - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggers
  the code that calls the command). Defaults to `ops`, could be customized to any level via a numerical value (0, 1, 2, 3 or 4)
  - `scriptsOptimization`: when disabled, disables default app compile time optimizations. If your app behaves differently with
- and without optimizations, please file a bug report on the bug tracker and disable code optimizations
+ and without optimizations, please file a bug report on the bug tracker and disable code optimizations.
  - `scriptsDebugging`: Puts detailed information about apps loading, performance and runtime in system log.
+ - `scriptsAppStore`: location of the app store for downloadable scarpet apps - can be configured to point to other scarpet app store.
 
 ## App structure
 
@@ -103,6 +104,36 @@ predicate that is volatile and might change, the command might falsely do or do 
 however player will always be able to type it in and either succeed, or fail, based on their current permissions.
 Custom permission applies to legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
+*  `'resources'` - list of all downloadable resources when installing the app from an app store. List of resources needs to be 
+in a list and contain of map-like resources descriptors, looking like
+   ```
+   'resources' -> [
+        {
+            'source' -> 'https://raw.githubusercontent.com/gnembon/fabric-carpet/master/src/main/resources/assets/carpet/icon.png',
+            'type' -> 'url',
+            'target' -> 'foo/photos.zip/foo/cm.png',
+        },
+        {
+            'source' -> 'survival/README.md',
+            'type' -> 'store',
+            'target' -> 'survival_readme.md',
+            'shared' -> true,
+        },
+        {
+            'source' -> 'carpets.sc',
+            'type' -> 'app',
+            'target' -> 'apps/flying_carpets.sc',
+            'shared' -> true,
+        },
+    ]
+   ```
+   `source` and `type` indicate resource location: either an arbitrary url (type `'url'`), 
+   absolute location of a file in the app store (type `'store'`),
+or a relative location in the same folder as the app in question (type `'app'`). 
+`'target'` points to the path in app data, or shared app data folder
+if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
+Currently, app resources
+are only downloaded when using `/carpet download` command.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
 *   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.

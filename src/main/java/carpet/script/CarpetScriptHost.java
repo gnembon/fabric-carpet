@@ -48,6 +48,7 @@ import net.minecraft.util.math.BlockPos;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -995,6 +996,12 @@ public class CarpetScriptHost extends ScriptHost
     {
         if (getName() == null && !fdesc.isShared) return null; //
         return fdesc.listFolder(main);
+    }
+
+    public boolean applyActionForResource(String path, boolean shared, Consumer<Path> action)
+    {
+        FileArgument fdesc = FileArgument.resourceFromPath(path, FileArgument.Reason.CREATE, shared);
+        return fdesc.findPathAndApply(main, action);
     }
 
 

@@ -170,8 +170,9 @@ calling `gametick` should be balanced in each case separately
 
 # `/script download` command
 
-`/script download <global or local?> <path>` command allows to download and save scripts directly from [scarpet app store](https://www.github.com/gnembon/scarpet).
-You can choose whether to save the script in the global config scripts folder or the local per-world script folder, 
-(on servers it always saves in the scripts folder) and it will be saved there, e.g `/script download local survival/angel_block.sc`
-would save the `angel_block.sc` file [here](https://github.com/gnembon/scarpet/blob/master/programs/survival/angel_block.sc)
-to a folder called `appstore/survival` in the world's scripts folder.
+`/script download <path>` command allows downloading and running apps directly from an online app store (it's all free), 
+by default the [scarpet app store](https://www.github.com/gnembon/scarpet).
+Downloaded apps will be placed in the world's scripts folder automatically. Location of the app store is controlled
+with a global carpet setting of `/carpet scriptsAppStore`. Apps, if required, will also download all the resources they need
+to run it. Consecutive downloads of the same app will re-download its content and its resources, but will not remove anything
+that has been removed or renamed.

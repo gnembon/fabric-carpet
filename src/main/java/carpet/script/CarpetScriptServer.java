@@ -285,7 +285,8 @@ public class CarpetScriptServer
             return false;
         }
         //addEvents(source, name);
-        String action = reload?"reloaded":"loaded";
+        String action = (installer!=null)?(reload?"reinstalled":"installed"):(reload?"reloaded":"loaded");
+
         
         Boolean isCommandAdded = newHost.addAppCommands(s -> {
             if (!isRuleApp) Messenger.m(source, s);
