@@ -227,6 +227,13 @@ public class NumericValue extends Value
         this.longValue = value;
         this.value = (double)value;
     }
+
+    /**
+     * Creates a legacy {@link NumericValue} for a {@code boolean}.
+     * @param boolval The boolean to set 1 or 0 for this {@link NumericValue}
+     * @deprecated Use {@link BooleanValue#of(boolean)} instead
+     */
+    @Deprecated
     public NumericValue(boolean boolval)
     {
         this(boolval?1L:0L);

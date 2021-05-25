@@ -6,6 +6,7 @@ import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
+import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FormattedTextValue;
 import carpet.script.value.ListValue;
@@ -114,7 +115,7 @@ public abstract class CommandArgument
             new StringArgument(),
             // vanilla arguments as per https://minecraft.gamepedia.com/Argument_types
             new VanillaUnconfigurableArgument( "bool", BoolArgumentType::bool,
-                    (c, p) -> new NumericValue(BoolArgumentType.getBool(c, p)), false
+                    (c, p) -> BooleanValue.of(BoolArgumentType.getBool(c, p)), false
             ),
             new FloatArgument(),
             new IntArgument(),

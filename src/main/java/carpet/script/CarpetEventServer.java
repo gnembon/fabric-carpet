@@ -465,7 +465,7 @@ public class CarpetEventServer
             public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
             {
                 handler.call( () -> Arrays.asList(new EntityValue(player),
-                        new NumericValue(forwardSpeed), new NumericValue(strafeSpeed), new NumericValue(jumping), new NumericValue(sneaking)
+                        new NumericValue(forwardSpeed), new NumericValue(strafeSpeed), BooleanValue.of(jumping), BooleanValue.of(sneaking)
                 ), player::getCommandSource);
             }
         };
@@ -700,7 +700,7 @@ public class CarpetEventServer
                         Arrays.asList(
                                 new EntityValue(player),
                                 StringValue.of(NBTSerializableValue.nameFromRegistryId(recipe)),
-                                new NumericValue(fullStack)
+                                BooleanValue.of(fullStack)
                         ), player::getCommandSource);
             }
         };
