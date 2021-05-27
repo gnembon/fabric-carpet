@@ -1328,7 +1328,7 @@ public class ShapeDispatcher
         }
 
         if (isStraight(from, to, density)) return drawOptimizedParticleLine(players, particle, from, to, density);
-        Vec3d incvec = to.subtract(from).multiply(2*density/MathHelper.sqrt(distance));
+        Vec3d incvec = to.subtract(from).multiply(2*density/Math.sqrt(distance));
 
         for (Vec3d delta = new Vec3d(0.0,0.0,0.0);
              delta.lengthSquared()<distance;

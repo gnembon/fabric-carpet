@@ -134,14 +134,14 @@ public class OptimizedExplosion
             }
 
             if (!entity.isImmuneToExplosion()) {
-                double d12 = MathHelper.sqrt(entity.squaredDistanceTo(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
+                double d12 = Math.sqrt(entity.squaredDistanceTo(eAccess.getX(), eAccess.getY(), eAccess.getZ())) / (double) f3;
 
                 if (d12 <= 1.0D) {
                     double d5 = entity.getX() - eAccess.getX();
                     // Change in 1.16 snapshots to fix a bug with TNT jumping
                     double d7 = (entity instanceof TntEntity ? entity.getY() : entity.getEyeY()) - eAccess.getY();
                     double d9 = entity.getZ() - eAccess.getZ();
-                    double d13 = (double) MathHelper.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
+                    double d13 = (double) Math.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
 
                     if (d13 != 0.0D) {
                         d5 = d5 / d13;

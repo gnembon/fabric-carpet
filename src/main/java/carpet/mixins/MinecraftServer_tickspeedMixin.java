@@ -46,7 +46,9 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
 
     @Shadow private volatile boolean loading;
 
-    @Shadow protected abstract void startMonitor(TickDurationMonitor monitor);
+    //@Shadow protected abstract void startMonitor(TickDurationMonitor monitor);
+
+    @Shadow protected abstract void startMonitor();
 
     @Shadow private long lastTimeReference;
 
@@ -116,8 +118,9 @@ public abstract class MinecraftServer_tickspeedMixin extends ReentrantThreadExec
             }
 
             this.timeReference += msThisTick;//50L;
-            TickDurationMonitor tickDurationMonitor = TickDurationMonitor.create("Server");
-            this.startMonitor(tickDurationMonitor);
+            //TickDurationMonitor tickDurationMonitor = TickDurationMonitor.create("Server");
+            //this.startMonitor(tickDurationMonitor);
+            this.startMonitor();
             this.profiler.startTick();
             this.profiler.push("tick");
             this.tick(TickSpeed.time_warp_start_time != 0 ? ()->true : this::shouldKeepTicking);

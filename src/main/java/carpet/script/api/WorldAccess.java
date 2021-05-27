@@ -576,7 +576,7 @@ public class WorldAccess {
         {
             c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
-            return BooleanValue.of(((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos)));
+            return BooleanValue.of(((CarpetContext)c).s.getWorld().method_37118(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
         });
 
         expression.addContextFunction("loaded_status", -1, (c, t, lv) ->

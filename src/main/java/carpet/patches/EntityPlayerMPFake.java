@@ -17,7 +17,6 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.UserCache;
 import net.minecraft.util.registry.RegistryKey;
@@ -25,6 +24,8 @@ import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.utils.Messenger;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("EntityConstructor")
 public class EntityPlayerMPFake extends ServerPlayerEntity
@@ -55,7 +56,9 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         }
         if (gameprofile.getProperties().containsKey("textures"))
         {
-            gameprofile = SkullBlockEntity.loadProperties(gameprofile);
+            AtomicReference<GameProfile> result = new AtomicReference<>();
+            SkullBlockEntity.loadProperties(gameprofile, result::set);
+            gameprofile = result.get();
         }
         EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, gameprofile, false);
         instance.fixStartingPosition = () -> instance.refreshPositionAndAngles(d0, d1, d2, (float) yaw, (float) pitch);
