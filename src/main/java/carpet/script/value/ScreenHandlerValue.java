@@ -1,12 +1,14 @@
 package carpet.script.value;
 
 import carpet.script.Context;
-import carpet.script.argument.FunctionArgument;
+import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.screen.AnvilScreenHandler;
 import net.minecraft.screen.ArrayPropertyDelegate;
@@ -19,31 +21,87 @@ import net.minecraft.screen.ScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerListener;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.registry.Registry;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import static net.minecraft.screen.ScreenHandlerType.*;
 
 public class ScreenHandlerValue extends Value {
     private final ScreenHandlerFactory screenHandler;
 
     private Inventory inventory;
-    private final boolean restricted;
-    private final String name;
-
+    private Text name;
     private final FunctionValue functionValue;
     private final Context context;
 
-    public ScreenHandlerValue(Value type, Text name, boolean restricted, FunctionValue functionValue, Context c) {
+
+    public static Map<ScreenHandlerType<?>,ScarpetScreenHandlerFactory> screenHandlerFactories;
+    public static Map<ScreenHandlerType<?>,Integer> inventorySizes;
+
+    static
+    {
+        screenHandlerFactories = new HashMap<>();
+
+        screenHandlerFactories.put(GENERIC_9X1,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X1,syncId,playerInventory,inventory1,1)));
+        screenHandlerFactories.put(GENERIC_9X2,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X2,syncId,playerInventory,inventory1,2)));
+        screenHandlerFactories.put(GENERIC_9X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X3,syncId,playerInventory,inventory1,3)));
+        screenHandlerFactories.put(GENERIC_9X4,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X4,syncId,playerInventory,inventory1,4)));
+        screenHandlerFactories.put(GENERIC_9X5,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X5,syncId,playerInventory,inventory1,5)));
+        screenHandlerFactories.put(GENERIC_9X6,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_9X6,syncId,playerInventory,inventory1,6)));
+
+        screenHandlerFactories.put(GENERIC_3X3,((syncId, playerInventory, inventory1) -> new GenericContainerScreenHandler(GENERIC_3X3,syncId,playerInventory,inventory1,1)));
+
+        screenHandlerFactories.put(HOPPER,(HopperScreenHandler::new));
+        screenHandlerFactories.put(ANVIL,(syncId, playerInventory, inventory1) -> {
+            AnvilScreenHandler anvilScreenHandler = new AnvilScreenHandler(syncId,playerInventory);
+            for(int j = 0; j < inventory1.size(); j++) {
+                anvilScreenHandler.setStackInSlot(j,inventory1.getStack(j));
+            }
+            return anvilScreenHandler;
+        });
+        screenHandlerFactories.put(LECTERN,(syncId, playerInventory, inventory1) -> new LecternScreenHandler(syncId,inventory1,new ArrayPropertyDelegate(1)));
+
+
+        inventorySizes = new HashMap<>();
+
+        inventorySizes.put(GENERIC_9X1,9);
+        inventorySizes.put(GENERIC_9X2,18);
+        inventorySizes.put(GENERIC_9X3,27);
+        inventorySizes.put(GENERIC_9X4,36);
+        inventorySizes.put(GENERIC_9X5,45);
+        inventorySizes.put(GENERIC_9X6,54);
+        inventorySizes.put(GENERIC_3X3,9);
+        inventorySizes.put(HOPPER,5);
+        inventorySizes.put(ANVIL,1);
+        inventorySizes.put(LECTERN,1);
+
+    }
+
+
+    public interface ScarpetScreenHandlerFactory {
+        ScreenHandler create(int syncId, PlayerInventory playerInventory, Inventory inventory);
+    }
+
+
+
+
+    public ScreenHandlerValue(Value type, Text name, FunctionValue functionValue, Context c) {
+        this.name = name;
         this.functionValue = functionValue;
         this.context = c;
-        this.restricted = restricted;
-        this.name = name.asString();
-        this.screenHandler = this.createScreenHandlerFactoryFromValue(type,name);
+        this.screenHandler = this.createScreenHandlerFactoryFromValue(type);
         if(this.screenHandler == null) throw new InternalExpressionException("Invalid screen handler type: " + type.getString());
     }
 
     public void showScreen(PlayerEntity player) {
+        if(player == null) return;
         if(screenHandler instanceof NamedScreenHandlerFactory)
             player.openHandledScreen((NamedScreenHandlerFactory) screenHandler);
     }
@@ -56,78 +114,34 @@ public class ScreenHandlerValue extends Value {
         return inventory != null;
     }
 
-    public ScreenHandlerFactory createScreenHandlerFactoryFromValue(Value v, Text name) {
-        String type = (v instanceof NumericValue)?"9x" + ((NumericValue) v).getInt():v.getString();
-
-        switch (type) {
-            case "9x1": return createGenericScreenHandlerFactory(ScreenHandlerType.GENERIC_9X1,name);
-            case "9x2": return createGenericScreenHandlerFactory(ScreenHandlerType.GENERIC_9X2,name);
-            case "9x3": return createGenericScreenHandlerFactory(ScreenHandlerType.GENERIC_9X3,name);
-            case "9x4": return createGenericScreenHandlerFactory(ScreenHandlerType.GENERIC_9X4,name);
-            case "9x5": return createGenericScreenHandlerFactory(ScreenHandlerType.GENERIC_9X5,name);
-            case "9x6": return createGenericScreenHandlerFactory(ScreenHandlerType.GENERIC_9X6,name);
-
-            case "3x3": return createGenericScreenHandlerFactory(ScreenHandlerType.GENERIC_3X3,name);
-            case "hopper": return createHopperScreenHandlerFactory(name);
-
-            case "anvil": return createAnvilScreenHandlerFactory(name);
-            case "lectern": return createLecternScreenHandlerFactory(name);
-
-            default: return null;
-        }
-    }
-
-    private ScreenHandlerFactory createGenericScreenHandlerFactory(ScreenHandlerType<?> screenHandlerType, Text displayName) {
-        this.inventory = getInvetoryForScreenHandler(screenHandlerType);
-        return new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
-            GenericContainerScreenHandler screenHandler = new GenericContainerScreenHandler(screenHandlerType, i, playerInventory, this.inventory, this.inventory.size()/9);
-            if (functionValue != null) addClickListener(screenHandler,playerEntity);
+    public ScreenHandlerFactory createScreenHandlerFactoryFromValue(Value v) {
+        String type = (v instanceof NumericValue)?"generic_9x" + ((NumericValue) v).getInt():v.getString();
+        ScreenHandlerType<? extends ScreenHandler> screenHandlerType = Registry.SCREEN_HANDLER.get(Identifier.tryParse(type));
+        if(screenHandlerType == null) throw new InternalExpressionException("Invalid screen handler type: " + type);
+        inventory = new SimpleInventory(inventorySizes.get(screenHandlerType));
+        SimpleNamedScreenHandlerFactory factory = new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
+            ScreenHandler screenHandler = screenHandlerFactories.get(screenHandlerType).create(i,playerInventory,inventory);
+            addClickListener(screenHandler);
             return screenHandler;
-        },displayName);
+        },this.name);
+
+        return factory;
     }
 
-    private ScreenHandlerFactory createHopperScreenHandlerFactory(Text displayName) {
-        this.inventory = getInvetoryForScreenHandler(ScreenHandlerType.HOPPER);
-        return new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
-            HopperScreenHandler screenHandler = new HopperScreenHandler(i, playerInventory, this.inventory);
-            if (functionValue != null) addClickListener(screenHandler,playerEntity);
-            return screenHandler;
-        },displayName);
-    }
+    private void addClickListener(ScreenHandler screenHandler) {
+        if(functionValue == null) return;
 
-    private ScreenHandlerFactory createAnvilScreenHandlerFactory(Text displayName) {
-        this.inventory = getInvetoryForScreenHandler(ScreenHandlerType.ANVIL);
-        return new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
-            AnvilScreenHandler screenHandler = new AnvilScreenHandler(i, playerInventory);
-            for(int j = 0; j < inventory.size(); j++) {
-                screenHandler.setStackInSlot(j,inventory.getStack(j));
-            }
-            if (functionValue != null) addClickListener(screenHandler,playerEntity);
-            return screenHandler;
-        },displayName);
-    }
-
-    private ScreenHandlerFactory createLecternScreenHandlerFactory(Text displayName) {
-        this.inventory = getInvetoryForScreenHandler(ScreenHandlerType.LECTERN);
-        return new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> {
-            LecternScreenHandler screenHandler = new LecternScreenHandler(i, this.inventory, new ArrayPropertyDelegate(1));
-            return screenHandler;
-        },displayName);
-    }
-
-    private void addClickListener(ScreenHandler screenHandler, PlayerEntity playerEntity) {
-        if(functionValue.getNumParams() != 4) throw new InternalExpressionException("Callback function requires four parameters");
-
-        screenHandler.addListener(new ScreenHandlerScarpetListener() {
+        screenHandler.addListener(new ScarpetScreenHandlerListener() {
             @Override
-            public void onSlotClick(ScreenHandler handler, int slotId, ItemStack stack, String type) {
-                Value playerValue = new EntityValue(playerEntity);
-                Value slotValue = NumericValue.of(slotId);
-                Value stackValue = ValueConversions.of(stack);
-                Value typeValue = StringValue.of(type);
-                functionValue.callInContext(context, Context.VOID, Arrays.asList(playerValue, slotValue, stackValue, typeValue));
+            public boolean onSlotClick(int slot, int button, SlotActionType actionType, PlayerEntity player) {
+                Value slotValue = NumericValue.of(slot);
+                Value buttonValue = NumericValue.of(button);
+                Value actionValue = StringValue.of(actionType.toString());
+                Value playerValue = EntityValue.of(player);
+                LazyValue cancel = functionValue.callInContext(context, Context.Type.NONE, Arrays.asList(ScreenHandlerValue.this,slotValue,buttonValue,actionValue,playerValue));
+                Value cancelValue = cancel.evalValue(context);
+                return cancelValue.getString().equals("cancel");
             }
-
             @Override
             public void onSlotUpdate(ScreenHandler handler, int slotId, ItemStack stack) {}
             @Override
@@ -135,22 +149,6 @@ public class ScreenHandlerValue extends Value {
             @Override
             public void onHandlerRegistered(ScreenHandler handler, DefaultedList<ItemStack> stacks) {}
         });
-    }
-
-    private static Inventory getInvetoryForScreenHandler(ScreenHandlerType<?> screenHandlerType) {
-        if(screenHandlerType.equals(ScreenHandlerType.GENERIC_9X1)) return new SimpleInventory(9);
-        if(screenHandlerType.equals(ScreenHandlerType.GENERIC_9X2)) return new SimpleInventory(18);
-        if(screenHandlerType.equals(ScreenHandlerType.GENERIC_9X3)) return new SimpleInventory(27);
-        if(screenHandlerType.equals(ScreenHandlerType.GENERIC_9X4)) return new SimpleInventory(36);
-        if(screenHandlerType.equals(ScreenHandlerType.GENERIC_9X5)) return new SimpleInventory(45);
-        if(screenHandlerType.equals(ScreenHandlerType.GENERIC_9X6)) return new SimpleInventory(54);
-
-        if(screenHandlerType.equals(ScreenHandlerType.GENERIC_3X3)) return new SimpleInventory(9);
-        if(screenHandlerType.equals(ScreenHandlerType.HOPPER)) return new SimpleInventory(5);
-        if(screenHandlerType.equals(ScreenHandlerType.ANVIL)) return new SimpleInventory(3);
-        if(screenHandlerType.equals(ScreenHandlerType.LECTERN)) return new SimpleInventory(1);
-
-        return null;
     }
 
     @Override
@@ -171,11 +169,12 @@ public class ScreenHandlerValue extends Value {
 
     @Override
     public Tag toTag(boolean force) {
-        return null;
+        if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
+        return StringTag.of(getString());
     }
 
 
-    public interface ScreenHandlerScarpetListener extends ScreenHandlerListener {
-        void onSlotClick(ScreenHandler handler, int slotId, ItemStack stack, String type);
+    public interface ScarpetScreenHandlerListener extends ScreenHandlerListener {
+        boolean onSlotClick(int slot, int button, SlotActionType actionType, PlayerEntity player);
     }
 }
