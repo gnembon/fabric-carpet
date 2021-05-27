@@ -421,7 +421,7 @@ public class Inventories {
             if(lv.get(1) instanceof ScreenHandlerValue) {
                 ScreenHandlerValue screenHandlerValue = (ScreenHandlerValue) lv.get(1);
                 players.forEach(screenHandlerValue::showScreen);
-            } else {
+            } else if(lv.get(1).isNull()) {
                 players.forEach(ServerPlayerEntity::closeHandledScreen);
             }
             return Value.TRUE;
