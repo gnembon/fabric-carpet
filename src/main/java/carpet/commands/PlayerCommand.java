@@ -272,7 +272,7 @@ public class PlayerCommand
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length()>40)
+        if (playerName.length()>maxPlayerLength(source.getMinecraftServer()))
         {
             Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
             return 0;
@@ -292,6 +292,11 @@ public class PlayerCommand
             return 0;
         }
         return 1;
+    }
+
+    private static int maxPlayerLength(MinecraftServer server)
+    {
+        return server.getServerPort() >= 0 ? 16 : 40;
     }
 
     private static int stop(CommandContext<ServerCommandSource> context)

@@ -110,7 +110,7 @@ public class ScriptCommand
     }
 
     /**
-     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#localScarpetRepoStructure}
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#appStoreRoot}
      * variable.
      */
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
@@ -329,10 +329,18 @@ public class ScriptCommand
                 then(argument("path", StringArgumentType.greedyString()).
                         suggests(ScriptCommand::suggestDownloadableApps).
                         executes(cc-> AppStoreManager.downloadScript(cc.getSource(), StringArgumentType.getString(cc,"path"))));
+        LiteralArgumentBuilder<ServerCommandSource> r = literal("remove").requires( (player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScriptACE) ).
+                then(argument("app", StringArgumentType.word()).
+                        suggests( (cc, bb) -> suggestMatching(CarpetServer.scriptServer.unloadableModules,bb)).
+                        executes((cc) ->
+                        {
+                            boolean success =CarpetServer.scriptServer.uninstallApp(cc.getSource(), StringArgumentType.getString(cc, "app"));
+                            return success?1:0;
+                        }));
 
         dispatcher.register(literal("script").
                 requires((player) ->  SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
-                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d));
+                then(b).then(u).then(o).then(l).then(s).then(c).then(h).then(i).then(e).then(t).then(a).then(f).then(q).then(d).then(r));
         dispatcher.register(literal("script").
                 requires((player) -> SettingsManager.canUseCommand(player, CarpetSettings.commandScript)).
                 then(literal("in").

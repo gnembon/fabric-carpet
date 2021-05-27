@@ -176,3 +176,9 @@ Downloaded apps will be placed in the world's scripts folder automatically. Loca
 with a global carpet setting of `/carpet scriptsAppStore`. Apps, if required, will also download all the resources they need
 to run it. Consecutive downloads of the same app will re-download its content and its resources, but will not remove anything
 that has been removed or renamed.
+
+# `/script remove` command
+
+command allow to stop and remove apps installed in the worlds scripts folder. The app is unloaded and app 'sc' file is moved
+to the `/scripts/trash`. Removed apps can only be restored by manually moving it back from the trash folder,
+or by redownloading from the appstore.
