@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -345,6 +346,30 @@ public class CarpetScriptServer
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");
         return true;
+    }
+
+    public boolean uninstallApp(ServerCommandSource source, String name)
+    {
+        try
+        {
+            name = name.toLowerCase(Locale.ROOT);
+            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts/trash");
+            if (!Files.exists(folder)) Files.createDirectories(folder);
+            if (!Files.exists(folder.getParent().resolve(name+".sc")))
+            {
+                Messenger.m(source, "App doesn't exist in the world scripts folder, so can only be unloaded");
+                return false;
+            }
+            removeScriptHost(source, name, false, false);
+            Files.move(folder.getParent().resolve(name+".sc"), folder.resolve(name+".sc"), StandardCopyOption.REPLACE_EXISTING);
+            Messenger.m(source, "gi Removed "+name+" app");
+            return true;
+        }
+        catch (IOException exc)
+        {
+            Messenger.m(source, "rb Failed to uninstall the app");
+        }
+        return false;
     }
 
     public boolean runEventCall(ServerCommandSource sender, String hostname, String optionalTarget, FunctionValue udf, List<Value> argv)
