@@ -265,6 +265,9 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                     return null;
                 return new InventoryLocator(pos, pos, inv, offset+1);
             }
+            if(v1 instanceof ScreenHandlerValue) {
+                return new InventoryLocator(null,null,((ScreenHandlerValue) v1).getInventory(),offset+1);
+            }
             BlockPos pos = new BlockPos(
                     NumericValue.asNumber(v1).getDouble(),
                     NumericValue.asNumber(params.get(1 + offset)).getDouble(),
@@ -276,7 +279,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         }
         catch (IndexOutOfBoundsException e)
         {
-            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, or an entity");
+            throw new InternalExpressionException("Inventory should be defined either by three coordinates, a block value, an entity or a screen handler");
         }
     }
 
