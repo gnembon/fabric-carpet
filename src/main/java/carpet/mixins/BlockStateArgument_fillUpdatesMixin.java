@@ -20,7 +20,7 @@ public class BlockStateArgument_fillUpdatesMixin
     ))
     private BlockState postProcessStateProxy(BlockState state, WorldAccess serverWorld, BlockPos blockPos)
     {
-        if (CarpetSettings.impendingFillSkipUpdates)
+        if (CarpetSettings.impendingFillSkipUpdates.get())
         {
             return state;
         }

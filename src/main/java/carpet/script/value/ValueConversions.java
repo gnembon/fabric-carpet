@@ -102,7 +102,7 @@ public class ValueConversions
     {
         return ListValue.of(
                 StringValue.of(criteria.getName()),
-                new NumericValue(criteria.isReadOnly())
+                BooleanValue.of(criteria.isReadOnly())
         );
     }
 
@@ -209,7 +209,7 @@ public class ValueConversions
                     new BlockValue(null, world, node.getPos()),
                     new StringValue(node.type.name().toLowerCase(Locale.ROOT)),
                     new NumericValue(node.penalty),
-                    new NumericValue(node.visited)
+                    BooleanValue.of(node.visited)
             ));
         }
         return ListValue.wrap(nodes);
@@ -243,7 +243,7 @@ public class ValueConversions
         }
         if (v instanceof Boolean)
         {
-            return new NumericValue((Boolean) v);
+            return BooleanValue.of((Boolean) v);
         }
         if (v instanceof UUID)
         {

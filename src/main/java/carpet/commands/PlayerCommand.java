@@ -192,9 +192,14 @@ public class PlayerCommand
         GameProfile profile = server.getUserCache().findByName(playerName);
         if (profile == null)
         {
-            Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
-                    "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
-            return true;
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
+            {
+                Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
+                        "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
+                return true;
+            } else {
+                profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
+            }
         }
         if (manager.getUserBanList().contains(profile))
         {
@@ -267,7 +272,7 @@ public class PlayerCommand
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length()>40)
+        if (playerName.length()>maxPlayerLength(source.getMinecraftServer()))
         {
             Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
             return 0;
@@ -287,6 +292,11 @@ public class PlayerCommand
             return 0;
         }
         return 1;
+    }
+
+    private static int maxPlayerLength(MinecraftServer server)
+    {
+        return server.getServerPort() >= 0 ? 16 : 40;
     }
 
     private static int stop(CommandContext<ServerCommandSource> context)

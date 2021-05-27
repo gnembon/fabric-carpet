@@ -105,7 +105,12 @@ public abstract class ScriptHost
 
     public final Module main;
 
-    public Fluff.TriFunction<Expression, Tokenizer.Token, String, List<String>> errorSnooper = null;
+    @FunctionalInterface
+    public interface ErrorSnooper
+    {
+        List<String> apply(Expression expression, Tokenizer.Token token, String message);
+    }
+    public ErrorSnooper errorSnooper = null;
 
     protected ScriptHost(Module code, boolean perUser, ScriptHost parent)
     {

@@ -17,6 +17,6 @@ public class StructurePiece_scarpetPlopMixin
     ))
     private void markOrNot(Chunk chunk, BlockPos pos)
     {
-        if (!CarpetSettings.skipGenerationChecks) chunk.markBlockForPostProcessing(pos);
+        if (!CarpetSettings.skipGenerationChecks.get()) chunk.markBlockForPostProcessing(pos);
     }
 }

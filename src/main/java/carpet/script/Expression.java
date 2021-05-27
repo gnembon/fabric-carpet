@@ -1072,6 +1072,7 @@ public class Expression
         if (!CarpetSettings.scriptsOptimization)
             return root.op;
 
+        Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
         CarpetScriptServer.LOG.info("Input code size for "+getModuleName()+": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
 
         boolean changed = true;
@@ -1088,13 +1089,13 @@ public class Expression
             while (true) {
                 int tree_size = treeSize(root);
                 int tree_depth = treeDepth(root);
-                boolean optimized = optimizeTree(context, root, Context.Type.NONE, 0);
+                boolean optimized = optimizeTree(optimizeOnlyContext, root, Context.Type.NONE, 0);
                 if (!optimized) break;
                 changed = true;
                 CarpetScriptServer.LOG.info("Optimized from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
             }
         }
-        return extractOp(context, root, Context.Type.NONE);
+        return extractOp(optimizeOnlyContext, root, Context.Type.NONE);
     }
 
     private int treeSize(ExpressionNode node)
@@ -1222,25 +1223,25 @@ public class Expression
                     Value val = ((LazyValue.Constant) arg.op).get();
                     args.add((c, t) -> val);
                 }
-                else args.add((c, t) -> arg.op.evalValue(null, requestedType));
+                else args.add((c, t) -> arg.op.evalValue(ctx, requestedType));
             } catch (NullPointerException npe) {
                 throw new ExpressionException(ctx, this, node.token, "Attempted to evaluate context free expression");
             }
         }
         // applying argument unpacking
-        args= AbstractLazyFunction.lazify(AbstractLazyFunction.unpackLazy(args, null, requestedType));
+        args= AbstractLazyFunction.lazify(AbstractLazyFunction.unpackLazy(args, ctx, requestedType));
         Value result;
         if (operation instanceof ILazyFunction)
         {
-            result = ((ILazyFunction) operation).lazyEval(null, expectedType, this, node.token, args).evalValue(null, expectedType);
+            result = ((ILazyFunction) operation).lazyEval(ctx, expectedType, this, node.token, args).evalValue(null, expectedType);
         }
         else if (args.size() == 1)
         {
-            result = ((ILazyOperator)operation).lazyEval(null, expectedType, this, node.token, args.get(0), null).evalValue(null, expectedType);
+            result = ((ILazyOperator)operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), null).evalValue(null, expectedType);
         }
         else // args == 2
         {
-            result = ((ILazyOperator)operation).lazyEval(null, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
+            result = ((ILazyOperator)operation).lazyEval(ctx, expectedType, this, node.token, args.get(0), args.get(1)).evalValue(null, expectedType);
         }
         node.op = LazyValue.ofConstant(result);
         //node.token.morph(Tokenizer.Token.TokenType.CONSTANT, node.token.surface);

@@ -117,9 +117,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         scriptServer.tick();
 
         //in case something happens
-        CarpetSettings.impendingFillSkipUpdates = false;
-        CarpetSettings.currentTelepotingEntityBox = null;
-        CarpetSettings.fixedPosition = null;
+        CarpetSettings.impendingFillSkipUpdates.set(false);
 
         extensions.forEach(e -> e.onTick(server));
     }
@@ -188,6 +186,9 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
         // this for whatever reason gets called multiple times even when joining;
         TickSpeed.reset();
+    }
+    public static void onServerDoneClosing(MinecraftServer server)
+    {
         settingsManager.detachServer();
     }
 

@@ -84,9 +84,8 @@ public final class AnnotationParser
      * <p>There is a set of requirements for the class and its methods:</p>
      * <ul>
      * <li>Class must be concrete. That is, no interfaces or abstract classes should be passed</li>
-     * <li>Class must have the default constructor (or an equivalent) available. That is done in order to not need the {@code static} modifier in every method, making them faster to
-     * code and simpler to look at.</li>
-     * <li>Annotated methods must not be {@code static}. See claim above</li>
+     * <li>Class must have the default constructor (or an equivalent) available. That is done in order to not need the {@code static} modifier in every 
+     * method, making them faster to code and simpler to look at.</li>
      * <li>Annotated methods must not throw checked exceptions. They can throw regular {@link RuntimeException}s (including but not limited to 
      * {@link InternalExpressionException}).
      * Basically, it's fine as long as you don't add a {@code throws} declaration to your methods.</li>
@@ -121,9 +120,7 @@ public final class AnnotationParser
         {
             if (!method.isAnnotationPresent(ScarpetFunction.class))
                 continue;
-            // Checks
-            if (Modifier.isStatic(method.getModifiers()))
-                throw new IllegalArgumentException("Annotated method '" + method.getName() + "', provided in '" + clazz + "' must not be static");
+
             if (method.getExceptionTypes().length != 0)
                 throw new IllegalArgumentException("Annotated method '" + method.getName() +"', provided in '"+clazz+"' must not declare checked exceptions");
 
@@ -212,7 +209,8 @@ public final class AnnotationParser
             try
             {
                 MethodHandle tempHandle = MethodHandles.publicLookup().unreflect(method).asFixedArity().asSpreader(Object[].class, this.methodParamCount);
-                this.handle = tempHandle.asType(tempHandle.type().changeReturnType(Object.class)).bindTo(instance);
+                tempHandle = tempHandle.asType(tempHandle.type().changeReturnType(Object.class));
+                this.handle = Modifier.isStatic(method.getModifiers()) ? tempHandle : tempHandle.bindTo(instance);
             } catch (IllegalAccessException e)
             {
                 throw new IllegalArgumentException(e);

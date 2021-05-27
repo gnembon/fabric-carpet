@@ -4,7 +4,6 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.AbstractNumberTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
@@ -73,12 +72,6 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     protected ListValue(List<Value> list)
     {
         items = list;
-    }
-
-    @Deprecated
-    public static Value fromItemStack(ItemStack itemstack)
-    {
-        return ValueConversions.of(itemstack);
     }
 
     public static Value fromTriple(double a, double b, double c)

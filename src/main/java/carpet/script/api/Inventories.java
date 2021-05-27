@@ -202,7 +202,7 @@ public class Inventories {
             CarpetContext cc = (CarpetContext) c;
             NBTSerializableValue.InventoryLocator inventoryLocator = NBTSerializableValue.locateInventory(cc, lv, 0);
             if (inventoryLocator == null) return Value.NULL;
-            return new NumericValue(!inventoryLocator.inventory.isEmpty());
+            return BooleanValue.of(!inventoryLocator.inventory.isEmpty());
         });
 
         //inventory_get(<b, e>, <n>) -> item_triple
