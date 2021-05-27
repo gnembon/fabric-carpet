@@ -4,14 +4,19 @@ import carpet.fakes.IngredientInterface;
 import carpet.fakes.RecipeManagerInterface;
 import carpet.script.CarpetContext;
 import carpet.script.Expression;
+import carpet.script.argument.FunctionArgument;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.value.BooleanValue;
+import carpet.script.value.EntityValue;
+import carpet.script.value.FormattedTextValue;
+import carpet.script.value.FunctionValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NullValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.ScreenHandlerValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
@@ -34,8 +39,10 @@ import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.recipe.ShapelessRecipe;
 import net.minecraft.recipe.SpecialCraftingRecipe;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.tag.TagManager;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.math.Vec3d;
@@ -386,6 +393,32 @@ public class Inventories {
                 cc.s.getWorld().spawnEntity(item);
             }
             return new NumericValue(item.getStack().getCount());
+        });
+
+        expression.addContextFunction("create_screen",-1, (c, t, lv) ->
+        {
+            if(lv.size() < 2) throw new InternalExpressionException("'create_screen' expected at least two arguments");
+            Value type = lv.get(0);
+            Text name = FormattedTextValue.getTextByValue(lv.get(1));
+            FunctionValue function = null;
+            if(lv.size() > 2)
+                function = FunctionArgument.findIn(c, expression.module, lv, 2, true, false).function;
+
+            return new ScreenHandlerValue(type,name,function,c);
+        });
+
+        expression.addContextFunction("open_screen",2, (c, t, lv) ->
+        {
+            Value targets = lv.get(0);
+            if (!(targets instanceof ListValue)) targets = ListValue.of(targets);
+            MinecraftServer server = ((CarpetContext) c).s.getMinecraftServer();
+            if(lv.get(1) instanceof ScreenHandlerValue) {
+                ScreenHandlerValue screenHandlerValue = (ScreenHandlerValue) lv.get(1);
+                ((ListValue) targets).getItems().forEach(value -> screenHandlerValue.showScreen(EntityValue.getPlayerByValue(server, value)));
+            } else {
+                ((ListValue) targets).getItems().forEach(value -> EntityValue.getPlayerByValue(server, value).closeHandledScreen());
+            }
+            return Value.TRUE;
         });
     }
 
