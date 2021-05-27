@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Inventories {
     public static void apply(Expression expression)
@@ -412,11 +413,16 @@ public class Inventories {
             Value targets = lv.get(0);
             if (!(targets instanceof ListValue)) targets = ListValue.of(targets);
             MinecraftServer server = ((CarpetContext) c).s.getMinecraftServer();
+            Stream<ServerPlayerEntity> players = ((ListValue) targets).getItems().stream().map(target -> {
+                ServerPlayerEntity player = EntityValue.getPlayerByValue(server, target);
+                if (player == null) throw new InternalExpressionException("'open_screen' requires a valid online player or a list of players as first argument. "+target.getString()+" is not a player.");
+                return player;
+            });
             if(lv.get(1) instanceof ScreenHandlerValue) {
                 ScreenHandlerValue screenHandlerValue = (ScreenHandlerValue) lv.get(1);
-                ((ListValue) targets).getItems().forEach(value -> screenHandlerValue.showScreen(EntityValue.getPlayerByValue(server, value)));
+                players.forEach(screenHandlerValue::showScreen);
             } else {
-                ((ListValue) targets).getItems().forEach(value -> EntityValue.getPlayerByValue(server, value).closeHandledScreen());
+                players.forEach(ServerPlayerEntity::closeHandledScreen);
             }
             return Value.TRUE;
         });
