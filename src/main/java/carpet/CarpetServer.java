@@ -114,7 +114,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     {
         TickSpeed.tick();
         HUDController.update_hud(server, null);
-        scriptServer.tick();
+        if (scriptServer != null) scriptServer.tick();
 
         //in case something happens
         CarpetSettings.impendingFillSkipUpdates.set(false);
@@ -168,6 +168,12 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
     }
 
+    public static void clientPreClosing()
+    {
+        if (scriptServer != null) scriptServer.onClose();
+        scriptServer = null;
+    }
+
     public static void onServerClosed(MinecraftServer server)
     {
         // this for whatever reason gets called multiple times even when joining on SP
@@ -175,6 +181,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         if (minecraft_server != null)
         {
             if (scriptServer != null) scriptServer.onClose();
+            scriptServer = null;
             ServerNetworkHandler.close();
             currentCommandDispatcher = null;
 
