@@ -103,6 +103,7 @@ public class CarpetEventServer
                 runtimeArgs = new ArrayList<>(runtimeArgs);
                 runtimeArgs.addAll(this.parametrizedArgs);
             }
+            if (CarpetServer.scriptServer == null) return false; // already stopped
             return CarpetServer.scriptServer.runEventCall(
                     sender.withLevel(CarpetSettings.runPermissionLevel),
                     host, optionalTarget, function, runtimeArgs

@@ -469,9 +469,10 @@ public class CarpetScriptServer
     public void onClose()
     {
         CarpetEventServer.Event.SHUTDOWN.onTick();
-        for (ScriptHost host : modules.values())
+        for (CarpetScriptHost host : modules.values())
         {
             host.onClose();
+            events.removeAllHostEvents(host);
         }
     }
 
