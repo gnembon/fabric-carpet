@@ -1,8 +1,6 @@
 package carpet.script.argument;
 
 import carpet.script.Context;
-import carpet.script.Fluff;
-import carpet.script.LazyValue;
 import carpet.script.ScriptHost;
 import carpet.script.bundled.Module;
 import carpet.script.command.CommandArgument;

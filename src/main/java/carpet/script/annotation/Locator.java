@@ -6,8 +6,6 @@ import java.lang.annotation.Target;
 import java.lang.reflect.AnnotatedType;
 import java.util.Iterator;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import com.google.common.collect.Lists;
 
 import carpet.script.CarpetContext;
