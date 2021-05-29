@@ -26,9 +26,7 @@ import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * <p>Class that holds annotation for {@link Argument} locators to be used in Scarpet functions.</p>
- * 
- * <p>Note: Only {@link Block} locator is currently implemented.</p>
+ * <p>Class that holds the annotations for {@link Argument} locators, in order for them to be used in Scarpet functions.</p>
  */
 public interface Locator
 {
