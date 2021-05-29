@@ -31,7 +31,7 @@ public class FunctionArgument extends Argument
     /**
      * @param c context
      * @param module module
-     * @param params list of lazy params
+     * @param params list of params
      * @param offset offset where to start looking for functional argument
      * @param allowNone none indicates no function present, otherwise it will croak
      * @param checkArgs whether the caller expects trailing parameters to fully resolve function argument list
