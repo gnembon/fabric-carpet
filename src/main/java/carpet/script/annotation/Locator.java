@@ -67,13 +67,10 @@ public interface Locator
      * <p>Represents that the annotated argument must be gotten by passing the arguments in there into a {@link Vector3Argument} locator.</p>
      * 
      * <p>Must be used in either a {@link Vector3Argument} or a {@link net.minecraft.util.math.Vec3d Vec3d} parameter.</p>
-     * 
-     * @deprecated This locator has not been implemented yet (TODO)
      */
     @Documented
     @Retention(RUNTIME)
     @Target({ PARAMETER, TYPE_USE })
-    @Deprecated // Not implemented
     public @interface Vec3d
     {
         /**
@@ -210,10 +207,10 @@ public interface Locator
             @Override
             public R checkAndConvert(Iterator<Value> valueIterator, Context context, Context.Type theLazyT)
             {
-                Vector3Argument locator = null;
-                // TODO Make the locator
-                // return (R) (returnVec3d ? locator.vec : locator);
-                throw new NotImplementedException("Locator.Vec3d still require adapting Vector3Argument to accept iterators!");
+                Vector3Argument locator = Vector3Argument.findIn(valueIterator, 0, optionalDirection, optionalEntity);
+                @SuppressWarnings("unchecked")
+                R ret = (R) (returnVec3d ? locator.vec : locator);
+                return ret;
             }
         }
 

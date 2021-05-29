@@ -1,7 +1,5 @@
 package carpet.script.argument;
 
-import carpet.script.CarpetContext;
-import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.EntityValue;
@@ -11,7 +9,9 @@ import carpet.script.value.Value;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class Vector3Argument extends Argument
 {
@@ -52,11 +52,15 @@ public class Vector3Argument extends Argument
         return findIn(params, offset, false, false);
     }
 
-    public static Vector3Argument findIn(List<Value> params, int offset, boolean optionalDirection, boolean optionalEntity)
+    public static Vector3Argument findIn(List<Value> params, int offset, boolean optionalDirection, boolean optionalEntity) {
+        return findIn(params.listIterator(offset), offset, optionalDirection, optionalEntity);
+    }
+
+    public static Vector3Argument findIn(Iterator<Value> params, int offset, boolean optionalDirection, boolean optionalEntity)
     {
         try
         {
-            Value v1 = params.get(0 + offset);
+            Value v1 = params.next();
             if (v1 instanceof BlockValue)
             {
                 return (new Vector3Argument(Vec3d.ofCenter(((BlockValue) v1).getPos()), 1+offset)).fromBlock();
@@ -84,21 +88,21 @@ public class Vector3Argument extends Argument
             }
             Vec3d pos = new Vec3d(
                     NumericValue.asNumber(v1).getDouble(),
-                    NumericValue.asNumber(params.get(1 + offset)).getDouble(),
-                    NumericValue.asNumber(params.get(2 + offset)).getDouble());
+                    NumericValue.asNumber(params.next()).getDouble(),
+                    NumericValue.asNumber(params.next()).getDouble());
             double yaw = 0.0D;
             double pitch = 0.0D;
             int eatenLength = 3;
-            if (params.size()>3+offset && optionalDirection)
+            if (params.hasNext() && optionalDirection)
             {
-                yaw = NumericValue.asNumber(params.get(3 + offset)).getDouble();
-                pitch = NumericValue.asNumber(params.get(4 + offset)).getDouble();
+                yaw = NumericValue.asNumber(params.next()).getDouble();
+                pitch = NumericValue.asNumber(params.next()).getDouble();
                 eatenLength = 5;
             }
 
-            return new Vector3Argument(pos,offset+eatenLength, yaw, pitch);
+            return new Vector3Argument(pos, offset+eatenLength, yaw, pitch);
         }
-        catch (IndexOutOfBoundsException e)
+        catch (IndexOutOfBoundsException | NoSuchElementException e)
         {
             throw new InternalExpressionException("Position argument should be defined either by three coordinates (a triple or by three arguments), or a positioned block value");
         }
