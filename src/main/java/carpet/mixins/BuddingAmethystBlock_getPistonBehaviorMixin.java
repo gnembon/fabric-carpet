@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class BuddingAmethystBlock_getPistonBehaviorMixin {
     @Inject(at = @At("HEAD"), method = "getPistonBehavior(Lnet/minecraft/block/BlockState;)Lnet/minecraft/block/piston/PistonBehavior;", cancellable = true)
     void getPistonBehavior(BlockState state, CallbackInfoReturnable<PistonBehavior> cir) {
-        if (CarpetSettings.pushableAmethyst) cir.setReturnValue(PistonBehavior.NORMAL);
+        if (CarpetSettings.movableAmethyst) cir.setReturnValue(PistonBehavior.NORMAL);
     }
 }
