@@ -89,6 +89,7 @@
     "ServerWorld_onePlayerSleepingMixin",
     "CoralBlockMixin",
     "CoralFeatureMixin",
+    "BuddingAmethystBlock_getPistonBehaviorMixin",
     "FluidBlock_renewableBlackstoneMixin",
     "FluidBlock_renewableDeepslateMixin",
     "LavaFluid_renewableDeepslateMixin",

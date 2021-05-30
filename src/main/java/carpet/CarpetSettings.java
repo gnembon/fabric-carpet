@@ -315,6 +315,9 @@ public class CarpetSettings
     )
     public static boolean hopperCounters = false;
 
+    @Rule( desc = "Allows Budding Amethyst blocks to be pushed by pistons", category = FEATURE )
+    public static boolean pushableAmethyst = false;
+
     @Rule( desc = "Guardians turn into Elder Guardian when struck by lightning", category = FEATURE )
     public static boolean renewableSponges = false;
 
