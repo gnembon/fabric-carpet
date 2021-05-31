@@ -315,7 +315,14 @@ public class CarpetSettings
     )
     public static boolean hopperCounters = false;
 
-    @Rule( desc = "Allows Budding Amethyst blocks to be moved by pistons", category = FEATURE )
+    @Rule(
+            desc = "Allows Budding Amethyst blocks to be moved",
+            extra = {
+                    "Allow for them to be moved by pistons",
+                    "as well as adds extra drop when mining with silk touch pickaxe"
+            },
+            category = FEATURE
+    )
     public static boolean movableAmethyst = false;
 
     @Rule( desc = "Guardians turn into Elder Guardian when struck by lightning", category = FEATURE )
