@@ -184,6 +184,7 @@
     "ServerWorld_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
     "ReloadCommand_reloadAppsMixin",
+    "CrashReport_addScarpetAppsMixin",
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
