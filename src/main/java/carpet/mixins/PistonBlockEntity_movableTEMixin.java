@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.fakes.BlockEntityInterface;
 import carpet.fakes.PistonBlockEntityInterface;
 import carpet.fakes.WorldInterface;
 import net.minecraft.block.Block;
@@ -57,7 +58,7 @@ public abstract class PistonBlockEntity_movableTEMixin extends BlockEntity imple
         this.carriedBlockEntity = blockEntity;
         if (this.carriedBlockEntity != null)
         {
-            ((BlockEntity_movableBEMixin)carriedBlockEntity).setPos(pos);
+            ((BlockEntityInterface)carriedBlockEntity).setCMPos(pos);
             // this might be little dangerous since pos is final for a hashing reason?
             if (world != null) carriedBlockEntity.setWorld(world);
         }
