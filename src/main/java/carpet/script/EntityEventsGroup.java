@@ -33,8 +33,7 @@ public class EntityEventsGroup
         if (actions.isEmpty()) return; // most of the cases, trying to be nice
         Map<Pair<String,String>, CarpetEventServer.Callback> actionSet = actions.get(type);
         if (actionSet == null) return;
-
-
+        if (CarpetServer.scriptServer == null) return; // executed after world is closin down
         for (Iterator<Map.Entry<Pair<String,String>, CarpetEventServer.Callback>> iterator = actionSet.entrySet().iterator(); iterator.hasNext(); )
         {
             Map.Entry<Pair<String,String>, CarpetEventServer.Callback> action = iterator.next();
