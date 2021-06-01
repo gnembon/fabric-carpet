@@ -137,7 +137,7 @@ public interface ValueConverter<R>
         }
 
         // Class only checks
-        if (type.isAssignableFrom(Value.class))
+        if (Value.class.isAssignableFrom(type))
             return Objects.requireNonNull(ValueCaster.get(type), "Value subclass " + type + " is not registered. Register it in ValueCaster to use it");
         // if (type == LazyValue.class) // No longer supported
         //     return (ValueConverter<R>) Params.LAZY_VALUE_IDENTITY;
