@@ -12,6 +12,7 @@
     "ServerPlayNetworkHandlerMixin",
     "CustomPayloadC2SPacketMixin",
 
+    "PerfCommand_permissionMixin",
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",

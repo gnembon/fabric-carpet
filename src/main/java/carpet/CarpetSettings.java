@@ -375,6 +375,13 @@ public class CarpetSettings
     )
     public static String commandProfile = "true";
 
+    @Rule(
+            desc = "Required permission level for /perf command",
+            options = {"2", "4"},
+            category = CREATIVE
+    )
+    public static int perfPermissionLevel = 4;
+
     @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
     public static String commandLog = "true";
 

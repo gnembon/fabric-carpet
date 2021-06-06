@@ -285,7 +285,8 @@ global_functions = {
    'health' -> {
          '*' -> [
             _(arg) -> _(e) -> (
-               [[], [],  [['health', 'health:', e~'health']]]
+                health = e~'health';
+               [[], [],  if (health != null, [['health', 'health:', e~'health']], [])]
             ),
          ,
             null
