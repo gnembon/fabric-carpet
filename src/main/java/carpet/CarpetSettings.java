@@ -769,7 +769,7 @@ public class CarpetSettings
     public static boolean renewableBlackstone = false;
 
     @Rule(
-            desc = "Lava and water generate deepslate and cobbled deepslate instead below y0",
+            desc = "Lava and water generate deepslate and cobbled deepslate instead below y16",
             category = FEATURE
     )
     public static boolean renewableDeepslate = false;
