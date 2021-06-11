@@ -378,7 +378,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (CommandSyntaxException e)
         {
-            notifier.accept(Messenger.c("Error when handling of setting up custom argument types: "+e.getMessage()));
+            notifier.accept(Messenger.c("r Error when handling of setting up custom argument types: "+e.getMessage()));
             return false;
         }
         if (appConfig.get(StringValue.of("commands")) != null)
