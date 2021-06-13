@@ -210,7 +210,7 @@
     "BlockItem_creativeNoClipMixin",
     "WallStandingBlockItem_creativeNoClipMixin",
     "ShulkerBoxBlockEntity_creativeNoClipMixin",
-    "LivingEntity_creativeFlyMixin"
+    "LivingEntity_creativeFlyMixin",
 
     "VeryBiasedToBottomHeightProvider_cleanLogsMixin",
     "TrapezoidHeightProvider_cleanLogsMixin"
