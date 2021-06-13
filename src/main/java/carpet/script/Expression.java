@@ -852,6 +852,7 @@ public class Expression
                     {
                         outputQueue.add(stack.pop());
                     }
+                    break;
                 case MARKER:
                     if ("$".equals(token.surface))
                     {

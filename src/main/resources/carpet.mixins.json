@@ -209,7 +209,8 @@
     "PistonBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
     "WallStandingBlockItem_creativeNoClipMixin",
-    "LivingEntity_creativeFlyMixin",
+    "ShulkerBoxBlockEntity_creativeNoClipMixin",
+    "LivingEntity_creativeFlyMixin"
 
     "VeryBiasedToBottomHeightProvider_cleanLogsMixin",
     "TrapezoidHeightProvider_cleanLogsMixin"

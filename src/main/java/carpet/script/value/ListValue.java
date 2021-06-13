@@ -436,8 +436,9 @@ public class ListValue extends AbstractListValue implements ContainerValueInterf
     @Override
     public Value get(Value value)
     {
-        long index = NumericValue.asNumber(value, "'address' to a list index").getLong();
-        return items.get(normalizeIndex(index, items.size()));
+        int size = items.size();
+        if (size == 0) return Value.NULL;
+        return items.get(normalizeIndex(NumericValue.asNumber(value, "'address' to a list index").getLong(), size));
     }
 
     @Override

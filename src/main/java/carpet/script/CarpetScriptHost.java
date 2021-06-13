@@ -378,7 +378,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         catch (CommandSyntaxException e)
         {
-            notifier.accept(Messenger.c("Error when handling of setting up custom argument types: "+e.getMessage()));
+            notifier.accept(Messenger.c("r Error when handling of setting up custom argument types: "+e.getMessage()));
             return false;
         }
         if (appConfig.get(StringValue.of("commands")) != null)
@@ -743,11 +743,8 @@ public class CarpetScriptHost extends ScriptHost
             {
                 case VARIABLE:
                     LazyValue var = getGlobalVariable(tok.surface);
-                    if (var != null)
-                    {
-                        argv.add(var);
-                        break;
-                    }
+                    if (var != null) argv.add(var);
+                    break;
                 case STRINGPARAM:
                     argv.add((c, t) -> new StringValue(tok.surface));
                     sign = "";

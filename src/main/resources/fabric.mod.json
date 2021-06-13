@@ -20,10 +20,10 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "carpet.CarpetServer"
+      "carpet.CarpetServer::CLIENT_INITIALIZER"
     ],
     "server": [
-      "carpet.CarpetServer"
+      "carpet.CarpetServer::SERVER_INITIALIZER"
     ]
   },
   "mixins": [
