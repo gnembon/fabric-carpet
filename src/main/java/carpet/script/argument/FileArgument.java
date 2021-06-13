@@ -1,7 +1,7 @@
 package carpet.script.argument;
 
 import carpet.CarpetServer;
-import carpet.CarpetSettings;
+import carpet.script.CarpetScriptServer;
 import carpet.script.bundled.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -195,7 +195,7 @@ public class FileArgument
                 }
                 catch (FileSystemNotFoundException | IOException e)
                 {
-                    CarpetSettings.LOG.warn("Exception when opening zip file", e);
+                    CarpetScriptServer.LOG.warn("Exception when opening zip file", e);
                     throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
                 }
             }
@@ -296,7 +296,7 @@ public class FileArgument
                     Files.createDirectories(file.getParent()) == null
             ) throw new IOException();
         } catch (IOException e) {
-            CarpetSettings.LOG.warn("IOException when creating paths", e);
+            CarpetScriptServer.LOG.warn("IOException when creating paths", e);
             throw new ThrowStatement("Unable to create paths for "+file.toString(), Throwables.IO_EXCEPTION);
         }
 
@@ -321,7 +321,7 @@ public class FileArgument
         } }
         catch (IOException e)
         {
-            CarpetSettings.LOG.warn("IOException when appending to text file", e);
+            CarpetScriptServer.LOG.warn("IOException when appending to text file", e);
             throw new ThrowStatement("Error when writing to the file: "+e, Throwables.IO_EXCEPTION);
         }
         finally
@@ -380,9 +380,9 @@ public class FileArgument
                 }
                 catch (IOException secondIO)
                 {
-                    CarpetSettings.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs",e);
-                    CarpetSettings.LOG.catching(ioException);
-                    CarpetSettings.LOG.catching(secondIO);
+                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs",e);
+                    CarpetScriptServer.LOG.catching(ioException);
+                    CarpetScriptServer.LOG.catching(secondIO);
                     throw new ThrowStatement("Not a valid NBT tag in "+path.toString(), Throwables.NBT_ERROR);
                 }
             }
@@ -444,7 +444,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
-            CarpetSettings.LOG.warn("IO Exception when writing nbt file", e);
+            CarpetScriptServer.LOG.warn("IO Exception when writing nbt file", e);
             throw new ThrowStatement("Unable to write tag to "+original.toString(), Throwables.IO_EXCEPTION);
         }
     }
@@ -460,7 +460,7 @@ public class FileArgument
         } }
         catch (IOException e)
         {
-            CarpetSettings.LOG.warn("IOException when removing file", e);
+            CarpetScriptServer.LOG.warn("IOException when removing file", e);
             throw new ThrowStatement("Error while removing file: "+getDisplayPath(), Throwables.IO_EXCEPTION);
         }
         finally
@@ -496,7 +496,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
-            CarpetSettings.LOG.warn("IOException when reading text file", e);
+            CarpetScriptServer.LOG.warn("IOException when reading text file", e);
             throw new ThrowStatement("Failed to read text file "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }
@@ -530,7 +530,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
-            CarpetSettings.LOG.warn("IOException when reading JSON file", e);
+            CarpetScriptServer.LOG.warn("IOException when reading JSON file", e);
             throw new ThrowStatement("Failed to read json file content "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }
