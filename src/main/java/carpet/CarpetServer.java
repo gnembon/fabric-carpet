@@ -1,6 +1,5 @@
 package carpet;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,8 +36,11 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-public class CarpetServer implements ClientModInitializer,DedicatedServerModInitializer // static for now - easier to handle all around the code, its one anyways
+public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
+    public static final ClientModInitializer CLIENT_INITIALIZER = CarpetServer::onGameStarted;
+    public static final DedicatedServerModInitializer SERVER_INITIALIZER = CarpetServer::onGameStarted;
+
     public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
@@ -46,17 +48,6 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     public static SettingsManager settingsManager;
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
-    @Override
-    public void onInitializeClient()
-    {
-    	CarpetServer.onGameStarted();
-    }
-    @Override
-    public void onInitializeServer()
-    {
-    	CarpetServer.onGameStarted();
-    }
-    
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     /**
      * Registers a {@link CarpetExtension} to be managed by Carpet.<br>
