@@ -30,7 +30,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     
     private ThreadLocal<List<BlockEntity>> list1_BlockEntities = new ThreadLocal<>(); //Unneccessary ThreadLocal if client and server use different PistonBlock instances
 
-    @Inject(method = "isMovable", at = @At(value = "RETURN", ordinal = 3, shift = At.Shift.BEFORE))
+    @Inject(method = "isMovable", cancellable = true, at = @At(value = "RETURN", ordinal = 3, shift = At.Shift.BEFORE))
     private static void movableCMD(BlockState blockState_1, World world_1, BlockPos blockPos_1,
             Direction direction_1, boolean boolean_1, Direction direction_2, CallbackInfoReturnable<Boolean> cir)
     {
