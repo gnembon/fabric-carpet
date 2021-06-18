@@ -310,15 +310,6 @@ public class ValueConversions
                 ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
         );
     }
-
-    public static Value of(BlockBox box)
-    {
-        return ListValue.of(
-                ListValue.fromTriple(box.minX, box.minY, box.minZ),
-                ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
-        );
-    }
-
     public static Value of(BlockBox box)
     {
         return ListValue.of(
