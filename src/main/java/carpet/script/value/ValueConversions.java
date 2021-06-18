@@ -32,6 +32,7 @@ import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ColumnPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -302,6 +303,21 @@ public class ValueConversions
                 new StringValue(uuid.toString())
         );
     }
+    public static Value of(Box box)
+    {
+        return ListValue.of(
+                ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+        );
+    }
+
+    public static Value of(BlockBox box)
+    {
+        return ListValue.of(
+                ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+        );
+    }
 
     public static Value of(StructureStart<?> structure)
     {
@@ -399,6 +415,8 @@ public class ValueConversions
     }
 
     public static Value guess(ServerWorld serverWorld, Object o) {
+        if (o == null)
+            return Value.NULL;
         if (o instanceof List)
             return ListValue.wrap(((List<?>) o).stream().map(oo -> guess(serverWorld, oo)).collect(Collectors.toList()));
         if (o instanceof BlockPos)
@@ -409,6 +427,10 @@ public class ValueConversions
             return of((Vec3d)o);
         if (o instanceof Vec3i)
             return of(new BlockPos((Vec3i)o));
+        if (o instanceof Box)
+            return of((Box)o);
+        if (o instanceof BlockBox)
+            return of((BlockBox) o);
         if (o instanceof ItemStack)
             return of((ItemStack)o);
         if (o instanceof Boolean)

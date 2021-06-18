@@ -282,6 +282,21 @@ global_functions = {
       ]
    },
 
+    'despawn_timer' -> {
+         '*' -> [
+            _(arg) -> _(e) -> (
+               despawn_timer = e~'despawn_timer';
+               if (despawn_timer,
+                  [[], [],  [['despawn', 'despawn timer:', despawn_timer]]]
+               ,
+                  [[], [], []]
+               )
+            ),
+         ,
+            null
+         ]
+      },
+
    'health' -> {
          '*' -> [
             _(arg) -> _(e) -> (
@@ -370,7 +385,7 @@ __config() ->{
         'transparency <alpha>'->_(alpha)->global_opacity = alpha
     },
     'arguments'->{
-        'display'->{'type'->'term','options'->['item_pickup','velocity','portal_cooldown','health','pathfinding','xpstack','drowning']},
+        'display'->{'type'->'term','options'->['item_pickup','velocity','portal_cooldown','despawn_timer','health','pathfinding','xpstack','drowning']},
         'aspect'->{'type'->'term','options'->['iron_golem_spawning','buddy_detection','hostile_detection','breeding']},
         'ticks'->{'type'->'int','min'->0,'max'->100},
         'alpha'->{'type'->'int','min'->0,'max'->255},
