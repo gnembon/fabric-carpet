@@ -251,7 +251,7 @@ public class CarpetSettings
     @Rule( desc = "Merges stationary primed TNT entities", category = TNT )
     public static boolean mergeTNT = false;
 
-    /*@Rule(
+    @Rule(
             desc = "Lag optimizations for redstone dust",
             extra = {
                     "by Theosib",
@@ -260,7 +260,7 @@ public class CarpetSettings
             },
             category = {EXPERIMENTAL, OPTIMIZATION}
     )
-    public static boolean fastRedstoneDust = false;*/
+    public static boolean fastRedstoneDust = false;
 
     @Rule(desc = "Only husks spawn in desert temples", category = FEATURE)
     public static boolean huskSpawningInTemples = false;
