@@ -192,7 +192,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/units/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/units/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
@@ -204,7 +204,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/hoglin_stable/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/hoglin_stable/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
@@ -216,7 +216,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/treasure/big_air_full", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/treasure/big_air_full", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),
@@ -228,7 +228,7 @@ public class FeatureGenerator
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
                         ImmutableList.of(
-                                Pair.of(StructurePoolElement.method_30435("bastion/bridge/starting_pieces/entrance_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
+                                Pair.of(StructurePoolElement.ofProcessedSingle("bastion/bridge/starting_pieces/entrance_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
                 ), 6),

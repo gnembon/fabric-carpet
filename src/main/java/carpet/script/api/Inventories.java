@@ -396,7 +396,7 @@ public class Inventories {
         {
             ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
-                    -2,
+                    -2, 0, // resolve mystery argument
                     int_1,
                     inventory.inventory.getStack(int_1)
             ));

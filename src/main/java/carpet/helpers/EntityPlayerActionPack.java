@@ -487,7 +487,7 @@ public class EntityPlayerActionPack
             boolean execute(ServerPlayerEntity player, Action action)
             {
                 player.updateLastActionTime();
-                player.dropSelectedItem(false);
+                player.method_37413(false); // dropSelectedItem
                 return false;
             }
         },
@@ -497,7 +497,7 @@ public class EntityPlayerActionPack
             boolean execute(ServerPlayerEntity player, Action action)
             {
                 player.updateLastActionTime();
-                player.dropSelectedItem(true);
+                player.method_37413(true); // dropSelectedItem
                 return false;
             }
         },
