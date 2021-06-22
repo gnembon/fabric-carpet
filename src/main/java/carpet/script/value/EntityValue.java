@@ -310,7 +310,7 @@ public class EntityValue extends Value
                     EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER
             );
             Set<EntityType<?>> deads = Sets.newHashSet(
-                    EntityType.AREA_EFFECT_CLOUD, EntityType.BOAT, EntityType.END_CRYSTAL,
+                    EntityType.AREA_EFFECT_CLOUD, EntityType.MARKER, EntityType.BOAT, EntityType.END_CRYSTAL,
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME, EntityType.GLOW_ITEM_FRAME,
                     EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
