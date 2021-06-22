@@ -204,6 +204,7 @@
     "BlockItem_creativeNoClipMixin",
     "WallStandingBlockItem_creativeNoClipMixin",
     "ShulkerBoxBlockEntity_creativeNoClipMixin",
+    "EndGatewayBlockEntity_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin"
 
   ],
