@@ -833,7 +833,7 @@ public class CarpetSettings
     public static boolean isCreativeFlying(Entity entity)
     {
         // #todo replace after merger to 1.17
-        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).abilities.flying;
+        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).getAbilities().flying;
     }
 
 
