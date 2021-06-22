@@ -48,7 +48,7 @@ public class EquipmentInventory implements Inventory
         catch (IndexOutOfBoundsException ignored)
         {
             //going out of the index should be really exceptional
-            return null;
+            return ItemStack.EMPTY;
         }
         return mob.getEquippedStack(slotSlot);
     }
@@ -64,11 +64,9 @@ public class EquipmentInventory implements Inventory
         catch (IndexOutOfBoundsException ignored)
         {
             //going out of the index should be really exceptional
-            return null;
+            return ItemStack.EMPTY;
         }
-        ItemStack stack = mob.getEquippedStack(slotSlot);
-        stack.decrement(amount);
-        return stack;
+        return mob.getEquippedStack(slotSlot).split(amount);
     }
 
     @Override
@@ -82,7 +80,7 @@ public class EquipmentInventory implements Inventory
         catch (IndexOutOfBoundsException ignored)
         {
             //going out of the index should be really exceptional
-            return null;
+            return ItemStack.EMPTY;
         }
         ItemStack previous = mob.getEquippedStack(slotSlot);
         mob.equipStack(slotSlot, ItemStack.EMPTY);

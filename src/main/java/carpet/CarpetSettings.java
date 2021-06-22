@@ -10,6 +10,8 @@ import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -828,6 +830,11 @@ public class CarpetSettings
             category = {CREATIVE, CLIENT}
     )
     public static boolean creativeNoClip = false;
+    public static boolean isCreativeFlying(Entity entity)
+    {
+        // #todo replace after merger to 1.17
+        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).abilities.flying;
+    }
 
 
     @Rule(
