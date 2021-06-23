@@ -188,7 +188,7 @@ baz(entities) -> // same thing
  ```
 
 It works similarly to the auto command, but arguments get their inferred types based on the argument
-names, looking at the full name, or the suffix after the last `_` that indicates the variable type. For instance, variable named `float` will
+names, looking at the full name, or any suffix when splitting on `_` that indicates the variable type. For instance, variable named `float` will
 be parsed as a floating point number, but it can be named `'first_float'` or `'other_float'` as well. Any variable that is not
 supported, will be parsed as a `'string'` type. 
 
@@ -240,7 +240,7 @@ paths with functions to execute, and optionally, custom argument types. Commands
 the key (can be empty) consists of 
 the execution path with the command syntax, which consists of literals (as is) and arguments (wrapped with `<>`), with the name / suffix
 of the name of the attribute indicating its type, and the value represent function to call, either function values,
-defined function names, or functions with some default arguments. Values extracted from commands will be passed to the
+defined function names, or functions with some default arguments. Argument names need to be unique for each command. Values extracted from commands will be passed to the
 functions and executed. By default, command list will be checked for ambiguities (commands with the same path up to some point
 that further use different attributes), causing app loading error if that happens, however this can be suppressed by specifying
 `'allow_command_conflicts'`.
@@ -253,8 +253,14 @@ and less frequently used features, like forks and redirects, used pretty much on
 
 ### Command argument types
 
-There are several default argument types that can be used directly without specifying custom types. Each argument can be 
-customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
+Argument types differ from actual argument names that the types are the suffixes of the used argument names, when separated with 
+`'_'` symbol. For example argument name `'from_pos'` will be interpreted as a built-in type `'int'` and provided to the command system
+as a name `'from_pos'`, however if you define a custom type `'from_pos'`, your custom type will be used instead. 
+Longer suffixes take priority over shorter prefixes, then user defined suffixes mask build-in prefixes.
+
+There are several default argument types that can be used directly without specifying custom types. 
+
+Each argument can be customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
 to match any of the built-in types, with a series of optional modifiers. Shared modifiers include:
   * `suggest` - static list of suggestions to show above the command while typing
   * `suggester` - function taking one map argument, indicating current state of attributes in the parsed command

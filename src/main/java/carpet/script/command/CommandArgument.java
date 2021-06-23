@@ -269,10 +269,16 @@ public abstract class CommandArgument
     public static CommandArgument getTypeForArgument(String argument, CarpetScriptHost host)
     {
         String[] components = argument.split("_");
-        String suffix = components[components.length-1];
-        CommandArgument arg =  host.appArgTypes.get(suffix);
-        if (arg != null) return arg;
-        return builtIns.getOrDefault(suffix, DEFAULT);
+        CommandArgument arg;
+        for (int i = 0; i < components.length; i++)
+        {
+            String candidate = String.join("_", Arrays.asList(components).subList(i, components.length));
+            arg = host.appArgTypes.get(candidate);
+            if (arg != null) return arg;
+            arg = builtIns.get(candidate);
+            if (arg != null) return arg;
+        }
+        return DEFAULT;
     }
 
     public static RequiredArgumentBuilder<ServerCommandSource, ?> argumentNode(String param, CarpetScriptHost host) throws CommandSyntaxException
