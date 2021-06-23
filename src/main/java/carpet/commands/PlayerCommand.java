@@ -265,10 +265,12 @@ public class PlayerCommand
                 () -> source.getWorld().getRegistryKey() // dimension.getType()
         );
         GameMode mode = GameMode.CREATIVE;
+        boolean flying = false;
         try
         {
             ServerPlayerEntity player = context.getSource().getPlayer();
             mode = player.interactionManager.getGameMode();
+            flying = player.abilities.flying;
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
@@ -284,7 +286,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
             return 0;
         }
-        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode);
+        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode, flying);
         if (player == null)
         {
             Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +
