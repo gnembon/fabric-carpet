@@ -240,7 +240,7 @@ paths with functions to execute, and optionally, custom argument types. Commands
 the key (can be empty) consists of 
 the execution path with the command syntax, which consists of literals (as is) and arguments (wrapped with `<>`), with the name / suffix
 of the name of the attribute indicating its type, and the value represent function to call, either function values,
-defined function names, or functions with some default arguments. Values extracted from commands will be passed to the
+defined function names, or functions with some default arguments. Argument names need to be unique for each command. Values extracted from commands will be passed to the
 functions and executed. By default, command list will be checked for ambiguities (commands with the same path up to some point
 that further use different attributes), causing app loading error if that happens, however this can be suppressed by specifying
 `'allow_command_conflicts'`.
