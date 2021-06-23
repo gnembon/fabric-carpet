@@ -72,7 +72,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         server.getPlayerManager().sendToDimension(new EntityPositionS2CPacket(instance), dimensionId);//instance.dimension);
         instance.getServerWorld().getChunkManager().updatePosition(instance);
         instance.dataTracker.set(PLAYER_MODEL_PARTS, (byte) 0x7f); // show all model layers (incl. capes)
-        instance.abilities.flying = flying;
+        instance.getAbilities().flying = flying;
         return instance;
     }
 
@@ -96,7 +96,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         server.getPlayerManager().sendToDimension(new EntitySetHeadYawS2CPacket(playerShadow, (byte) (player.headYaw * 256 / 360)), playerShadow.world.getRegistryKey());
         server.getPlayerManager().sendToAll(new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, playerShadow));
         player.getServerWorld().getChunkManager().updatePosition(playerShadow);
-        playerShadow.abilities.flying = player.abilities.flying;
+        playerShadow.getAbilities().flying = player.getAbilities().flying;
         return playerShadow;
     }
 

@@ -270,7 +270,7 @@ public class PlayerCommand
         {
             ServerPlayerEntity player = context.getSource().getPlayer();
             mode = player.interactionManager.getGameMode();
-            flying = player.abilities.flying;
+            flying = player.getAbilities().flying;
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
