@@ -488,9 +488,12 @@ public class EntityValue extends Value
         });
         put("is_burning", (e, a) -> BooleanValue.of(e.isOnFire()));
         put("fire", (e, a) -> new NumericValue(e.getFireTicks()));
+        put("is_freezing", (e, a) -> BooleanValue.of(e.isFreezing()));
+        put("frost", (e, a) -> new NumericValue(e.getFrozenTicks()));
         put("silent", (e, a)-> BooleanValue.of(e.isSilent()));
         put("gravity", (e, a) -> BooleanValue.of(!e.hasNoGravity()));
         put("immune_to_fire", (e, a) -> BooleanValue.of(e.isFireImmune()));
+        put("immune_to_frost", (e, a) -> BooleanValue.of(!e.canFreeze()));
 
         put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
         put("dimension", (e, a) -> new StringValue(nameFromRegistryId(e.world.getRegistryKey().getValue()))); // getDimId
@@ -1462,6 +1465,7 @@ public class EntityValue extends Value
         put("invulnerable",(e,v)-> e.setInvulnerable(v.getBoolean()));
 
         put("fire",(e,v)-> e.setFireTicks((int)NumericValue.asNumber(v).getLong()));
+        put("frost",(e,v)-> e.setFrozenTicks((int)NumericValue.asNumber(v).getLong()));
 
         put("hunger", (e, v)-> {
             if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setFoodLevel((int) NumericValue.asNumber(v).getLong());
