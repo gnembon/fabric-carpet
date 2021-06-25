@@ -928,16 +928,39 @@ public class CarpetEventServer
             }
         };
 
+        @Deprecated
         public static String getEntityLoadEventName(EntityType<? extends Entity> et)
         {
             return "entity_loaded_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
         }
 
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<>()
-        {{
+        @Deprecated
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<EntityType<? extends Entity>, Event>() {{
             EntityType.get("zombie");
             Registry.ENTITY_TYPE.forEach(et -> {
-                put(et, new Event(getEntityLoadEventName(et), 2, true, false)
+                put(et, new Event(getEntityLoadEventName(et), 1, true, false)
+                {
+                    @Override
+                    public void onEntityAction(Entity entity, boolean created)
+                    {
+                        handler.call(
+                                () -> Collections.singletonList(new EntityValue(entity)),
+                                () -> CarpetServer.minecraft_server.getCommandSource().withWorld((ServerWorld) entity.world).withLevel(CarpetSettings.runPermissionLevel)
+                        );
+                    }
+                });
+            });
+        }};
+
+        public static String getEntityHandlerEventName(EntityType<? extends Entity> et)
+        {
+            return "entity_handler_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
+        }
+
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER= new HashMap<EntityType<? extends Entity>, Event>() {{
+            EntityType.get("zombie");
+            Registry.ENTITY_TYPE.forEach(et -> {
+                put(et, new Event(getEntityHandlerEventName(et), 2, true, false)
                 {
                     @Override
                     public void onEntityAction(Entity entity, boolean created)

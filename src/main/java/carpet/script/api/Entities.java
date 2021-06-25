@@ -275,10 +275,21 @@ public class Entities {
             if (funArg.function == null)
             {
                 types.forEach(et -> events.removeBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), (CarpetScriptHost) c.host));
+                types.forEach(et -> events.removeBuiltInEvent(CarpetEventServer.Event.getEntityHandlerEventName(et), (CarpetScriptHost) c.host));
             }
             else
             {
-                types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, funArg.args));
+                ///compat
+                int argno = funArg.function.getArguments().size() - funArg.args.size();
+                if (argno == 1)
+                {
+                    c.host.issueDeprecation("entity_load_handler() with single argument callback");
+                    types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityLoadEventName(et), c.host, funArg.function, funArg.args));
+                }
+                else
+                {
+                    types.forEach(et -> events.addBuiltInEvent(CarpetEventServer.Event.getEntityHandlerEventName(et), c.host, funArg.function, funArg.args));
+                }
             }
             return new NumericValue(types.size());
         });
