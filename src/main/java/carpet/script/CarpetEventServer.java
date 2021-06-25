@@ -935,7 +935,8 @@ public class CarpetEventServer
         }
 
         @Deprecated
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<EntityType<? extends Entity>, Event>() {{
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<>()
+        {{
             EntityType.get("zombie");
             Registry.ENTITY_TYPE.forEach(et -> {
                 put(et, new Event(getEntityLoadEventName(et), 1, true, false)
@@ -957,7 +958,8 @@ public class CarpetEventServer
             return "entity_handler_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
         }
 
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER= new HashMap<EntityType<? extends Entity>, Event>() {{
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER= new HashMap<>()
+        {{
             EntityType.get("zombie");
             Registry.ENTITY_TYPE.forEach(et -> {
                 put(et, new Event(getEntityHandlerEventName(et), 2, true, false)

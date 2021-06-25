@@ -20,12 +20,25 @@ public class ServerEntityManager_scarpetMixin
     private void handleAddedEntity(EntityLike entityLike, boolean existing, CallbackInfoReturnable<Boolean> cir)
     {
         Entity entity = (Entity)entityLike;
-        CarpetEventServer.Event event = CarpetEventServer.Event.ENTITY_LOAD.get(entity.getType());
+        CarpetEventServer.Event event = CarpetEventServer.Event.ENTITY_HANDLER.get(entity.getType());
         if (event != null)
         {
             if (event.isNeeded())
             {
                 event.onEntityAction(entity, !existing);
+            }
+        }
+        else
+        {
+            CarpetScriptServer.LOG.error("Failed to handle entity type " + entity.getType().getTranslationKey());
+        }
+
+        event = CarpetEventServer.Event.ENTITY_LOAD.get(entity.getType());
+        if (event != null)
+        {
+            if (event.isNeeded())
+            {
+                event.onEntityAction(entity, true);
             }
         }
         else
