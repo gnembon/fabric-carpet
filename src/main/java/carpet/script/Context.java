@@ -1,5 +1,6 @@
 package carpet.script;
 
+import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.Value;
 
 import java.util.HashMap;
@@ -8,17 +9,21 @@ import java.util.Set;
 
 public class Context
 {
-    public static final int NONE = 0;
-    public static final int VOID = 1;
-    public static final int BOOLEAN = 2;
-    public static final int NUMBER = 3;
-    public static final int STRING = 4;
-    public static final int LIST = 5;
-    public static final int ITERATOR = 6;
-    public static final int SIGNATURE = 7;
-    public static final int LOCALIZATION = 8;
-    public static final int LVALUE = 9;
-    public static final int MAPDEF = 10;
+    public enum Type
+    {
+        NONE, VOID, BOOLEAN, NUMBER, STRING, LIST, ITERATOR, SIGNATURE, LOCALIZATION, LVALUE, MAPDEF
+    }
+    public static final Type NONE = Type.NONE;
+    public static final Type VOID = Type.VOID;
+    public static final Type BOOLEAN = Type.BOOLEAN;
+    public static final Type NUMBER = Type.NUMBER;
+    public static final Type STRING = Type.STRING;
+    public static final Type LIST = Type.LIST;
+    public static final Type ITERATOR = Type.ITERATOR;
+    public static final Type SIGNATURE = Type.SIGNATURE;
+    public static final Type LOCALIZATION = Type.LOCALIZATION;
+    public static final Type LVALUE = Type.LVALUE;
+    public static final Type MAPDEF = Type.MAPDEF;
 
     public Map<String, LazyValue> variables = new HashMap<>();
 
@@ -78,5 +83,64 @@ public class Context
     public Context duplicate()
     {
         return new Context(this.host);
+    }
+    public ScriptHost.ErrorSnooper getErrorSnooper()
+    {
+        return host.errorSnooper;
+    }
+
+
+    /**
+     * immutable context only for reason on reporting access violations in evaluating expressions in optimizization
+     * mode detecting any potential violations that may happen on the way
+     */
+    public static class ContextForErrorReporting extends Context
+    {
+        public ScriptHost.ErrorSnooper optmizerEerrorSnooper;
+        public ContextForErrorReporting(Context parent)
+        {
+            super(null);
+            optmizerEerrorSnooper =  parent.host.errorSnooper;
+        }
+
+        @Override
+        public ScriptHost.ErrorSnooper getErrorSnooper()
+        {
+            return optmizerEerrorSnooper;
+        }
+
+        public void badProgrammer()
+        {
+            throw new InternalExpressionException("Attempting to access the execution context while optimizing the code;" +
+                    " This is not the problem with your code, but the error cause by improper use of code compile optimizations" +
+                    "of scarpet authors. Please report this issue directly to the scarpet issue tracker");
+
+        }
+        @Override
+        public LazyValue getVariable(String name) { badProgrammer(); return null;}
+
+        @Override
+        public void setVariable(String name, LazyValue lv) { badProgrammer(); }
+
+        @Override
+        public void delVariable(String variable) { badProgrammer(); }
+
+        @Override
+        public void removeVariablesMatching(String varname) { badProgrammer(); }
+
+        @Override
+        public Context with(String variable, LazyValue lv) { badProgrammer(); return this; }
+
+        @Override
+        public Set<String> getAllVariableNames() { badProgrammer(); return null;}
+
+        @Override
+        public Context recreate() { badProgrammer(); return null;}
+
+        @Override
+        protected void initialize() { badProgrammer();}
+
+        @Override
+        public Context duplicate() { badProgrammer(); return null;}
     }
 }

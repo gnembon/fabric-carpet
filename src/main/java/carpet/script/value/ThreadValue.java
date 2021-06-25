@@ -35,7 +35,7 @@ public class ThreadValue extends Value
                     {
                         try
                         {
-                            return function.lazyEval(ctx, Context.NONE, expr, token, FunctionValue.lazify(args)).evalValue(ctx);
+                            return function.execute(ctx, Context.NONE, expr, token, args).evalValue(ctx);
                         }
                         catch (ExitStatement exit)
                         {
@@ -44,7 +44,7 @@ public class ThreadValue extends Value
                         }
                         catch (ExpressionException exc)
                         {
-                            ctx.host.handleExpressionException("Thread failed", exc);
+                            ctx.host.handleExpressionException("Thread failed\n", exc);
                             return Value.NULL;
                         }
 

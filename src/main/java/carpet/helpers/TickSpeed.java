@@ -108,9 +108,13 @@ public class TickSpeed
         {
             tick_warp_callback = null;
             if (source != tick_warp_sender) tick_warp_sender = null;
-            finish_time_warp();
-            tick_warp_sender = null;
-            return Messenger.c("gi Warp interrupted");
+            if (time_bias > 0)
+            {
+                finish_time_warp();
+                tick_warp_sender = null;
+                return Messenger.c("gi Warp interrupted");
+            }
+            return Messenger.c("ri No warp in progress");
         }
         if (time_bias > 0)
         {

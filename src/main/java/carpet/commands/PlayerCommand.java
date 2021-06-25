@@ -192,9 +192,14 @@ public class PlayerCommand
         GameProfile profile = server.getUserCache().findByName(playerName);
         if (profile == null)
         {
-            Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
-                    "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
-            return true;
+            if (!CarpetSettings.allowSpawningOfflinePlayers)
+            {
+                Messenger.m(context.getSource(), "r Player "+playerName+" is either banned by Mojang, or auth servers are down. " +
+                        "Banned players can only be summoned in Singleplayer and in servers in off-line mode.");
+                return true;
+            } else {
+                profile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(playerName), playerName);
+            }
         }
         if (manager.getUserBanList().contains(profile))
         {
@@ -260,14 +265,16 @@ public class PlayerCommand
                 () -> source.getWorld().getRegistryKey() // dimension.getType()
         );
         GameMode mode = GameMode.CREATIVE;
+        boolean flying = false;
         try
         {
             ServerPlayerEntity player = context.getSource().getPlayer();
             mode = player.interactionManager.getGameMode();
+            flying = player.abilities.flying;
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length()>40)
+        if (playerName.length()>maxPlayerLength(source.getMinecraftServer()))
         {
             Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
             return 0;
@@ -279,7 +286,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
             return 0;
         }
-        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode);
+        PlayerEntity player = EntityPlayerMPFake.createFake(playerName, server, pos.x, pos.y, pos.z, facing.y, facing.x, dimType, mode, flying);
         if (player == null)
         {
             Messenger.m(context.getSource(), "rb Player " + StringArgumentType.getString(context, "player") + " doesn't exist " +
@@ -287,6 +294,11 @@ public class PlayerCommand
             return 0;
         }
         return 1;
+    }
+
+    private static int maxPlayerLength(MinecraftServer server)
+    {
+        return server.getServerPort() >= 0 ? 16 : 40;
     }
 
     private static int stop(CommandContext<ServerCommandSource> context)

@@ -3,13 +3,14 @@
   "id": "carpet",
   "version": "${version}",
 
-  "name": "Carpet Mod in Fabric",
+  "name": "Carpet Mod",
   "description": "Carpet made out of fabric",
   "authors": [
     "gnembon, ..."
   ],
   "contact": {
     "homepage": "https://github.com/gnembon/fabric-carpet",
+    "issues": "https://github.com/gnembon/fabric-carpet/issues",
     "sources": "https://github.com/gnembon/fabric-carpet"
   },
 
@@ -19,10 +20,10 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "carpet.CarpetServer"
+      "carpet.CarpetServer::CLIENT_INITIALIZER"
     ],
     "server": [
-      "carpet.CarpetServer"
+      "carpet.CarpetServer::SERVER_INITIALIZER"
     ]
   },
   "mixins": [
@@ -33,8 +34,5 @@
   "depends": {
     "minecraft": "1.16.x",
     "fabricloader": ">=0.7.1"
-  },
-  "suggests": {
-    "flamingo": "*"
   }
 }

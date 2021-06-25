@@ -35,7 +35,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
     {
         if (world.isClient())
             return false;
-        CarpetSettings.skipGenerationChecks = true;
+        CarpetSettings.skipGenerationChecks.set(true);
         try
         {
             Random rand = new Random(world.getRandom().nextInt());
@@ -79,7 +79,7 @@ public abstract class StructureFeatureMixin<C extends FeatureConfig> implements 
         }
         finally
         {
-            CarpetSettings.skipGenerationChecks = false;
+            CarpetSettings.skipGenerationChecks.set(false);
         }
         return true;
     }

@@ -6,6 +6,12 @@ as `2+(2*2)`, not `(2+2)*2`, otherwise they are applied from left to right, i.e.
 as `(2+4)-3`, which in case of numbers doesn't matter, but since `scarpet` allows for mixing all value types 
 the associativity would matter, and may lead to unintended effects:
 
+Operators can be unary - with one argument prefixed by the operator (like `-`, `!`, `...`), "practically binary" (that
+clearly have left and right operands, like assignment `=` operator), and "technically binary" (all binary operators have left and 
+right hand, but can be frequently chained together, like `1+2+3`). All "technically binary" operators (where chaining makes sense)
+have their functional counterparts, e.g. `1+2+3` is equivalent to `sum(1, 2, 3)`. Functional and operatoral forms are directly 
+equivalent - they actually will result in the same code as scarpet will optimize long operator chains into their optimized functional forms. 
+
 Important operator is function definition `->` operator. It will be covered 
 in [User Defined Functions and Program Control Flow](docs/scarpet/language/FunctionsAndControlFlow.md)
 
@@ -29,11 +35,12 @@ Here is the complete list of operators in `scarpet` including control flow opera
 are not technically operators, but part of the language, even if they look like them:
 
 *   Match, Get `~ :`
-*   Unary `+ - !`
+*   Unary `+ - ! ...`
 *   Exponent `^`
 *   Multiplication `* / %`
 *   Addition `+ -`
-*   Comparison `== != > >= <= <`
+*   Comparison `> >= <= <`
+*   Equality `== !=`
 *   Logical And`&&`
 *   Logical Or `||`
 *   Assignment `= += <>`
@@ -114,10 +121,10 @@ $      )
 $   );
 $   lvl
 $);
-/script run global_get_enchantment(players(), 'sharpness')
+/script run global_get_enchantment(player(), 'sharpness')
 </pre>
 
-### `Basic Arithmetic Operators + - * /`
+### Basic Arithmetic Operators `+`, `sum(...)`, `-`, `difference(...)`, `*`, `product(...)`, `/`, `quotient(...)`
 
 Allows to add the results of two expressions. If the operands resolve to numbers, the result is arithmetic operation. 
 In case of strings, adding or subtracting from a string results in string concatenation and removal of substrings 
@@ -132,6 +139,12 @@ to lists treated as vectors.
 Addition with maps (`{}` or `m()`) results in a new map with keys from both maps added, if both operands are maps,
 adding elements of the right argument to the keys, of left map, or just adding the right value as a new key
 in the output map. 
+
+Functional forms of `-` and `/` have less intuitive multi-nary interpretation, but they might be useful in some situations.
+`x-y-z` resolves to `difference(x, y, z)`.
+
+`/` always produces a properly accurate result, fully reversible with `*` operator. To obtain a integer 'div' result, use
+`floor(x/y)`.
 
 Examples:
 
@@ -148,22 +161,26 @@ b = [100,63,100]; b+[10,0,10]  => [110,63,110]
 {'a' -> 1} + {'b' -> 2} => {'a' -> 1, 'b' -> 2}
 </pre>
 
-### `Just Operators % ^`
+### Just Operators `%`, `^`
 
-The modulo and exponent (power) operators work only if both operands are numbers
+The modulo and exponent (power) operators work only if both operands are numbers. `%` is a proper (and useful) 'modulus' operator,
+not a useless 'reminder' operator that you would expect from anything that touches Java. While typically modulus is reserved
+to integer numbers, scarpet expands them to floats with as much sense as possible.
 
 <pre>pi^pi%euler  => 1.124....
--9 % 4  => -1
-9 % -4  => 0 ¯\_(ツ)_/¯ Java
+-9 % 4  => 3
+9 % -4  => -3
+9.1 % -4.2  => -3.5
+9.1 % 4.2  => 0.7
 -3 ^ 2  => 9
 -3 ^ pi => // Error
 </pre>
 
-### `Comparison Operators == != < > <= >=`
+### Comparison Operators `==`, `equal()`, `!=`, `unique()`, `<`, `increasing()`, `>`, `decreasing()`, `<=`, `nondecreasing()`, `>=`, `nonincreasing()`
 
-Allows to compare the results of two expressions. For numbers it is considers arithmetic order of numbers, for 
+Allows to compare the results of two expressions. For numbers, it considers arithmetic order of numbers, for 
 strings - lexicographical, nulls are always 'less' than everything else, and lists check their elements - 
-if the sizes are different, the size matters, otherwise, pairwise comparisons for each elements are performed. 
+if the sizes are different, the size matters, otherwise, pairwise comparisons for each element are performed. 
 The same order rules than with all these operators are used with the default sortographical order as used by `sort` 
 function. All of these are true:
 
@@ -179,7 +196,12 @@ null < -1000
 3 == 3.0
 </pre>
 
-### `Logical Operators && ||`
+Functional variants of these operators allow to assert certain paradigms on multiple arguments at once. This means that 
+due to formal equivalence `x < y < z` is equivalent to `x < y & y < z` because of direct mapping to `increasing(x, y, z)`. This translates through
+the parentheses, so `((x < y) < z)` is the same as `increasing(x, y, z)`. To achieve the same effect as you would see in other
+ languages (not python), you would need to cast the first pair to boolean value, i.e. `bool(x < y) < z`. 
+
+### Logical Operators `&&`, `and(...)`, `||`, `or(...)`
 
 These operator compute respective boolean operation on the operands. What it important is that if calculating of the 
 second operand is not necessary, it won't be evaluated, which means one can use them as conditional statements. In 
@@ -231,6 +253,45 @@ flips boolean condition of the expression. Equivalent of `bool(expr)==false`
 !false  => true
 !null  => true
 !5  => false
-!l() => true
-!l(null) => false
+![] => true
+![null] => false
 </pre>
+
+### `Unpacking Operator ...`
+
+Unpacks elements of a list of an iterator into a sequence of arguments in a function making so that `fun(...[1, 2, 3])` is
+identical with `fun(1, 2, 3)`. For maps, it unpacks them to a list of key-value pairs.
+
+In function signatures it identifies a vararg parameter. 
+
+<pre>
+fun(a, b, ... rest) -> [a, b, rest]; fun(1, 2, 3, 4)    => [1, 2, [3, 4]]
+</pre>
+
+Effects of `...` can be surprisingly lasting. It is kept through the use of variables and function calls.
+
+<pre>
+fun(a, b, ... rest) -> [a, b, ... rest]; fun(1, 2, 3, 4)    => [1, 2, 3, 4]
+args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())   => 6
+a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)   => 6
+</pre>
+
+Unpacking mechanics can be used for list and map constriction, not just for function calls.
+
+<pre>
+[...range(5), pi, ...range(5,-1,-1)]   => [0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]
+{ ... map(range(5),  _  -> _*_ )}   => {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}
+{...{1 -> 2, 3 -> 4}, ...{5 -> 6, 7 -> 8}}   => {1: 2, 3: 4, 5: 6, 7: 8}
+</pre>
+
+Fine print: unpacking of argument lists happens just before functions are evaluated. 
+This means that in some situations, for instance 
+when an expression is expected (`map(list, expr)`), or a function should not evaluate some (most!) of its arguments (`if(...)`), 
+unpacking cannot be used, and will be ignored, leaving `... list` identical to `list`. 
+Functions that don't honor unpacking mechanics, should have no use for it at the first place
+ (i.e. have one, or very well-defined, and very specific parameters), 
+so some caution (prior testing) is advised. Some of these multi-argument built-in functions are
+ `if`, `try`, `sort_key`, `system_variable_get`, `synchronize`, `sleep`, `in_dimension`, 
+all container functions (`get`, `has`, `put`, `delete`), 
+and all loop functions (`while`, `loop`, `map`, `filter`, `first`, `all`, `c_for`, `for` and`reduce`).
+ 

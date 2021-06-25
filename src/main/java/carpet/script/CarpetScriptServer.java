@@ -1,11 +1,27 @@
 package carpet.script;
 
 import carpet.CarpetSettings;
+import carpet.script.annotation.AnnotationParser;
+import carpet.script.api.Auxiliary;
+import carpet.script.api.BlockIterators;
+import carpet.script.api.Entities;
+import carpet.script.api.Inventories;
+import carpet.script.api.Scoreboards;
+import carpet.script.api.WorldAccess;
 import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.language.Arithmetic;
+import carpet.script.language.ControlFlow;
+import carpet.script.language.DataStructures;
+import carpet.script.language.Functions;
+import carpet.script.language.Loops;
+import carpet.script.language.Sys;
+import carpet.script.language.Threading;
+import carpet.script.utils.AppStoreManager;
 import carpet.script.value.FunctionValue;
 import carpet.script.value.Value;
 import carpet.utils.CarpetProfiler;
@@ -20,11 +36,14 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,15 +53,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
 
 public class CarpetScriptServer
 {
     //make static for now, but will change that later:
+    public static final Logger LOG = LogManager.getLogger("scarpet");
     public final MinecraftServer server;
     public  CarpetScriptHost globalHost;
     public  Map<String, CarpetScriptHost> modules;
@@ -109,7 +126,7 @@ public class CarpetScriptServer
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
-        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false);
+        globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null);
     }
 
     public void initializeForWorld()
@@ -124,7 +141,7 @@ public class CarpetScriptServer
         {
             for (String moduleName: listAvailableModules(false))
             {
-                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false);
+                addScriptHost(server.getCommandSource(), moduleName, null, true, true, false, null);
             }
         }
         CarpetEventServer.Event.START.onTick();
@@ -222,8 +239,8 @@ public class CarpetScriptServer
         return modules.get(name);
     }
 
-    public boolean addScriptHost(ServerCommandSource source, String name, Function<ServerCommandSource, Boolean> commandValidator,
-                                 boolean perPlayer, boolean autoload, boolean isRuleApp)
+    public boolean addScriptHost(ServerCommandSource source, String name, Predicate<ServerCommandSource> commandValidator,
+                                 boolean perPlayer, boolean autoload, boolean isRuleApp, AppStoreManager.StoreNode installer)
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet load", CarpetProfiler.TYPE.GENERAL);
         if (commandValidator == null) commandValidator = p -> true;
@@ -242,7 +259,7 @@ public class CarpetScriptServer
             Messenger.m(source, "r Failed to add "+name+" app");
             return false;
         }
-        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp);
+        CarpetScriptHost newHost = CarpetScriptHost.create(this, module, perPlayer, source, commandValidator, isRuleApp, installer);
         if (newHost == null)
         {
             Messenger.m(source, "r Failed to add "+name+" app");
@@ -269,13 +286,16 @@ public class CarpetScriptServer
             return false;
         }
         //addEvents(source, name);
-        String action = reload?"reloaded":"loaded";
+        String action = (installer!=null)?(reload?"reinstalled":"installed"):(reload?"reloaded":"loaded");
+
+        
         Boolean isCommandAdded = newHost.addAppCommands(s -> {
             if (!isRuleApp) Messenger.m(source, s);
         });
         if (isCommandAdded == null) // error should be dispatched
         {
-            removeScriptHost(source, name, false, false);
+            removeScriptHost(source, name, false, isRuleApp);
+            return false;
         }
         else if (isCommandAdded)
         {
@@ -326,6 +346,30 @@ public class CarpetScriptServer
         CarpetServer.settingsManager.notifyPlayersCommandsChanged();
         if (notifySource) Messenger.m(source, "gi Removed "+name+" app");
         return true;
+    }
+
+    public boolean uninstallApp(ServerCommandSource source, String name)
+    {
+        try
+        {
+            name = name.toLowerCase(Locale.ROOT);
+            Path folder = server.getSavePath(WorldSavePath.ROOT).resolve("scripts/trash");
+            if (!Files.exists(folder)) Files.createDirectories(folder);
+            if (!Files.exists(folder.getParent().resolve(name+".sc")))
+            {
+                Messenger.m(source, "App doesn't exist in the world scripts folder, so can only be unloaded");
+                return false;
+            }
+            removeScriptHost(source, name, false, false);
+            Files.move(folder.getParent().resolve(name+".sc"), folder.resolve(name+".sc"), StandardCopyOption.REPLACE_EXISTING);
+            Messenger.m(source, "gi Removed "+name+" app");
+            return true;
+        }
+        catch (IOException exc)
+        {
+            Messenger.m(source, "rb Failed to uninstall the app");
+        }
+        return false;
     }
 
     public boolean runEventCall(ServerCommandSource sender, String hostname, String optionalTarget, FunctionValue udf, List<Value> argv)
@@ -398,7 +442,7 @@ public class CarpetScriptServer
             {
                 host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
             }
-            catch (NullPointerException | InvalidCallbackException npe)
+            catch (NullPointerException | InvalidCallbackException | IntegrityException npe)
             {
                 if (reportFails) return -1;
                 continue;
@@ -425,9 +469,10 @@ public class CarpetScriptServer
     public void onClose()
     {
         CarpetEventServer.Event.SHUTDOWN.onTick();
-        for (ScriptHost host : modules.values())
+        for (CarpetScriptHost host : modules.values())
         {
             host.onClose();
+            events.removeAllHostEvents(host);
         }
     }
 
@@ -451,7 +496,7 @@ public class CarpetScriptServer
     static class TransferData
     {
         boolean perUser;
-        Function<ServerCommandSource, Boolean> commandValidator;
+        Predicate<ServerCommandSource> commandValidator;
         boolean isRuleApp;
         private TransferData(CarpetScriptHost host)
         {
@@ -468,11 +513,32 @@ public class CarpetScriptServer
         apps.keySet().forEach(s -> removeScriptHost(server.getCommandSource(), s, false, false));
         CarpetEventServer.Event.clearAllBuiltinEvents();
         init();
-        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp));
+        apps.forEach((s, data) -> addScriptHost(server.getCommandSource(), s,data.commandValidator, data.perUser,false, data.isRuleApp, null));
     }
 
     public void reAddCommands()
     {
         modules.values().forEach(host -> host.addAppCommands(s -> {}));
+    }
+    
+    public static void parseFunctionClasses()
+    {
+        // Language
+        AnnotationParser.parseFunctionClass(Arithmetic.class);
+        AnnotationParser.parseFunctionClass(ControlFlow.class);
+        AnnotationParser.parseFunctionClass(DataStructures.class);
+        AnnotationParser.parseFunctionClass(Functions.class);
+        AnnotationParser.parseFunctionClass(Loops.class);
+        AnnotationParser.parseFunctionClass(Sys.class);
+        AnnotationParser.parseFunctionClass(Threading.class);
+        
+        // API
+        AnnotationParser.parseFunctionClass(Auxiliary.class);
+        AnnotationParser.parseFunctionClass(BlockIterators.class);
+        AnnotationParser.parseFunctionClass(Entities.class);
+        AnnotationParser.parseFunctionClass(Inventories.class);
+        AnnotationParser.parseFunctionClass(Scoreboards.class);
+        AnnotationParser.parseFunctionClass(carpet.script.language.Threading.class);
+        AnnotationParser.parseFunctionClass(WorldAccess.class);
     }
 }

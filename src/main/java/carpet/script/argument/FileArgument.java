@@ -1,8 +1,7 @@
 package carpet.script.argument;
 
 import carpet.CarpetServer;
-import carpet.script.Context;
-import carpet.script.LazyValue;
+import carpet.script.CarpetScriptServer;
 import carpet.script.bundled.Module;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
@@ -30,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -48,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,7 +80,8 @@ public class FileArgument
         TEXT("text", ".txt"),
         NBT("nbt", ".nbt"),
         JSON("json", ".json"),
-        FOLDER("folder", "");
+        FOLDER("folder", ""),
+        ANY("any", "");
 
         private final String id;
         private final String extension;
@@ -117,14 +117,14 @@ public class FileArgument
         return "path: "+resource+" zip: "+zipContainer+" type: "+type.id+" folder: "+isFolder+" shared: "+isShared+" reason: "+reason.toString();
     }
 
-    public static FileArgument from(List<LazyValue> lv, Context c, boolean isFolder, Reason reason)
+    public static FileArgument from(List<Value> lv, boolean isFolder, Reason reason)
     {
         if (lv.size() < 2) throw new InternalExpressionException("File functions require path and type as first two arguments");
-        Pair<String, String> resource = recognizeResource(lv.get(0).evalValue(c), isFolder);
-        String origtype = lv.get(1).evalValue(c).getString().toLowerCase(Locale.ROOT);
+        String origtype = lv.get(1).getString().toLowerCase(Locale.ROOT);
         boolean shared = origtype.startsWith("shared_");
         String typeString = shared ? origtype.substring(7) : origtype; //len(shared_)
         Type type = Type.of.get(typeString);
+        Pair<String, String> resource = recognizeResource(lv.get(0).getString(), isFolder, type);
         if (type==null)
             throw new InternalExpressionException("Unsupported file type: "+origtype);
         if (type==Type.FOLDER && !isFolder)
@@ -133,18 +133,26 @@ public class FileArgument
 
     }
 
-    public static Pair<String,String> recognizeResource(Value value, boolean isFolder)
+    public static FileArgument resourceFromPath(String path, Reason reason, boolean shared)
     {
-        String origfile = value.getString();
+        Pair<String, String> resource = recognizeResource(path, false, Type.ANY);
+        return  new FileArgument(resource.getLeft(), Type.ANY,resource.getRight(), false, shared, reason);
+    }
+
+    public static Pair<String,String> recognizeResource(String origfile, boolean isFolder, Type type)
+    {
         String[] pathElements = origfile.toLowerCase(Locale.ROOT).split("[/\\\\]+");
         List<String> path = new ArrayList<>();
         String zipPath = null;
-        for (String token : pathElements)
+        for (int i =0; i < pathElements.length; i++ )
         {
-            boolean isZip = token.endsWith(".zip");
+            String token = pathElements[i];
+            boolean isZip = token.endsWith(".zip") && (isFolder || (i < pathElements.length-1));
             if (zipPath != null && isZip) throw new InternalExpressionException(token+" indicates zip access in an already zipped location "+zipPath);
             if (isZip) token = token.substring(0, token.length()-4);
-            token = token.replaceAll("[^A-Za-z0-9\\-+_]", "");
+            token = (type==Type.ANY && i == pathElements.length-1)? // sloppy really, but should work
+                    token.replaceAll("[^A-Za-z0-9\\-+_.]", ""):
+                    token.replaceAll("[^A-Za-z0-9\\-+_]", "");
             if (token.isEmpty()) continue;
             if (isZip) token = token + ".zip";
             path.add(token);
@@ -180,15 +188,14 @@ public class FileArgument
                 Map<String, String> env = new HashMap<>();
                 if (reason == Reason.CREATE) env.put("create", "true");
                 zipPath = resolve(getDescriptor(module, zipContainer));
+                if (!Files.exists(zipPath) && reason != Reason.CREATE) return null; // no zip file
                 try {
+                    if (!Files.exists(zipPath.getParent())) Files.createDirectories(zipPath.getParent());
                     zfs = FileSystems.newFileSystem(URI.create("jar:"+ zipPath.toUri().toString()), env);
                 }
-                catch (FileSystemNotFoundException fsnfe)
+                catch (FileSystemNotFoundException | IOException e)
                 {
-                    return null;
-                }
-                catch (IOException e)
-                {
+                    CarpetScriptServer.LOG.warn("Exception when opening zip file", e);
                     throw new ThrowStatement("Unable to open zip file: "+zipContainer, Throwables.IO_EXCEPTION);
                 }
             }
@@ -220,6 +227,23 @@ public class FileArgument
         throw new InternalExpressionException("Invalid file descriptor: "+res);
     }
 
+
+    public boolean findPathAndApply(Module module, Consumer<Path> action)
+    {
+        try { synchronized (writeIOSync)
+        {
+            Path dataFile = toPath(module);//, resourceName, supportedTypes.get(type), isShared);
+            if (dataFile == null) return false;
+            createPaths(dataFile);
+            action.accept(dataFile);
+        } }
+        finally
+        {
+            close();
+        }
+        return true;
+    }
+
     public Stream<Path> listFiles(Module module)
     {
         Path dir = toPath(module);
@@ -227,7 +251,10 @@ public class FileArgument
         String ext = type.extension;
         try
         {
-            return Files.list(dir).filter(path -> (type==Type.FOLDER)?path.toString().endsWith("/"):path.toString().endsWith(ext));
+            return Files.list(dir).filter(path -> (type==Type.FOLDER)
+                    ?Files.isDirectory(path)
+                    :(Files.isRegularFile(path) &&  path.toString().endsWith(ext))
+            );
         }
         catch (IOException ignored)
         {
@@ -246,17 +273,17 @@ public class FileArgument
             Path rootPath = moduleRootPath(module);
             if (rootPath == null) return null;
             String zipComponent = (zipContainer != null) ? rootPath.relativize(zipPath).toString() : null;
-            strings = result.map(p -> {
-                if (zipContainer == null)
-                    return rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/");
-                return (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/");
-            });
+            strings = (zipContainer == null)
+                    ? result.map(p -> rootPath.relativize(p).toString().replaceAll("[\\\\/]+", "/"))
+                    // need to remove ties to the zip file system before closing, so wrapping the stream
+                    : result.map(p -> (zipComponent + '/'+ p.toString()).replaceAll("[\\\\/]+", "/")).collect(Collectors.toList()).stream();
         } }
         finally
         {
             close();
         }
         if (type == Type.FOLDER)
+            // java 8 paths are inconsistent. in java 16 they all should not have trailing slashes
             return strings.map(s -> s.endsWith("/")?s.substring(0, s.length()-1):s);
         return strings.map(FilenameUtils::removeExtension);
     }
@@ -269,6 +296,7 @@ public class FileArgument
                     Files.createDirectories(file.getParent()) == null
             ) throw new IOException();
         } catch (IOException e) {
+            CarpetScriptServer.LOG.warn("IOException when creating paths", e);
             throw new ThrowStatement("Unable to create paths for "+file.toString(), Throwables.IO_EXCEPTION);
         }
 
@@ -293,6 +321,7 @@ public class FileArgument
         } }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when appending to text file", e);
             throw new ThrowStatement("Error when writing to the file: "+e, Throwables.IO_EXCEPTION);
         }
         finally
@@ -349,8 +378,11 @@ public class FileArgument
                         return TagReaders.of(byte_1).read(dataInput_1, 0, PositionTracker.DEFAULT);
                     }
                 }
-                catch (IOException ignored)
+                catch (IOException secondIO)
                 {
+                    CarpetScriptServer.LOG.warn("IOException when trying to read nbt file, something may have gone wrong with the fs",e);
+                    CarpetScriptServer.LOG.catching(ioException);
+                    CarpetScriptServer.LOG.catching(secondIO);
                     throw new ThrowStatement("Not a valid NBT tag in "+path.toString(), Throwables.NBT_ERROR);
                 }
             }
@@ -383,7 +415,7 @@ public class FileArgument
         {
             if (!zipped)
             {
-                path = new File(path.toFile().getAbsolutePath() + "_tmp").toPath();
+                path = path.getParent().resolve(path.getFileName() + "_tmp");
                 Files.deleteIfExists(path);
             }
 
@@ -412,6 +444,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IO Exception when writing nbt file", e);
             throw new ThrowStatement("Unable to write tag to "+original.toString(), Throwables.IO_EXCEPTION);
         }
     }
@@ -427,6 +460,7 @@ public class FileArgument
         } }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when removing file", e);
             throw new ThrowStatement("Error while removing file: "+getDisplayPath(), Throwables.IO_EXCEPTION);
         }
         finally
@@ -462,6 +496,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when reading text file", e);
             throw new ThrowStatement("Failed to read text file "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }
@@ -495,6 +530,7 @@ public class FileArgument
         }
         catch (IOException e)
         {
+            CarpetScriptServer.LOG.warn("IOException when reading JSON file", e);
             throw new ThrowStatement("Failed to read json file content "+filePath.toString(), Throwables.IO_EXCEPTION);
         }
     }

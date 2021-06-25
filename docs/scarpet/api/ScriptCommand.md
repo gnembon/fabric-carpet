@@ -167,3 +167,18 @@ This would slow down the computation of fib(40) from a minute to two, but allows
 and be responsive to commands, using about half of each tick to advance the computation. Obviously depending on the 
 problem, and available hardware, certain things can take more or less time to execute, so portioning of work with 
 calling `gametick` should be balanced in each case separately
+
+# `/script download` command
+
+`/script download <path>` command allows downloading and running apps directly from an online app store (it's all free), 
+by default the [scarpet app store](https://www.github.com/gnembon/scarpet).
+Downloaded apps will be placed in the world's scripts folder automatically. Location of the app store is controlled
+with a global carpet setting of `/carpet scriptsAppStore`. Apps, if required, will also download all the resources they need
+to run it. Consecutive downloads of the same app will re-download its content and its resources, but will not remove anything
+that has been removed or renamed.
+
+# `/script remove` command
+
+command allow to stop and remove apps installed in the worlds scripts folder. The app is unloaded and app 'sc' file is moved
+to the `/scripts/trash`. Removed apps can only be restored by manually moving it back from the trash folder,
+or by redownloading from the appstore.

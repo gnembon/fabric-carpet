@@ -240,8 +240,56 @@
   "rule.spawnChunksSize.name": "出生點永加載區塊半徑",
   "rule.spawnChunksSize.desc": "更改出生點永加載區塊半徑",
   "rule.spawnChunksSize.extra.0": "定義新半徑\n設為0以禁用出生點區塊加載",
+  
+  "rule.chainStone.name": "強化鎖鏈",
+  "rule.chainStone.desc": "長條鎖鏈在末端間將會相互連接",
+  "rule.chainStone.extra.0": "並且也會與直接連接的方塊連接\n當啟用 stick_to_all : 將無視視覺上連接狀態，使全部連接",
 
+  "rule.piglinsSpawningInBastions.name": "豬布林堡壘生成",
+  "rule.piglinsSpawningInBastions.desc": "豬布林將在堡壘遺跡生成",
+  "rule.piglinsSpawningInBastions.extra.0": "包括 : 豬布林，蠻兵，及一些豬布獸",
 
+  "rule.renewableBlackstone.name": "可再生黑石",
+  "rule.renewableBlackstone.desc": "地獄玄武岩生成機，但在下方沒有靈魂沙",
+  "rule.renewableBlackstone.extra.0": "..將會轉換成黑石",
+
+  "rule.lightEngineMaxBatchSize.name": "光照引擎最大批次大小",
+  "rule.lightEngineMaxBatchSize.desc": "更改光照引擎最大批次大小",
+  "rule.lightEngineMaxBatchSize.extra.0": "允許更高光照抑制容限",
+  "rule.lightEngineMaxBatchSize.extra.1": "設置成5-遊戲預設容限",
+
+  "rule.cleanLogs.name": "清除數據追蹤器",
+  "rule.cleanLogs.desc": "從數據追蹤器中刪除令人討厭的信息",
+  "rule.cleanLogs.extra.0": "在'達到最大聲音對象池247'時將不再顯示",
+  "rule.cleanLogs.extra.1": "在一般農場與裝置是正常顯示",
+
+  "rule.structureBlockOutlineDistance.name": "結構方塊外框顯示距離",
+  "rule.structureBlockOutlineDistance.desc": "自訂義結構方塊外框顯示距離",
+  "rule.structureBlockOutlineDistance.extra.0": "需要客戶端支持才能正常工作",
+
+  "rule.superSecretSetting.name": "最高機密設置",
+
+  "rule.lightningKillsDropsFix.name": "閃電破壞掉落物修正",
+  "rule.lightningKillsDropsFix.desc": "閃電會破壞自閃電擊殺實體的掉落物",
+  "rule.lightningKillsDropsFix.extra.0": "設置成true來防止掉落物被閃電破壞",
+  "rule.lightningKillsDropsFix.extra.1": "修正[MC-206922](https://bugs.mojang.com/browse/MC-206922)",
+
+  "rule.pingPlayerListLimit.name": "玩家ping列表數量限制",
+  "rule.pingPlayerListLimit.desc": "自訂義伺服器ping列表(多人遊戲菜單)玩家列表樣本限制",
+
+  "rule.structureBlockIgnored.name": "結構方塊變更無視方塊",
+  "rule.structureBlockIgnored.desc": "變更被結構方塊無視的方塊",
+
+  "rule.structureBlockLimit.name": "結構方塊上限更改",
+  "rule.structureBlockLimit.desc": "自訂義結構方塊每個方位距離上限",
+  "rule.structureBlockLimit.extra.0": "警告 : 必須是永久的才能正確加載",
+  "rule.structureBlockLimit.extra.1": "建議設置'結構方塊變更無視方塊'成空氣(air)",
+  "rule.structureBlockLimit.extra.2": "當儲存大量結構時",
+  "rule.structureBlockLimit.extra.3": "需要客戶端玩家編輯結構方塊",
+  "rule.structureBlockLimit.extra.4": "當渲染很長的結構時，\n'結構方塊外框顯示距離'將會是必要開啟的",
+  
+  
+  
   "category.bugfix": "BUG修復",
   "category.survival": "生存用",
   "category.creative": "創造用",

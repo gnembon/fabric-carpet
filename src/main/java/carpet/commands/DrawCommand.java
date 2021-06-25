@@ -224,7 +224,7 @@ public class DrawCommand
                         continue;
                     }
 
-                    CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+                    CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
                     for (int xmod = -1; xmod < 2; xmod += 2)
                     {
                         for (int ymod = -1; ymod < 2; ymod += 2)
@@ -238,7 +238,7 @@ public class DrawCommand
                             }
                         }
                     }
-                    CarpetSettings.impendingFillSkipUpdates = false;
+                    CarpetSettings.impendingFillSkipUpdates.set(false);
                 }
             }
         }
@@ -274,7 +274,7 @@ public class DrawCommand
 
         ServerWorld world = source.getWorld();
 
-        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+        CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
 
         for (int r = 0; r < radius; ++r)
         {
@@ -290,7 +290,7 @@ public class DrawCommand
             }
         }
 
-        CarpetSettings.impendingFillSkipUpdates = false;
+        CarpetSettings.impendingFillSkipUpdates.set(false);
 
         if (CarpetSettings.fillUpdates)
         {
@@ -377,7 +377,7 @@ public class DrawCommand
 
         ServerWorld world = source.getWorld();
 
-        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+        CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
 
         boolean isSquare = base.equalsIgnoreCase("square");
 
@@ -387,7 +387,7 @@ public class DrawCommand
             affected+= fillFlat(world, pos, i, r, isSquare, orientation, block, replacement, list, mbpos);
         }
         
-        CarpetSettings.impendingFillSkipUpdates = false;
+        CarpetSettings.impendingFillSkipUpdates.set(false);
 
         if (CarpetSettings.fillUpdates) {
 
@@ -429,7 +429,7 @@ public class DrawCommand
 
         ServerWorld world = source.getWorld();
 
-        CarpetSettings.impendingFillSkipUpdates = !CarpetSettings.fillUpdates;
+        CarpetSettings.impendingFillSkipUpdates.set(!CarpetSettings.fillUpdates);
 
         boolean isSquare = base.equalsIgnoreCase("square");
 
@@ -438,7 +438,7 @@ public class DrawCommand
             affected+= fillFlat(world, pos, i, radius, isSquare, orientation, block, replacement, list, mbpos);
         }
 
-        CarpetSettings.impendingFillSkipUpdates = false;
+        CarpetSettings.impendingFillSkipUpdates.set(false);
 
         if (CarpetSettings.fillUpdates) {
 

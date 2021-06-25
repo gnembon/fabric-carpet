@@ -1,5 +1,6 @@
 package carpet;
 
+import carpet.script.utils.AppStoreManager;
 import carpet.settings.ParsedRule;
 import carpet.settings.Rule;
 import carpet.settings.SettingsManager;
@@ -9,6 +10,8 @@ import carpet.utils.Messenger;
 import carpet.utils.SpawnChunks;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -42,17 +45,16 @@ import static carpet.settings.RuleCategory.CLIENT;
 @SuppressWarnings("CanBeFinal")
 public class CarpetSettings
 {
-    public static final String carpetVersion = "1.4.31+v210407";
+    public static final String carpetVersion = "1.4.40+v210608";
     public static final Logger LOG = LogManager.getLogger("carpet");
-    public static boolean skipGenerationChecks = false;
-    public static boolean impendingFillSkipUpdates = false;
-    public static Box currentTelepotingEntityBox = null;
-    public static Vec3d fixedPosition = null;
+    public static ThreadLocal<Boolean> skipGenerationChecks = ThreadLocal.withInitial(() -> false);
+    public static ThreadLocal<Boolean> impendingFillSkipUpdates = ThreadLocal.withInitial(() -> false);
     public static int runPermissionLevel = 2;
     public static boolean doChainStone = false;
     public static boolean chainStoneStickToAll = false;
     public static Block structureBlockIgnoredBlock = Blocks.STRUCTURE_VOID;
     public static final int vanillaStructureBlockLimit = 48;
+    public static int updateSuppressionBlockSetting = -1;
 
     private static class LanguageValidator extends Validator<String> {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
@@ -251,7 +253,7 @@ public class CarpetSettings
     @Rule( desc = "Merges stationary primed TNT entities", category = TNT )
     public static boolean mergeTNT = false;
 
-    /*@Rule(
+    @Rule(
             desc = "Lag optimizations for redstone dust",
             extra = {
                     "by Theosib",
@@ -260,7 +262,7 @@ public class CarpetSettings
             },
             category = {EXPERIMENTAL, OPTIMIZATION}
     )
-    public static boolean fastRedstoneDust = false;*/
+    public static boolean fastRedstoneDust = false;
 
     @Rule(desc = "Only husks spawn in desert temples", category = FEATURE)
     public static boolean huskSpawningInTemples = false;
@@ -443,8 +445,36 @@ public class CarpetSettings
     )
     public static boolean scriptsAutoload = true;
 
+    @Rule(
+            desc = "Enables scripts debugging messages in system log",
+            category = SCARPET
+    )
+    public static boolean scriptsDebugging = false;
+
+    @Rule(
+            desc = "Enables scripts optimization",
+            category = SCARPET
+    )
+    public static boolean scriptsOptimization = true;
+
+    @Rule(
+            desc = "Location of the online repository of scarpet apps",
+            extra = {
+                    "set to 'none' to disable.",
+                    "Point to any github repo with scarpet apps",
+                    "using <user>/<repo>/contents/<path...>"
+            },
+            category = SCARPET,
+            validate= AppStoreManager.ScarpetAppStoreValidator.class
+    )
+    public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
+
+
     @Rule(desc = "Enables /player command to control/spawn players", category = COMMAND)
     public static String commandPlayer = "ops";
+
+    @Rule(desc = "Spawn offline players in online mode if online-mode player with specified name does not exist", category = COMMAND)
+    public static boolean allowSpawningOfflinePlayers = true;
 
     @Rule(desc = "Allows to track mobs AI via /track command", category = COMMAND)
     public static String commandTrackAI = "ops";
@@ -775,6 +805,11 @@ public class CarpetSettings
             category = {CREATIVE, CLIENT}
     )
     public static boolean creativeNoClip = false;
+    public static boolean isCreativeFlying(Entity entity)
+    {
+        // #todo replace after merger to 1.17
+        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).abilities.flying;
+    }
 
 
     @Rule(
@@ -878,4 +913,48 @@ public class CarpetSettings
             category = {BUGFIX}
     )
     public static boolean lightningKillsDropsFix = false;
+
+    @Rule(
+            desc = "Placing an activator rail on top of a barrier block will update suppress when the rail turns off.",
+            extra = {"Entering an integer will make the update suppression block auto-reset","Integer entered is the delay in ticks for it to reset"},
+            category = {CREATIVE, "extras"},
+            options = {"false","true","1","6"},
+            strict = false,
+            validate = updateSuppressionBlockModes.class
+    )
+    public static String updateSuppressionBlock = "false";
+
+    public static int getInteger(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch(NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private static class updateSuppressionBlockModes extends Validator<String> {
+        @Override
+        public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string) {
+            if (!currentRule.get().equals(newValue)) {
+                if (newValue.equalsIgnoreCase("false")) {
+                    updateSuppressionBlockSetting = -1;
+                } else if (newValue.equalsIgnoreCase("true")) {
+                    updateSuppressionBlockSetting = 0;
+                } else {
+                    int parsedInt = getInteger(newValue);
+                    if (parsedInt <= 0) {
+                        updateSuppressionBlockSetting = -1;
+                        return "false";
+                    } else {
+                        updateSuppressionBlockSetting = parsedInt;
+                    }
+                }
+            }
+            return newValue;
+        }
+        @Override
+        public String description() {
+            return "Cannot be negative, can be true, false, or # > 0";
+        }
+    }
 }

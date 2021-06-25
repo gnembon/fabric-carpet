@@ -57,20 +57,8 @@ living entities based on their spawn group. Negative descriptor resolves to all 
 category.
 * All entity tags including those provided with datapacks. Built-in entity tags include: `skeletons`, `raiders`, 
 `beehive_inhabitors` (bee, duh), `arrows` and `impact_projectiles`.
-* Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
-`area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
-`chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
-`egg`, `elder_guardian`, `end_crystal`, `ender_dragon`, `ender_pearl`, `enderman`, `endermite`, `evoker`, 
-`evoker_fangs`, `experience_bottle`, `experience_orb`, `eye_of_ender`, `falling_block`, `fireball`, `firework_rocket`, 
-`fishing_bobber`, `fox`, `furnace_minecart`, `ghast`, `giant`, `guardian`, `hoglin`, `hopper_minecart`, `horse`, 
-`husk`, `illusioner`, `iron_golem`, `item`, `item_frame`, `leash_knot`, `lightning_bolt`, `llama`, `llama_spit`, 
-`magma_cube`, `minecart`, `mooshroom`, `mule`, `ocelot`, `painting`, `panda`, `parrot`, `phantom`, `pig`, `piglin`, 
-`piglin_brute`, `pillager`, `player`, `polar_bear`, `potion`, `pufferfish`, `rabbit`, `ravager`, `salmon`, `sheep`, 
-`shulker`, `shulker_bullet`, `silverfish`, `skeleton`, `skeleton_horse`, `slime`, `small_fireball`, `snow_golem`, 
-`snowball`, `spawner_minecart`, `spectral_arrow`, `spider`, `squid`, `stray`, `strider`, `tnt`, `tnt_minecart`, 
-`trader_llama`, `trident`, `tropical_fish`, `turtle`, `vex`, `villager`, `vindicator`, `wandering_trader`, `witch`, 
-`wither`, `wither_skeleton`, `wither_skull`, `wolf`, `zoglin`, `zombie`, `zombie_horse`, `zombie_villager`, 
-`zombified_piglin`
+* Any of the standard entity types, equivalent to selection from `/summon` vanilla command, which is one of the options returned
+by `entity_types()`, except for `'fishing_bobber'` and `'player'`.
 
 All categories can be preceded with `'!'` which will fetch all entities (unless otherwise noted) that are valid (health > 0) but not 
 belonging to that group. 
@@ -114,7 +102,7 @@ which in this case can be radically simplified:
 
 <pre>
 query(p, 'name') <=> p ~ 'name'     // much shorter and cleaner
-query(p, 'holds', 'offhand') <=> p ~ l('holds', 'offhand')    // not really but can be done
+query(p, 'holds', 'offhand') <=> p ~ ['holds', 'offhand']    // not really but can be done
 </pre>
 
 ### `query(e, 'removed')`
@@ -163,7 +151,7 @@ Returns a 3d vector where the entity is looking.
 
 ### `query(e, 'motion')`
 
-Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`. Motion represents the velocity from all the forces
+Triple of entity's motion vector, `[motion_x, motion_y, motion_z]`. Motion represents the velocity from all the forces
 that exert on the given entity. Things that are not 'forces' like voluntary movement, or reaction from the ground are
 not part of said forces.
 
@@ -434,6 +422,10 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'language')`
+
+Returns `null` for any non-player entity, if not returns the player's language as a string.
+
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
@@ -519,6 +511,12 @@ Regardless of the options selected, the result could be:
  - block value if block is in reach, or
  - a coordinate triple if `'exact'` option was used and hit was successful.
 
+### `query(e, 'attribute')` `query(e, 'attribute', name)`
+
+returns the value of an attribute of the living entity. If the name is not provided, 
+returns a map of all attributes and values of this entity. If an attribute doesn't apply to the entity,
+or the entity is not a living entity, `null` is returned.
+
 ### `query(e, 'brain', memory)`
 
 Retrieves brain memory for entity. Possible memory units highly depend on the game version. Brain is availalble
@@ -575,11 +573,11 @@ Removes (not kills) entity from the game.
 
 Kills the entity.
 
-### `modify(e, 'pos', x, y, z), modify(e, 'pos', l(x,y,z) )`
+### `modify(e, 'pos', x, y, z), modify(e, 'pos', [x,y,z] )`
 
 Moves the entity to a specified coords.
 
-### `modify(e, 'location', x, y, z, yaw, pitch), modify(e, 'location', l(x, y, z, yaw, pitch) )`
+### `modify(e, 'location', x, y, z, yaw, pitch), modify(e, 'location', [x, y, z, yaw, pitch] )`
 
 Changes full location vector all at once.
 
@@ -591,15 +589,21 @@ Changes entity's location in the specified direction.
 
 Changes entity's pitch or yaw angle.
 
+### `modify(e, 'look', x, y, z), modify(e, 'look', [x,y,z] )`
+
+Sets entity's 3d vector where the entity is looking.
+For cases where the vector has a length of 0, yaw and pitch won't get changed.
+When pointing straight up or down, yaw will stay the same.
+
 ### `modify(e, 'head_yaw', angle)`, `modify(e, 'body_yaw', angle)`
 
 For living entities, controls their head and body yaw angle.
 
-### `modify(e, 'move', x, y, z), modify(e, 'move', l(x,y,z) )`
+### `modify(e, 'move', x, y, z), modify(e, 'move', [x,y,z] )`
 
 Moves the entity by a vector from its current location.
 
-### `modify(e, 'motion', x, y, z), modify(e, 'motion', l(x,y,z) )`
+### `modify(e, 'motion', x, y, z), modify(e, 'motion', [x,y,z] )`
 
 Sets the motion vector (where and how much entity is moving).
 
@@ -607,7 +611,7 @@ Sets the motion vector (where and how much entity is moving).
 
 Sets the corresponding component of the motion vector.
 
-### `modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', l(x, y, z) )`
+### `modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', [x, y, z] )`
 
 Adds a vector to the motion vector. Most realistic way to apply a force to an entity.
 
@@ -658,15 +662,15 @@ Mounts the entity to the `other`.
 
 Shakes off all passengers.
 
-### `modify(e, 'mount_passengers', passenger, ? ...), modify(e, 'mount_passengers', l(passengers) )`
+### `modify(e, 'mount_passengers', passenger, ? ...), modify(e, 'mount_passengers', [passengers] )`
 
 Mounts on all listed entities on `e`.
 
-### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', l(tags) )`
+### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', [tags] )`
 
 Adds tag(s) to the entity.
 
-### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', l(tags) )`
+### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', [tags] )`
 
 Removes tag(s) from the entity.
 
@@ -863,7 +867,7 @@ protect_villager(entity, amount, source, source_entity, healing_player) ->
 (
    if(source_entity && source_entity~'type' != 'player',
       modify(entity, 'health', amount + entity~'health' );
-      particle('end_rod', pos(entity)+l(0,3,0));
+      particle('end_rod', pos(entity)+[0,3,0]);
       print(str('%s healed thanks to %s', entity, healing_player))
    )
 );

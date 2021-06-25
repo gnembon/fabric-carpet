@@ -18,9 +18,42 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * A series of utility functions and variables for dealing predominantly with hopper counters and determining which counter
+ * to add their items to, as well as helping dealing with carpet functionality.
+ */
 public class WoolTool
 {
+    /**
+     * A map of the {@link MaterialColor} to the {@link DyeColor} which is used in {@link WoolTool#getWoolColorAtPosition}
+     * to get the colour of wool at a position.
+     */
     private static final HashMap<MaterialColor,DyeColor> Material2Dye = new HashMap<>();
+
+    /**
+     * A map of all the wool colours to their respective colours in the {@link Messenger#m} format so the name of the counter
+     * gets printed in colour.
+     */
+
+    public static final HashMap<MaterialColor,String> Material2DyeName = new HashMap<MaterialColor, String>(){{
+        put(MaterialColor.WHITE, "w ");
+        put(MaterialColor.ORANGE, "#F9801D ");
+        put(MaterialColor.MAGENTA, "m ");
+        put(MaterialColor.LIGHT_BLUE, "t ");
+        put(MaterialColor.YELLOW, "y ");
+        put(MaterialColor.LAPIS, "l ");
+        put(MaterialColor.PINK, "#FFACCB ");
+        put(MaterialColor.GRAY, "f ");
+        put(MaterialColor.LIGHT_GRAY, "g ");
+        put(MaterialColor.CYAN, "c ");
+        put(MaterialColor.PURPLE, "p ");
+        put(MaterialColor.BLUE, "v ");
+        put(MaterialColor.BROWN, "#835432 ");
+        put(MaterialColor.GREEN, "e ");
+        put(MaterialColor.RED, "r ");
+        put(MaterialColor.BLACK, "k ");
+    }};
+
     static
     {
         for (DyeColor color: DyeColor.values())
@@ -29,6 +62,13 @@ public class WoolTool
         }
     }
 
+    /**
+     * The method which gets triggered when a player places a carpet, and decides what to do based on the carpet's colour:
+     * <ul>
+     *     <li>Red - Resets the counter of the colour of wool underneath the carpet (if there is no wool, then nothing happens)</li>
+     *     <li>Green - Prints the contents of the counter of the colour of wool underneath the carpet</li>
+     * </ul>
+     */
     public static void carpetPlacedAction(DyeColor color, PlayerEntity placer, BlockPos pos, ServerWorld worldIn)
     {
 		if (!CarpetSettings.carpets)
@@ -93,6 +133,9 @@ public class WoolTool
         }
     }
 
+    /**
+     * Gets the colour of wool at the position, for hoppers to be able to decide whether to add their items to the global counter.
+     */
     public static DyeColor getWoolColorAtPosition(World worldIn, BlockPos pos)
     {
         BlockState state = worldIn.getBlockState(pos);

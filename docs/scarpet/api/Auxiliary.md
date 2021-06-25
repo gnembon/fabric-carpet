@@ -50,7 +50,7 @@ Throws `unknown_particle` if particle doesn't exist.
 ## Markers
 
 ### `draw_shape(shape, duration, key?, value?, ... )`, 
-### `draw_shape(shape, duration, l(key?, value?, ... ))`, 
+### `draw_shape(shape, duration, [key?, value?, ... ])`, 
 ### `draw_shape(shape, duration, attribute_map)`
 ### `draw_shape(shape_list)`
 
@@ -65,7 +65,8 @@ per shape and last whatever they typically last in the game.
 
 Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
 Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
-sending many small packets to draw several shapes at once.
+sending many small packets to draw several shapes at once. The drawback of sending shapes is batches is that they need to address
+the same list of players, i.e. if multiple players from the list target different players, all shapes will be sent to all of them.
 
 Shapes will fail to draw and raise a runtime error if not all its required parameters
 are specified and all available shapes have some parameters that are required, so make sure to have them in place:
@@ -78,8 +79,8 @@ or simply refresh the shapes periodically in more dynamic applications.
 Optional shared shape attributes:
  * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
- * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
- player, otherwise it will be send to all players in the dimension.
+ * `player` - name or player entity to send the shape to, or a list of players. If specified, the shapes will appear only for the specified
+ players (regardless where they are), otherwise it will be send to all players in the current dimension.
  * `line` - (Deprecated) line thickness, defaults to 2.0pt. Not supported in 1.17's 3.2 core GL renderer.
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
@@ -211,7 +212,7 @@ produce an exception.
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
 Can optionally define player or list of players to send the message to.
 
-### `format(components, ...)`, `format(l(components, ...))`
+### `format(components, ...)`, `format([components, ...])`
 
 Creates a line of formatted text. Each component is either a string indicating formatting and text it corresponds to
 or a decorator affecting the component preceding it.
@@ -265,7 +266,7 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
 Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
  * `players` is either an online player or a list of players. When sending a single player, it will throw if the player is invalid or offline.
@@ -277,9 +278,17 @@ Sends the player (or players if `players` is a list) a title of a specific type,
    Executing with those will set the times to the specified ones.
    Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
+### `display_title(players, 'player_list_header', text)`
+### `display_title(players, 'player_list_footer', text)`
+
+Changes the header or footer of the player list for the specified targets.
+If `text` is `null` or an empty string it will remove the header or footer for the specified targets.
+In case the player has Carpet loggers running, the footer specified by Scarpet will appear above the loggers.
+
 ### `logger(msg), logger(type, msg)`
 
-Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
+Prints the message to system logs, and not to chat.
+By default prints an info, unless you specify otherwise in the `type` parameter.
 
 Available output types:
 
@@ -432,47 +441,86 @@ Synopsis:
 <pre>
 script run create_datapack('foo', 
 {
-    'foo' -> {
-        'bar.json' -> {
-            'c' -> true,
-            'd' -> false,
-            'e' -> {'foo' -> [1,2,3]},
-            'a' -> 'foobar',
-            'b' -> 5
-        }
-    }
+    'foo' -> { 'bar.json' -> {
+        'c' -> true,
+        'd' -> false,
+        'e' -> {'foo' -> [1,2,3]},
+        'a' -> 'foobar',
+        'b' -> 5
+    } }
 })
+</pre>
 
+Custom dimension example:
+<pre>
 script run create_datapack('funky_world',  {
-    'data' -> {
-        'minecraft' -> {
-            'dimension' -> {
-                'custom_ow.json' -> { 
-                    'type' -> 'minecraft:the_end',
-                    'generator' -> {
-                        'biome_source' -> {
-                             'seed' -> 0,
-                             'large_biomes' -> false,
-                             'type' -> 'minecraft:vanilla_layered'
-                        },
-                        'seed' -> 0,
-                        'settings' -> 'minecraft:nether',
-                        'type' -> 'minecraft:noise'
-                    }
-                }
-            }
-        }
-    }
+    'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+        'type' -> 'minecraft:the_end',
+        'generator' -> {
+            'biome_source' -> {
+                 'seed' -> 0,
+                 'large_biomes' -> false,
+                 'type' -> 'minecraft:vanilla_layered'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:nether',
+            'type' -> 'minecraft:noise'
+    } } } } }
 });
 check_hidden_dimensions();  => ['funky_world']
-        
+</pre>
+
+Loot table example:
+<pre>
+script run create_datapack('silverfishes_drop_gravel', {
+    'data' -> { 'minecraft' -> { 'loot_tables' -> { 'entities' -> { 'silverfish.json' -> {
+        'type' -> 'minecraft:entity',
+        'pools' -> [
+            {
+                'rolls' -> {
+                    'min' -> 0,
+                    'max' -> 1
+                },
+                'entries' -> [
+                    {
+                        'type' -> 'minecraft:item',
+                        'name' -> 'minecraft:gravel'
+                    }
+                ]
+            }
+        ]
+    } } } } }
+});
+</pre>
+
+Recipe example:
+<pre>
+script run create_datapack('craftable_cobwebs', {
+    'data' -> { 'scarpet' -> { 'recipes' -> { 'cobweb.json' -> {
+        'type' -> 'crafting_shaped',
+        'pattern' -> [
+            'SSS',
+            'SSS',
+            'SSS'
+        ],
+        'key' -> {
+            'S' -> {
+                'item' -> 'minecraft:string'
+            }
+        },
+        'result' -> {
+            'item' -> 'minecraft:cobweb',
+            'count' -> 1
+        }
+    } } } }
+});
 </pre>
 
 ### `enable_hidden_dimensions()`
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
-datapacks have been added to the game, either with 'create_datapack()' or manually by dropping a datapack file and calling 
+datapacks have been added to the game, either with `create_datapack()` or manually by dropping a datapack file and calling 
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
@@ -637,6 +685,7 @@ Available options in the scarpet app space:
  * `server_banned_players` - list of banned player names
  * `server_banned_ips` - list of banned IP addresses
  * `server_dev_environment` - boolean indicating whether this server is in a development environment.
+ * `server_mods` - map with all loaded mods mapped to their versions as strings
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM

@@ -103,6 +103,7 @@ public class CarpetEventServer
                 runtimeArgs = new ArrayList<>(runtimeArgs);
                 runtimeArgs.addAll(this.parametrizedArgs);
             }
+            if (CarpetServer.scriptServer == null) return false; // already stopped
             return CarpetServer.scriptServer.runEventCall(
                     sender.withLevel(CarpetSettings.runPermissionLevel),
                     host, optionalTarget, function, runtimeArgs
@@ -465,7 +466,7 @@ public class CarpetEventServer
             public void onMountControls(ServerPlayerEntity player, float strafeSpeed, float forwardSpeed, boolean jumping, boolean sneaking)
             {
                 handler.call( () -> Arrays.asList(new EntityValue(player),
-                        new NumericValue(forwardSpeed), new NumericValue(strafeSpeed), new NumericValue(jumping), new NumericValue(sneaking)
+                        new NumericValue(forwardSpeed), new NumericValue(strafeSpeed), BooleanValue.of(jumping), BooleanValue.of(sneaking)
                 ), player::getCommandSource);
             }
         };
@@ -479,7 +480,7 @@ public class CarpetEventServer
                     //ItemStack itemstack = player.getStackInHand(enumhand);
                     return Arrays.asList(
                             new EntityValue(player),
-                            ListValue.fromItemStack(itemstack),
+                            ValueConversions.of(itemstack),
                             StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
                     );
                 }, player::getCommandSource);
@@ -513,7 +514,7 @@ public class CarpetEventServer
                     Vec3d vec3d = hitRes.getPos().subtract(blockpos.getX(), blockpos.getY(), blockpos.getZ());
                     return Arrays.asList(
                             new EntityValue(player),
-                            ListValue.fromItemStack(itemstack),
+                            ValueConversions.of(itemstack),
                             StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
                             new BlockValue(null, player.getServerWorld(), blockpos),
                             StringValue.of(enumfacing.getName()),
@@ -557,7 +558,7 @@ public class CarpetEventServer
             {
                 handler.call( () -> Arrays.asList(
                         new EntityValue(player),
-                        ListValue.fromItemStack(itemstack),
+                        ValueConversions.of(itemstack),
                         StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand"),
                         new BlockValue(null, player.getServerWorld(), pos)
                 ), player::getCommandSource);
@@ -602,7 +603,7 @@ public class CarpetEventServer
         {
             @Override
             public void onItemAction(ServerPlayerEntity player, Hand enumhand, ItemStack itemstack) {
-                handler.call( () -> Arrays.asList(new EntityValue(player), ListValue.fromItemStack(itemstack)), player::getCommandSource);
+                handler.call( () -> Arrays.asList(new EntityValue(player), ValueConversions.of(itemstack)), player::getCommandSource);
             }
         };
 
@@ -656,7 +657,7 @@ public class CarpetEventServer
                 handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ListValue.fromItemStack(itemstack),
+                                ValueConversions.of(itemstack),
                                 StringValue.of(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::getCommandSource);
             }
@@ -670,7 +671,7 @@ public class CarpetEventServer
                 handler.call( () ->
                         Arrays.asList(
                                 new EntityValue(player),
-                                ListValue.fromItemStack(itemstack),
+                                ValueConversions.of(itemstack),
                                 new StringValue(enumhand == Hand.MAIN_HAND ? "mainhand" : "offhand")
                         ), player::getCommandSource);
             }
@@ -700,7 +701,7 @@ public class CarpetEventServer
                         Arrays.asList(
                                 new EntityValue(player),
                                 StringValue.of(NBTSerializableValue.nameFromRegistryId(recipe)),
-                                new NumericValue(fullStack)
+                                BooleanValue.of(fullStack)
                         ), player::getCommandSource);
             }
         };
@@ -1048,6 +1049,37 @@ public class CarpetEventServer
         public void onWorldEvent(ServerWorld world, BlockPos pos) { }
         public void onWorldEventFlag(ServerWorld world, BlockPos pos, int flag) { }
         public void onCarpetRuleChanges(ParsedRule<?> rule, ServerCommandSource source) { }
+        public void onCustomPlayerEvent(ServerPlayerEntity player, Object ... args)
+        {
+            if (handler.reqArgs != (args.length+1))
+                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+(args.length+1));
+            handler.call(
+                    () -> {
+                        List<Value> valArgs = new ArrayList<>();
+                        valArgs.add(EntityValue.of(player));
+                        for (Object o: args)
+                        {
+                            valArgs.add(ValueConversions.guess(player.getServerWorld(), o));
+                        }
+                        return valArgs;
+                    }, player::getCommandSource
+            );
+        }
+        public void onCustomWorldEvent(ServerWorld world, Object ... args)
+        {
+            if (handler.reqArgs != args.length)
+                throw new InternalExpressionException("Expected "+handler.reqArgs+" arguments for "+name+", got "+args.length);
+            handler.call(
+                    () -> {
+                        List<Value> valArgs = new ArrayList<>();
+                        for (Object o: args)
+                        {
+                            valArgs.add(ValueConversions.guess(world, o));
+                        }
+                        return valArgs;
+                    }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+            );
+        }
     }
 
 

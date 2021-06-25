@@ -13,6 +13,7 @@ import carpet.helpers.Tracer;
 import carpet.network.ServerNetworkHandler;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.script.CarpetContext;
+import carpet.script.CarpetScriptServer;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
@@ -25,6 +26,8 @@ import net.minecraft.entity.ai.brain.Memory;
 import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.pathing.Path;
+import net.minecraft.entity.attribute.AttributeContainer;
+import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.nbt.StringTag;
@@ -55,7 +58,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
@@ -289,14 +291,14 @@ public class EntityValue extends Value
                     EntityType.FIREBALL, EntityType.LLAMA_SPIT, EntityType.SMALL_FIREBALL,
                     EntityType.SNOWBALL, EntityType.SPECTRAL_ARROW, EntityType.EGG,
                     EntityType.ENDER_PEARL, EntityType.EXPERIENCE_BOTTLE, EntityType.POTION,
-                    EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER
+                    EntityType.TRIDENT, EntityType.WITHER_SKULL, EntityType.FISHING_BOBBER, EntityType.SHULKER_BULLET
             );
             Set<EntityType<?>> deads = Sets.newHashSet(
                     EntityType.AREA_EFFECT_CLOUD, EntityType.BOAT, EntityType.END_CRYSTAL,
                     EntityType.EVOKER_FANGS, EntityType.EXPERIENCE_ORB, EntityType.EYE_OF_ENDER,
                     EntityType.FALLING_BLOCK, EntityType.ITEM, EntityType.ITEM_FRAME,
                     EntityType.LEASH_KNOT, EntityType.LIGHTNING_BOLT, EntityType.PAINTING,
-                    EntityType.TNT
+                    EntityType.TNT, EntityType.ARMOR_STAND
 
             );
             Set<EntityType<?>> minecarts = Sets.newHashSet(
@@ -405,7 +407,7 @@ public class EntityValue extends Value
 
     private static final Map<String, BiFunction<Entity, Value, Value>> featureAccessors = new HashMap<String, BiFunction<Entity, Value, Value>>() {{
         //put("test", (e, a) -> a == null ? Value.NULL : new StringValue(a.getString()));
-        put("removed", (entity, arg) -> new NumericValue(entity.removed));
+        put("removed", (entity, arg) -> BooleanValue.of(entity.removed));
         put("uuid",(e, a) -> new StringValue(e.getUuidAsString()));
         put("id",(e, a) -> new NumericValue(e.getEntityId()));
         put("pos", (e, a) -> ListValue.of(new NumericValue(e.getX()), new NumericValue(e.getY()), new NumericValue(e.getZ())));
@@ -421,30 +423,30 @@ public class EntityValue extends Value
         put("motion_x", (e, a) -> new NumericValue(e.getVelocity().x));
         put("motion_y", (e, a) -> new NumericValue(e.getVelocity().y));
         put("motion_z", (e, a) -> new NumericValue(e.getVelocity().z));
-        put("on_ground", (e, a) -> new NumericValue(e.isOnGround()));
+        put("on_ground", (e, a) -> BooleanValue.of(e.isOnGround()));
         put("name", (e, a) -> new StringValue(e.getName().getString()));
         put("display_name", (e, a) -> new FormattedTextValue(e.getDisplayName()));
         put("command_name", (e, a) -> new StringValue(e.getEntityName()));
         put("custom_name", (e, a) -> e.hasCustomName()?new StringValue(e.getCustomName().getString()):Value.NULL);
         put("type", (e, a) -> new StringValue(nameFromRegistryId(Registry.ENTITY_TYPE.getId(e.getType()))));
-        put("is_riding", (e, a) -> new NumericValue(e.hasVehicle()));
-        put("is_ridden", (e, a) -> new NumericValue(e.hasPassengers()));
+        put("is_riding", (e, a) -> BooleanValue.of(e.hasVehicle()));
+        put("is_ridden", (e, a) -> BooleanValue.of(e.hasPassengers()));
         put("passengers", (e, a) -> ListValue.wrap(e.getPassengerList().stream().map(EntityValue::new).collect(Collectors.toList())));
         put("mount", (e, a) -> (e.getVehicle()!=null)?new EntityValue(e.getVehicle()):Value.NULL);
-        put("unmountable", (e, a) -> new NumericValue(((EntityInterface)e).isPermanentVehicle()));
+        put("unmountable", (e, a) -> BooleanValue.of(((EntityInterface)e).isPermanentVehicle()));
         // deprecated
         put("tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
 
         put("scoreboard_tags", (e, a) -> ListValue.wrap(e.getScoreboardTags().stream().map(StringValue::new).collect(Collectors.toList())));
         put("entity_tags", (e, a) -> ListValue.wrap(e.getServer().getTagManager().getEntityTypes().getTags().entrySet().stream().filter(entry -> entry.getValue().contains(e.getType())).map(entry -> ValueConversions.of(entry.getKey())).collect(Collectors.toList())));
         // deprecated
-        put("has_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+        put("has_tag", (e, a) -> BooleanValue.of(e.getScoreboardTags().contains(a.getString())));
 
-        put("has_scoreboard_tag", (e, a) -> new NumericValue(e.getScoreboardTags().contains(a.getString())));
+        put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getScoreboardTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
             net.minecraft.tag.Tag<EntityType<?>> tag = e.getServer().getTagManager().getEntityTypes().getTag(new Identifier(a.getString()));
             if (tag == null) return Value.NULL;
-            return new NumericValue(e.getType().isIn(tag));
+            return BooleanValue.of(e.getType().isIn(tag));
         });
 
         put("yaw", (e, a)-> new NumericValue(e.yaw));
@@ -468,13 +470,13 @@ public class EntityValue extends Value
             Vec3d look = e.getRotationVector();
             return ListValue.of(new NumericValue(look.x),new NumericValue(look.y),new NumericValue(look.z));
         });
-        put("is_burning", (e, a) -> new NumericValue(e.isOnFire()));
+        put("is_burning", (e, a) -> BooleanValue.of(e.isOnFire()));
         put("fire", (e, a) -> new NumericValue(e.getFireTicks()));
-        put("silent", (e, a)-> new NumericValue(e.isSilent()));
-        put("gravity", (e, a) -> new NumericValue(!e.hasNoGravity()));
-        put("immune_to_fire", (e, a) -> new NumericValue(e.isFireImmune()));
+        put("silent", (e, a)-> BooleanValue.of(e.isSilent()));
+        put("gravity", (e, a) -> BooleanValue.of(!e.hasNoGravity()));
+        put("immune_to_fire", (e, a) -> BooleanValue.of(e.isFireImmune()));
 
-        put("invulnerable", (e, a) -> new NumericValue(e.isInvulnerable()));
+        put("invulnerable", (e, a) -> BooleanValue.of(e.isInvulnerable()));
         put("dimension", (e, a) -> new StringValue(nameFromRegistryId(e.world.getRegistryKey().getValue()))); // getDimId
         put("height", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).height));
         put("width", (e, a) -> new NumericValue(e.getDimensions(EntityPose.STANDING).width));
@@ -482,13 +484,13 @@ public class EntityValue extends Value
         put("age", (e, a) -> new NumericValue(e.age));
         put("breeding_age", (e, a) -> e instanceof PassiveEntity?new NumericValue(((PassiveEntity) e).getBreedingAge()):Value.NULL);
         put("despawn_timer", (e, a) -> e instanceof LivingEntity?new NumericValue(((LivingEntity) e).getDespawnCounter()):Value.NULL);
-        put("item", (e, a) -> (e instanceof ItemEntity)?ListValue.fromItemStack(((ItemEntity) e).getStack()):Value.NULL);
+        put("item", (e, a) -> (e instanceof ItemEntity)?ValueConversions.of(((ItemEntity) e).getStack()):Value.NULL);
         put("count", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntity) e).getStack().getCount()):Value.NULL);
         put("pickup_delay", (e, a) -> (e instanceof ItemEntity)?new NumericValue(((ItemEntityInterface) e).getPickupDelayCM()):Value.NULL);
         put("portal_cooldown", (e , a) ->new NumericValue(((EntityInterface)e).getPortalTimer()));
         put("portal_timer", (e , a) ->new NumericValue(((EntityInterface)e).getPublicNetherPortalCooldown()));
         // ItemEntity -> despawn timer via ssGetAge
-        put("is_baby", (e, a) -> (e instanceof LivingEntity)?new NumericValue(((LivingEntity) e).isBaby()):Value.NULL);
+        put("is_baby", (e, a) -> (e instanceof LivingEntity)?BooleanValue.of(((LivingEntity) e).isBaby()):Value.NULL);
         put("target", (e, a) -> {
             if (e instanceof MobEntity)
             {
@@ -516,7 +518,7 @@ public class EntityValue extends Value
                         ValueConversions.of(spe.getSpawnPointPosition()),
                         ValueConversions.of(spe.getSpawnPointDimension()),
                         new NumericValue(spe.getSpawnAngle()),
-                        new NumericValue(spe.isSpawnPointSet()) // true if forced spawn point
+                        BooleanValue.of(spe.isSpawnPointSet())
                         );
             }
             return Value.NULL;
@@ -526,13 +528,19 @@ public class EntityValue extends Value
         put("sprinting", (e, a) -> e.isSprinting()?Value.TRUE:Value.FALSE);
         put("swimming", (e, a) -> e.isSwimming()?Value.TRUE:Value.FALSE);
         put("swinging", (e, a) -> {
-            if (e instanceof LivingEntity) return new NumericValue(((LivingEntity) e).handSwinging);
+            if (e instanceof LivingEntity) return BooleanValue.of(((LivingEntity) e).handSwinging);
             return Value.NULL;
         });
 
         put("air", (e, a) -> new NumericValue(e.getAir()));
+        put("language", (e, a)->{
+            if(!(e instanceof ServerPlayerEntity))
+                return NULL;
+            String lang = ((ServerPlayerEntityInterface) e).getLanguage();
+            return StringValue.of(lang);
+        });
         put("persistence", (e, a) -> {
-            if (e instanceof MobEntity) return new NumericValue(((MobEntity) e).isPersistent());
+            if (e instanceof MobEntity) return BooleanValue.of(((MobEntity) e).isPersistent());
             return Value.NULL;
         });
         put("hunger", (e, a) -> {
@@ -724,7 +732,7 @@ public class EntityValue extends Value
             if (where == null)
                 throw new InternalExpressionException("Unknown inventory slot: "+a.getString());
             if (e instanceof LivingEntity)
-                return ListValue.fromItemStack(((LivingEntity)e).getEquippedStack(where));
+                return ValueConversions.of(((LivingEntity)e).getEquippedStack(where));
             return Value.NULL;
         });
 
@@ -832,6 +840,22 @@ public class EntityValue extends Value
             return Value.NULL;
         });
 
+        put("attribute", (e, a) ->{
+            if (!(e instanceof LivingEntity)) return Value.NULL;
+            LivingEntity el = (LivingEntity)e;
+            if (a == null)
+            {
+                AttributeContainer container = el.getAttributes();
+                return MapValue.wrap(Registry.ATTRIBUTE.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(Registry.ATTRIBUTE.getId(aa)), aa -> NumericValue.of(container.getValue(aa)))));
+            }
+            Identifier id =  new Identifier(a.getString());
+            EntityAttribute attrib = Registry.ATTRIBUTE.getOrEmpty(id).orElseThrow(
+                    () -> new InternalExpressionException("Unknown attribute: "+a.getString())
+            );
+            if (!el.getAttributes().hasAttribute(attrib)) return Value.NULL;
+            return NumericValue.of(el.getAttributeValue(attrib));
+        });
+
         put("nbt",(e, a) -> {
             CompoundTag nbttagcompound = e.toTag((new CompoundTag()));
             if (a==null)
@@ -899,9 +923,11 @@ public class EntityValue extends Value
         }
     }
 
-    private static void updateVelocity(Entity e)
+    private static void updateVelocity(Entity e, double scale)
     {
         e.velocityModified = true;
+        if (Math.abs(scale) > 10000)
+            CarpetScriptServer.LOG.warn("Moved entity "+e.getEntityName()+" "+e.getName()+" at " +e.getPos()+" extremly fast: "+e.getVelocity());
         //((ServerWorld)e.getEntityWorld()).method_14178().sendToNearbyPlayers(e, new EntityVelocityUpdateS2CPacket(e));
     }
 
@@ -1006,7 +1032,22 @@ public class EntityValue extends Value
             updatePosition(e, e.getX(), e.getY(), e.getZ(), e.yaw, MathHelper.clamp((float)NumericValue.asNumber(v).getDouble(), -90, 90));
         });
 
-        //"look"
+        put("look", (e, v) -> {
+            if (!(v instanceof ListValue)) throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
+            List<Value> vec = ((ListValue)v).getItems();
+            float x = NumericValue.asNumber(vec.get(0)).getFloat();
+            float y = NumericValue.asNumber(vec.get(1)).getFloat();
+            float z = NumericValue.asNumber(vec.get(2)).getFloat();
+            float l = MathHelper.sqrt(x*x + y*y + z*z);
+            if(l==0) return;
+            x /= l;
+            y /= l;
+            z /= l;
+            float pitch = (float) -Math.asin(y) / 0.017453292F;
+            float yaw = (float) (x==0 && z==0 ? e.yaw : MathHelper.atan2(-x,z) / 0.017453292F);
+            updatePosition(e, e.getX(), e.getY(), e.getZ(), yaw, pitch);
+        });
+
         //"turn"
         //"nod"
 
@@ -1033,30 +1074,32 @@ public class EntityValue extends Value
                 throw new InternalExpressionException("Expected a list of 3 parameters as a second argument");
             }
             List<Value> coords = ((ListValue) v).getItems();
-            e.setVelocity(
-                    NumericValue.asNumber(coords.get(0)).getDouble(),
-                    NumericValue.asNumber(coords.get(1)).getDouble(),
-                    NumericValue.asNumber(coords.get(2)).getDouble()
-            );
-            updateVelocity(e);
+            double dx = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dy = NumericValue.asNumber(coords.get(0)).getDouble();
+            double dz = NumericValue.asNumber(coords.get(2)).getDouble();
+            e.setVelocity(dx, dy, dz);
+            updateVelocity(e, MathHelper.absMax(MathHelper.absMax(dx, dy), dz));
         });
         put("motion_x", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(NumericValue.asNumber(v).getDouble(), velocity.y, velocity.z);
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(dv, velocity.y, velocity.z);
+            updateVelocity(e, dv);
         });
         put("motion_y", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(velocity.x, NumericValue.asNumber(v).getDouble(), velocity.z);
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(velocity.x, dv, velocity.z);
+            updateVelocity(e, dv);
         });
         put("motion_z", (e, v) ->
         {
             Vec3d velocity = e.getVelocity();
-            e.setVelocity(velocity.x, velocity.y, NumericValue.asNumber(v).getDouble());
-            updateVelocity(e);
+            double dv = NumericValue.asNumber(v).getDouble();
+            e.setVelocity(velocity.x, velocity.y, dv);
+            updateVelocity(e, dv);
         });
 
         put("accelerate", (e, v) ->
@@ -1071,7 +1114,7 @@ public class EntityValue extends Value
                     NumericValue.asNumber(coords.get(1)).getDouble(),
                     NumericValue.asNumber(coords.get(2)).getDouble()
             );
-            updateVelocity(e);
+            updateVelocity(e, e.getVelocity().length());
 
         });
         put("custom_name", (e, v) -> {
@@ -1088,7 +1131,7 @@ public class EntityValue extends Value
                 v = ((ListValue) v).getItems().get(0);
             }
             e.setCustomNameVisible(showName);
-            e.setCustomName(new LiteralText(v.getString()));
+            e.setCustomName(FormattedTextValue.getTextByValue(v));
         });
 
         put("persistence", (e, v) ->
@@ -1190,7 +1233,7 @@ public class EntityValue extends Value
             else if (v instanceof ListValue)
             {
                 List<Value> lv = ((ListValue) v).getItems();
-                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false);
+                Vector3Argument locator = Vector3Argument.findIn(lv, 0, false, false);
                 pos = new BlockPos(locator.vec.x, locator.vec.y, locator.vec.z);
                 if (lv.size() > locator.offset)
                 {
@@ -1219,7 +1262,7 @@ public class EntityValue extends Value
             else if (a instanceof ListValue)
             {
                 List<Value> params= ((ListValue) a).getItems();
-                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false);
+                Vector3Argument blockLocator = Vector3Argument.findIn(params, 0, false, false);
                 BlockPos pos = new BlockPos(blockLocator.vec);
                 RegistryKey<World> world = spe.getEntityWorld().getRegistryKey();
                 float angle = spe.getHeadYaw();
@@ -1413,7 +1456,7 @@ public class EntityValue extends Value
         });
 
         put("add_exhaustion", (e, v)-> {
-            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion((int) NumericValue.asNumber(v).getLong());
+            if (e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().addExhaustion(NumericValue.asNumber(v).getFloat());
         });
 
         put("absorption", (e, v) -> {

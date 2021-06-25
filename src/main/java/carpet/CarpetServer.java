@@ -1,6 +1,5 @@
 package carpet;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,8 +36,11 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-public class CarpetServer implements ClientModInitializer,DedicatedServerModInitializer // static for now - easier to handle all around the code, its one anyways
+public class CarpetServer // static for now - easier to handle all around the code, its one anyways
 {
+    public static final ClientModInitializer CLIENT_INITIALIZER = CarpetServer::onGameStarted;
+    public static final DedicatedServerModInitializer SERVER_INITIALIZER = CarpetServer::onGameStarted;
+
     public static final Random rand = new Random();
     public static MinecraftServer minecraft_server;
     private static CommandDispatcher<ServerCommandSource> currentCommandDispatcher;
@@ -46,17 +48,6 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     public static SettingsManager settingsManager;
     public static final List<CarpetExtension> extensions = new ArrayList<>();
 
-    @Override
-    public void onInitializeClient()
-    {
-    	CarpetServer.onGameStarted();
-    }
-    @Override
-    public void onInitializeServer()
-    {
-    	CarpetServer.onGameStarted();
-    }
-    
     // Separate from onServerLoaded, because a server can be loaded multiple times in singleplayer
     /**
      * Registers a {@link CarpetExtension} to be managed by Carpet.<br>
@@ -82,6 +73,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         settingsManager.parseSettingsClass(CarpetSettings.class);
         extensions.forEach(CarpetExtension::onGameStarted);
         FabricAPIHooks.initialize();
+        CarpetScriptServer.parseFunctionClasses();
     }
 
     public static void onServerLoaded(MinecraftServer server)
@@ -104,7 +96,7 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
 
     public static void onServerLoadedWorlds(MinecraftServer minecraftServer)
     {
-        HopperCounter.resetAll(minecraftServer);
+        HopperCounter.resetAll(minecraftServer, true);
         extensions.forEach(e -> e.onServerLoadedWorlds(minecraftServer));
         scriptServer.initializeForWorld();
     }
@@ -112,13 +104,11 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
     public static void tick(MinecraftServer server)
     {
         TickSpeed.tick();
-        HUDController.update_hud(server);
-        scriptServer.tick();
+        HUDController.update_hud(server, null);
+        if (scriptServer != null) scriptServer.tick();
 
         //in case something happens
-        CarpetSettings.impendingFillSkipUpdates = false;
-        CarpetSettings.currentTelepotingEntityBox = null;
-        CarpetSettings.fixedPosition = null;
+        CarpetSettings.impendingFillSkipUpdates.set(false);
 
         extensions.forEach(e -> e.onTick(server));
     }
@@ -169,6 +159,12 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         extensions.forEach(e -> e.onPlayerLoggedOut(player));
     }
 
+    public static void clientPreClosing()
+    {
+        if (scriptServer != null) scriptServer.onClose();
+        scriptServer = null;
+    }
+
     public static void onServerClosed(MinecraftServer server)
     {
         // this for whatever reason gets called multiple times even when joining on SP
@@ -176,16 +172,21 @@ public class CarpetServer implements ClientModInitializer,DedicatedServerModInit
         if (minecraft_server != null)
         {
             if (scriptServer != null) scriptServer.onClose();
+            scriptServer = null;
             ServerNetworkHandler.close();
             currentCommandDispatcher = null;
 
             LoggerRegistry.stopLoggers();
+            HUDController.resetScarpetHUDs();
             extensions.forEach(e -> e.onServerClosed(server));
             minecraft_server = null;
         }
 
         // this for whatever reason gets called multiple times even when joining;
         TickSpeed.reset();
+    }
+    public static void onServerDoneClosing(MinecraftServer server)
+    {
         settingsManager.detachServer();
     }
 

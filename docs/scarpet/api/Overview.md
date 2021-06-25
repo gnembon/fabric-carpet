@@ -1,7 +1,20 @@
 # Minecraft specific API and `scarpet` language add-ons and commands
 
-Here is the gist of the Minecraft related functions. Otherwise the CarpetScript could live without Minecraft.
+Here is the gist of the Minecraft related functions. Otherwise the scarpet could live without Minecraft.
 
+## Global scarpet options
+
+These options affect directly how scarpet functions and can be triggered via `/carpet` command.
+ - `commandScript`: disables `/script` command making it impossible to control apps in game. Apps will still load and run 
+ when loaded with the world (i.e. present in the world/scripts folder)
+ - `scriptsAutoload`: when set to `false` will prevent apps loaded with the world to load automatically. You can still
+ load them on demand via `/script load` command
+ - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggers
+ the code that calls the command). Defaults to `ops`, could be customized to any level via a numerical value (0, 1, 2, 3 or 4)
+ - `scriptsOptimization`: when disabled, disables default app compile time optimizations. If your app behaves differently with
+ and without optimizations, please file a bug report on the bug tracker and disable code optimizations.
+ - `scriptsDebugging`: Puts detailed information about apps loading, performance and runtime in system log.
+ - `scriptsAppStore`: location of the app store for downloadable scarpet apps - can be configured to point to other scarpet app store.
 
 ## App structure
 
@@ -56,6 +69,30 @@ conflicts and ambiguities between different paths of execution. While ambiguous 
 and they tend to execute correctly, the suggestion support works really poorly in these situations and scarpet
 will warn and prevent such apps from loading with an error message. If `allow_command_conflicts` is specified and 
 `true`, then scarpet will load all provided commands regardless.
+*   `'requires'` - defines either a map of mod dependencies in Fabric's mod.json style, or a function to be executed. If it's a map, it will only
+    allow the app to load if all of the mods specified in the map meet the version criteria. If it's a function, it will prevent the app from 
+    loading if the function does not execute to `false`, displaying whatever is returned to the user.
+    
+    Available prefixes for the version comparison are `>=`, `<=`, `>`, `<`, `~`, `^` and `=` (default if none specified), based in the spec 
+    at [NPM docs about SemVer ranges](https://docs.npmjs.com/cli/v6/using-npm/semver#ranges)
+    ```
+    __config() -> {
+      'requires' -> {
+        'carpet' -> '>=1.4.33', // Will require Carpet with a version >= 1.4.32
+        'minecraft' -> '>=1.16', // Will require Minecraft with a version >= 1.16
+        'chat-up' -> '*' // Will require any version of the chat-up mod
+      }
+    }
+    ```
+    ```
+    __config() -> {
+      'requires' -> _() -> (
+          d = convert_date(unix_time());
+          if(d:6 == 5 && d:2 == 13, 
+            'Its Friday, 13th' // Will throw this if Friday 13th, will load else since `if` function returns `null` by default
+          )
+    }
+    ```
 *   `'command_permission'` - indicates a custom permission to run the command. It can either be a number indicating 
 permission level (from 1 to 4) or a string value, one of: `'all'` (default), `'ops'` (default opped player with permission level of 2),
 `'server'` - command accessible only through the server console and commandblocks, but not in chat, `'players'` - opposite
@@ -67,6 +104,36 @@ predicate that is volatile and might change, the command might falsely do or do 
 however player will always be able to type it in and either succeed, or fail, based on their current permissions.
 Custom permission applies to legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
+*  `'resources'` - list of all downloadable resources when installing the app from an app store. List of resources needs to be 
+in a list and contain of map-like resources descriptors, looking like
+   ```
+   'resources' -> [
+        {
+            'source' -> 'https://raw.githubusercontent.com/gnembon/fabric-carpet/master/src/main/resources/assets/carpet/icon.png',
+            'type' -> 'url',
+            'target' -> 'foo/photos.zip/foo/cm.png',
+        },
+        {
+            'source' -> 'survival/README.md',
+            'type' -> 'store',
+            'target' -> 'survival_readme.md',
+            'shared' -> true,
+        },
+        {
+            'source' -> 'carpets.sc',
+            'type' -> 'app',
+            'target' -> 'apps/flying_carpets.sc',
+            'shared' -> true,
+        },
+    ]
+   ```
+   `source` and `type` indicate resource location: either an arbitrary url (type `'url'`), 
+   absolute location of a file in the app store (type `'store'`),
+or a relative location in the same folder as the app in question (type `'app'`). 
+`'target'` points to the path in app data, or shared app data folder
+if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
+Currently, app resources
+are only downloaded when using `/carpet download` command.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
 *   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.
@@ -121,7 +188,7 @@ baz(entities) -> // same thing
  ```
 
 It works similarly to the auto command, but arguments get their inferred types based on the argument
-names, looking at the full name, or the suffix after the last `_` that indicates the variable type. For instance, variable named `float` will
+names, looking at the full name, or any suffix when splitting on `_` that indicates the variable type. For instance, variable named `float` will
 be parsed as a floating point number, but it can be named `'first_float'` or `'other_float'` as well. Any variable that is not
 supported, will be parsed as a `'string'` type. 
 
@@ -173,7 +240,7 @@ paths with functions to execute, and optionally, custom argument types. Commands
 the key (can be empty) consists of 
 the execution path with the command syntax, which consists of literals (as is) and arguments (wrapped with `<>`), with the name / suffix
 of the name of the attribute indicating its type, and the value represent function to call, either function values,
-defined function names, or functions with some default arguments. Values extracted from commands will be passed to the
+defined function names, or functions with some default arguments. Argument names need to be unique for each command. Values extracted from commands will be passed to the
 functions and executed. By default, command list will be checked for ambiguities (commands with the same path up to some point
 that further use different attributes), causing app loading error if that happens, however this can be suppressed by specifying
 `'allow_command_conflicts'`.
@@ -186,8 +253,14 @@ and less frequently used features, like forks and redirects, used pretty much on
 
 ### Command argument types
 
-There are several default argument types that can be used directly without specifying custom types. Each argument can be 
-customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
+Argument types differ from actual argument names that the types are the suffixes of the used argument names, when separated with 
+`'_'` symbol. For example argument name `'from_pos'` will be interpreted as a built-in type `'int'` and provided to the command system
+as a name `'from_pos'`, however if you define a custom type `'from_pos'`, your custom type will be used instead. 
+Longer suffixes take priority over shorter prefixes, then user defined suffixes mask build-in prefixes.
+
+There are several default argument types that can be used directly without specifying custom types. 
+
+Each argument can be customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
 to match any of the built-in types, with a series of optional modifiers. Shared modifiers include:
   * `suggest` - static list of suggestions to show above the command while typing
   * `suggester` - function taking one map argument, indicating current state of attributes in the parsed command

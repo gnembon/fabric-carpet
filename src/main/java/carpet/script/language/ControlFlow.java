@@ -20,14 +20,24 @@ import java.util.stream.Collectors;
 public class ControlFlow {
     public static void apply(Expression expression) // public just to get the javadoc right
     {
-        expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, (c, t, lv1, lv2) ->
+        // needs to be lazy cause of custom contextualization
+        expression.addLazyBinaryOperator(";", Operators.precedence.get("nextop;"), true, true, t -> Context.Type.VOID, (c, t, lv1, lv2) ->
         {
             lv1.evalValue(c, Context.VOID);
             Value v2 = lv2.evalValue(c, t);
             return (cc, tt) -> v2;
         });
 
-        // if(cond1, expr1, cond2, expr2, ..., ?default) => value
+        expression.addPureLazyFunction("then", -1, t -> Context.Type.VOID, (c, t, lv) -> {
+            int imax = lv.size()-1;
+            for (int i = 0; i < imax; i++) lv.get(i).evalValue(c, Context.VOID);
+            Value v = lv.get(imax).evalValue(c, t);
+            return (cc, tt) -> v;
+        });
+        expression.addFunctionalEquivalence(";", "then");
+
+
+        // obvious lazy due to conditional evaluation of arguments
         expression.addLazyFunction("if", -1, (c, t, lv) ->
         {
             if ( lv.size() < 2 )
@@ -49,25 +59,26 @@ public class ControlFlow {
             return (cc, tt) -> Value.NULL;
         });
 
-        expression.addFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
+        expression.addImpureFunction("exit", (lv) -> { throw new ExitStatement(lv.size()==0?Value.NULL:lv.get(0)); });
 
-        expression.addLazyFunction("throw", -1, (c, t, lv)-> 
+        expression.addImpureFunction("throw", lv->
         {
             switch (lv.size()) 
             {
                 case 0:
                     throw new ThrowStatement(Value.NULL, Throwables.USER_DEFINED);
                 case 1:
-                    throw new ThrowStatement(lv.get(0).evalValue(c), Throwables.USER_DEFINED );
+                    throw new ThrowStatement(lv.get(0), Throwables.USER_DEFINED );
                 case 2:
-                    throw new ThrowStatement(lv.get(1).evalValue(c), Throwables.getTypeForException(lv.get(0).evalValue(c).getString()));
+                    throw new ThrowStatement(lv.get(1), Throwables.getTypeForException(lv.get(0).getString()));
                 case 3:
-                    throw new ThrowStatement(lv.get(2).evalValue(c), Throwables.getTypeForException(lv.get(1).evalValue(c).getString()), lv.get(0).evalValue(c).getString());
+                    throw new ThrowStatement(lv.get(2), Throwables.getTypeForException(lv.get(1).getString()), lv.get(0).getString());
                 default:
                     throw new InternalExpressionException("throw() can't accept more than 3 parameters");
             }
         });
 
+        // needs to be lazy since execution of parameters but first one are conditional
         expression.addLazyFunction("try", -1, (c, t, lv) ->
         {
             if (lv.size()==0)

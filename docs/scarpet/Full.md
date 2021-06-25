@@ -20,9 +20,9 @@ or an OVERLY complex example:
 /script run
     block_check(x1, y1, z1, x2, y2, z2, block_to_check) ->
     (
-        l(minx, maxx) = sort(l(x1, x2));
-        l(miny, maxy) = sort(l(y1, y2));
-        l(minz, maxz) = sort(l(z1, z2));
+        [minx, maxx] = sort([x1, x2]);
+        [miny, maxy] = sort([y1, y2]);
+        [minz, maxz] = sort([z1, z2]);
         'Need to compute the size of the area of course';
         'Cause this language doesn\'t support comments in the command mode';
         xsize = maxx - minx + 1;
@@ -46,7 +46,7 @@ or an OVERLY complex example:
     check_area_around_closest_player_for_block(block_to_check) ->
     (
         closest_player = player();
-        l(posx, posy, posz) = query(closest_player, 'pos');
+        [posx, posy, posz] = query(closest_player, 'pos');
         total_count = block_check( posx-8,1,posz-8, posx+8,17,posz+8, block_to_check);
         print('There is '+total_count+' of '+block_to_check+' around you')
     )
@@ -69,7 +69,7 @@ Writing a program, is like writing a `2+3`, just a bit longer.
 ## Basic language components
 
 Programs consist of constants, like `2`, `3.14`, `pi`, or `'foo'`, operators like `+`, `/`, `->`, variables which you 
-can define, like `foo` or special ones that will be defined for you, like `_x`, or `_` , which I specific to a each
+can define, like `foo` or special ones that will be defined for you, like `_x`, or `_` , which are specific to each
 built in function, and functions with name, and arguments in the form of `f(a,b,c)`, where `f` is the function name,
 and `a, b, c` are the arguments which can be any other expression. And that's all the parts of the language, so all
 in all - sounds quite simple.
@@ -333,6 +333,12 @@ as `2+(2*2)`, not `(2+2)*2`, otherwise they are applied from left to right, i.e.
 as `(2+4)-3`, which in case of numbers doesn't matter, but since `scarpet` allows for mixing all value types 
 the associativity would matter, and may lead to unintended effects:
 
+Operators can be unary - with one argument prefixed by the operator (like `-`, `!`, `...`), "practically binary" (that
+clearly have left and right operands, like assignment `=` operator), and "technically binary" (all binary operators have left and 
+right hand, but can be frequently chained together, like `1+2+3`). All "technically binary" operators (where chaining makes sense)
+have their functional counterparts, e.g. `1+2+3` is equivalent to `sum(1, 2, 3)`. Functional and operatoral forms are directly 
+equivalent - they actually will result in the same code as scarpet will optimize long operator chains into their optimized functional forms. 
+
 Important operator is function definition `->` operator. It will be covered 
 in [User Defined Functions and Program Control Flow](docs/scarpet/language/FunctionsAndControlFlow.md)
 
@@ -356,11 +362,12 @@ Here is the complete list of operators in `scarpet` including control flow opera
 are not technically operators, but part of the language, even if they look like them:
 
 *   Match, Get `~ :`
-*   Unary `+ - !`
+*   Unary `+ - ! ...`
 *   Exponent `^`
 *   Multiplication `* / %`
 *   Addition `+ -`
-*   Comparison `== != > >= <= <`
+*   Comparison `> >= <= <`
+*   Equality `== !=`
 *   Logical And`&&`
 *   Logical Or `||`
 *   Assignment `= += <>`
@@ -441,10 +448,10 @@ $      )
 $   );
 $   lvl
 $);
-/script run global_get_enchantment(players(), 'sharpness')
+/script run global_get_enchantment(player(), 'sharpness')
 </pre>
 
-### `Basic Arithmetic Operators + - * /`
+### Basic Arithmetic Operators `+`, `sum(...)`, `-`, `difference(...)`, `*`, `product(...)`, `/`, `quotient(...)`
 
 Allows to add the results of two expressions. If the operands resolve to numbers, the result is arithmetic operation. 
 In case of strings, adding or subtracting from a string results in string concatenation and removal of substrings 
@@ -459,6 +466,12 @@ to lists treated as vectors.
 Addition with maps (`{}` or `m()`) results in a new map with keys from both maps added, if both operands are maps,
 adding elements of the right argument to the keys, of left map, or just adding the right value as a new key
 in the output map. 
+
+Functional forms of `-` and `/` have less intuitive multi-nary interpretation, but they might be useful in some situations.
+`x-y-z` resolves to `difference(x, y, z)`.
+
+`/` always produces a properly accurate result, fully reversible with `*` operator. To obtain a integer 'div' result, use
+`floor(x/y)`.
 
 Examples:
 
@@ -475,22 +488,26 @@ b = [100,63,100]; b+[10,0,10]  => [110,63,110]
 {'a' -> 1} + {'b' -> 2} => {'a' -> 1, 'b' -> 2}
 </pre>
 
-### `Just Operators % ^`
+### Just Operators `%`, `^`
 
-The modulo and exponent (power) operators work only if both operands are numbers
+The modulo and exponent (power) operators work only if both operands are numbers. `%` is a proper (and useful) 'modulus' operator,
+not a useless 'reminder' operator that you would expect from anything that touches Java. While typically modulus is reserved
+to integer numbers, scarpet expands them to floats with as much sense as possible.
 
 <pre>pi^pi%euler  => 1.124....
--9 % 4  => -1
-9 % -4  => 0 ¯\_(ツ)_/¯ Java
+-9 % 4  => 3
+9 % -4  => -3
+9.1 % -4.2  => -3.5
+9.1 % 4.2  => 0.7
 -3 ^ 2  => 9
 -3 ^ pi => // Error
 </pre>
 
-### `Comparison Operators == != < > <= >=`
+### Comparison Operators `==`, `equal()`, `!=`, `unique()`, `<`, `increasing()`, `>`, `decreasing()`, `<=`, `nondecreasing()`, `>=`, `nonincreasing()`
 
-Allows to compare the results of two expressions. For numbers it is considers arithmetic order of numbers, for 
+Allows to compare the results of two expressions. For numbers, it considers arithmetic order of numbers, for 
 strings - lexicographical, nulls are always 'less' than everything else, and lists check their elements - 
-if the sizes are different, the size matters, otherwise, pairwise comparisons for each elements are performed. 
+if the sizes are different, the size matters, otherwise, pairwise comparisons for each element are performed. 
 The same order rules than with all these operators are used with the default sortographical order as used by `sort` 
 function. All of these are true:
 
@@ -506,7 +523,12 @@ null < -1000
 3 == 3.0
 </pre>
 
-### `Logical Operators && ||`
+Functional variants of these operators allow to assert certain paradigms on multiple arguments at once. This means that 
+due to formal equivalence `x < y < z` is equivalent to `x < y & y < z` because of direct mapping to `increasing(x, y, z)`. This translates through
+the parentheses, so `((x < y) < z)` is the same as `increasing(x, y, z)`. To achieve the same effect as you would see in other
+ languages (not python), you would need to cast the first pair to boolean value, i.e. `bool(x < y) < z`. 
+
+### Logical Operators `&&`, `and(...)`, `||`, `or(...)`
 
 These operator compute respective boolean operation on the operands. What it important is that if calculating of the 
 second operand is not necessary, it won't be evaluated, which means one can use them as conditional statements. In 
@@ -558,9 +580,48 @@ flips boolean condition of the expression. Equivalent of `bool(expr)==false`
 !false  => true
 !null  => true
 !5  => false
-!l() => true
-!l(null) => false
+![] => true
+![null] => false
 </pre>
+
+### `Unpacking Operator ...`
+
+Unpacks elements of a list of an iterator into a sequence of arguments in a function making so that `fun(...[1, 2, 3])` is
+identical with `fun(1, 2, 3)`. For maps, it unpacks them to a list of key-value pairs.
+
+In function signatures it identifies a vararg parameter. 
+
+<pre>
+fun(a, b, ... rest) -> [a, b, rest]; fun(1, 2, 3, 4)    => [1, 2, [3, 4]]
+</pre>
+
+Effects of `...` can be surprisingly lasting. It is kept through the use of variables and function calls.
+
+<pre>
+fun(a, b, ... rest) -> [a, b, ... rest]; fun(1, 2, 3, 4)    => [1, 2, 3, 4]
+args() -> ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(args())   => 6
+a = ... [1, 2, 3]; sum(a, b, c) -> a+b+c; sum(a)   => 6
+</pre>
+
+Unpacking mechanics can be used for list and map constriction, not just for function calls.
+
+<pre>
+[...range(5), pi, ...range(5,-1,-1)]   => [0, 1, 2, 3, 4, 3.14159265359, 5, 4, 3, 2, 1, 0]
+{ ... map(range(5),  _  -> _*_ )}   => {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}
+{...{1 -> 2, 3 -> 4}, ...{5 -> 6, 7 -> 8}}   => {1: 2, 3: 4, 5: 6, 7: 8}
+</pre>
+
+Fine print: unpacking of argument lists happens just before functions are evaluated. 
+This means that in some situations, for instance 
+when an expression is expected (`map(list, expr)`), or a function should not evaluate some (most!) of its arguments (`if(...)`), 
+unpacking cannot be used, and will be ignored, leaving `... list` identical to `list`. 
+Functions that don't honor unpacking mechanics, should have no use for it at the first place
+ (i.e. have one, or very well-defined, and very specific parameters), 
+so some caution (prior testing) is advised. Some of these multi-argument built-in functions are
+ `if`, `try`, `sort_key`, `system_variable_get`, `synchronize`, `sleep`, `in_dimension`, 
+all container functions (`get`, `has`, `put`, `delete`), 
+and all loop functions (`while`, `loop`, `map`, `filter`, `first`, `all`, `c_for`, `for` and`reduce`).
+ 
 # Arithmetic operations
 
 ## Basic Arithmetic Functions
@@ -624,8 +685,8 @@ Interesting bit - `min` and `max` don't remove variable associations from argume
 LHS of assignments (obvious case), or argument spec in function definitions (far less obvious).
 
 <pre>
-a = 1; b = 2; min(a,b) = 3; l(a,b)  => [3, 2]
-a = 1; b = 2; fun(x, min(a,b)) -> l(a,b); fun(3,5)  => [5, 0]
+a = 1; b = 2; min(a,b) = 3; [a,b]  => [3, 2]
+a = 1; b = 2; fun(x, min(a,b)) -> [a,b]; fun(3,5)  => [5, 0]
 </pre>
 
 Absolutely no idea, how the latter might be useful in practice. But since it compiles, can ship it.
@@ -706,8 +767,8 @@ represent binary values.
 bool(pi) => true
 bool(false) => false
 bool('') => false
-bool(l()) => false
-bool(l('')) => true
+bool([]) => false
+bool(['']) => true
 bool('foo') => true
 bool('false') => false
 bool('nulL') => false
@@ -724,8 +785,8 @@ number(false) => 0
 number(true) => 1
 number('') => null
 number('3.14') => 3.14
-number(l()) => 0
-number(l('')) => 1
+number([]) => 0
+number(['']) => 1
 number('foo') => null
 number('3bar') => null
 number('2')+number('2') => 4
@@ -737,7 +798,7 @@ If called with one argument, returns string representation of such value.
 
 Otherwise, returns a formatted string representing the expression. Arguments for formatting can either be provided as
  each consecutive parameter, or as a list which then would be the only extra parameter. To format one list argument
- , you can use `str(list)`, or `str('foo %s', l(list))`.
+ , you can use `str(list)`, or `str('foo %s', [list])`.
 
 Accepts formatting style accepted by `String.format`. 
 Supported types (with `"%<?>"` syntax):
@@ -772,7 +833,7 @@ are not thread safe and require the execution to park on the server thread, wher
 the off-tick time in between ticks that didn't take all 50ms. There are however benefits of running things in parallel, 
 like fine time control not relying on the tick clock, or running things independent on each other. You can still run 
 your actions on tick-by-tick basis, either taking control of the execution using `game_tick()` API function 
-(nasty solution), or scheduling tick using `schedule()` function (preffered solution), but threading gives much more control
+(nasty solution), or scheduling tick using `schedule()` function (preferred solution), but threading gives much more control
 on the timings without impacting the main game and is the only solution to solve problems in parallel 
 (see [scarpet camera](/src/main/resources/assets/carpet/scripts/camera.sc)).
 
@@ -786,7 +847,10 @@ effectively parallelized.
 
 If the app is shutting down, creating new tasks via `task` will not succeed. Instead the new task will do nothing and return
 `null`, so most threaded application should handle closing apps naturally. Keep in mind in case you rely on task return values,
-that they will return `null` regardless of anything in these situations.
+that they will return `null` regardless of anything in these situations. When app handles `__on_close()` event, new tasks cannot
+be submitted at this point, but current tasks are not terminated. Apps can use that opportunity to gracefully shutdown their tasks.
+Regardless if the app handles `__on_close()` event, or does anything with their tasks in it, all tasks will be terminated exceptionally
+within the next 1.5 seconds. 
 
 ### `task(function, ... args)`, `task_thread(executor, function, ... args)`
 
@@ -901,8 +965,8 @@ or length of the list
 length(pi) => 1
 length(pi*pi) => 1
 length(pi^pi) => 2
-length(l()) => 0
-length(l(1,2,3)) => 3
+length([]) => 0
+length([1,2,3]) => 3
 length('') => 0
 length('foo') => 3
 </pre>
@@ -992,11 +1056,11 @@ Unlike the previous function, this can be used to get exact time, but it varies 
 
 ### `convert_date(milliseconds)`
 ### `convert_date(year, month, date, hours?, mins?, secs?)`
-### `convert_date(l(year, month, date, hours?, mins?, secs?))`
+### `convert_date([year, month, date, hours?, mins?, secs?])`
 
 If called with a single argument, converts standard POSIX time to a list in the format: 
 
-`l(year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year)`
+`[year, month, date, hours, mins, secs, day_of_week, day_of_year, week_of_year]`
 
 eg: `convert_date(1592401346960) -> [2020, 6, 17, 10, 42, 26, 3, 169, 25]`
 
@@ -1015,9 +1079,9 @@ Example editing:
 <pre>
 date = convert_date(unix_time());
 
-months = l('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
+months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-days = l('Mon','Tue','Wed','Thu','Fri','Sat','Sun');
+days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 print(
   str('Its %s, %d %s %d, %02d:%02d:%02d', 
@@ -1029,6 +1093,15 @@ print(
 This will give you a date:
 
 It is currently `hrs`:`mins` and `secs` seconds on the `date`th of `month`, `year`
+
+### `encode_b64(string)`, `decode_b64(string)`
+
+Encode or decode a string from b64, throwing a `b64_error` exception if it's invalid
+
+### `encode_json(value)`, `decode_json(string)`
+
+Encodes a value as a json string, and decodes a json string as a valid value, throwing a `json_error` exception if it 
+doesn't parse properly
 
 ### `profile_expr(expression)`
 
@@ -1071,7 +1144,7 @@ used for object counting
 <pre>
 /script run
 $ count_blocks(ent) -> (
-$   l(cx, cy, cz) = query(ent, 'pos');
+$   [cx, cy, cz] = query(ent, 'pos');
 $   scan(cx, cy, cz, 16, 16, 16, var('count_'+_) += 1);
 $   for ( sort_key( vars('count_'), -var(_)),
 $     print(str( '%s: %d', slice(_,6), var(_) ))
@@ -1168,7 +1241,7 @@ Evaluates expression `expr`, `num` number of times. code>expr receives `_` syste
 
 <pre>
 loop(5, game_tick())  => repeat tick 5 times
-list = l(); loop(5, x = _; loop(5, list += l(x, _) ) ); list
+list = []; loop(5, x = _; loop(5, list += [x, _] ) ); list
   // double loop, produces: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [1, 1], ... , [4, 2], [4, 3], [4, 4]]
 </pre>
 
@@ -1176,7 +1249,7 @@ In this small example we will search for first 10 primes, apparently including 0
 
 <pre>
 check_prime(n) -> !first( range(2, sqrt(n)+1), !(n % _) );
-primes = l();
+primes = [];
 loop(10000, if(check_prime(_), primes += _ ; if (length(primes) >= 10, break())));
 primes
 // outputs: [0, 1, 2, 3, 5, 7, 11, 13, 17, 19]
@@ -1193,7 +1266,7 @@ place of the resulting map element, otherwise current element is skipped.
 
 <pre>
 map(range(10), _*_)  => [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
-map(players('*'), _+' is stoopid') [gnembon is stoopid, herobrine is stoopid]
+map(player('*'), _+' is stoopid') [gnembon is stoopid, herobrine is stoopid]
 </pre>
 
 ### `filter(list,expr(_,_i))`
@@ -1247,11 +1320,12 @@ it will be used from now on as a new value for the accumulator.
 reduce([1,2,3,4],_a+_,0)  => 10
 reduce([1,2,3,4],_a*_,1)  => 24
 </pre>
+
 # User-defined functions and program control flow
 
 ## Writing programs with more than 1 line
 
-### `Operator ;`
+### Operator `;`, `then(...)`
 
 To effectively write programs that have more than one line, a programmer needs way to specify a sequence of commands 
 that execute one after another. In `scarpet` this can be achieved with `;`. Its an operator, and by separating 
@@ -1271,7 +1345,7 @@ in `scarpet`, and not barely an instruction delimiter, terminating the code with
 be valid. Having said that, since many programming languages don't care about the number of op terminators 
 programmers use, carpet preprocessor will remove all unnecessary semicolons from scripts when compiled.
 
-In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)`.
+In general `expr; expr; expr; expr` is equivalent to `(((expr ; expr) ; expr) ; expr)` or `then(expr, expr, expr, expr)`.
 
 Result of the evaluated expression is the same as the result of the second expression, but first expression 
 is also evaluated for side-effects
@@ -1296,7 +1370,7 @@ and with `player` scope, each player hosts its own state for each app, so functi
 
 
 <pre>
-/script run a() -> global_list+=1; global_list = l(1,2,3); a(); a(); global_list  // => [1, 2, 3, 1, 1]
+/script run a() -> global_list+=1; global_list = [1,2,3]; a(); a(); global_list  // => [1, 2, 3, 1, 1]
 /script run a(); a(); global_list  // => [1, 2, 3, 1, 1, 1, 1]
 </pre>
 
@@ -1325,7 +1399,7 @@ a unique name, which you can pass somewhere else to get this function `call`ed. 
 by their value and `call` method.
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); a(list); a(list); list  // => [1,2,3]
+a(lst) -> lst+=1; list = [1,2,3]; a(list); a(list); list  // => [1,2,3]
 </pre>
 
 In case the inner function wants to operate and modify larger objects, lists from the outer scope, but not global, 
@@ -1351,14 +1425,14 @@ which variables you want to use, and borrow
 This mechanism can be used to use static mutable objects without the need of using `global_...` variables
 
 <pre>
-list = l(1,2,3); a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
+list = [1,2,3]; a(outer(list)) -> list+=1;  a(); a(); list  // => [1,2,3,1,1]
 </pre>
 
 The return value of a function is the value of the last expression. This as the same effect as using outer or 
 global lists, but is more expensive
 
 <pre>
-a(lst) -> lst+=1; list = l(1,2,3); list=a(list); list=a(list); list  // => [1,2,3,1,1]
+a(lst) -> lst+=1; list = [1,2,3]; list=a(list); list=a(list); list  // => [1,2,3,1,1]
 </pre>
 
 Ability to combine more statements into one expression, with functions, passing parameters, and global and outer 
@@ -1381,15 +1455,16 @@ foo(... x) -> ...  # all arguments for foo are included in the list
     
 </pre>
 
-### `import(module_name, symbols ...)`
+### `import(module_name, ? symbols ...)`
 
 Imports symbols from other apps and libraries into the current one: global variables or functions, allowing to use 
 them in the current app. This includes other symbols imported by these modules. Scarpet supports circular dependencies, 
 but if symbols are used directly in the module body rather than functions, it may not be able to retrieve them. 
+
 Returns full list of available symbols that could be imported from this module, which can be used to debug import 
 issues, and list contents of libraries.
 
-### `call(function, args.....)`
+### `call(function, ? args ...)`
 
 calls a user defined function with specified arguments. It is equivalent to calling `function(args...)` directly 
 except you can use it with function value, or name instead. This means you can pass functions to other user defined 
@@ -1450,11 +1525,11 @@ programmers with their own lambda arguments
 
 <pre>
 my_map(list, function) -> map(list, call(function, _));
-my_map(l(1,2,3), _(x) -> x*x);    // => [1,4,9]
-profile_expr(my_map(l(1,2,3), _(x) -> x*x));   // => ~32000
-sq(x) -> x*x; profile_expr(my_map(l(1,2,3), 'sq'));   // => ~36000
-sq = (_(x) -> x*x); profile_expr(my_map(l(1,2,3), sq));   // => ~36000
-profile_expr(map(l(1,2,3), _*_));   // => ~80000
+my_map([1,2,3], _(x) -> x*x);    // => [1,4,9]
+profile_expr(my_map([1,2,3], _(x) -> x*x));   // => ~32000
+sq(x) -> x*x; profile_expr(my_map([1,2,3], 'sq'));   // => ~36000
+sq = (_(x) -> x*x); profile_expr(my_map([1,2,3], sq));   // => ~36000
+profile_expr(map([1,2,3], _*_));   // => ~80000
 </pre>
 
 ## Control flow
@@ -1516,6 +1591,7 @@ but like everywhere else, doing that sounds like a bad idea.
   - `io_exception`: This is the parent for any exception that occurs due to an error handling external data.
     - `nbt_error`: Incorrect input/output NBT file.
     - `json_error`: Incorrect input/output JSON data.
+    - `b64_error`: Incorrect input/output b64 (base 64) string
   - `user_exception`: Exception thrown by default with `throw` function.
   
 Synopsis:
@@ -1763,7 +1839,7 @@ It returns a new sorted list, not affecting the list passed to the argument
 
 <pre>sort(3,2,1)  => [1, 2, 3]
 sort('a',3,11,1)  => [1, 3, 11, 'a']
-list = l(4,3,2,1); sort(list)  => [1, 2, 3, 4]
+list = [4,3,2,1]; sort(list)  => [1, 2, 3, 4]
 </pre>
 
 ### `sort_key(list, key_expr)`
@@ -1773,15 +1849,15 @@ Sorts a copy of the list in the order or keys as defined by the `key_expr` for e
 <pre>
 sort_key([1,3,2],_)  => [1, 2, 3]
 sort_key([1,3,2],-_)  => [3, 2, 1]
-sort_key(l(range(10)),rand(1))  => [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
-sort_key(l(range(20)),str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
+sort_key([range(10)],rand(1))  => [1, 0, 9, 6, 8, 2, 4, 5, 7, 3]
+sort_key([range(20)],str(_))  => [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 3, 4, 5, 6, 7, 8, 9]
 </pre>
 
 ### `range(to), range(from, to), range(from, to, step)`
 
 Creates a range of numbers from `from`, no greater/larger than `to`. The `step` parameter dictates not only the 
 increment size, but also direction (can be negative). The returned value is not a proper list, just the iterator 
-but if for whatever reason you need a proper list with all items evaluated, use `l(range(to))`. 
+but if for whatever reason you need a proper list with all items evaluated, use `[range(to)]`. 
 Primarily to be used in higher order functions
 
 <pre>
@@ -1808,7 +1884,7 @@ arguments is a list of lists, they have to have two elements each, and then firs
 
 In map creation context (directly inside `{}` or `m{}` call), `->` operator acts like a pair constructor for simpler
 syntax providing key value pairs, so the invocation to `{foo -> bar, baz -> quux}` is equivalent to
-`{l(foo, bar), l(baz, quux)}`, which is equivalent to somewhat older, but more traditional functional form of
+`{[foo, bar], [baz, quux]}`, which is equivalent to somewhat older, but more traditional functional form of
 `m(l(foo, bar),l(baz, quuz))`.
 
 Internally, `{?}`(list syntax) and `m(?)`(function syntax) are equivalent. `{}` is simply translated to 
@@ -1834,8 +1910,21 @@ reduce(range(10), put(_a, _, _*_); _a, {})
 Returns full lists of keys, values and key-value pairs (2-element lists) for all the entries in the map
 # Minecraft specific API and `scarpet` language add-ons and commands
 
-Here is the gist of the Minecraft related functions. Otherwise the CarpetScript could live without Minecraft.
+Here is the gist of the Minecraft related functions. Otherwise the scarpet could live without Minecraft.
 
+## Global scarpet options
+
+These options affect directly how scarpet functions and can be triggered via `/carpet` command.
+ - `commandScript`: disables `/script` command making it impossible to control apps in game. Apps will still load and run 
+ when loaded with the world (i.e. present in the world/scripts folder)
+ - `scriptsAutoload`: when set to `false` will prevent apps loaded with the world to load automatically. You can still
+ load them on demand via `/script load` command
+ - `commandScriptACE`: command permission level that is used to trigger commands from scarpet scripts (regardless who triggers
+ the code that calls the command). Defaults to `ops`, could be customized to any level via a numerical value (0, 1, 2, 3 or 4)
+ - `scriptsOptimization`: when disabled, disables default app compile time optimizations. If your app behaves differently with
+ and without optimizations, please file a bug report on the bug tracker and disable code optimizations.
+ - `scriptsDebugging`: Puts detailed information about apps loading, performance and runtime in system log.
+ - `scriptsAppStore`: location of the app store for downloadable scarpet apps - can be configured to point to other scarpet app store.
 
 ## App structure
 
@@ -1890,6 +1979,30 @@ conflicts and ambiguities between different paths of execution. While ambiguous 
 and they tend to execute correctly, the suggestion support works really poorly in these situations and scarpet
 will warn and prevent such apps from loading with an error message. If `allow_command_conflicts` is specified and 
 `true`, then scarpet will load all provided commands regardless.
+*   `'requires'` - defines either a map of mod dependencies in Fabric's mod.json style, or a function to be executed. If it's a map, it will only
+    allow the app to load if all of the mods specified in the map meet the version criteria. If it's a function, it will prevent the app from 
+    loading if the function does not execute to `false`, displaying whatever is returned to the user.
+    
+    Available prefixes for the version comparison are `>=`, `<=`, `>`, `<`, `~`, `^` and `=` (default if none specified), based in the spec 
+    at [NPM docs about SemVer ranges](https://docs.npmjs.com/cli/v6/using-npm/semver#ranges)
+    ```
+    __config() -> {
+      'requires' -> {
+        'carpet' -> '>=1.4.33', // Will require Carpet with a version >= 1.4.32
+        'minecraft' -> '>=1.16', // Will require Minecraft with a version >= 1.16
+        'chat-up' -> '*' // Will require any version of the chat-up mod
+      }
+    }
+    ```
+    ```
+    __config() -> {
+      'requires' -> _() -> (
+          d = convert_date(unix_time());
+          if(d:6 == 5 && d:2 == 13, 
+            'Its Friday, 13th' // Will throw this if Friday 13th, will load else since `if` function returns `null` by default
+          )
+    }
+    ```
 *   `'command_permission'` - indicates a custom permission to run the command. It can either be a number indicating 
 permission level (from 1 to 4) or a string value, one of: `'all'` (default), `'ops'` (default opped player with permission level of 2),
 `'server'` - command accessible only through the server console and commandblocks, but not in chat, `'players'` - opposite
@@ -1901,6 +2014,36 @@ predicate that is volatile and might change, the command might falsely do or do 
 however player will always be able to type it in and either succeed, or fail, based on their current permissions.
 Custom permission applies to legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
+*  `'resources'` - list of all downloadable resources when installing the app from an app store. List of resources needs to be 
+in a list and contain of map-like resources descriptors, looking like
+   ```
+   'resources' -> [
+        {
+            'source' -> 'https://raw.githubusercontent.com/gnembon/fabric-carpet/master/src/main/resources/assets/carpet/icon.png',
+            'type' -> 'url',
+            'target' -> 'foo/photos.zip/foo/cm.png',
+        },
+        {
+            'source' -> 'survival/README.md',
+            'type' -> 'store',
+            'target' -> 'survival_readme.md',
+            'shared' -> true,
+        },
+        {
+            'source' -> 'carpets.sc',
+            'type' -> 'app',
+            'target' -> 'apps/flying_carpets.sc',
+            'shared' -> true,
+        },
+    ]
+   ```
+   `source` and `type` indicate resource location: either an arbitrary url (type `'url'`), 
+   absolute location of a file in the app store (type `'store'`),
+or a relative location in the same folder as the app in question (type `'app'`). 
+`'target'` points to the path in app data, or shared app data folder
+if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
+Currently, app resources
+are only downloaded when using `/carpet download` command.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
 *   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.
@@ -2120,11 +2263,12 @@ if a player is in the other dimension, calls to entities and blocks around that 
 Moreover, running commandblocks in the spawn chunks would mean that commands will always refer to the overworld 
 blocks and entities. In case you would want to run commands across all dimensions, just run three of them, 
 using `/execute in overworld/the_nether/the_end run script run ...` and query players using `player('*')`, 
-which only returns players in current dimension, or use `in_dimension(expr)` function.# Blocks / World API
+which only returns players in current dimension, or use `in_dimension(expr)` function.
+# Blocks / World API
 
 ## Specifying blocks
 
-### `block(x, y, z)`, `block(l(x,y,z))`, `block(state)`
+### `block(x, y, z)`, `block([x,y,z])`, `block(state)`
 
 Returns either a block from specified location, or block with a specific state (as used by `/setblock` command), 
 so allowing for block properties, block entity data etc. Blocks otherwise can be referenced everywhere by its simple 
@@ -2178,10 +2322,10 @@ Throws `unknown_block` if provided block to set is not valid
 
 <pre>
 set(0,5,0,'bedrock')  => bedrock
-set(l(0,5,0), 'bedrock')  => bedrock
+set([0,5,0], 'bedrock')  => bedrock
 set(block(0,5,0), 'bedrock')  => bedrock
 scan(0,5,0,0,0,0,set(_,'bedrock'))  => 1
-set(pos(players()), 'bedrock')  => bedrock
+set(pos(player()), 'bedrock')  => bedrock
 set(0,0,0,'bedrock')  => 0   // or 1 in overworlds generated in 1.8 and before
 scan(0,100,0,20,20,20,set(_,'glass'))
     // filling the area with glass
@@ -2213,7 +2357,7 @@ generator. The following code causes a cascading effect as blocks placed on chun
 loaded to full, thus generated:
 
 <pre>
-__config() -> m(l('scope', 'global'));
+__config() -> {'scope' -> 'global'};
 __on_chunk_generated(x, z) -> (
   scan(x,0,z,0,0,0,15,15,15,
     if (perlin(_x/16, _y/8, _z/16) > _y/16,
@@ -2226,7 +2370,7 @@ __on_chunk_generated(x, z) -> (
 The following addition resolves this issue, by not allowing block updates past chunk borders:
 
 <pre>
-__config() -> m(l('scope', 'global'));
+__config() -> {'scope' -> 'global'};
 __on_chunk_generated(x, z) -> (
   without_updates(
     scan(x,0,z,0,0,0,15,15,15,
@@ -2324,7 +2468,7 @@ mine(x,y,z) ->
   slot = p~'selected_slot';
   item_tuple = inventory_get(p, slot);
   if (!item_tuple, destroy(x,y,z,'air'); return()); // empty hand, just break with 'air'
-  l(item, count, tag) = item_tuple;
+  [item, count, tag] = item_tuple;
   tag_back = destroy(x,y,z, item, tag);
   if (tag_back == false, // failed to break the item
     return(tag_back)
@@ -2351,6 +2495,13 @@ Causes a block to be harvested by a specified player entity. Honors player item 
 tool if applicable. If the entity is not a valid player, no block gets destroyed. If a player is not allowed to break 
 that block, a block doesn't get destroyed either.
 
+### `create_explosion(pos, power?, mode?, fire?, source?, attacker?)`
+
+Creates an explosion at a given position. Default values of optional parameters are: `'power'` - `4` (TNT power), 
+`'mode'` (block breaking effect `none`, `destroy` or `break`: `break`, `fire` (whether extra fire blocks should be created) - `false`,
+`source` (exploding entity) - `null` and `attacker` (entity responsible for trigerring) - `null`. Explosions created with this
+endpoint cannot be captured with `__on_explosion` event, however they will be captured by `__on_explosion_outcome`.
+
 ### `weather()`,`weather(type)`,`weather(type, ticks)`
 
 If called with no args, returns `'clear'`, `'rain` or `'thunder'` based on the current weather. If thundering, will
@@ -2369,8 +2520,8 @@ Returns a triple of coordinates of a specified block or entity. Technically enti
 and the same can be achieved with `query(entity,'pos')`, but for simplicity `pos` allows to pass all positional objects.
 
 <pre>
-pos(block(0,5,0)) => l(0,5,0)
-pos(players()) => l(12.3, 45.6, 32.05)
+pos(block(0,5,0)) => [0,5,0]
+pos(player()) => [12.3, 45.6, 32.05]
 pos(block('stone')) => Error: Cannot fetch position of an unrealized block
 </pre>
 
@@ -2380,8 +2531,8 @@ Returns a coords triple that is offset in a specified `direction` by `amount` of
 1 block. To offset into opposite facing, use negative numbers for the `amount`.
 
 <pre>
-pos_offset(block(0,5,0), 'up', 2)  => l(0,7,0)
-pos_offset(l(0,5,0), 'up', -2 ) => l(0,3,0)
+pos_offset(block(0,5,0), 'up', 2)  => [0,7,0]
+pos_offset([0,5,0], 'up', -2 ) => [0,3,0]
 </pre>
 
 ### `(Deprecated) block_properties(pos)`
@@ -2620,7 +2771,7 @@ To check if a block is truly loaded, I mean in memory, use `generation_status(x)
 outside of the playable area, just are not used by any of the game mechanic processes.
 
 <pre>
-loaded(pos(players()))  => 1
+loaded(pos(player()))  => 1
 loaded(100000,100,1000000)  => 0
 </pre>
 
@@ -2666,7 +2817,7 @@ Returns spawn potential at a location (1.16+ only)
 
 Sends full chunk data to clients. Useful when lots stuff happened and you want to refresh it on the clients.
 
-### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk(l(pos, ...))`
+### `reset_chunk(pos)`, `reset_chunk(from_pos, to_pos)`, `reset_chunk([pos, ...])`
 Removes and resets the chunk, all chunks in the specified area or all chunks in a list at once, removing all previous
 blocks and entities, and replacing it with a new generation. For all currently loaded chunks, they will be brought
 to their current generation status, and updated to the player. All chunks that are not in the loaded area, will only
@@ -2937,7 +3088,6 @@ with the game and assumed not changing.
 
 `custom_dimension` is experimental and considered a WIP. More customization options besides the seed will be added in
 the future.
-
 # Iterating over larger areas of blocks
 
 These functions help scan larger areas of blocks without using generic loop functions, like nested `loop`.
@@ -3051,20 +3201,8 @@ living entities based on their spawn group. Negative descriptor resolves to all 
 category.
 * All entity tags including those provided with datapacks. Built-in entity tags include: `skeletons`, `raiders`, 
 `beehive_inhabitors` (bee, duh), `arrows` and `impact_projectiles`.
-* Any of the following standard entity types (equivalent to selection from `/summon` vanilla command: 
-`area_effect_cloud`, `armor_stand`, `arrow`, `bat`, `bee`, `blaze`, `boat`, `cat`, `cave_spider`, `chest_minecart`, 
-`chicken`, `cod`, `command_block_minecart`, `cow`, `creeper`, `dolphin`, `donkey`, `dragon_fireball`, `drowned`, 
-`egg`, `elder_guardian`, `end_crystal`, `ender_dragon`, `ender_pearl`, `enderman`, `endermite`, `evoker`, 
-`evoker_fangs`, `experience_bottle`, `experience_orb`, `eye_of_ender`, `falling_block`, `fireball`, `firework_rocket`, 
-`fishing_bobber`, `fox`, `furnace_minecart`, `ghast`, `giant`, `guardian`, `hoglin`, `hopper_minecart`, `horse`, 
-`husk`, `illusioner`, `iron_golem`, `item`, `item_frame`, `leash_knot`, `lightning_bolt`, `llama`, `llama_spit`, 
-`magma_cube`, `minecart`, `mooshroom`, `mule`, `ocelot`, `painting`, `panda`, `parrot`, `phantom`, `pig`, `piglin`, 
-`piglin_brute`, `pillager`, `player`, `polar_bear`, `potion`, `pufferfish`, `rabbit`, `ravager`, `salmon`, `sheep`, 
-`shulker`, `shulker_bullet`, `silverfish`, `skeleton`, `skeleton_horse`, `slime`, `small_fireball`, `snow_golem`, 
-`snowball`, `spawner_minecart`, `spectral_arrow`, `spider`, `squid`, `stray`, `strider`, `tnt`, `tnt_minecart`, 
-`trader_llama`, `trident`, `tropical_fish`, `turtle`, `vex`, `villager`, `vindicator`, `wandering_trader`, `witch`, 
-`wither`, `wither_skeleton`, `wither_skull`, `wolf`, `zoglin`, `zombie`, `zombie_horse`, `zombie_villager`, 
-`zombified_piglin`
+* Any of the standard entity types, equivalent to selection from `/summon` vanilla command, which is one of the options returned
+by `entity_types()`, except for `'fishing_bobber'` and `'player'`.
 
 All categories can be preceded with `'!'` which will fetch all entities (unless otherwise noted) that are valid (health > 0) but not 
 belonging to that group. 
@@ -3108,7 +3246,7 @@ which in this case can be radically simplified:
 
 <pre>
 query(p, 'name') <=> p ~ 'name'     // much shorter and cleaner
-query(p, 'holds', 'offhand') <=> p ~ l('holds', 'offhand')    // not really but can be done
+query(p, 'holds', 'offhand') <=> p ~ ['holds', 'offhand']    // not really but can be done
 </pre>
 
 ### `query(e, 'removed')`
@@ -3157,7 +3295,7 @@ Returns a 3d vector where the entity is looking.
 
 ### `query(e, 'motion')`
 
-Triple of entity's motion vector, `l(motion_x, motion_y, motion_z)`. Motion represents the velocity from all the forces
+Triple of entity's motion vector, `[motion_x, motion_y, motion_z]`. Motion represents the velocity from all the forces
 that exert on the given entity. Things that are not 'forces' like voluntary movement, or reaction from the ground are
 not part of said forces.
 
@@ -3428,6 +3566,10 @@ Numbers related to player's xp. `xp` is the overall xp player has, `xp_level` is
 
 Number indicating remaining entity health, or `null` if not applicable.
 
+### `query(e, 'language')`
+
+Returns `null` for any non-player entity, if not returns the player's language as a string.
+
 ### `query(e, 'holds', slot?)`
 
 Returns triple of short name, stack count, and NBT of item held in `slot`, or `null` if nothing or not applicable. Available options for `slot` are:
@@ -3513,6 +3655,12 @@ Regardless of the options selected, the result could be:
  - block value if block is in reach, or
  - a coordinate triple if `'exact'` option was used and hit was successful.
 
+### `query(e, 'attribute')` `query(e, 'attribute', name)`
+
+returns the value of an attribute of the living entity. If the name is not provided, 
+returns a map of all attributes and values of this entity. If an attribute doesn't apply to the entity,
+or the entity is not a living entity, `null` is returned.
+
 ### `query(e, 'brain', memory)`
 
 Retrieves brain memory for entity. Possible memory units highly depend on the game version. Brain is availalble
@@ -3569,11 +3717,11 @@ Removes (not kills) entity from the game.
 
 Kills the entity.
 
-### `modify(e, 'pos', x, y, z), modify(e, 'pos', l(x,y,z) )`
+### `modify(e, 'pos', x, y, z), modify(e, 'pos', [x,y,z] )`
 
 Moves the entity to a specified coords.
 
-### `modify(e, 'location', x, y, z, yaw, pitch), modify(e, 'location', l(x, y, z, yaw, pitch) )`
+### `modify(e, 'location', x, y, z, yaw, pitch), modify(e, 'location', [x, y, z, yaw, pitch] )`
 
 Changes full location vector all at once.
 
@@ -3585,15 +3733,21 @@ Changes entity's location in the specified direction.
 
 Changes entity's pitch or yaw angle.
 
+### `modify(e, 'look', x, y, z), modify(e, 'look', [x,y,z] )`
+
+Sets entity's 3d vector where the entity is looking.
+For cases where the vector has a length of 0, yaw and pitch won't get changed.
+When pointing straight up or down, yaw will stay the same.
+
 ### `modify(e, 'head_yaw', angle)`, `modify(e, 'body_yaw', angle)`
 
 For living entities, controls their head and body yaw angle.
 
-### `modify(e, 'move', x, y, z), modify(e, 'move', l(x,y,z) )`
+### `modify(e, 'move', x, y, z), modify(e, 'move', [x,y,z] )`
 
 Moves the entity by a vector from its current location.
 
-### `modify(e, 'motion', x, y, z), modify(e, 'motion', l(x,y,z) )`
+### `modify(e, 'motion', x, y, z), modify(e, 'motion', [x,y,z] )`
 
 Sets the motion vector (where and how much entity is moving).
 
@@ -3601,7 +3755,7 @@ Sets the motion vector (where and how much entity is moving).
 
 Sets the corresponding component of the motion vector.
 
-### `modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', l(x, y, z) )`
+### `modify(e, 'accelerate', x, y, z), modify(e, 'accelerate', [x, y, z] )`
 
 Adds a vector to the motion vector. Most realistic way to apply a force to an entity.
 
@@ -3652,15 +3806,15 @@ Mounts the entity to the `other`.
 
 Shakes off all passengers.
 
-### `modify(e, 'mount_passengers', passenger, ? ...), modify(e, 'mount_passengers', l(passengers) )`
+### `modify(e, 'mount_passengers', passenger, ? ...), modify(e, 'mount_passengers', [passengers] )`
 
 Mounts on all listed entities on `e`.
 
-### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', l(tags) )`
+### `modify(e, 'tag', tag, ? ...), modify(e, 'tag', [tags] )`
 
 Adds tag(s) to the entity.
 
-### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', l(tags) )`
+### `modify(e, 'clear_tag', tag, ? ...), modify(e, 'clear_tag', [tags] )`
 
 Removes tag(s) from the entity.
 
@@ -3857,7 +4011,7 @@ protect_villager(entity, amount, source, source_entity, healing_player) ->
 (
    if(source_entity && source_entity~'type' != 'player',
       modify(entity, 'health', amount + entity~'health' );
-      particle('end_rod', pos(entity)+l(0,3,0));
+      particle('end_rod', pos(entity)+[0,3,0]);
       print(str('%s healed thanks to %s', entity, healing_player))
    )
 );
@@ -4160,6 +4314,19 @@ at the same time.
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 
 already be spawned at that point. `mode` is `true` if the lightning did cause a trap to spawn. 
 
+### `__on_explosion(pos, power, source, causer, mode, fire)`
+
+Event triggered right before explosion takes place and before has any effect on the world. `source` can be an entity causing
+the explosion, and `causer` the entity triggering it,
+`mode` indicates block effects: `'none'`, `'break'` (drop all blocks), or `'destroy'` - drop few blocks. Event
+is not captured when `create_explosion()` is called.
+
+### `__on_explosion_outcome(pos, power, source, causer, mode, fire, blocks, entities)`
+Triggered during the explosion, before any changes to the blocks are done, 
+but the decision to blow up is already made and entities are already affected.  
+The parameter `blocks` contains the list of blocks that will blow up (empty if `explosionNoBlockDamage` is set to `true`).
+The parameter `entities` contains the list of entities that have been affected by the explosion. Triggered even with `create_explosion()`.
+
 ### `__on_carpet_rule_changes(rule, new_value)`
 Triggered when a carpet mod rule is changed. It includes extension rules, not using default `/carpet` command, 
 which will then be namespaced as `namespace:rule`.
@@ -4188,7 +4355,7 @@ Example events that may cause it to happen is releasing a bow. The event is trig
 the request, however the `item_tuple` is provided representing the item that the player started with. You can use that and
 compare with the currently held item for a delta.
 
-### `__on_player_finishes_using_item(player, item_tuple, hand))`
+### `__on_player_finishes_using_item(player, item_tuple, hand)`
 Player using of an item is done. This is controlled server side and is responsible for such events as finishing
 eating. The event is triggered after confirming that the action is valid, and sending the feedback back
 to the client, but before triggering it and its effects in game.
@@ -4669,7 +4836,7 @@ Throws `unknown_particle` if particle doesn't exist.
 ## Markers
 
 ### `draw_shape(shape, duration, key?, value?, ... )`, 
-### `draw_shape(shape, duration, l(key?, value?, ... ))`, 
+### `draw_shape(shape, duration, [key?, value?, ... ])`, 
 ### `draw_shape(shape, duration, attribute_map)`
 ### `draw_shape(shape_list)`
 
@@ -4684,7 +4851,8 @@ per shape and last whatever they typically last in the game.
 
 Shapes can be send one by one, using either of the first three invocations, or batched as a list of shape descriptors. 
 Batching has this benefit that they will be send possibly as one packet, limiting network overhead of 
-sending many small packets to draw several shapes at once.
+sending many small packets to draw several shapes at once. The drawback of sending shapes is batches is that they need to address
+the same list of players, i.e. if multiple players from the list target different players, all shapes will be sent to all of them.
 
 Shapes will fail to draw and raise a runtime error if not all its required parameters
 are specified and all available shapes have some parameters that are required, so make sure to have them in place:
@@ -4697,8 +4865,8 @@ or simply refresh the shapes periodically in more dynamic applications.
 Optional shared shape attributes:
  * `color` - integer value indicating the main color of the shape in the form of red, green, blue and alpha components 
  in the form of `0xRRGGBBAA`, with the default of `-1`, so white opaque, or `0xFFFFFFFF`.
- * `player` - name or player entity to send the shape to. If specified, the shapes will appear only for the specified
- player, otherwise it will be send to all players in the dimension.
+ * `player` - name or player entity to send the shape to, or a list of players. If specified, the shapes will appear only for the specified
+ players (regardless where they are), otherwise it will be send to all players in the current dimension.
  * `line` - (Deprecated) line thickness, defaults to 2.0pt. Not supported in 1.17's 3.2 core GL renderer.
  * `fill` - color for the faces, defaults to no fill. Use `color` attribute format
  * `follow` - entity, or player name. Shape will follow an entity instead of being static.
@@ -4830,7 +4998,7 @@ produce an exception.
 Displays the result of the expression to the chat. Overrides default `scarpet` behaviour of sending everyting to stderr.
 Can optionally define player or list of players to send the message to.
 
-### `format(components, ...)`, `format(l(components, ...))`
+### `format(components, ...)`, `format([components, ...])`
 
 Creates a line of formatted text. Each component is either a string indicating formatting and text it corresponds to
 or a decorator affecting the component preceding it.
@@ -4884,7 +5052,7 @@ Example usages:
   // not a problem in apps
 </pre>
 
-### `display_title(players, type, title?, fadeInTicks?, stayTicks?, fadeOutTicks),`
+### `display_title(players, type, text?, fadeInTicks?, stayTicks?, fadeOutTicks),`
 
 Sends the player (or players if `players` is a list) a title of a specific type, with optionally some times.
  * `players` is either an online player or a list of players. When sending a single player, it will throw if the player is invalid or offline.
@@ -4896,9 +5064,17 @@ Sends the player (or players if `players` is a list) a title of a specific type,
    Executing with those will set the times to the specified ones.
    Note that `actionbar` type doesn't support changing times (vanilla bug, see [MC-106167](https://bugs.mojang.com/browse/MC-106167)).
 
+### `display_title(players, 'player_list_header', text)`
+### `display_title(players, 'player_list_footer', text)`
+
+Changes the header or footer of the player list for the specified targets.
+If `text` is `null` or an empty string it will remove the header or footer for the specified targets.
+In case the player has Carpet loggers running, the footer specified by Scarpet will appear above the loggers.
+
 ### `logger(msg), logger(type, msg)`
 
-Prints the message to system logs, and not to chat. By default prints an info, unless you specify otherwise in the `type` parameter.
+Prints the message to system logs, and not to chat.
+By default prints an info, unless you specify otherwise in the `type` parameter.
 
 Available output types:
 
@@ -5051,47 +5227,86 @@ Synopsis:
 <pre>
 script run create_datapack('foo', 
 {
-    'foo' -> {
-        'bar.json' -> {
-            'c' -> true,
-            'd' -> false,
-            'e' -> {'foo' -> [1,2,3]},
-            'a' -> 'foobar',
-            'b' -> 5
-        }
-    }
+    'foo' -> { 'bar.json' -> {
+        'c' -> true,
+        'd' -> false,
+        'e' -> {'foo' -> [1,2,3]},
+        'a' -> 'foobar',
+        'b' -> 5
+    } }
 })
+</pre>
 
+Custom dimension example:
+<pre>
 script run create_datapack('funky_world',  {
-    'data' -> {
-        'minecraft' -> {
-            'dimension' -> {
-                'custom_ow.json' -> { 
-                    'type' -> 'minecraft:the_end',
-                    'generator' -> {
-                        'biome_source' -> {
-                             'seed' -> 0,
-                             'large_biomes' -> false,
-                             'type' -> 'minecraft:vanilla_layered'
-                        },
-                        'seed' -> 0,
-                        'settings' -> 'minecraft:nether',
-                        'type' -> 'minecraft:noise'
-                    }
-                }
-            }
-        }
-    }
+    'data' -> { 'minecraft' -> { 'dimension' -> { 'custom_ow.json' -> { 
+        'type' -> 'minecraft:the_end',
+        'generator' -> {
+            'biome_source' -> {
+                 'seed' -> 0,
+                 'large_biomes' -> false,
+                 'type' -> 'minecraft:vanilla_layered'
+            },
+            'seed' -> 0,
+            'settings' -> 'minecraft:nether',
+            'type' -> 'minecraft:noise'
+    } } } } }
 });
 check_hidden_dimensions();  => ['funky_world']
-        
+</pre>
+
+Loot table example:
+<pre>
+script run create_datapack('silverfishes_drop_gravel', {
+    'data' -> { 'minecraft' -> { 'loot_tables' -> { 'entities' -> { 'silverfish.json' -> {
+        'type' -> 'minecraft:entity',
+        'pools' -> [
+            {
+                'rolls' -> {
+                    'min' -> 0,
+                    'max' -> 1
+                },
+                'entries' -> [
+                    {
+                        'type' -> 'minecraft:item',
+                        'name' -> 'minecraft:gravel'
+                    }
+                ]
+            }
+        ]
+    } } } } }
+});
+</pre>
+
+Recipe example:
+<pre>
+script run create_datapack('craftable_cobwebs', {
+    'data' -> { 'scarpet' -> { 'recipes' -> { 'cobweb.json' -> {
+        'type' -> 'crafting_shaped',
+        'pattern' -> [
+            'SSS',
+            'SSS',
+            'SSS'
+        ],
+        'key' -> {
+            'S' -> {
+                'item' -> 'minecraft:string'
+            }
+        },
+        'result' -> {
+            'item' -> 'minecraft:cobweb',
+            'count' -> 1
+        }
+    } } } }
+});
 </pre>
 
 ### `enable_hidden_dimensions()`
 
 The function reads current datapack settings detecting new dimensions defined by these datapacks that have not yet been added
 to the list of current dimensions and adds them so that they can be used and accessed right away. It doesn't matter how the
-datapacks have been added to the game, either with 'create_datapack()' or manually by dropping a datapack file and calling 
+datapacks have been added to the game, either with `create_datapack()` or manually by dropping a datapack file and calling 
 `/datapack enable` on it. Returns the list of valid dimension names / identifiers that has been added in the process.
 
 Fine print: The function should be
@@ -5256,6 +5471,7 @@ Available options in the scarpet app space:
  * `server_banned_players` - list of banned player names
  * `server_banned_ips` - list of banned IP addresses
  * `server_dev_environment` - boolean indicating whether this server is in a development environment.
+ * `server_mods` - map with all loaded mods mapped to their versions as strings
  
  System related properties
  * `java_max_memory` - maximum allowed memory accessible by JVM
@@ -5444,3 +5660,18 @@ This would slow down the computation of fib(40) from a minute to two, but allows
 and be responsive to commands, using about half of each tick to advance the computation. Obviously depending on the 
 problem, and available hardware, certain things can take more or less time to execute, so portioning of work with 
 calling `gametick` should be balanced in each case separately
+
+# `/script download` command
+
+`/script download <path>` command allows downloading and running apps directly from an online app store (it's all free), 
+by default the [scarpet app store](https://www.github.com/gnembon/scarpet).
+Downloaded apps will be placed in the world's scripts folder automatically. Location of the app store is controlled
+with a global carpet setting of `/carpet scriptsAppStore`. Apps, if required, will also download all the resources they need
+to run it. Consecutive downloads of the same app will re-download its content and its resources, but will not remove anything
+that has been removed or renamed.
+
+# `/script remove` command
+
+command allow to stop and remove apps installed in the worlds scripts folder. The app is unloaded and app 'sc' file is moved
+to the `/scripts/trash`. Removed apps can only be restored by manually moving it back from the trash folder,
+or by redownloading from the appstore.

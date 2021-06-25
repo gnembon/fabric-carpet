@@ -3,6 +3,7 @@ package carpet.network;
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.helpers.TickSpeed;
+import carpet.script.utils.SnoopyCommandSource;
 import carpet.settings.ParsedRule;
 import carpet.settings.SettingsManager;
 import io.netty.buffer.Unpooled;
@@ -12,10 +13,9 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;
@@ -93,38 +93,22 @@ public class ServerNetworkHandler
         String command = commandData.getString("command");
         String id = commandData.getString("id");
         List<Text> output = new ArrayList<>();
-        String[] error = {null};
+        Text[] error = {null};
         int resultCode = -1;
         if (player.getServer() == null)
         {
-            error[0] = "No Server";
+            error[0] = new LiteralText("No Server");
         }
         else
         {
             resultCode = player.getServer().getCommandManager().execute(
-                    new ServerCommandSource(player, player.getPos(), player.getRotationClient(),
-                    player.world instanceof ServerWorld ? (ServerWorld) player.world : null,
-                    player.server.getPermissionLevel(player.getGameProfile()), player.getName().getString(), player.getDisplayName(),
-                    player.world.getServer(), player)
-                    {
-                        @Override
-                        public void sendError(Text message)
-                        {
-                            error[0] = message.getString();
-                        }
-                        @Override
-                        public void sendFeedback(Text message, boolean broadcastToOps)
-                        {
-                            output.add(message);
-                        }
-                    },
-                    command
+                    new SnoopyCommandSource(player, error, output), command
             );
-        };
+        }
         CompoundTag result = new CompoundTag();
         result.putString("id", id);
         result.putInt("code", resultCode);
-        if (error[0] != null) result.putString("error", error[0]);
+        if (error[0] != null) result.putString("error", error[0].asString());
         ListTag outputResult = new ListTag();
         for (Text line: output) outputResult.add(StringTag.of(Text.Serializer.toJson(line)));
         if (!output.isEmpty()) result.put("output", outputResult);

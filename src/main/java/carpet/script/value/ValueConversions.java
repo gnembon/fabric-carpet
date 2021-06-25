@@ -32,8 +32,10 @@ import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.dynamic.GlobalPos;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ColumnPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
@@ -101,7 +103,7 @@ public class ValueConversions
     {
         return ListValue.of(
                 StringValue.of(criteria.getName()),
-                new NumericValue(criteria.isReadOnly())
+                BooleanValue.of(criteria.isReadOnly())
         );
     }
 
@@ -208,7 +210,7 @@ public class ValueConversions
                     new BlockValue(null, world, node.getPos()),
                     new StringValue(node.type.name().toLowerCase(Locale.ROOT)),
                     new NumericValue(node.penalty),
-                    new NumericValue(node.visited)
+                    BooleanValue.of(node.visited)
             ));
         }
         return ListValue.wrap(nodes);
@@ -242,7 +244,7 @@ public class ValueConversions
         }
         if (v instanceof Boolean)
         {
-            return new NumericValue((Boolean) v);
+            return BooleanValue.of((Boolean) v);
         }
         if (v instanceof UUID)
         {
@@ -299,6 +301,21 @@ public class ValueConversions
         return ListValue.of(
                 current == null?Value.NULL:new EntityValue(current),
                 new StringValue(uuid.toString())
+        );
+    }
+    public static Value of(Box box)
+    {
+        return ListValue.of(
+                ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
+        );
+    }
+
+    public static Value of(BlockBox box)
+    {
+        return ListValue.of(
+                ListValue.fromTriple(box.minX, box.minY, box.minZ),
+                ListValue.fromTriple(box.maxX, box.maxY, box.maxZ)
         );
     }
 
@@ -395,5 +412,33 @@ public class ValueConversions
                 MapValue.wrap(predicateData.getCMProperties()),
                 predicateData.getCMDataTag() == null?Value.NULL:new NBTSerializableValue(predicateData.getCMDataTag())
         );
+    }
+
+    public static Value guess(ServerWorld serverWorld, Object o) {
+        if (o == null)
+            return Value.NULL;
+        if (o instanceof List)
+            return ListValue.wrap(((List<?>) o).stream().map(oo -> guess(serverWorld, oo)).collect(Collectors.toList()));
+        if (o instanceof BlockPos)
+            return new BlockValue(null, serverWorld, (BlockPos)o);
+        if (o instanceof Entity)
+            return EntityValue.of((Entity) o);
+        if (o instanceof Vec3d)
+            return of((Vec3d)o);
+        if (o instanceof Vec3i)
+            return of(new BlockPos((Vec3i)o));
+        if (o instanceof Box)
+            return of((Box)o);
+        if (o instanceof BlockBox)
+            return of((BlockBox) o);
+        if (o instanceof ItemStack)
+            return of((ItemStack)o);
+        if (o instanceof Boolean)
+            return BooleanValue.of((Boolean) o);
+        if (o instanceof Number)
+            return NumericValue.of((Number) o);
+        if (o instanceof Identifier)
+            return of((Identifier)o);
+        return StringValue.of(o.toString());
     }
 }

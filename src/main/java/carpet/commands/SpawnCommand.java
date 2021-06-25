@@ -181,7 +181,7 @@ public class SpawnCommand
         //counter reset
         if (counter == null)
         {
-            HopperCounter.resetAll(source.getMinecraftServer());
+            HopperCounter.resetAll(source.getMinecraftServer(), false);
         }
         else
         {

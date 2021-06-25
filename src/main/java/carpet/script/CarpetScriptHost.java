@@ -12,8 +12,10 @@ import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
+import carpet.script.utils.AppStoreManager;
 import carpet.script.value.EntityValue;
 import carpet.script.value.FunctionValue;
+import carpet.script.value.ListValue;
 import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
@@ -28,6 +30,12 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.SemanticVersion;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.nbt.Tag;
@@ -40,6 +48,7 @@ import net.minecraft.util.math.BlockPos;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,8 +56,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,10 +79,11 @@ public class CarpetScriptHost extends ScriptHost
     public Map<Value, Value> appConfig;
     public Map<String, CommandArgument> appArgTypes;
 
-    Function<ServerCommandSource, Boolean> commandValidator;
+    Predicate<ServerCommandSource> commandValidator;
     boolean isRuleApp;
+    public AppStoreManager.StoreNode storeSource;
 
-    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
+    private CarpetScriptHost(CarpetScriptServer server, Module code, boolean perUser, ScriptHost parent, Map<Value, Value> config, Map<String, CommandArgument> argTypes, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
     {
         super(code, perUser, parent);
         this.saveTimeout = 0;
@@ -90,9 +102,10 @@ public class CarpetScriptHost extends ScriptHost
         appArgTypes = argTypes;
         this.commandValidator = commandValidator;
         this.isRuleApp = isRuleApp;
+        storeSource = null;
     }
 
-    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Function<ServerCommandSource, Boolean> commandValidator, boolean isRuleApp)
+    public static CarpetScriptHost create(CarpetScriptServer scriptServer, Module module, boolean perPlayer, ServerCommandSource source, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp, AppStoreManager.StoreNode storeSource)
     {
         CarpetScriptHost host = new CarpetScriptHost(scriptServer, module, perPlayer, null, Collections.emptyMap(), new HashMap<>(), commandValidator, isRuleApp);
         // parse code and convert to expression
@@ -109,6 +122,7 @@ public class CarpetScriptHost extends ScriptHost
                 host.setChatErrorSnooper(source);
                 CarpetExpression ex = new CarpetExpression(host.main, code, source, new BlockPos(0, 0, 0));
                 ex.getExpr().asATextSource();
+                host.storeSource = storeSource;
                 ex.scriptRunCommand(host, new BlockPos(source.getPosition()));
             }
             catch (CarpetExpressionException e)
@@ -122,11 +136,15 @@ public class CarpetScriptHost extends ScriptHost
                 host.handleErrorWithStack("Math doesn't compute", ae);
                 return null;
             }
+            finally
+            {
+                host.storeSource = null;
+            }
         }
         return host;
     }
 
-    private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument<Value> funcSpec, List<String> paramNames) throws CommandSyntaxException
+    private static int execute(CommandContext<ServerCommandSource> ctx, String hostName, FunctionArgument funcSpec, List<String> paramNames) throws CommandSyntaxException
     {
         CarpetProfiler.ProfilerToken currentSection = CarpetProfiler.start_section(null, "Scarpet command", CarpetProfiler.TYPE.GENERAL);
         CarpetScriptHost cHost = CarpetServer.scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
@@ -150,7 +168,7 @@ public class CarpetScriptHost extends ScriptHost
     public LiteralArgumentBuilder<ServerCommandSource> addPathToCommand(
             LiteralArgumentBuilder<ServerCommandSource> command,
             List<CommandToken> path,
-            FunctionArgument<Value> functionSpec
+            FunctionArgument functionSpec
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
@@ -172,21 +190,21 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> getNewCommandTree(
-            List<Pair<List<CommandToken>,FunctionArgument<Value>>> entries, Function<ServerCommandSource, Boolean> useValidator
+            List<Pair<List<CommandToken>,FunctionArgument>> entries, Predicate<ServerCommandSource> useValidator
     ) throws CommandSyntaxException
     {
         String hostName = main.getName();
-        Function<ServerCommandSource, Boolean> configValidator = getCommandConfigPermissions();
+        Predicate<ServerCommandSource> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.apply(player) && configValidator.apply(player));
-        for (Pair<List<CommandToken>,FunctionArgument<Value>> commandData : entries)
+               requires((player) -> CarpetServer.scriptServer.modules.containsKey(hostName) && useValidator.test(player) && configValidator.test(player));
+        for (Pair<List<CommandToken>,FunctionArgument> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
         }
         return command;
     }
 
-    public Function<ServerCommandSource, Boolean> getCommandConfigPermissions() throws CommandSyntaxException
+    public Predicate<ServerCommandSource> getCommandConfigPermissions() throws CommandSyntaxException
     {
         Value confValue = appConfig.get(StringValue.of("command_permission"));
         if (confValue == null) return s -> true;
@@ -283,19 +301,28 @@ public class CarpetScriptHost extends ScriptHost
             Map<Value, Value> config = ((MapValue) ret).getMap();
             setPerPlayer(config.getOrDefault(new StringValue("scope"), new StringValue("player")).getString().equalsIgnoreCase("player"));
             persistenceRequired = config.getOrDefault(new StringValue("stay_loaded"), Value.TRUE).getBoolean();
-            // read custom arguments
-            Value arguments = config.get(StringValue.of("arguments"));
-            if (arguments != null)
+            // check requires
+            Value loadRequirements = config.get(new StringValue("requires"));
+            if (loadRequirements instanceof FunctionValue)
             {
-                if (!(arguments instanceof MapValue))
-                    throw new InternalExpressionException("'arguments' element in config should be a map");
-                for (Map.Entry<Value, Value> typeData : ((MapValue)arguments).getMap().entrySet())
+                Value reqResult = callNow((FunctionValue) loadRequirements, Collections.emptyList());
+                if (reqResult.getBoolean()) // != false or null
+                    throw new InternalExpressionException(reqResult.getString());
+            }
+            else
+            {
+                checkModVersionRequirements(loadRequirements);
+            };
+            if (storeSource != null)
+            {
+                Value resources = config.get(new StringValue("resources"));
+                if (resources != null)
                 {
-                    String argument = typeData.getKey().getString();
-                    Value spec = typeData.getValue();
-                    if (!(spec instanceof MapValue)) throw new InternalExpressionException("Spec for '"+argument+"' should be a map");
-                    Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
-                    appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
+                    if (!(resources instanceof ListValue)) throw new InternalExpressionException("App resources not defined as a list");
+                    for (Value resource : ((ListValue) resources).getItems())
+                    {
+                        AppStoreManager.addResource(this, storeSource, resource);
+                    }
                 }
             }
             appConfig = config;
@@ -323,8 +350,37 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
+    public void readCustomArgumentTypes() throws CommandSyntaxException
+    {
+        // read custom arguments
+        Value arguments = appConfig.get(StringValue.of("arguments"));
+        if (arguments != null)
+        {
+            if (!(arguments instanceof MapValue))
+                throw CommandArgument.error("'arguments' element in config should be a map");
+            appArgTypes.clear();
+            for (Map.Entry<Value, Value> typeData : ((MapValue)arguments).getMap().entrySet())
+            {
+                String argument = typeData.getKey().getString();
+                Value spec = typeData.getValue();
+                if (!(spec instanceof MapValue)) throw CommandArgument.error("Spec for '"+argument+"' should be a map");
+                Map<String, Value> specData = ((MapValue) spec).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
+                appArgTypes.put(argument, CommandArgument.buildFromConfig(argument, specData, this));
+            }
+        }
+    }
+
     public Boolean addAppCommands(Consumer<Text> notifier)
     {
+        try
+        {
+            readCustomArgumentTypes();
+        }
+        catch (CommandSyntaxException e)
+        {
+            notifier.accept(Messenger.c("r Error when handling of setting up custom argument types: "+e.getMessage()));
+            return false;
+        }
         if (appConfig.get(StringValue.of("commands")) != null)
         {
             try
@@ -342,12 +398,91 @@ public class CarpetScriptHost extends ScriptHost
             catch (CommandSyntaxException cse)
             {
                 // failed
-                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app ", cse.getRawMessage()));
+                notifier.accept(Messenger.c("r Failed to build command system for "+getName()+" thus failed to load the app: ", cse.getRawMessage()));
                 return null;
             }
 
         }
         return addLegacyCommand(notifier);
+    }
+    
+    // Prefixes based on FLoader's SemanticVersionPredicateParser's class prefixes under Apache 2.0, since that's not public API
+    private static final Map<String, BiPredicate<SemanticVersion, SemanticVersion>> VERSION_PREFIXES = new HashMap<String, BiPredicate<SemanticVersion, SemanticVersion>>() {{
+            put(">=", (target, source) -> source.compareTo(target) >= 0);
+            put("<=", (target, source) -> source.compareTo(target) <= 0);
+            put(">", (target, source) -> source.compareTo(target) > 0);
+            put("<", (target, source) -> source.compareTo(target) < 0);
+            put("=", (target, source) -> source.compareTo(target) == 0);
+            put("~", (target, source) -> source.compareTo(target) >= 0
+                    && source.getVersionComponent(0) == target.getVersionComponent(0)
+                    && source.getVersionComponent(1) == target.getVersionComponent(1));
+            put("^", (target, source) -> source.compareTo(target) >= 0
+                    && source.getVersionComponent(0) == target.getVersionComponent(0));
+    }};
+    
+    public void checkModVersionRequirements(Value reqs) {
+        if (reqs == null)
+            return;
+        if (!(reqs instanceof MapValue))
+        {
+            throw new InternalExpressionException("`requires` field must be a map of mod dependencies or a function to be executed");
+        }
+        Map<Value, Value> requirements = ((MapValue)reqs).getMap();
+        for (Entry<Value, Value> requirement : requirements.entrySet())
+        {
+            boolean successful = false;
+            String requiredModId = requirement.getKey().getString();
+            String requirementString = requirement.getValue().getString();
+            
+            ModContainer mod = FabricLoader.getInstance().getModContainer(requiredModId).orElse(null);
+            if (mod != null)
+            {
+                if (requirementString.equals("*"))
+                    continue;
+                Version presentVersion = mod.getMetadata().getVersion();
+                BiPredicate<SemanticVersion, SemanticVersion> tester = null;
+                String remainingRequirementString = requirementString;
+                for (Entry<String, BiPredicate<SemanticVersion, SemanticVersion>> s : VERSION_PREFIXES.entrySet())
+                {
+                    if (requirementString.startsWith(s.getKey()))
+                    {
+                        tester = s.getValue();
+                        remainingRequirementString = requirementString.substring(s.getKey().length());
+                    }
+                }
+                if (tester == null)
+                    tester = VERSION_PREFIXES.get("=");
+                if (presentVersion instanceof SemanticVersion)
+                {
+                    SemanticVersion requiredVersion = null;
+                    try {
+                        requiredVersion = SemanticVersion.parse(remainingRequirementString);
+                    }
+                    catch (VersionParsingException e)
+                    {
+                        throw new InternalExpressionException("Failed to parse semantic version for '" + requiredModId + "' in 'requires': " + e.getMessage());
+                    }
+                    if (tester.test(requiredVersion, (SemanticVersion) presentVersion))
+                        successful = true;
+                }
+                else
+                {
+                    if (FabricLoader.getInstance().isDevelopmentEnvironment())
+                        successful = true; // Autoversioning breaks semver in dev (loads as ${version})
+                    else
+                    {
+                        if (!(tester == VERSION_PREFIXES.get("=")))
+                            throw new InternalExpressionException("Mod '"+requiredModId+"' doesn't use semversion, thus can only check version equality");
+                        if (presentVersion.getFriendlyString().equals(remainingRequirementString))
+                            successful = true;
+                    }
+                }
+            }
+            if (!successful)
+            {
+                throw new InternalExpressionException(getName()+" requires " + requiredModId + " version " + requirementString + " in order to load");
+            }
+        }
     }
 
     private Boolean addLegacyCommand(Consumer<Text> notifier)
@@ -361,7 +496,7 @@ public class CarpetScriptHost extends ScriptHost
             return null;
         }
 
-        Function<ServerCommandSource, Boolean> configValidator;
+        Predicate<ServerCommandSource> configValidator;
         try
         {
             configValidator = getCommandConfigPermissions();
@@ -373,7 +508,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         String hostName = getName();
         LiteralArgumentBuilder<ServerCommandSource> command = literal(hostName).
-                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.apply(player) && configValidator.apply(player)).
+                requires((player) -> scriptServer.modules.containsKey(hostName) && commandValidator.test(player) && configValidator.test(player)).
                 executes( (c) ->
                 {
                     CarpetScriptHost targetHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(c.getSource());
@@ -382,9 +517,11 @@ public class CarpetScriptHost extends ScriptHost
                     return (int)response.readInteger();
                 });
 
-        for (String function : globaFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
+        boolean hasTypeSupport = appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean();
+
+        for (String function : globalFunctionNames(main, s ->  !s.startsWith("_")).sorted().collect(Collectors.toList()))
         {
-            if (appConfig.getOrDefault(StringValue.of("legacy_command_type_support"), Value.FALSE).getBoolean())
+            if (hasTypeSupport)
             {
                 try
                 {
@@ -424,19 +561,19 @@ public class CarpetScriptHost extends ScriptHost
         return true;
     }
 
-    public LiteralArgumentBuilder<ServerCommandSource> readCommands(Function<ServerCommandSource, Boolean> useValidator) throws CommandSyntaxException
+    public LiteralArgumentBuilder<ServerCommandSource> readCommands(Predicate<ServerCommandSource> useValidator) throws CommandSyntaxException
     {
         Value commands = appConfig.get(StringValue.of("commands"));
 
         if (commands == null) return null;
         if (!(commands instanceof MapValue))
             throw CommandArgument.error("'commands' element in config should be a map");
-        List<Pair<List<CommandToken>,FunctionArgument<Value>>> commandEntries = new ArrayList<>();
+        List<Pair<List<CommandToken>,FunctionArgument>> commandEntries = new ArrayList<>();
 
         for (Map.Entry<Value, Value> commandsData : ((MapValue)commands).getMap().entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList()))
         {
             List<CommandToken> elements = CommandToken.parseSpec(commandsData.getKey().getString(), this);
-            FunctionArgument<Value> funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
+            FunctionArgument funSpec = FunctionArgument.fromCommandSpec(this, commandsData.getValue());
             commandEntries.add(Pair.of(elements, funSpec));
         }
         commandEntries.sort(new ListComparator<>());
@@ -606,11 +743,8 @@ public class CarpetScriptHost extends ScriptHost
             {
                 case VARIABLE:
                     LazyValue var = getGlobalVariable(tok.surface);
-                    if (var != null)
-                    {
-                        argv.add(var);
-                        break;
-                    }
+                    if (var != null) argv.add(var);
+                    break;
                 case STRINGPARAM:
                     argv.add((c, t) -> new StringValue(tok.surface));
                     sign = "";
@@ -690,12 +824,10 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value call(ServerCommandSource source, FunctionValue function, List<Value> suppliedArgs)
+    public Value call(ServerCommandSource source, FunctionValue function, List<Value> argv)
     {
         if (CarpetServer.scriptServer.stopAll)
             throw new CarpetExpressionException("SCARPET PAUSED", null);
-
-        List<LazyValue> argv = FunctionValue.lazify(suppliedArgs);
 
         List<String> args = function.getArguments();
         if (argv.size() != args.size())
@@ -703,7 +835,7 @@ public class CarpetScriptHost extends ScriptHost
             String error = "Fail: stored function "+function.getPrettyString()+" takes "+args.size()+" arguments, not "+argv.size()+ ":\n";
             for (int i = 0; i < max(argv.size(), args.size()); i++)
             {
-                error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).evalValue(null).getString():"??")+"\n";
+                error += (i<args.size()?args.get(i):"??")+" => "+(i<argv.size()?argv.get(i).getString():"??")+"\n";
             }
             throw new CarpetExpressionException(error, null);
         }
@@ -712,7 +844,7 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
             return function.getExpression().evalValue(
-                    () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
+                    () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
                     context,
                     Context.VOID
             );
@@ -741,7 +873,7 @@ public class CarpetScriptHost extends ScriptHost
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
             Context context = new CarpetContext(this, source, pos);
             return fun.getExpression().evalValue(
-                    () -> fun.lazyEval(context, Context.VOID, fun.getExpression(), fun.getToken(), FunctionValue.lazify(argv)),
+                    () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),
                     context,
                     Context.VOID);
         }
@@ -863,6 +995,12 @@ public class CarpetScriptHost extends ScriptHost
         return fdesc.listFolder(main);
     }
 
+    public boolean applyActionForResource(String path, boolean shared, Consumer<Path> action)
+    {
+        FileArgument fdesc = FileArgument.resourceFromPath(path, FileArgument.Reason.CREATE, shared);
+        return fdesc.findPathAndApply(main, action);
+    }
+
 
     public void tick()
     {
@@ -890,15 +1028,7 @@ public class CarpetScriptHost extends ScriptHost
                 return null;
             }
 
-            String shebang = message;
-            if (expr.module != null)
-            {
-                shebang += " in " + expr.module.getName() + "";
-            }
-            else
-            {
-                shebang += " in system chat";
-            }
+            String shebang = message+" in "+expr.getModuleName();
             if (token != null)
             {
                 String[] lines = expr.getCodeString().split("\n");
@@ -953,7 +1083,7 @@ public class CarpetScriptHost extends ScriptHost
     }
 
     @Override
-    public void handleExpressionException(String message, ExpressionException exc)
+    synchronized public void handleExpressionException(String message, ExpressionException exc)
     {
         handleErrorWithStack(message, new CarpetExpressionException(exc.getMessage(), exc.stack));
     }

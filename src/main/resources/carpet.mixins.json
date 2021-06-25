@@ -4,6 +4,8 @@
   "package": "carpet.mixins",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "BarrierBlock_updateSuppressionBlockMixin",
+
     "SpawnHelperInnerMixin",
     "CommandManagerMixin",
 
@@ -61,6 +63,7 @@
     "Brain_Mixin",
     "Memory_scarpetMixin",
 
+    "PlayerEntity_fakePlayersMixin",
     "ServerWorld_fakePlayersMixin",
     "ThrownEnderpearlEntity_fakePlayersMixin",
 
@@ -73,6 +76,7 @@
     "ExperienceOrbEntityMixin",
     "PlayerActionC2SPacketMixin",
     "ServerPlayerEntityMixin",
+    "ClientSettingsC2SPacket_scarpetMixin",
     "PlayerManager_coreMixin",
     "PlayerManager_fakePlayersMixin",
     "RedstoneWireBlockMixin",
@@ -158,6 +162,7 @@
     "MobEntity_extremeMixin",
     "ProjectileEntity_extremeMixin",
     "Projectile_extremeMixin",
+    "WitherEntity_extremeMixin",
 
     "ArmorStandEntity_scarpetMarkerMixin",
     "Entity_scarpetEventsMixin",
@@ -172,12 +177,14 @@
     "Scoreboard_scarpetMixin",
     "TradeOutputSlot_scarpetEventMixin",
 
+    "BiomeEffects_scarpetMixin",
     "ChunkTicketManager_scarpetMixin",
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
     "ReloadCommand_reloadAppsMixin",
+    "CrashReport_addScarpetAppsMixin",
 
     "RecipeManager_scarpetMixin",
     "Ingredient_scarpetMixin",
@@ -196,6 +203,8 @@
     "PistonBlockEntity_playerHandlingMixin",
     "BlockItem_creativeNoClipMixin",
     "WallStandingBlockItem_creativeNoClipMixin",
+    "ShulkerBoxBlockEntity_creativeNoClipMixin",
+    "EndGatewayBlockEntity_creativeNoClipMixin",
     "LivingEntity_creativeFlyMixin"
 
   ],
@@ -214,6 +223,7 @@
     "DebugRenderer_scarpetRenderMixin",
     "WorldRenderer_scarpetRenderMixin",
 
+    "BiomeArray_cleanLogsMixin",
     "SoundEngineInt_cleanLogsMixin",
     "SoundSystem_cleanLogsMixin"
   ],
