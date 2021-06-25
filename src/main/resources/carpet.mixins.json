@@ -188,6 +188,7 @@
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",
+    "ServerEntityManager_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
     "ReloadCommand_reloadAppsMixin",
     "CrashReport_addScarpetAppsMixin",

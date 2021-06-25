@@ -26,7 +26,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import static carpet.script.CarpetEventServer.Event.ENTITY_LOAD;
 import static carpet.script.CarpetEventServer.Event.EXPLOSION;
 import static carpet.script.CarpetEventServer.Event.LIGHTNING;
 
@@ -46,6 +45,8 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
         if (LIGHTNING.isNeeded()) LIGHTNING.onWorldEventFlag((ServerWorld) (Object)this, blockPos, bl2?1:0);
     }
 
+    /*
+    moved to ServerEntityManager_scarpetMixin in 1.17
     @Redirect(method = "addEntity", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/server/world/ServerEntityManager;addEntity(Lnet/minecraft/world/entity/EntityLike;)Z"
@@ -66,6 +67,7 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
         };
         return success;
     }
+    */
 
     @Inject(method = "createExplosion", at = @At("HEAD"))
     private void handleExplosion(/*@Nullable*/ Entity entity, /*@Nullable*/ DamageSource damageSource, /*@Nullable*/ ExplosionBehavior explosionBehavior, double d, double e, double f, float g, boolean bl, Explosion.DestructionType destructionType, CallbackInfoReturnable<Explosion> cir)

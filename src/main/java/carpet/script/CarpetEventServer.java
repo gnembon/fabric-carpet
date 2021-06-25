@@ -933,16 +933,17 @@ public class CarpetEventServer
             return "entity_loaded_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
         }
 
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<EntityType<? extends Entity>, Event>() {{
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<>()
+        {{
             EntityType.get("zombie");
             Registry.ENTITY_TYPE.forEach(et -> {
-                put(et, new Event(getEntityLoadEventName(et), 1, true, false)
+                put(et, new Event(getEntityLoadEventName(et), 2, true, false)
                 {
                     @Override
-                    public void onEntityAction(Entity entity)
+                    public void onEntityAction(Entity entity, boolean created)
                     {
                         handler.call(
-                                () -> Collections.singletonList(new EntityValue(entity)),
+                                () -> Arrays.asList(new EntityValue(entity), BooleanValue.of(created)),
                                 () -> CarpetServer.minecraft_server.getCommandSource().withWorld((ServerWorld) entity.world).withLevel(CarpetSettings.runPermissionLevel)
                         );
                     }
@@ -1040,7 +1041,7 @@ public class CarpetEventServer
         public void onBlockPlaced(ServerPlayerEntity player, BlockPos pos, Hand enumhand, ItemStack itemstack) { }
         public void onEntityHandAction(ServerPlayerEntity player, Entity entity, Hand enumhand) { }
         public void onHandAction(ServerPlayerEntity player, Hand enumhand) { }
-        public void onEntityAction(Entity entity) { }
+        public void onEntityAction(Entity entity, boolean created) { }
         public void onDimensionChange(ServerPlayerEntity player, Vec3d from, Vec3d to, RegistryKey<World> fromDim, RegistryKey<World> dimTo) {}
         public void onDamage(Entity target, float amount, DamageSource source) { }
         public void onRecipeSelected(ServerPlayerEntity player, Identifier recipe, boolean fullStack) {}
