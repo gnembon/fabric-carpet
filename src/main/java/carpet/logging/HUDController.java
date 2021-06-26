@@ -124,7 +124,7 @@ public class HUDController
         for (ServerPlayerEntity player: targets)
         {
             PacketByteBuf packetData = new PacketByteBuf(Unpooled.buffer()).
-                    writeText(scarpet_headers.getOrDefault(player, new LiteralText(""))).
+                    writeText(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText(""))).
                     writeText(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
             PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket(packetData);
 
