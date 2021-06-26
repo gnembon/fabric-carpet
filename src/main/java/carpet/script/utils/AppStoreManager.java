@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 /**
  * A class used to save scarpet app store scripts to disk
  */
@@ -48,7 +47,7 @@ public class AppStoreManager
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions.
      */
-    public static final StoreNode appStoreRoot = StoreNode.folder(null, "");
+    public static final StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
 
     /** This is the base link to the scarpet app repo from the github api.
      */
@@ -59,8 +58,8 @@ public class AppStoreManager
     {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
         {
-            appStoreRoot.sealed = false;
-            appStoreRoot.children = new HashMap<>();
+            APP_STORE_ROOT.sealed = false;
+            APP_STORE_ROOT.children = new HashMap<>();
             if (newValue.equalsIgnoreCase("none"))
             {
                 scarpetRepoLink = null;
@@ -113,7 +112,7 @@ public class AppStoreManager
         }
         private StringBuilder createPrePath()
         {
-            return this == appStoreRoot ? new StringBuilder() : parent.createPrePath().append(pathElement());
+            return this == APP_STORE_ROOT ? new StringBuilder() : parent.createPrePath().append(pathElement());
         }
         private StoreNode(StoreNode parent, String name)
         {
@@ -210,7 +209,7 @@ public class AppStoreManager
     public static List<String> suggestionsFromPath(String currentPath) throws IOException
     {
         String[] path = currentPath.split("/");
-        StoreNode appKiosk = appStoreRoot;
+        StoreNode appKiosk = APP_STORE_ROOT;
         for(String pathElement : path)
         {
             if (appKiosk.cannotContinueFor(pathElement)) return appKiosk.createPathSuggestions();
@@ -256,7 +255,7 @@ public class AppStoreManager
      */
     public static Triple<String, String, StoreNode> getFileNode(String appPath)
     {
-        return getFileNodeFrom(appStoreRoot, appPath);
+        return getFileNodeFrom(APP_STORE_ROOT, appPath);
     }
 
     public static Triple<String, String, StoreNode> getFileNodeFrom(StoreNode start, String appPath)
@@ -353,6 +352,29 @@ public class AppStoreManager
         return getFileNodeFrom(storeSource, original).getMiddle(); // Relative path: Use download location
     }
 
+    private static StoreNode getNewStoreNode(StoreNode originalSource, String sourceString, String contentUrl)
+    {
+        StoreNode next = originalSource;
+        if (sourceString == contentUrl) // External URL 
+            return null;
+        if (sourceString.charAt(0) == '/') // Absolute URL
+        {
+            next = APP_STORE_ROOT;
+            sourceString = sourceString.substring(1);
+        }
+        String[] dirs = sourceString.split("/");
+        try
+        {
+            for (int i = 0; i < dirs.length - 1; i++)
+                next = next.drillDown(dirs[i]);
+        }
+        catch (IOException e)
+        {
+            return null; // Shouldn't ever happen, but let's not give an incorrect node just in case
+        }
+        return next;
+    }
+
     public static void addResource(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value resource)
     {
         if (!(resource instanceof MapValue))
@@ -381,7 +403,7 @@ public class AppStoreManager
                 throw new InternalExpressionException("App resource tried to leave script reserved space");
             try
             {
-                downloadScript(carpetScriptHost.responsibleSource, target, Triple.of(target, contentUrl, null));
+                downloadScript(carpetScriptHost.responsibleSource, target, Triple.of(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)));
             }
             catch (CommandException e)
             {

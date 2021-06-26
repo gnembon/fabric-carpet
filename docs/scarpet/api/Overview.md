@@ -110,12 +110,10 @@ in a list and contain of map-like resources descriptors, looking like
    'resources' -> [
         {
             'source' -> 'https://raw.githubusercontent.com/gnembon/fabric-carpet/master/src/main/resources/assets/carpet/icon.png',
-            'type' -> 'url',
             'target' -> 'foo/photos.zip/foo/cm.png',
         },
         {
-            'source' -> 'survival/README.md',
-            'type' -> 'store',
+            'source' -> '/survival/README.md',
             'target' -> 'survival_readme.md',
             'shared' -> true,
         },
@@ -123,17 +121,18 @@ in a list and contain of map-like resources descriptors, looking like
             'source' -> 'carpets.sc',
             'type' -> 'app',
             'target' -> 'apps/flying_carpets.sc',
-            'shared' -> true,
         },
     ]
    ```
-   `source` and `type` indicate resource location: either an arbitrary url (type `'url'`), 
-   absolute location of a file in the app store (type `'store'`),
-or a relative location in the same folder as the app in question (type `'app'`). 
+   `source` indicates resource location: either an arbitrary url (starting with `http://` or `https://`), 
+   absolute location of a file in the app store (starting with a slash `/`),
+or a relative location in the same folder as the app in question (the relative location directly). 
 `'target'` points to the path in app data, or shared app data folder
 if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
-Currently, app resources
-are only downloaded when using `/carpet download` command.
+If `type` is specified as `app`, the `source` must point to a scarpet app or library, and the app will be downloaded and installed as well.
+If the app has relative resources dependencies, Carpet will use its own path in case the app was loaded from the same app store, or none if the 
+app was loaded from an external url.
+Currently, app resources are only downloaded when using `/carpet download` command.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
 *   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.
