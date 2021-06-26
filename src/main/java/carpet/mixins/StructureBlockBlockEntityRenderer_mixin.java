@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(StructureBlockBlockEntityRenderer.class)
 public abstract class StructureBlockBlockEntityRenderer_mixin implements BlockEntityRenderer<StructureBlockBlockEntity>
 {
-    @Inject(method = "method_33893", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getRenderDistance", at = @At("HEAD"), cancellable = true)
     void newLimit(CallbackInfoReturnable<Integer> cir)
     {
         if (CarpetSettings.structureBlockOutlineDistance != 96)
