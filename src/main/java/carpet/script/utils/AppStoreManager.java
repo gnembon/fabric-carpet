@@ -215,10 +215,15 @@ public class AppStoreManager
         StoreNode appKiosk = appStoreRoot;
         for(String pathElement : path)
         {
-            if (appKiosk.cannotContinueFor(pathElement)) return appKiosk.createPathSuggestions();
+            if (appKiosk.cannotContinueFor(pathElement)) break;
             appKiosk = appKiosk.children.get(pathElement);
         }
-        return appKiosk.createPathSuggestions();
+        List<String> filteredSuggestions = appKiosk.createPathSuggestions().stream().filter(s -> s.startsWith(currentPath)).collect(Collectors.toList());
+        if (filteredSuggestions.size() == 1) {
+            if (!appKiosk.isLeaf())
+                return suggestionsFromPath(filteredSuggestions.get(0)); // Start suggesting directory contents
+        }
+        return filteredSuggestions;
     }
 
 
