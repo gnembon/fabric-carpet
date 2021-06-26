@@ -107,7 +107,7 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         value = "INVOKE",
         target = "Lnet/minecraft/server/world/ThreadedAnvilChunkStorage;convertToFullChunk(Lnet/minecraft/server/world/ChunkHolder;)Ljava/util/concurrent/CompletableFuture;",
         shift = At.Shift.AFTER
-    ))
+    ), remap = false)
     private void onChunkGenerated(final ChunkHolder chunkHolder, final Chunk chunk, final CallbackInfoReturnable<CompletableFuture> cir)
     {
         if (CHUNK_GENERATED.isNeeded())
