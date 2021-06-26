@@ -461,6 +461,10 @@ public class ScriptCommand
         {
             host.handleErrorWithStack("Math doesn't compute", ae);
         }
+        catch (StackOverflowError soe)
+        {
+            host.handleErrorWithStack("Your thoughts are too deep", soe);
+        }
         return 0;
         //host.resetErrorSnooper();  // lets say no need to reset the snooper in case something happens on the way
     }

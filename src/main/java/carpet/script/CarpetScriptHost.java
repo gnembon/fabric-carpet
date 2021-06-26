@@ -136,6 +136,10 @@ public class CarpetScriptHost extends ScriptHost
                 host.handleErrorWithStack("Math doesn't compute", ae);
                 return null;
             }
+            catch (StackOverflowError soe)
+            {
+                host.handleErrorWithStack("Your thoughts are too deep", soe);
+            }
             finally
             {
                 host.storeSource = null;
@@ -698,13 +702,16 @@ public class CarpetScriptHost extends ScriptHost
         catch (CarpetExpressionException exc)
         {
             handleErrorWithStack("Error while running custom command", exc);
-            return Value.NULL;
         }
         catch (ArithmeticException ae)
         {
             handleErrorWithStack("Math doesn't compute", ae);
-            return Value.NULL;
         }
+        catch (StackOverflowError soe)
+        {
+            handleErrorWithStack("Your thoughts are too deep", soe);
+        }
+        return Value.NULL;
     }
 
     public Value handleCommand(ServerCommandSource source, FunctionValue function, List<Value> args)
@@ -716,13 +723,16 @@ public class CarpetScriptHost extends ScriptHost
         catch (CarpetExpressionException exc)
         {
             handleErrorWithStack("Error while running custom command", exc);
-            return Value.NULL;
         }
         catch (ArithmeticException ae)
         {
             handleErrorWithStack("Math doesn't compute", ae);
-            return Value.NULL;
         }
+        catch (StackOverflowError soe)
+        {
+            handleErrorWithStack("Your thoughts are too deep", soe);
+        }
+        return Value.NULL;
     }
 
     public Value callLegacy(ServerCommandSource source, String call, List<Integer> coords, String arg)
@@ -1068,13 +1078,13 @@ public class CarpetScriptHost extends ScriptHost
         super.resetErrorSnooper();
     }
 
-    public void handleErrorWithStack(String intro, Exception exception)
+    public void handleErrorWithStack(String intro, Throwable exception)
     {
         if (responsibleSource != null)
         {
             if (exception instanceof CarpetExpressionException) ((CarpetExpressionException) exception).printStack(responsibleSource);
             String message = exception.getMessage();
-            Messenger.m(responsibleSource, "r "+intro+(message.isEmpty()?"":": "+message));
+            Messenger.m(responsibleSource, "r "+intro+( (message == null || message.isEmpty())?"":": "+message));
         }
         else
         {

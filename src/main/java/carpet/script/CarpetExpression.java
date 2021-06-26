@@ -82,6 +82,10 @@ public class CarpetExpression
         {
             throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage(), null);
         }
+        catch (StackOverflowError soe)
+        {
+            throw new CarpetExpressionException("Your thoughts are too deep", null);
+        }
     }
 
     public Value scriptRunCommand(ScriptHost host, BlockPos pos)
@@ -114,6 +118,10 @@ public class CarpetExpression
         catch (ArithmeticException ae)
         {
             throw new CarpetExpressionException("Math doesn't compute... "+ae.getMessage(), null);
+        }
+        catch (StackOverflowError soe)
+        {
+            throw new CarpetExpressionException("Your thoughts are too deep", null);
         }
     }
 }
