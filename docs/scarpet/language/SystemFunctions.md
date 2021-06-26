@@ -252,7 +252,7 @@ indicating if the given seed has been used or not.
 
 returns a noise value from `0.0` to `1.0` (roughly) for 1, 2 or 3 dimensional coordinate. The default seed it samples 
 from is `0`, but seed can be specified as a 4th argument as well. In case you need 1D or 2D noise values with custom 
-seed, use `null` for `z`, or `y` and `z` arguments respectively.
+seed, use `null` for `y` and `z`, or `z` arguments respectively.
 
 Perlin noise is based on a square grid and generates rougher maps comparing to Simplex, which is creamier. 
 Querying for lower-dimensional result, rather than affixing unused dimensions to constants has a speed benefit,
