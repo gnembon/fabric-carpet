@@ -5,6 +5,7 @@ import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.MapValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.settings.ParsedRule;
 import carpet.settings.Validator;
@@ -370,7 +371,7 @@ public class AppStoreManager
         }
         catch (IOException e)
         {
-            return null; // Shouldn't ever happen, but let's not give an incorrect node just in case
+            return null; // Should never happen, but let's not give a potentially incorrect node just in case
         }
         return next;
     }
@@ -385,7 +386,7 @@ public class AppStoreManager
         String source = resourceMap.get("source").getString();
         String target = resourceMap.get("target").getString();
         boolean shared = resourceMap.getOrDefault("shared", Value.FALSE).getBoolean();
-        String type = resourceMap.get("type").getString();
+        String type = resourceMap.getOrDefault("type", StringValue.EMPTY).getString();
         String contentUrl;
         if (type.equalsIgnoreCase("store")) // deprecated, but necessary since it allows 'absolute' paths without starting slash
         {
