@@ -70,7 +70,7 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class CarpetScriptHost extends ScriptHost
 {
     private final CarpetScriptServer scriptServer;
-    ServerCommandSource responsibleSource;
+    public ServerCommandSource responsibleSource;
 
     private Tag globalState;
     private int saveTimeout;
