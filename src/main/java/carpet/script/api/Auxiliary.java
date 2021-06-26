@@ -572,7 +572,7 @@ public class Auxiliary {
             else title = null; // Will never happen, just to make lambda happy
             if (packetGetter == null)
             {
-                Map<ServerPlayerEntity, BaseText> map;
+                Map<String, BaseText> map;
                 if (actionString.equals("player_list_header"))
                     map = HUDController.scarpet_headers;
                 else
@@ -582,12 +582,12 @@ public class Auxiliary {
                 List<ServerPlayerEntity> targetList = targets.collect(Collectors.toList());
                 if (!soundsTrue) // null or empty string
                     targetList.forEach(target -> {
-                        map.remove(target);
+                        map.remove(target.getEntityName());
                         total.getAndIncrement();
                     });
                 else
                     targetList.forEach(target -> {
-                        map.put(target, (BaseText) title);
+                        map.put(target.getEntityName(), (BaseText) title);
                         total.getAndIncrement();
                     });
                 HUDController.update_hud(((CarpetContext)c).s.getMinecraftServer(), targetList);
