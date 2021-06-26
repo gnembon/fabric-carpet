@@ -12,7 +12,8 @@ public class BiomeArray_cleanLogsMixin
 {
     @Redirect(method = "<init>(Lnet/minecraft/util/collection/IndexedIterable;[I)V", at = @At(
             value = "INVOKE",
-            target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V")
+            target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V",
+            remap = false)
     )
     private void skipLog(Logger logger, String message)
     {
