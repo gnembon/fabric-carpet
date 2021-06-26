@@ -104,7 +104,7 @@ predicate that is volatile and might change, the command might falsely do or do 
 however player will always be able to type it in and either succeed, or fail, based on their current permissions.
 Custom permission applies to legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
-*  `'resources'` - list of all downloadable resources when installing the app from an app store. List of resources needs to be 
+*  `'resources'` - list of all downloadable resources or dependencies when installing the app from an app store. List of resources needs to be 
 in a list and contain of map-like resources descriptors, looking like
    ```
    'resources' -> [
@@ -120,7 +120,7 @@ in a list and contain of map-like resources descriptors, looking like
         {
             'source' -> 'carpets.sc',
             'type' -> 'app',
-            'target' -> 'apps/flying_carpets.sc',
+            'target' -> 'flying_carpets.sc',
         },
     ]
    ```
@@ -132,6 +132,8 @@ if `'shared'` is specified and `true`. When re-downloading the app, all resource
 If `type` is specified as `app`, the `source` must point to a scarpet app or library, and the app will be downloaded and installed as well.
 If the app has relative resources dependencies, Carpet will use its own path in case the app was loaded from the same app store, or none if the 
 app was loaded from an external url.
+If you need to `import()` from dependencies indicated in this block, make sure to have the `__config()` map before any import that references your
+remote dependencies, in order to allow them to be downloaded.
 Currently, app resources are only downloaded when using `/carpet download` command.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
