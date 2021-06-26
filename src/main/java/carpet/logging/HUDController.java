@@ -42,10 +42,11 @@ public class HUDController
     }
 
     public static Map<ServerPlayerEntity, List<BaseText>> player_huds = new HashMap<>();
+
+    //keyed with player names so unlogged players don't hold the reference
+    public static final Map<String, BaseText> scarpet_headers = new HashMap<>();
     
-    public static final Map<ServerPlayerEntity, BaseText> scarpet_headers = new HashMap<>();
-    
-    public static final Map<ServerPlayerEntity, BaseText> scarpet_footers = new HashMap<>();
+    public static final Map<String, BaseText> scarpet_footers = new HashMap<>();
 
     public static void resetScarpetHUDs() {
         scarpet_headers.clear();
@@ -54,6 +55,7 @@ public class HUDController
 
     public static void addMessage(ServerPlayerEntity player, BaseText hudMessage)
     {
+        if (player == null) return;
         if (!player_huds.containsKey(player))
         {
             player_huds.put(player, new ArrayList<>());
@@ -80,7 +82,10 @@ public class HUDController
 
         player_huds.clear();
 
-        scarpet_footers.forEach(HUDController::addMessage);
+        server.getPlayerManager().getPlayerList().forEach(p -> {
+            BaseText scarpetFOoter = scarpet_footers.get(p.getEntityName());
+            if (scarpetFOoter != null) HUDController.addMessage(p, scarpetFOoter);
+        });
 
         if (LoggerRegistry.__tps)
             LoggerRegistry.getLogger("tps").log(()-> send_tps_display(server));
@@ -117,7 +122,7 @@ public class HUDController
         for (ServerPlayerEntity player: targets)
         {
             PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player, new LiteralText("")));
+            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText("")));
             ((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
             player.networkHandler.sendPacket(packet);
         }
