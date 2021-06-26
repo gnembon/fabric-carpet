@@ -500,7 +500,7 @@ public class SettingsManager
             ps.println("* Type: `" + rule.type.getSimpleName() + "`  ");
             ps.println("* Default value: `" + rule.defaultAsString + "`  ");
             String optionString = rule.options.stream().map(s -> "`" + s + "`").collect(Collectors.joining(", "));
-            ps.println((rule.isStrict?"* Required":"* Suggested")+" options: " + optionString + "  ");
+            if (!optionString.isEmpty()) ps.println((rule.isStrict?"* Required":"* Suggested")+" options: " + optionString + "  ");
             ps.println("* Categories: " + rule.categories.stream().map(s -> "`" + s.toUpperCase(Locale.ROOT) + "`").collect(Collectors.joining(", ")) + "  ");
             boolean preamble = false;
             for (Validator<?> validator : rule.validators)
