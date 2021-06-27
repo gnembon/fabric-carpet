@@ -70,10 +70,17 @@ Duplicate of `tick`, just automatically located in the nether. Use `__on_tick() 
 ### `__on_tick_ender()` (Deprecated)
 Duplicate of `tick`, just automatically located in the end. Use `__on_tick() -> in_dimension('end', ... ` instead.
 
-### `__on_chunk_generated(x,z)`
+### `__on_chunk_generated(x, z)`
 Called right after a chunk at a given coordinate is full generated. `x` and `z` correspond
-to the lowest x and z coords in the chunk. Event may (or may not) work with Optifine installed
-at the same time.
+to the lowest x and z coords in the chunk. Handling of this event is scheduled as an off-tick task happening after the 
+chunk is confirmed to be generated and loaded to the game, so 
+handling of this event is not technically guaranteed, if the game crashes while players are moving for example, and can
+be missed on the next start, if the game successfully saves it and fails to execute all remaining tasks. In normal operation
+this should not happen, but be warned.
+
+### `__on_chunk_loaded(x, z)`
+Called right after a chunk at a given coordinate is loaded. All newly generated chunks are loaded as well.
+ `x` and `z` correspond to the lowest x and z coordinates in the chunk.
 
 ### `__on_lightning(block, mode)`
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 

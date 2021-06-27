@@ -45,7 +45,6 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.village.Merchant;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.explosion.Explosion;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -417,12 +416,23 @@ public class CarpetEventServer
         public static final Event CHUNK_GENERATED = new Event("chunk_generated", 2, true)
         {
             @Override
-            public void onChunkGenerated(ServerWorld world, Chunk chunk)
+            public void onChunkEvent(ServerWorld world, ChunkPos chPos, boolean generated)
             {
                 handler.call( () ->
                         {
-                            ChunkPos pos = chunk.getPos();
-                            return Arrays.asList(new NumericValue(pos.x << 4), new NumericValue(pos.z << 4));
+                            return Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4));
+                        }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
+                );
+            }
+        };
+        public static final Event CHUNK_LOADED = new Event("chunk_loaded", 2, true)
+        {
+            @Override
+            public void onChunkEvent(ServerWorld world, ChunkPos chPos, boolean generated)
+            {
+                handler.call( () ->
+                        {
+                            return Arrays.asList(new NumericValue(chPos.x << 4), new NumericValue(chPos.z << 4));
                         }, () -> CarpetServer.minecraft_server.getCommandSource().withWorld(world)
                 );
             }
@@ -1050,7 +1060,7 @@ public class CarpetEventServer
         public boolean deprecated() {return false;}
         //stubs for calls just to ease calls in vanilla code so they don't need to deal with scarpet value types
         public void onTick() { }
-        public void onChunkGenerated(ServerWorld world, Chunk chunk) { }
+        public void onChunkEvent(ServerWorld world, ChunkPos chPos, boolean generated) { }
         public void onPlayerEvent(ServerPlayerEntity player) { }
         public void onPlayerMessage(ServerPlayerEntity player, String message) { }
         public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount) { }
