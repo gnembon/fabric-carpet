@@ -1,6 +1,7 @@
 __command() -> 
 __config() -> 
 __on_chunk_generated(x, z) ->
+__on_chunk_loaded(x, z) ->
 __on_close() ->
 __on_player_attacks_entity(player, entity) -> 
 __on_player_breaks_block(player, block) -> 
@@ -34,7 +35,7 @@ __on_player_wakes_up(player) ->
 __on_player_escapes_sleep(player) ->
 __on_statistic(player, category, event, value) ->
 __on_start() ->
-__on_tick() -> 
+__on_tick() ->
 __on_tick_ender() -> 
 __on_tick_nether() -> 
 __on_player_takes_damage(player, amount, source, source_entity) -> 

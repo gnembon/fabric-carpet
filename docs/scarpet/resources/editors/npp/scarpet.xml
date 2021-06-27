@@ -100,6 +100,7 @@
                 __command
                 __config
                 __on_chunk_generated
+                __on_chunk_loaded
                 __on_close
                 __on_player_attacks_entity
                 __on_player_breaks_block
