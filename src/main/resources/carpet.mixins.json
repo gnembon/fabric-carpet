@@ -175,6 +175,7 @@
     "PlayerInventory_scarpetEventMixin",
     "ScoreboardObjective_scarpetMixin",
     "Scoreboard_scarpetMixin",
+    "Team_scarpetMixin",
     "TradeOutputSlot_scarpetEventMixin",
 
     "BiomeEffects_scarpetMixin",
