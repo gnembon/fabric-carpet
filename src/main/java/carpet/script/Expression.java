@@ -1074,7 +1074,8 @@ public class Expression
             return root.op;
 
         Context optimizeOnlyContext = new Context.ContextForErrorReporting(context);
-        CarpetScriptServer.LOG.info("Input code size for "+getModuleName()+": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
+        if (CarpetSettings.scriptsDebugging)
+            CarpetScriptServer.LOG.info("Input code size for "+getModuleName()+": " + treeSize(root) + " nodes, " + treeDepth(root) + " deep");
 
         boolean changed = true;
         while(changed) {
@@ -1085,7 +1086,8 @@ public class Expression
                 boolean optimized = compactTree(root, Context.Type.NONE, 0);
                 if (!optimized) break;
                 changed = true;
-                CarpetScriptServer.LOG.info("Compacted from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
+                if (CarpetSettings.scriptsDebugging)
+                    CarpetScriptServer.LOG.info("Compacted from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
             }
             while (true) {
                 int tree_size = treeSize(root);
@@ -1093,7 +1095,8 @@ public class Expression
                 boolean optimized = optimizeTree(optimizeOnlyContext, root, Context.Type.NONE, 0);
                 if (!optimized) break;
                 changed = true;
-                CarpetScriptServer.LOG.info("Optimized from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
+                if (CarpetSettings.scriptsDebugging)
+                    CarpetScriptServer.LOG.info("Optimized from " + tree_size + " nodes, " + tree_depth + " code depth to " + treeSize(root) + " nodes, " + treeDepth(root) + " code depth");
             }
         }
         return extractOp(optimizeOnlyContext, root, Context.Type.NONE);
