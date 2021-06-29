@@ -42,31 +42,31 @@ public class SystemInfo {
         put("app_scope", c -> StringValue.of((c.host).isPerUser()?"player":"global"));
         put("app_players", c -> ListValue.wrap(c.host.getUserList().stream().map(StringValue::new).collect(Collectors.toList())));
 
-        put("world_name", c -> new StringValue(c.s.getMinecraftServer().getSaveProperties().getLevelName()));
+        put("world_name", c -> new StringValue(c.s.getServer().getSaveProperties().getLevelName()));
         put("world_seed", c -> new NumericValue(c.s.getWorld().getSeed()));
-        put("server_motd", c -> StringValue.of(c.s.getMinecraftServer().getServerMotd()));
-        put("world_path", c -> StringValue.of(c.s.getMinecraftServer().getSavePath(WorldSavePath.ROOT).toString()));
+        put("server_motd", c -> StringValue.of(c.s.getServer().getServerMotd()));
+        put("world_path", c -> StringValue.of(c.s.getServer().getSavePath(WorldSavePath.ROOT).toString()));
         put("world_folder", c -> {
-            Path serverPath = c.s.getMinecraftServer().getSavePath(WorldSavePath.ROOT);
+            Path serverPath = c.s.getServer().getSavePath(WorldSavePath.ROOT);
             int nodeCount = serverPath.getNameCount();
             if (nodeCount < 2) return Value.NULL;
             String tlf = serverPath.getName(nodeCount-2).toString();
             return StringValue.of(tlf);
         });
-        put("world_dimensions", c -> ListValue.wrap(c.s.getMinecraftServer().getWorldRegistryKeys().stream().map(k -> ValueConversions.of(k.getValue())).collect(Collectors.toList())));
+        put("world_dimensions", c -> ListValue.wrap(c.s.getServer().getWorldRegistryKeys().stream().map(k -> ValueConversions.of(k.getValue())).collect(Collectors.toList())));
         put("world_spawn_point", c -> {
-            WorldProperties prop = c.s.getMinecraftServer().getOverworld().getLevelProperties();
+            WorldProperties prop = c.s.getServer().getOverworld().getLevelProperties();
             return ListValue.of(NumericValue.of(prop.getSpawnX()), NumericValue.of(prop.getSpawnY()), NumericValue.of(prop.getSpawnZ()));
         });
 
-        put("game_difficulty", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getDifficulty().getName()));
-        put("game_hardcore", c -> BooleanValue.of(c.s.getMinecraftServer().getSaveProperties().isHardcore()));
-        put("game_storage_format", c -> StringValue.of(c.s.getMinecraftServer().getSaveProperties().getFormatName(c.s.getMinecraftServer().getSaveProperties().getVersion())));
-        put("game_default_gamemode", c -> StringValue.of(c.s.getMinecraftServer().getDefaultGameMode().getName()));
-        put("game_max_players", c -> new NumericValue(c.s.getMinecraftServer().getMaxPlayerCount()));
-        put("game_view_distance", c -> new NumericValue(c.s.getMinecraftServer().getPlayerManager().getViewDistance()));
-        put("game_mod_name", c -> StringValue.of(c.s.getMinecraftServer().getServerModName()));
-        put("game_version", c -> StringValue.of(c.s.getMinecraftServer().getVersion()));
+        put("game_difficulty", c -> StringValue.of(c.s.getServer().getSaveProperties().getDifficulty().getName()));
+        put("game_hardcore", c -> BooleanValue.of(c.s.getServer().getSaveProperties().isHardcore()));
+        put("game_storage_format", c -> StringValue.of(c.s.getServer().getSaveProperties().getFormatName(c.s.getServer().getSaveProperties().getVersion())));
+        put("game_default_gamemode", c -> StringValue.of(c.s.getServer().getDefaultGameMode().getName()));
+        put("game_max_players", c -> new NumericValue(c.s.getServer().getMaxPlayerCount()));
+        put("game_view_distance", c -> new NumericValue(c.s.getServer().getPlayerManager().getViewDistance()));
+        put("game_mod_name", c -> StringValue.of(c.s.getServer().getServerModName()));
+        put("game_version", c -> StringValue.of(c.s.getServer().getVersion()));
         put("game_target", c -> StringValue.of(SharedConstants.getGameVersion().getReleaseTarget()));
         put("game_protocol", c -> NumericValue.of(SharedConstants.getProtocolVersion()));
         put("game_major_target", c -> {
@@ -81,11 +81,11 @@ public class SystemInfo {
         put("game_data_version", c->NumericValue.of(SharedConstants.getGameVersion().getWorldVersion()));
         put("game_pack_version", c->NumericValue.of(SharedConstants.getGameVersion().getPackVersion()));
 
-        put("server_ip", c -> StringValue.of(c.s.getMinecraftServer().getServerIp()));
-        put("server_whitelisted", c -> BooleanValue.of(c.s.getMinecraftServer().isEnforceWhitelist()));
+        put("server_ip", c -> StringValue.of(c.s.getServer().getServerIp()));
+        put("server_whitelisted", c -> BooleanValue.of(c.s.getServer().isEnforceWhitelist()));
         put("server_whitelist", c -> {
             MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.s.getMinecraftServer().getPlayerManager().getWhitelistedNames())
+            for (String s: c.s.getServer().getPlayerManager().getWhitelistedNames())
             {
                 whitelist.append(StringValue.of(s));
             }
@@ -93,7 +93,7 @@ public class SystemInfo {
         });
         put("server_banned_players", c -> {
             MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.s.getMinecraftServer().getPlayerManager().getUserBanList().getNames())
+            for (String s: c.s.getServer().getPlayerManager().getUserBanList().getNames())
             {
                 whitelist.append(StringValue.of(s));
             }
@@ -101,7 +101,7 @@ public class SystemInfo {
         });
         put("server_banned_ips", c -> {
             MapValue whitelist = new MapValue(Collections.emptyList());
-            for (String s: c.s.getMinecraftServer().getPlayerManager().getIpBanList().getNames())
+            for (String s: c.s.getServer().getPlayerManager().getIpBanList().getNames())
             {
                 whitelist.append(StringValue.of(s));
             }

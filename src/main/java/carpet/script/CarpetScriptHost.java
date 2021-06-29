@@ -642,7 +642,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             if (optionalTarget == null)
             {
-                for (ServerPlayerEntity player : source.getMinecraftServer().getPlayerManager().getPlayerList())
+                for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList())
                 {
                     CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
                     targets.add(host);
@@ -651,7 +651,7 @@ public class CarpetScriptHost extends ScriptHost
             }
             else
             {
-                ServerPlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(optionalTarget);
+                ServerPlayerEntity player = source.getServer().getPlayerManager().getPlayer(optionalTarget);
                 if (player != null)
                 {
                     CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());

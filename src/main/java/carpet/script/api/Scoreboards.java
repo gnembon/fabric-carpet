@@ -69,7 +69,7 @@ public class Scoreboards {
         expression.addContextFunction("scoreboard", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            Scoreboard scoreboard =  cc.s.getServer().getScoreboard();
             if (lv.size()==0)
                 return ListValue.wrap(scoreboard.getObjectiveNames().stream().map(StringValue::new).collect(Collectors.toList()));
             String objectiveName = lv.get(0).getString();
@@ -102,7 +102,7 @@ public class Scoreboards {
         {
             if (lv.size()==0) throw new InternalExpressionException("'scoreboard_remove' requires at least one parameter");
             CarpetContext cc = (CarpetContext)c;
-            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            Scoreboard scoreboard =  cc.s.getServer().getScoreboard();
             String objectiveName = lv.get(0).getString();
             ScoreboardObjective objective = scoreboard.getObjective(objectiveName);
             if (objective == null) return Value.FALSE;
@@ -125,7 +125,7 @@ public class Scoreboards {
         expression.addContextFunction("scoreboard_add", -1, (c, t, lv)->
         {
             CarpetContext cc = (CarpetContext)c;
-            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            Scoreboard scoreboard =  cc.s.getServer().getScoreboard();
             if (lv.size() == 0 || lv.size()>2) throw new InternalExpressionException("'scoreboard_add' should have one or two parameters");
             String objectiveName = lv.get(0).getString();
             ScoreboardCriterion criterion;
@@ -163,7 +163,7 @@ public class Scoreboards {
         {
             if(lv.size() < 2) throw new InternalExpressionException("'scoreboard_property' requires at least two parameters");
             CarpetContext cc = (CarpetContext)c;
-            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            Scoreboard scoreboard =  cc.s.getServer().getScoreboard();
             ScoreboardObjective objective = scoreboard.getObjective(lv.get(0).getString());
             if(objective == null) return Value.NULL;
 
@@ -228,7 +228,7 @@ public class Scoreboards {
         expression.addContextFunction("scoreboard_display", 2, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            Scoreboard scoreboard =  cc.s.getMinecraftServer().getScoreboard();
+            Scoreboard scoreboard =  cc.s.getServer().getScoreboard();
             String location = lv.get(0).getString();
             int slot = Scoreboard.getDisplaySlotId(location);
             if (slot < 0) throw new InternalExpressionException("Invalid objective slot: "+location);
@@ -249,7 +249,7 @@ public class Scoreboards {
         {
             if(lv.size() > 1) throw new InternalExpressionException("'team_list' requires zero or one parameters");
             CarpetContext cc = (CarpetContext)c;
-            ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
+            ServerScoreboard scoreboard = cc.s.getServer().getScoreboard();
             if(lv.size() == 0)
                 return ListValue.wrap(scoreboard.getTeamNames().stream().map(StringValue::of).collect(Collectors.toList()));
             if (lv.size() != 1) return Value.NULL;
@@ -264,7 +264,7 @@ public class Scoreboards {
             if(!(lv.size() < 3 && lv.size() > 0)) throw new InternalExpressionException("'team_add' requires one or two parameters");
 
             CarpetContext cc = (CarpetContext)c;
-            ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
+            ServerScoreboard scoreboard = cc.s.getServer().getScoreboard();
             String teamName = lv.get(0).getString();
 
             if(lv.size() == 1)
@@ -287,7 +287,7 @@ public class Scoreboards {
         expression.addContextFunction("team_remove", 1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
+            ServerScoreboard scoreboard = cc.s.getServer().getScoreboard();
             Value teamVal = lv.get(0);
             String team = teamVal.getString();
             if(scoreboard.getTeam(team) == null) return Value.NULL;
@@ -299,7 +299,7 @@ public class Scoreboards {
         expression.addContextFunction("team_leave", 1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
+            ServerScoreboard scoreboard = cc.s.getServer().getScoreboard();
             Value playerVal = lv.get(0);
             String player = EntityValue.getPlayerNameByValue(playerVal);
             if(player == null) return Value.NULL;
@@ -309,7 +309,7 @@ public class Scoreboards {
         expression.addContextFunction("team_property", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerScoreboard scoreboard = cc.s.getMinecraftServer().getScoreboard();
+            ServerScoreboard scoreboard = cc.s.getServer().getScoreboard();
 
             if(lv.size() < 2 || lv.size() > 3) throw new InternalExpressionException("'team_property' requires two or three arguments");
 
@@ -400,7 +400,7 @@ public class Scoreboards {
 
         expression.addContextFunction("bossbar", -1, (c, t, lv) ->
         {
-            BossBarManager bossBarManager = ((CarpetContext)c).s.getMinecraftServer().getBossBarManager();
+            BossBarManager bossBarManager = ((CarpetContext)c).s.getServer().getBossBarManager();
             if(lv.size() > 3) throw new InternalExpressionException("'bossbar' accepts max three arguments");
 
             if(lv.size() == 0) return ListValue.wrap(bossBarManager.getAll().stream().map(CommandBossBar::getId).map(Identifier::toString).map(StringValue::of).collect(Collectors.toList()));
@@ -457,13 +457,13 @@ public class Scoreboards {
 
                     if(propertyValue instanceof ListValue) {
                         ((ListValue) propertyValue).getItems().forEach((v)->{
-                            ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext)c).s.getMinecraftServer(),propertyValue);
+                            ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext)c).s.getServer(),propertyValue);
                             if(player != null) bossBar.addPlayer(player);
                         });
                         return Value.TRUE;
                     }
 
-                    ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getMinecraftServer(), propertyValue);
+                    ServerPlayerEntity player = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), propertyValue);
                     if(player != null) {
                         bossBar.addPlayer(player);
                         return Value.TRUE;
@@ -475,14 +475,14 @@ public class Scoreboards {
                     {
                         bossBar.clearPlayers();
                         ((ListValue) propertyValue).getItems().forEach((v) -> {
-                            ServerPlayerEntity p = EntityValue.getPlayerByValue(((CarpetContext) c).s.getMinecraftServer(), v);
+                            ServerPlayerEntity p = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), v);
                             if (p != null) bossBar.addPlayer(p);
                         });
                         return Value.TRUE;
                     }
 
 
-                    ServerPlayerEntity p = EntityValue.getPlayerByValue(((CarpetContext) c).s.getMinecraftServer(), propertyValue);
+                    ServerPlayerEntity p = EntityValue.getPlayerByValue(((CarpetContext) c).s.getServer(), propertyValue);
                     bossBar.clearPlayers();
                     if (p != null) {
                         bossBar.addPlayer(p);

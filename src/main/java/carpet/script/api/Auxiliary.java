@@ -198,7 +198,7 @@ public class Auxiliary {
         {
             CarpetContext cc = (CarpetContext)c;
             if (lv.size() == 0) return ListValue.wrap(Registry.PARTICLE_TYPE.getIds().stream().map(ValueConversions::of));
-            MinecraftServer ms = cc.s.getMinecraftServer();
+            MinecraftServer ms = cc.s.getServer();
             ServerWorld world = cc.s.getWorld();
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             String particleName = lv.get(0).getString();
@@ -270,7 +270,7 @@ public class Auxiliary {
                     }
                     else
                     {
-                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                        player = cc.s.getServer().getPlayerManager().getPlayer(playerValue.getString());
                     }
                 }
             }
@@ -310,7 +310,7 @@ public class Auxiliary {
                     }
                     else
                     {
-                        player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(playerValue.getString());
+                        player = cc.s.getServer().getPlayerManager().getPlayer(playerValue.getString());
                     }
                 }
             }
@@ -485,7 +485,7 @@ public class Auxiliary {
         {
             if (lv.size() == 0 || lv.size() > 2) throw new InternalExpressionException("'print' takes one or two arguments");
             ServerCommandSource s = ((CarpetContext)c).s;
-            MinecraftServer server = s.getMinecraftServer();
+            MinecraftServer server = s.getServer();
             Value res = lv.get(0);
             List<ServerPlayerEntity> targets = null;
             if (lv.size() == 2)
@@ -516,7 +516,7 @@ public class Auxiliary {
             if (lv.size() < 2) throw new InternalExpressionException("'display_title' needs at least a target, type and message, and optionally times");
             Value pVal = lv.get(0);
             if (!(pVal instanceof ListValue)) pVal = ListValue.of(pVal);
-            MinecraftServer server = ((CarpetContext)c).s.getMinecraftServer();
+            MinecraftServer server = ((CarpetContext)c).s.getServer();
             Stream<ServerPlayerEntity> targets = ((ListValue) pVal).getItems().stream().map(v ->
             {
                 ServerPlayerEntity player = EntityValue.getPlayerByValue(server, v);
@@ -590,7 +590,7 @@ public class Auxiliary {
                         map.put(target.getEntityName(), (BaseText) title);
                         total.getAndIncrement();
                     });
-                HUDController.update_hud(((CarpetContext)c).s.getMinecraftServer(), targetList);
+                HUDController.update_hud(((CarpetContext)c).s.getServer(), targetList);
                 return NumericValue.of(total.get());
             }
             TitleFadeS2CPacket timesPacket; // TimesPacket
@@ -630,7 +630,7 @@ public class Auxiliary {
             {
                 Text[] error = {null};
                 List<Text> output = new ArrayList<>();
-                Value retval = new NumericValue(s.getMinecraftServer().getCommandManager().execute(
+                Value retval = new NumericValue(s.getServer().getCommandManager().execute(
                         new SnoopyCommandSource(s, error, output),
                         lv.get(0).getString())
                 );
@@ -649,15 +649,15 @@ public class Auxiliary {
         expression.addContextFunction("save", 0, (c, t, lv) ->
         {
             ServerCommandSource s = ((CarpetContext)c).s;
-            s.getMinecraftServer().getPlayerManager().saveAllPlayerData();
-            s.getMinecraftServer().save(true,true,true);
+            s.getServer().getPlayerManager().saveAllPlayerData();
+            s.getServer().save(true,true,true);
             s.getWorld().getChunkManager().tick(() -> true);
             CarpetScriptServer.LOG.warn("Saved chunks");
             return Value.TRUE;
         });
 
         expression.addContextFunction("tick_time", 0, (c, t, lv) ->
-                new NumericValue(((CarpetContext) c).s.getMinecraftServer().getTicks()));
+                new NumericValue(((CarpetContext) c).s.getServer().getTicks()));
 
         expression.addContextFunction("world_time", 0, (c, t, lv) ->
                 new NumericValue(((CarpetContext) c).s.getWorld().getTime()));
@@ -678,9 +678,9 @@ public class Auxiliary {
         {
             //assuming we are in the tick world section
             // might be off one tick when run in the off tasks or asynchronously.
-            int currentReportedTick = ((CarpetContext) c).s.getMinecraftServer().getTicks()-1;
+            int currentReportedTick = ((CarpetContext) c).s.getServer().getTicks()-1;
             List<Value> ticks = new ArrayList<>(100);
-            final long[] tickArray = ((CarpetContext) c).s.getMinecraftServer().lastTickLengths;
+            final long[] tickArray = ((CarpetContext) c).s.getServer().lastTickLengths;
             for (int i=currentReportedTick+100; i > currentReportedTick; i--)
             {
                 ticks.add(new NumericValue(((double)tickArray[i % 100])/1000000.0));
@@ -692,12 +692,12 @@ public class Auxiliary {
         expression.addContextFunction("game_tick", -1, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             ServerCommandSource s = cc.s;
-            if (!s.getMinecraftServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
+            if (!s.getServer().isOnThread()) throw new InternalExpressionException("Unable to run ticks from threads");
             if (CarpetServer.scriptServer.tickDepth > 16) throw new InternalExpressionException("'game_tick' function caused other 'game_tick' functions to run. You should not allow that.");
             try
             {
                 CarpetServer.scriptServer.tickDepth ++;
-                ((MinecraftServerInterface) s.getMinecraftServer()).forceTick(() -> System.nanoTime() - CarpetServer.scriptServer.tickStart < 50000000L);
+                ((MinecraftServerInterface) s.getServer()).forceTick(() -> System.nanoTime() - CarpetServer.scriptServer.tickStart < 50000000L);
                 if (lv.size() > 0)
                 {
                     long ms_total = NumericValue.asNumber(lv.get(0)).getLong();
@@ -747,13 +747,13 @@ public class Auxiliary {
                 ValueConversions.of( ((CarpetContext)c).s.getWorld()));
 
         expression.addContextFunction("view_distance", 0, (c, t, lv) ->
-                new NumericValue(((CarpetContext)c).s.getMinecraftServer().getPlayerManager().getViewDistance()));
+                new NumericValue(((CarpetContext)c).s.getServer().getPlayerManager().getViewDistance()));
 
         // lazy due to passthrough and context changing ability
         expression.addLazyFunction("in_dimension", 2, (c, t, lv) -> {
             ServerCommandSource outerSource = ((CarpetContext)c).s;
             Value dimensionValue = lv.get(0).evalValue(c);
-            World world = ValueConversions.dimFromValue(dimensionValue, outerSource.getMinecraftServer());
+            World world = ValueConversions.dimFromValue(dimensionValue, outerSource.getServer());
             if (world == outerSource.getWorld()) return lv.get(1);
             ServerCommandSource innerSource = outerSource.withWorld((ServerWorld)world);
             Context newCtx = c.recreate();
@@ -791,7 +791,7 @@ public class Auxiliary {
                 throw new InternalExpressionException("'plop' needs extra argument indicating what to plop");
             String what = lv.get(locator.offset).getString();
             Value [] result = new Value[]{Value.NULL};
-            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
+            ((CarpetContext)c).s.getServer().submitAndJoin( () ->
             {
                 Boolean res = FeatureGenerator.plop(what, ((CarpetContext) c).s.getWorld(), locator.block.getPos());
 
@@ -969,7 +969,7 @@ public class Auxiliary {
         expression.addContextFunction("statistic", 3, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getMinecraftServer(), lv.get(0));
+            ServerPlayerEntity player = EntityValue.getPlayerByValue(cc.s.getServer(), lv.get(0));
             if (player == null) return Value.NULL;
             Identifier category;
             Identifier statName;
@@ -1030,7 +1030,7 @@ public class Auxiliary {
         expression.addContextFunction("nbt_storage", -1, (c, t, lv) -> {
             if (lv.size() > 2) throw new InternalExpressionException("'nbt_storage' requires 0, 1 or 2 arguments.");
             CarpetContext cc = (CarpetContext) c;
-            DataCommandStorage storage = cc.s.getMinecraftServer().getDataCommandStorage();
+            DataCommandStorage storage = cc.s.getServer().getDataCommandStorage();
             if (lv.size() == 0)
                 return ListValue.wrap(storage.getIds().map(i -> new StringValue(nameFromRegistryId(i))).collect(Collectors.toList()));
             String key = lv.get(0).getString();
@@ -1049,7 +1049,7 @@ public class Auxiliary {
             CarpetContext cc = (CarpetContext)c;
             String origName = lv.get(0).getString();
             String name = InputValidator.validateSimpleString(origName, true);
-            MinecraftServer server = cc.s.getMinecraftServer();
+            MinecraftServer server = cc.s.getServer();
             for (String dpName : server.getDataPackManager().getNames())
             {
                 if (dpName.equalsIgnoreCase("file/"+name+".zip") ||
@@ -1114,7 +1114,7 @@ public class Auxiliary {
         expression.addContextFunction("enable_hidden_dimensions", 0, (c, t, lv) -> {
             CarpetContext cc = (CarpetContext)c;
             // from minecraft.server.Main.main
-            MinecraftServer server = cc.s.getMinecraftServer();
+            MinecraftServer server = cc.s.getServer();
             LevelStorage.Session session = ((MinecraftServerInterface)server).getCMSession();
             DataPackSettings dataPackSettings = session.getDataPackSettings();
             ResourcePackManager resourcePackManager = server.getDataPackManager();

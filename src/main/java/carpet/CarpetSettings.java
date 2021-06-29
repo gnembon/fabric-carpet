@@ -636,7 +636,7 @@ public class CarpetSettings
                 Messenger.m(source, "r view distance has to be between 0 and 32");
                 return null;
             }
-            MinecraftServer server = source.getMinecraftServer();
+            MinecraftServer server = source.getServer();
 
             if (server.isDedicated())
             {

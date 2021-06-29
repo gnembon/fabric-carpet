@@ -283,14 +283,14 @@ public class AppStoreManager
     public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath){
         String  scriptPath;
         String location;
-        if(globalSavePath && !source.getMinecraftServer().isDedicated())
+        if(globalSavePath && !source.getServer().isDedicated())
         { //cos config folder only is in clients
             scriptPath = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath()+"/"+path;
             location = "global script config folder";
         }
         else
         {
-            scriptPath = source.getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath()+"/"+appFileName;
+            scriptPath = source.getServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath()+"/"+appFileName;
             location = "world scripts folder";
         }
         try

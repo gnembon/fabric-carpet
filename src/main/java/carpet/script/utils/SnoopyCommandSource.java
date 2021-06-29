@@ -40,7 +40,7 @@ public class SnoopyCommandSource extends ServerCommandSource
     public SnoopyCommandSource(ServerCommandSource original, Text[] error, List<Text> chatOutput)
     {
         super(CommandOutput.DUMMY, original.getPosition(), original.getRotation(), original.getWorld(), CarpetSettings.runPermissionLevel,
-                original.getName(), original.getDisplayName(), original.getMinecraftServer(), original.getEntity(), false,
+                original.getName(), original.getDisplayName(), original.getServer(), original.getEntity(), false,
                 (ctx, succ, res) -> { }, EntityAnchorArgumentType.EntityAnchor.FEET);
         this.output = CommandOutput.DUMMY;
         this.position = original.getPosition();
@@ -48,7 +48,7 @@ public class SnoopyCommandSource extends ServerCommandSource
         this.level = CarpetSettings.runPermissionLevel;
         this.simpleName = original.getName();
         this.name = original.getDisplayName();
-        this.server = original.getMinecraftServer();
+        this.server = original.getServer();
         this.entity = original.getEntity();
         this.resultConsumer = (ctx, succ, res) -> { };
         this.entityAnchor = original.getEntityAnchor();

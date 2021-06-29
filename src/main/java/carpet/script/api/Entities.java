@@ -48,7 +48,7 @@ public class Entities {
                 CarpetContext cc = (CarpetContext)c;
                 if (cc.host.user != null)
                 {
-                    ServerPlayerEntity player = cc.s.getMinecraftServer().getPlayerManager().getPlayer(cc.host.user);
+                    ServerPlayerEntity player = cc.s.getServer().getPlayerManager().getPlayer(cc.host.user);
                     return EntityValue.of(player);
                 }
                 Entity callingEntity = cc.s.getEntity();
@@ -62,7 +62,7 @@ public class Entities {
             if ("all".equalsIgnoreCase(playerName))
             {
                 retval = ListValue.wrap(
-                        ((CarpetContext)c).s.getMinecraftServer().getPlayerManager().getPlayerList().
+                        ((CarpetContext)c).s.getServer().getPlayerManager().getPlayerList().
                                 stream().map(EntityValue::new).collect(Collectors.toList()));
             }
             else if ("*".equalsIgnoreCase(playerName))
@@ -97,7 +97,7 @@ public class Entities {
             }
             else
             {
-                ServerPlayerEntity player = ((CarpetContext) c).s.getMinecraftServer().getPlayerManager().getPlayer(playerName);
+                ServerPlayerEntity player = ((CarpetContext) c).s.getServer().getPlayerManager().getPlayer(playerName);
                 if (player != null)
                     retval = new EntityValue(player);
             }
@@ -167,7 +167,7 @@ public class Entities {
         {
             String who = lv.get(0).getString();
             ServerCommandSource source = ((CarpetContext)c).s;
-            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getMinecraftServer());
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, source.getServer());
             List<? extends Entity> entityList = source.getWorld().getEntitiesByType(eDesc.directType, eDesc.filteringPredicate);
             return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
         });
@@ -195,7 +195,7 @@ public class Entities {
                 throw new InternalExpressionException("Range of 'entity_area' cannot come from a block argument");
             Vec3d range = rangeLocator.vec;
             Box area = centerBox.expand(range.x, range.y, range.z);
-            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, cc.s.getMinecraftServer());
+            EntityValue.EntityClassDescriptor eDesc = EntityValue.getEntityDescriptor(who, cc.s.getServer());
             List<? extends Entity> entityList = cc.s.getWorld().getEntitiesByType(eDesc.directType, area,eDesc.filteringPredicate);
             return ListValue.wrap(entityList.stream().map(EntityValue::new).collect(Collectors.toList()));
         });
@@ -257,7 +257,7 @@ public class Entities {
         {
             if (lv.size() > 1) throw new InternalExpressionException("'entity_types' requires one or no arguments");
             String desc = (lv.size() == 1)?lv.get(0).getString():"*";
-            return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).s.getMinecraftServer()).listValue;
+            return EntityValue.getEntityDescriptor(desc, ((CarpetContext) c).s.getServer()).listValue;
         });
 
         expression.addContextFunction("entity_load_handler", -1, (c, t, lv) ->
@@ -269,7 +269,7 @@ public class Entities {
                     ? ((ListValue) entityValue).getItems().stream().map(Value::getString).collect(Collectors.toList())
                     : Collections.singletonList(entityValue.getString());
             Set<EntityType<? extends Entity>> types = new HashSet<>();
-            descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).s.getMinecraftServer()).typeList));
+            descriptors.forEach(s -> types.addAll(EntityValue.getEntityDescriptor(s, ((CarpetContext) c).s.getServer()).typeList));
             FunctionArgument funArg = FunctionArgument.findIn(c, expression.module, lv, 1, true, false);
             CarpetEventServer events = ((CarpetScriptHost)c.host).getScriptServer().events;
             if (funArg.function == null)

@@ -383,7 +383,7 @@ public class CarpetScriptServer
         ServerPlayerEntity target = null;
         if (optionalTarget != null)
         {
-            target = sender.getMinecraftServer().getPlayerManager().getPlayer(optionalTarget);
+            target = sender.getServer().getPlayerManager().getPlayer(optionalTarget);
             if (target == null) return false;
         }
         int successes = signal(sender, target, hostname, udf, argv, true );
@@ -436,8 +436,8 @@ public class CarpetScriptServer
         {
             // getPlayer will always return nonnull cause retrieve for execution only returns hosts for existing players.
             ServerCommandSource executingSource = host.perUser
-                    ? source.getMinecraftServer().getPlayerManager().getPlayer(host.user).getCommandSource()
-                    : source.getMinecraftServer().getCommandSource();
+                    ? source.getServer().getPlayerManager().getPlayer(host.user).getCommandSource()
+                    : source.getServer().getCommandSource();
             try
             {
                 host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);

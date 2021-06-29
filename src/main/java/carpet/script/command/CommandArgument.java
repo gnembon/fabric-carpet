@@ -132,7 +132,7 @@ public abstract class CommandArgument
                     false
             ),
             new VanillaUnconfigurableArgument( "blockpredicate", BlockPredicateArgumentType::blockPredicate,
-                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getMinecraftServer().getTagManager(), BlockPredicateArgumentType.getBlockPredicate(c, p)), false
+                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().getTagManager(), BlockPredicateArgumentType.getBlockPredicate(c, p)), false
             ),
             new VanillaUnconfigurableArgument("teamcolor", ColorArgumentType::color,
                     (c, p) -> {
@@ -199,13 +199,13 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getRecipeArgument(c, p).getId()), SuggestionProviders.ALL_RECIPES
             ),
             new VanillaUnconfigurableArgument("advancement", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getAdvancementArgument(c, p).getId()), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getAdvancementLoader().getAdvancements().stream().map(Advancement::getId), builder)
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getAdvancementArgument(c, p).getId()), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getAdvancementLoader().getAdvancements().stream().map(Advancement::getId), builder)
             ),
             new VanillaUnconfigurableArgument("lootcondition", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getId(IdentifierArgumentType.getPredicateArgument(c, p).getType())), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getPredicateManager().getIds(), builder)
+                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getId(IdentifierArgumentType.getPredicateArgument(c, p).getType())), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getPredicateManager().getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("loottable", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getLootManager().getTableIds(), builder)
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getLootManager().getTableIds(), builder)
             ),
             new VanillaUnconfigurableArgument("attribute", IdentifierArgumentType::identifier,
                     (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getId(IdentifierArgumentType.getAttributeArgument(c, p))), (ctx, builder) -> CommandSource.suggestIdentifiers(Registry.ATTRIBUTE.getIds(), builder)
@@ -220,7 +220,7 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), SuggestionProviders.AVAILABLE_SOUNDS
             ),
             new VanillaUnconfigurableArgument("storekey", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getDataCommandStorage().getIds(), builder)
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getDataCommandStorage().getIds(), builder)
             ),
 
             // default

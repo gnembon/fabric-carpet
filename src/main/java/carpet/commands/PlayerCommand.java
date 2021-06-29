@@ -136,7 +136,7 @@ public class PlayerCommand
     private static ServerPlayerEntity getPlayer(CommandContext<ServerCommandSource> context)
     {
         String playerName = StringArgumentType.getString(context, "player");
-        MinecraftServer server = context.getSource().getMinecraftServer();
+        MinecraftServer server = context.getSource().getServer();
         return server.getPlayerManager().getPlayer(playerName);
     }
 
@@ -158,7 +158,7 @@ public class PlayerCommand
             return false;
         }
 
-        if (!context.getSource().getMinecraftServer().getPlayerManager().isOperator(sendingPlayer.getGameProfile()))
+        if (!context.getSource().getServer().getPlayerManager().isOperator(sendingPlayer.getGameProfile()))
         {
             if (sendingPlayer != player && !(player instanceof EntityPlayerMPFake))
             {
@@ -181,7 +181,7 @@ public class PlayerCommand
     private static boolean cantSpawn(CommandContext<ServerCommandSource> context)
     {
         String playerName = StringArgumentType.getString(context, "player");
-        MinecraftServer server = context.getSource().getMinecraftServer();
+        MinecraftServer server = context.getSource().getServer();
         PlayerManager manager = server.getPlayerManager();
         PlayerEntity player = manager.getPlayer(playerName);
         if (player != null)
@@ -274,13 +274,13 @@ public class PlayerCommand
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length()>maxPlayerLength(source.getMinecraftServer()))
+        if (playerName.length()>maxPlayerLength(source.getServer()))
         {
             Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
             return 0;
         }
 
-        MinecraftServer server = source.getMinecraftServer();
+        MinecraftServer server = source.getServer();
         if (!World.isValid(new BlockPos(pos.x, pos.y, pos.z)))
         {
             Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");

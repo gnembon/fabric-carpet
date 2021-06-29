@@ -226,7 +226,7 @@ public class BlockRotator
     {
         Direction sourceFace = source.getBlockState().get(DispenserBlock.FACING);
         World world = source.getWorld();
-        BlockPos blockpos = source.getBlockPos().offset(sourceFace); // offset
+        BlockPos blockpos = source.getPos().offset(sourceFace); // offset
         BlockState iblockstate = world.getBlockState(blockpos);
         Block block = iblockstate.getBlock();
 
@@ -274,7 +274,7 @@ public class BlockRotator
             }
         }
         // Send block update to the block that just have been rotated.
-        world.updateNeighbor(blockpos, block, source.getBlockPos());
+        world.updateNeighbor(blockpos, block, source.getPos());
 
         return stack;
     }

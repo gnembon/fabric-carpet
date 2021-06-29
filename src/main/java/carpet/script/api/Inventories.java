@@ -65,7 +65,7 @@ public class Inventories {
             if (lv.size() == 0)
                 return ListValue.wrap(Registry.ITEM.getIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             String tag = lv.get(0).getString();
             net.minecraft.tag.Tag<Item> itemTag = tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTag(new Identifier(tag));
             if (itemTag == null) return Value.NULL;
@@ -75,7 +75,7 @@ public class Inventories {
         expression.addContextFunction("item_tags", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             if (lv.size() == 0)
                 return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
@@ -106,7 +106,7 @@ public class Inventories {
                 }
             }
             List<Recipe<?>> recipes;
-            recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, new Identifier(recipeName));
+            recipes = ((RecipeManagerInterface) cc.s.getServer().getRecipeManager()).getAllMatching(type, new Identifier(recipeName));
             if (recipes.isEmpty())
                 return Value.NULL;
             List<Value> recipesOutput = new ArrayList<>();

@@ -207,7 +207,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 if (strVal.equals("enderchest"))
                 {
                     Value v2 = params.get(1 + offset);
-                    ServerPlayerEntity player = EntityValue.getPlayerByValue(c.s.getMinecraftServer(), v2);
+                    ServerPlayerEntity player = EntityValue.getPlayerByValue(c.s.getServer(), v2);
                     if (player == null) throw new InternalExpressionException("enderchest inventory requires player argument");
                     return new InventoryLocator(player, player.getBlockPos(), player.getEnderChestInventory(), offset + 2, true);
                 }
@@ -221,7 +221,7 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
                 }
                 boolean isEnder = strVal.startsWith("enderchest_");
                 if (isEnder) strVal = strVal.substring(11); // len("enderchest_")
-                ServerPlayerEntity player = c.s.getMinecraftServer().getPlayerManager().getPlayer(strVal);
+                ServerPlayerEntity player = c.s.getServer().getPlayerManager().getPlayer(strVal);
                 if (player == null) throw new InternalExpressionException("String description of an inventory should either denote a player or player's enderchest");
                 return new InventoryLocator(
                         player,

@@ -692,7 +692,7 @@ public class WorldAccess {
             boolean previous = CarpetSettings.impendingFillSkipUpdates.get();
             if (previous) return lv.get(0);
             Value [] result = new Value[]{Value.NULL};
-            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
+            ((CarpetContext)c).s.getServer().submitAndJoin( () ->
             {
                 try
                 {
@@ -781,7 +781,7 @@ public class WorldAccess {
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
             Boolean[] result = new Boolean[]{true};
-            cc.s.getMinecraftServer().submitAndJoin( () ->
+            cc.s.getServer().submitAndJoin( () ->
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
                 boolean success = world.setBlockState(targetPos, finalSourceBlockState, 2);
@@ -1135,7 +1135,7 @@ public class WorldAccess {
             if (lv.size() == 0)
                 return ListValue.wrap(Registry.BLOCK.getIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             String tag = lv.get(0).getString();
             net.minecraft.tag.Tag<Block> blockTag = tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(new Identifier(tag));
             if (blockTag == null) return Value.NULL;
@@ -1145,7 +1145,7 @@ public class WorldAccess {
         expression.addContextFunction("block_tags", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             if (lv.size() == 0)
                 return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
@@ -1182,7 +1182,7 @@ public class WorldAccess {
             // in locatebiome
             if (locator.offset == lv.size())
             {
-                Identifier biomeId = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
+                Identifier biomeId = cc.s.getServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
                 return new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             }
             String biomeFeature = lv.get(locator.offset).getString();
@@ -1199,7 +1199,7 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).getString();
             // from locatebiome command code
-            Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(new Identifier(biomeName))
+            Biome biome = cc.s.getServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(new Identifier(biomeName))
                 .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset+1)
@@ -1218,7 +1218,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
             ServerWorld world = cc.s.getWorld();
-            cc.s.getMinecraftServer().submitAndJoin( () -> WorldTools.forceChunkUpdate(pos, world));
+            cc.s.getServer().submitAndJoin( () -> WorldTools.forceChunkUpdate(pos, world));
             return Value.TRUE;
         });
 
@@ -1345,7 +1345,7 @@ public class WorldAccess {
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it
-            ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
+            ((CarpetContext) c).s.getServer().submitAndJoin(() ->
             {
                 Map<StructureFeature<?>, StructureStart<?>> structures = world.getChunk(pos).getStructureStarts();
                 if (lv.size() == locator.offset + 1)
@@ -1407,7 +1407,7 @@ public class WorldAccess {
                 }
             }
 
-            boolean success = WorldTools.createWorld(cc.s.getMinecraftServer(), worldKey, seed);
+            boolean success = WorldTools.createWorld(cc.s.getServer(), worldKey, seed);
             if (!success) return Value.FALSE;
             CarpetServer.settingsManager.notifyPlayersCommandsChanged();
             return Value.TRUE;
@@ -1466,7 +1466,7 @@ public class WorldAccess {
 
             Value [] result = new Value[]{Value.NULL};
 
-            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
+            ((CarpetContext)c).s.getServer().submitAndJoin( () ->
             {
                 Map<String, Integer> report = ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(requestedChunks);
                 /*for (ChunkPos chpos: requestedChunks) // needed in 1.16 only
