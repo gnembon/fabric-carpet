@@ -12,6 +12,10 @@ import java.util.concurrent.Future;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
+import carpet.fakes.SimpleEntityLookupInterface;
+import carpet.fakes.ServerWorldInterface;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import org.apache.commons.lang3.tuple.Pair;
@@ -358,11 +362,17 @@ public abstract class ThreadedAnvilChunkStorage_scarpetChunkCreationMixin implem
         {
             final ChunkPos pos = chunk.getPos();
 
+            // remove entities
+            long longPos = pos.toLong();
+            if (this.loadedChunks.contains(longPos) && chunk instanceof WorldChunk)
+                ((SimpleEntityLookupInterface<Entity>)((ServerWorldInterface)world).getEntityLookupCMPublic()).getChunkEntities(pos).forEach(entity -> { if (!(entity instanceof PlayerEntity)) entity.discard();});
+
+
             if (chunk instanceof WorldChunk)
                 ((WorldChunk) chunk).setLoadedToWorld(false);
 
             if (this.loadedChunks.remove(pos.toLong()) && chunk instanceof WorldChunk)
-                this.world.unloadEntities((WorldChunk) chunk);
+                this.world.unloadEntities((WorldChunk) chunk); // block entities only
 
             ((ServerLightingProviderInterface) this.serverLightingProvider).invokeUpdateChunkStatus(pos);
             ((ServerLightingProviderInterface) this.serverLightingProvider).removeLightData(chunk);

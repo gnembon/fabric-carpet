@@ -1469,13 +1469,13 @@ public class WorldAccess {
             ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
             {
                 Map<String, Integer> report = ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(requestedChunks);
-                for (ChunkPos chpos: requestedChunks)
+                /*for (ChunkPos chpos: requestedChunks) // needed in 1.16 only
                 {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
                     {
                         WorldTools.forceChunkUpdate(chpos.getStartPos(), world);
                     }
-                }
+                }*/
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
                         e -> new StringValue((String)((Map.Entry) e).getKey()),
                         e ->  new NumericValue((Integer)((Map.Entry) e).getValue())

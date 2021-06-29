@@ -13,6 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.entity.EntityLookup;
 import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.explosion.ExplosionBehavior;
 import net.minecraft.world.level.ServerWorldProperties;
@@ -79,7 +80,14 @@ public class ServerWorld_scarpetMixin implements ServerWorldInterface
     @Final
     @Shadow
     private ServerWorldProperties worldProperties;
+    @Shadow @Final private ServerEntityManager<Entity> entityManager;
+
     public ServerWorldProperties getWorldPropertiesCM(){
         return worldProperties;
+    }
+
+    @Override
+    public EntityLookup<Entity> getEntityLookupCMPublic() {
+        return entityManager.getLookup();
     }
 }

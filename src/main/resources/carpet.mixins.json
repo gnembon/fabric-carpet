@@ -41,6 +41,7 @@
     "CommandFunctionManager_tickMixin",
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
+    "SimpleEntityLookup_scarpetMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
     "ServerLightingProvider_scarpetMixin",
     "LevelPropagator_resetChunkInterface",
