@@ -314,6 +314,7 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'dimension'`: string representing a valid dimension in the world.
   * `'anchor'`: string of `feet` or `eyes`.
   * `'entitytype'`: string representing a type of entity 
+  * `'entities'`: entity selector, returns a list of entities directly. Can be configured with `'single'` to only accept a single entity (will return the entity instead of a singleton) and with `'players'` to only accept players.
   * `'floatrange'`: pair of two numbers where one is smaller than the other 
   * `'players'`: returning a list of valid player name string, logged in or not. If configured with `'single'` returns only one player or `null`.
   * `'intrange'`: same as `'floatrange'`, but requiring integers. 
