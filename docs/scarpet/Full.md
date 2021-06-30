@@ -996,7 +996,7 @@ indicating if the given seed has been used or not.
 
 returns a noise value from `0.0` to `1.0` (roughly) for 1, 2 or 3 dimensional coordinate. The default seed it samples 
 from is `0`, but seed can be specified as a 4th argument as well. In case you need 1D or 2D noise values with custom 
-seed, use `null` for `z`, or `y` and `z` arguments respectively.
+seed, use `null` for `y` and `z`, or `z` arguments respectively.
 
 Perlin noise is based on a square grid and generates rougher maps comparing to Simplex, which is creamier. 
 Querying for lower-dimensional result, rather than affixing unused dimensions to constants has a speed benefit,
@@ -1680,8 +1680,7 @@ equivalent to `has(get(foo,a), b)` or `has(foo, a, b)`
 ### `delete(container, address, ...), delete(lvalue)`
 
 Removes specific entry from the container. For the lists - removes the element and shrinks it. For maps, it 
-removes the key from the map, and for nbt - removes content from a given path. For lists and maps returns previous 
-entry at the address, for nbt's - number of removed objects, with 0 indicating that the original value was unaffected.
+removes the key from the map, and for nbt - removes content from a given path.
 
 Like with the `get` and `has`, `delete` can accept chained addresses, as well as l-value container access, removing 
 the value from the leaf of the path provided, so `delete(foo, a, b)` is the 
@@ -2098,7 +2097,7 @@ baz(entities) -> // same thing
  ```
 
 It works similarly to the auto command, but arguments get their inferred types based on the argument
-names, looking at the full name, or the suffix after the last `_` that indicates the variable type. For instance, variable named `float` will
+names, looking at the full name, or any suffix when splitting on `_` that indicates the variable type. For instance, variable named `float` will
 be parsed as a floating point number, but it can be named `'first_float'` or `'other_float'` as well. Any variable that is not
 supported, will be parsed as a `'string'` type. 
 
@@ -2150,7 +2149,7 @@ paths with functions to execute, and optionally, custom argument types. Commands
 the key (can be empty) consists of 
 the execution path with the command syntax, which consists of literals (as is) and arguments (wrapped with `<>`), with the name / suffix
 of the name of the attribute indicating its type, and the value represent function to call, either function values,
-defined function names, or functions with some default arguments. Values extracted from commands will be passed to the
+defined function names, or functions with some default arguments. Argument names need to be unique for each command. Values extracted from commands will be passed to the
 functions and executed. By default, command list will be checked for ambiguities (commands with the same path up to some point
 that further use different attributes), causing app loading error if that happens, however this can be suppressed by specifying
 `'allow_command_conflicts'`.
@@ -2163,8 +2162,14 @@ and less frequently used features, like forks and redirects, used pretty much on
 
 ### Command argument types
 
-There are several default argument types that can be used directly without specifying custom types. Each argument can be 
-customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
+Argument types differ from actual argument names that the types are the suffixes of the used argument names, when separated with 
+`'_'` symbol. For example argument name `'from_pos'` will be interpreted as a built-in type `'int'` and provided to the command system
+as a name `'from_pos'`, however if you define a custom type `'from_pos'`, your custom type will be used instead. 
+Longer suffixes take priority over shorter prefixes, then user defined suffixes mask build-in prefixes.
+
+There are several default argument types that can be used directly without specifying custom types. 
+
+Each argument can be customized in the `'arguments'` section of the app config, specifying its base type, via `'type'` that needs
 to match any of the built-in types, with a series of optional modifiers. Shared modifiers include:
   * `suggest` - static list of suggestions to show above the command while typing
   * `suggester` - function taking one map argument, indicating current state of attributes in the parsed command
@@ -3960,7 +3965,10 @@ In case you want to pass an event handler that is not defined in your module, pl
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 
 Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
-to an entity right when it is loaded to the world without querying them every tick. Callback expects one parameter - the entity.
+to an entity right when it is loaded to the world without querying them every tick. Callback expects two parameters - the entity,
+and a boolean indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
+only entities are allowed, but deprecated and will be removed at some point.
+
 If callback is `null`, then the current entity handler, if present, is removed. Consecutive calls to `entity_load_handler` will add / subtract
 of the currently targeted entity types pool.
 
@@ -3970,10 +3978,10 @@ that it is not clear which player to use run the load call.
 ```
 // veryfast method of getting rid of all the zombies. Callback is so early, its packets haven't reached yet the clients
 // so to save on log errors, removal of mobs needs to be scheduled for later.
-entity_load_handler('zombie', _(e) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
+entity_load_handler('zombie', _(e, new) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
 
 // making all zombies immediately faster and less susceptible to friction of any sort
-entity_load_handler('zombie', _(e) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
+entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))
 ```
 
 Word of caution: entities can be loaded with chunks in various states, for instance when a chunk is being generated, this means
@@ -3981,25 +3989,30 @@ that accessing world blocks would cause the game to freeze due to force generati
 sure to never assume the chunk is ready and use `entity_load_handler` to schedule actions around the loaded entity, 
 or manipulate entity directly.
 
+Also, it is possible that mobs that spawn with world generation, while being 'added' have their metadata serialized and cached
+internally (vanilla limitation), so some modifications to these entities may have no effect on them. This affects mobs created with
+world generation.
+
 For instance the following handler is safe, as it only accesses the entity directly. It makes all spawned pigmen jump
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> modify(e, 'motion', 0, 1, 0) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new, modify(e, 'motion', 0, 1, 0)) )
 ```
 But the following handler, attempting to despawn pigmen that spawn in portals, will cause the game to freeze due to cascading access to blocks that would cause neighbouring chunks 
 to force generate, causing also error messages for all pigmen caused by packets send after entity is removed by script.
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new && block(pos(e))=='nether_portal', modify(e, 'remove') ) )
 ```
 Easiest method to circumvent these issues is delay the check, which may or may not cause cascade load to happen, but 
 will definitely break the infinite chain.
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> schedule(0, _(outer(e)) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) ) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new, schedule(0, _(outer(e)) -> if(block(pos(e))=='nether_portal', modify(e, 'remove') ) ) ) )
 ```
 But the best is to perform the check first time the entity will be ticked - giving the game all the time to ensure chunk 
-is fully loaded and entity processing, removing the tick handler 
+is fully loaded and entity processing, removing the tick handler: 
 ```
-/script run entity_load_handler('zombified_piglin', _(e) -> entity_event(e, 'on_tick', _(e) -> ( if(block(pos(e))=='nether_portal', modify(e, 'remove')); entity_event(e, 'on_tick', null) ) ) )
+/script run entity_load_handler('zombified_piglin', _(e, new) -> if(new, entity_event(e, 'on_tick', _(e) -> ( if(block(pos(e))=='nether_portal', modify(e, 'remove')); entity_event(e, 'on_tick', null) ) ) ) )
 ```
+Looks little convoluted, but that's the safest method to ensure your app won't crash.
 
 ### `entity_event(e, event, function)`, `entity_event(e, event, call_name, ... args?)`
 
@@ -4305,10 +4318,17 @@ Duplicate of `tick`, just automatically located in the nether. Use `__on_tick() 
 ### `__on_tick_ender()` (Deprecated)
 Duplicate of `tick`, just automatically located in the end. Use `__on_tick() -> in_dimension('end', ... ` instead.
 
-### `__on_chunk_generated(x,z)`
+### `__on_chunk_generated(x, z)`
 Called right after a chunk at a given coordinate is full generated. `x` and `z` correspond
-to the lowest x and z coords in the chunk. Event may (or may not) work with Optifine installed
-at the same time.
+to the lowest x and z coords in the chunk. Handling of this event is scheduled as an off-tick task happening after the 
+chunk is confirmed to be generated and loaded to the game, so 
+handling of this event is not technically guaranteed, if the game crashes while players are moving for example, and can
+be missed on the next start, if the game successfully saves it and fails to execute all remaining tasks. In normal operation
+this should not happen, but be warned.
+
+### `__on_chunk_loaded(x, z)`
+Called right after a chunk at a given coordinate is loaded. All newly generated chunks are loaded as well.
+ `x` and `z` correspond to the lowest x and z coordinates in the chunk.
 
 ### `__on_lightning(block, mode)`
 Triggered right after a lightning strikes. Lightning entity as well as potential horseman trap would 

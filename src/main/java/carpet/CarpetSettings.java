@@ -845,6 +845,7 @@ public class CarpetSettings
                     "but this also means it will work on vanilla servers as well"
             },
             category = {CREATIVE, CLIENT},
+            strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
     public static double creativeFlySpeed = 1.0;
@@ -860,6 +861,7 @@ public class CarpetSettings
                     "but this also means it will work on vanilla servers as well"
             },
             category = {CREATIVE, CLIENT},
+            strict = false,
             validate = Validator.PROBABILITY.class
     )
     public static double creativeFlyDrag = 0.09;

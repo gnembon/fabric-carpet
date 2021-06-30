@@ -110,7 +110,7 @@ public class ScriptCommand
     }
 
     /**
-     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#appStoreRoot}
+     * A method to suggest the available scarpet scripts based off of the current player input and {@link AppStoreManager#APP_STORE_ROOT}
      * variable.
      */
     private static CompletableFuture<Suggestions> suggestDownloadableApps(
