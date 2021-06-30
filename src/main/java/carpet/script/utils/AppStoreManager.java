@@ -296,6 +296,7 @@ public class AppStoreManager
             {
                 if (useTrash)
                 {
+                    Files.createDirectories(scriptLocation.getParent().resolve("trash"));
                     Path trashPath = scriptLocation.getParent().resolve("trash").resolve(path);
                     int i = 0;
                     while (Files.exists(trashPath))
