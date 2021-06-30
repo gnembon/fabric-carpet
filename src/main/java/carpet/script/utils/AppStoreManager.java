@@ -230,10 +230,10 @@ public class AppStoreManager
     public static int downloadScript(ServerCommandSource source, String path)
     {
         Triple<String, String, StoreNode> nodeInfo = getFileNode(path);
-        return downloadScript(source, path, nodeInfo);
+        return downloadScript(source, path, nodeInfo, false);
     }
 
-    private static int downloadScript(ServerCommandSource source, String path, Triple<String, String, StoreNode> nodeInfo)
+    private static int downloadScript(ServerCommandSource source, String path, Triple<String, String, StoreNode> nodeInfo, boolean useTrash)
     {
         String code;
         try
@@ -244,7 +244,7 @@ public class AppStoreManager
         {
             throw new CommandException(Messenger.c("rb Failed to obtain app file content: "+e.getMessage()));
         }
-        if (!saveScriptToFile(source, path, nodeInfo.getLeft(), code, false)) return 0;
+        if (!saveScriptToFile(source, path, nodeInfo.getLeft(), code, false, useTrash)) return 0;
         boolean success = CarpetServer.scriptServer.addScriptHost(source, nodeInfo.getLeft().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.getRight());
         return success?1:0;
     }
@@ -278,7 +278,7 @@ public class AppStoreManager
     }
 
 
-    public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath)
+    public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
     {
         Path scriptLocation;
         if (globalSavePath && !source.getMinecraftServer().isDedicated()) // never happens, this is always called with globalSavePath being false
@@ -293,14 +293,30 @@ public class AppStoreManager
         {
             Files.createDirectories(scriptLocation.getParent());
             if (Files.exists(scriptLocation))
-                Messenger.m(source, String.format("gi Note: replaced existing app '%s'", appFileName));
+            {
+                if (useTrash)
+                {
+                    Path trashPath = scriptLocation.getParent().resolve("trash").resolve(path);
+                    int i = 0;
+                    while (Files.exists(trashPath))
+                    {
+                        String[] nameAndExtension = appFileName.split("\\.");
+                        String newFileName = String.format(nameAndExtension[0] + "%02d." + nameAndExtension[1],i);
+                        trashPath = trashPath.getParent().resolve(newFileName);
+                        i++;
+                    }
+                    Files.move(scriptLocation, trashPath);
+                }
+                Messenger.m(source, String.format("gi Note: replaced existing app '%s'"+(useTrash ? " (old moved to /trash folder)" : ""), appFileName));
+            }
             BufferedWriter writer = Files.newBufferedWriter(scriptLocation);
             writer.write(code);
             writer.close();
         }
         catch (IOException e)
         {
-            Messenger.m(source, "r Error in downloading app: "+e.getMessage());
+            Messenger.m(source, "r Error while downloading app: " + e.toString());
+            CarpetScriptServer.LOG.warn("Error while downloading app", e);
             return false;
         }
         return true;
@@ -353,10 +369,41 @@ public class AppStoreManager
         return getFileNodeFrom(storeSource, original).getMiddle(); // Relative path: Use download location
     }
 
+    public static void addResource(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value resource)
+    {
+        if (!(resource instanceof MapValue))
+            throw new InternalExpressionException("This is not a valid resource map: "+resource.getString());
+        Map<String, Value> resourceMap = ((MapValue) resource).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
+        if (!resourceMap.containsKey("source")) throw new InternalExpressionException("Missing 'source' field in resource descriptor: "+resource.getString());
+        String source = resourceMap.get("source").getString();
+        String contentUrl = getFullContentUrl(source, storeSource);
+        String target = resourceMap.computeIfAbsent("target", k -> new StringValue(contentUrl.substring(contentUrl.lastIndexOf('/') + 1))).getString();
+        boolean shared = resourceMap.getOrDefault("shared", Value.FALSE).getBoolean();
+
+        if (!carpetScriptHost.applyActionForResource(target, shared, p -> {
+            try {
+                writeUrlToFile(contentUrl, p);
+            } catch (IOException e) {
+                throw new InternalExpressionException("Unable to write resource "+target+": "+e.toString());
+            }
+        }))
+        {
+            throw new InternalExpressionException("Unable to write resource "+target);
+        }
+        CarpetScriptServer.LOG.info("Downloaded resource "+target+" from "+contentUrl);
+    }
+
+    /**
+     * Gets a new StoreNode for an app's dependency with proper relativeness. Will be null if it comes from an external URL
+     * @param originalSource The StoreNode from the container's app
+     * @param sourceString The string the app specified as source
+     * @param contentUrl The full content URL, from {@link #getFullContentUrl(String, StoreNode)}
+     * @return A {@link StoreNode} that can be used in an app that came from the provided source
+     */
     private static StoreNode getNewStoreNode(StoreNode originalSource, String sourceString, String contentUrl)
     {
         StoreNode next = originalSource;
-        if (sourceString == contentUrl) // External URL 
+        if (sourceString == contentUrl) // External URL (check getFullUrlContent)
             return null;
         if (sourceString.charAt(0) == '/') // Absolute URL
         {
@@ -376,53 +423,25 @@ public class AppStoreManager
         return next;
     }
 
-    public static void addResource(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value resource)
-    {
-        if (!(resource instanceof MapValue))
-            throw new InternalExpressionException("This is not a valid resource map: "+resource.getString());
-        Map<String, Value> resourceMap = ((MapValue) resource).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
-        for (String key: new String[]{"source", "target"})
-            if (!resourceMap.containsKey(key)) throw new InternalExpressionException("Missing '"+key+"' field in resource descriptor: "+resource.getString());
-        String source = resourceMap.get("source").getString();
-        String target = resourceMap.get("target").getString();
-        boolean shared = resourceMap.getOrDefault("shared", Value.FALSE).getBoolean();
-        String type = resourceMap.getOrDefault("type", StringValue.EMPTY).getString();
-        String contentUrl;
-        if (type.equalsIgnoreCase("store")) // deprecated, but necessary since it allows 'absolute' paths without starting slash
+    public static void addLibrary(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value library) {
+        if (!(library instanceof MapValue))
+            throw new InternalExpressionException("This is not a valid library map: "+library.getString());
+        Map<String, String> libraryMap = ((MapValue) library).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), e -> e.getValue().getString()));
+        String source = libraryMap.get("source");
+        String contentUrl = getFullContentUrl(source, storeSource);
+        String target = libraryMap.computeIfAbsent("target", k -> contentUrl.substring(contentUrl.lastIndexOf('/') + 1));
+        if (!(contentUrl.endsWith(".sc") || contentUrl.endsWith(".scl")))
+            throw new InternalExpressionException("App resource type must download a scarpet app or library.");
+        if (target.indexOf('/') != -1)
+            throw new InternalExpressionException("App resource tried to leave script reserved space");
+        try
         {
-            carpetScriptHost.issueDeprecation("'store' resource type");
-            Triple<String, String, StoreNode> nodeInfo = getFileNode(source);
-            contentUrl = nodeInfo.getMiddle();
+            downloadScript(carpetScriptHost.responsibleSource, target, Triple.of(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)), true);
         }
-        else
-            contentUrl = getFullContentUrl(source, storeSource);
-        if (type.equalsIgnoreCase("app"))
+        catch (CommandException e)
         {
-            if (!(contentUrl.endsWith(".sc") || contentUrl.endsWith(".scl")))
-                throw new InternalExpressionException("App resource type must download a scarpet app or library.");
-            if (target.indexOf('/') != -1)
-                throw new InternalExpressionException("App resource tried to leave script reserved space");
-            try
-            {
-                downloadScript(carpetScriptHost.responsibleSource, target, Triple.of(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)));
-            }
-            catch (CommandException e)
-            {
-                throw new InternalExpressionException("Error when installing app dependencies: " + e.getMessage());
-            }
-            CarpetScriptServer.LOG.info("Downloaded app "+target+" from "+contentUrl);
-            return;
+            throw new InternalExpressionException("Error when installing app dependencies: " + e.toString());
         }
-        if (!carpetScriptHost.applyActionForResource(target, shared, p -> {
-            try {
-                writeUrlToFile(contentUrl, p);
-            } catch (IOException e) {
-                throw new InternalExpressionException("Unable to write resource "+target+": "+e.getMessage());
-            }
-        }))
-        {
-            throw new InternalExpressionException("Unable to write resource "+target);
-        }
-        CarpetScriptServer.LOG.info("Downloaded resource "+target+" from "+contentUrl);
+        CarpetScriptServer.LOG.info("Downloaded app "+target+" from "+contentUrl);
     }
 }

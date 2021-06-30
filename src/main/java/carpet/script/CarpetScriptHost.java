@@ -328,6 +328,15 @@ public class CarpetScriptHost extends ScriptHost
                         AppStoreManager.addResource(this, storeSource, resource);
                     }
                 }
+                Value libraries = config.get(new StringValue("libraries"));
+                if (libraries != null)
+                {
+                    if (!(libraries instanceof ListValue)) throw new InternalExpressionException("App libraries not defined as a list");
+                    for (Value library : ((ListValue) libraries).getItems())
+                    {
+                        AppStoreManager.addLibrary(this, storeSource, library);
+                    }
+                }
             }
             appConfig = config;
         }
