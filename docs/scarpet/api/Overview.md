@@ -110,30 +110,46 @@ in a list and contain of map-like resources descriptors, looking like
    'resources' -> [
         {
             'source' -> 'https://raw.githubusercontent.com/gnembon/fabric-carpet/master/src/main/resources/assets/carpet/icon.png',
-            'type' -> 'url',
             'target' -> 'foo/photos.zip/foo/cm.png',
         },
         {
-            'source' -> 'survival/README.md',
-            'type' -> 'store',
+            'source' -> '/survival/README.md',
             'target' -> 'survival_readme.md',
             'shared' -> true,
         },
         {
-            'source' -> 'carpets.sc',
-            'type' -> 'app',
-            'target' -> 'apps/flying_carpets.sc',
-            'shared' -> true,
+            'source' -> 'circle.sc', // Relative path
+            'target' -> 'apps/circle.sc', // This won't install the app, use 'libraries' for that
         },
     ]
    ```
-   `source` and `type` indicate resource location: either an arbitrary url (type `'url'`), 
-   absolute location of a file in the app store (type `'store'`),
-or a relative location in the same folder as the app in question (type `'app'`). 
-`'target'` points to the path in app data, or shared app data folder
+   `source` indicates resource location: either an arbitrary url (starting with `http://` or `https://`), 
+   absolute location of a file in the app store (starting with a slash `/`),
+or a relative location in the same folder as the app in question (the relative location directly). 
+`'target'` points to the path in app data, or shared app data folder. If not specified it will place the app into the main data folder with the name it has.
 if `'shared'` is specified and `true`. When re-downloading the app, all resources will be re-downloaded as well. 
-Currently, app resources
-are only downloaded when using `/carpet download` command.
+Currently, app resources are only downloaded when using `/carpet download` command.
+*   `libraries` - list of libraries or apps to be downloaded when installing the app from the app store. It needs to be a list of map-like resource
+descriptors, like the above `resources` field.
+   ```
+   'libraries' -> [
+        {
+            'source' -> '/tutorial/carpets.sc'
+        },
+        {
+            'source' -> '/fundamentals/heap.sc',
+            'target' -> 'heap-lib.sc'
+        }
+    ]
+   ```
+    `source` indicates resource location and must point to a scarpet app or library. It can be either an arbitrary url (starting with `http://` 
+    or `https://`), absolute location of a file in the app store (starting with a slash `/`), or a relative location in the same folder as the app
+    in question (the relative location directly). 
+    `target` is an optional field indicating the new name of the app. If not specified it will place the app into the main data folder with the name it has.
+If the app has relative resources dependencies, Carpet will use the app's path for relatives if the app was loaded from the same app store, or none if the 
+app was loaded from an external url.
+If you need to `import()` from dependencies indicated in this block, make sure to have the `__config()` map before any import that references your
+remote dependencies, in order to allow them to be downloaded and initialized before the import is executed.
 *   `'arguments'` - defines custom argument types for legacy commands with `'legacy_command_type_support'` as well
 as for the custom commands defined with `'commands'`, see below.
 *   `'commands'` - defines custom commands for the app to be executed with `/<app>` command, see below.

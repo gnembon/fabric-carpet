@@ -5,11 +5,11 @@ import carpet.script.CarpetScriptHost;
 import carpet.script.CarpetScriptServer;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.MapValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.settings.ParsedRule;
 import carpet.settings.Validator;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -21,7 +21,7 @@ import net.minecraft.util.WorldSavePath;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -32,7 +32,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,7 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 /**
  * A class used to save scarpet app store scripts to disk
@@ -50,7 +48,7 @@ public class AppStoreManager
     /** A local copy of the scarpet repo's file structure, to avoid multiple queries to github.com while typing out the
      * {@code /script download} command and getting the suggestions.
      */
-    public static final StoreNode appStoreRoot = StoreNode.folder(null, "");
+    public static final StoreNode APP_STORE_ROOT = StoreNode.folder(null, "");
 
     /** This is the base link to the scarpet app repo from the github api.
      */
@@ -61,8 +59,8 @@ public class AppStoreManager
     {
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String string)
         {
-            appStoreRoot.sealed = false;
-            appStoreRoot.children = new HashMap<>();
+            APP_STORE_ROOT.sealed = false;
+            APP_STORE_ROOT.children = new HashMap<>();
             if (newValue.equalsIgnoreCase("none"))
             {
                 scarpetRepoLink = null;
@@ -115,7 +113,7 @@ public class AppStoreManager
         }
         private StringBuilder createPrePath()
         {
-            return this == appStoreRoot ? new StringBuilder() : parent.createPrePath().append(pathElement());
+            return this == APP_STORE_ROOT ? new StringBuilder() : parent.createPrePath().append(pathElement());
         }
         private StoreNode(StoreNode parent, String name)
         {
@@ -212,7 +210,7 @@ public class AppStoreManager
     public static List<String> suggestionsFromPath(String currentPath) throws IOException
     {
         String[] path = currentPath.split("/");
-        StoreNode appKiosk = appStoreRoot;
+        StoreNode appKiosk = APP_STORE_ROOT;
         for(String pathElement : path)
         {
             if (appKiosk.cannotContinueFor(pathElement)) break;
@@ -237,6 +235,11 @@ public class AppStoreManager
     public static int downloadScript(ServerCommandSource source, String path)
     {
         Triple<String, String, StoreNode> nodeInfo = getFileNode(path);
+        return downloadScript(source, path, nodeInfo, false);
+    }
+
+    private static int downloadScript(ServerCommandSource source, String path, Triple<String, String, StoreNode> nodeInfo, boolean useTrash)
+    {
         String code;
         try
         {
@@ -246,7 +249,7 @@ public class AppStoreManager
         {
             throw new CommandException(Messenger.c("rb Failed to obtain app file content: "+e.getMessage()));
         }
-        if (!saveScriptToFile(source, path, nodeInfo.getLeft(), code, false)) return 0;
+        if (!saveScriptToFile(source, path, nodeInfo.getLeft(), code, false, useTrash)) return 0;
         boolean success = CarpetServer.scriptServer.addScriptHost(source, nodeInfo.getLeft().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.getRight());
         return success?1:0;
     }
@@ -258,7 +261,7 @@ public class AppStoreManager
      */
     public static Triple<String, String, StoreNode> getFileNode(String appPath)
     {
-        return getFileNodeFrom(appStoreRoot, appPath);
+        return getFileNodeFrom(APP_STORE_ROOT, appPath);
     }
 
     public static Triple<String, String, StoreNode> getFileNodeFrom(StoreNode start, String appPath)
@@ -280,32 +283,46 @@ public class AppStoreManager
     }
 
 
-    public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath){
-        String  scriptPath;
-        String location;
-        if(globalSavePath && !source.getMinecraftServer().isDedicated())
+    public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
+    {
+        Path scriptLocation;
+        if (globalSavePath && !source.getMinecraftServer().isDedicated()) // never happens, this is always called with globalSavePath being false
         { //cos config folder only is in clients
-            scriptPath = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath()+"/"+path;
-            location = "global script config folder";
+            scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath().resolve(path);
         }
         else
         {
-            scriptPath = source.getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath()+"/"+appFileName;
-            location = "world scripts folder";
+            scriptLocation = source.getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
         }
         try
         {
-            Path scriptLocation = Paths.get(scriptPath);
             Files.createDirectories(scriptLocation.getParent());
-            if(Files.exists(scriptLocation))
-                Messenger.m(source, String.format("gi Note: replaced existing app '%s'", appFileName));
-            FileWriter fileWriter = new FileWriter(scriptPath);
-            fileWriter.write(code);
-            fileWriter.close();
+            if (Files.exists(scriptLocation))
+            {
+                if (useTrash)
+                {
+                    Files.createDirectories(scriptLocation.getParent().resolve("trash"));
+                    Path trashPath = scriptLocation.getParent().resolve("trash").resolve(path);
+                    int i = 0;
+                    while (Files.exists(trashPath))
+                    {
+                        String[] nameAndExtension = appFileName.split("\\.");
+                        String newFileName = String.format(nameAndExtension[0] + "%02d." + nameAndExtension[1],i);
+                        trashPath = trashPath.getParent().resolve(newFileName);
+                        i++;
+                    }
+                    Files.move(scriptLocation, trashPath);
+                }
+                Messenger.m(source, String.format("gi Note: replaced existing app '%s'"+(useTrash ? " (old moved to /trash folder)" : ""), appFileName));
+            }
+            BufferedWriter writer = Files.newBufferedWriter(scriptLocation);
+            writer.write(code);
+            writer.close();
         }
         catch (IOException e)
         {
-            Messenger.m(source, "r Error in downloading app: "+e.getMessage());
+            Messenger.m(source, "r Error while downloading app: " + e.toString());
+            CarpetScriptServer.LOG.warn("Error while downloading app", e);
             return false;
         }
         return true;
@@ -348,47 +365,89 @@ public class AppStoreManager
             Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
         }
     }
+    
+    private static String getFullContentUrl(String original, StoreNode storeSource)
+    {
+        if (original.matches("^https?://.*$")) // We've got a full url here: Just use it
+            return original;
+        if (original.charAt(0) == '/') // We've got an absolute path: Use app store root
+            return getFileNode(original.substring(1)).getMiddle();
+        return getFileNodeFrom(storeSource, original).getMiddle(); // Relative path: Use download location
+    }
 
     public static void addResource(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value resource)
     {
         if (!(resource instanceof MapValue))
             throw new InternalExpressionException("This is not a valid resource map: "+resource.getString());
         Map<String, Value> resourceMap = ((MapValue) resource).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), Map.Entry::getValue));
-        for (String key: ImmutableList.of("source", "target", "type"))
-            if (!resourceMap.containsKey(key)) throw new InternalExpressionException("Missing '"+key+"' field in resource descriptor: "+resource.getString());
+        if (!resourceMap.containsKey("source")) throw new InternalExpressionException("Missing 'source' field in resource descriptor: "+resource.getString());
         String source = resourceMap.get("source").getString();
-        String target = resourceMap.get("target").getString();
+        String contentUrl = getFullContentUrl(source, storeSource);
+        String target = resourceMap.computeIfAbsent("target", k -> new StringValue(contentUrl.substring(contentUrl.lastIndexOf('/') + 1))).getString();
         boolean shared = resourceMap.getOrDefault("shared", Value.FALSE).getBoolean();
-        String type = resourceMap.get("type").getString();
-        String contentUrl;
-        if (type.equalsIgnoreCase("url"))
-        {
-            contentUrl = source;
-        }
-        else if (type.equalsIgnoreCase("store"))
-        {
-            Triple<String, String, StoreNode> nodeInfo = getFileNode(source);
-            contentUrl = nodeInfo.getMiddle();
-        }
-        else if (type.equalsIgnoreCase("app"))
-        {
-            Triple<String, String, StoreNode> nodeInfo = getFileNodeFrom(storeSource, source);
-            contentUrl = nodeInfo.getMiddle();
-        }
-        else
-        {
-            throw new InternalExpressionException("Incorrect source type, expecting 'url', 'store' or 'app', got "+type);
-        }
+
         if (!carpetScriptHost.applyActionForResource(target, shared, p -> {
             try {
                 writeUrlToFile(contentUrl, p);
             } catch (IOException e) {
-                throw new InternalExpressionException("Unable to write resource "+target+": "+e.getMessage());
+                throw new InternalExpressionException("Unable to write resource "+target+": "+e.toString());
             }
         }))
         {
             throw new InternalExpressionException("Unable to write resource "+target);
         }
         CarpetScriptServer.LOG.info("Downloaded resource "+target+" from "+contentUrl);
+    }
+
+    /**
+     * Gets a new StoreNode for an app's dependency with proper relativeness. Will be null if it comes from an external URL
+     * @param originalSource The StoreNode from the container's app
+     * @param sourceString The string the app specified as source
+     * @param contentUrl The full content URL, from {@link #getFullContentUrl(String, StoreNode)}
+     * @return A {@link StoreNode} that can be used in an app that came from the provided source
+     */
+    private static StoreNode getNewStoreNode(StoreNode originalSource, String sourceString, String contentUrl)
+    {
+        StoreNode next = originalSource;
+        if (sourceString == contentUrl) // External URL (check getFullUrlContent)
+            return null;
+        if (sourceString.charAt(0) == '/') // Absolute URL
+        {
+            next = APP_STORE_ROOT;
+            sourceString = sourceString.substring(1);
+        }
+        String[] dirs = sourceString.split("/");
+        try
+        {
+            for (int i = 0; i < dirs.length - 1; i++)
+                next = next.drillDown(dirs[i]);
+        }
+        catch (IOException e)
+        {
+            return null; // Should never happen, but let's not give a potentially incorrect node just in case
+        }
+        return next;
+    }
+
+    public static void addLibrary(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value library) {
+        if (!(library instanceof MapValue))
+            throw new InternalExpressionException("This is not a valid library map: "+library.getString());
+        Map<String, String> libraryMap = ((MapValue) library).getMap().entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getString(), e -> e.getValue().getString()));
+        String source = libraryMap.get("source");
+        String contentUrl = getFullContentUrl(source, storeSource);
+        String target = libraryMap.computeIfAbsent("target", k -> contentUrl.substring(contentUrl.lastIndexOf('/') + 1));
+        if (!(contentUrl.endsWith(".sc") || contentUrl.endsWith(".scl")))
+            throw new InternalExpressionException("App resource type must download a scarpet app or library.");
+        if (target.indexOf('/') != -1)
+            throw new InternalExpressionException("App resource tried to leave script reserved space");
+        try
+        {
+            downloadScript(carpetScriptHost.responsibleSource, target, Triple.of(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)), true);
+        }
+        catch (CommandException e)
+        {
+            throw new InternalExpressionException("Error when installing app dependencies: " + e.toString());
+        }
+        CarpetScriptServer.LOG.info("Downloaded app "+target+" from "+contentUrl);
     }
 }
