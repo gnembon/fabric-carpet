@@ -62,7 +62,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;method_37413(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z", // dropSelectedItem
             ordinal = 0,
             shift = At.Shift.BEFORE
     ))
@@ -84,7 +84,7 @@ public class ServerPlayNetworkHandler_scarpetEventsMixin
 
     @Inject(method = "onPlayerAction", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerPlayerEntity;method_37413(Z)Z", // dropSelectedItem
+            target = "Lnet/minecraft/server/network/ServerPlayerEntity;dropSelectedItem(Z)Z", // dropSelectedItem
             ordinal = 1,
             shift = At.Shift.BEFORE
     ))
