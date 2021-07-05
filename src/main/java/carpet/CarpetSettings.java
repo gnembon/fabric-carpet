@@ -196,6 +196,7 @@ public class CarpetSettings
             category = {SURVIVAL, FEATURE}
     )
     public static boolean stackableShulkerBoxes = false;
+    public static final int SHULKER_STACK_SIZE = 64;
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
