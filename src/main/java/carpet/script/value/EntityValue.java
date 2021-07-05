@@ -17,6 +17,7 @@ import carpet.script.CarpetScriptServer;
 import carpet.script.EntityEventsGroup;
 import carpet.script.argument.Vector3Argument;
 import carpet.script.exception.InternalExpressionException;
+import carpet.script.utils.InputValidator;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -251,7 +252,7 @@ public class EntityValue extends Value
                 positive = false;
                 who = who.substring(1);
             }
-            Tag<EntityType<?>> eTag = server.getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(who));
+            Tag<EntityType<?>> eTag = server.getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(InputValidator.identifierOf(who));
             if (eTag == null) throw new InternalExpressionException(who+" is not a valid entity descriptor");
             if (positive)
             {
@@ -460,7 +461,7 @@ public class EntityValue extends Value
 
         put("has_scoreboard_tag", (e, a) -> BooleanValue.of(e.getScoreboardTags().contains(a.getString())));
         put("has_entity_tag", (e, a) -> {
-            Tag<EntityType<?>> tag = e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(new Identifier(a.getString()));
+            Tag<EntityType<?>> tag = e.getServer().getTagManager().getOrCreateTagGroup(Registry.ENTITY_TYPE_KEY).getTag(InputValidator.identifierOf(a.getString()));
             if (tag == null) return Value.NULL;
             return BooleanValue.of(e.getType().isIn(tag));
         });
@@ -628,7 +629,7 @@ public class EntityValue extends Value
 
         put("brain", (e, a) -> {
             String module = a.getString();
-            MemoryModuleType<?> moduleType = Registry.MEMORY_MODULE_TYPE.get(new Identifier(module));
+            MemoryModuleType<?> moduleType = Registry.MEMORY_MODULE_TYPE.get(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY) return Value.NULL;
             if (e instanceof LivingEntity)
             {
@@ -723,7 +724,7 @@ public class EntityValue extends Value
                 return ListValue.wrap(effects);
             }
             String effectName = a.getString();
-            StatusEffect potion = Registry.STATUS_EFFECT.get(new Identifier(effectName));
+            StatusEffect potion = Registry.STATUS_EFFECT.get(InputValidator.identifierOf(effectName));
             if (potion == null)
                 throw new InternalExpressionException("No such an effect: "+effectName);
             if (!((LivingEntity) e).hasStatusEffect(potion))
@@ -867,7 +868,7 @@ public class EntityValue extends Value
                 AttributeContainer container = el.getAttributes();
                 return MapValue.wrap(Registry.ATTRIBUTE.stream().filter(container::hasAttribute).collect(Collectors.toMap(aa -> ValueConversions.of(Registry.ATTRIBUTE.getId(aa)), aa -> NumericValue.of(container.getValue(aa)))));
             }
-            Identifier id =  new Identifier(a.getString());
+            Identifier id =  InputValidator.identifierOf(a.getString());
             EntityAttribute attrib = Registry.ATTRIBUTE.getOrEmpty(id).orElseThrow(
                     () -> new InternalExpressionException("Unknown attribute: "+a.getString())
             );
@@ -1379,7 +1380,7 @@ public class EntityValue extends Value
                 if (lv.size() >= 1 && lv.size() <= 6)
                 {
                     String effectName = lv.get(0).getString();
-                    StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
+                    StatusEffect effect = Registry.STATUS_EFFECT.get(InputValidator.identifierOf(effectName));
                     if (effect == null)
                         throw new InternalExpressionException("Wrong effect name: "+effectName);
                     if (lv.size() == 1)
@@ -1412,7 +1413,7 @@ public class EntityValue extends Value
             else
             {
                 String effectName = v.getString();
-                StatusEffect effect = Registry.STATUS_EFFECT.get(new Identifier(effectName));
+                StatusEffect effect = Registry.STATUS_EFFECT.get(InputValidator.identifierOf(effectName));
                 if (effect == null)
                     throw new InternalExpressionException("Wrong effect name: "+effectName);
                 le.removeStatusEffect(effect);

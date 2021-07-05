@@ -9,6 +9,7 @@ import carpet.script.LazyValue;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.utils.InputValidator;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
@@ -407,14 +408,7 @@ public class Scoreboards {
 
             String id = lv.get(0).getString();
             Identifier identifier;
-            try
-            {
-                identifier = new Identifier(id);
-            }
-            catch (InvalidIdentifierException invalidIdentifierException)
-            {
-                return Value.NULL;
-            }
+            identifier = InputValidator.identifierOf(id);
 
             if(lv.size() == 1)
             {
