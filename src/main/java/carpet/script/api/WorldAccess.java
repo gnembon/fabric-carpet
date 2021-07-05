@@ -22,6 +22,7 @@ import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
 import carpet.script.utils.BiomeInfo;
+import carpet.script.utils.InputValidator;
 import carpet.script.utils.WorldTools;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
@@ -322,7 +323,7 @@ public class WorldAccess {
                 String poiType = lv.get(locator.offset+1).getString().toLowerCase(Locale.ROOT);
                 if (!"any".equals(poiType))
                 {
-                    PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiType))
+                    PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(InputValidator.identifierOf(poiType))
                             .orElseThrow(() -> new ThrowStatement(poiType, Throwables.UNKNOWN_POI));
                     condition = (tt) -> tt == type;
                 }
@@ -372,7 +373,7 @@ public class WorldAccess {
                 return Value.TRUE;
             }
             String poiTypeString = poi.getString().toLowerCase(Locale.ROOT);
-            PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(new Identifier(poiTypeString))
+            PointOfInterestType type =  Registry.POINT_OF_INTEREST_TYPE.getOrEmpty(InputValidator.identifierOf(poiTypeString))
             		.orElseThrow(() -> new ThrowStatement(poiTypeString, Throwables.UNKNOWN_POI));
             int occupancy = 0;
             if (locator.offset + 1 < lv.size())
@@ -827,7 +828,7 @@ public class WorldAccess {
                 {
                     playerBreak = true;
                     String itemString = val.getString();
-                    item = Registry.ITEM.getOrEmpty(new Identifier(itemString))
+                    item = Registry.ITEM.getOrEmpty(InputValidator.identifierOf(itemString))
                             .orElseThrow(() -> new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM));
                 }
             }
@@ -1136,7 +1137,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             String tag = lv.get(0).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(InputValidator.identifierOf(tag));
             if (blockTag == null) return Value.NULL;
             return ListValue.wrap(blockTag.values().stream().map(b -> ValueConversions.of(Registry.BLOCK.getId(b))).collect(Collectors.toList()));
         });
@@ -1154,7 +1155,7 @@ public class WorldAccess {
                 return ListValue.wrap(tagManager.getBlocks().getTags().entrySet().stream().filter(e -> e.getValue().contains(target)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
             }
             String tag = lv.get(blockLocator.offset).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(InputValidator.identifierOf(tag));
             if (blockTag == null) return Value.NULL;
             return BooleanValue.of(blockLocator.block.getBlockState().isIn(blockTag));
         });
@@ -1170,7 +1171,7 @@ public class WorldAccess {
             Biome biome;
             if (locator.replacement != null)
             {
-                biome = world.getRegistryManager().get(Registry.BIOME_KEY).get(new Identifier(locator.replacement));
+                biome = world.getRegistryManager().get(Registry.BIOME_KEY).get(InputValidator.identifierOf(locator.replacement));
                 if (biome == null) throw new ThrowStatement(locator.replacement, Throwables.UNKNOWN_BIOME) ;
             }
             else
@@ -1198,7 +1199,7 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).getString();
             // from locatebiome command code
-            Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(new Identifier(biomeName))
+            Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(InputValidator.identifierOf(biomeName))
                 .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset+1)
@@ -1235,7 +1236,7 @@ public class WorldAccess {
             String simpleStructureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
             //CarpetSettings.LOG.error(FeatureGenerator.featureToStructure.keySet().stream().collect(Collectors.joining(",")));
             //CarpetSettings.LOG.error(FeatureGenerator.featureToStructure.values().stream().collect(Collectors.joining(",")));
-            StructureFeature<?> structureName = Registry.STRUCTURE_FEATURE.get(new Identifier(simpleStructureName));
+            StructureFeature<?> structureName = Registry.STRUCTURE_FEATURE.get(InputValidator.identifierOf(simpleStructureName));
             if (structureName == null) return Value.NULL;
             LongSet structureReferences = references.get(structureName);
             if (structureReferences == null || structureReferences.isEmpty()) return ListValue.of();
@@ -1264,7 +1265,7 @@ public class WorldAccess {
                 if (!(requested instanceof NullValue))
                 {
                     String reqString = requested.getString();
-                    structure = Registry.STRUCTURE_FEATURE.getOrEmpty(new Identifier(reqString))
+                    structure = Registry.STRUCTURE_FEATURE.getOrEmpty(InputValidator.identifierOf(reqString))
                             .orElseThrow(() -> new ThrowStatement(reqString, Throwables.UNKNOWN_STRUCTURE));
                 }
                 if (lv.size() > locator.offset+1)
@@ -1325,7 +1326,7 @@ public class WorldAccess {
                 return MapValue.wrap(structureList);
             }
             String structureName = lv.get(locator.offset).getString().toLowerCase(Locale.ROOT);
-            return ValueConversions.of(structures.get(Registry.STRUCTURE_FEATURE.get(new Identifier(structureName))));
+            return ValueConversions.of(structures.get(Registry.STRUCTURE_FEATURE.get(InputValidator.identifierOf(structureName))));
         });
 
         expression.addContextFunction("set_structure", -1, (c, t, lv) ->

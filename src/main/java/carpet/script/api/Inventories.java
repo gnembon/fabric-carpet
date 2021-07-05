@@ -7,6 +7,7 @@ import carpet.script.Expression;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
+import carpet.script.utils.InputValidator;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
@@ -66,7 +67,7 @@ public class Inventories {
             CarpetContext cc = (CarpetContext)c;
             TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
             String tag = lv.get(0).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
             return ListValue.wrap(itemTag.values().stream().map(b -> ValueConversions.of(Registry.ITEM.getId(b))).collect(Collectors.toList()));
         });
@@ -81,7 +82,7 @@ public class Inventories {
             if (lv.size() == 1)
                 return ListValue.wrap(tagManager.getItems().getTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
             String tag = lv.get(1).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(new Identifier(tag));
+            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
             return BooleanValue.of(item.isIn(itemTag));
         });
@@ -95,17 +96,10 @@ public class Inventories {
             if (lv.size() > 1)
             {
                 String recipeType = lv.get(1).getString();
-                try
-                {
-                    type = Registry.RECIPE_TYPE.get(new Identifier(recipeType));
-                }
-                catch (InvalidIdentifierException ignored)
-                {
-                    throw new InternalExpressionException("Unknown crafting category: " + recipeType);
-                }
+                type = Registry.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
             }
             List<Recipe<?>> recipes;
-            recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, new Identifier(recipeName));
+            recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
             if (recipes.isEmpty())
                 return Value.NULL;
             List<Value> recipesOutput = new ArrayList<>();
@@ -175,7 +169,7 @@ public class Inventories {
         {
             String itemStr = v.getString();
             Item item;
-            Identifier id = new Identifier(itemStr);
+            Identifier id = InputValidator.identifierOf(itemStr);
             item = Registry.ITEM.getOrEmpty(id).orElseThrow(() -> new ThrowStatement(itemStr, Throwables.UNKNOWN_ITEM));
             if (!item.hasRecipeRemainder()) return Value.NULL;
             return new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.ITEM.getId(item.getRecipeRemainder())));

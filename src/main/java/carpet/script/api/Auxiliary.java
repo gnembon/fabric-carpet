@@ -154,7 +154,7 @@ public class Auxiliary {
                 return ListValue.wrap(Registry.SOUND_EVENT.getIds().stream().map(ValueConversions::of));
             }
             String rawString = lv.get(0).getString();
-            Identifier soundName = new Identifier(rawString);
+            Identifier soundName = InputValidator.identifierOf(rawString);
             Vector3Argument locator = Vector3Argument.findIn(lv, 1);
             if (Registry.SOUND_EVENT.get(soundName) == null)
                 throw new ThrowStatement(rawString, Throwables.UNKNOWN_SOUND);
@@ -950,15 +950,8 @@ public class Auxiliary {
             if (player == null) return Value.NULL;
             Identifier category;
             Identifier statName;
-            try
-            {
-                category = new Identifier(lv.get(1).getString());
-                statName = new Identifier(lv.get(2).getString());
-            }
-            catch (InvalidIdentifierException e)
-            {
-                return Value.NULL;
-            }
+            category = InputValidator.identifierOf(lv.get(1).getString());
+            statName = InputValidator.identifierOf(lv.get(2).getString());
             StatType<?> type = Registry.STAT_TYPE.get(category);
             if (type == null) return Value.NULL;
             Stat<?> stat = getStat(type, statName);
@@ -1011,12 +1004,12 @@ public class Auxiliary {
             if (lv.size() == 0)
                 return ListValue.wrap(storage.getIds().map(i -> new StringValue(nameFromRegistryId(i))).collect(Collectors.toList()));
             String key = lv.get(0).getString();
-            CompoundTag old_nbt = storage.get(new Identifier(key));
+            CompoundTag old_nbt = storage.get(InputValidator.identifierOf(key));
             if (lv.size() == 2) {
                 Value nbt = lv.get(1);
                 NBTSerializableValue new_nbt = (nbt instanceof NBTSerializableValue) ? (NBTSerializableValue) nbt
                         : NBTSerializableValue.parseString(nbt.getString(), true);
-                storage.set(new Identifier(key), new_nbt.getCompoundTag());
+                storage.set(InputValidator.identifierOf(key), new_nbt.getCompoundTag());
             }
             return NBTSerializableValue.of(old_nbt);
         });
