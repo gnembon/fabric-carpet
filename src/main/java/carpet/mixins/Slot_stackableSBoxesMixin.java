@@ -1,6 +1,7 @@
 package carpet.mixins;
 
 import carpet.CarpetSettings;
+import carpet.helpers.InventoryHelper;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
@@ -17,7 +18,11 @@ public class Slot_stackableSBoxesMixin {
     ))
     private int getMaxCountForSboxes(Slot slot, ItemStack stack)
     {
-        if (CarpetSettings.stackableShulkerBoxes && stack.getItem() instanceof BlockItem && ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock)
+        if (CarpetSettings.stackableShulkerBoxes &&
+                stack.getItem() instanceof BlockItem &&
+                ((BlockItem)stack.getItem()).getBlock() instanceof ShulkerBoxBlock &&
+                !InventoryHelper.shulkerBoxHasItems(stack)
+        )
         {
             return CarpetSettings.SHULKER_STACK_SIZE;
         }
