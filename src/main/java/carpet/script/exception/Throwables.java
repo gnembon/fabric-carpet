@@ -28,6 +28,7 @@ public class Throwables {
     public static final Throwables NBT_ERROR             = register("nbt_error", IO_EXCEPTION);
     public static final Throwables JSON_ERROR            = register("json_error", IO_EXCEPTION);
     public static final Throwables B64_ERROR             = register("b64_error", IO_EXCEPTION);
+    public static final Throwables HTML_ERROR            = register("html_error", IO_EXCEPTION);//todo figure out exactly what kind of error it is
     public static final Throwables USER_DEFINED          = register("user_exception", THROWN_EXCEPTION_TYPE);
 
     /**
