@@ -466,6 +466,7 @@ public class CarpetSettings
                     "using <user>/<repo>/contents/<path...>"
             },
             category = SCARPET,
+            strict = false,
             validate= AppStoreManager.ScarpetAppStoreValidator.class
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";
