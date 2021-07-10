@@ -987,6 +987,7 @@ public class CarpetEventServer
         public final String name;
 
         public final CallbackList handler;
+        @Deprecated
         public final boolean globalOnly;
         public final boolean isPublic; // public events can be targetted with __on_<event> defs
         public Event(String name, int reqArgs, boolean isGlobalOnly)
