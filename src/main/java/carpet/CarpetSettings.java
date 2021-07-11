@@ -453,6 +453,7 @@ public class CarpetSettings
                     "have when running commands with run()"
             },
             category = {SCARPET},
+            options = {"ops", "0", "1", "2", "3", "4"},
             validate = {Validator._COMMAND_LEVEL_VALIDATOR.class, ModulePermissionLevel.class}
     )
     public static String commandScriptACE = "ops";
@@ -484,6 +485,7 @@ public class CarpetSettings
                     "using <user>/<repo>/contents/<path...>"
             },
             category = SCARPET,
+            strict = false,
             validate= AppStoreManager.ScarpetAppStoreValidator.class
     )
     public static String scriptsAppStore = "gnembon/scarpet/contents/programs";

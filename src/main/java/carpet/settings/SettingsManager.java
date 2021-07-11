@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -138,11 +139,24 @@ public class SettingsManager
      */
     public void parseSettingsClass(Class settingsClass)
     {
-        for (Field f : settingsClass.getDeclaredFields())
+        rule: for (Field f : settingsClass.getDeclaredFields())
         {
             Rule rule = f.getAnnotation(Rule.class);
             if (rule == null) continue;
-            ParsedRule parsed = new ParsedRule(f, rule, this);
+            ParsedRule<?> parsed = new ParsedRule<>(f, rule, this);
+            for (Class<? extends Condition> condition : rule.condition()) {
+                try
+                {
+                    Constructor<?> constr = condition.getDeclaredConstructor();
+                    constr.setAccessible(true);
+                    if (!((Condition) constr.newInstance()).isTrue())
+                        continue rule;
+                }
+                catch (ReflectiveOperationException e)
+                {
+                    throw new RuntimeException(e);
+                }
+            }
             rules.put(parsed.name, parsed);
         }
     }

@@ -64,4 +64,9 @@ public @interface Rule
      * The class of the validator checked when the rule is changed.
      */
     Class<? extends Validator>[] validate() default {};
+
+    /**
+     * The class of the condition checked when the rule is parsed.
+     */
+    Class<? extends Condition>[] condition() default {};
 }
