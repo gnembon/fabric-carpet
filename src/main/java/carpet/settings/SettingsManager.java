@@ -139,28 +139,25 @@ public class SettingsManager
      */
     public void parseSettingsClass(Class settingsClass)
     {
-        for (Field f : settingsClass.getDeclaredFields())
+        rule: for (Field f : settingsClass.getDeclaredFields())
         {
             Rule rule = f.getAnnotation(Rule.class);
             if (rule == null) continue;
-            ParsedRule parsed = new ParsedRule(f, rule, this);
-
-            List<Boolean> conditions = new ArrayList<>();
+            ParsedRule<?> parsed = new ParsedRule<>(f, rule, this);
             for (Class<? extends Condition> condition : rule.condition()) {
                 try
                 {
                     Constructor<?> constr = condition.getDeclaredConstructor();
                     constr.setAccessible(true);
-                    conditions.add(((Condition) constr.newInstance()).isTrue());
+                    if (!((Condition) constr.newInstance()).isTrue())
+                        continue rule;
                 }
                 catch (ReflectiveOperationException e)
                 {
                     throw new RuntimeException(e);
                 }
             }
-
-            if (rule.condition().length == 0 || conditions.stream().allMatch(Boolean::valueOf))
-                rules.put(parsed.name, parsed);
+            rules.put(parsed.name, parsed);
         }
     }
 
