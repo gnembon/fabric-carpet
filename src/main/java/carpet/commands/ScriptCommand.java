@@ -2,7 +2,6 @@ package carpet.commands;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import carpet.script.CarpetScriptServer;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.CarpetEventServer;
 import carpet.script.CarpetExpression;
@@ -22,7 +21,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.block.Block;
@@ -117,15 +115,18 @@ public class ScriptCommand
             CommandContext<ServerCommandSource> context,
             SuggestionsBuilder suggestionsBuilder
     ) throws CommandSyntaxException {
-        try {
-            String previous = suggestionsBuilder.getRemaining();
-            AppStoreManager.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
-            return suggestionsBuilder.buildFuture();
-        }
-        catch (IOException e)
-        {
-            throw new SimpleCommandExceptionType(Messenger.c("rb "+e.getMessage())).create();
-        }
+        
+        return CompletableFuture.supplyAsync(()->{
+             String previous = suggestionsBuilder.getRemaining();
+            try {
+                AppStoreManager.suggestionsFromPath(previous).forEach(suggestionsBuilder::suggest);
+            }
+            catch (IOException e)
+            {
+                CarpetSettings.LOG.warn("Exception when fetching app store structure", e);
+            }
+            return suggestionsBuilder.build();
+        });
     }
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
