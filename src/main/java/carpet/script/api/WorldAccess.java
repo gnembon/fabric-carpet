@@ -123,6 +123,12 @@ import static carpet.script.utils.WorldTools.canHasChunk;
 
 public class WorldAccess {
     private static final Map<String, Direction> DIRECTION_MAP = Arrays.stream(Direction.values()).collect(Collectors.toMap(Direction::getName, (direction) -> direction));
+    static {
+        DIRECTION_MAP.put("y", Direction.UP);
+        DIRECTION_MAP.put("z", Direction.SOUTH);
+        DIRECTION_MAP.put("x", Direction.EAST);
+
+    }
     private final static Map<String, ChunkTicketType<?>> ticketTypes = new HashMap<String, ChunkTicketType<?>>(){{
         put("portal", ChunkTicketType.PORTAL);
         put("teleport", ChunkTicketType.POST_TELEPORT);
