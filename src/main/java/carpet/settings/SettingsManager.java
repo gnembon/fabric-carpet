@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -143,7 +144,23 @@ public class SettingsManager
             Rule rule = f.getAnnotation(Rule.class);
             if (rule == null) continue;
             ParsedRule parsed = new ParsedRule(f, rule, this);
-            rules.put(parsed.name, parsed);
+
+            List<Boolean> conditions = new ArrayList<>();
+            for (Class<? extends Condition> condition : rule.condition()) {
+                try
+                {
+                    Constructor<?> constr = condition.getDeclaredConstructor();
+                    constr.setAccessible(true);
+                    conditions.add(((Condition) constr.newInstance()).isTrue());
+                }
+                catch (ReflectiveOperationException e)
+                {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (rule.condition().length == 0 || conditions.stream().allMatch(Boolean::valueOf))
+                rules.put(parsed.name, parsed);
         }
     }
 
