@@ -835,7 +835,9 @@ public class CarpetEventServer
             private final Set<Identifier> skippedStats = new HashSet<Identifier>(){{
                 add(Stats.TIME_SINCE_DEATH);
                 add(Stats.TIME_SINCE_REST);
-                add(Stats.PLAY_ONE_MINUTE);
+                //add(Stats.PLAY_ONE_MINUTE);
+                add(Stats.PLAY_TIME);
+                add(Stats.TOTAL_WORLD_TIME);
             }};
             @Override
             public void onPlayerStatistic(ServerPlayerEntity player, Stat<?> stat, int amount)
@@ -943,7 +945,8 @@ public class CarpetEventServer
         }
 
         @Deprecated
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<EntityType<? extends Entity>, Event>() {{
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_LOAD= new HashMap<>()
+        {{
             EntityType.get("zombie");
             Registry.ENTITY_TYPE.forEach(et -> {
                 put(et, new Event(getEntityLoadEventName(et), 1, true, false)
@@ -965,7 +968,8 @@ public class CarpetEventServer
             return "entity_handler_" + ValueConversions.of(Registry.ENTITY_TYPE.getId(et)).getString();
         }
 
-        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER= new HashMap<EntityType<? extends Entity>, Event>() {{
+        public static final Map<EntityType<? extends Entity>, Event> ENTITY_HANDLER= new HashMap<>()
+        {{
             EntityType.get("zombie");
             Registry.ENTITY_TYPE.forEach(et -> {
                 put(et, new Event(getEntityHandlerEventName(et), 2, true, false)

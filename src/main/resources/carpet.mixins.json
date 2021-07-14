@@ -2,7 +2,7 @@
   "required": true,
   "refmap": "fabric-carpet-refmap.json",
   "package": "carpet.mixins",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_16",
   "mixins": [
     "BarrierBlock_updateSuppressionBlockMixin",
 
@@ -12,6 +12,7 @@
     "ServerPlayNetworkHandlerMixin",
     "CustomPayloadC2SPacketMixin",
 
+    "PerfCommand_permissionMixin",
     "FillCommandMixin",
     "CloneCommandMixin",
     "SetBlockCommandMixin",
@@ -33,12 +34,14 @@
     "MinecraftServer_tickspeedMixin",
     "World_tickMixin",
     "ServerWorld_tickMixin",
+    "WorldChunkBEList_tickMixin",
     "ServerChunkManager_tickMixin",
     "ThreadedAnvilChunkStorage_tickMixin",
     "ChunkTicketManager_tickMixin",
     "CommandFunctionManager_tickMixin",
 
     "ThreadedAnvilChunkStorage_scarpetChunkCreationMixin",
+    "SimpleEntityLookup_scarpetMixin",
     "ChunkHolder_scarpetChunkCreationMixin",
     "ServerLightingProvider_scarpetMixin",
     "LevelPropagator_resetChunkInterface",
@@ -88,7 +91,10 @@
     "ServerWorld_onePlayerSleepingMixin",
     "CoralBlockMixin",
     "CoralFeatureMixin",
+    "BuddingAmethystBlock_movableAmethystMixin",
     "FluidBlock_renewableBlackstoneMixin",
+    "FluidBlock_renewableDeepslateMixin",
+    "LavaFluid_renewableDeepslateMixin",
     "StructureFeatureMixin",
     "World_scarpetPlopMixin",
     "ChunkRegion_scarpetPlopMixin",
@@ -129,6 +135,8 @@
     "ContainerMixin",
     "ClientConnectionMixin",
     "CauldronBlock_stackableSBoxesMixin",
+    "AbstractCauldronBlock_stackableSBoxesMixin",
+    "Slot_stackableSBoxesMixin",
     "ItemEntityMixin",
     "TntBlockMixin",
     "ExplosionMixin",
@@ -183,6 +191,7 @@
     "StatType_scarpetMixin",
     "PointOfInterest_scarpetMixin",
     "ServerWorld_scarpetMixin",
+    "ServerEntityManager_scarpetMixin",
     "HungerManagerMixin_scarpetEventsMixin",
     "ReloadCommand_reloadAppsMixin",
     "CrashReport_addScarpetAppsMixin",
@@ -193,8 +202,8 @@
     "StatePredicate_scarpetMixin",
     "TagPredicate_scarpetMixin",
     "HorseBaseEntity_scarpetMixin",
-    "PillagerEntity_scarpetMixin",
 
+    "BlockEntity_movableBEMixin",
     "PistonBlock_movableTEMixin",
     "PistonBlockEntity_movableTEMixin",
     "World_movableTEMixin",
@@ -206,8 +215,10 @@
     "WallStandingBlockItem_creativeNoClipMixin",
     "ShulkerBoxBlockEntity_creativeNoClipMixin",
     "EndGatewayBlockEntity_creativeNoClipMixin",
-    "LivingEntity_creativeFlyMixin"
+    "LivingEntity_creativeFlyMixin",
 
+    "VeryBiasedToBottomHeightProvider_cleanLogsMixin",
+    "TrapezoidHeightProvider_cleanLogsMixin"
   ],
   "client": [
     "RenderTickCounter_tickSpeedMixin",
@@ -217,6 +228,7 @@
     "InGameHudMixin",
     "PlayerListHudMixin",
     "PistonBlockEntityRenderer_movableTEMixin",
+    "StructureBlockBlockEntityRenderer_mixin",
     "ClientPlayerEntity_clientCommandMixin",
     "WorldRenderer_fogOffMixin",
     "WorldRenderer_creativeNoClipMixin",

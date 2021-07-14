@@ -18,7 +18,7 @@ public class ShulkerBoxBlockEntity_creativeNoClipMixin
     ))
     private PistonBehavior getPistonBehaviourOfNoClipPlayers(Entity entity)
     {
-        if (CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).abilities.flying)
+        if (CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).getAbilities().flying)
             return PistonBehavior.IGNORE;
         return entity.getPistonBehavior();
     }

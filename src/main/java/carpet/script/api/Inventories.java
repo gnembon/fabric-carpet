@@ -26,7 +26,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.recipe.AbstractCookingRecipe;
 import net.minecraft.recipe.CuttingRecipe;
@@ -36,6 +36,7 @@ import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.recipe.ShapelessRecipe;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.tag.Tag;
 import net.minecraft.tag.TagManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
@@ -65,9 +66,9 @@ public class Inventories {
             if (lv.size() == 0)
                 return ListValue.wrap(Registry.ITEM.getIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             String tag = lv.get(0).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(InputValidator.identifierOf(tag));
+            net.minecraft.tag.Tag<Item> itemTag = tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
             return ListValue.wrap(itemTag.values().stream().map(b -> ValueConversions.of(Registry.ITEM.getId(b))).collect(Collectors.toList()));
         });
@@ -75,16 +76,16 @@ public class Inventories {
         expression.addContextFunction("item_tags", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             if (lv.size() == 0)
-                return ListValue.wrap(tagManager.getItems().getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             Item item = NBTSerializableValue.parseItem(lv.get(0).getString()).getItem();
             if (lv.size() == 1)
-                return ListValue.wrap(tagManager.getItems().getTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTags().entrySet().stream().filter(e -> e.getValue().contains(item)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
             String tag = lv.get(1).getString();
-            net.minecraft.tag.Tag<Item> itemTag = tagManager.getItems().getTag(InputValidator.identifierOf(tag));
+            net.minecraft.tag.Tag<Item> itemTag = tagManager.getOrCreateTagGroup(Registry.ITEM_KEY).getTag(InputValidator.identifierOf(tag));
             if (itemTag == null) return Value.NULL;
-            return BooleanValue.of(item.isIn(itemTag));
+            return BooleanValue.of(itemTag.contains(item));
         });
 
         expression.addContextFunction("recipe_data", -1, (c, t, lv) ->
@@ -99,7 +100,7 @@ public class Inventories {
                 type = Registry.RECIPE_TYPE.get(InputValidator.identifierOf(recipeType));
             }
             List<Recipe<?>> recipes;
-            recipes = ((RecipeManagerInterface) cc.s.getMinecraftServer().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
+            recipes = ((RecipeManagerInterface) cc.s.getServer().getRecipeManager()).getAllMatching(type, InputValidator.identifierOf(recipeName));
             if (recipes.isEmpty())
                 return Value.NULL;
             List<Value> recipesOutput = new ArrayList<>();
@@ -107,7 +108,7 @@ public class Inventories {
             {
                 ItemStack result = recipe.getOutput();
                 List<Value> ingredientValue = new ArrayList<>();
-                recipe.getPreviewInputs().forEach(
+                recipe.getIngredients().forEach(
                         ingredient ->
                         {
                             // I am flattening ingredient lists per slot.
@@ -239,7 +240,7 @@ public class Inventories {
                 syncPlayerInventory(inventoryLocator, slot);
                 return ValueConversions.of(previousStack);
             }
-            CompoundTag nbt = null; // skipping one argument
+            NbtCompound nbt = null; // skipping one argument
             if (lv.size() > inventoryLocator.offset+3)
             {
                 Value nbtValue = lv.get(inventoryLocator.offset+3);
@@ -389,7 +390,7 @@ public class Inventories {
         {
             ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
-                    -2,
+                    -2, 0, // resolve mystery argument
                     int_1,
                     inventory.inventory.getStack(int_1)
             ));

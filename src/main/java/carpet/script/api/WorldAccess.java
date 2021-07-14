@@ -62,8 +62,8 @@ import net.minecraft.item.MiningToolItem;
 import net.minecraft.item.ShearsItem;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.TridentItem;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicket;
@@ -74,6 +74,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.structure.StructureStart;
+import net.minecraft.tag.Tag;
 import net.minecraft.tag.TagManager;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Clearable;
@@ -245,7 +246,7 @@ public class WorldAccess {
                     return true;
                 } else {
                     ItemStack itemStack_1 = player.getMainHandStack();
-                    boolean boolean_2 = player.isUsingEffectiveTool(blockState_1);
+                    boolean boolean_2 = player.canHarvest(blockState_1);
                     itemStack_1.postMine(player.world, blockState_1, blockPos_1, player);
                     if (boolean_1 && boolean_2) {
                         ItemStack itemStack_2 = itemStack_1.isEmpty() ? ItemStack.EMPTY : itemStack_1.copy();
@@ -286,7 +287,7 @@ public class WorldAccess {
         {
             if (lv.size() == 0)
                 throw new InternalExpressionException("Block requires at least one parameter");
-            CompoundTag tag = BlockArgument.findIn( (CarpetContext) c, lv, 0, true).block.getData();
+            NbtCompound tag = BlockArgument.findIn( (CarpetContext) c, lv, 0, true).block.getData();
             return NBTSerializableValue.of(tag);
         });
 
@@ -582,7 +583,7 @@ public class WorldAccess {
         {
             c.host.issueDeprecation("loaded_ep(...)");
             BlockPos pos = BlockArgument.findIn((CarpetContext)c, lv, 0).block.getPos();
-            return BooleanValue.of(((CarpetContext)c).s.getWorld().getChunkManager().shouldTickChunk(new ChunkPos(pos)));
+            return BooleanValue.of(((CarpetContext)c).s.getWorld().method_37118(pos));// 1.17pre1 getChunkManager().shouldTickChunk(new ChunkPos(pos)));
         });
 
         expression.addContextFunction("loaded_status", -1, (c, t, lv) ->
@@ -698,7 +699,7 @@ public class WorldAccess {
             boolean previous = CarpetSettings.impendingFillSkipUpdates.get();
             if (previous) return lv.get(0);
             Value [] result = new Value[]{Value.NULL};
-            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
+            ((CarpetContext)c).s.getServer().submitAndJoin( () ->
             {
                 try
                 {
@@ -721,7 +722,7 @@ public class WorldAccess {
             BlockArgument sourceLocator = BlockArgument.findIn(cc, lv, targetLocator.offset, true);
             BlockState sourceBlockState = sourceLocator.block.getBlockState();
             BlockState targetBlockState = world.getBlockState(targetLocator.block.getPos());
-            CompoundTag data = null;
+            NbtCompound data = null;
             if (lv.size() > sourceLocator.offset)
             {
                 List<Value> args = new ArrayList<>();
@@ -780,14 +781,14 @@ public class WorldAccess {
             }
 
             if (data == null) data = sourceLocator.block.getData();
-            CompoundTag finalData = data;
+            NbtCompound finalData = data;
 
             if (sourceBlockState == targetBlockState && data == null)
                 return Value.FALSE;
             BlockState finalSourceBlockState = sourceBlockState;
             BlockPos targetPos = targetLocator.block.getPos();
             Boolean[] result = new Boolean[]{true};
-            cc.s.getMinecraftServer().submitAndJoin( () ->
+            cc.s.getServer().submitAndJoin( () ->
             {
                 Clearable.clear(world.getBlockEntity(targetPos));
                 boolean success = world.setBlockState(targetPos, finalSourceBlockState, 2);
@@ -796,11 +797,11 @@ public class WorldAccess {
                     BlockEntity be = world.getBlockEntity(targetPos);
                     if (be != null)
                     {
-                        CompoundTag destTag = finalData.copy();
+                        NbtCompound destTag = finalData.copy();
                         destTag.putInt("x", targetPos.getX());
                         destTag.putInt("y", targetPos.getY());
                         destTag.putInt("z", targetPos.getZ());
-                        be.fromTag(finalSourceBlockState, destTag);
+                        be.readNbt(destTag);
                         be.markDirty();
                         success = true;
                     }
@@ -838,7 +839,7 @@ public class WorldAccess {
                             .orElseThrow(() -> new ThrowStatement(itemString, Throwables.UNKNOWN_ITEM));
                 }
             }
-            CompoundTag tag = null;
+            NbtCompound tag = null;
             if (lv.size() > locator.offset+1)
             {
                 if (!playerBreak) throw new InternalExpressionException("tag is not necessary with 'destroy' with no item");
@@ -866,7 +867,7 @@ public class WorldAccess {
             boolean dropLoot = true;
             if (playerBreak)
             {
-                boolean isUsingEffectiveTool = !state.isToolRequired() || tool.isEffectiveOn(state);
+                boolean isUsingEffectiveTool = !state.isToolRequired() || tool.isSuitableFor(state);
                 //postMine() durability from item classes
                 float hardness = state.getHardness(world, where);
                 int damageAmount = 0;
@@ -901,7 +902,7 @@ public class WorldAccess {
                 return Value.TRUE;
             if (toolBroke)
                 return Value.NULL;
-            Tag outtag = tool.getTag();
+            NbtElement outtag = tool.getTag();
             if (outtag == null)
                 return Value.TRUE;
             return new NBTSerializableValue(() -> outtag);
@@ -1083,7 +1084,7 @@ public class WorldAccess {
 
         expression.addContextFunction("map_colour", -1, (c, t, lv) ->
                 stateStringQuery(c, "map_colour", lv, (s, p) ->
-                        BlockInfo.mapColourName.get(s.getTopMaterialColor(((CarpetContext)c).s.getWorld(), p))));
+                        BlockInfo.mapColourName.get(s.getMapColor(((CarpetContext)c).s.getWorld(), p))));
 
 
         // Deprecated for block_state()
@@ -1141,9 +1142,9 @@ public class WorldAccess {
             if (lv.size() == 0)
                 return ListValue.wrap(Registry.BLOCK.getIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             String tag = lv.get(0).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(InputValidator.identifierOf(tag));
+            net.minecraft.tag.Tag<Block> blockTag = tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(InputValidator.identifierOf(tag));
             if (blockTag == null) return Value.NULL;
             return ListValue.wrap(blockTag.values().stream().map(b -> ValueConversions.of(Registry.BLOCK.getId(b))).collect(Collectors.toList()));
         });
@@ -1151,17 +1152,17 @@ public class WorldAccess {
         expression.addContextFunction("block_tags", -1, (c, t, lv) ->
         {
             CarpetContext cc = (CarpetContext)c;
-            TagManager tagManager = cc.s.getMinecraftServer().getTagManager();
+            TagManager tagManager = cc.s.getServer().getTagManager();
             if (lv.size() == 0)
-                return ListValue.wrap(tagManager.getBlocks().getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTagIds().stream().map(ValueConversions::of).collect(Collectors.toList()));
             BlockArgument blockLocator = BlockArgument.findIn(cc, lv, 0, true);
             if (blockLocator.offset == lv.size())
             {
                 Block target = blockLocator.block.getBlockState().getBlock();
-                return ListValue.wrap(tagManager.getBlocks().getTags().entrySet().stream().filter(e -> e.getValue().contains(target)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
+                return ListValue.wrap(tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTags().entrySet().stream().filter(e -> e.getValue().contains(target)).map(e -> ValueConversions.of(e.getKey())).collect(Collectors.toList()));
             }
             String tag = lv.get(blockLocator.offset).getString();
-            net.minecraft.tag.Tag<Block> blockTag = tagManager.getBlocks().getTag(InputValidator.identifierOf(tag));
+            Tag<Block> blockTag = tagManager.getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(InputValidator.identifierOf(tag));
             if (blockTag == null) return Value.NULL;
             return BooleanValue.of(blockLocator.block.getBlockState().isIn(blockTag));
         });
@@ -1188,7 +1189,7 @@ public class WorldAccess {
             // in locatebiome
             if (locator.offset == lv.size())
             {
-                Identifier biomeId = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
+                Identifier biomeId = cc.s.getServer().getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
                 return new StringValue(NBTSerializableValue.nameFromRegistryId(biomeId));
             }
             String biomeFeature = lv.get(locator.offset).getString();
@@ -1205,7 +1206,7 @@ public class WorldAccess {
                 throw new InternalExpressionException("'set_biome' needs a biome name as an argument");
             String biomeName = lv.get(locator.offset+0).getString();
             // from locatebiome command code
-            Biome biome = cc.s.getMinecraftServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(InputValidator.identifierOf(biomeName))
+            Biome biome = cc.s.getServer().getRegistryManager().get(Registry.BIOME_KEY).getOrEmpty(InputValidator.identifierOf(biomeName))
                 .orElseThrow(() -> new ThrowStatement(biomeName, Throwables.UNKNOWN_BIOME));
             boolean doImmediateUpdate = true;
             if (lv.size() > locator.offset+1)
@@ -1224,7 +1225,7 @@ public class WorldAccess {
             CarpetContext cc = (CarpetContext)c;
             BlockPos pos = BlockArgument.findIn(cc, lv, 0).block.getPos();
             ServerWorld world = cc.s.getWorld();
-            cc.s.getMinecraftServer().submitAndJoin( () -> WorldTools.forceChunkUpdate(pos, world));
+            cc.s.getServer().submitAndJoin( () -> WorldTools.forceChunkUpdate(pos, world));
             return Value.TRUE;
         });
 
@@ -1323,10 +1324,10 @@ public class WorldAccess {
                     StructureStart<?> start = entry.getValue();
                     if (start == StructureStart.DEFAULT)
                         continue;
-                    BlockBox box = start.getBoundingBox();
+                    BlockBox box = start.setBoundingBoxFromChildren();
                     structureList.put(
                             new StringValue(NBTSerializableValue.nameFromRegistryId(Registry.STRUCTURE_FEATURE.getId(entry.getKey()))),
-                            ListValue.of(ListValue.fromTriple(box.minX, box.minY, box.minZ), ListValue.fromTriple(box.maxX, box.maxY, box.maxZ))
+                            ListValue.of(ListValue.fromTriple(box.getMinX(), box.getMinY(), box.getMinZ()), ListValue.fromTriple(box.getMaxX(), box.getMaxY(), box.getMaxZ()))
                     );
                 }
                 return MapValue.wrap(structureList);
@@ -1351,7 +1352,7 @@ public class WorldAccess {
             // good 'ol pointer
             Value[] result = new Value[]{Value.NULL};
             // technically a world modification. Even if we could let it slide, we will still park it
-            ((CarpetContext) c).s.getMinecraftServer().submitAndJoin(() ->
+            ((CarpetContext) c).s.getServer().submitAndJoin(() ->
             {
                 Map<StructureFeature<?>, StructureStart<?>> structures = world.getChunk(pos).getStructureStarts();
                 if (lv.size() == locator.offset + 1)
@@ -1371,11 +1372,11 @@ public class WorldAccess {
                         return;
                     }
                     StructureStart<?> start = structures.get(structure);
-                    ChunkPos structureChunkPos = new ChunkPos(start.getChunkX(), start.getChunkZ());
-                    BlockBox box = start.getBoundingBox();
-                    for (int chx = box.minX / 16; chx <= box.maxX / 16; chx++)
+                    ChunkPos structureChunkPos = start.getPos(); //   new ChunkPos(start.getChunkX(), start.getChunkZ());
+                    BlockBox box = start.setBoundingBoxFromChildren();
+                    for (int chx = box.getMinX() / 16; chx <= box.getMaxX() / 16; chx++)  // minx maxx
                     {
-                        for (int chz = box.minZ / 16; chz <= box.maxZ / 16; chz++)
+                        for (int chz = box.getMinZ() / 16; chz <= box.getMaxZ() / 16; chz++) //minZ maxZ
                         {
                             ChunkPos chpos = new ChunkPos(chx, chz);
                             // getting a chunk will convert it to full, allowing to modify references
@@ -1413,7 +1414,7 @@ public class WorldAccess {
                 }
             }
 
-            boolean success = WorldTools.createWorld(cc.s.getMinecraftServer(), worldKey, seed);
+            boolean success = WorldTools.createWorld(cc.s.getServer(), worldKey, seed);
             if (!success) return Value.FALSE;
             CarpetServer.settingsManager.notifyPlayersCommandsChanged();
             return Value.TRUE;
@@ -1472,16 +1473,16 @@ public class WorldAccess {
 
             Value [] result = new Value[]{Value.NULL};
 
-            ((CarpetContext)c).s.getMinecraftServer().submitAndJoin( () ->
+            ((CarpetContext)c).s.getServer().submitAndJoin( () ->
             {
                 Map<String, Integer> report = ((ThreadedAnvilChunkStorageInterface) world.getChunkManager().threadedAnvilChunkStorage).regenerateChunkRegion(requestedChunks);
-                for (ChunkPos chpos: requestedChunks)
+                /*for (ChunkPos chpos: requestedChunks) // needed in 1.16 only
                 {
                     if (world.getChunk(chpos.x, chpos.z, ChunkStatus.FULL, false) != null)
                     {
                         WorldTools.forceChunkUpdate(chpos.getStartPos(), world);
                     }
-                }
+                }*/
                 result[0] = MapValue.wrap(report.entrySet().stream().collect(Collectors.toMap(
                         e -> new StringValue((String)((Map.Entry) e).getKey()),
                         e ->  new NumericValue((Integer)((Map.Entry) e).getValue())

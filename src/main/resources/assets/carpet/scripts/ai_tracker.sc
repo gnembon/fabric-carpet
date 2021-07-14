@@ -300,7 +300,8 @@ global_functions = {
    'health' -> {
          '*' -> [
             _(arg) -> _(e) -> (
-               [[], [],  [['health', 'health:', e~'health']]]
+                health = e~'health';
+               [[], [],  if (health != null, [['health', 'health:', e~'health']], [])]
             ),
          ,
             null
@@ -325,10 +326,7 @@ global_functions = {
          _(arg) -> _(orb) -> (
             tag = query(orb, 'nbt');
             ct = tag:'Count';
-            [[], [], if (ct > 1, [
-                //['value', 'size:', tag:'Value'],
-                ['stack', ct]
-            ],[]) ]
+            [[], [], if (ct > 1, [['stack', ct]],[]) ]
          ),
       ,
          null

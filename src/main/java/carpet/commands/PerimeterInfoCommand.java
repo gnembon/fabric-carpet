@@ -13,7 +13,7 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.EntitySummonArgumentType;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 
 import static net.minecraft.server.command.CommandManager.argument;
@@ -46,19 +46,19 @@ public class PerimeterInfoCommand
 
     private static int perimeterDiagnose(ServerCommandSource source, BlockPos pos, String mobId)
     {
-        CompoundTag nbttagcompound = new CompoundTag();
+        NbtCompound nbttagcompound = new NbtCompound();
         MobEntity entityliving = null;
         if (mobId != null)
         {
             nbttagcompound.putString("id", mobId);
             Entity baseEntity = EntityType.loadEntityWithPassengers(nbttagcompound, source.getWorld(), (entity_1x) -> {
-                entity_1x.refreshPositionAndAngles(new BlockPos(pos.getX(), -10, pos.getZ()), entity_1x.yaw, entity_1x.pitch);
+                entity_1x.refreshPositionAndAngles(new BlockPos(pos.getX(), -10, pos.getZ()), entity_1x.getYaw(), entity_1x. getPitch());
                 return !source.getWorld().tryLoadEntity(entity_1x) ? null : entity_1x;
             });
             if (!(baseEntity instanceof  MobEntity))
             {
                 Messenger.m(source, "r /perimeterinfo requires a mob entity to test agains.");
-                if (baseEntity != null) baseEntity.remove();
+                if (baseEntity != null) baseEntity.discard();
                 return 0;
             }
             entityliving = (MobEntity) baseEntity;
@@ -72,7 +72,7 @@ public class PerimeterInfoCommand
         {
             Messenger.m(source, "w   ", entityliving.getDisplayName() ,"w : ","wb "+res.specific);
             res.samples.forEach(bp -> Messenger.m(source, "w   ", Messenger.tp("c", bp)));
-            entityliving.remove();
+            entityliving.discard(); // dicard // remove();
         }
         return 1;
     }

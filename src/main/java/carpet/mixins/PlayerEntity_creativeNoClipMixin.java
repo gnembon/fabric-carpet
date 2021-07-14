@@ -23,7 +23,7 @@ public abstract class PlayerEntity_creativeNoClipMixin extends LivingEntity
     )
     private boolean canClipTroughWorld(PlayerEntity playerEntity)
     {
-        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.abilities.flying);
+        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.getAbilities().flying);
 
     }
 
@@ -33,15 +33,15 @@ public abstract class PlayerEntity_creativeNoClipMixin extends LivingEntity
     )
     private boolean collidesWithEntities(PlayerEntity playerEntity)
     {
-        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.abilities.flying);
+        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.getAbilities().flying);
     }
 
-    @Redirect(method = "updateSize", at = @At(
+    @Redirect(method = "updatePose", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/entity/player/PlayerEntity;isSpectator()Z")
     )
     private boolean spectatorsDontPose(PlayerEntity playerEntity)
     {
-        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.abilities.flying);
+        return playerEntity.isSpectator() || (CarpetSettings.creativeNoClip && playerEntity.isCreative() && playerEntity.getAbilities().flying);
     }
 }

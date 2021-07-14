@@ -10,12 +10,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(BiomeArray.class)
 public class BiomeArray_cleanLogsMixin
 {
-    @Redirect(method = "<init>(Lnet/minecraft/util/collection/IndexedIterable;[I)V", at = @At(
+    // this changed in 21w18a - maybe its not needed anymore, please check
+    @SuppressWarnings("UnresolvedMixinReference")
+    @Redirect(method = "<init>(Lnet/minecraft/util/collection/IndexedIterable;Lnet/minecraft/world/HeightLimitView;[I)V", at = @At(
             value = "INVOKE",
-            target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;)V")
+            target = "Lorg/apache/logging/log4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V")
     )
-    private void skipLog(Logger logger, String message)
+    private void skipLog(Logger logger, String message, Object p0, Object p1)
     {
-        if (!CarpetSettings.cleanLogs) logger.warn(message);
+        if (!CarpetSettings.cleanLogs) logger.warn(message, p0, p1);
     }
 }

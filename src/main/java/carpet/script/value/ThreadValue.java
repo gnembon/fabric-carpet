@@ -6,7 +6,7 @@ import carpet.script.Tokenizer;
 import carpet.script.exception.ExitStatement;
 import carpet.script.exception.ExpressionException;
 import carpet.script.exception.InternalExpressionException;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtElement;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -117,7 +117,7 @@ public class ThreadValue extends Value
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         return getValue().toTag(true);

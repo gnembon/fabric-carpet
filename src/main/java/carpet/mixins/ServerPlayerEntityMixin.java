@@ -27,7 +27,6 @@ public abstract class ServerPlayerEntityMixin implements ServerPlayerEntityInter
             MinecraftServer minecraftServer_1,
             ServerWorld serverWorld_1,
             GameProfile gameProfile_1,
-            ServerPlayerInteractionManager serverPlayerInteractionManager_1,
             CallbackInfo ci)
     {
         this.actionPack = new EntityPlayerActionPack((ServerPlayerEntity) (Object) this);

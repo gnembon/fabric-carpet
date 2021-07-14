@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(EndGatewayBlockEntity.class)
 public class EndGatewayBlockEntity_creativeNoClipMixin
 {
-    @Inject(method = "method_30276", cancellable = true, at = @At("HEAD"))
+    @Inject(method = "canTeleport", cancellable = true, at = @At("HEAD"))
     private static void checkFlyingCreative(Entity entity, CallbackInfoReturnable<Boolean> cir)
     {
         if (CarpetSettings.isCreativeFlying(entity)) cir.setReturnValue(false);

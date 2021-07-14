@@ -26,7 +26,7 @@ public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
      * Remove all markers that do not belong to any script host and not part of the global one when loaded
      * @param ci
      */
-    @Inject(method = "readCustomDataFromTag", at = @At("HEAD"))
+    @Inject(method = "readCustomDataFromNbt", at = @At("HEAD"))
     private void checkScarpetMarkerUnloaded(CallbackInfo ci)
     {
         if (!world.isClient)
@@ -40,13 +40,13 @@ public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
                     String hostName = StringUtils.removeStart(owner.get(),prefix);
                     if (!hostName.isEmpty() && CarpetServer.scriptServer.getHostByName(hostName) == null)
                     {
-                        remove();
+                        discard();  //discard
                     }
 
                 }
                 else
                 {
-                    remove();
+                    discard(); // discard
                 }
             }
         }

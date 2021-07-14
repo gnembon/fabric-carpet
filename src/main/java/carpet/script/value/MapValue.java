@@ -3,8 +3,8 @@ package carpet.script.value;
 import carpet.script.exception.InternalExpressionException;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -260,9 +260,9 @@ public class MapValue extends AbstractListValue implements ContainerValueInterfa
     }
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
-        CompoundTag tag = new CompoundTag() ;
+        NbtCompound tag = new NbtCompound() ;
         map.forEach( (k, v) ->
         {
             if (!force && !(k instanceof StringValue)) throw new NBTSerializableValue.IncompatibleTypeException(k);

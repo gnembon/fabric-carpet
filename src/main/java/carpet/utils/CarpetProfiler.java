@@ -82,7 +82,7 @@ public class CarpetProfiler
         {
             SECTION_STATS.put(section, 0L);
         }
-        for (RegistryKey<World> level : source.getMinecraftServer().getWorldRegistryKeys())
+        for (RegistryKey<World> level : source.getServer().getWorldRegistryKeys())
         {
             for (String section : SECTIONS)
             {

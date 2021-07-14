@@ -32,8 +32,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.command.PerfCommand;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 public class CarpetServer // static for now - easier to handle all around the code, its one anyways
@@ -113,7 +115,11 @@ public class CarpetServer // static for now - easier to handle all around the co
         extensions.forEach(e -> e.onTick(server));
     }
 
-    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher)
+    @Deprecated
+    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+    }
+
+    public static void registerCarpetCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandManager.RegistrationEnvironment environment)
     {
         settingsManager.registerCommand(dispatcher);
         extensions.forEach(e -> {
@@ -137,6 +143,9 @@ public class CarpetServer // static for now - easier to handle all around the co
         // for all other, they will have them registered when they add themselves
         extensions.forEach(e -> e.registerCommands(dispatcher));
         currentCommandDispatcher = dispatcher;
+
+        if (environment != CommandManager.RegistrationEnvironment.DEDICATED)
+            PerfCommand.register(dispatcher);
         
         if (FabricLoader.getInstance().isDevelopmentEnvironment())
             TestCommand.register(dispatcher);

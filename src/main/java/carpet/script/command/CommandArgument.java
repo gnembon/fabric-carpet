@@ -50,18 +50,18 @@ import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.EntitySummonArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.IdentifierArgumentType;
-import net.minecraft.command.argument.ItemEnchantmentArgumentType;
+import net.minecraft.command.argument.EnchantmentArgumentType;
 import net.minecraft.command.argument.ItemSlotArgumentType;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.command.argument.MessageArgumentType;
-import net.minecraft.command.argument.MobEffectArgumentType;
-import net.minecraft.command.argument.NbtCompoundTagArgumentType;
+import net.minecraft.command.argument.StatusEffectArgumentType;
+import net.minecraft.command.argument.NbtCompoundArgumentType;
 import net.minecraft.command.argument.NbtPathArgumentType;
-import net.minecraft.command.argument.NbtTagArgumentType;
+import net.minecraft.command.argument.NbtElementArgumentType;
 import net.minecraft.command.argument.NumberRangeArgumentType;
-import net.minecraft.command.argument.ObjectiveArgumentType;
-import net.minecraft.command.argument.ObjectiveCriteriaArgumentType;
-import net.minecraft.command.argument.ParticleArgumentType;
+import net.minecraft.command.argument.ScoreboardObjectiveArgumentType;
+import net.minecraft.command.argument.ScoreboardCriterionArgumentType;
+import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.command.argument.RotationArgumentType;
 import net.minecraft.command.argument.ScoreHolderArgumentType;
 import net.minecraft.command.argument.ScoreboardSlotArgumentType;
@@ -132,7 +132,7 @@ public abstract class CommandArgument
                     false
             ),
             new VanillaUnconfigurableArgument( "blockpredicate", BlockPredicateArgumentType::blockPredicate,
-                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getMinecraftServer().getTagManager(), BlockPredicateArgumentType.getBlockPredicate(c, p)), false
+                    (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().getTagManager(), BlockPredicateArgumentType.getBlockPredicate(c, p)), false
             ),
             new VanillaUnconfigurableArgument("teamcolor", ColorArgumentType::color,
                     (c, p) -> {
@@ -155,17 +155,17 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("entitytype", EntitySummonArgumentType::entitySummon,
                     (c, p) -> ValueConversions.of(EntitySummonArgumentType.getEntitySummon(c, p)), SuggestionProviders.SUMMONABLE_ENTITIES
             ),
-            new VanillaUnconfigurableArgument("floatrange", NumberRangeArgumentType::method_30918,
+            new VanillaUnconfigurableArgument("floatrange", NumberRangeArgumentType::floatRange,
                     (c, p) -> ValueConversions.of(c.getArgument(p, NumberRange.FloatRange.class)), true
             ),
             // function??
 
             new PlayerProfileArgument(),
-            new VanillaUnconfigurableArgument("intrange", NumberRangeArgumentType::numberRange,
+            new VanillaUnconfigurableArgument("intrange", NumberRangeArgumentType::intRange,
                     (c, p) -> ValueConversions.of(NumberRangeArgumentType.IntRangeArgumentType.getRangeArgument(c, p)), true
             ),
-            new VanillaUnconfigurableArgument("enchantment", ItemEnchantmentArgumentType::itemEnchantment,
-                    (c, p) -> ValueConversions.of(Registry.ENCHANTMENT.getId(ItemEnchantmentArgumentType.getEnchantment(c, p))), false
+            new VanillaUnconfigurableArgument("enchantment", EnchantmentArgumentType::enchantment,
+                    (c, p) -> ValueConversions.of(Registry.ENCHANTMENT.getId(EnchantmentArgumentType.getEnchantment(c, p))), false
             ),
             // item_predicate  ?? //same as item but accepts tags, not sure right now
             new SlotArgument(),
@@ -175,22 +175,22 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("message", MessageArgumentType::message,
                     (c, p) -> new FormattedTextValue(MessageArgumentType.getMessage(c, p)), true
             ),
-            new VanillaUnconfigurableArgument("effect", MobEffectArgumentType::mobEffect,
-                    (c, p) -> ValueConversions.of(Registry.STATUS_EFFECT.getId(MobEffectArgumentType.getMobEffect(c, p))),false
+            new VanillaUnconfigurableArgument("effect", StatusEffectArgumentType::statusEffect,
+                    (c, p) -> ValueConversions.of(Registry.STATUS_EFFECT.getId(StatusEffectArgumentType.getStatusEffect(c, p))),false
             ),
             new TagArgument(), // for nbt_compound_tag and nbt_tag
             new VanillaUnconfigurableArgument("path", NbtPathArgumentType::nbtPath,
                     (c, p) -> StringValue.of(NbtPathArgumentType.getNbtPath(c, p).toString()), true
             ),
-            new VanillaUnconfigurableArgument("objective", ObjectiveArgumentType::objective,
-                    (c, p) -> ValueConversions.of(ObjectiveArgumentType.getObjective(c, p)), false
+            new VanillaUnconfigurableArgument("objective", ScoreboardObjectiveArgumentType::scoreboardObjective,
+                    (c, p) -> ValueConversions.of(ScoreboardObjectiveArgumentType.getObjective(c, p)), false
             ),
-            new VanillaUnconfigurableArgument("criterion", ObjectiveCriteriaArgumentType::objectiveCriteria,
-                    (c, p) -> StringValue.of(ObjectiveCriteriaArgumentType.getCriteria(c, p).getName()), false
+            new VanillaUnconfigurableArgument("criterion", ScoreboardCriterionArgumentType::scoreboardCriterion,
+                    (c, p) -> StringValue.of(ScoreboardCriterionArgumentType.getCriterion(c, p).getName()), false
             ),
             // operation // not sure if we need it, you have scarpet for that
-            new VanillaUnconfigurableArgument("particle", ParticleArgumentType::particle,
-                    (c, p) -> ValueConversions.of(ParticleArgumentType.getParticle(c, p)), false
+            new VanillaUnconfigurableArgument("particle", ParticleEffectArgumentType::particleEffect,
+                    (c, p) -> ValueConversions.of(ParticleEffectArgumentType.getParticle(c, p)), false
             ),
 
             // resource / identifier section
@@ -199,16 +199,16 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getRecipeArgument(c, p).getId()), SuggestionProviders.ALL_RECIPES
             ),
             new VanillaUnconfigurableArgument("advancement", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getAdvancementArgument(c, p).getId()), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getAdvancementLoader().getAdvancements().stream().map(Advancement::getId), builder)
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getAdvancementArgument(c, p).getId()), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getAdvancementLoader().getAdvancements().stream().map(Advancement::getId), builder)
             ),
             new VanillaUnconfigurableArgument("lootcondition", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getId(IdentifierArgumentType.method_23727(c, p).getType())), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getPredicateManager().getIds(), builder)
+                    (c, p) -> ValueConversions.of( Registry.LOOT_CONDITION_TYPE.getId(IdentifierArgumentType.getPredicateArgument(c, p).getType())), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getPredicateManager().getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("loottable", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getLootManager().getTableIds(), builder)
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getLootManager().getTableIds(), builder)
             ),
             new VanillaUnconfigurableArgument("attribute", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getId(IdentifierArgumentType.method_27575(c, p))), (ctx, builder) -> CommandSource.suggestIdentifiers(Registry.ATTRIBUTE.getIds(), builder)
+                    (c, p) -> ValueConversions.of( Registry.ATTRIBUTE.getId(IdentifierArgumentType.getAttributeArgument(c, p))), (ctx, builder) -> CommandSource.suggestIdentifiers(Registry.ATTRIBUTE.getIds(), builder)
             ),
             new VanillaUnconfigurableArgument("boss", IdentifierArgumentType::identifier,
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), BossBarCommand.SUGGESTION_PROVIDER
@@ -220,7 +220,7 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), SuggestionProviders.AVAILABLE_SOUNDS
             ),
             new VanillaUnconfigurableArgument("storekey", IdentifierArgumentType::identifier,
-                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getMinecraftServer().getDataCommandStorage().getIds(), builder)
+                    (c, p) -> ValueConversions.of( IdentifierArgumentType.getIdentifier(c, p)), (ctx, builder) -> CommandSource.suggestIdentifiers(ctx.getSource().getServer().getDataCommandStorage().getIds(), builder)
             ),
 
             // default
@@ -698,22 +698,22 @@ public abstract class CommandArgument
         boolean mapRequired;
         private TagArgument()
         {
-            super("tag", NbtCompoundTagArgumentType.nbtCompound().getExamples(), false);
+            super("tag", NbtCompoundArgumentType.nbtCompound().getExamples(), false);
             mapRequired = true;
         }
         @Override
         protected ArgumentType<?> getArgumentType()
         {
-            return mapRequired?NbtCompoundTagArgumentType.nbtCompound(): NbtTagArgumentType.nbtTag();
+            return mapRequired?NbtCompoundArgumentType.nbtCompound(): NbtElementArgumentType.nbtElement();
         }
 
         @Override
         protected Value getValueFromContext(CommandContext<ServerCommandSource> context, String param) throws CommandSyntaxException
         {
             if (mapRequired)
-                return new NBTSerializableValue(NbtCompoundTagArgumentType.getCompoundTag(context, param));
+                return new NBTSerializableValue(NbtCompoundArgumentType.getNbtCompound(context, param));
             else
-                return new NBTSerializableValue(NbtTagArgumentType.getTag(context, param));
+                return new NBTSerializableValue(NbtElementArgumentType.getNbtElement(context, param));
         }
 
         @Override

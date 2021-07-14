@@ -2,7 +2,7 @@ package carpet.script.bundled;
 
 import carpet.CarpetServer;
 import carpet.script.argument.FileArgument;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.util.WorldSavePath;
 
 import java.nio.file.Files;
@@ -14,7 +14,7 @@ public abstract class Module
     public abstract String getCode();
     public abstract boolean isLibrary();
 
-    public static Tag getData(Module module)
+    public static NbtElement getData(Module module)
     {
         Path dataFile = resolveResource(module);
         if (dataFile == null) return null;
@@ -22,7 +22,7 @@ public abstract class Module
         synchronized (FileArgument.writeIOSync) { return FileArgument.readTag(dataFile); }
     }
 
-    public static void saveData(Module module, Tag globalState)
+    public static void saveData(Module module, NbtElement globalState)
     {
         Path dataFile = resolveResource(module);
         if (dataFile == null) return;

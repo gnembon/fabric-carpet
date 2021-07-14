@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-
+/* There is no worse example to use for 1.17 compatibility
 import static net.minecraft.network.packet.s2c.play.TitleS2CPacket.Action;
 
 public class FunctionsTestClass {
@@ -58,3 +58,4 @@ public class FunctionsTestClass {
 	    return targets.size();
 	}
 }
+*/

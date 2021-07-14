@@ -38,7 +38,7 @@ import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -72,7 +72,7 @@ public class CarpetScriptHost extends ScriptHost
     private final CarpetScriptServer scriptServer;
     public ServerCommandSource responsibleSource;
 
-    private Tag globalState;
+    private NbtElement globalState;
     private int saveTimeout;
     public boolean persistenceRequired;
 
@@ -651,7 +651,7 @@ public class CarpetScriptHost extends ScriptHost
         {
             if (optionalTarget == null)
             {
-                for (ServerPlayerEntity player : source.getMinecraftServer().getPlayerManager().getPlayerList())
+                for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList())
                 {
                     CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
                     targets.add(host);
@@ -660,7 +660,7 @@ public class CarpetScriptHost extends ScriptHost
             }
             else
             {
-                ServerPlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(optionalTarget);
+                ServerPlayerEntity player = source.getServer().getPlayerManager().getPlayer(optionalTarget);
                 if (player != null)
                 {
                     CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
@@ -937,7 +937,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 for (Entity e : world.getEntitiesByType(EntityType.ARMOR_STAND, (as) -> as.getScoreboardTags().contains(markerName)))
                 {
-                    e.remove();
+                    e.discard();
                 }
             }
             if (this.saveTimeout > 0)
@@ -950,12 +950,12 @@ public class CarpetScriptHost extends ScriptHost
         Module.saveData(main, globalState);
     }
 
-    private Tag loadState()
+    private NbtElement loadState()
     {
         return Module.getData(main);
     }
 
-    public Tag readFileTag(FileArgument fdesc)
+    public NbtElement readFileTag(FileArgument fdesc)
     {
         if (getName() == null && !fdesc.isShared) return null;
         if (fdesc.resource != null)
@@ -965,7 +965,7 @@ public class CarpetScriptHost extends ScriptHost
         return ((CarpetScriptHost)parent).globalState;
     }
 
-    public boolean writeTagFile(Tag tag, FileArgument fdesc)
+    public boolean writeTagFile(NbtElement tag, FileArgument fdesc)
     {
         if (getName() == null && !fdesc.isShared) return false; // if belongs to an app, cannot be default host.
 

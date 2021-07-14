@@ -136,7 +136,7 @@ public class PlayerCommand
     private static ServerPlayerEntity getPlayer(CommandContext<ServerCommandSource> context)
     {
         String playerName = StringArgumentType.getString(context, "player");
-        MinecraftServer server = context.getSource().getMinecraftServer();
+        MinecraftServer server = context.getSource().getServer();
         return server.getPlayerManager().getPlayer(playerName);
     }
 
@@ -158,7 +158,7 @@ public class PlayerCommand
             return false;
         }
 
-        if (!context.getSource().getMinecraftServer().getPlayerManager().isOperator(sendingPlayer.getGameProfile()))
+        if (!context.getSource().getServer().getPlayerManager().isOperator(sendingPlayer.getGameProfile()))
         {
             if (sendingPlayer != player && !(player instanceof EntityPlayerMPFake))
             {
@@ -181,7 +181,7 @@ public class PlayerCommand
     private static boolean cantSpawn(CommandContext<ServerCommandSource> context)
     {
         String playerName = StringArgumentType.getString(context, "player");
-        MinecraftServer server = context.getSource().getMinecraftServer();
+        MinecraftServer server = context.getSource().getServer();
         PlayerManager manager = server.getPlayerManager();
         PlayerEntity player = manager.getPlayer(playerName);
         if (player != null)
@@ -189,7 +189,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
             return true;
         }
-        GameProfile profile = server.getUserCache().findByName(playerName);
+        GameProfile profile = server.getUserCache().findByName(playerName).orElse(null);
         if (profile == null)
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)
@@ -224,9 +224,9 @@ public class PlayerCommand
     private static int lookAt(CommandContext<ServerCommandSource> context)
     {
         return manipulate(context, ap -> {
-            try {
+            //try {
                 ap.lookAt(Vec3ArgumentType.getVec3(context, "position"));
-            } catch (CommandSyntaxException ignored) {}
+            //} catch (CommandSyntaxException ignored) {}
         });
     }
 
@@ -270,18 +270,18 @@ public class PlayerCommand
         {
             ServerPlayerEntity player = context.getSource().getPlayer();
             mode = player.interactionManager.getGameMode();
-            flying = player.abilities.flying;
+            flying = player.getAbilities().flying;
         }
         catch (CommandSyntaxException ignored) {}
         String playerName = StringArgumentType.getString(context, "player");
-        if (playerName.length()>maxPlayerLength(source.getMinecraftServer()))
+        if (playerName.length()>maxPlayerLength(source.getServer()))
         {
             Messenger.m(context.getSource(), "rb Player name: "+playerName+" is too long");
             return 0;
         }
 
-        MinecraftServer server = source.getMinecraftServer();
-        if (!World.isInBuildLimit(new BlockPos(pos.x, pos.y, pos.z)))
+        MinecraftServer server = source.getServer();
+        if (!World.isValid(new BlockPos(pos.x, pos.y, pos.z)))
         {
             Messenger.m(context.getSource(), "rb Player "+playerName+" cannot be placed outside of the world");
             return 0;

@@ -2,6 +2,8 @@ package carpet.script.utils;
 
 import carpet.fakes.MinecraftServerInterface;
 import com.google.common.collect.ImmutableList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.packet.s2c.play.ChunkDataS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WorldGenerationProgressListener;
@@ -97,21 +99,21 @@ public class WorldTools
         ChunkGenerator chunkGenerator2;
         DimensionType dimensionType2;
         if (dimensionOptions == null) {
-            dimensionType2 = (DimensionType)server.getRegistryManager().getDimensionTypes().getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
-            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (new Random()).nextLong());
+            dimensionType2 = server.getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY).getOrThrow(DimensionType.OVERWORLD_REGISTRY_KEY);
+            chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY), (new Random()).nextLong());
         } else {
             dimensionType2 = dimensionOptions.getDimensionType();
             chunkGenerator2 = dimensionOptions.getChunkGenerator();
         }
 
-        RegistryKey<World> customWorld = RegistryKey.of(Registry.DIMENSION, worldId);
+        RegistryKey<World> customWorld = RegistryKey.of(Registry.WORLD_KEY, worldId);
 
         //chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
 
         chunkGenerator2 = new NoiseChunkGenerator(
                 new VanillaLayeredBiomeSource((seed==null)?l:seed, false, false, server.getRegistryManager().get(Registry.BIOME_KEY)),
                 (seed==null)?l:seed,
-                () -> server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN).getOrThrow(ChunkGeneratorSettings.OVERWORLD)
+                () -> server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD)
         );
 
         ServerWorld serverWorld = new ServerWorld(
@@ -142,7 +144,7 @@ public class WorldTools
             List<ServerPlayerEntity> nearbyPlayers = world.getPlayers(p -> pos.getSquaredDistance(p.getX(), pos.getY(), p.getZ(), true) < vvd);
             if (!nearbyPlayers.isEmpty())
             {
-                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk, 65535);
+                ChunkDataS2CPacket packet = new ChunkDataS2CPacket(worldChunk);
                 ChunkPos chpos = new ChunkPos(pos);
                 nearbyPlayers.forEach(p -> p.networkHandler.sendPacket(packet));
             }
@@ -154,6 +156,8 @@ public class WorldTools
     {
         @Override public void start(ChunkPos spawnPos) { }
         @Override public void setChunkStatus(ChunkPos pos, ChunkStatus status) { }
+        @Environment(EnvType.CLIENT)
+        @Override public void start() { }
         @Override public void stop() { }
     }
 

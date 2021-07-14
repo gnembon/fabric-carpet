@@ -3,10 +3,10 @@ package carpet.utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Material;
-import net.minecraft.block.MaterialColor;
+import net.minecraft.block.MapColor;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.TargetFinder;
+import net.minecraft.entity.ai.NoPenaltyTargeting;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.ai.pathing.NavigationType;
 import net.minecraft.entity.mob.PathAwareEntity;
@@ -67,61 +67,81 @@ public class BlockInfo
         put(BlockSoundGroup.BONE, "bone");
         put(BlockSoundGroup.NETHERITE, "netherite");
         put(BlockSoundGroup.ANCIENT_DEBRIS, "ancient_debris");
+        put(BlockSoundGroup.LODESTONE, "lodestone");
+        put(BlockSoundGroup.CHAIN, "chain");
+        put(BlockSoundGroup.NETHER_GOLD_ORE, "nether_gold_ore");
+        put(BlockSoundGroup.GILDED_BLACKSTONE, "gilded_blackstone");
+        put(BlockSoundGroup.CANDLE, "candle");
+        put(BlockSoundGroup.AMETHYST_BLOCK, "amethyst");
+        put(BlockSoundGroup.AMETHYST_CLUSTER, "amethyst_cluster");
+        put(BlockSoundGroup.SMALL_AMETHYST_BUD, "small_amethyst_bud");
+        put(BlockSoundGroup.LARGE_AMETHYST_BUD, "large_amethyst_bud");
+        put(BlockSoundGroup.MEDIUM_AMETHYST_BUD, "medium_amethyst_bud");
+        put(BlockSoundGroup.TUFF, "tuff");
+        put(BlockSoundGroup.CALCITE, "calcite");
+        put(BlockSoundGroup.COPPER, "copper");
     }};
 
-    public static final Map<MaterialColor, String> mapColourName = new HashMap<MaterialColor, String>() {{
-        put(MaterialColor.CLEAR     , "air"       );
-        put(MaterialColor.GRASS     , "grass"     );
-        put(MaterialColor.SAND      , "sand"      );
-        put(MaterialColor.WEB       , "wool"      );
-        put(MaterialColor.LAVA      , "tnt"       );
-        put(MaterialColor.ICE       , "ice"       );
-        put(MaterialColor.IRON      , "iron"      );
-        put(MaterialColor.FOLIAGE   , "foliage"   );
-        put(MaterialColor.WHITE     , "snow"      );
-        put(MaterialColor.CLAY      , "clay"      );
-        put(MaterialColor.DIRT      , "dirt"      );
-        put(MaterialColor.STONE     , "stone"     );
-        put(MaterialColor.WATER     , "water"     );
-        put(MaterialColor.WOOD      , "wood"      );
-        put(MaterialColor.QUARTZ    , "quartz"    );
-        put(MaterialColor.ORANGE    , "adobe"     );
-        put(MaterialColor.MAGENTA   , "magenta"   );
-        put(MaterialColor.LIGHT_BLUE, "light_blue");
-        put(MaterialColor.YELLOW    , "yellow"    );
-        put(MaterialColor.LIME      , "lime"      );
-        put(MaterialColor.PINK      , "pink"      );
-        put(MaterialColor.GRAY      , "gray"      );
-        put(MaterialColor.LIGHT_GRAY, "light_gray");
-        put(MaterialColor.CYAN      , "cyan"      );
-        put(MaterialColor.PURPLE    , "purple"    );
-        put(MaterialColor.BLUE      , "blue"      );
-        put(MaterialColor.BROWN     , "brown"     );
-        put(MaterialColor.GREEN     , "green"     );
-        put(MaterialColor.RED       , "red"       );
-        put(MaterialColor.BLACK     , "black"     );
-        put(MaterialColor.GOLD      , "gold"      );
-        put(MaterialColor.DIAMOND   , "diamond"   );
-        put(MaterialColor.LAPIS     , "lapis"     );
-        put(MaterialColor.EMERALD   , "emerald"   );
-        put(MaterialColor.SPRUCE    , "obsidian"  );
-        put(MaterialColor.NETHER    , "netherrack"); //TODO fix these
-        put(MaterialColor.WHITE_TERRACOTTA     , "white_terracotta"      );
-        put(MaterialColor.ORANGE_TERRACOTTA    , "orange_terracotta"     );
-        put(MaterialColor.MAGENTA_TERRACOTTA   , "magenta_terracotta"    );
-        put(MaterialColor.LIGHT_BLUE_TERRACOTTA, "light_blue_terracotta" );
-        put(MaterialColor.YELLOW_TERRACOTTA    , "yellow_terracotta"     );
-        put(MaterialColor.LIME_TERRACOTTA      , "lime_terracotta"       );
-        put(MaterialColor.PINK_TERRACOTTA      , "pink_terracotta"       );
-        put(MaterialColor.GRAY_TERRACOTTA      , "gray_terracotta"       );
-        put(MaterialColor.LIGHT_GRAY_TERRACOTTA, "light_gray_terracotta" );
-        put(MaterialColor.CYAN_TERRACOTTA      , "cyan_terracotta"       );
-        put(MaterialColor.PURPLE_TERRACOTTA    , "purple_terracotta"     );
-        put(MaterialColor.BLUE_TERRACOTTA      , "blue_terracotta"       );
-        put(MaterialColor.BROWN_TERRACOTTA     , "brown_terracotta"      );
-        put(MaterialColor.GREEN_TERRACOTTA     , "green_terracotta"      );
-        put(MaterialColor.RED_TERRACOTTA       , "red_terracotta"        );
-        put(MaterialColor.BLACK_TERRACOTTA     , "black_terracotta"      );
+    public static final Map<MapColor, String> mapColourName = new HashMap<MapColor, String>() {{
+        put(MapColor.CLEAR     , "air"       );
+        put(MapColor.PALE_GREEN     , "grass"     );
+        put(MapColor.PALE_YELLOW       , "sand"      );
+        put(MapColor.WHITE_GRAY        , "wool"      );
+        put(MapColor.BRIGHT_RED       , "tnt"       );
+        put(MapColor.PALE_PURPLE        , "ice"       );
+        put(MapColor.IRON_GRAY      , "iron"      );
+        put(MapColor.DARK_GREEN    , "foliage"   );
+        put(MapColor.WHITE     , "snow"      );
+        put(MapColor.LIGHT_BLUE_GRAY       , "clay"      );
+        put(MapColor.DIRT_BROWN       , "dirt"      );
+        put(MapColor.STONE_GRAY      , "stone"     );
+        put(MapColor.WATER_BLUE      , "water"     );
+        put(MapColor.OAK_TAN       , "wood"      );
+        put(MapColor.OFF_WHITE     , "quartz"    );
+        put(MapColor.ORANGE    , "adobe"     );
+        put(MapColor.MAGENTA   , "magenta"   );
+        put(MapColor.LIGHT_BLUE, "light_blue");
+        put(MapColor.YELLOW    , "yellow"    );
+        put(MapColor.LIME      , "lime"      );
+        put(MapColor.PINK      , "pink"      );
+        put(MapColor.GRAY      , "gray"      );
+        put(MapColor.LIGHT_GRAY, "light_gray");
+        put(MapColor.CYAN      , "cyan"      );
+        put(MapColor.PURPLE    , "purple"    );
+        put(MapColor.BLUE      , "blue"      );
+        put(MapColor.BROWN     , "brown"     );
+        put(MapColor.GREEN     , "green"     );
+        put(MapColor.RED       , "red"       );
+        put(MapColor.BLACK     , "black"     );
+        put(MapColor.GOLD      , "gold"      );
+        put(MapColor.DIAMOND_BLUE    , "diamond"   );
+        put(MapColor.LAPIS_BLUE      , "lapis"     );
+        put(MapColor.EMERALD_GREEN    , "emerald"   );
+        put(MapColor.SPRUCE_BROWN     , "obsidian"  );
+        put(MapColor.DARK_RED     , "netherrack"); //TODO fix these
+        put(MapColor.TERRACOTTA_WHITE      , "white_terracotta"      );
+        put(MapColor.TERRACOTTA_ORANGE    , "orange_terracotta"     );
+        put(MapColor.TERRACOTTA_MAGENTA   , "magenta_terracotta"    );
+        put(MapColor.TERRACOTTA_LIGHT_BLUE, "light_blue_terracotta" );
+        put(MapColor.TERRACOTTA_YELLOW    , "yellow_terracotta"     );
+        put(MapColor.TERRACOTTA_LIME      , "lime_terracotta"       );
+        put(MapColor.TERRACOTTA_PINK      , "pink_terracotta"       );
+        put(MapColor.TERRACOTTA_GRAY      , "gray_terracotta"       );
+        put(MapColor.TERRACOTTA_LIGHT_GRAY, "light_gray_terracotta" );
+        put(MapColor.TERRACOTTA_CYAN      , "cyan_terracotta"       );
+        put(MapColor.TERRACOTTA_PURPLE    , "purple_terracotta"     );
+        put(MapColor.TERRACOTTA_BLUE      , "blue_terracotta"       );
+        put(MapColor.TERRACOTTA_BROWN     , "brown_terracotta"      );
+        put(MapColor.TERRACOTTA_GREEN     , "green_terracotta"      );
+        put(MapColor.TERRACOTTA_RED       , "red_terracotta"        );
+        put(MapColor.TERRACOTTA_BLACK     , "black_terracotta"      );
+        put(MapColor.DULL_RED        , "crimson_nylium"        );
+        put(MapColor.DULL_PINK         , "crimson_stem"          );
+        put(MapColor.DARK_CRIMSON        , "crimson_hyphae"        );
+        put(MapColor.TEAL         , "warped_nylium"         );
+        put(MapColor.DARK_AQUA           , "warped_stem"           );
+        put(MapColor.DARK_DULL_PINK         , "warped_hyphae"         );
+        put(MapColor.BRIGHT_TEAL           , "warped_wart"           );
     }};
 
     public static final Map<Material, String> materialName = new HashMap<Material, String>() {{
@@ -132,20 +152,20 @@ public class BlockInfo
         put(Material.PLANT          , "plant"        );
         put(Material.UNDERWATER_PLANT, "water_plant" );
         put(Material.REPLACEABLE_PLANT, "vegetation"       );
-        put(Material.REPLACEABLE_UNDERWATER_PLANT       , "sea_grass"    );
+        put(Material.REPLACEABLE_UNDERWATER_PLANT, "sea_grass"    );
         put(Material.WATER          , "water"        );
         put(Material.BUBBLE_COLUMN  , "bubble_column");
         put(Material.LAVA           , "lava"         );
-        put(Material.SNOW_LAYER           , "snow_layer"   );
+        put(Material.SNOW_LAYER     , "snow_layer"   );
         put(Material.FIRE           , "fire"         );
-        put(Material.SUPPORTED          , "decoration"   );
+        put(Material.DECORATION      , "decoration"   );
         put(Material.COBWEB         , "cobweb"       );
         put(Material.REDSTONE_LAMP  , "redstone_lamp");
-        put(Material.ORGANIC_PRODUCT           , "clay"         );
-        put(Material.SOIL         , "dirt"         );
-        put(Material.SOLID_ORGANIC        , "grass"        );
-        put(Material.DENSE_ICE     , "packed_ice"   );
-        put(Material.AGGREGATE          , "sand"         );
+        put(Material.ORGANIC_PRODUCT, "clay"         );
+        put(Material.SOIL           , "dirt"         );
+        put(Material.SOLID_ORGANIC  , "grass"        );
+        put(Material.DENSE_ICE      , "packed_ice"   );
+        put(Material.AGGREGATE      , "sand"         );
         put(Material.SPONGE         , "sponge"       );
         put(Material.SHULKER_BOX    , "shulker"      );
         put(Material.WOOD           , "wood"         );
@@ -161,13 +181,14 @@ public class BlockInfo
         put(Material.STONE          , "stone"        );
         put(Material.METAL          , "metal"        );
         put(Material.SNOW_BLOCK     , "snow"         );
-        put(Material.REPAIR_STATION          , "anvil"        );
+        put(Material.REPAIR_STATION , "anvil"        );
         put(Material.BARRIER        , "barrier"      );
         put(Material.PISTON         , "piston"       );
-        put(Material.UNUSED_PLANT   , "coral"        );
-        put(Material.GOURD        , "gourd"        );
+        put(Material.MOSS_BLOCK     , "moss"         );
+        put(Material.GOURD          , "gourd"        );
         put(Material.EGG            , "dragon_egg"   );
         put(Material.CAKE           , "cake"         );
+        put(Material.AMETHYST       , "amethyst"     );
     }};
 
     public static List<BaseText> blockInfo(BlockPos pos, ServerWorld world)
@@ -185,7 +206,7 @@ public class BlockInfo
         lst.add(Messenger.s("====================================="));
         lst.add(Messenger.s(String.format("Block info for %s%s (id %d%s):",Registry.BLOCK.getId(block),metastring, Registry.BLOCK.getRawId(block), metastring )));
         lst.add(Messenger.s(String.format(" - Material: %s", materialName.get(material))));
-        lst.add(Messenger.s(String.format(" - Map colour: %s", mapColourName.get(state.getTopMaterialColor(world, pos)))));
+        lst.add(Messenger.s(String.format(" - Map colour: %s", mapColourName.get(state.getMapColor(world, pos)))));
         lst.add(Messenger.s(String.format(" - Sound type: %s", soundName.get(block.getSoundGroup(state)))));
         lst.add(Messenger.s(""));
         lst.add(Messenger.s(String.format(" - Full block: %s", state.isFullCube(world, pos)))); //  isFullCube() )));
@@ -231,7 +252,7 @@ public class BlockInfo
         for (int i=0; i<1000; i++)
         {
 
-            Vec3d vec = TargetFinder.findTarget(creature, 10, 7);
+            Vec3d vec = NoPenaltyTargeting.find(creature, 10, 7); // TargetFinder.findTarget(creature, 10, 7);
             if (vec == null)
             {
                 continue;
@@ -251,7 +272,7 @@ public class BlockInfo
             }
             total_ticks += 3*i;
         }
-        creature.remove();
+        creature.discard(); // discarded // remove(Entity.RemovalReason.field_26999); // 2nd option - DISCARDED
         long total_time = (total_ticks)/1000/20;
         return Messenger.s(String.format(" - Wander chance above: %.1f%%\n - Average standby above: %s",
                 (100.0F*success)/1000,

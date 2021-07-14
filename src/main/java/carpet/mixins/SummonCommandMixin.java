@@ -31,10 +31,10 @@ public class SummonCommandMixin
             LocalDifficulty localDifficulty_1 =  world.getLocalDifficulty(at);
             boolean boolean_2 = world.getGameRules().getBoolean(GameRules.DO_MOB_SPAWNING) && world.random.nextDouble() < (double)localDifficulty_1.getLocalDifficulty() * 0.01D;
             if (boolean_2) {
-                SkeletonHorseEntity skeletonHorseEntity_1 = (SkeletonHorseEntity) EntityType.SKELETON_HORSE.create(world);
+                SkeletonHorseEntity skeletonHorseEntity_1 = EntityType.SKELETON_HORSE.create(world);
                 skeletonHorseEntity_1.setTrapped(true);
                 skeletonHorseEntity_1.setBreedingAge(0);
-                skeletonHorseEntity_1.resetPosition(entity.getX(), entity.getY(), entity.getZ());
+                skeletonHorseEntity_1.setPosition(entity.getX(), entity.getY(), entity.getZ());
                 world.spawnEntity(skeletonHorseEntity_1);
             }
         }

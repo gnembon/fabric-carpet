@@ -33,7 +33,7 @@ public abstract class FluidBlock_renewableBlackstoneMixin
                 for(Direction direction : Direction.values())
                 {
                     if (direction != Direction.DOWN) {
-                        BlockPos blockPos = pos.offset(direction);
+                        BlockPos blockPos = pos.offset(direction); // offset
                         if (world.getBlockState(blockPos).isOf(Blocks.BLUE_ICE)) {
                             world.setBlockState(pos, Blocks.BLACKSTONE.getDefaultState());
                             playExtinguishSound(world, pos);

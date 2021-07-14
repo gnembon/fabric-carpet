@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import net.minecraft.nbt.NbtElement;
 import org.apache.commons.lang3.ClassUtils;
 
 import carpet.script.LazyValue;
@@ -17,7 +18,6 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.Tag;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.dynamic.GlobalPos;
@@ -48,7 +48,7 @@ public final class OutputConverter<T>
         registerToValue(String.class, StringValue::new);
         registerToValue(Entity.class, EntityValue::new);
         registerToValue(Text.class, FormattedTextValue::new);
-        registerToValue(Tag.class, NBTSerializableValue::new);
+        registerToValue(NbtElement.class, NBTSerializableValue::new);
         registerToValue(BlockPos.class, ValueConversions::of);
         registerToValue(Vec3d.class, ValueConversions::of);
         registerToValue(ItemStack.class, ValueConversions::of);

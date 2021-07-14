@@ -146,8 +146,8 @@ public class SpawnCommand
                     Math.max(a.getY(), b.getY()),
                     Math.max(a.getZ(), b.getZ()) );
         }
-        SpawnReporter.reset_spawn_stats(source.getMinecraftServer(), false);
-        SpawnReporter.track_spawns = (long) source.getMinecraftServer().getTicks();
+        SpawnReporter.reset_spawn_stats(source.getServer(), false);
+        SpawnReporter.track_spawns = (long) source.getServer().getTicks();
         SpawnReporter.lower_spawning_limit = lsl;
         SpawnReporter.upper_spawning_limit = usl;
         Messenger.m(source, "gi Spawning tracking started.");
@@ -157,7 +157,7 @@ public class SpawnCommand
     private static int stopTracking(ServerCommandSource source)
     {
         Messenger.send(source, SpawnReporter.tracking_report(source.getWorld()));
-        SpawnReporter.reset_spawn_stats(source.getMinecraftServer(),false);
+        SpawnReporter.reset_spawn_stats(source.getServer(),false);
         SpawnReporter.track_spawns = 0L;
         SpawnReporter.lower_spawning_limit = null;
         SpawnReporter.upper_spawning_limit = null;
@@ -175,19 +175,19 @@ public class SpawnCommand
     private static int runTest(ServerCommandSource source, int ticks, String counter)
     {
         //stop tracking
-        SpawnReporter.reset_spawn_stats(source.getMinecraftServer(),false);
+        SpawnReporter.reset_spawn_stats(source.getServer(),false);
         //start tracking
-        SpawnReporter.track_spawns = (long) source.getMinecraftServer().getTicks();
+        SpawnReporter.track_spawns = (long) source.getServer().getTicks();
         //counter reset
         if (counter == null)
         {
-            HopperCounter.resetAll(source.getMinecraftServer(), false);
+            HopperCounter.resetAll(source.getServer(), false);
         }
         else
         {
             HopperCounter hCounter = HopperCounter.getCounter(counter);
             if (hCounter != null)
-                    hCounter.reset(source.getMinecraftServer());
+                    hCounter.reset(source.getServer());
         }
 
 

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(WeightedPicker.Entry.class)
 public interface WeightedPickerEntryMixin
-{
+{/* /// not needed in 1.17
     @Accessor("weight")
-    int getWeight();
+    int getWeight();*/
 }

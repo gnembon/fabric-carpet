@@ -305,13 +305,13 @@ public class AppStoreManager
     public static boolean saveScriptToFile(ServerCommandSource source, String path, String appFileName, String code, boolean globalSavePath, boolean useTrash)
     {
         Path scriptLocation;
-        if (globalSavePath && !source.getMinecraftServer().isDedicated()) // never happens, this is always called with globalSavePath being false
+        if (globalSavePath && !source.getServer().isDedicated()) // never happens, this is always called with globalSavePath being false
         { //cos config folder only is in clients
             scriptLocation = FabricLoader.getInstance().getConfigDir().resolve("carpet/scripts/appstore").toAbsolutePath().resolve(path);
         }
         else
         {
-            scriptLocation = source.getMinecraftServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
+            scriptLocation = source.getServer().getSavePath(WorldSavePath.ROOT).resolve("scripts").toAbsolutePath().resolve(appFileName);
         }
         try
         {
@@ -384,7 +384,7 @@ public class AppStoreManager
             Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
         }
     }
-    
+
     private static String getFullContentUrl(String original, StoreNode storeSource)
     {
         if (original.matches("^https?://.*$")) // We've got a full url here: Just use it

@@ -4,9 +4,9 @@ import carpet.CarpetServer;
 import carpet.CarpetSettings;
 import carpet.script.utils.ShapesRenderer;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -72,16 +72,16 @@ public class CarpetClient
         return true;
     }
 
-    public static void onClientCommand(Tag t)
+    public static void onClientCommand(NbtElement t)
     {
         CarpetSettings.LOG.info("Server Response:");
-        CompoundTag tag = (CompoundTag)t;
+        NbtCompound tag = (NbtCompound)t;
         CarpetSettings.LOG.info(" - id: "+tag.getString("id"));
         CarpetSettings.LOG.info(" - code: "+tag.getInt("code"));
         if (tag.contains("error")) CarpetSettings.LOG.warn(" - error: "+tag.getString("error"));
         if (tag.contains("output"))
         {
-            ListTag outputTag = (ListTag) tag.get("output");
+            NbtList outputTag = (NbtList) tag.get("output");
             for (int i = 0; i < outputTag.size(); i++)
                 CarpetSettings.LOG.info(" - response: " + Text.Serializer.fromJson(outputTag.getString(i)).getString());
         }

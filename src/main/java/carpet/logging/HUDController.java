@@ -7,7 +7,9 @@ import carpet.logging.logHelpers.PacketCounter;
 import carpet.mixins.PlayerListHeaderS2CPacketMixin;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
+import io.netty.buffer.Unpooled;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.network.packet.s2c.play.PlayerListHeaderS2CPacket;
 import net.minecraft.server.MinecraftServer;
@@ -42,10 +44,9 @@ public class HUDController
     }
 
     public static Map<ServerPlayerEntity, List<BaseText>> player_huds = new HashMap<>();
-
-    //keyed with player names so unlogged players don't hold the reference
+//keyed with player names so unlogged players don't hold the reference
     public static final Map<String, BaseText> scarpet_headers = new HashMap<>();
-    
+
     public static final Map<String, BaseText> scarpet_footers = new HashMap<>();
 
     public static void resetScarpetHUDs() {
@@ -68,9 +69,10 @@ public class HUDController
     }
     public static void clear_player(PlayerEntity player)
     {
-        PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-        ((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
-        ((PlayerListHeaderS2CPacketMixin)packet).setFooter(new LiteralText(""));
+        PacketByteBuf packetData = new PacketByteBuf(Unpooled.buffer()).writeText(new LiteralText("")).writeText(new LiteralText(""));
+        PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket(packetData);
+        //((PlayerListHeaderS2CPacketMixin)packet).setHeader(new LiteralText(""));
+        //((PlayerListHeaderS2CPacketMixin)packet).setFooter(new LiteralText(""));
         ((ServerPlayerEntity)player).networkHandler.sendPacket(packet);
     }
 
@@ -121,9 +123,14 @@ public class HUDController
         if (force!= null) targets.addAll(force);
         for (ServerPlayerEntity player: targets)
         {
-            PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
-            ((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText("")));
-            ((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
+            PacketByteBuf packetData = new PacketByteBuf(Unpooled.buffer()).
+                    writeText(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText(""))).
+                    writeText(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
+            PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket(packetData);
+
+            //PlayerListHeaderS2CPacket packet = new PlayerListHeaderS2CPacket();
+            //((PlayerListHeaderS2CPacketMixin)packet).setHeader(scarpet_headers.getOrDefault(player.getEntityName(), new LiteralText("")));
+            //((PlayerListHeaderS2CPacketMixin)packet).setFooter(Messenger.c(player_huds.getOrDefault(player, Collections.emptyList()).toArray(new Object[0])));
             player.networkHandler.sendPacket(packet);
         }
     }

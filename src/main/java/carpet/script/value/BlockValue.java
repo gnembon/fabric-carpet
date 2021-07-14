@@ -13,9 +13,9 @@ import net.minecraft.command.argument.BlockArgumentParser;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.dynamic.GlobalPos;
@@ -45,7 +45,7 @@ public class BlockValue extends Value
     private BlockState blockState;
     private final BlockPos pos;
     private final ServerWorld world;
-    private CompoundTag data;
+    private NbtCompound data;
 
     public static BlockValue fromCoords(CarpetContext c, int x, int y, int z)
     {
@@ -63,9 +63,9 @@ public class BlockValue extends Value
             BlockArgumentParser blockstateparser = (new BlockArgumentParser(new StringReader(str), false)).parse(true);
             if (blockstateparser.getBlockState() != null)
             {
-                CompoundTag bd = blockstateparser.getNbtData();
+                NbtCompound bd = blockstateparser.getNbtData();
                 if (bd == null)
-                    bd = new CompoundTag();
+                    bd = new NbtCompound();
                 bv = new BlockValue(blockstateparser.getBlockState(), null, null, bd );
                 if (bvCache.size()>10000)
                     bvCache.clear();
@@ -107,7 +107,7 @@ public class BlockValue extends Value
     }
 
 
-    public CompoundTag getData()
+    public NbtCompound getData()
     {
         if (data != null)
         {
@@ -118,13 +118,13 @@ public class BlockValue extends Value
         if (world != null && pos != null)
         {
             BlockEntity be = getBlockEntity(world, pos);
-            CompoundTag tag = new CompoundTag();
+            NbtCompound tag = new NbtCompound();
             if (be == null)
             {
                 data = tag;
                 return null;
             }
-            data = be.toTag(tag);
+            data = be.writeNbt(tag);
             return data;
         }
         return null;
@@ -139,7 +139,7 @@ public class BlockValue extends Value
         data = null;
     }
 
-    public BlockValue(BlockState state, ServerWorld world, BlockPos position, CompoundTag nbt)
+    public BlockValue(BlockState state, ServerWorld world, BlockPos position, NbtCompound nbt)
     {
         this.world = world;
         blockState = state;
@@ -188,26 +188,26 @@ public class BlockValue extends Value
     public ServerWorld getWorld() { return world;}
 
     @Override
-    public Tag toTag(boolean force)
+    public NbtElement toTag(boolean force)
     {
         if (!force) throw new NBTSerializableValue.IncompatibleTypeException(this);
         // follows falling block convertion
-        CompoundTag tag =  new CompoundTag();
-        CompoundTag state = new CompoundTag();
+        NbtCompound tag =  new NbtCompound();
+        NbtCompound state = new NbtCompound();
         BlockState s = getBlockState();
-        state.put("Name", StringTag.of(Registry.BLOCK.getId(s.getBlock()).toString()));
+        state.put("Name", NbtString.of(Registry.BLOCK.getId(s.getBlock()).toString()));
         Collection<Property<?>> properties = s.getProperties();
         if (!properties.isEmpty())
         {
-            CompoundTag props = new CompoundTag();
+            NbtCompound props = new NbtCompound();
             for (Property<?> p: properties)
             {
-                props.put(p.getName(), StringTag.of(s.get(p).toString().toLowerCase(Locale.ROOT)));
+                props.put(p.getName(), NbtString.of(s.get(p).toString().toLowerCase(Locale.ROOT)));
             }
             state.put("Properties", props);
         }
         tag.put("BlockState", state);
-        CompoundTag dataTag = getData();
+        NbtCompound dataTag = getData();
         if (dataTag != null)
         {
             tag.put("TileEntityData", dataTag);

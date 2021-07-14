@@ -133,7 +133,7 @@ public class LogCommand
     }
     private static int unsubFromAll(ServerCommandSource source, String player_name)
     {
-        PlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(player_name);
+        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");
@@ -148,7 +148,7 @@ public class LogCommand
     }
     private static int unsubFromLogger(ServerCommandSource source, String player_name, String logname)
     {
-        PlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(player_name);
+        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");
@@ -166,7 +166,7 @@ public class LogCommand
 
     private static int toggleSubscription(ServerCommandSource source, String player_name, String logName)
     {
-        PlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(player_name);
+        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");
@@ -190,7 +190,7 @@ public class LogCommand
     }
     private static int subscribePlayer(ServerCommandSource source, String player_name, String logname, String option)
     {
-        PlayerEntity player = source.getMinecraftServer().getPlayerManager().getPlayer(player_name);
+        PlayerEntity player = source.getServer().getPlayerManager().getPlayer(player_name);
         if (player == null)
         {
             Messenger.m(source, "r No player specified");

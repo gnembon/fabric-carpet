@@ -186,15 +186,17 @@ public class CarpetSettings
     @Rule( desc = "Players absorb XP instantly, without delay", category = CREATIVE )
     public static boolean xpNoCooldown = false;
 
+
     @Rule( desc = "XP orbs combine with other into bigger orbs", category = FEATURE )
     public static boolean combineXPOrbs = false;
 
     @Rule(
             desc = "Empty shulker boxes can stack to 64 when dropped on the ground",
-            extra = "To move them around between inventories, use shift click to move entire stacks",
+            extra = ".. or when manipulated inside the inventories",
             category = {SURVIVAL, FEATURE}
     )
     public static boolean stackableShulkerBoxes = false;
+    public static final int SHULKER_STACK_SIZE = 64;
 
     @Rule( desc = "Explosions won't destroy blocks", category = {CREATIVE, TNT} )
     public static boolean explosionNoBlockDamage = false;
@@ -316,6 +318,16 @@ public class CarpetSettings
     )
     public static boolean hopperCounters = false;
 
+    @Rule(
+            desc = "Allows Budding Amethyst blocks to be moved",
+            extra = {
+                    "Allow for them to be moved by pistons",
+                    "as well as adds extra drop when mining with silk touch pickaxe"
+            },
+            category = FEATURE
+    )
+    public static boolean movableAmethyst = false;
+
     @Rule( desc = "Guardians turn into Elder Guardian when struck by lightning", category = FEATURE )
     public static boolean renewableSponges = false;
 
@@ -365,6 +377,13 @@ public class CarpetSettings
             category = COMMAND
     )
     public static String commandProfile = "true";
+
+    @Rule(
+            desc = "Required permission level for /perf command",
+            options = {"2", "4"},
+            category = CREATIVE
+    )
+    public static int perfPermissionLevel = 4;
 
     @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
     public static String commandLog = "true";
@@ -588,8 +607,8 @@ public class CarpetSettings
     public static boolean waterFlow = true;
     */
 
-    @Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
-    public static boolean onePlayerSleeping = false;
+    //@Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
+    //public static boolean onePlayerSleeping = false;
 
     @Rule(
             desc = "Sets a different motd message on client trying to connect to the server",
@@ -620,7 +639,7 @@ public class CarpetSettings
                 Messenger.m(source, "r view distance has to be between 0 and 32");
                 return null;
             }
-            MinecraftServer server = source.getMinecraftServer();
+            MinecraftServer server = source.getServer();
 
             if (server.isDedicated())
             {
@@ -754,6 +773,13 @@ public class CarpetSettings
     )
     public static boolean renewableBlackstone = false;
 
+    @Rule(
+            desc = "Lava and water generate deepslate and cobbled deepslate instead below Y16",
+            extra = "This rule may change Y value to 0 with 1.18",
+            category = FEATURE
+    )
+    public static boolean renewableDeepslate = false;
+
     @Rule(desc = "fixes block placement rotation issue when player rotates quickly while placing blocks", category = BUGFIX)
     public static boolean placementRotationFix = false;
 
@@ -810,7 +836,7 @@ public class CarpetSettings
     public static boolean isCreativeFlying(Entity entity)
     {
         // #todo replace after merger to 1.17
-        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).abilities.flying;
+        return CarpetSettings.creativeNoClip && entity instanceof PlayerEntity && (((PlayerEntity) entity).isCreative()) && ((PlayerEntity) entity).getAbilities().flying;
     }
 
 
@@ -909,7 +935,7 @@ public class CarpetSettings
             strict = false,
             validate = Validator.NONNEGATIVE_NUMBER.class
     )
-    public static double structureBlockOutlineDistance = 96d;
+    public static int structureBlockOutlineDistance = 96;
 
     @Rule(
             desc = "Lightning kills the items that drop when lightning kills an entity",

@@ -147,7 +147,7 @@ public class TickSpeed
         time_warp_start_time = 0;
         if (tick_warp_callback != null)
         {
-            CommandManager icommandmanager = tick_warp_sender.getMinecraftServer().getCommandManager();
+            CommandManager icommandmanager = tick_warp_sender.getServer().getCommandManager();
             try
             {
                 icommandmanager.execute(tick_warp_sender, tick_warp_callback);

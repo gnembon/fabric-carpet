@@ -6,7 +6,7 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.state.property.Property;
 import net.minecraft.tag.Tag;
 import org.spongepowered.asm.mixin.Final;
@@ -23,7 +23,7 @@ public class StatePredicate_scarpetMixin implements BlockPredicateInterface
 
     @Shadow @Final private BlockState state;
 
-    @Shadow @Final /*@Nullable*/ private CompoundTag nbt;
+    @Shadow @Final /*@Nullable*/ private NbtCompound nbt;
 
     @Shadow @Final private Set<Property<?>> properties;
 
@@ -50,7 +50,7 @@ public class StatePredicate_scarpetMixin implements BlockPredicateInterface
     }
 
     @Override
-    public CompoundTag getCMDataTag()
+    public NbtCompound getCMDataTag()
     {
         return nbt;
     }

@@ -75,6 +75,6 @@ public class ServerPlayerInteractionManager_scarpetEventsMixin implements Server
     public void setBlockBreakingProgress(int progress)
     {
         blockBreakingProgress = MathHelper.clamp(progress, -1, 10);
-        world.setBlockBreakingInfo(-1*this.player.getEntityId(), miningPos, blockBreakingProgress);
+        world.setBlockBreakingInfo(-1*this.player.getId(), miningPos, blockBreakingProgress);
     }
 }

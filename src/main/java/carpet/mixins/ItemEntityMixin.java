@@ -24,7 +24,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
 {
     private static final int SHULKERBOX_MAX_STACK_AMOUNT = 64;
 
-    @Shadow private int age;
+    @Shadow private int itemAge;
     @Shadow private int pickupDelay;
 
     public ItemEntityMixin(EntityType<?> entityType_1, World world_1) {
@@ -34,7 +34,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
     @Override
     public void onStruckByLightning(ServerWorld world, LightningEntity lightning) {
         if (CarpetSettings.lightningKillsDropsFix) {
-            if (this.age > 8) { //Only kill item if its older then 8 ticks
+            if (this.itemAge > 8) { //Only kill item if its older then 8 ticks
                 super.onStruckByLightning(world, lightning);
             }
         } else {
@@ -44,7 +44,7 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
 
     @Override
     public int getAgeCM() {
-        return this.age;
+        return this.itemAge;
     }
 
     @Override
@@ -105,12 +105,12 @@ public abstract class ItemEntityMixin extends Entity implements ItemEntityInterf
             self.setStack(selfStack);
 
             this.pickupDelay = Math.max(((ItemEntityInterface)other).getPickupDelayCM(), this.pickupDelay);
-            this.age = Math.min(((ItemEntityInterface)other).getAgeCM(), this.age);
+            this.itemAge = Math.min(((ItemEntityInterface)other).getAgeCM(), this.itemAge);
 
             otherStack.decrement(amount);
             if (otherStack.isEmpty())
             {
-                other.remove();
+                other.discard(); // discard remove();
             }
             else
             {

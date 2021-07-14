@@ -50,16 +50,16 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
                        block != Blocks.SPAWNER;
     }
     
-    @Redirect(method = "isMovable", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;hasBlockEntity()Z")) // hasBLockENtity
-    private static boolean ifHasBlockEntity(Block block)
+    @Redirect(method = "isMovable", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;hasBlockEntity()Z"))
+    private static boolean ifHasBlockEntity(BlockState blockState)
     {
-        if (!block.hasBlockEntity())
+        if (!blockState.hasBlockEntity())
         {
             return false;
         }
         else
         {
-            return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(block));
+            return !(CarpetSettings.movableBlockEntities && isPushableBlockEntity(blockState.getBlock()));
         }
     }
 
@@ -87,7 +87,7 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
             for (int i = 0; i < list_1.size(); ++i)
             {
                 BlockPos blockpos = list_1.get(i);
-                BlockEntity blockEntity = (list_2.get(i).getBlock().hasBlockEntity()) ? world_1.getBlockEntity(blockpos) : null;
+                BlockEntity blockEntity = (list_2.get(i).hasBlockEntity()) ? world_1.getBlockEntity(blockpos) : null;
                 list1_BlockEntities.get().add(blockEntity);
                 if (blockEntity != null)
                 {
@@ -101,34 +101,32 @@ public abstract class PistonBlock_movableTEMixin extends FacingBlock
     }
     
     @Inject(method = "move", at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
-            target = "Lnet/minecraft/world/World;setBlockEntity(Lnet/minecraft/util/math/BlockPos;" +
-                             "Lnet/minecraft/block/entity/BlockEntity;)V", ordinal = 0),
+            target = "Lnet/minecraft/world/World;addBlockEntity(Lnet/minecraft/block/entity/BlockEntity;)V", ordinal = 0),
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void setBlockEntityWithCarried(World world_1, BlockPos blockPos_1, Direction direction_1, boolean boolean_1,
                                            CallbackInfoReturnable<Boolean> cir, BlockPos blockPos_2, PistonHandler pistonHandler_1, Map map_1, List list_1,
                                            List list_2, List list_3, BlockState[] blockStates_1, Direction direction_2, int int_2,
-                                           int int_3, BlockPos blockPos_4, BlockState blockState_1)
+                                           int int_3, BlockPos blockPos_4, BlockState blockState9, BlockState blockState4)
     {
-        BlockEntity blockEntityPiston = PistonExtensionBlock.createBlockEntityPiston((BlockState) list_2.get(int_3),
+        BlockEntity blockEntityPiston = PistonExtensionBlock.createBlockEntityPiston(blockPos_4, blockState4, (BlockState) list_2.get(int_3),
                 direction_1, boolean_1, false);
         if (CarpetSettings.movableBlockEntities)
             ((PistonBlockEntityInterface) blockEntityPiston).setCarriedBlockEntity(list1_BlockEntities.get().get(int_3));
-        world_1.setBlockEntity(blockPos_4, blockEntityPiston);
+        world_1.addBlockEntity(blockEntityPiston);
+        //world_1.setBlockEntity(blockPos_4, blockEntityPiston);
     }
     
     @Redirect(method = "move", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/World;setBlockEntity(Lnet/minecraft/util/math/BlockPos;" +
-                             "Lnet/minecraft/block/entity/BlockEntity;)V",
+            target = "Lnet/minecraft/world/World;addBlockEntity(Lnet/minecraft/block/entity/BlockEntity;)V",
             ordinal = 0))
-    private void dontDoAnything(World world, BlockPos blockPos_6, BlockEntity blockEntityPiston)
+    private void dontDoAnything(World world, BlockEntity blockEntity)
     {
     }
     
     @Redirect(method = "move", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/block/PistonExtensionBlock;createBlockEntityPiston(Lnet/minecraft/block/BlockState;" +
-                             "Lnet/minecraft/util/math/Direction;ZZ)Lnet/minecraft/block/entity/BlockEntity;",
+            target = "Lnet/minecraft/block/PistonExtensionBlock;createBlockEntityPiston(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/Direction;ZZ)Lnet/minecraft/block/entity/BlockEntity;",
             ordinal = 0))
-    private BlockEntity returnNull(BlockState blockState_1, Direction direction_1, boolean boolean_1, boolean boolean_2)
+    private BlockEntity returnNull(BlockPos blockPos, BlockState blockState, BlockState blockState2, Direction direction, boolean bl, boolean bl2)
     {
         return null;
     }
