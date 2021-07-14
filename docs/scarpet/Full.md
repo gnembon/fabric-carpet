@@ -2659,9 +2659,9 @@ With an optional feature, it returns value for the specified attribute for that 
 * `'water_fog_color'`: RGBA color value of water fog
 * `'humidity'`: value from 0 to 1 indicating how wet is the biome
 * `'precipitation'`: `'rain'` `'snot'`, or `'none'`... ok, maybe `'snow'`, but that means snots for sure as well.
-* `'depth'`: float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
+* `'depth'`: (1.17.1 and below) float value indicating how high or low the terrain should generate. Values > 0 indicate generation above sea level
 and values < 0, below sea level.
-* `'scale'`: float value indicating how flat is the terrain.
+* `'scale'`: (1.17 and below) float value indicating how flat is the terrain.
 * `'features'`: list of features that generate in the biome, grouped by generation steps
 * `'structures'`: list of structures that generate in the biome.
 
@@ -2762,7 +2762,14 @@ Boolean function, true if the block at position blocks movement.
 Returns the name of sound type made by the block at position. One of:
 
 `'wood'`, `'gravel'`, `'grass'`, `'stone'`, `'metal'`, `'glass'`, `'wool'`, `'sand'`, `'snow'`, 
-`'ladder'`, `'anvil'`, `'slime'`, `'sea_grass'`, `'coral'`
+`'ladder'`, `'anvil'`, `'slime'`, `'sea_grass'`, `'coral'`, `'bamboo'`', `'shoots'`', `'scaffolding'`', `'berry'`', `'crop'`',
+`'stem'`', `'wart'`', 
+`'lantern'`', `'fungi_stem'`', `'nylium'`', `'fungus'`', `'roots'`', `'shroomlight'`', `'weeping_vines'`', `'soul_sand'`',
+ `'soul_soil'`', `'basalt'`', 
+`'wart'`', `'netherrack'`', `'nether_bricks'`', `'nether_sprouts'`', `'nether_ore'`', `'bone'`', `'netherite'`', `'ancient_debris'`',
+`'lodestone'`', `'chain'`', `'nether_gold_ore'`', `'gilded_blackstone'`',
+`'candle'`', `'amethyst'`', `'amethyst_cluster'`', `'small_amethyst_bud'`', `'large_amethyst_bud'`', `'medium_amethyst_bud'`',
+`'tuff'`', `'calcite'`', `'copper'`'
 
 ### `material(pos)`
 
@@ -2772,7 +2779,7 @@ Returns the name of material of the block at position. very useful to target a g
 `'bubble_column'`, `'lava'`, `'snow_layer'`, `'fire'`, `'redstone_bits'`, `'cobweb'`, `'redstone_lamp'`, `'clay'`, 
 `'dirt'`, `'grass'`, `'packed_ice'`, `'sand'`, `'sponge'`, `'wood'`, `'wool'`, `'tnt'`, `'leaves'`, `'glass'`, 
 `'ice'`, `'cactus'`, `'stone'`, `'iron'`, `'snow'`, `'anvil'`, `'barrier'`, `'piston'`, `'coral'`, `'gourd'`, 
-`'dragon_egg'`, `'cake'`
+`'dragon_egg'`, `'cake'`, `'amethyst'`
 
 ### `map_colour(pos)`
 
@@ -2784,7 +2791,8 @@ Returns the map colour of a block at position. One of:
 '`, `'diamond'`, `'lapis'`, `'emerald'`, `'obsidian'`, `'netherrack'`, `'white_terracotta'`, `'orange_terracotta'`, 
 `'magenta_terracotta'`, `'light_blue_terracotta'`, `'yellow_terracotta'`, `'lime_terracotta'`, `'pink_terracotta'`, 
 `'gray_terracotta'`, `'light_gray_terracotta'`, `'cyan_terracotta'`, `'purple_terracotta'`, `'blue_terracotta'`, 
-`'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`
+`'brown_terracotta'`, `'green_terracotta'`, `'red_terracotta'`, `'black_terracotta'`,
+`'crimson_nylium'`, `'crimson_stem'`, `'crimson_hyphae'`, `'warped_nylium'`, `'warped_stem'`, `'warped_hyphae'`, `'warped_wart'`
 
 
 ### `loaded(pos)`
