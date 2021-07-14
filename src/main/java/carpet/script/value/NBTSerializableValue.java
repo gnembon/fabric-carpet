@@ -96,10 +96,10 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
 
     public static Value fromStack(ItemStack stack)
     {
-        if (stack.hasTag())
+        if (stack.hasNbt())
         {
             NBTSerializableValue value = new NBTSerializableValue();
-            value.nbtSupplier = stack::getTag;
+            value.nbtSupplier = stack::getNbt;
             return value;
         }
         return Value.NULL;
