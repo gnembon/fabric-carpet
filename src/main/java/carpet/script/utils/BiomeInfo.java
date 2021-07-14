@@ -33,8 +33,8 @@ public class BiomeInfo
         put("water_fog_color", (w, b) -> ValueConversions.ofRGB(((BiomeEffectsInterface)b.getEffects()).getCMWaterFogColor()));
         put("humidity", (w, b) -> NumericValue.of(b.getDownfall()));
         put("precipitation", (w, b) -> StringValue.of(b.getPrecipitation().getName()));
-        put("depth", (w, b) -> NumericValue.of(b.getDepth()));
-        put("scale", (w, b) -> NumericValue.of(b.getScale()));
+        //put("depth", (w, b) -> NumericValue.of(b.getDepth()));
+        //put("scale", (w, b) -> NumericValue.of(b.getScale()));
         put("features", (w, b) -> {
 
             Registry<ConfiguredFeature<?,?>> registry = w.getRegistryManager().get(Registry.CONFIGURED_FEATURE_KEY);

@@ -189,7 +189,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is already logged on");
             return true;
         }
-        GameProfile profile = server.getUserCache().findByName(playerName).orElse(null);
+        GameProfile profile = server.getUserCache().method_14515(playerName); // findByName  .orElse(null)
         if (profile == null)
         {
             if (!CarpetSettings.allowSpawningOfflinePlayers)

@@ -40,7 +40,7 @@ public class EntityPlayerMPFake extends ServerPlayerEntity
         UserCache.setUseRemote(false);
         GameProfile gameprofile;
         try {
-            gameprofile = server.getUserCache().findByName(username).orElse(null);
+            gameprofile = server.getUserCache().method_14515(username); //findByName  .orElse(null)
         }
         finally {
             UserCache.setUseRemote(server.isDedicated() && server.isOnlineMode());
