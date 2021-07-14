@@ -23,7 +23,7 @@ public class InventoryHelper
     public static boolean cleanUpShulkerBoxTag(ItemStack stack)
     {
         boolean changed = false;
-        NbtCompound tag = stack.getTag();
+        NbtCompound tag = stack.getNbt();
 
         if (tag == null || !tag.contains("BlockEntityTag", TAG_COMPOUND))
             return false;
@@ -42,7 +42,7 @@ public class InventoryHelper
         }
         if (tag.isEmpty())
         {
-            stack.setTag(null);
+            stack.setNbt(null);
             changed = true;
         }
         return changed;
@@ -50,7 +50,7 @@ public class InventoryHelper
 
     public static boolean shulkerBoxHasItems(ItemStack stack)
     {
-        NbtCompound tag = stack.getTag();
+        NbtCompound tag = stack.getNbt();
 
         if (tag == null || !tag.contains("BlockEntityTag", TAG_COMPOUND))
             return false;

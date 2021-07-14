@@ -857,7 +857,7 @@ public class WorldAccess {
 
             ItemStack tool = new ItemStack(item, 1);
             if (tag != null)
-                tool.setTag(tag);
+                tool.setNbt(tag);
             if (playerBreak && state.getHardness(world, where) < 0.0) return Value.FALSE;
             boolean removed = world.removeBlock(where, false);
             if (!removed) return Value.FALSE;
@@ -902,7 +902,7 @@ public class WorldAccess {
                 return Value.TRUE;
             if (toolBroke)
                 return Value.NULL;
-            NbtElement outtag = tool.getTag();
+            NbtElement outtag = tool.getNbt();
             if (outtag == null)
                 return Value.TRUE;
             return new NBTSerializableValue(() -> outtag);
