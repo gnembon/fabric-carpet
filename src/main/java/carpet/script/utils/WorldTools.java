@@ -18,7 +18,7 @@ import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.registry.SimpleRegistry;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.biome.source.VanillaLayeredBiomeSource;
+import net.minecraft.world.biome.source.MultiNoiseBiomeSource;
 import net.minecraft.world.border.WorldBorderListener;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
@@ -110,11 +110,10 @@ public class WorldTools
 
         //chunkGenerator2 = GeneratorOptions.createOverworldGenerator(server.getRegistryManager().get(Registry.BIOME_KEY), server.getRegistryManager().get(Registry.NOISE_SETTINGS_WORLDGEN), (seed==null)?l:seed);
 
-        chunkGenerator2 = new NoiseChunkGenerator(
-                new VanillaLayeredBiomeSource((seed==null)?l:seed, false, false, server.getRegistryManager().get(Registry.BIOME_KEY)),
-                (seed==null)?l:seed,
-                () -> server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD)
-        );
+        // from world/gen/GeneratorOptions
+        chunkGenerator2 = new NoiseChunkGenerator(MultiNoiseBiomeSource.method_35242(server.getRegistryManager().get(Registry.BIOME_KEY), seed), seed, () -> {
+            return server.getRegistryManager().get(Registry.CHUNK_GENERATOR_SETTINGS_KEY).getOrThrow(ChunkGeneratorSettings.OVERWORLD);
+        });
 
         ServerWorld serverWorld = new ServerWorld(
                 server,
