@@ -185,6 +185,7 @@
     "Scoreboard_scarpetMixin",
     "Team_scarpetMixin",
     "TradeOutputSlot_scarpetEventMixin",
+    "ScreenHandler_scarpetMixin",
 
     "BiomeEffects_scarpetMixin",
     "ChunkTicketManager_scarpetMixin",
