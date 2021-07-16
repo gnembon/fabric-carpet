@@ -14,7 +14,7 @@ Square root. For other fancy roots, use `^`, math and yo noggin. Imagine square 
 
 ### `abs(n)`
 
-Absolut value.
+Absolute value.
 
 ### `round(n)`
 
