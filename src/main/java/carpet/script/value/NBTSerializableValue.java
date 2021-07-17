@@ -633,25 +633,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
         return false;
     }
 
-    public static class InventoryLocator
+    public static record InventoryLocator(Object owner, BlockPos position, Inventory inventory, int offset, boolean isEnder)
     {
-        public Object owner;
-        public BlockPos position;
-        public Inventory inventory;
-        public int offset;
-        public boolean isEnder;
         InventoryLocator(Object owner, BlockPos pos, Inventory i, int o)
         {
             this(owner, pos, i, o, false);
-        }
-
-        InventoryLocator(Object owner, BlockPos pos, Inventory i, int o, boolean isEnder)
-        {
-            this.owner = owner;
-            position = pos;
-            inventory = i;
-            offset = o;
-            this.isEnder = isEnder;
         }
     }
 

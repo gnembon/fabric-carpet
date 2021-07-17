@@ -2,7 +2,6 @@ package carpet.script.utils;
 
 import carpet.CarpetSettings;
 import carpet.network.ServerNetworkHandler;
-import carpet.script.CarpetContext;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.ThrowStatement;
 import carpet.script.exception.Throwables;
@@ -16,8 +15,6 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -45,7 +42,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.util.registry.RegistryKey;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,11 +56,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static java.util.Map.entry;
+
 public class ShapeDispatcher
 {
     private static final Map<String, ParticleEffect> particleCache = new HashMap<>();
+    public static record ShapeWithConfig(ExpiringShape shape, Map<String, Value> config) {}
 
-    public static Pair<ExpiringShape,Map<String, Value>> fromFunctionArgs(
+    public static ShapeWithConfig fromFunctionArgs(
             MinecraftServer server, ServerWorld world,
             List<Value> lv,
             Set<ServerPlayerEntity> playerSet
@@ -114,10 +113,10 @@ public class ShapeDispatcher
             }
             params.remove("player");
         }
-        return Pair.of(ShapeDispatcher.create(server, shapeType, params), params);
+        return new ShapeWithConfig(ShapeDispatcher.create(server, shapeType, params), params);
     }
 
-    public static void sendShape(Collection<ServerPlayerEntity> players, List<Pair<ExpiringShape,Map<String, Value>>> shapes)
+    public static void sendShape(Collection<ServerPlayerEntity> players, List<ShapeWithConfig> shapes)
     {
         List<ServerPlayerEntity> clientPlayers = new ArrayList<>();
         List<ServerPlayerEntity> alternativePlayers = new ArrayList<>();
@@ -137,9 +136,9 @@ public class ShapeDispatcher
 
             NbtList tag = new NbtList();
             int tagcount = 0;
-            for (Pair<ExpiringShape, Map<String, Value>> s : shapes)
+            for (ShapeWithConfig s : shapes)
             {
-                tag.add(ExpiringShape.toTag(s.getRight()));  // 4000 shapes limit boxes
+                tag.add(ExpiringShape.toTag(s.config()));  // 4000 shapes limit boxes
                 if (tagcount++>1000)
                 {
                     tagcount = 0;
@@ -154,7 +153,7 @@ public class ShapeDispatcher
         if (!alternativePlayers.isEmpty())
         {
             List<Consumer<ServerPlayerEntity>> alternatives = new ArrayList<>();
-            shapes.forEach(s -> alternatives.add(s.getLeft().alternative()));
+            shapes.forEach(s -> alternatives.add(s.shape().alternative()));
             alternativePlayers.forEach(p -> alternatives.forEach( a -> a.accept(p)));
         }
     }
@@ -405,8 +404,8 @@ public class ShapeDispatcher
         }
 
         // list of params that need to be there
-        private final Set<String> required = ImmutableSet.of("duration", "shape", "dim");
-        private final Map<String, Value> optional = ImmutableMap.of(
+        private final Set<String> required = Set.of("duration", "shape", "dim");
+        private final Map<String, Value> optional = Map.of(
                 "color", new NumericValue(-1),
                 "follow", new NumericValue(-1),
                 "line", new NumericValue(2.0),
@@ -425,20 +424,19 @@ public class ShapeDispatcher
 
     public static class DisplayedText extends ExpiringShape
     {
-        private final Set<String> required = ImmutableSet.of("pos", "text");
-        private final Map<String, Value> optional = ImmutableMap.<String, Value>builder().
-                put("facing", new StringValue("player")).
-                put("raise", new NumericValue(0)).
-                put("tilt", new NumericValue(0)).
-                put("lean", new NumericValue(0)).
-                put("turn", new NumericValue(0)).
-                put("indent", new NumericValue(0)).
-                put("height", new NumericValue(0)).
-                put("align", new StringValue("center")).
-                put("size", new NumericValue(10)).
-                put("value", Value.NULL).
-                put("doublesided", new NumericValue(0)).
-                build();
+        private final Set<String> required = Set.of("pos", "text");
+        private final Map<String, Value> optional = Map.ofEntries(
+                entry("facing", new StringValue("player")),
+                entry("raise", new NumericValue(0)),
+                entry("tilt", new NumericValue(0)),
+                entry("lean", new NumericValue(0)),
+                entry("turn", new NumericValue(0)),
+                entry("indent", new NumericValue(0)),
+                entry("height", new NumericValue(0)),
+                entry("align", new StringValue("center")),
+                entry("size", new NumericValue(10)),
+                entry("value", Value.NULL),
+                entry("doublesided", new NumericValue(0)));
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -552,8 +550,8 @@ public class ShapeDispatcher
 
     public static class Box extends ExpiringShape
     {
-        private final Set<String> required = ImmutableSet.of("from", "to");
-        private final Map<String, Value> optional = ImmutableMap.of();
+        private final Set<String> required = Set.of("from", "to");
+        private final Map<String, Value> optional = Map.of();
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -630,8 +628,8 @@ public class ShapeDispatcher
 
     public static class Line extends ExpiringShape
     {
-        private final Set<String> required = ImmutableSet.of("from", "to");
-        private final Map<String, Value> optional = ImmutableMap.of();
+        private final Set<String> required = Set.of("from", "to");
+        private final Map<String, Value> optional = Map.of();
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -683,8 +681,8 @@ public class ShapeDispatcher
 
     public static class Sphere extends ExpiringShape
     {
-        private final Set<String> required = ImmutableSet.of("center", "radius");
-        private final Map<String, Value> optional = ImmutableMap.of("level", Value.ZERO);
+        private final Set<String> required = Set.of("center", "radius");
+        private final Map<String, Value> optional = Map.of("level", Value.ZERO);
         @Override
         protected Set<String> requiredParams() { return Sets.union(super.requiredParams(), required); }
         @Override
@@ -755,8 +753,8 @@ public class ShapeDispatcher
     }
     public static class Cylinder extends ExpiringShape
     {
-        private final Set<String> required = ImmutableSet.of("center", "radius");
-        private final Map<String, Value> optional = ImmutableMap.of(
+        private final Set<String> required = Set.of("center", "radius");
+        private final Map<String, Value> optional = Map.of(
                 "level", Value.ZERO,
                 "height", Value.ZERO,
                 "axis", new StringValue("y")
@@ -913,6 +911,7 @@ public class ShapeDispatcher
 
         @Override
         public NbtElement toTag(Value value) { return NbtString.of(value.getString()); }
+        @Override
         public Value decode(NbtElement tag) { return new StringValue(tag.asString()); }
     }
     public static class TextParam extends StringParam
@@ -1149,6 +1148,7 @@ public class ShapeDispatcher
             throw new InternalExpressionException("'"+p.id+"' requires a triple, block or entity to indicate position");
         }
 
+        @Override
         public Value decode(NbtElement tag)
         {
             NbtList ctag = (NbtList)tag;
@@ -1187,6 +1187,7 @@ public class ShapeDispatcher
             return ListValue.wrap(points);
         }
 
+        @Override
         public Value decode(NbtElement tag)
         {
             NbtList ltag = (NbtList)tag;
@@ -1228,6 +1229,7 @@ public class ShapeDispatcher
             super(id);
         }
 
+        @Override
         public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
         @Override
         public NbtElement toTag(Value value) { return NbtInt.of(NumericValue.asNumber(value, id).getInt()); }
@@ -1254,6 +1256,7 @@ public class ShapeDispatcher
             return new NumericValue(player.getId());
         }
 
+        @Override
         public Value decode(NbtElement tag) { return new NumericValue(((NbtInt)tag).intValue()); }
     }
 

@@ -1,4 +1,3 @@
-
 package carpet.utils;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;

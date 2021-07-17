@@ -38,8 +38,6 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import net.minecraft.SharedConstants;
 import net.minecraft.block.BlockState;
@@ -104,7 +102,6 @@ import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.level.UnmodifiableLevelProperties;
 import net.minecraft.world.level.storage.LevelStorage;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -334,7 +331,7 @@ public class Auxiliary {
             ServerWorld world = cc.s.getWorld();
             MinecraftServer server = world.getServer();
             Set<ServerPlayerEntity> playerTargets = new HashSet<>();
-            List<Pair<ShapeDispatcher.ExpiringShape, Map<String,Value>>> shapes = new ArrayList<>();
+            List<ShapeDispatcher.ShapeWithConfig> shapes = new ArrayList<>();
             if (lv.size() == 1) // bulk
             {
                 Value specLoad = lv.get(0);
@@ -1062,10 +1059,10 @@ public class Auxiliary {
             {
                 try {
                     //Files.createDirectory(packFloder);
-                    try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + packFloder.toUri().toString()), ImmutableMap.of("create", "true"))) {
+                    try (FileSystem zipfs = FileSystems.newFileSystem(URI.create("jar:" + packFloder.toUri().toString()), Map.of("create", "true"))) {
                         Path zipRoot = zipfs.getPath("/");
                         zipValueToJson(zipRoot.resolve("pack.mcmeta"), MapValue.wrap(
-                                ImmutableMap.of(StringValue.of("pack"), MapValue.wrap(ImmutableMap.of(
+                                Map.of(StringValue.of("pack"), MapValue.wrap(Map.of(
                                         StringValue.of("pack_format"), new NumericValue(SharedConstants.getGameVersion().getPackVersion()),
                                         StringValue.of("description"), StringValue.of(name),
                                         StringValue.of("source"), StringValue.of("scarpet")
@@ -1144,7 +1141,7 @@ public class Auxiliary {
                     DimensionType dimensionType3 = entry.getValue().getDimensionType();
                     ChunkGenerator chunkGenerator3 = entry.getValue().getChunkGenerator();
                     UnmodifiableLevelProperties unmodifiableLevelProperties = new UnmodifiableLevelProperties(saveProperties, ((ServerWorldInterface) server.getOverworld()).getWorldPropertiesCM());
-                    ServerWorld serverWorld2 = new ServerWorld(server, Util.getMainWorkerExecutor(), session, unmodifiableLevelProperties, registryKey2, dimensionType3, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, ImmutableList.of(), false);
+                    ServerWorld serverWorld2 = new ServerWorld(server, Util.getMainWorkerExecutor(), session, unmodifiableLevelProperties, registryKey2, dimensionType3, WorldTools.NOOP_LISTENER, chunkGenerator3, bl, m, List.of(), false);
                     server.getOverworld().getWorldBorder().addListener(new WorldBorderListener.WorldBorderSyncer(serverWorld2.getWorldBorder()));
                     existing_worlds.put(registryKey2, serverWorld2);
                 }
