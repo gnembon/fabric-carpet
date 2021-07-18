@@ -4,7 +4,6 @@ import carpet.CarpetServer;
 import carpet.fakes.BlockStateArgumentInterface;
 import carpet.script.CarpetScriptHost;
 import carpet.script.argument.FunctionArgument;
-import carpet.script.exception.InternalExpressionException;
 import carpet.script.value.BlockValue;
 import carpet.script.value.BooleanValue;
 import carpet.script.value.EntityValue;
@@ -808,15 +807,28 @@ public abstract class CommandArgument
         protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
             super.configure(config, host);
-            if (config.containsKey("min"))
-            {
+            double[] suggestions = new double[3];
+
+            if (config.containsKey("min")) {
                 min = NumericValue.asNumber(config.get("min"), "min").getDouble();
+                suggestions[0] = min;
             }
-            if (config.containsKey("max"))
-            {
+            if (config.containsKey("max")) {
                 max = NumericValue.asNumber(config.get("max"), "max").getDouble();
+                suggestions[2] = max;
             }
-            if (max != null && min == null) throw error("Double types cannot be only upper-bounded"+" for custom type "+suffix);
+            if (max != null && min == null)
+                throw error("Double types cannot be only upper-bounded for custom type " + suffix);
+
+            if (max != null) {  //We have both max and min, so suggest min, (max + min)/2, max
+                suggestions[1] = (max + min) / 2;
+            } else if (min != null) { //Only have min, so suggest min, min+abs(min), min + 2 * abs(min)
+                suggestions[1] = min + Math.abs(min);
+                suggestions[2] = min + 2 * Math.abs(min);
+            }
+
+            if (min != null) //overriding default suggestions
+                examples = Arrays.stream(suggestions).mapToObj(d -> "" + d).collect(Collectors.toSet());
         }
 
         @Override
@@ -858,16 +870,30 @@ public abstract class CommandArgument
         @Override
         protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
+
             super.configure(config, host);
-            if (config.containsKey("min"))
-            {
+            double[] suggestions = new double[3];
+
+            if (config.containsKey("min")) {
                 min = NumericValue.asNumber(config.get("min"), "min").getLong();
+                suggestions[0] = min;
             }
-            if (config.containsKey("max"))
-            {
+            if (config.containsKey("max")) {
                 max = NumericValue.asNumber(config.get("max"), "max").getLong();
+                suggestions[2] = max;
             }
-            if (max != null && min == null) throw error("Double types cannot be only upper-bounded"+" for custom type "+suffix);
+            if (max != null && min == null)
+                throw error("Double types cannot be only upper-bounded for custom type " + suffix);
+
+            if (max != null) {  //We have both max and min, so suggest min, (max + min)/2, max
+                suggestions[1] = (max + min) >> 1;
+            } else if (min != null) { //Only have min, so suggest min, min+abs(min), min + 2 * abs(min)
+                suggestions[1] = min + Math.abs(min);
+                suggestions[2] = min + 2 * Math.abs(min);
+            }
+
+            if (min != null) //overriding default suggestions
+                examples = Arrays.stream(suggestions).mapToObj(d -> "" + d).collect(Collectors.toSet());
         }
 
         @Override
