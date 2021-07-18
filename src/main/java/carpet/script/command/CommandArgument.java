@@ -871,7 +871,7 @@ public abstract class CommandArgument
         @Override
         protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
-            double[] suggestions = new double[3];
+            long[] suggestions = new long[3];
 
             if (config.containsKey("min")) {
                 min = NumericValue.asNumber(config.get("min"), "min").getLong();
@@ -892,7 +892,7 @@ public abstract class CommandArgument
             }
 
             if (min != null) //overriding default suggestions
-                examples = Arrays.stream(suggestions).mapToObj(d -> "" + d).collect(Collectors.toSet());
+                examples = Arrays.stream(suggestions).mapToObj(l -> "" + l).collect(Collectors.toSet());
             //processing at the end in case we actually defined suggestions using 'suggest' parameter so we can overwrite
             super.configure(config, host);
         }
