@@ -806,7 +806,6 @@ public abstract class CommandArgument
         @Override
         protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
-            super.configure(config, host);
             double[] suggestions = new double[3];
 
             if (config.containsKey("min")) {
@@ -829,6 +828,8 @@ public abstract class CommandArgument
 
             if (min != null) //overriding default suggestions
                 examples = Arrays.stream(suggestions).mapToObj(d -> "" + d).collect(Collectors.toSet());
+            //processing at the end in case we actually defined suggestions using 'suggest' parameter so we can overwrite
+            super.configure(config, host);
         }
 
         @Override
@@ -870,8 +871,6 @@ public abstract class CommandArgument
         @Override
         protected void configure(Map<String, Value> config, CarpetScriptHost host) throws CommandSyntaxException
         {
-
-            super.configure(config, host);
             double[] suggestions = new double[3];
 
             if (config.containsKey("min")) {
@@ -894,6 +893,8 @@ public abstract class CommandArgument
 
             if (min != null) //overriding default suggestions
                 examples = Arrays.stream(suggestions).mapToObj(d -> "" + d).collect(Collectors.toSet());
+            //processing at the end in case we actually defined suggestions using 'suggest' parameter so we can overwrite
+            super.configure(config, host);
         }
 
         @Override
