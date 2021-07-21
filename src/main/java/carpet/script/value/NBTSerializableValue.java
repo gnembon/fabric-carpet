@@ -235,11 +235,11 @@ public class NBTSerializableValue extends Value implements ContainerValueInterfa
             {
                 Inventory inv = null;
                 Entity e = ((EntityValue) v1).getEntity();
-                if (e instanceof PlayerEntity) inv = ((PlayerEntity) e).getInventory();
+                if (e instanceof PlayerEntity pe) inv = pe.getInventory();
                 else if (e instanceof Inventory) inv = (Inventory) e;
-                else if (e instanceof InventoryOwner) inv = ((InventoryOwner) e).getInventory();
-                else if (e instanceof InventoryBearerInterface) inv = ((InventoryBearerInterface)e).getCMInventory(); // horse only
-                else if (e instanceof LivingEntity) return new InventoryLocator(e, e.getBlockPos(), new EquipmentInventory((MobEntity) e), offset+1);
+                else if (e instanceof InventoryOwner io) inv = io.getInventory();
+                else if (e instanceof InventoryBearerInterface ibi) inv = ibi.getCMInventory(); // horse only
+                else if (e instanceof LivingEntity le) return new InventoryLocator(e, e.getBlockPos(), new EquipmentInventory(le), offset+1);
                 if (inv == null)
                     return null;
 
