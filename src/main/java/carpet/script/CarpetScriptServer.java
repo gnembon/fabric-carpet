@@ -94,7 +94,7 @@ public class CarpetScriptServer
      * @param app The {@link BundledModule} of the app.
      */
     public static void registerSettingsApp(BundledModule app) {
-    	ruleModuleData.add(app);
+        ruleModuleData.add(app);
     }
 
     static
@@ -493,16 +493,11 @@ public class CarpetScriptServer
         });
     }
 
-    static class TransferData
+    private static record TransferData(boolean perUser, Predicate<ServerCommandSource> commandValidator, boolean isRuleApp)
     {
-        boolean perUser;
-        Predicate<ServerCommandSource> commandValidator;
-        boolean isRuleApp;
         private TransferData(CarpetScriptHost host)
         {
-            perUser = host.perUser;
-            commandValidator = host.commandValidator;
-            isRuleApp = host.isRuleApp;
+            this(host.perUser, host.commandValidator, host.isRuleApp);
         }
     }
 

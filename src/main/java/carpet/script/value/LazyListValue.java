@@ -109,9 +109,9 @@ public abstract class LazyListValue extends AbstractListValue implements Iterato
     {
         return hasNext();
     }
-    public abstract boolean hasNext();
+    @Override public abstract boolean hasNext();
 
-    public abstract Value next();
+    @Override public abstract Value next();
 
     @Override
     public void fatality() {reset();}

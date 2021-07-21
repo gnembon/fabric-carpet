@@ -122,6 +122,7 @@ public class SnoopyCommandSource extends ServerCommandSource
         return new SnoopyCommandSource(output, position, rotation, world, level, simpleName, name, server, entity, consumer, entityAnchor, error, chatOutput);
     }
 
+    @Override
     public ServerCommandSource mergeConsumers(ResultConsumer<ServerCommandSource> consumer, BinaryOperator<ResultConsumer<ServerCommandSource>> binaryOperator)
     {
         ResultConsumer<ServerCommandSource> resultConsumer = binaryOperator.apply(this.resultConsumer, consumer);

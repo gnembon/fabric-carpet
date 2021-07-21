@@ -2,9 +2,9 @@ package carpet.settings;
 
 import carpet.CarpetServer;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableList;
 import net.minecraft.server.command.ServerCommandSource;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -48,7 +48,7 @@ public abstract class Validator<T>
     }
 
     public static class _COMMAND_LEVEL_VALIDATOR extends Validator<String> {
-        private static ImmutableList<String> OPTIONS = ImmutableList.of("true", "false", "ops", "0", "1", "2", "3", "4");
+        private static List<String> OPTIONS = List.of("true", "false", "ops", "0", "1", "2", "3", "4");
         @Override public String validate(ServerCommandSource source, ParsedRule<String> currentRule, String newValue, String userString) {
             if (!OPTIONS.contains(userString.toLowerCase(Locale.ROOT)))
             {
@@ -59,7 +59,7 @@ public abstract class Validator<T>
             }
             return userString.toLowerCase(Locale.ROOT);
         }
-        public String description() { return "Can be limited to 'ops' only, or a custom permission level";}
+        @Override public String description() { return "Can be limited to 'ops' only, or a custom permission level";}
     }
     
     public static class _SCARPET<T> extends Validator<T> {
@@ -68,7 +68,7 @@ public abstract class Validator<T>
         {
             return newValue;
         }
-        public String description() {
+        @Override public String description() {
             return "It controls an accompanying Scarpet App";
         }
     }

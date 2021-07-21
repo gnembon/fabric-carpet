@@ -2,7 +2,6 @@ package carpet.helpers;
 
 import carpet.CarpetSettings;
 import carpet.fakes.StructureFeatureInterface;
-import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureManager;
@@ -36,6 +35,7 @@ import net.minecraft.world.gen.feature.StructurePoolFeatureConfig;
 import net.minecraft.world.gen.feature.TreeFeatureConfig;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FeatureGenerator
@@ -175,13 +175,13 @@ public class FeatureGenerator
     }
 
     public static final Map<String, Thing> featureMap = new HashMap<String, Thing>() {{
-        put("oak_bees", simpleTree(ConfiguredFeatures.OAK.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
-        put("fancy_oak_bees", simpleTree(ConfiguredFeatures.FANCY_OAK.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
-        put("birch_bees", simpleTree(ConfiguredFeatures.BIRCH.getConfig().setTreeDecorators(ImmutableList.of(new BeehiveTreeDecorator(1.0F)))));
+        put("oak_bees", simpleTree(ConfiguredFeatures.OAK.getConfig().setTreeDecorators(List.of(new BeehiveTreeDecorator(1.0F)))));
+        put("fancy_oak_bees", simpleTree(ConfiguredFeatures.FANCY_OAK.getConfig().setTreeDecorators(List.of(new BeehiveTreeDecorator(1.0F)))));
+        put("birch_bees", simpleTree(ConfiguredFeatures.BIRCH.getConfig().setTreeDecorators(List.of(new BeehiveTreeDecorator(1.0F)))));
         put("coral_tree", simplePlop(Feature.CORAL_TREE.configure(FeatureConfig.DEFAULT)));
         put("coral_claw", simplePlop(Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT)));
         put("coral_mushroom", simplePlop(Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT)));
-        put("coral", simplePlop(Feature.SIMPLE_RANDOM_SELECTOR.configure(new SimpleRandomFeatureConfig(ImmutableList.of(
+        put("coral", simplePlop(Feature.SIMPLE_RANDOM_SELECTOR.configure(new SimpleRandomFeatureConfig(List.of(
                 () -> Feature.CORAL_TREE.configure(FeatureConfig.DEFAULT),
                 () -> Feature.CORAL_CLAW.configure(FeatureConfig.DEFAULT),
                 () -> Feature.CORAL_MUSHROOM.configure(FeatureConfig.DEFAULT)
@@ -191,7 +191,7 @@ public class FeatureGenerator
                 new StructurePoolFeatureConfig(() -> new StructurePool(
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
-                        ImmutableList.of(
+                        List.of(
                                 Pair.of(StructurePoolElement.ofProcessedSingle("bastion/units/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
@@ -203,7 +203,7 @@ public class FeatureGenerator
                 new StructurePoolFeatureConfig(() -> new StructurePool(
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
-                        ImmutableList.of(
+                        List.of(
                                 Pair.of(StructurePoolElement.ofProcessedSingle("bastion/hoglin_stable/air_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
@@ -215,7 +215,7 @@ public class FeatureGenerator
                 new StructurePoolFeatureConfig(() -> new StructurePool(
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
-                        ImmutableList.of(
+                        List.of(
                                 Pair.of(StructurePoolElement.ofProcessedSingle("bastion/treasure/big_air_full", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID
@@ -227,7 +227,7 @@ public class FeatureGenerator
                 new StructurePoolFeatureConfig(() -> new StructurePool(
                         new Identifier("bastion/starts"),
                         new Identifier("empty"),
-                        ImmutableList.of(
+                        List.of(
                                 Pair.of(StructurePoolElement.ofProcessedSingle("bastion/bridge/starting_pieces/entrance_base", StructureProcessorLists.BASTION_GENERIC_DEGRADATION), 1)
                         ),
                         StructurePool.Projection.RIGID

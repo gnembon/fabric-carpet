@@ -121,6 +121,8 @@ public class NumericValue extends Value
         }
         return super.add(v);
     }
+
+    @Override
     public Value subtract(Value v) {  // TODO test if definintn add(NumericVlaue) woud solve the casting
         if (v instanceof NumericValue)
         {
@@ -133,6 +135,8 @@ public class NumericValue extends Value
         }
         return super.subtract(v);
     }
+
+    @Override
     public Value multiply(Value v)
     {
         if (v instanceof NumericValue)
@@ -150,6 +154,8 @@ public class NumericValue extends Value
         }
         return new StringValue(StringUtils.repeat(v.getString(), (int) getLong()));
     }
+
+    @Override
     public Value divide(Value v)
     {
         //if (1+2==3) throw new ArithmeticException("Booyah");
@@ -226,17 +232,6 @@ public class NumericValue extends Value
     {
         this.longValue = value;
         this.value = (double)value;
-    }
-
-    /**
-     * Creates a legacy {@link NumericValue} for a {@code boolean}.
-     * @param boolval The boolean to set 1 or 0 for this {@link NumericValue}
-     * @deprecated Use {@link BooleanValue#of(boolean)} instead
-     */
-    @Deprecated
-    public NumericValue(boolean boolval)
-    {
-        this(boolval?1L:0L);
     }
 
     @Override

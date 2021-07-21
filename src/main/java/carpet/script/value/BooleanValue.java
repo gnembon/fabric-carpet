@@ -12,7 +12,7 @@ public class BooleanValue extends NumericValue
 
     boolean boolValue;
     private BooleanValue(boolean boolval) {
-        super(boolval);
+        super(boolval ? 1L : 0L);
         boolValue = boolval;
     }
 

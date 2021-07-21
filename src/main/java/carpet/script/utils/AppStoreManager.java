@@ -18,7 +18,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.CommandException;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -55,6 +54,7 @@ public class AppStoreManager
      */
     private static String scarpetRepoLink = "https://api.github.com/repos/gnembon/scarpet/contents/programs/";
 
+    private static record AppInfo(String name, String url, StoreNode source) {}
 
     public static class ScarpetAppStoreValidator extends Validator<String>
     {
@@ -253,23 +253,23 @@ public class AppStoreManager
 
     public static int downloadScript(ServerCommandSource source, String path)
     {
-        Triple<String, String, StoreNode> nodeInfo = getFileNode(path);
+        AppInfo nodeInfo = getFileNode(path);
         return downloadScript(source, path, nodeInfo, false);
     }
 
-    private static int downloadScript(ServerCommandSource source, String path, Triple<String, String, StoreNode> nodeInfo, boolean useTrash)
+    private static int downloadScript(ServerCommandSource source, String path, AppInfo nodeInfo, boolean useTrash)
     {
         String code;
         try
         {
-            code = getStringFromStream(nodeInfo.getMiddle());
+            code = getStringFromStream(nodeInfo.url());
         }
         catch (IOException e)
         {
             throw new CommandException(Messenger.c("rb Failed to obtain app file content: "+e.getMessage()));
         }
-        if (!saveScriptToFile(source, path, nodeInfo.getLeft(), code, false, useTrash)) return 0;
-        boolean success = CarpetServer.scriptServer.addScriptHost(source, nodeInfo.getLeft().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.getRight());
+        if (!saveScriptToFile(source, path, nodeInfo.name(), code, false, useTrash)) return 0;
+        boolean success = CarpetServer.scriptServer.addScriptHost(source, nodeInfo.name().replaceFirst("\\.sc$", ""), null, true, false, false, nodeInfo.source());
         return success?1:0;
     }
 
@@ -278,12 +278,12 @@ public class AppStoreManager
      * @param appPath The user inputted path to the scarpet script
      * @return Pair of app file name and content
      */
-    public static Triple<String, String, StoreNode> getFileNode(String appPath)
+    public static AppInfo getFileNode(String appPath)
     {
         return getFileNodeFrom(APP_STORE_ROOT, appPath);
     }
 
-    public static Triple<String, String, StoreNode> getFileNodeFrom(StoreNode start, String appPath)
+    public static AppInfo getFileNodeFrom(StoreNode start, String appPath)
     {
         String[] path = appPath.split("/");
         StoreNode appKiosk = start;
@@ -293,7 +293,7 @@ public class AppStoreManager
                 appKiosk = appKiosk.drillDown(pathElement);
             String appName = path[path.length-1];
             appKiosk.getValue(appName);
-            return Triple.of(appName, appKiosk.getValue(appName), appKiosk);
+            return new AppInfo(appName, appKiosk.getValue(appName), appKiosk);
         }
         catch (IOException e)
         {
@@ -390,8 +390,8 @@ public class AppStoreManager
         if (original.matches("^https?://.*$")) // We've got a full url here: Just use it
             return original;
         if (original.charAt(0) == '/') // We've got an absolute path: Use app store root
-            return getFileNode(original.substring(1)).getMiddle();
-        return getFileNodeFrom(storeSource, original).getMiddle(); // Relative path: Use download location
+            return getFileNode(original.substring(1)).url();
+        return getFileNodeFrom(storeSource, original).url(); // Relative path: Use download location
     }
 
     public static void addResource(CarpetScriptHost carpetScriptHost, StoreNode storeSource, Value resource)
@@ -461,7 +461,7 @@ public class AppStoreManager
             throw new InternalExpressionException("App resource tried to leave script reserved space");
         try
         {
-            downloadScript(carpetScriptHost.responsibleSource, target, Triple.of(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)), true);
+            downloadScript(carpetScriptHost.responsibleSource, target, new AppInfo(target, contentUrl, getNewStoreNode(storeSource, source, contentUrl)), true);
         }
         catch (CommandException e)
         {

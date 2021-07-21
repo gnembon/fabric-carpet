@@ -38,6 +38,7 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler {
         return g;
     }
 
+    @Override
     public double sample2d(double x, double y) {
         x = x/2;
         y = y/2;
@@ -75,6 +76,7 @@ public class SimplexNoiseSampler extends PerlinNoiseSampler {
         return 35.0D * (aa + ab + ac)+0.5;
     }
 
+    @Override
     public double sample3d(double d, double e, double f) {
         d = d/2;
         e = e/2;

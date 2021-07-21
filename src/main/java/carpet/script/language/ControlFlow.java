@@ -13,8 +13,8 @@ import carpet.script.value.MapValue;
 import carpet.script.value.NumericValue;
 import carpet.script.value.StringValue;
 import carpet.script.value.Value;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ControlFlow {
@@ -106,7 +106,7 @@ public class ControlFlow {
                 LazyValue __ = c.getVariable("_");
                 c.setVariable("_", (__c, __t) -> ret.data.reboundedTo("_"));
                 LazyValue _trace = c.getVariable("_trace");
-                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(ImmutableMap.of(
+                c.setVariable("_trace", (__c, __t) -> MapValue.wrap(Map.of(
                         StringValue.of("stack"), ListValue.wrap(ret.stack.stream().map(f -> ListValue.of(
                                 StringValue.of(f.getModule().getName()),
                                 StringValue.of(f.getString()),

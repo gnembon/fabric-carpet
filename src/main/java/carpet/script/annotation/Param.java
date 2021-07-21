@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import carpet.CarpetServer;
 import carpet.script.Context;
 import carpet.script.value.BooleanValue;
@@ -195,12 +193,8 @@ public interface Param
             }
         };
 
-        /**
-         * <p>Strict converters</p>
-         * 
-         * <p>Stored as {@code <Pair<Type, shallow?>, Converter>}</p>
-         */
-        private static final Map<Pair<Class<?>, Boolean>, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
+        static record StrictConverterInfo(Class<?> type, boolean shallow) {}
+        private static final Map<StrictConverterInfo, ValueConverter<?>> strictParamsByClassAndShallowness = new HashMap<>();
         static
         { // TODO Specify strictness in name?
             registerStrictConverter(String.class, false, new SimpleTypeConverter<>(StringValue.class, StringValue::getString, "string"));
@@ -224,7 +218,7 @@ public interface Param
         {
             boolean shallow = type.getAnnotation(Strict.class).shallow();
             Class<?> clazz = (Class<?>) type.getType();
-            Pair<Class<?>, Boolean> key = Pair.of(clazz, shallow);
+            var key = new StrictConverterInfo(clazz, shallow);
             ValueConverter<?> converter = strictParamsByClassAndShallowness.get(key);
             if (converter != null)
                 return converter;
@@ -245,7 +239,7 @@ public interface Param
          */
         public static <T> void registerStrictConverter(Class<T> type, boolean shallow, ValueConverter<T> converter)
         {
-            Pair<Class<?>, Boolean> key = Pair.of(type, shallow);
+            var key = new StrictConverterInfo(type, shallow);
             if (strictParamsByClassAndShallowness.containsKey(key))
                 throw new IllegalArgumentException(type + " already has a registered " + (shallow ? "" : "non-") + "shallow StrictConverter");
             strictParamsByClassAndShallowness.put(key, converter);

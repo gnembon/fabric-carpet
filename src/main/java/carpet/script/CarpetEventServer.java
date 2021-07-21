@@ -135,18 +135,8 @@ public class CarpetEventServer
         {
             return function.getString()+((host==null)?"":"(from "+host+(optionalTarget == null?"":"/"+optionalTarget)+")");
         }
-        public static class Signature
-        {
-            String function;
-            String host;
-            String target;
-            public Signature(String fun, String h, String t)
-            {
-                function = fun;
-                host = h;
-                target = t;
-            }
-        }
+        public static record Signature(String function, String host, String target) {}
+        
         public static Signature fromString(String str)
         {
             Pattern find = Pattern.compile("(\\w+)(?:\\(from (\\w+)(?:/(\\w+))?\\))?");

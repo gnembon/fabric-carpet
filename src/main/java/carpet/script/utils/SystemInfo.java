@@ -133,7 +133,7 @@ public class SystemInfo {
         put("java_system_cpu_load", c -> {
             OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
                     OperatingSystemMXBean.class);
-            return new NumericValue(osBean.getSystemCpuLoad());
+            return new NumericValue(osBean.getCpuLoad());
         });
         put("java_process_cpu_load", c -> {
             OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(

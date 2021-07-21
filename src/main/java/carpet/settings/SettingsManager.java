@@ -5,7 +5,6 @@ import carpet.CarpetSettings;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -72,6 +71,7 @@ public class SettingsManager
     private MinecraftServer server;
     private List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> observers = new ArrayList<>();
     private static List<TriConsumer<ServerCommandSource, ParsedRule<?>, String>> staticObservers = new ArrayList<>();
+    static record ConfigReadResult(Map<String, String> ruleMap, boolean locked) {}
 
     /**
      * Creates a new {@link SettingsManager} without a fancy name.
@@ -264,7 +264,7 @@ public class SettingsManager
      */
     public Collection<ParsedRule<?>> findStartupOverrides()
     {
-        Set<String> defaults = readSettingsFromConf(getFile()).getLeft().keySet();
+        Set<String> defaults = readSettingsFromConf(getFile()).ruleMap().keySet();
         return rules.values().stream().filter(r -> defaults.contains(r.name)).
                 sorted().collect(Collectors.toList());
     }
@@ -396,30 +396,30 @@ public class SettingsManager
     private void loadConfigurationFromConf()
     {
         for (ParsedRule<?> rule : rules.values()) rule.resetToDefault(server.getCommandSource());
-        Pair<Map<String, String>, Boolean> conf = readSettingsFromConf(getFile());
+        ConfigReadResult conf = readSettingsFromConf(getFile());
         locked = false;
-        if (conf.getRight())
+        if (conf.locked())
         {
             CarpetSettings.LOG.info("[CM]: "+fancyName+" features are locked by the administrator");
             disableBooleanCommands();
         }
-        for (String key: conf.getLeft().keySet())
+        for (String key: conf.ruleMap().keySet())
         {
             try
             {
-                if (rules.get(key).set(server.getCommandSource(), conf.getLeft().get(key)) != null)
-                    CarpetSettings.LOG.info("[CM]: loaded setting " + key + " as " + conf.getLeft().get(key) + " from " + identifier + ".conf");
+                if (rules.get(key).set(server.getCommandSource(), conf.ruleMap().get(key)) != null)
+                    CarpetSettings.LOG.info("[CM]: loaded setting " + key + " as " + conf.ruleMap().get(key) + " from " + identifier + ".conf");
             }
             catch (Exception exc)
             {
                 CarpetSettings.LOG.error("[CM Error]: Failed to load setting: "+key+", "+exc);
             }
         }
-        locked = conf.getRight();
+        locked = conf.locked();
     }
 
 
-    private Pair<Map<String, String>, Boolean> readSettingsFromConf(Path path)
+    private ConfigReadResult readSettingsFromConf(Path path)
     {
         try (BufferedReader reader = Files.newBufferedReader(path))
         {
@@ -452,9 +452,9 @@ public class SettingsManager
 
                 }
             }
-            return Pair.of(result, confLocked);
+            return new ConfigReadResult(result, confLocked);
         }
-        catch(NoSuchFileException e)
+        catch (NoSuchFileException e)
         {
             if (path.equals(getFile()) && FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
             {
@@ -467,15 +467,15 @@ public class SettingsManager
                     }
                     return readSettingsFromConf(defaultsPath);
                 } catch (IOException e2) {
-                    CarpetSettings.LOG.error("Exception when loading fallback default config: ", e);
+                    CarpetSettings.LOG.error("Exception when loading fallback default config: ", e2);
                 }
             }
-            return Pair.of(new HashMap<>(), false);
+            return new ConfigReadResult(new HashMap<>(), false);
         }
         catch (IOException e)
         {
             e.printStackTrace();
-            return Pair.of(new HashMap<>(), false);
+            return new ConfigReadResult(new HashMap<>(), false);
         }
     }
 
@@ -486,7 +486,7 @@ public class SettingsManager
             if (rule.name.toLowerCase(Locale.ROOT).contains(lcSearch)) return true; // substring match, case insensitive
             for (String c : rule.categories) if (c.equals(search)) return true; // category exactly, case sensitive
             return Sets.newHashSet(rule.description.toLowerCase(Locale.ROOT).split("\\W+")).contains(lcSearch); // contains full term in description, but case insensitive
-        }).sorted().collect(ImmutableList.toImmutableList());
+        }).sorted().collect(Collectors.toUnmodifiableList());
     }
 
     /**
@@ -647,9 +647,9 @@ public class SettingsManager
     {
         if (locked) return 0;
         if (!rules.containsKey(rule.name)) return 0;
-        Pair<Map<String, String>,Boolean> conf = readSettingsFromConf(getFile());
-        conf.getLeft().put(rule.name, stringValue);
-        writeSettingsToConf(conf.getLeft()); // this may feels weird, but if conf
+        ConfigReadResult conf = readSettingsFromConf(getFile());
+        conf.ruleMap().put(rule.name, stringValue);
+        writeSettingsToConf(conf.ruleMap()); // this may feels weird, but if conf
         // is locked, it will never reach this point.
         rule.set(source,stringValue);
         Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_will_now_default_to_%(value)s","Rule %s will now default to %s"), rule.translatedName(), stringValue));
@@ -660,9 +660,9 @@ public class SettingsManager
     {
         if (locked) return 0;
         if (!rules.containsKey(rule.name)) return 0;
-        Pair<Map<String, String>,Boolean> conf = readSettingsFromConf(getFile());
-        conf.getLeft().remove(rule.name);
-        writeSettingsToConf(conf.getLeft());
+        ConfigReadResult conf = readSettingsFromConf(getFile());
+        conf.ruleMap().remove(rule.name);
+        writeSettingsToConf(conf.ruleMap());
         rules.get(rule.name).resetToDefault(source);
         Messenger.m(source ,"gi "+String.format(tr("ui.rule_%(rule)s_not_set_restart","Rule %s will now not be set on restart"), rule.translatedName()));
         return 1;
