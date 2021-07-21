@@ -108,9 +108,8 @@ public class ExplosionLogHelper
         @Override
         public boolean equals(Object obj)
         {
-            if (obj instanceof EntityChangedStatusWithCount)
+            if (obj instanceof EntityChangedStatusWithCount other)
             {
-                EntityChangedStatusWithCount other = (EntityChangedStatusWithCount) obj;
                 return other.pos.equals(pos) && other.accel.equals(accel) && other.type.equals(type);
             }
             return super.equals(obj);

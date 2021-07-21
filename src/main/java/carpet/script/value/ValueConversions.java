@@ -123,9 +123,8 @@ public class ValueConversions
         {
             return ((EntityValue)dimensionValue).getEntity().getEntityWorld();
         }
-        else if (dimensionValue instanceof BlockValue)
+        else if (dimensionValue instanceof BlockValue bv)
         {
-            BlockValue bv = (BlockValue)dimensionValue;
             if (bv.getWorld() != null)
             {
                 return bv.getWorld();
@@ -225,9 +224,8 @@ public class ValueConversions
 
     private static Value fromEntityMemory(Entity e, Object v)
     {
-        if (v instanceof GlobalPos)
+        if (v instanceof GlobalPos pos)
         {
-            GlobalPos pos = (GlobalPos)v;
             return of(pos);
         }
         if (v instanceof Entity)
@@ -250,9 +248,8 @@ public class ValueConversions
         {
             return ofUUID( (ServerWorld) e.getEntityWorld(), (UUID)v);
         }
-        if (v instanceof DamageSource)
+        if (v instanceof DamageSource source)
         {
-            DamageSource source = (DamageSource) v;
             return ListValue.of(
                     new StringValue(source.getName()),
                     source.getAttacker()==null?Value.NULL:new EntityValue(source.getAttacker())
@@ -278,9 +275,8 @@ public class ValueConversions
         {
             v = new ArrayList(((Set) v));
         }
-        if (v instanceof List)
+        if (v instanceof List l)
         {
-            List l = (List)v;
             if (l.isEmpty()) return ListValue.of();
             Object el = l.get(0);
             if (el instanceof Entity)
