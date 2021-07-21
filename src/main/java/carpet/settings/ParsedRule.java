@@ -38,6 +38,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
     public final List<Validator<T>> validators;
     public final T defaultValue;
     public final String defaultAsString;
+    public final boolean allowCommandBlocks;
     public final SettingsManager settingsManager;
 
     ParsedRule(Field field, Rule rule, SettingsManager settingsManager)
@@ -50,6 +51,7 @@ public final class ParsedRule<T> implements Comparable<ParsedRule> {
         this.extraInfo = ImmutableList.copyOf(rule.extra());
         this.categories = ImmutableList.copyOf(rule.category());
         this.scarpetApp = rule.appSource();
+        this.allowCommandBlocks = rule.allowCommandBlocks();
         this.settingsManager = settingsManager;
         this.validators = new ArrayList<>();
         for (Class v : rule.validate())

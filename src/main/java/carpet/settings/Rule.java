@@ -69,4 +69,9 @@ public @interface Rule
      * The class of the condition checked when the rule is parsed.
      */
     Class<? extends Condition>[] condition() default {};
+
+    /**
+     * If false, command blocks won't be able to change the rule's value.
+     */
+    boolean allowCommandBlocks() default true;
 }
