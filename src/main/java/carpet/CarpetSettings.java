@@ -18,9 +18,7 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -987,4 +985,19 @@ public class CarpetSettings
             return "Cannot be negative, can be true, false, or # > 0";
         }
     }
+
+    @Rule(
+            desc = "Changes the command permission level for all command blocks on the server",
+            extra = {
+                    "0: No cheat commands.",
+                    "1: Same as 0.",
+                    "2: Most cheat commands.",
+                    "3: Server moderation: bans, kicks, whitelist, op, etc.",
+                    "4: Server management: stopping, saving, perf."
+            },
+            options = {"0", "1", "2", "3", "4"},
+            category = {COMMAND},
+            allowCommandBlocks = false
+    )
+    public static int commandBlockPermissionLevel = 2;
 }

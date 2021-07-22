@@ -2,6 +2,7 @@ package carpet.settings;
 
 import carpet.CarpetServer;
 import carpet.CarpetSettings;
+import carpet.mixins.ServerCommandSourceAccessor;
 import carpet.network.ServerNetworkHandler;
 import carpet.utils.Translations;
 import carpet.utils.Messenger;
@@ -23,6 +24,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.BaseText;
 import net.minecraft.util.WorldSavePath;
+import net.minecraft.world.CommandBlockExecutor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.util.TriConsumer;
 
@@ -635,6 +637,8 @@ public class SettingsManager
 
     private int setRule(ServerCommandSource source, ParsedRule<?> rule, String newValue)
     {
+        if (!rule.allowCommandBlocks && ((ServerCommandSourceAccessor) source).getOutput() instanceof CommandBlockExecutor)
+            return 0;
         if (rule.set(source, newValue) != null)
             Messenger.m(source, "w "+rule.toString()+", ", "c ["+ tr("ui.change_permanently","change permanently")+"?]",
                     "^w "+String.format(tr("ui.click_to_keep_the_settings_in_%(conf)s_to_save_across_restarts","Click to keep the settings in %s to save across restarts"), identifier+".conf"),
