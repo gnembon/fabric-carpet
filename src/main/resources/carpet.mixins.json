@@ -90,6 +90,7 @@
     "LivingEntity_maxCollisionsMixin",
     "ServerWorld_onePlayerSleepingMixin",
     "CoralBlockMixin",
+    "CoralFanBlockMixin",
     "CoralFeatureMixin",
     "BuddingAmethystBlock_movableAmethystMixin",
     "FluidBlock_renewableBlackstoneMixin",
