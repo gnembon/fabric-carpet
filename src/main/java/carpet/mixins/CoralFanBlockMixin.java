@@ -19,8 +19,8 @@ public abstract class CoralFanBlockMixin implements Fertilizable
 {
     public boolean isFertilizable(BlockView var1, BlockPos var2, BlockState var3, boolean var4)
     {
-        return CarpetSettings.renewableCoral.equals("fan_only")
-                || CarpetSettings.renewableCoral.equals("enabled")
+        return CarpetSettings.renewableCoral == CarpetSettings.RenewableCoralMode.FAN_ONLY
+                || CarpetSettings.renewableCoral == CarpetSettings.RenewableCoralMode.TRUE
                 && var3.get(CoralParentBlock.WATERLOGGED)
                 && var1.getFluidState(var2.up()).isIn(FluidTags.WATER);
     }
