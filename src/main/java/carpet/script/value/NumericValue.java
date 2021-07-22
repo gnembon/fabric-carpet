@@ -110,9 +110,8 @@ public class NumericValue extends Value
     @Override
     public Value add(Value v)
     {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof NumericValue)
+        if (v instanceof NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
             if (longValue != null && nv.longValue != null)
             {
                 return new NumericValue(longValue+nv.longValue);
@@ -122,9 +121,8 @@ public class NumericValue extends Value
         return super.add(v);
     }
     public Value subtract(Value v) {  // TODO test if definintn add(NumericVlaue) woud solve the casting
-        if (v instanceof NumericValue)
+        if (v instanceof NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
             if (longValue != null && nv.longValue != null)
             {
                 return new NumericValue(longValue-nv.longValue);
@@ -135,9 +133,8 @@ public class NumericValue extends Value
     }
     public Value multiply(Value v)
     {
-        if (v instanceof NumericValue)
+        if (v instanceof NumericValue nv)
         {
-            NumericValue nv = (NumericValue)v;
             if (longValue != null && nv.longValue != null)
             {
                 return new NumericValue(longValue*nv.longValue);
@@ -173,9 +170,8 @@ public class NumericValue extends Value
         {
             return -o.compareTo(this);
         }
-        if (o instanceof NumericValue)
+        if (o instanceof NumericValue no)
         {
-            NumericValue no = (NumericValue)o;
             if (longValue != null && no.longValue != null)
                 return longValue.compareTo(no.longValue);
             return Double.compare(value, no.value);
@@ -189,9 +185,8 @@ public class NumericValue extends Value
         {
             return o.equals(this);
         }
-        if (o instanceof NumericValue)
+        if (o instanceof NumericValue no)
         {
-            NumericValue no = (NumericValue)o;
             if (longValue != null && no.longValue != null)
                 return longValue.equals(no.longValue);
             return !this.subtract(no).getBoolean();

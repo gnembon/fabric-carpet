@@ -362,9 +362,8 @@ public class Inventories {
             {
                 item = ((PlayerEntity) owner).dropItem(droppedStack, false, true);
             }
-            else if (owner instanceof LivingEntity)
+            else if (owner instanceof LivingEntity villager)
             {
-                LivingEntity villager = (LivingEntity)owner;
                 // stolen from LookTargetUtil.give((VillagerEntity)owner, droppedStack, (LivingEntity) owner);
                 double double_1 = villager.getY() - 0.30000001192092896D + (double)villager.getStandingEyeHeight();
                 item = new ItemEntity(villager.world, villager.getX(), double_1, villager.getZ(), droppedStack);
@@ -386,9 +385,8 @@ public class Inventories {
 
     private static void syncPlayerInventory(NBTSerializableValue.InventoryLocator inventory, int int_1)
     {
-        if (inventory.owner instanceof ServerPlayerEntity && !inventory.isEnder)
+        if (inventory.owner instanceof ServerPlayerEntity player && !inventory.isEnder)
         {
-            ServerPlayerEntity player = (ServerPlayerEntity) inventory.owner;
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(
                     -2, 0, // resolve mystery argument
                     int_1,
