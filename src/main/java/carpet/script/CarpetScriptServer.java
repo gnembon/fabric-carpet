@@ -12,8 +12,6 @@ import carpet.script.bundled.BundledModule;
 import carpet.CarpetServer;
 import carpet.script.bundled.FileModule;
 import carpet.script.bundled.Module;
-import carpet.script.exception.IntegrityException;
-import carpet.script.exception.InvalidCallbackException;
 import carpet.script.language.Arithmetic;
 import carpet.script.language.ControlFlow;
 import carpet.script.language.DataStructures;
@@ -23,7 +21,6 @@ import carpet.script.language.Sys;
 import carpet.script.language.Threading;
 import carpet.script.utils.AppStoreManager;
 import carpet.script.value.FunctionValue;
-import carpet.script.value.Value;
 import carpet.utils.CarpetProfiler;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -35,7 +32,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
-import net.minecraft.util.math.BlockPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -120,9 +116,9 @@ public class CarpetScriptServer
     private void init()
     {
         ScriptHost.systemGlobals.clear();
-        events = new CarpetEventServer(server);
+        events = new CarpetEventServer(this);
         modules = new HashMap<>();
-        unloadableModules = new HashSet<String>();
+        unloadableModules = new HashSet<>();
         tickStart = 0L;
         stopAll = false;
         holyMoly = server.getCommandManager().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
@@ -232,7 +228,7 @@ public class CarpetScriptServer
         return moduleNames;
     }
 
-    public ScriptHost getHostByName(String name)
+    public CarpetScriptHost getAppHostByName(String name)
     {
         if (name == null)
             return globalHost;
@@ -310,7 +306,10 @@ public class CarpetScriptServer
         if (newHost.isPerUser())
         {
             // that will provide player hosts right at the startup
-            newHost.retrieveForExecution(source, null);
+            for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList())
+            {
+                newHost.retrieveForExecution(player.getCommandSource(), player);
+            }
         }
         else
         {
@@ -370,86 +369,6 @@ public class CarpetScriptServer
             Messenger.m(source, "rb Failed to uninstall the app");
         }
         return false;
-    }
-
-    public boolean runEventCall(ServerCommandSource sender, String hostname, String optionalTarget, FunctionValue udf, List<Value> argv)
-    {
-        CarpetScriptHost host = globalHost;
-        if (hostname != null)
-            host = modules.get(hostname);
-        if (host == null) return false;
-        // dummy call for player apps that reside on the global copy - do not run them, but report as successes.
-        if (host.isPerUser() && optionalTarget==null) return true;
-        ServerPlayerEntity target = null;
-        if (optionalTarget != null)
-        {
-            target = sender.getServer().getPlayerManager().getPlayer(optionalTarget);
-            if (target == null) return false;
-        }
-        int successes = signal(sender, target, hostname, udf, argv, true );
-        return successes >= 0;
-    }
-
-    public void runScheduledCall(BlockPos origin, ServerCommandSource source, String hostname, CarpetScriptHost host, FunctionValue udf, List<Value> argv)
-    {
-        if (hostname != null && !modules.containsKey(hostname)) // well - scheduled call app got unloaded
-            return;
-        try
-        {
-            host.callUDF(origin, source, udf, argv);
-        }
-        catch (NullPointerException | InvalidCallbackException ignored)
-        {
-        }
-    }
-
-    /**
-     * returns number of successful calls in the host or -1 if failed exceptionally
-     * @param sender
-     * @param optionalRecipient
-     * @param hostname
-     * @param udf
-     * @param argv
-     * @param reportFails - returns -1 when any call failed
-     * @return
-     */
-    public int signal(ServerCommandSource sender, ServerPlayerEntity optionalRecipient, String hostname, FunctionValue udf, List<Value> argv, boolean reportFails)
-    {
-
-        if (hostname == null)
-        {
-            if (optionalRecipient != null) return 0;
-            try
-            {
-                globalHost.callUDF(BlockPos.ORIGIN, sender, udf, argv);
-            }
-            catch (NullPointerException | InvalidCallbackException npe)
-            {
-                return reportFails?-1:0;
-            }
-            return 1;
-        }
-        String hostRecipient = optionalRecipient == null?null:optionalRecipient.getEntityName();
-        ServerCommandSource source = (optionalRecipient == null)? sender : optionalRecipient.getCommandSource().withLevel(CarpetSettings.runPermissionLevel);
-        int successes = 0;
-        for (CarpetScriptHost host : modules.get(hostname).retrieveForExecution(sender, hostRecipient))
-        {
-            // getPlayer will always return nonnull cause retrieve for execution only returns hosts for existing players.
-            ServerCommandSource executingSource = host.perUser
-                    ? source.getServer().getPlayerManager().getPlayer(host.user).getCommandSource()
-                    : source.getServer().getCommandSource();
-            try
-            {
-                host.callUDF(BlockPos.ORIGIN, source.withLevel(CarpetSettings.runPermissionLevel), udf, argv);
-            }
-            catch (NullPointerException | InvalidCallbackException | IntegrityException npe)
-            {
-                if (reportFails) return -1;
-                continue;
-            }
-            successes ++;
-        }
-        return successes;
     }
 
     public void tick()

@@ -10,6 +10,7 @@ import carpet.script.command.CommandArgument;
 import carpet.script.command.CommandToken;
 import carpet.script.exception.CarpetExpressionException;
 import carpet.script.exception.ExpressionException;
+import carpet.script.exception.IntegrityException;
 import carpet.script.exception.InternalExpressionException;
 import carpet.script.exception.InvalidCallbackException;
 import carpet.script.utils.AppStoreManager;
@@ -644,37 +645,19 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public List<CarpetScriptHost> retrieveForExecution(ServerCommandSource source, String optionalTarget)
+    public CarpetScriptHost retrieveForExecution(ServerCommandSource source, ServerPlayerEntity player)
     {
-        List<CarpetScriptHost> targets = new ArrayList<>();
-        if (perUser)
+        CarpetScriptHost target = null;
+        if (!perUser)
         {
-            if (optionalTarget == null)
-            {
-                for (ServerPlayerEntity player : source.getServer().getPlayerManager().getPlayerList())
-                {
-                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
-                    targets.add(host);
-                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
-                }
-            }
-            else
-            {
-                ServerPlayerEntity player = source.getServer().getPlayerManager().getPlayer(optionalTarget);
-                if (player != null)
-                {
-                    CarpetScriptHost host = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
-                    targets.add(host);
-                    if (host.errorSnooper == null) host.setChatErrorSnooper(player.getCommandSource());
-                }
-            }
+            target = this;
         }
-        else
+        else if (player != null)
         {
-            targets.add(this);
-            if (this.errorSnooper == null) this.setChatErrorSnooper(source);
+            target = (CarpetScriptHost) retrieveForExecution(player.getEntityName());
         }
-        return targets;
+        if (target != null && target.errorSnooper == null) target.setChatErrorSnooper(source);
+        return target;
     }
 
     public CarpetScriptHost retrieveOwnForExecution(ServerCommandSource source) throws CommandSyntaxException
@@ -830,6 +813,7 @@ public class CarpetScriptHost extends ScriptHost
         try
         {
             // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
             return function.getExpression().evalValue(
                     () -> function.lazyEval(context, Context.VOID, function.getExpression(), function.getToken(), argv),
@@ -860,7 +844,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         try
         {
-            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            assertAppIntegrity(function.getModule());
             Context context = new CarpetContext(this, source, BlockPos.ORIGIN);
             return function.getExpression().evalValue(
                     () -> function.execute(context, Context.VOID, function.getExpression(), function.getToken(), argv),
@@ -874,7 +858,7 @@ public class CarpetScriptHost extends ScriptHost
         }
     }
 
-    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException
+    public Value callUDF(BlockPos pos, ServerCommandSource source, FunctionValue fun, List<Value> argv) throws InvalidCallbackException, IntegrityException
     {
         if (CarpetServer.scriptServer.stopAll)
             return Value.NULL;
@@ -889,7 +873,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         try
         {
-            // TODO: this is just for now - invoke would be able to invoke other hosts scripts
+            assertAppIntegrity(fun.getModule());
             Context context = new CarpetContext(this, source, pos);
             return fun.getExpression().evalValue(
                     () -> fun.execute(context, Context.VOID, fun.getExpression(), fun.getToken(), argv),

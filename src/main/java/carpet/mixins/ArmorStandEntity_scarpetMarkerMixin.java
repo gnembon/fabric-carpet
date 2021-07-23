@@ -38,7 +38,7 @@ public abstract class ArmorStandEntity_scarpetMarkerMixin extends LivingEntity
                 if (owner.isPresent())
                 {
                     String hostName = StringUtils.removeStart(owner.get(),prefix);
-                    if (!hostName.isEmpty() && CarpetServer.scriptServer.getHostByName(hostName) == null)
+                    if (!hostName.isEmpty() && CarpetServer.scriptServer.getAppHostByName(hostName) == null)
                     {
                         discard();  //discard
                     }

@@ -38,7 +38,7 @@ public class EntityEventsGroup
         {
             Map.Entry<Pair<String,String>, CarpetEventServer.Callback> action = iterator.next();
             Pair<String,String> key = action.getKey();
-            ScriptHost host = CarpetServer.scriptServer.getHostByName(key.getLeft());
+            ScriptHost host = CarpetServer.scriptServer.getAppHostByName(key.getLeft());
             if (host == null)
             {
                 iterator.remove();
@@ -52,7 +52,7 @@ public class EntityEventsGroup
                     continue;
                 }
             }
-            if (!type.call(action.getValue(), entity, args))
+            if (type.call(action.getValue(), entity, args) == CarpetEventServer.CallbackResult.FAIL)
                 iterator.remove();
         }
         if (actionSet.isEmpty()) actions.remove(type);
@@ -125,7 +125,7 @@ public class EntityEventsGroup
             }
             return new CarpetEventServer.Callback(key.getLeft(), key.getRight(), function, extraArgs);
         }
-        public boolean call(CarpetEventServer.Callback tickCall, Entity entity, Object ... args)
+        public CarpetEventServer.CallbackResult call(CarpetEventServer.Callback tickCall, Entity entity, Object ... args)
         {
             assert args.length == argcount-1;
             return tickCall.execute(entity.getCommandSource(), makeArgs(entity, args));
