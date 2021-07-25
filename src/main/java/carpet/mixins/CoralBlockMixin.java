@@ -29,7 +29,7 @@ public abstract class CoralBlockMixin implements Fertilizable
 {
     public boolean isFertilizable(BlockView var1, BlockPos var2, BlockState var3, boolean var4)
     {
-        return CarpetSettings.renewableCoral == CarpetSettings.RenewableCoralMode.CORAL_ONLY
+        return CarpetSettings.renewableCoral == CarpetSettings.RenewableCoralMode.EXPANDED
                 || CarpetSettings.renewableCoral == CarpetSettings.RenewableCoralMode.TRUE
                 && var3.get(CoralParentBlock.WATERLOGGED)
                 && var1.getFluidState(var2.up()).isIn(FluidTags.WATER);

@@ -763,12 +763,12 @@ public class CarpetSettings
 
     public enum RenewableCoralMode {
         FALSE,
-        CORAL_ONLY,
-        FAN_ONLY,
+        EXPANDED,
         TRUE;
     }
     @Rule(
-            desc = "Coral structures will grow with bonemeal from coral plants/coral fans",
+            desc = "Coral structures will grow with bonemeal from coral plants",
+            extra = "Expanded also allows growing from coral fans for easier farming",
             category = FEATURE
     )
     public static RenewableCoralMode renewableCoral = RenewableCoralMode.FALSE;
