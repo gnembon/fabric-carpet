@@ -18,9 +18,7 @@ import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -606,9 +604,6 @@ public class CarpetSettings
     )
     public static boolean waterFlow = true;
     */
-
-    //@Rule(desc = "One player is required on the server to cause night to pass", category = SURVIVAL)
-    //public static boolean onePlayerSleeping = false;
 
     @Rule(
             desc = "Sets a different motd message on client trying to connect to the server",

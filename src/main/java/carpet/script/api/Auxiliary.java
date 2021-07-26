@@ -3,7 +3,6 @@ package carpet.script.api;
 import carpet.CarpetServer;
 import carpet.fakes.MinecraftServerInterface;
 import carpet.fakes.ServerWorldInterface;
-import carpet.fakes.StatTypeInterface;
 import carpet.fakes.ThreadedAnvilChunkStorageInterface;
 import carpet.helpers.FeatureGenerator;
 import carpet.logging.HUDController;
@@ -1209,7 +1208,7 @@ public class Auxiliary {
     private static <T> Stat<T> getStat(StatType<T> type, Identifier id)
     {
         T key = type.getRegistry().get(id);
-        if (key == null || !((StatTypeInterface)type).hasStatCreated(key))
+        if (key == null || !type.hasStat(key))
             return null;
         return type.getOrCreateStat(key);
     }

@@ -6,7 +6,6 @@ import carpet.fakes.ItemEntityInterface;
 import carpet.fakes.LivingEntityInterface;
 import carpet.fakes.MemoryInterface;
 import carpet.fakes.MobEntityInterface;
-import carpet.fakes.HungerManagerInterface;
 import carpet.fakes.ServerPlayerEntityInterface;
 import carpet.fakes.ServerPlayerInteractionManagerInterface;
 import carpet.helpers.Tracer;
@@ -573,7 +572,7 @@ public class EntityValue extends Value
         });
 
         put("exhaustion",(e, a)->{
-            if(e instanceof PlayerEntity) return new NumericValue(((HungerManagerInterface)((PlayerEntity) e).getHungerManager()).getExhaustionCM());
+            if(e instanceof PlayerEntity) return new NumericValue(((PlayerEntity) e).getHungerManager().getExhaustion());
             return Value.NULL;
         });
 
@@ -1473,7 +1472,7 @@ public class EntityValue extends Value
         });
 
         put("exhaustion", (e, v)-> {
-            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setExhaustionCM(NumericValue.asNumber(v).getFloat());
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setExhaustion(NumericValue.asNumber(v).getFloat());
         });
 
         put("add_exhaustion", (e, v)-> {
@@ -1506,7 +1505,7 @@ public class EntityValue extends Value
         });
 
         put("saturation", (e, v)-> {
-            if(e instanceof PlayerEntity) ((HungerManagerInterface) ((PlayerEntity) e).getHungerManager()).setSaturationCM(NumericValue.asNumber(v, "saturation").getFloat());
+            if(e instanceof PlayerEntity) ((PlayerEntity) e).getHungerManager().setSaturationLevel(NumericValue.asNumber(v, "saturation").getFloat());
         });
 
         put("air", (e, v) -> e.setAir(NumericValue.asNumber(v, "air").getInt()));
