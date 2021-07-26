@@ -530,9 +530,8 @@ public class EntityValue extends Value
             return Value.NULL;
         });
         put("spawn_point", (e, a) -> {
-            if (e instanceof ServerPlayerEntity)
+            if (e instanceof ServerPlayerEntity spe)
             {
-                ServerPlayerEntity spe = (ServerPlayerEntity)e;
                 if (spe.getSpawnPointPosition() == null) return Value.FALSE;
                 return ListValue.of(
                         ValueConversions.of(spe.getSpawnPointPosition()),
@@ -631,9 +630,8 @@ public class EntityValue extends Value
             String module = a.getString();
             MemoryModuleType<?> moduleType = Registry.MEMORY_MODULE_TYPE.get(InputValidator.identifierOf(module));
             if (moduleType == MemoryModuleType.DUMMY) return Value.NULL;
-            if (e instanceof LivingEntity)
+            if (e instanceof LivingEntity livingEntity)
             {
-                LivingEntity livingEntity = (LivingEntity)e;
                 Brain<?> brain = livingEntity.getBrain();
                 Map<MemoryModuleType<?>, Optional<? extends Memory<?>>> memories = ((BrainInterface)brain).getMobMemories();
                 Optional<? extends Memory<?>> optmemory = memories.get(moduleType);
@@ -652,9 +650,8 @@ public class EntityValue extends Value
         });
 
         put("permission_level", (e, a) -> {
-            if (e instanceof  ServerPlayerEntity)
+            if (e instanceof  ServerPlayerEntity spe)
             {
-                ServerPlayerEntity spe = (ServerPlayerEntity) e;
                 for (int i=4; i>=0; i--)
                 {
                     if (spe.hasPermissionLevel(i))
@@ -667,10 +664,9 @@ public class EntityValue extends Value
         });
 
         put("player_type", (e, a) -> {
-            if (e instanceof PlayerEntity)
+            if (e instanceof PlayerEntity p)
             {
                 if (e instanceof EntityPlayerMPFake) return new StringValue(((EntityPlayerMPFake) e).isAShadow?"shadow":"fake");
-                PlayerEntity p = (PlayerEntity)e;
                 MinecraftServer server = p.getEntityWorld().getServer();
                 if (server.isDedicated()) return new StringValue("multiplayer");
                 boolean runningLan = server.isRemote();
@@ -927,9 +923,8 @@ public class EntityValue extends Value
             e.refreshPositionAndAngles(x, y, z, yaw, pitch);
             // we were sending to players for not-living entites, that were untracked. Living entities should be tracked.
             //((ServerWorld) e.getEntityWorld()).getChunkManager().sendToNearbyPlayers(e, new EntityS2CPacket.(e));
-            if (e instanceof LivingEntity)
+            if (e instanceof LivingEntity le)
             {
-                LivingEntity le = (LivingEntity)e;
                 le.prevBodyYaw = le.prevYaw = yaw;
                 le.prevHeadYaw = le.headYaw = yaw;
                 // seems universal for:
@@ -956,9 +951,8 @@ public class EntityValue extends Value
         put("age", (e, v) -> e.age = Math.abs((int)NumericValue.asNumber(v).getLong()) );
         put("health", (e, v) -> {
             float health = (float) NumericValue.asNumber(v).getDouble();
-            if (health <= 0f && e instanceof ServerPlayerEntity)
+            if (health <= 0f && e instanceof ServerPlayerEntity player)
             {
-                ServerPlayerEntity player = (ServerPlayerEntity) e;
                 if (player.currentScreenHandler != null)
                 {
                     // if player dies with open container, then that causes NPE on the client side
@@ -1273,8 +1267,7 @@ public class EntityValue extends Value
         }); //requires mixing
 
         put("spawn_point", (e, a) -> {
-            if (!(e instanceof ServerPlayerEntity)) return;
-            ServerPlayerEntity spe = (ServerPlayerEntity)e;
+            if (!(e instanceof ServerPlayerEntity spe)) return;
             if (a == null)
             {
                 spe.setSpawnPoint(null, null, 0, false, false);
@@ -1302,9 +1295,8 @@ public class EntityValue extends Value
                 }
                 spe.setSpawnPoint(world, pos, angle, forced, false);
             }
-            else if (a instanceof BlockValue)
+            else if (a instanceof BlockValue bv)
             {
-                BlockValue bv= (BlockValue)a;
                 if (bv.getPos()==null || bv.getWorld() == null)
                     throw new InternalExpressionException("block for spawn modification should be localised in the world");
                 spe.setSpawnPoint(bv.getWorld().getRegistryKey(), bv.getPos(), e.getYaw(), true, false); // yaw
@@ -1367,8 +1359,7 @@ public class EntityValue extends Value
         });
         put("effect", (e, v) ->
         {
-            if (!(e instanceof LivingEntity)) return;
-            LivingEntity le = (LivingEntity)e;
+            if (!(e instanceof LivingEntity le)) return;
             if (v == null)
             {
                 le.clearStatusEffects();

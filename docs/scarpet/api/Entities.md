@@ -815,21 +815,24 @@ In case you want to pass an event handler that is not defined in your module, pl
 
 ### `entity_load_handler(descriptor / descriptors, function)`, `entity_load_handler(descriptor / descriptors, call_name, ... args?)`
 
-Attaches a callback to when any entity matching the following type / types is loaded in the game, allowing to grab a handle
+Attaches a callback to trigger when any entity matching the following type / types is loaded in the game, allowing to grab a handle
 to an entity right when it is loaded to the world without querying them every tick. Callback expects two parameters - the entity,
-and a boolean indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
+and a boolean value indicating if the entity was newly created(`true`) or just loaded from disk. Single argument functions accepting
 only entities are allowed, but deprecated and will be removed at some point.
 
 If callback is `null`, then the current entity handler, if present, is removed. Consecutive calls to `entity_load_handler` will add / subtract
 of the currently targeted entity types pool.
 
-Like other global events, calls to `entity_load_handler` can only be attached in apps with global scope. Player scope makes so
-that it is not clear which player to use run the load call.
+Like other global events, calls to `entity_load_handler` should only be attached in apps with global scope. For player scope apps,
+it will be called multiple times, once for each player. That's likely not what you want to do.
 
 ```
 // veryfast method of getting rid of all the zombies. Callback is so early, its packets haven't reached yet the clients
 // so to save on log errors, removal of mobs needs to be scheduled for later.
 entity_load_handler('zombie', _(e, new) -> schedule(0, _(outer(e)) -> modify(e, 'remove')))
+
+// another way to do it is to remove the entity when it starts ticking
+entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'remove')))
 
 // making all zombies immediately faster and less susceptible to friction of any sort
 entity_load_handler('zombie', _(e, new) -> entity_event(e, 'on_tick', _(e) -> modify(e, 'motion', 1.2*e~'motion')))

@@ -262,7 +262,6 @@ public class Entities {
 
         expression.addContextFunction("entity_load_handler", -1, (c, t, lv) ->
         {
-            if (c.host.isPerUser()) throw new InternalExpressionException("'entity_load_handler' can only be called in apps with global scope");
             if (lv.size() < 2) throw new InternalExpressionException("'entity_load_handler' required the entity type, and a function to call");
             Value entityValue = lv.get(0);
             List<String> descriptors = (entityValue instanceof ListValue)
